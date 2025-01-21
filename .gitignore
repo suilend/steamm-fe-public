@@ -1,0 +1,17 @@
+local/*
+.vscode/*
+temp/*
+sdk/.env
+
+contracts/*/build/*
+
+.DS_Store
+target
+**/*.rs.bk
+node_modules
+grcov.log
+.env
+package-lock.json
+yarn.lock
+sui/*
+dist/*
