@@ -1,8 +1,8 @@
 {
-  "name": "@slamm/sdk",
+  "name": "@steamm/sdk",
   "version": "1.0.9",
   "private": true,
-  "description": "A TypeScript SDK for interacting with the Suilend AMM program",
+  "description": "A TypeScript SDK for interacting with the Steamm program",
   "author": "Suilend",
   "license": "MIT",
   "main": "./sdk/src/index.ts",
@@ -17,6 +17,13 @@
     "lint": "bun eslint && bun prettier",
     "release": "bun run build && bun ts-node ./prepublish.ts && cd ./dist && npm publish --access public",
     "test": "bun test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/suilend/steamm-fe.git"
+  },
+  "bugs": {
+    "url": "https://github.com/suilend/steamm-fe/issues"
   },
   "dependencies": {
     "@mysten/sui": "^1.9.0",
