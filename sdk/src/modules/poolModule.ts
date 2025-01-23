@@ -429,14 +429,10 @@ export interface PoolDepositLiquidityArgs {
   pool: SuiAddressType;
   coinTypeA: SuiTypeName;
   coinTypeB: SuiTypeName;
-  coinObjA: TransactionResult;
-  coinObjB: TransactionResult;
-  // coinObjA: SuiAddressType | TransactionObjectInput | TransactionResult;
-  // coinObjB: SuiAddressType | TransactionObjectInput | TransactionResult;
+  coinObjA: TransactionArgument;
+  coinObjB: TransactionArgument;
   maxA: bigint;
   maxB: bigint;
-  usdcCoin: TransactionResult;
-  suiCoin: TransactionResult;
 }
 
 export interface PoolRedeemLiquidityArgs {
