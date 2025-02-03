@@ -1,9 +1,8 @@
-import { ParsedKeypair, decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import { decodeSuiPrivateKey, ParsedKeypair } from "@mysten/sui/cryptography";
+import { SteammSDK } from "../src/sdk";
 import { Transaction } from "@mysten/sui/transactions";
 import dotenv from "dotenv";
-
-import { SteammSDK } from "../src/sdk";
 import { STEAMM_PKG_ID, SUILEND_PKG_ID } from "../src/testnet/testnet";
 import { getTestSui, getTestUsdc } from "../src/testnet/utils";
 
@@ -49,7 +48,7 @@ async function swap(suiPrivateKey: string) {
       maxA: BigInt("1000000000000000000"),
       maxB: BigInt("1000000000000000000"),
     },
-    tx,
+    tx
   );
 
   tx.transferObjects([suiCoinLiq, usdcCoinLiq], sdk.senderAddress);
@@ -68,7 +67,7 @@ async function swap(suiPrivateKey: string) {
       amountIn: BigInt("10000000000000"),
       minAmountOut: BigInt("0"),
     },
-    tx,
+    tx
   );
 
   tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
