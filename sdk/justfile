@@ -33,24 +33,16 @@ fstart: _check_sui
     sui genesis --working-dir sui
     sui start --network.config sui --with-faucet
 
-# Regenerates the smart contract bindings
-# bind:
-    # TODO: pull contract from repo
-    # rm -rf sdk/src/_codegen/_generated/_dependencies/*
-    # rm -rf sdk/src/_codegen/_generated/_framework/*
-    # rm -rf sdk/src/_codegen/_generated/slamm/*
-    # rm -rf sdk/src/_codegen/_generated/.eslintrc.json
-
-    # sui-client-gen --manifest sdk/src/_codegen/_generated --out sdk/src/_codegen/_generated
-
 # Publishes packages to localnet and runs ts tests
 setup:
     bash -c './bin/publocal.sh'
+    bash -b './bin/sourcekey.sh'
 unset:
     bash -c './bin/unpublocal.sh'
 
 test:
     bash -c './bin/publocal.sh'
-    bun test ./sdk/tests/index.test.ts
+    bash -b './bin/sourcekey.sh'
+    bun test ./tests/index.test.ts
     bash -c './bin/unpublocal.sh'
 

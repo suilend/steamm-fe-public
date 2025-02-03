@@ -1,7 +1,7 @@
 // These addresses are filled automatically by the test pipeline
-export const LIQUID_STAKING_PKG_ID = "";
-export const WORMHOLE_PKG_ID = "";
-export const SPRUNGSUI_PKG_ID = "";
-export const PYTH_PKG_ID = "";
-export const SUILEND_PKG_ID = "";
-export const STEAMM_PKG_ID = "";
+export const LIQUID_STAKING_PKG_ID = "0xe8de321e0e39438a81a0a50c44777f66d02110a2fdceeed7abb9aa66a703fa1e";
+export const WORMHOLE_PKG_ID = "0x3db1d2f3ab730a0becade44620fe499be4564ce30cb9d74377448c91e48c7cc5";
+export const SPRUNGSUI_PKG_ID = "0x163340d7689ab8def79030e924e37ea70eedadb942896068f0cecf1d38b83656";
+export const PYTH_PKG_ID = "0x5031142443530e4a39e8a62dea121e844ba78204def6be9c9ac9e0b421965231";
+export const SUILEND_PKG_ID = "0x5b0f34b1fbcdef6e37138dd97ab8f87957cb95aefaf365038e4c1a9c1c04b84c";
+export const STEAMM_PKG_ID = "0xaf56413cecc85e990c8abfaf0289f10d2b5bc93cbffc650f814234642eb580b1";

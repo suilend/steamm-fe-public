@@ -91,7 +91,7 @@ populate_toml() {
 populate_ts() {
     local PACKAGE_ID="$1"
     local PACKAGE_NAME="$2"
-    local TS_FILE="sdk/tests/packages.ts"
+    local TS_FILE="tests/packages.ts"
 
     # Check if TS file exists
     if [ ! -f "$TS_FILE" ]; then
@@ -132,10 +132,7 @@ publish_package() {
     INITIAL_DIR=$(pwd)
     
     # Change to package directory
-    cd "$FOLDER_NAME"
-    RESPONSE=$(sui client publish --silence-warnings --no-lint --json)
-    cd "$INITIAL_DIR"
-
+    RESPONSE=$(sui client --client.config sui/client.yaml publish $FOLDER_NAME --silence-warnings --no-lint --json)
     RESULT=$(echo "$RESPONSE" | jq -r '.effects.status.status')
 
     if [ $RESULT != "success" ]; then
@@ -176,8 +173,10 @@ find_object_id() {
     fi
 }
 
-sui client faucet
+sui client --client.config sui/client.yaml faucet
 sleep 1
+
+sui client --client.config sui/client.yaml addresses
 
 LIQUID_STAKING_RESPONSE=$(publish_package "temp/liquid_staking" "LIQUID_STAKING_PKG_ID")
 WORMHOLE_RESPONSE=$(publish_package "temp/wormhole" "WORMHOLE_PKG_ID")
@@ -188,7 +187,6 @@ STEAMM_RESPONSE=$(publish_package "temp/steamm" "STEAMM_PKG_ID")
 
 
 # Get relevant object IDs
-
 lending_market_registry=$(find_object_id "$SUILEND_RESPONSE" ".*::lending_market_registry::Registry")
 echo "lending_market_registry: $lending_market_registry"
 
@@ -229,4 +227,4 @@ if [ "$INITIAL_ENV" != "localnet" ]; then
     sui client switch --env "$INITIAL_ENV"
 fi
 
-sui client call --package "$PACKAGE_ID" --module setup --function setup --args "$lending_market_registry" "$registry" "$lp_metadata" "$lp_treasury_cap" "$usdc_metadata" "$sui_metadata" "$b_usdc_metadata" "$b_sui_metadata" "$b_usdc_treasury_cap" "$b_sui_treasury_cap" > /dev/null
+sui client --client.config sui/client.yaml call --package "$PACKAGE_ID" --module setup --function setup --args "$lending_market_registry" "$registry" "$lp_metadata" "$lp_treasury_cap" "$usdc_metadata" "$sui_metadata" "$b_usdc_metadata" "$b_sui_metadata" "$b_usdc_treasury_cap" "$b_sui_treasury_cap" > /dev/null
