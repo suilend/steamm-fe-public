@@ -1,8 +1,9 @@
+import { ParsedKeypair, decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { decodeSuiPrivateKey, ParsedKeypair } from "@mysten/sui/cryptography";
-import { SteammSDK } from "../src/sdk";
 import { Transaction } from "@mysten/sui/transactions";
 import dotenv from "dotenv";
+
+import { SteammSDK } from "../src/sdk";
 import { STEAMM_PKG_ID, SUILEND_PKG_ID } from "../src/testnet/testnet";
 import { getTestSui, getTestUsdc } from "../src/testnet/utils";
 
@@ -49,7 +50,7 @@ async function redeemLiquidity(suiPrivateKey: string) {
         maxA: BigInt("1000000000000000000"),
         maxB: BigInt("1000000000000000000"),
       },
-      tx
+      tx,
     );
 
   await sdk.Pool.redeemLiquidityEntry(
@@ -61,7 +62,7 @@ async function redeemLiquidity(suiPrivateKey: string) {
       minA: BigInt("0"),
       minB: BigInt("0"),
     },
-    tx
+    tx,
   );
 
   tx.transferObjects([suiCoin, usdcCoin, bTokenA, bTokenB], sdk.senderAddress);
