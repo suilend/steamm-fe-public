@@ -25,11 +25,11 @@ else
 fi
 
 # Check if current environment is localnet
-INITIAL_ENV=$(sui client envs --json | grep -oE '"[^"]*"' | tail -n1 | tr -d '"')
+INITIAL_ENV=$(sui client --client.config sui/client.yaml envs --json | grep -oE '"[^"]*"' | tail -n1 | tr -d '"')
 
 if [ "$INITIAL_ENV" != "localnet" ]; then
     printf "Current environment is: $INITIAL_ENV. Switching to localnet..." >&2
-    sui client switch --env localnet
+    sui client --client.config sui/client.yaml switch --env localnet
 fi
 
 
@@ -221,10 +221,10 @@ PACKAGE_ID=$(echo "$STEAMM_RESPONSE" | grep -A 3 '"type": "published"' | grep "p
 echo "PACKAGE_ID: $PACKAGE_ID"
 
 
+sui client --client.config sui/client.yaml call --package "$PACKAGE_ID" --module setup --function setup --args "$lending_market_registry" "$registry" "$lp_metadata" "$lp_treasury_cap" "$usdc_metadata" "$sui_metadata" "$b_usdc_metadata" "$b_sui_metadata" "$b_usdc_treasury_cap" "$b_sui_treasury_cap" > /dev/null
+
 # Reset back to initial environment
 if [ "$INITIAL_ENV" != "localnet" ]; then
     echo "Switching back to previous environment"
-    sui client switch --env "$INITIAL_ENV"
+    sui client --client.config sui/client.yaml switch --env "$INITIAL_ENV"
 fi
-
-sui client --client.config sui/client.yaml call --package "$PACKAGE_ID" --module setup --function setup --args "$lending_market_registry" "$registry" "$lp_metadata" "$lp_treasury_cap" "$usdc_metadata" "$sui_metadata" "$b_usdc_metadata" "$b_sui_metadata" "$b_usdc_treasury_cap" "$b_sui_treasury_cap" > /dev/null
