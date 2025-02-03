@@ -54,7 +54,7 @@ jobs:
           # Test the connection
           ssh -o StrictHostKeyChecking=no git@github.com || true
 
-          git clone --branch steamm-script git@github.com:solendprotocol/steamm.git temp/git
+          git clone --branch steamm-script git@github.com:solendprotocol/steamm.git sdk/temp/git
 
       - name: Sui localnet
         run: |
