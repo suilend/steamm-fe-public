@@ -2,9 +2,8 @@ import {
   Transaction,
   TransactionArgument,
 } from "@mysten/sui/dist/cjs/transactions";
-import { TEST_FAUCET_PKG_ID } from "./testnet";
+import { TEST_FAUCET_TESTNET_PKG_ID } from "./testnet";
 
-// TODO: move to test module
 export function getTestSui(
   tx: Transaction,
   amount: number
@@ -36,7 +35,7 @@ export function getTesCoin(
   coinType: string
 ): TransactionArgument {
   const treasuryCapRef = tx.moveCall({
-    target: `${TEST_FAUCET_PKG_ID}::faucets::get_faucet`,
+    target: `${TEST_FAUCET_TESTNET_PKG_ID}::faucets::get_faucet`,
     typeArguments: [coinType],
     arguments: [tx.object(faucetId)],
   });

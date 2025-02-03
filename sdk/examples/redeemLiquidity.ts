@@ -3,7 +3,7 @@ import { decodeSuiPrivateKey, ParsedKeypair } from "@mysten/sui/cryptography";
 import { SteammSDK } from "../src/sdk";
 import { Transaction } from "@mysten/sui/transactions";
 import dotenv from "dotenv";
-import { STEAMM_PKG_ID, SUILEND_PKG_ID } from "../src/testnet/testnet";
+import { STEAMM_TESTNET_PKG_ID, SUILEND_TESTNET_PKG_ID } from "../src/testnet/testnet";
 import { getTestSui, getTestUsdc } from "../src/testnet/utils";
 
 dotenv.config();
@@ -22,12 +22,12 @@ async function redeemLiquidity(suiPrivateKey: string) {
   const sdk = new SteammSDK({
     fullRpcUrl: "https://fullnode.testnet.sui.io:443",
     steamm_config: {
-      package_id: STEAMM_PKG_ID,
-      published_at: STEAMM_PKG_ID,
+      package_id: STEAMM_TESTNET_PKG_ID,
+      published_at: STEAMM_TESTNET_PKG_ID,
     },
     suilend_config: {
-      package_id: SUILEND_PKG_ID,
-      published_at: SUILEND_PKG_ID,
+      package_id: SUILEND_TESTNET_PKG_ID,
+      published_at: SUILEND_TESTNET_PKG_ID,
     },
   });
 
@@ -42,8 +42,8 @@ async function redeemLiquidity(suiPrivateKey: string) {
     await sdk.Pool.depositLiquidity(
       {
         pool: pools[0].poolId,
-        coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
-        coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
+        coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
+        coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
         coinObjA: usdcCoin,
         coinObjB: suiCoin,
         maxA: BigInt("1000000000000000000"),
@@ -55,8 +55,8 @@ async function redeemLiquidity(suiPrivateKey: string) {
   await sdk.Pool.redeemLiquidityEntry(
     {
       pool: pools[0].poolId,
-      coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
-      coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
+      coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
+      coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
       lpCoinObj: lpToken,
       minA: BigInt("0"),
       minB: BigInt("0"),
