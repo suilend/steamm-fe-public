@@ -1,5 +1,5 @@
 const EEmptyBank = new Error(
-  "The total funds (available + deployed) must be greater than zero.",
+  "The total funds (available + deployed) must be greater than zero."
 );
 
 export enum LendingAction {
@@ -10,7 +10,7 @@ export enum LendingAction {
 
 export function computeUtilisationBps(
   fundsAvailable: bigint,
-  fundsDeployed: bigint,
+  fundsDeployed: bigint
 ): bigint {
   // Assert that the sum of funds available and deployed is greater than zero
   if (fundsAvailable + fundsDeployed <= 0) {

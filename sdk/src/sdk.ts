@@ -1,21 +1,20 @@
-import { Signer } from "@mysten/sui/dist/cjs/cryptography/keypair";
-
-import { PoolModule } from "./modules/poolModule";
-import { RpcModule } from "./modules/rpcModule";
 import {
+  SteammConfigs,
+  Package,
+  SuilendConfigs,
   BankList,
   DataPage,
-  EventData,
-  NewBankEvent,
-  NewPoolEvent,
-  Package,
   PoolInfo,
-  SteammConfigs,
-  SuilendConfigs,
-  extractBankList,
+  EventData,
+  NewPoolEvent,
   extractPoolInfo,
+  NewBankEvent,
+  extractBankList,
 } from "./types";
-import { SuiAddressType, patchFixSuiObjectId } from "./utils";
+import { RpcModule } from "./modules/rpcModule";
+import { patchFixSuiObjectId, SuiAddressType } from "./utils";
+import { PoolModule } from "./modules/poolModule";
+import { Signer } from "@mysten/sui/dist/cjs/cryptography/keypair";
 
 export type SdkOptions = {
   fullRpcUrl: string;
@@ -115,5 +114,18 @@ export class SteammSDK {
     pools = extractPoolInfo(eventData);
 
     return pools;
+  }
+
+  async getPoolsByType(
+    coinType1: string,
+    coinType2: string
+  ): Promise<PoolInfo[]> {
+    const pools = await this.getPools();
+
+    return pools.filter(
+      (pool) =>
+        (pool.coinTypeA === coinType1 && pool.coinTypeB === coinType2) ||
+        (pool.coinTypeA === coinType2 && pool.coinTypeB === coinType1)
+    );
   }
 }

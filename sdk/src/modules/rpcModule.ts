@@ -1,3 +1,4 @@
+import { Transaction } from "@mysten/sui/transactions";
 import {
   DevInspectResults,
   DynamicFieldPage,
@@ -12,7 +13,6 @@ import {
 } from "@mysten/sui/client";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Secp256k1Keypair } from "@mysten/sui/keypairs/secp256k1";
-import { Transaction } from "@mysten/sui/transactions";
 
 export type SuiObjectIdType = string;
 
@@ -47,7 +47,7 @@ export class RpcModule extends SuiClient {
    */
   async queryEventsByPage(
     query: SuiEventFilter,
-    paginationArgs: PaginationArgs = "all",
+    paginationArgs: PaginationArgs = "all"
   ): Promise<DataPage<any>> {
     let result: any = [];
     let hasNextPage = true;
@@ -82,7 +82,7 @@ export class RpcModule extends SuiClient {
   async getOwnedObjectsByPage(
     owner: string,
     query: SuiObjectResponseQuery,
-    paginationArgs: PaginationArgs = "all",
+    paginationArgs: PaginationArgs = "all"
   ): Promise<DataPage<any>> {
     let result: any = [];
     let hasNextPage = true;
@@ -115,7 +115,7 @@ export class RpcModule extends SuiClient {
    */
   async getDynamicFieldsByPage(
     parentId: SuiObjectIdType,
-    paginationArgs: PaginationArgs = "all",
+    paginationArgs: PaginationArgs = "all"
   ): Promise<DataPage<any>> {
     let result: any = [];
     let hasNextPage = true;
@@ -150,7 +150,7 @@ export class RpcModule extends SuiClient {
   async batchGetObjects(
     ids: SuiObjectIdType[],
     options?: SuiObjectDataOptions,
-    limit = 50,
+    limit = 50
   ): Promise<SuiObjectResponse[]> {
     let objectDataResponses: SuiObjectResponse[] = [];
 
@@ -204,7 +204,7 @@ export class RpcModule extends SuiClient {
    */
   async sendTransaction(
     keypair: Ed25519Keypair | Secp256k1Keypair,
-    tx: Transaction,
+    tx: Transaction
   ): Promise<SuiTransactionBlockResponse | undefined> {
     try {
       const resultTxn: any = await this.signAndExecuteTransaction({
@@ -232,7 +232,7 @@ export class RpcModule extends SuiClient {
   async sendSimulationTransaction(
     tx: Transaction,
     simulationAccount: string,
-    useDevInspect = true,
+    useDevInspect = true
   ): Promise<DevInspectResults | undefined> {
     try {
       if (useDevInspect) {

@@ -1,2 +1,2 @@
 [packages]
-steamm = { local = "../../../contracts/steamm/" }
+steamm = { local = "../../../../temp/git/contracts/steamm/" }

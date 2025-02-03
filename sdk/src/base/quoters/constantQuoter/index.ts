@@ -3,13 +3,11 @@ import {
   TransactionArgument,
   TransactionResult,
 } from "@mysten/sui/transactions";
-
-import { ConstantProductFunctions } from "../../..";
-import { PoolInfo } from "../../../types";
+import { CpNewArgs, CpQuoteSwapArgs, CpSwapArgs } from "./constantProductArgs";
 import { MigrateArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
-
-import { CpNewArgs, CpQuoteSwapArgs, CpSwapArgs } from "./constantProductArgs";
+import { PoolInfo } from "../../../types";
+import { ConstantProductFunctions } from "../../..";
 
 export * from "./constantProductArgs";
 
@@ -24,7 +22,7 @@ export class ConstantProductQuoter implements Quoter {
 
   public swap(
     args: CpSwapArgs,
-    tx: Transaction = new Transaction(),
+    tx: Transaction = new Transaction()
   ): TransactionResult {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
@@ -39,7 +37,7 @@ export class ConstantProductQuoter implements Quoter {
       tx,
       this.quoterTypes(),
       callArgs,
-      this.packageId,
+      this.packageId
     );
 
     return swapResult;
@@ -47,7 +45,7 @@ export class ConstantProductQuoter implements Quoter {
 
   public quoteSwap(
     args: CpQuoteSwapArgs,
-    tx: Transaction = new Transaction(),
+    tx: Transaction = new Transaction()
   ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
@@ -59,7 +57,7 @@ export class ConstantProductQuoter implements Quoter {
       tx,
       this.quoterTypes(),
       callArgs,
-      this.packageId,
+      this.packageId
     );
     return quote;
   }
@@ -96,7 +94,7 @@ export class ConstantProductQuoter implements Quoter {
     return ConstantProductFunctions.offset(
       tx,
       this.quoterTypes(),
-      tx.object(this.poolInfo.poolId),
+      tx.object(this.poolInfo.poolId)
     );
   }
 
@@ -104,13 +102,13 @@ export class ConstantProductQuoter implements Quoter {
     return ConstantProductFunctions.k(
       tx,
       this.quoterTypes(),
-      tx.object(this.poolInfo.poolId),
+      tx.object(this.poolInfo.poolId)
     );
   }
 
   public migrateHook(
     args: MigrateArgs,
-    tx: Transaction = new Transaction(),
+    tx: Transaction = new Transaction()
   ): [TransactionArgument, TransactionArgument] {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
@@ -120,7 +118,7 @@ export class ConstantProductQuoter implements Quoter {
     const [coinA, coinB] = ConstantProductFunctions.migrate(
       tx,
       this.quoterTypes(),
-      callArgs,
+      callArgs
     );
 
     return [coinA, coinB];

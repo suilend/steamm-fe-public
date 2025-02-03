@@ -4,14 +4,13 @@ import {
   TransactionObjectInput,
   TransactionResult,
 } from "@mysten/sui/transactions";
-
-import { Bank, Pool } from "../base";
-import { DepositQuote, RedeemQuote } from "../base/pool/poolTypes";
-import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
-import { BankInfo, PoolInfo } from "../types";
+import { IModule } from "../interfaces/IModule";
+import { DepositQuote, RedeemQuote } from "../base/pool/poolTypes";
 import { SuiTypeName } from "../utils";
 import { SuiAddressType } from "../utils";
+import { BankInfo, PoolInfo } from "../types";
+import { Bank, Pool } from "../base";
 
 /**
  * Helper class to help interact with pools.
@@ -29,7 +28,7 @@ export class PoolModule implements IModule {
 
   public async depositLiquidityEntry(
     args: PoolDepositLiquidityArgs,
-    tx: Transaction,
+    tx: Transaction
   ) {
     const [bTokenA, bTokenB, lpToken, _depositResult] =
       await this.depositLiquidity(args, tx);
@@ -39,13 +38,13 @@ export class PoolModule implements IModule {
 
   public async depositLiquidity(
     args: PoolDepositLiquidityArgs,
-    tx: Transaction,
+    tx: Transaction
   ): Promise<
     [
       TransactionArgument,
       TransactionArgument,
       TransactionArgument,
-      TransactionArgument,
+      TransactionArgument
     ]
   > {
     const pools = await this.sdk.getPools();
@@ -64,7 +63,7 @@ export class PoolModule implements IModule {
         coins: tx.object(args.coinObjA),
         coinAmount: args.maxA,
       },
-      tx,
+      tx
     );
 
     const bTokenB = bankB.mintBTokens(
@@ -72,7 +71,7 @@ export class PoolModule implements IModule {
         coins: tx.object(args.coinObjB),
         coinAmount: args.maxB,
       },
-      tx,
+      tx
     );
 
     const maxbA = tx.moveCall({
@@ -93,7 +92,7 @@ export class PoolModule implements IModule {
         maxA: maxbA,
         maxB: maxbB,
       },
-      tx,
+      tx
     );
 
     return [bTokenA, bTokenB, lpToken, depositResult];
@@ -101,7 +100,7 @@ export class PoolModule implements IModule {
 
   public async redeemLiquidityEntry(
     args: PoolRedeemLiquidityArgs,
-    tx: Transaction,
+    tx: Transaction
   ) {
     const [coinA, coinB, bTokenA, bTokenB, _redeemResult] =
       await this.redeemLiquidity(args, tx);
@@ -109,20 +108,20 @@ export class PoolModule implements IModule {
     // TODO: destroy or transfer btokens
     tx.transferObjects(
       [coinA, coinB, bTokenA, bTokenB],
-      this.sdk.senderAddress,
+      this.sdk.senderAddress
     );
   }
 
   public async redeemLiquidity(
     args: PoolRedeemLiquidityArgs,
-    tx: Transaction,
+    tx: Transaction
   ): Promise<
     [
       TransactionArgument,
       TransactionArgument,
       TransactionArgument,
       TransactionArgument,
-      TransactionArgument,
+      TransactionArgument
     ]
   > {
     const pools = await this.sdk.getPools();
@@ -142,7 +141,7 @@ export class PoolModule implements IModule {
         minA: args.minA,
         minB: args.minB,
       },
-      tx,
+      tx
     );
 
     const bTokenAAmount = tx.moveCall({
@@ -161,7 +160,7 @@ export class PoolModule implements IModule {
         btokens: bTokenA,
         btokenAmount: bTokenAAmount,
       },
-      tx,
+      tx
     );
 
     const coinB = bankB.burnBTokens(
@@ -169,7 +168,7 @@ export class PoolModule implements IModule {
         btokens: bTokenB,
         btokenAmount: bTokenBAmount,
       },
-      tx,
+      tx
     );
 
     return [coinA, coinB, bTokenA, bTokenB, redeemResult];
@@ -178,26 +177,26 @@ export class PoolModule implements IModule {
   public async swapEntry(args: PoolSwapArgs, tx: Transaction) {
     const [coinA, coinB, bTokenA, bTokenB, swapResult] = await this.swap(
       args,
-      tx,
+      tx
     );
 
     // TODO: destroy or transfer btokens
     tx.transferObjects(
       [coinA, coinB, bTokenA, bTokenB],
-      this.sdk.senderAddress,
+      this.sdk.senderAddress
     );
   }
 
   public async swap(
     args: PoolSwapArgs,
-    tx: Transaction,
+    tx: Transaction
   ): Promise<
     [
       TransactionArgument,
       TransactionArgument,
       TransactionArgument,
       TransactionArgument,
-      TransactionArgument,
+      TransactionArgument
     ]
   > {
     const pools = await this.sdk.getPools();
@@ -217,7 +216,7 @@ export class PoolModule implements IModule {
             coins: tx.object(args.coinAObj),
             coinAmount: args.amountIn,
           },
-          tx,
+          tx
         )
       : tx.moveCall({
           target: `0x2::coin::zero`,
@@ -230,7 +229,7 @@ export class PoolModule implements IModule {
             coins: tx.object(args.coinBObj),
             coinAmount: args.amountIn,
           },
-          tx,
+          tx
         )
       : tx.moveCall({
           target: `0x2::coin::zero`,
@@ -246,7 +245,7 @@ export class PoolModule implements IModule {
         // TODO: Min amount out should be translated from native coin T to bT
         minAmountOut: args.minAmountOut,
       },
-      tx,
+      tx
     );
 
     const bTokenAAmount = tx.moveCall({
@@ -265,7 +264,7 @@ export class PoolModule implements IModule {
         btokens: bTokenA,
         btokenAmount: bTokenAAmount,
       },
-      tx,
+      tx
     );
 
     const coinB = bankB.burnBTokens(
@@ -273,7 +272,7 @@ export class PoolModule implements IModule {
         btokens: bTokenB,
         btokenAmount: bTokenBAmount,
       },
-      tx,
+      tx
     );
 
     return [coinA, coinB, bTokenA, bTokenB, swapResult];
@@ -290,7 +289,7 @@ export class PoolModule implements IModule {
         maxA: args.maxA,
         maxB: args.maxB,
       },
-      tx,
+      tx
     );
 
     return await this.getQuoteResult<DepositQuote>(tx, quote, "DepositQuote");
@@ -306,7 +305,7 @@ export class PoolModule implements IModule {
       {
         lpTokens: args.lpTokens,
       },
-      tx,
+      tx
     );
 
     return await this.getQuoteResult<RedeemQuote>(tx, quote, "RedeemQuote");
@@ -315,7 +314,7 @@ export class PoolModule implements IModule {
   private async getQuoteResult<T>(
     tx: Transaction,
     quote: TransactionArgument,
-    quoteType: string,
+    quoteType: string
   ): Promise<T> {
     const pkgAddy = this.sdk.sdkOptions.steamm_config.package_id;
 
@@ -329,7 +328,7 @@ export class PoolModule implements IModule {
       {
         sender: this.sdk.senderAddress,
         transactionBlock: tx,
-      },
+      }
     );
 
     if (inspectResults.error) {

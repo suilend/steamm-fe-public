@@ -1,0 +1,56 @@
+#
+# `$ just`
+#
+# Just is a command runner.
+# You can download it from https://github.com/casey/just
+# Alternatively, you can just read the file and run the commands manually.
+#
+
+# By default just list all available commands
+[private]
+default:
+    @just -l
+
+# Fails if sui is not a binary
+[private]
+_check_sui:
+    #!/bin/bash
+    if ! command -v sui 2>&1 >/dev/null
+    then
+        echo "sui binary not found"
+        echo "You can download the binary from https://github.com/MystenLabs/sui/releases"
+        exit 1
+    fi
+
+# Starts the localnet network
+start: _check_sui
+    sui start --network.config sui --with-faucet
+
+fstart: _check_sui
+    mkdir -p sui # no-op if it exists
+    rm -rf sui/*
+
+    sui genesis --working-dir sui
+    sui start --network.config sui --with-faucet
+
+# Regenerates the smart contract bindings
+# bind:
+    # TODO: pull contract from repo
+    # rm -rf sdk/src/_codegen/_generated/_dependencies/*
+    # rm -rf sdk/src/_codegen/_generated/_framework/*
+    # rm -rf sdk/src/_codegen/_generated/slamm/*
+    # rm -rf sdk/src/_codegen/_generated/.eslintrc.json
+
+    # sui-client-gen --manifest sdk/src/_codegen/_generated --out sdk/src/_codegen/_generated
+
+# Publishes packages to localnet and runs ts tests
+setup:
+    bash -c './bin/publocal.sh'
+unset:
+    bash -c './bin/unpublocal.sh'
+
+test:
+    bash -c './bin/publocal.sh'
+    bun test ./sdk/tests/index.test.ts
+    bash -c './bin/unpublocal.sh'
+
