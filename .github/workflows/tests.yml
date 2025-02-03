@@ -1,0 +1,78 @@
+name: SDK Tests
+
+on:
+  pull_request:
+    branches: [main, develop, staging, production]
+
+jobs:
+  move-test:
+    runs-on: ubuntu-latest
+    container: 
+      image: mysten/sui-tools:mainnet 
+      ports:
+        - 80
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # bugfix: install git
+      - name: install git
+        run: apt-get install -y git
+
+      - name: Install Just
+        uses: taiki-e/install-action@just
+
+      - name: Install jq
+        run: apt-get update && apt-get install -y jq
+
+      - name: Install unzip
+        run: apt-get install -y unzip
+      
+      - name: Install bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Sui localnet
+        run: |
+          sui genesis -f
+          sui start &
+
+      - name: Get active address
+        run: |
+          sleep 1
+          ACTIVE_ADDRESS=$(sui client addresses --json | jq -r '.activeAddress')
+          echo "Active address: $ACTIVE_ADDRESS"
+          echo "ACTIVE_ADDRESS=$ACTIVE_ADDRESS" >> $GITHUB_ENV
+          PRIVATE_KEY=$(sui keytool export --key-identity $ACTIVE_ADDRESS --json | jq -r '.exportedPrivateKey')
+          echo "PRIVATE_KEY=$PRIVATE_KEY" >> $GITHUB_ENV
+
+      - name: Fetch steamm repo
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.STEAMM_REPO_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          chmod 700 ~/.ssh
+
+          # Remove any existing known_hosts to start fresh
+          rm -f ~/.ssh/known_hosts
+          # Add GitHub's host key with strict checking disabled temporarily
+          ssh-keyscan -H github.com > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          eval $(ssh-agent -s)
+          ssh-add ~/.ssh/id_rsa
+
+          # Test the connection
+          ssh -o StrictHostKeyChecking=no git@github.com || true
+
+          git clone --branch steamm-script git@github.com:solendprotocol/steamm.git temp/git
+      
+      - name: Setup localnet state
+        run: |
+          bash ./bin/publocal.sh --ci
+      
+      - name: Run tests
+        run: bun test ./sdk/tests/index.test.ts
