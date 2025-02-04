@@ -11,9 +11,5 @@
       "source.fixAll.eslint": "explicit"
     }
   },
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "editor.tokenColorCustomizations": {
-    "comments": "#C0C4C9",
-    "textMateRules": []
-  }
+  "typescript.tsdk": "node_modules/typescript/lib"
 }
