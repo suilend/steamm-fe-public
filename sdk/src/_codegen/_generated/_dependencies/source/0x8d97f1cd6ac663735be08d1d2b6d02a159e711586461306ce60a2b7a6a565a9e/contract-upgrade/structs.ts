@@ -9,136 +9,484 @@ import {fromB64} from "@mysten/sui/utils";
 
 /* ============================== ContractUpgraded =============================== */
 
-export function isContractUpgraded(type: string): boolean { type = compressSuiType(type); return type === `${PKG_V1}::contract_upgrade::ContractUpgraded`; }
+export function isContractUpgraded(type: string): boolean {
+    type = compressSuiType(type);
+    return type === `${PKG_V1}::contract_upgrade::ContractUpgraded`;
+}
 
-export interface ContractUpgradedFields { oldContract: ToField<ID>; newContract: ToField<ID> }
+export interface ContractUpgradedFields {
+    oldContract: ToField<ID>; newContract: ToField<ID>
+}
 
-export type ContractUpgradedReified = Reified< ContractUpgraded, ContractUpgradedFields >;
+export type ContractUpgradedReified = Reified<
+    ContractUpgraded,
+    ContractUpgradedFields
+>;
 
-export class ContractUpgraded implements StructClass { __StructClass = true as const;
+export class ContractUpgraded implements StructClass {
+    __StructClass = true as const;
 
- static readonly $typeName = `${PKG_V1}::contract_upgrade::ContractUpgraded`; static readonly $numTypeParams = 0; static readonly $isPhantom = [] as const;
+    static readonly $typeName = `${PKG_V1}::contract_upgrade::ContractUpgraded`;
+    static readonly $numTypeParams = 0;
+    static readonly $isPhantom = [] as const;
 
- readonly $typeName = ContractUpgraded.$typeName; readonly $fullTypeName: `${typeof PKG_V1}::contract_upgrade::ContractUpgraded`; readonly $typeArgs: []; readonly $isPhantom = ContractUpgraded.$isPhantom;
+    readonly $typeName = ContractUpgraded.$typeName;
+    readonly $fullTypeName: `${typeof PKG_V1}::contract_upgrade::ContractUpgraded`;
+    readonly $typeArgs: [];
+    readonly $isPhantom = ContractUpgraded.$isPhantom;
 
- readonly oldContract: ToField<ID>; readonly newContract: ToField<ID>
+    readonly oldContract:
+        ToField<ID>
+    ; readonly newContract:
+        ToField<ID>
 
- private constructor(typeArgs: [], fields: ContractUpgradedFields, ) { this.$fullTypeName = composeSuiType( ContractUpgraded.$typeName, ...typeArgs ) as `${typeof PKG_V1}::contract_upgrade::ContractUpgraded`; this.$typeArgs = typeArgs;
+    private constructor(typeArgs: [], fields: ContractUpgradedFields,
+    ) {
+        this.$fullTypeName = composeSuiType(
+            ContractUpgraded.$typeName,
+            ...typeArgs
+        ) as `${typeof PKG_V1}::contract_upgrade::ContractUpgraded`;
+        this.$typeArgs = typeArgs;
 
- this.oldContract = fields.oldContract;; this.newContract = fields.newContract; }
+        this.oldContract = fields.oldContract;; this.newContract = fields.newContract;
+    }
 
- static reified( ): ContractUpgradedReified { return { typeName: ContractUpgraded.$typeName, fullTypeName: composeSuiType( ContractUpgraded.$typeName, ...[] ) as `${typeof PKG_V1}::contract_upgrade::ContractUpgraded`, typeArgs: [ ] as [], isPhantom: ContractUpgraded.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => ContractUpgraded.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => ContractUpgraded.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => ContractUpgraded.fromBcs( data, ), bcs: ContractUpgraded.bcs, fromJSONField: (field: any) => ContractUpgraded.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => ContractUpgraded.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => ContractUpgraded.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => ContractUpgraded.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => ContractUpgraded.fetch( client, id, ), new: ( fields: ContractUpgradedFields, ) => { return new ContractUpgraded( [], fields ) }, kind: "StructClassReified", } }
+    static reified(): ContractUpgradedReified {
+        return {
+            typeName: ContractUpgraded.$typeName,
+            fullTypeName: composeSuiType(
+                ContractUpgraded.$typeName,
+                ...[]
+            ) as `${typeof PKG_V1}::contract_upgrade::ContractUpgraded`,
+            typeArgs: [] as [],
+            isPhantom: ContractUpgraded.$isPhantom,
+            reifiedTypeArgs: [],
+            fromFields: (fields: Record<string, any>) =>
+                ContractUpgraded.fromFields(
+                    fields,
+                ),
+            fromFieldsWithTypes: (item: FieldsWithTypes) =>
+                ContractUpgraded.fromFieldsWithTypes(
+                    item,
+                ),
+            fromBcs: (data: Uint8Array) =>
+                ContractUpgraded.fromBcs(
+                    data,
+                ),
+            bcs: ContractUpgraded.bcs,
+            fromJSONField: (field: any) =>
+                ContractUpgraded.fromJSONField(
+                    field,
+                ),
+            fromJSON: (json: Record<string, any>) =>
+                ContractUpgraded.fromJSON(
+                    json,
+                ),
+            fromSuiParsedData: (content: SuiParsedData) =>
+                ContractUpgraded.fromSuiParsedData(
+                    content,
+                ),
+            fromSuiObjectData: (content: SuiObjectData) =>
+                ContractUpgraded.fromSuiObjectData(
+                    content,
+                ),
+            fetch: async (client: SuiClient, id: string) => ContractUpgraded.fetch(
+                client,
+                id,
+            ),
+            new: (
+                fields: ContractUpgradedFields,
+            ) => {
+                return new ContractUpgraded(
+                    [],
+                    fields
+                )
+            },
+            kind: "StructClassReified",
+        }
+    }
 
- static get r() { return ContractUpgraded.reified() }
+    static get r() {
+        return ContractUpgraded.reified()
+    }
 
- static phantom( ): PhantomReified<ToTypeStr<ContractUpgraded>> { return phantom(ContractUpgraded.reified( )); } static get p() { return ContractUpgraded.phantom() }
+    static phantom(): PhantomReified<ToTypeStr<ContractUpgraded>> {
+        return phantom(ContractUpgraded.reified());
+    }
 
- static get bcs() { return bcs.struct("ContractUpgraded", {
+    static get p() {
+        return ContractUpgraded.phantom()
+    }
 
- old_contract: ID.bcs, new_contract: ID.bcs
+    static get bcs() {
+        return bcs.struct("ContractUpgraded", {
+            old_contract:
+                ID.bcs
+            , new_contract:
+                ID.bcs
 
-}) };
+        })
+    };
 
- static fromFields( fields: Record<string, any> ): ContractUpgraded { return ContractUpgraded.reified( ).new( { oldContract: decodeFromFields(ID.reified(), fields.old_contract), newContract: decodeFromFields(ID.reified(), fields.new_contract) } ) }
+    static fromFields(
+         fields: Record<string, any>
+    ): ContractUpgraded {
+        return ContractUpgraded.reified().new(
+            {oldContract: decodeFromFields(ID.reified(), fields.old_contract), newContract: decodeFromFields(ID.reified(), fields.new_contract)}
+        )
+    }
 
- static fromFieldsWithTypes( item: FieldsWithTypes ): ContractUpgraded { if (!isContractUpgraded(item.type)) { throw new Error("not a ContractUpgraded type");
+    static fromFieldsWithTypes(
+         item: FieldsWithTypes
+    ): ContractUpgraded {
+        if (!isContractUpgraded(item.type)) {
+            throw new Error("not a ContractUpgraded type");
+        }
 
- }
+        return ContractUpgraded.reified().new(
+            {oldContract: decodeFromFieldsWithTypes(ID.reified(), item.fields.old_contract), newContract: decodeFromFieldsWithTypes(ID.reified(), item.fields.new_contract)}
+        )
+    }
 
- return ContractUpgraded.reified( ).new( { oldContract: decodeFromFieldsWithTypes(ID.reified(), item.fields.old_contract), newContract: decodeFromFieldsWithTypes(ID.reified(), item.fields.new_contract) } ) }
+    static fromBcs(
+         data: Uint8Array
+    ): ContractUpgraded {
 
- static fromBcs( data: Uint8Array ): ContractUpgraded { return ContractUpgraded.fromFields( ContractUpgraded.bcs.parse(data) ) }
+        return ContractUpgraded.fromFields(
+            ContractUpgraded.bcs.parse(data)
+        )
+    }
 
- toJSONField() { return {
+    toJSONField() {
+        return {
+            oldContract: this.oldContract,newContract: this.newContract,
 
- oldContract: this.oldContract,newContract: this.newContract,
+        }
+    }
 
-} }
+    toJSON() {
+        return {
+            $typeName: this.$typeName,
+            $typeArgs: this.$typeArgs,
+            ...this.toJSONField()
+        }
+    }
 
- toJSON() { return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() } }
+    static fromJSONField(
+         field: any
+    ): ContractUpgraded {
+        return ContractUpgraded.reified().new(
+            {oldContract: decodeFromJSONField(ID.reified(), field.oldContract), newContract: decodeFromJSONField(ID.reified(), field.newContract)}
+        )
+    }
 
- static fromJSONField( field: any ): ContractUpgraded { return ContractUpgraded.reified( ).new( { oldContract: decodeFromJSONField(ID.reified(), field.oldContract), newContract: decodeFromJSONField(ID.reified(), field.newContract) } ) }
+    static fromJSON(
+         json: Record<string, any>
+    ): ContractUpgraded {
+        if (json.$typeName !== ContractUpgraded.$typeName) {
+            throw new Error("not a WithTwoGenerics json object")
+        };
 
- static fromJSON( json: Record<string, any> ): ContractUpgraded { if (json.$typeName !== ContractUpgraded.$typeName) { throw new Error("not a WithTwoGenerics json object") };
+        return ContractUpgraded.fromJSONField(
+            json,
+        )
+    }
 
- return ContractUpgraded.fromJSONField( json, ) }
+    static fromSuiParsedData(
+         content: SuiParsedData
+    ): ContractUpgraded {
+        if (content.dataType !== "moveObject") {
+            throw new Error("not an object");
+        }
+        if (!isContractUpgraded(content.type)) {
+            throw new Error(`object at ${(content.fields as any).id} is not a ContractUpgraded object`);
+        }
+        return ContractUpgraded.fromFieldsWithTypes(
+            content
+        );
+    }
 
- static fromSuiParsedData( content: SuiParsedData ): ContractUpgraded { if (content.dataType !== "moveObject") { throw new Error("not an object"); } if (!isContractUpgraded(content.type)) { throw new Error(`object at ${(content.fields as any).id} is not a ContractUpgraded object`); } return ContractUpgraded.fromFieldsWithTypes( content ); }
+    static fromSuiObjectData(
+         data: SuiObjectData
+    ): ContractUpgraded {
+        if (data.bcs) {
+            if (data.bcs.dataType !== "moveObject" || !isContractUpgraded(data.bcs.type)) {
+                throw new Error(`object at is not a ContractUpgraded object`);
+            }
 
- static fromSuiObjectData( data: SuiObjectData ): ContractUpgraded { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isContractUpgraded(data.bcs.type)) { throw new Error(`object at is not a ContractUpgraded object`); }
+            return ContractUpgraded.fromBcs(
+                fromB64(data.bcs.bcsBytes)
+            );
+        }
+        if (data.content) {
+            return ContractUpgraded.fromSuiParsedData(
+                data.content
+            )
+        }
 
- return ContractUpgraded.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return ContractUpgraded.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+        throw new Error(
+            "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+        );
+    }
 
- static async fetch( client: SuiClient, id: string ): Promise<ContractUpgraded> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching ContractUpgraded object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isContractUpgraded(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a ContractUpgraded object`); }
+    static async fetch(
+        client: SuiClient, id: string
+    ): Promise<ContractUpgraded> {
+        const res = await client.getObject({
+            id,
+            options: {
+                showBcs: true,
+            },
+        });
+        if (res.error) {
+            throw new Error(`error fetching ContractUpgraded object at id ${id}: ${res.error.code}`);
+        }
+        if (res.data?.bcs?.dataType !== "moveObject" || !isContractUpgraded(res.data.bcs.type)) {
+            throw new Error(`object at id ${id} is not a ContractUpgraded object`);
+        }
 
- return ContractUpgraded.fromSuiObjectData( res.data ); }
-
- }
+        return ContractUpgraded.fromSuiObjectData(
+            res.data
+        );
+    }
+}
 
 /* ============================== UpgradeContract =============================== */
 
-export function isUpgradeContract(type: string): boolean { type = compressSuiType(type); return type === `${PKG_V1}::contract_upgrade::UpgradeContract`; }
+export function isUpgradeContract(type: string): boolean {
+    type = compressSuiType(type);
+    return type === `${PKG_V1}::contract_upgrade::UpgradeContract`;
+}
 
-export interface UpgradeContractFields { digest: ToField<Bytes32> }
+export interface UpgradeContractFields {
+    digest: ToField<Bytes32>
+}
 
-export type UpgradeContractReified = Reified< UpgradeContract, UpgradeContractFields >;
+export type UpgradeContractReified = Reified<
+    UpgradeContract,
+    UpgradeContractFields
+>;
 
-export class UpgradeContract implements StructClass { __StructClass = true as const;
+export class UpgradeContract implements StructClass {
+    __StructClass = true as const;
 
- static readonly $typeName = `${PKG_V1}::contract_upgrade::UpgradeContract`; static readonly $numTypeParams = 0; static readonly $isPhantom = [] as const;
+    static readonly $typeName = `${PKG_V1}::contract_upgrade::UpgradeContract`;
+    static readonly $numTypeParams = 0;
+    static readonly $isPhantom = [] as const;
 
- readonly $typeName = UpgradeContract.$typeName; readonly $fullTypeName: `${typeof PKG_V1}::contract_upgrade::UpgradeContract`; readonly $typeArgs: []; readonly $isPhantom = UpgradeContract.$isPhantom;
+    readonly $typeName = UpgradeContract.$typeName;
+    readonly $fullTypeName: `${typeof PKG_V1}::contract_upgrade::UpgradeContract`;
+    readonly $typeArgs: [];
+    readonly $isPhantom = UpgradeContract.$isPhantom;
 
- readonly digest: ToField<Bytes32>
+    readonly digest:
+        ToField<Bytes32>
 
- private constructor(typeArgs: [], fields: UpgradeContractFields, ) { this.$fullTypeName = composeSuiType( UpgradeContract.$typeName, ...typeArgs ) as `${typeof PKG_V1}::contract_upgrade::UpgradeContract`; this.$typeArgs = typeArgs;
+    private constructor(typeArgs: [], fields: UpgradeContractFields,
+    ) {
+        this.$fullTypeName = composeSuiType(
+            UpgradeContract.$typeName,
+            ...typeArgs
+        ) as `${typeof PKG_V1}::contract_upgrade::UpgradeContract`;
+        this.$typeArgs = typeArgs;
 
- this.digest = fields.digest; }
+        this.digest = fields.digest;
+    }
 
- static reified( ): UpgradeContractReified { return { typeName: UpgradeContract.$typeName, fullTypeName: composeSuiType( UpgradeContract.$typeName, ...[] ) as `${typeof PKG_V1}::contract_upgrade::UpgradeContract`, typeArgs: [ ] as [], isPhantom: UpgradeContract.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => UpgradeContract.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => UpgradeContract.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => UpgradeContract.fromBcs( data, ), bcs: UpgradeContract.bcs, fromJSONField: (field: any) => UpgradeContract.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => UpgradeContract.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => UpgradeContract.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => UpgradeContract.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => UpgradeContract.fetch( client, id, ), new: ( fields: UpgradeContractFields, ) => { return new UpgradeContract( [], fields ) }, kind: "StructClassReified", } }
+    static reified(): UpgradeContractReified {
+        return {
+            typeName: UpgradeContract.$typeName,
+            fullTypeName: composeSuiType(
+                UpgradeContract.$typeName,
+                ...[]
+            ) as `${typeof PKG_V1}::contract_upgrade::UpgradeContract`,
+            typeArgs: [] as [],
+            isPhantom: UpgradeContract.$isPhantom,
+            reifiedTypeArgs: [],
+            fromFields: (fields: Record<string, any>) =>
+                UpgradeContract.fromFields(
+                    fields,
+                ),
+            fromFieldsWithTypes: (item: FieldsWithTypes) =>
+                UpgradeContract.fromFieldsWithTypes(
+                    item,
+                ),
+            fromBcs: (data: Uint8Array) =>
+                UpgradeContract.fromBcs(
+                    data,
+                ),
+            bcs: UpgradeContract.bcs,
+            fromJSONField: (field: any) =>
+                UpgradeContract.fromJSONField(
+                    field,
+                ),
+            fromJSON: (json: Record<string, any>) =>
+                UpgradeContract.fromJSON(
+                    json,
+                ),
+            fromSuiParsedData: (content: SuiParsedData) =>
+                UpgradeContract.fromSuiParsedData(
+                    content,
+                ),
+            fromSuiObjectData: (content: SuiObjectData) =>
+                UpgradeContract.fromSuiObjectData(
+                    content,
+                ),
+            fetch: async (client: SuiClient, id: string) => UpgradeContract.fetch(
+                client,
+                id,
+            ),
+            new: (
+                fields: UpgradeContractFields,
+            ) => {
+                return new UpgradeContract(
+                    [],
+                    fields
+                )
+            },
+            kind: "StructClassReified",
+        }
+    }
 
- static get r() { return UpgradeContract.reified() }
+    static get r() {
+        return UpgradeContract.reified()
+    }
 
- static phantom( ): PhantomReified<ToTypeStr<UpgradeContract>> { return phantom(UpgradeContract.reified( )); } static get p() { return UpgradeContract.phantom() }
+    static phantom(): PhantomReified<ToTypeStr<UpgradeContract>> {
+        return phantom(UpgradeContract.reified());
+    }
 
- static get bcs() { return bcs.struct("UpgradeContract", {
+    static get p() {
+        return UpgradeContract.phantom()
+    }
 
- digest: Bytes32.bcs
+    static get bcs() {
+        return bcs.struct("UpgradeContract", {
+            digest:
+                Bytes32.bcs
 
-}) };
+        })
+    };
 
- static fromFields( fields: Record<string, any> ): UpgradeContract { return UpgradeContract.reified( ).new( { digest: decodeFromFields(Bytes32.reified(), fields.digest) } ) }
+    static fromFields(
+         fields: Record<string, any>
+    ): UpgradeContract {
+        return UpgradeContract.reified().new(
+            {digest: decodeFromFields(Bytes32.reified(), fields.digest)}
+        )
+    }
 
- static fromFieldsWithTypes( item: FieldsWithTypes ): UpgradeContract { if (!isUpgradeContract(item.type)) { throw new Error("not a UpgradeContract type");
+    static fromFieldsWithTypes(
+         item: FieldsWithTypes
+    ): UpgradeContract {
+        if (!isUpgradeContract(item.type)) {
+            throw new Error("not a UpgradeContract type");
+        }
 
- }
+        return UpgradeContract.reified().new(
+            {digest: decodeFromFieldsWithTypes(Bytes32.reified(), item.fields.digest)}
+        )
+    }
 
- return UpgradeContract.reified( ).new( { digest: decodeFromFieldsWithTypes(Bytes32.reified(), item.fields.digest) } ) }
+    static fromBcs(
+         data: Uint8Array
+    ): UpgradeContract {
 
- static fromBcs( data: Uint8Array ): UpgradeContract { return UpgradeContract.fromFields( UpgradeContract.bcs.parse(data) ) }
+        return UpgradeContract.fromFields(
+            UpgradeContract.bcs.parse(data)
+        )
+    }
 
- toJSONField() { return {
+    toJSONField() {
+        return {
+            digest: this.digest.toJSONField(),
 
- digest: this.digest.toJSONField(),
+        }
+    }
 
-} }
+    toJSON() {
+        return {
+            $typeName: this.$typeName,
+            $typeArgs: this.$typeArgs,
+            ...this.toJSONField()
+        }
+    }
 
- toJSON() { return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() } }
+    static fromJSONField(
+         field: any
+    ): UpgradeContract {
+        return UpgradeContract.reified().new(
+            {digest: decodeFromJSONField(Bytes32.reified(), field.digest)}
+        )
+    }
 
- static fromJSONField( field: any ): UpgradeContract { return UpgradeContract.reified( ).new( { digest: decodeFromJSONField(Bytes32.reified(), field.digest) } ) }
+    static fromJSON(
+         json: Record<string, any>
+    ): UpgradeContract {
+        if (json.$typeName !== UpgradeContract.$typeName) {
+            throw new Error("not a WithTwoGenerics json object")
+        };
 
- static fromJSON( json: Record<string, any> ): UpgradeContract { if (json.$typeName !== UpgradeContract.$typeName) { throw new Error("not a WithTwoGenerics json object") };
+        return UpgradeContract.fromJSONField(
+            json,
+        )
+    }
 
- return UpgradeContract.fromJSONField( json, ) }
+    static fromSuiParsedData(
+         content: SuiParsedData
+    ): UpgradeContract {
+        if (content.dataType !== "moveObject") {
+            throw new Error("not an object");
+        }
+        if (!isUpgradeContract(content.type)) {
+            throw new Error(`object at ${(content.fields as any).id} is not a UpgradeContract object`);
+        }
+        return UpgradeContract.fromFieldsWithTypes(
+            content
+        );
+    }
 
- static fromSuiParsedData( content: SuiParsedData ): UpgradeContract { if (content.dataType !== "moveObject") { throw new Error("not an object"); } if (!isUpgradeContract(content.type)) { throw new Error(`object at ${(content.fields as any).id} is not a UpgradeContract object`); } return UpgradeContract.fromFieldsWithTypes( content ); }
+    static fromSuiObjectData(
+         data: SuiObjectData
+    ): UpgradeContract {
+        if (data.bcs) {
+            if (data.bcs.dataType !== "moveObject" || !isUpgradeContract(data.bcs.type)) {
+                throw new Error(`object at is not a UpgradeContract object`);
+            }
 
- static fromSuiObjectData( data: SuiObjectData ): UpgradeContract { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isUpgradeContract(data.bcs.type)) { throw new Error(`object at is not a UpgradeContract object`); }
+            return UpgradeContract.fromBcs(
+                fromB64(data.bcs.bcsBytes)
+            );
+        }
+        if (data.content) {
+            return UpgradeContract.fromSuiParsedData(
+                data.content
+            )
+        }
 
- return UpgradeContract.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return UpgradeContract.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+        throw new Error(
+            "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+        );
+    }
 
- static async fetch( client: SuiClient, id: string ): Promise<UpgradeContract> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching UpgradeContract object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isUpgradeContract(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a UpgradeContract object`); }
+    static async fetch(
+        client: SuiClient, id: string
+    ): Promise<UpgradeContract> {
+        const res = await client.getObject({
+            id,
+            options: {
+                showBcs: true,
+            },
+        });
+        if (res.error) {
+            throw new Error(`error fetching UpgradeContract object at id ${id}: ${res.error.code}`);
+        }
+        if (res.data?.bcs?.dataType !== "moveObject" || !isUpgradeContract(res.data.bcs.type)) {
+            throw new Error(`object at id ${id} is not a UpgradeContract object`);
+        }
 
- return UpgradeContract.fromSuiObjectData( res.data ); }
-
- }
+        return UpgradeContract.fromSuiObjectData(
+            res.data
+        );
+    }
+}

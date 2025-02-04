@@ -38,8 +38,8 @@ async function redeemLiquidity(suiPrivateKey: string) {
   const suiCoin = getTestSui(tx, 1000000000000000000);
   const usdcCoin = getTestUsdc(tx, 1000000000000000000);
 
-  const [bTokenA, bTokenB, lpToken, _depositResult] =
-    await sdk.Pool.depositLiquidity(
+  const [lpToken, _depositResult] =
+    await sdk.Pool.depositLiquidity(tx, 
       {
         pool: pools[0].poolId,
         coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
@@ -48,23 +48,20 @@ async function redeemLiquidity(suiPrivateKey: string) {
         coinObjB: suiCoin,
         maxA: BigInt("1000000000000000000"),
         maxB: BigInt("1000000000000000000"),
-      },
-      tx
+      }
     );
 
-  await sdk.Pool.redeemLiquidityEntry(
-    {
+  await sdk.Pool.redeemLiquidityEntry(tx, {
       pool: pools[0].poolId,
       coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
       coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
       lpCoinObj: lpToken,
       minA: BigInt("0"),
       minB: BigInt("0"),
-    },
-    tx
+    }
   );
 
-  tx.transferObjects([suiCoin, usdcCoin, bTokenA, bTokenB], sdk.senderAddress);
+  tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
 
   const devResult = await sdk.fullClient.devInspectTransactionBlock({
     transactionBlock: tx,

@@ -28,8 +28,8 @@ export class Bank {
   }
 
   public mintBTokens(
+    tx: Transaction,
     args: MintBTokensArgs,
-    tx: Transaction = new Transaction()
   ): TransactionResult {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
@@ -49,8 +49,8 @@ export class Bank {
   }
 
   public burnBTokens(
+    tx: Transaction,
     args: BurnBTokensArgs,
-    tx: Transaction = new Transaction()
   ): TransactionResult {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
@@ -70,8 +70,8 @@ export class Bank {
   }
 
   public initLending(
+    tx: Transaction,
     args: InitLendingArgs,
-    tx: Transaction = new Transaction()
   ) {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
@@ -84,7 +84,7 @@ export class Bank {
     BankFunctions.initLending(tx, this.typeArgs(), callArgs, this.packageId);
   }
 
-  public rebalance(tx: Transaction = new Transaction()) {
+  public rebalance(tx: Transaction) {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
       lendingMarket: tx.object(this.bankInfo.lendingMarketId),
@@ -95,8 +95,8 @@ export class Bank {
   }
 
   public cTokenAmount(
+    tx: Transaction,
     args: CTokenAmountArgs,
-    tx: Transaction = new Transaction()
   ): TransactionArgument {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
@@ -113,8 +113,8 @@ export class Bank {
   }
 
   public setUtilisationBps(
+    tx: Transaction,
     args: SetBankUtilisationBpsArgs,
-    tx: Transaction = new Transaction()
   ) {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
@@ -131,7 +131,7 @@ export class Bank {
     );
   }
 
-  public migrate(args: MigrateBankArgs, tx: Transaction = new Transaction()) {
+  public migrate(tx: Transaction, args: MigrateBankArgs) {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
       admin: args.admin,
@@ -143,7 +143,7 @@ export class Bank {
   // Client-side logic
 
   public needsRebalance(
-    tx: Transaction = new Transaction()
+    tx: Transaction,
   ): TransactionArgument {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
@@ -156,7 +156,7 @@ export class Bank {
 
   // Getters
 
-  public viewLending(tx: Transaction = new Transaction()): TransactionArgument {
+  public viewLending(tx: Transaction): TransactionArgument {
     return BankFunctions.lending(
       tx,
       this.typeArgs(),
@@ -166,7 +166,7 @@ export class Bank {
   }
 
   public viewTotalFunds(
-    tx: Transaction = new Transaction()
+    tx: Transaction,
   ): TransactionArgument {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
@@ -183,7 +183,7 @@ export class Bank {
   }
 
   public viewFundsAvailable(
-    tx: Transaction = new Transaction()
+    tx: Transaction,
   ): TransactionArgument {
     return BankFunctions.fundsAvailable(
       tx,
@@ -194,7 +194,7 @@ export class Bank {
   }
 
   public viewTargetUtilisationBps(
-    tx: Transaction = new Transaction()
+    tx: Transaction,
   ): TransactionArgument {
     return BankFunctions.targetUtilisationBps(
       tx,
@@ -205,7 +205,7 @@ export class Bank {
   }
 
   public viewUtilisationBufferBps(
-    tx: Transaction = new Transaction()
+    tx: Transaction,
   ): TransactionArgument {
     return BankFunctions.utilisationBufferBps(
       tx,
@@ -216,7 +216,7 @@ export class Bank {
   }
 
   public viewTargetUtilisationBpsUnchecked(
-    tx: Transaction = new Transaction()
+    tx: Transaction,
   ): TransactionArgument {
     return BankFunctions.targetUtilisationBpsUnchecked(
       tx,
@@ -227,7 +227,7 @@ export class Bank {
   }
 
   public viewUtilisationBufferBpsUnchecked(
-    tx: Transaction = new Transaction()
+    tx: Transaction,
   ): TransactionArgument {
     return BankFunctions.utilisationBufferBpsUnchecked(
       tx,
@@ -238,7 +238,7 @@ export class Bank {
   }
 
   public viewReserveArrayIndex(
-    tx: Transaction = new Transaction()
+    tx: Transaction,
   ): TransactionArgument {
     return BankFunctions.reserveArrayIndex(
       tx,
@@ -261,7 +261,7 @@ export class Bank {
 //   pType: string,
 //   tType: string,
 //   registryID: string,
-//   tx: Transaction = new Transaction()
+//   tx: Transaction,
 // ) {
 //   const registry = tx.object(registryID);
 

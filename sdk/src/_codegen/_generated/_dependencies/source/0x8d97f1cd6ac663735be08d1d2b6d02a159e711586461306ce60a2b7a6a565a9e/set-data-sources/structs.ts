@@ -10,68 +10,240 @@ import {fromB64} from "@mysten/sui/utils";
 
 /* ============================== DataSources =============================== */
 
-export function isDataSources(type: string): boolean { type = compressSuiType(type); return type === `${PKG_V1}::set_data_sources::DataSources`; }
+export function isDataSources(type: string): boolean {
+    type = compressSuiType(type);
+    return type === `${PKG_V1}::set_data_sources::DataSources`;
+}
 
-export interface DataSourcesFields { sources: ToField<Vector<DataSource>> }
+export interface DataSourcesFields {
+    sources: ToField<Vector<DataSource>>
+}
 
-export type DataSourcesReified = Reified< DataSources, DataSourcesFields >;
+export type DataSourcesReified = Reified<
+    DataSources,
+    DataSourcesFields
+>;
 
-export class DataSources implements StructClass { __StructClass = true as const;
+export class DataSources implements StructClass {
+    __StructClass = true as const;
 
- static readonly $typeName = `${PKG_V1}::set_data_sources::DataSources`; static readonly $numTypeParams = 0; static readonly $isPhantom = [] as const;
+    static readonly $typeName = `${PKG_V1}::set_data_sources::DataSources`;
+    static readonly $numTypeParams = 0;
+    static readonly $isPhantom = [] as const;
 
- readonly $typeName = DataSources.$typeName; readonly $fullTypeName: `${typeof PKG_V1}::set_data_sources::DataSources`; readonly $typeArgs: []; readonly $isPhantom = DataSources.$isPhantom;
+    readonly $typeName = DataSources.$typeName;
+    readonly $fullTypeName: `${typeof PKG_V1}::set_data_sources::DataSources`;
+    readonly $typeArgs: [];
+    readonly $isPhantom = DataSources.$isPhantom;
 
- readonly sources: ToField<Vector<DataSource>>
+    readonly sources:
+        ToField<Vector<DataSource>>
 
- private constructor(typeArgs: [], fields: DataSourcesFields, ) { this.$fullTypeName = composeSuiType( DataSources.$typeName, ...typeArgs ) as `${typeof PKG_V1}::set_data_sources::DataSources`; this.$typeArgs = typeArgs;
+    private constructor(typeArgs: [], fields: DataSourcesFields,
+    ) {
+        this.$fullTypeName = composeSuiType(
+            DataSources.$typeName,
+            ...typeArgs
+        ) as `${typeof PKG_V1}::set_data_sources::DataSources`;
+        this.$typeArgs = typeArgs;
 
- this.sources = fields.sources; }
+        this.sources = fields.sources;
+    }
 
- static reified( ): DataSourcesReified { return { typeName: DataSources.$typeName, fullTypeName: composeSuiType( DataSources.$typeName, ...[] ) as `${typeof PKG_V1}::set_data_sources::DataSources`, typeArgs: [ ] as [], isPhantom: DataSources.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => DataSources.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => DataSources.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => DataSources.fromBcs( data, ), bcs: DataSources.bcs, fromJSONField: (field: any) => DataSources.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => DataSources.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => DataSources.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => DataSources.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => DataSources.fetch( client, id, ), new: ( fields: DataSourcesFields, ) => { return new DataSources( [], fields ) }, kind: "StructClassReified", } }
+    static reified(): DataSourcesReified {
+        return {
+            typeName: DataSources.$typeName,
+            fullTypeName: composeSuiType(
+                DataSources.$typeName,
+                ...[]
+            ) as `${typeof PKG_V1}::set_data_sources::DataSources`,
+            typeArgs: [] as [],
+            isPhantom: DataSources.$isPhantom,
+            reifiedTypeArgs: [],
+            fromFields: (fields: Record<string, any>) =>
+                DataSources.fromFields(
+                    fields,
+                ),
+            fromFieldsWithTypes: (item: FieldsWithTypes) =>
+                DataSources.fromFieldsWithTypes(
+                    item,
+                ),
+            fromBcs: (data: Uint8Array) =>
+                DataSources.fromBcs(
+                    data,
+                ),
+            bcs: DataSources.bcs,
+            fromJSONField: (field: any) =>
+                DataSources.fromJSONField(
+                    field,
+                ),
+            fromJSON: (json: Record<string, any>) =>
+                DataSources.fromJSON(
+                    json,
+                ),
+            fromSuiParsedData: (content: SuiParsedData) =>
+                DataSources.fromSuiParsedData(
+                    content,
+                ),
+            fromSuiObjectData: (content: SuiObjectData) =>
+                DataSources.fromSuiObjectData(
+                    content,
+                ),
+            fetch: async (client: SuiClient, id: string) => DataSources.fetch(
+                client,
+                id,
+            ),
+            new: (
+                fields: DataSourcesFields,
+            ) => {
+                return new DataSources(
+                    [],
+                    fields
+                )
+            },
+            kind: "StructClassReified",
+        }
+    }
 
- static get r() { return DataSources.reified() }
+    static get r() {
+        return DataSources.reified()
+    }
 
- static phantom( ): PhantomReified<ToTypeStr<DataSources>> { return phantom(DataSources.reified( )); } static get p() { return DataSources.phantom() }
+    static phantom(): PhantomReified<ToTypeStr<DataSources>> {
+        return phantom(DataSources.reified());
+    }
 
- static get bcs() { return bcs.struct("DataSources", {
+    static get p() {
+        return DataSources.phantom()
+    }
 
- sources: bcs.vector(DataSource.bcs)
+    static get bcs() {
+        return bcs.struct("DataSources", {
+            sources:
+                bcs.vector(DataSource.bcs)
 
-}) };
+        })
+    };
 
- static fromFields( fields: Record<string, any> ): DataSources { return DataSources.reified( ).new( { sources: decodeFromFields(reified.vector(DataSource.reified()), fields.sources) } ) }
+    static fromFields(
+         fields: Record<string, any>
+    ): DataSources {
+        return DataSources.reified().new(
+            {sources: decodeFromFields(reified.vector(DataSource.reified()), fields.sources)}
+        )
+    }
 
- static fromFieldsWithTypes( item: FieldsWithTypes ): DataSources { if (!isDataSources(item.type)) { throw new Error("not a DataSources type");
+    static fromFieldsWithTypes(
+         item: FieldsWithTypes
+    ): DataSources {
+        if (!isDataSources(item.type)) {
+            throw new Error("not a DataSources type");
+        }
 
- }
+        return DataSources.reified().new(
+            {sources: decodeFromFieldsWithTypes(reified.vector(DataSource.reified()), item.fields.sources)}
+        )
+    }
 
- return DataSources.reified( ).new( { sources: decodeFromFieldsWithTypes(reified.vector(DataSource.reified()), item.fields.sources) } ) }
+    static fromBcs(
+         data: Uint8Array
+    ): DataSources {
 
- static fromBcs( data: Uint8Array ): DataSources { return DataSources.fromFields( DataSources.bcs.parse(data) ) }
+        return DataSources.fromFields(
+            DataSources.bcs.parse(data)
+        )
+    }
 
- toJSONField() { return {
+    toJSONField() {
+        return {
+            sources: fieldToJSON<Vector<DataSource>>(`vector<${DataSource.$typeName}>`, this.sources),
 
- sources: fieldToJSON<Vector<DataSource>>(`vector<${DataSource.$typeName}>`, this.sources),
+        }
+    }
 
-} }
+    toJSON() {
+        return {
+            $typeName: this.$typeName,
+            $typeArgs: this.$typeArgs,
+            ...this.toJSONField()
+        }
+    }
 
- toJSON() { return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() } }
+    static fromJSONField(
+         field: any
+    ): DataSources {
+        return DataSources.reified().new(
+            {sources: decodeFromJSONField(reified.vector(DataSource.reified()), field.sources)}
+        )
+    }
 
- static fromJSONField( field: any ): DataSources { return DataSources.reified( ).new( { sources: decodeFromJSONField(reified.vector(DataSource.reified()), field.sources) } ) }
+    static fromJSON(
+         json: Record<string, any>
+    ): DataSources {
+        if (json.$typeName !== DataSources.$typeName) {
+            throw new Error("not a WithTwoGenerics json object")
+        };
 
- static fromJSON( json: Record<string, any> ): DataSources { if (json.$typeName !== DataSources.$typeName) { throw new Error("not a WithTwoGenerics json object") };
+        return DataSources.fromJSONField(
+            json,
+        )
+    }
 
- return DataSources.fromJSONField( json, ) }
+    static fromSuiParsedData(
+         content: SuiParsedData
+    ): DataSources {
+        if (content.dataType !== "moveObject") {
+            throw new Error("not an object");
+        }
+        if (!isDataSources(content.type)) {
+            throw new Error(`object at ${(content.fields as any).id} is not a DataSources object`);
+        }
+        return DataSources.fromFieldsWithTypes(
+            content
+        );
+    }
 
- static fromSuiParsedData( content: SuiParsedData ): DataSources { if (content.dataType !== "moveObject") { throw new Error("not an object"); } if (!isDataSources(content.type)) { throw new Error(`object at ${(content.fields as any).id} is not a DataSources object`); } return DataSources.fromFieldsWithTypes( content ); }
+    static fromSuiObjectData(
+         data: SuiObjectData
+    ): DataSources {
+        if (data.bcs) {
+            if (data.bcs.dataType !== "moveObject" || !isDataSources(data.bcs.type)) {
+                throw new Error(`object at is not a DataSources object`);
+            }
 
- static fromSuiObjectData( data: SuiObjectData ): DataSources { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isDataSources(data.bcs.type)) { throw new Error(`object at is not a DataSources object`); }
+            return DataSources.fromBcs(
+                fromB64(data.bcs.bcsBytes)
+            );
+        }
+        if (data.content) {
+            return DataSources.fromSuiParsedData(
+                data.content
+            )
+        }
 
- return DataSources.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return DataSources.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+        throw new Error(
+            "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+        );
+    }
 
- static async fetch( client: SuiClient, id: string ): Promise<DataSources> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching DataSources object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isDataSources(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a DataSources object`); }
+    static async fetch(
+        client: SuiClient, id: string
+    ): Promise<DataSources> {
+        const res = await client.getObject({
+            id,
+            options: {
+                showBcs: true,
+            },
+        });
+        if (res.error) {
+            throw new Error(`error fetching DataSources object at id ${id}: ${res.error.code}`);
+        }
+        if (res.data?.bcs?.dataType !== "moveObject" || !isDataSources(res.data.bcs.type)) {
+            throw new Error(`object at id ${id} is not a DataSources object`);
+        }
 
- return DataSources.fromSuiObjectData( res.data ); }
-
- }
+        return DataSources.fromSuiObjectData(
+            res.data
+        );
+    }
+}

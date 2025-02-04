@@ -38,7 +38,7 @@ async function swap(suiPrivateKey: string) {
   const suiCoinLiq = getTestSui(tx, 1000000000000000000);
   const usdcCoinLiq = getTestUsdc(tx, 1000000000000000000);
 
-  await sdk.Pool.depositLiquidityEntry(
+  await sdk.Pool.depositLiquidityEntry(tx,
     {
       pool: pools[0].poolId,
       coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
@@ -47,8 +47,7 @@ async function swap(suiPrivateKey: string) {
       coinObjB: getTestSui(tx, 1000000000000000000),
       maxA: BigInt("1000000000000000000"),
       maxB: BigInt("1000000000000000000"),
-    },
-    tx
+    }
   );
 
   tx.transferObjects([suiCoinLiq, usdcCoinLiq], sdk.senderAddress);
@@ -56,8 +55,7 @@ async function swap(suiPrivateKey: string) {
   const suiCoin = getTestSui(tx, 10000000000000);
   const usdcCoin = getTestUsdc(tx, 0);
 
-  await sdk.Pool.swapEntry(
-    {
+  await sdk.Pool.swap(tx, {
       pool: pools[0].poolId,
       coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
       coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
@@ -66,8 +64,7 @@ async function swap(suiPrivateKey: string) {
       a2b: false,
       amountIn: BigInt("10000000000000"),
       minAmountOut: BigInt("0"),
-    },
-    tx
+    }
   );
 
   tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);

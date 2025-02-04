@@ -38,8 +38,20 @@ async function depositLiquidity(suiPrivateKey: string) {
   const suiCoin = getTestSui(tx, 1000000000000000000);
   const usdcCoin = getTestUsdc(tx, 1000000000000000000);
 
-  await sdk.Pool.depositLiquidityEntry(
-    {
+  // await sdk.Pool.quoteDeposit(
+  //   {
+  //     pool: pools[0].poolId,
+  //     coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
+  //     coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
+  //     coinObjA: usdcCoin,
+  //     coinObjB: suiCoin,
+  //     maxA: BigInt("1000000000000000000"),
+  //     maxB: BigInt("1000000000000000000"),
+  //   },
+  //   tx
+  // );
+
+  await sdk.Pool.depositLiquidityEntry(tx, {
       pool: pools[0].poolId,
       coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
       coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
@@ -48,7 +60,6 @@ async function depositLiquidity(suiPrivateKey: string) {
       maxA: BigInt("1000000000000000000"),
       maxB: BigInt("1000000000000000000"),
     },
-    tx
   );
 
   tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);

@@ -9,272 +9,964 @@ import {fromB64} from "@mysten/sui/utils";
 
 /* ============================== CurrentVersion =============================== */
 
-export function isCurrentVersion(type: string): boolean { type = compressSuiType(type); return type === `${PKG_V1}::package_utils::CurrentVersion`; }
+export function isCurrentVersion(type: string): boolean {
+    type = compressSuiType(type);
+    return type === `${PKG_V1}::package_utils::CurrentVersion`;
+}
 
-export interface CurrentVersionFields { dummyField: ToField<"bool"> }
+export interface CurrentVersionFields {
+    dummyField: ToField<"bool">
+}
 
-export type CurrentVersionReified = Reified< CurrentVersion, CurrentVersionFields >;
+export type CurrentVersionReified = Reified<
+    CurrentVersion,
+    CurrentVersionFields
+>;
 
-export class CurrentVersion implements StructClass { __StructClass = true as const;
+export class CurrentVersion implements StructClass {
+    __StructClass = true as const;
 
- static readonly $typeName = `${PKG_V1}::package_utils::CurrentVersion`; static readonly $numTypeParams = 0; static readonly $isPhantom = [] as const;
+    static readonly $typeName = `${PKG_V1}::package_utils::CurrentVersion`;
+    static readonly $numTypeParams = 0;
+    static readonly $isPhantom = [] as const;
 
- readonly $typeName = CurrentVersion.$typeName; readonly $fullTypeName: `${typeof PKG_V1}::package_utils::CurrentVersion`; readonly $typeArgs: []; readonly $isPhantom = CurrentVersion.$isPhantom;
+    readonly $typeName = CurrentVersion.$typeName;
+    readonly $fullTypeName: `${typeof PKG_V1}::package_utils::CurrentVersion`;
+    readonly $typeArgs: [];
+    readonly $isPhantom = CurrentVersion.$isPhantom;
 
- readonly dummyField: ToField<"bool">
+    readonly dummyField:
+        ToField<"bool">
 
- private constructor(typeArgs: [], fields: CurrentVersionFields, ) { this.$fullTypeName = composeSuiType( CurrentVersion.$typeName, ...typeArgs ) as `${typeof PKG_V1}::package_utils::CurrentVersion`; this.$typeArgs = typeArgs;
+    private constructor(typeArgs: [], fields: CurrentVersionFields,
+    ) {
+        this.$fullTypeName = composeSuiType(
+            CurrentVersion.$typeName,
+            ...typeArgs
+        ) as `${typeof PKG_V1}::package_utils::CurrentVersion`;
+        this.$typeArgs = typeArgs;
 
- this.dummyField = fields.dummyField; }
+        this.dummyField = fields.dummyField;
+    }
 
- static reified( ): CurrentVersionReified { return { typeName: CurrentVersion.$typeName, fullTypeName: composeSuiType( CurrentVersion.$typeName, ...[] ) as `${typeof PKG_V1}::package_utils::CurrentVersion`, typeArgs: [ ] as [], isPhantom: CurrentVersion.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => CurrentVersion.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => CurrentVersion.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => CurrentVersion.fromBcs( data, ), bcs: CurrentVersion.bcs, fromJSONField: (field: any) => CurrentVersion.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => CurrentVersion.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => CurrentVersion.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => CurrentVersion.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => CurrentVersion.fetch( client, id, ), new: ( fields: CurrentVersionFields, ) => { return new CurrentVersion( [], fields ) }, kind: "StructClassReified", } }
+    static reified(): CurrentVersionReified {
+        return {
+            typeName: CurrentVersion.$typeName,
+            fullTypeName: composeSuiType(
+                CurrentVersion.$typeName,
+                ...[]
+            ) as `${typeof PKG_V1}::package_utils::CurrentVersion`,
+            typeArgs: [] as [],
+            isPhantom: CurrentVersion.$isPhantom,
+            reifiedTypeArgs: [],
+            fromFields: (fields: Record<string, any>) =>
+                CurrentVersion.fromFields(
+                    fields,
+                ),
+            fromFieldsWithTypes: (item: FieldsWithTypes) =>
+                CurrentVersion.fromFieldsWithTypes(
+                    item,
+                ),
+            fromBcs: (data: Uint8Array) =>
+                CurrentVersion.fromBcs(
+                    data,
+                ),
+            bcs: CurrentVersion.bcs,
+            fromJSONField: (field: any) =>
+                CurrentVersion.fromJSONField(
+                    field,
+                ),
+            fromJSON: (json: Record<string, any>) =>
+                CurrentVersion.fromJSON(
+                    json,
+                ),
+            fromSuiParsedData: (content: SuiParsedData) =>
+                CurrentVersion.fromSuiParsedData(
+                    content,
+                ),
+            fromSuiObjectData: (content: SuiObjectData) =>
+                CurrentVersion.fromSuiObjectData(
+                    content,
+                ),
+            fetch: async (client: SuiClient, id: string) => CurrentVersion.fetch(
+                client,
+                id,
+            ),
+            new: (
+                fields: CurrentVersionFields,
+            ) => {
+                return new CurrentVersion(
+                    [],
+                    fields
+                )
+            },
+            kind: "StructClassReified",
+        }
+    }
 
- static get r() { return CurrentVersion.reified() }
+    static get r() {
+        return CurrentVersion.reified()
+    }
 
- static phantom( ): PhantomReified<ToTypeStr<CurrentVersion>> { return phantom(CurrentVersion.reified( )); } static get p() { return CurrentVersion.phantom() }
+    static phantom(): PhantomReified<ToTypeStr<CurrentVersion>> {
+        return phantom(CurrentVersion.reified());
+    }
 
- static get bcs() { return bcs.struct("CurrentVersion", {
+    static get p() {
+        return CurrentVersion.phantom()
+    }
 
- dummy_field: bcs.bool()
+    static get bcs() {
+        return bcs.struct("CurrentVersion", {
+            dummy_field:
+                bcs.bool()
 
-}) };
+        })
+    };
 
- static fromFields( fields: Record<string, any> ): CurrentVersion { return CurrentVersion.reified( ).new( { dummyField: decodeFromFields("bool", fields.dummy_field) } ) }
+    static fromFields(
+         fields: Record<string, any>
+    ): CurrentVersion {
+        return CurrentVersion.reified().new(
+            {dummyField: decodeFromFields("bool", fields.dummy_field)}
+        )
+    }
 
- static fromFieldsWithTypes( item: FieldsWithTypes ): CurrentVersion { if (!isCurrentVersion(item.type)) { throw new Error("not a CurrentVersion type");
+    static fromFieldsWithTypes(
+         item: FieldsWithTypes
+    ): CurrentVersion {
+        if (!isCurrentVersion(item.type)) {
+            throw new Error("not a CurrentVersion type");
+        }
 
- }
+        return CurrentVersion.reified().new(
+            {dummyField: decodeFromFieldsWithTypes("bool", item.fields.dummy_field)}
+        )
+    }
 
- return CurrentVersion.reified( ).new( { dummyField: decodeFromFieldsWithTypes("bool", item.fields.dummy_field) } ) }
+    static fromBcs(
+         data: Uint8Array
+    ): CurrentVersion {
 
- static fromBcs( data: Uint8Array ): CurrentVersion { return CurrentVersion.fromFields( CurrentVersion.bcs.parse(data) ) }
+        return CurrentVersion.fromFields(
+            CurrentVersion.bcs.parse(data)
+        )
+    }
 
- toJSONField() { return {
+    toJSONField() {
+        return {
+            dummyField: this.dummyField,
 
- dummyField: this.dummyField,
+        }
+    }
 
-} }
+    toJSON() {
+        return {
+            $typeName: this.$typeName,
+            $typeArgs: this.$typeArgs,
+            ...this.toJSONField()
+        }
+    }
 
- toJSON() { return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() } }
+    static fromJSONField(
+         field: any
+    ): CurrentVersion {
+        return CurrentVersion.reified().new(
+            {dummyField: decodeFromJSONField("bool", field.dummyField)}
+        )
+    }
 
- static fromJSONField( field: any ): CurrentVersion { return CurrentVersion.reified( ).new( { dummyField: decodeFromJSONField("bool", field.dummyField) } ) }
+    static fromJSON(
+         json: Record<string, any>
+    ): CurrentVersion {
+        if (json.$typeName !== CurrentVersion.$typeName) {
+            throw new Error("not a WithTwoGenerics json object")
+        };
 
- static fromJSON( json: Record<string, any> ): CurrentVersion { if (json.$typeName !== CurrentVersion.$typeName) { throw new Error("not a WithTwoGenerics json object") };
+        return CurrentVersion.fromJSONField(
+            json,
+        )
+    }
 
- return CurrentVersion.fromJSONField( json, ) }
+    static fromSuiParsedData(
+         content: SuiParsedData
+    ): CurrentVersion {
+        if (content.dataType !== "moveObject") {
+            throw new Error("not an object");
+        }
+        if (!isCurrentVersion(content.type)) {
+            throw new Error(`object at ${(content.fields as any).id} is not a CurrentVersion object`);
+        }
+        return CurrentVersion.fromFieldsWithTypes(
+            content
+        );
+    }
 
- static fromSuiParsedData( content: SuiParsedData ): CurrentVersion { if (content.dataType !== "moveObject") { throw new Error("not an object"); } if (!isCurrentVersion(content.type)) { throw new Error(`object at ${(content.fields as any).id} is not a CurrentVersion object`); } return CurrentVersion.fromFieldsWithTypes( content ); }
+    static fromSuiObjectData(
+         data: SuiObjectData
+    ): CurrentVersion {
+        if (data.bcs) {
+            if (data.bcs.dataType !== "moveObject" || !isCurrentVersion(data.bcs.type)) {
+                throw new Error(`object at is not a CurrentVersion object`);
+            }
 
- static fromSuiObjectData( data: SuiObjectData ): CurrentVersion { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isCurrentVersion(data.bcs.type)) { throw new Error(`object at is not a CurrentVersion object`); }
+            return CurrentVersion.fromBcs(
+                fromB64(data.bcs.bcsBytes)
+            );
+        }
+        if (data.content) {
+            return CurrentVersion.fromSuiParsedData(
+                data.content
+            )
+        }
 
- return CurrentVersion.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return CurrentVersion.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+        throw new Error(
+            "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+        );
+    }
 
- static async fetch( client: SuiClient, id: string ): Promise<CurrentVersion> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching CurrentVersion object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isCurrentVersion(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a CurrentVersion object`); }
+    static async fetch(
+        client: SuiClient, id: string
+    ): Promise<CurrentVersion> {
+        const res = await client.getObject({
+            id,
+            options: {
+                showBcs: true,
+            },
+        });
+        if (res.error) {
+            throw new Error(`error fetching CurrentVersion object at id ${id}: ${res.error.code}`);
+        }
+        if (res.data?.bcs?.dataType !== "moveObject" || !isCurrentVersion(res.data.bcs.type)) {
+            throw new Error(`object at id ${id} is not a CurrentVersion object`);
+        }
 
- return CurrentVersion.fromSuiObjectData( res.data ); }
-
- }
+        return CurrentVersion.fromSuiObjectData(
+            res.data
+        );
+    }
+}
 
 /* ============================== CurrentPackage =============================== */
 
-export function isCurrentPackage(type: string): boolean { type = compressSuiType(type); return type === `${PKG_V1}::package_utils::CurrentPackage`; }
+export function isCurrentPackage(type: string): boolean {
+    type = compressSuiType(type);
+    return type === `${PKG_V1}::package_utils::CurrentPackage`;
+}
 
-export interface CurrentPackageFields { dummyField: ToField<"bool"> }
+export interface CurrentPackageFields {
+    dummyField: ToField<"bool">
+}
 
-export type CurrentPackageReified = Reified< CurrentPackage, CurrentPackageFields >;
+export type CurrentPackageReified = Reified<
+    CurrentPackage,
+    CurrentPackageFields
+>;
 
-export class CurrentPackage implements StructClass { __StructClass = true as const;
+export class CurrentPackage implements StructClass {
+    __StructClass = true as const;
 
- static readonly $typeName = `${PKG_V1}::package_utils::CurrentPackage`; static readonly $numTypeParams = 0; static readonly $isPhantom = [] as const;
+    static readonly $typeName = `${PKG_V1}::package_utils::CurrentPackage`;
+    static readonly $numTypeParams = 0;
+    static readonly $isPhantom = [] as const;
 
- readonly $typeName = CurrentPackage.$typeName; readonly $fullTypeName: `${typeof PKG_V1}::package_utils::CurrentPackage`; readonly $typeArgs: []; readonly $isPhantom = CurrentPackage.$isPhantom;
+    readonly $typeName = CurrentPackage.$typeName;
+    readonly $fullTypeName: `${typeof PKG_V1}::package_utils::CurrentPackage`;
+    readonly $typeArgs: [];
+    readonly $isPhantom = CurrentPackage.$isPhantom;
 
- readonly dummyField: ToField<"bool">
+    readonly dummyField:
+        ToField<"bool">
 
- private constructor(typeArgs: [], fields: CurrentPackageFields, ) { this.$fullTypeName = composeSuiType( CurrentPackage.$typeName, ...typeArgs ) as `${typeof PKG_V1}::package_utils::CurrentPackage`; this.$typeArgs = typeArgs;
+    private constructor(typeArgs: [], fields: CurrentPackageFields,
+    ) {
+        this.$fullTypeName = composeSuiType(
+            CurrentPackage.$typeName,
+            ...typeArgs
+        ) as `${typeof PKG_V1}::package_utils::CurrentPackage`;
+        this.$typeArgs = typeArgs;
 
- this.dummyField = fields.dummyField; }
+        this.dummyField = fields.dummyField;
+    }
 
- static reified( ): CurrentPackageReified { return { typeName: CurrentPackage.$typeName, fullTypeName: composeSuiType( CurrentPackage.$typeName, ...[] ) as `${typeof PKG_V1}::package_utils::CurrentPackage`, typeArgs: [ ] as [], isPhantom: CurrentPackage.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => CurrentPackage.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => CurrentPackage.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => CurrentPackage.fromBcs( data, ), bcs: CurrentPackage.bcs, fromJSONField: (field: any) => CurrentPackage.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => CurrentPackage.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => CurrentPackage.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => CurrentPackage.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => CurrentPackage.fetch( client, id, ), new: ( fields: CurrentPackageFields, ) => { return new CurrentPackage( [], fields ) }, kind: "StructClassReified", } }
+    static reified(): CurrentPackageReified {
+        return {
+            typeName: CurrentPackage.$typeName,
+            fullTypeName: composeSuiType(
+                CurrentPackage.$typeName,
+                ...[]
+            ) as `${typeof PKG_V1}::package_utils::CurrentPackage`,
+            typeArgs: [] as [],
+            isPhantom: CurrentPackage.$isPhantom,
+            reifiedTypeArgs: [],
+            fromFields: (fields: Record<string, any>) =>
+                CurrentPackage.fromFields(
+                    fields,
+                ),
+            fromFieldsWithTypes: (item: FieldsWithTypes) =>
+                CurrentPackage.fromFieldsWithTypes(
+                    item,
+                ),
+            fromBcs: (data: Uint8Array) =>
+                CurrentPackage.fromBcs(
+                    data,
+                ),
+            bcs: CurrentPackage.bcs,
+            fromJSONField: (field: any) =>
+                CurrentPackage.fromJSONField(
+                    field,
+                ),
+            fromJSON: (json: Record<string, any>) =>
+                CurrentPackage.fromJSON(
+                    json,
+                ),
+            fromSuiParsedData: (content: SuiParsedData) =>
+                CurrentPackage.fromSuiParsedData(
+                    content,
+                ),
+            fromSuiObjectData: (content: SuiObjectData) =>
+                CurrentPackage.fromSuiObjectData(
+                    content,
+                ),
+            fetch: async (client: SuiClient, id: string) => CurrentPackage.fetch(
+                client,
+                id,
+            ),
+            new: (
+                fields: CurrentPackageFields,
+            ) => {
+                return new CurrentPackage(
+                    [],
+                    fields
+                )
+            },
+            kind: "StructClassReified",
+        }
+    }
 
- static get r() { return CurrentPackage.reified() }
+    static get r() {
+        return CurrentPackage.reified()
+    }
 
- static phantom( ): PhantomReified<ToTypeStr<CurrentPackage>> { return phantom(CurrentPackage.reified( )); } static get p() { return CurrentPackage.phantom() }
+    static phantom(): PhantomReified<ToTypeStr<CurrentPackage>> {
+        return phantom(CurrentPackage.reified());
+    }
 
- static get bcs() { return bcs.struct("CurrentPackage", {
+    static get p() {
+        return CurrentPackage.phantom()
+    }
 
- dummy_field: bcs.bool()
+    static get bcs() {
+        return bcs.struct("CurrentPackage", {
+            dummy_field:
+                bcs.bool()
 
-}) };
+        })
+    };
 
- static fromFields( fields: Record<string, any> ): CurrentPackage { return CurrentPackage.reified( ).new( { dummyField: decodeFromFields("bool", fields.dummy_field) } ) }
+    static fromFields(
+         fields: Record<string, any>
+    ): CurrentPackage {
+        return CurrentPackage.reified().new(
+            {dummyField: decodeFromFields("bool", fields.dummy_field)}
+        )
+    }
 
- static fromFieldsWithTypes( item: FieldsWithTypes ): CurrentPackage { if (!isCurrentPackage(item.type)) { throw new Error("not a CurrentPackage type");
+    static fromFieldsWithTypes(
+         item: FieldsWithTypes
+    ): CurrentPackage {
+        if (!isCurrentPackage(item.type)) {
+            throw new Error("not a CurrentPackage type");
+        }
 
- }
+        return CurrentPackage.reified().new(
+            {dummyField: decodeFromFieldsWithTypes("bool", item.fields.dummy_field)}
+        )
+    }
 
- return CurrentPackage.reified( ).new( { dummyField: decodeFromFieldsWithTypes("bool", item.fields.dummy_field) } ) }
+    static fromBcs(
+         data: Uint8Array
+    ): CurrentPackage {
 
- static fromBcs( data: Uint8Array ): CurrentPackage { return CurrentPackage.fromFields( CurrentPackage.bcs.parse(data) ) }
+        return CurrentPackage.fromFields(
+            CurrentPackage.bcs.parse(data)
+        )
+    }
 
- toJSONField() { return {
+    toJSONField() {
+        return {
+            dummyField: this.dummyField,
 
- dummyField: this.dummyField,
+        }
+    }
 
-} }
+    toJSON() {
+        return {
+            $typeName: this.$typeName,
+            $typeArgs: this.$typeArgs,
+            ...this.toJSONField()
+        }
+    }
 
- toJSON() { return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() } }
+    static fromJSONField(
+         field: any
+    ): CurrentPackage {
+        return CurrentPackage.reified().new(
+            {dummyField: decodeFromJSONField("bool", field.dummyField)}
+        )
+    }
 
- static fromJSONField( field: any ): CurrentPackage { return CurrentPackage.reified( ).new( { dummyField: decodeFromJSONField("bool", field.dummyField) } ) }
+    static fromJSON(
+         json: Record<string, any>
+    ): CurrentPackage {
+        if (json.$typeName !== CurrentPackage.$typeName) {
+            throw new Error("not a WithTwoGenerics json object")
+        };
 
- static fromJSON( json: Record<string, any> ): CurrentPackage { if (json.$typeName !== CurrentPackage.$typeName) { throw new Error("not a WithTwoGenerics json object") };
+        return CurrentPackage.fromJSONField(
+            json,
+        )
+    }
 
- return CurrentPackage.fromJSONField( json, ) }
+    static fromSuiParsedData(
+         content: SuiParsedData
+    ): CurrentPackage {
+        if (content.dataType !== "moveObject") {
+            throw new Error("not an object");
+        }
+        if (!isCurrentPackage(content.type)) {
+            throw new Error(`object at ${(content.fields as any).id} is not a CurrentPackage object`);
+        }
+        return CurrentPackage.fromFieldsWithTypes(
+            content
+        );
+    }
 
- static fromSuiParsedData( content: SuiParsedData ): CurrentPackage { if (content.dataType !== "moveObject") { throw new Error("not an object"); } if (!isCurrentPackage(content.type)) { throw new Error(`object at ${(content.fields as any).id} is not a CurrentPackage object`); } return CurrentPackage.fromFieldsWithTypes( content ); }
+    static fromSuiObjectData(
+         data: SuiObjectData
+    ): CurrentPackage {
+        if (data.bcs) {
+            if (data.bcs.dataType !== "moveObject" || !isCurrentPackage(data.bcs.type)) {
+                throw new Error(`object at is not a CurrentPackage object`);
+            }
 
- static fromSuiObjectData( data: SuiObjectData ): CurrentPackage { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isCurrentPackage(data.bcs.type)) { throw new Error(`object at is not a CurrentPackage object`); }
+            return CurrentPackage.fromBcs(
+                fromB64(data.bcs.bcsBytes)
+            );
+        }
+        if (data.content) {
+            return CurrentPackage.fromSuiParsedData(
+                data.content
+            )
+        }
 
- return CurrentPackage.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return CurrentPackage.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+        throw new Error(
+            "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+        );
+    }
 
- static async fetch( client: SuiClient, id: string ): Promise<CurrentPackage> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching CurrentPackage object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isCurrentPackage(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a CurrentPackage object`); }
+    static async fetch(
+        client: SuiClient, id: string
+    ): Promise<CurrentPackage> {
+        const res = await client.getObject({
+            id,
+            options: {
+                showBcs: true,
+            },
+        });
+        if (res.error) {
+            throw new Error(`error fetching CurrentPackage object at id ${id}: ${res.error.code}`);
+        }
+        if (res.data?.bcs?.dataType !== "moveObject" || !isCurrentPackage(res.data.bcs.type)) {
+            throw new Error(`object at id ${id} is not a CurrentPackage object`);
+        }
 
- return CurrentPackage.fromSuiObjectData( res.data ); }
-
- }
+        return CurrentPackage.fromSuiObjectData(
+            res.data
+        );
+    }
+}
 
 /* ============================== PackageInfo =============================== */
 
-export function isPackageInfo(type: string): boolean { type = compressSuiType(type); return type === `${PKG_V1}::package_utils::PackageInfo`; }
+export function isPackageInfo(type: string): boolean {
+    type = compressSuiType(type);
+    return type === `${PKG_V1}::package_utils::PackageInfo`;
+}
 
-export interface PackageInfoFields { package: ToField<ID>; digest: ToField<Bytes32> }
+export interface PackageInfoFields {
+    package: ToField<ID>; digest: ToField<Bytes32>
+}
 
-export type PackageInfoReified = Reified< PackageInfo, PackageInfoFields >;
+export type PackageInfoReified = Reified<
+    PackageInfo,
+    PackageInfoFields
+>;
 
-export class PackageInfo implements StructClass { __StructClass = true as const;
+export class PackageInfo implements StructClass {
+    __StructClass = true as const;
 
- static readonly $typeName = `${PKG_V1}::package_utils::PackageInfo`; static readonly $numTypeParams = 0; static readonly $isPhantom = [] as const;
+    static readonly $typeName = `${PKG_V1}::package_utils::PackageInfo`;
+    static readonly $numTypeParams = 0;
+    static readonly $isPhantom = [] as const;
 
- readonly $typeName = PackageInfo.$typeName; readonly $fullTypeName: `${typeof PKG_V1}::package_utils::PackageInfo`; readonly $typeArgs: []; readonly $isPhantom = PackageInfo.$isPhantom;
+    readonly $typeName = PackageInfo.$typeName;
+    readonly $fullTypeName: `${typeof PKG_V1}::package_utils::PackageInfo`;
+    readonly $typeArgs: [];
+    readonly $isPhantom = PackageInfo.$isPhantom;
 
- readonly package: ToField<ID>; readonly digest: ToField<Bytes32>
+    readonly package:
+        ToField<ID>
+    ; readonly digest:
+        ToField<Bytes32>
 
- private constructor(typeArgs: [], fields: PackageInfoFields, ) { this.$fullTypeName = composeSuiType( PackageInfo.$typeName, ...typeArgs ) as `${typeof PKG_V1}::package_utils::PackageInfo`; this.$typeArgs = typeArgs;
+    private constructor(typeArgs: [], fields: PackageInfoFields,
+    ) {
+        this.$fullTypeName = composeSuiType(
+            PackageInfo.$typeName,
+            ...typeArgs
+        ) as `${typeof PKG_V1}::package_utils::PackageInfo`;
+        this.$typeArgs = typeArgs;
 
- this.package = fields.package;; this.digest = fields.digest; }
+        this.package = fields.package;; this.digest = fields.digest;
+    }
 
- static reified( ): PackageInfoReified { return { typeName: PackageInfo.$typeName, fullTypeName: composeSuiType( PackageInfo.$typeName, ...[] ) as `${typeof PKG_V1}::package_utils::PackageInfo`, typeArgs: [ ] as [], isPhantom: PackageInfo.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => PackageInfo.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => PackageInfo.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => PackageInfo.fromBcs( data, ), bcs: PackageInfo.bcs, fromJSONField: (field: any) => PackageInfo.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => PackageInfo.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => PackageInfo.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => PackageInfo.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => PackageInfo.fetch( client, id, ), new: ( fields: PackageInfoFields, ) => { return new PackageInfo( [], fields ) }, kind: "StructClassReified", } }
+    static reified(): PackageInfoReified {
+        return {
+            typeName: PackageInfo.$typeName,
+            fullTypeName: composeSuiType(
+                PackageInfo.$typeName,
+                ...[]
+            ) as `${typeof PKG_V1}::package_utils::PackageInfo`,
+            typeArgs: [] as [],
+            isPhantom: PackageInfo.$isPhantom,
+            reifiedTypeArgs: [],
+            fromFields: (fields: Record<string, any>) =>
+                PackageInfo.fromFields(
+                    fields,
+                ),
+            fromFieldsWithTypes: (item: FieldsWithTypes) =>
+                PackageInfo.fromFieldsWithTypes(
+                    item,
+                ),
+            fromBcs: (data: Uint8Array) =>
+                PackageInfo.fromBcs(
+                    data,
+                ),
+            bcs: PackageInfo.bcs,
+            fromJSONField: (field: any) =>
+                PackageInfo.fromJSONField(
+                    field,
+                ),
+            fromJSON: (json: Record<string, any>) =>
+                PackageInfo.fromJSON(
+                    json,
+                ),
+            fromSuiParsedData: (content: SuiParsedData) =>
+                PackageInfo.fromSuiParsedData(
+                    content,
+                ),
+            fromSuiObjectData: (content: SuiObjectData) =>
+                PackageInfo.fromSuiObjectData(
+                    content,
+                ),
+            fetch: async (client: SuiClient, id: string) => PackageInfo.fetch(
+                client,
+                id,
+            ),
+            new: (
+                fields: PackageInfoFields,
+            ) => {
+                return new PackageInfo(
+                    [],
+                    fields
+                )
+            },
+            kind: "StructClassReified",
+        }
+    }
 
- static get r() { return PackageInfo.reified() }
+    static get r() {
+        return PackageInfo.reified()
+    }
 
- static phantom( ): PhantomReified<ToTypeStr<PackageInfo>> { return phantom(PackageInfo.reified( )); } static get p() { return PackageInfo.phantom() }
+    static phantom(): PhantomReified<ToTypeStr<PackageInfo>> {
+        return phantom(PackageInfo.reified());
+    }
 
- static get bcs() { return bcs.struct("PackageInfo", {
+    static get p() {
+        return PackageInfo.phantom()
+    }
 
- package: ID.bcs, digest: Bytes32.bcs
+    static get bcs() {
+        return bcs.struct("PackageInfo", {
+            package:
+                ID.bcs
+            , digest:
+                Bytes32.bcs
 
-}) };
+        })
+    };
 
- static fromFields( fields: Record<string, any> ): PackageInfo { return PackageInfo.reified( ).new( { package: decodeFromFields(ID.reified(), fields.package), digest: decodeFromFields(Bytes32.reified(), fields.digest) } ) }
+    static fromFields(
+         fields: Record<string, any>
+    ): PackageInfo {
+        return PackageInfo.reified().new(
+            {package: decodeFromFields(ID.reified(), fields.package), digest: decodeFromFields(Bytes32.reified(), fields.digest)}
+        )
+    }
 
- static fromFieldsWithTypes( item: FieldsWithTypes ): PackageInfo { if (!isPackageInfo(item.type)) { throw new Error("not a PackageInfo type");
+    static fromFieldsWithTypes(
+         item: FieldsWithTypes
+    ): PackageInfo {
+        if (!isPackageInfo(item.type)) {
+            throw new Error("not a PackageInfo type");
+        }
 
- }
+        return PackageInfo.reified().new(
+            {package: decodeFromFieldsWithTypes(ID.reified(), item.fields.package), digest: decodeFromFieldsWithTypes(Bytes32.reified(), item.fields.digest)}
+        )
+    }
 
- return PackageInfo.reified( ).new( { package: decodeFromFieldsWithTypes(ID.reified(), item.fields.package), digest: decodeFromFieldsWithTypes(Bytes32.reified(), item.fields.digest) } ) }
+    static fromBcs(
+         data: Uint8Array
+    ): PackageInfo {
 
- static fromBcs( data: Uint8Array ): PackageInfo { return PackageInfo.fromFields( PackageInfo.bcs.parse(data) ) }
+        return PackageInfo.fromFields(
+            PackageInfo.bcs.parse(data)
+        )
+    }
 
- toJSONField() { return {
+    toJSONField() {
+        return {
+            package: this.package,digest: this.digest.toJSONField(),
 
- package: this.package,digest: this.digest.toJSONField(),
+        }
+    }
 
-} }
+    toJSON() {
+        return {
+            $typeName: this.$typeName,
+            $typeArgs: this.$typeArgs,
+            ...this.toJSONField()
+        }
+    }
 
- toJSON() { return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() } }
+    static fromJSONField(
+         field: any
+    ): PackageInfo {
+        return PackageInfo.reified().new(
+            {package: decodeFromJSONField(ID.reified(), field.package), digest: decodeFromJSONField(Bytes32.reified(), field.digest)}
+        )
+    }
 
- static fromJSONField( field: any ): PackageInfo { return PackageInfo.reified( ).new( { package: decodeFromJSONField(ID.reified(), field.package), digest: decodeFromJSONField(Bytes32.reified(), field.digest) } ) }
+    static fromJSON(
+         json: Record<string, any>
+    ): PackageInfo {
+        if (json.$typeName !== PackageInfo.$typeName) {
+            throw new Error("not a WithTwoGenerics json object")
+        };
 
- static fromJSON( json: Record<string, any> ): PackageInfo { if (json.$typeName !== PackageInfo.$typeName) { throw new Error("not a WithTwoGenerics json object") };
+        return PackageInfo.fromJSONField(
+            json,
+        )
+    }
 
- return PackageInfo.fromJSONField( json, ) }
+    static fromSuiParsedData(
+         content: SuiParsedData
+    ): PackageInfo {
+        if (content.dataType !== "moveObject") {
+            throw new Error("not an object");
+        }
+        if (!isPackageInfo(content.type)) {
+            throw new Error(`object at ${(content.fields as any).id} is not a PackageInfo object`);
+        }
+        return PackageInfo.fromFieldsWithTypes(
+            content
+        );
+    }
 
- static fromSuiParsedData( content: SuiParsedData ): PackageInfo { if (content.dataType !== "moveObject") { throw new Error("not an object"); } if (!isPackageInfo(content.type)) { throw new Error(`object at ${(content.fields as any).id} is not a PackageInfo object`); } return PackageInfo.fromFieldsWithTypes( content ); }
+    static fromSuiObjectData(
+         data: SuiObjectData
+    ): PackageInfo {
+        if (data.bcs) {
+            if (data.bcs.dataType !== "moveObject" || !isPackageInfo(data.bcs.type)) {
+                throw new Error(`object at is not a PackageInfo object`);
+            }
 
- static fromSuiObjectData( data: SuiObjectData ): PackageInfo { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isPackageInfo(data.bcs.type)) { throw new Error(`object at is not a PackageInfo object`); }
+            return PackageInfo.fromBcs(
+                fromB64(data.bcs.bcsBytes)
+            );
+        }
+        if (data.content) {
+            return PackageInfo.fromSuiParsedData(
+                data.content
+            )
+        }
 
- return PackageInfo.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return PackageInfo.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+        throw new Error(
+            "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+        );
+    }
 
- static async fetch( client: SuiClient, id: string ): Promise<PackageInfo> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching PackageInfo object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isPackageInfo(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a PackageInfo object`); }
+    static async fetch(
+        client: SuiClient, id: string
+    ): Promise<PackageInfo> {
+        const res = await client.getObject({
+            id,
+            options: {
+                showBcs: true,
+            },
+        });
+        if (res.error) {
+            throw new Error(`error fetching PackageInfo object at id ${id}: ${res.error.code}`);
+        }
+        if (res.data?.bcs?.dataType !== "moveObject" || !isPackageInfo(res.data.bcs.type)) {
+            throw new Error(`object at id ${id} is not a PackageInfo object`);
+        }
 
- return PackageInfo.fromSuiObjectData( res.data ); }
-
- }
+        return PackageInfo.fromSuiObjectData(
+            res.data
+        );
+    }
+}
 
 /* ============================== PendingPackage =============================== */
 
-export function isPendingPackage(type: string): boolean { type = compressSuiType(type); return type === `${PKG_V1}::package_utils::PendingPackage`; }
+export function isPendingPackage(type: string): boolean {
+    type = compressSuiType(type);
+    return type === `${PKG_V1}::package_utils::PendingPackage`;
+}
 
-export interface PendingPackageFields { dummyField: ToField<"bool"> }
+export interface PendingPackageFields {
+    dummyField: ToField<"bool">
+}
 
-export type PendingPackageReified = Reified< PendingPackage, PendingPackageFields >;
+export type PendingPackageReified = Reified<
+    PendingPackage,
+    PendingPackageFields
+>;
 
-export class PendingPackage implements StructClass { __StructClass = true as const;
+export class PendingPackage implements StructClass {
+    __StructClass = true as const;
 
- static readonly $typeName = `${PKG_V1}::package_utils::PendingPackage`; static readonly $numTypeParams = 0; static readonly $isPhantom = [] as const;
+    static readonly $typeName = `${PKG_V1}::package_utils::PendingPackage`;
+    static readonly $numTypeParams = 0;
+    static readonly $isPhantom = [] as const;
 
- readonly $typeName = PendingPackage.$typeName; readonly $fullTypeName: `${typeof PKG_V1}::package_utils::PendingPackage`; readonly $typeArgs: []; readonly $isPhantom = PendingPackage.$isPhantom;
+    readonly $typeName = PendingPackage.$typeName;
+    readonly $fullTypeName: `${typeof PKG_V1}::package_utils::PendingPackage`;
+    readonly $typeArgs: [];
+    readonly $isPhantom = PendingPackage.$isPhantom;
 
- readonly dummyField: ToField<"bool">
+    readonly dummyField:
+        ToField<"bool">
 
- private constructor(typeArgs: [], fields: PendingPackageFields, ) { this.$fullTypeName = composeSuiType( PendingPackage.$typeName, ...typeArgs ) as `${typeof PKG_V1}::package_utils::PendingPackage`; this.$typeArgs = typeArgs;
+    private constructor(typeArgs: [], fields: PendingPackageFields,
+    ) {
+        this.$fullTypeName = composeSuiType(
+            PendingPackage.$typeName,
+            ...typeArgs
+        ) as `${typeof PKG_V1}::package_utils::PendingPackage`;
+        this.$typeArgs = typeArgs;
 
- this.dummyField = fields.dummyField; }
+        this.dummyField = fields.dummyField;
+    }
 
- static reified( ): PendingPackageReified { return { typeName: PendingPackage.$typeName, fullTypeName: composeSuiType( PendingPackage.$typeName, ...[] ) as `${typeof PKG_V1}::package_utils::PendingPackage`, typeArgs: [ ] as [], isPhantom: PendingPackage.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => PendingPackage.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => PendingPackage.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => PendingPackage.fromBcs( data, ), bcs: PendingPackage.bcs, fromJSONField: (field: any) => PendingPackage.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => PendingPackage.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => PendingPackage.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => PendingPackage.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => PendingPackage.fetch( client, id, ), new: ( fields: PendingPackageFields, ) => { return new PendingPackage( [], fields ) }, kind: "StructClassReified", } }
+    static reified(): PendingPackageReified {
+        return {
+            typeName: PendingPackage.$typeName,
+            fullTypeName: composeSuiType(
+                PendingPackage.$typeName,
+                ...[]
+            ) as `${typeof PKG_V1}::package_utils::PendingPackage`,
+            typeArgs: [] as [],
+            isPhantom: PendingPackage.$isPhantom,
+            reifiedTypeArgs: [],
+            fromFields: (fields: Record<string, any>) =>
+                PendingPackage.fromFields(
+                    fields,
+                ),
+            fromFieldsWithTypes: (item: FieldsWithTypes) =>
+                PendingPackage.fromFieldsWithTypes(
+                    item,
+                ),
+            fromBcs: (data: Uint8Array) =>
+                PendingPackage.fromBcs(
+                    data,
+                ),
+            bcs: PendingPackage.bcs,
+            fromJSONField: (field: any) =>
+                PendingPackage.fromJSONField(
+                    field,
+                ),
+            fromJSON: (json: Record<string, any>) =>
+                PendingPackage.fromJSON(
+                    json,
+                ),
+            fromSuiParsedData: (content: SuiParsedData) =>
+                PendingPackage.fromSuiParsedData(
+                    content,
+                ),
+            fromSuiObjectData: (content: SuiObjectData) =>
+                PendingPackage.fromSuiObjectData(
+                    content,
+                ),
+            fetch: async (client: SuiClient, id: string) => PendingPackage.fetch(
+                client,
+                id,
+            ),
+            new: (
+                fields: PendingPackageFields,
+            ) => {
+                return new PendingPackage(
+                    [],
+                    fields
+                )
+            },
+            kind: "StructClassReified",
+        }
+    }
 
- static get r() { return PendingPackage.reified() }
+    static get r() {
+        return PendingPackage.reified()
+    }
 
- static phantom( ): PhantomReified<ToTypeStr<PendingPackage>> { return phantom(PendingPackage.reified( )); } static get p() { return PendingPackage.phantom() }
+    static phantom(): PhantomReified<ToTypeStr<PendingPackage>> {
+        return phantom(PendingPackage.reified());
+    }
 
- static get bcs() { return bcs.struct("PendingPackage", {
+    static get p() {
+        return PendingPackage.phantom()
+    }
 
- dummy_field: bcs.bool()
+    static get bcs() {
+        return bcs.struct("PendingPackage", {
+            dummy_field:
+                bcs.bool()
 
-}) };
+        })
+    };
 
- static fromFields( fields: Record<string, any> ): PendingPackage { return PendingPackage.reified( ).new( { dummyField: decodeFromFields("bool", fields.dummy_field) } ) }
+    static fromFields(
+         fields: Record<string, any>
+    ): PendingPackage {
+        return PendingPackage.reified().new(
+            {dummyField: decodeFromFields("bool", fields.dummy_field)}
+        )
+    }
 
- static fromFieldsWithTypes( item: FieldsWithTypes ): PendingPackage { if (!isPendingPackage(item.type)) { throw new Error("not a PendingPackage type");
+    static fromFieldsWithTypes(
+         item: FieldsWithTypes
+    ): PendingPackage {
+        if (!isPendingPackage(item.type)) {
+            throw new Error("not a PendingPackage type");
+        }
 
- }
+        return PendingPackage.reified().new(
+            {dummyField: decodeFromFieldsWithTypes("bool", item.fields.dummy_field)}
+        )
+    }
 
- return PendingPackage.reified( ).new( { dummyField: decodeFromFieldsWithTypes("bool", item.fields.dummy_field) } ) }
+    static fromBcs(
+         data: Uint8Array
+    ): PendingPackage {
 
- static fromBcs( data: Uint8Array ): PendingPackage { return PendingPackage.fromFields( PendingPackage.bcs.parse(data) ) }
+        return PendingPackage.fromFields(
+            PendingPackage.bcs.parse(data)
+        )
+    }
 
- toJSONField() { return {
+    toJSONField() {
+        return {
+            dummyField: this.dummyField,
 
- dummyField: this.dummyField,
+        }
+    }
 
-} }
+    toJSON() {
+        return {
+            $typeName: this.$typeName,
+            $typeArgs: this.$typeArgs,
+            ...this.toJSONField()
+        }
+    }
 
- toJSON() { return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() } }
+    static fromJSONField(
+         field: any
+    ): PendingPackage {
+        return PendingPackage.reified().new(
+            {dummyField: decodeFromJSONField("bool", field.dummyField)}
+        )
+    }
 
- static fromJSONField( field: any ): PendingPackage { return PendingPackage.reified( ).new( { dummyField: decodeFromJSONField("bool", field.dummyField) } ) }
+    static fromJSON(
+         json: Record<string, any>
+    ): PendingPackage {
+        if (json.$typeName !== PendingPackage.$typeName) {
+            throw new Error("not a WithTwoGenerics json object")
+        };
 
- static fromJSON( json: Record<string, any> ): PendingPackage { if (json.$typeName !== PendingPackage.$typeName) { throw new Error("not a WithTwoGenerics json object") };
+        return PendingPackage.fromJSONField(
+            json,
+        )
+    }
 
- return PendingPackage.fromJSONField( json, ) }
+    static fromSuiParsedData(
+         content: SuiParsedData
+    ): PendingPackage {
+        if (content.dataType !== "moveObject") {
+            throw new Error("not an object");
+        }
+        if (!isPendingPackage(content.type)) {
+            throw new Error(`object at ${(content.fields as any).id} is not a PendingPackage object`);
+        }
+        return PendingPackage.fromFieldsWithTypes(
+            content
+        );
+    }
 
- static fromSuiParsedData( content: SuiParsedData ): PendingPackage { if (content.dataType !== "moveObject") { throw new Error("not an object"); } if (!isPendingPackage(content.type)) { throw new Error(`object at ${(content.fields as any).id} is not a PendingPackage object`); } return PendingPackage.fromFieldsWithTypes( content ); }
+    static fromSuiObjectData(
+         data: SuiObjectData
+    ): PendingPackage {
+        if (data.bcs) {
+            if (data.bcs.dataType !== "moveObject" || !isPendingPackage(data.bcs.type)) {
+                throw new Error(`object at is not a PendingPackage object`);
+            }
 
- static fromSuiObjectData( data: SuiObjectData ): PendingPackage { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isPendingPackage(data.bcs.type)) { throw new Error(`object at is not a PendingPackage object`); }
+            return PendingPackage.fromBcs(
+                fromB64(data.bcs.bcsBytes)
+            );
+        }
+        if (data.content) {
+            return PendingPackage.fromSuiParsedData(
+                data.content
+            )
+        }
 
- return PendingPackage.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return PendingPackage.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+        throw new Error(
+            "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+        );
+    }
 
- static async fetch( client: SuiClient, id: string ): Promise<PendingPackage> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching PendingPackage object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isPendingPackage(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a PendingPackage object`); }
+    static async fetch(
+        client: SuiClient, id: string
+    ): Promise<PendingPackage> {
+        const res = await client.getObject({
+            id,
+            options: {
+                showBcs: true,
+            },
+        });
+        if (res.error) {
+            throw new Error(`error fetching PendingPackage object at id ${id}: ${res.error.code}`);
+        }
+        if (res.data?.bcs?.dataType !== "moveObject" || !isPendingPackage(res.data.bcs.type)) {
+            throw new Error(`object at id ${id} is not a PendingPackage object`);
+        }
 
- return PendingPackage.fromSuiObjectData( res.data ); }
-
- }
+        return PendingPackage.fromSuiObjectData(
+            res.data
+        );
+    }
+}

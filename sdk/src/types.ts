@@ -15,7 +15,6 @@ export type NewPoolEvent = {
   coin_type_b: { name: string };
   creator: string;
   lp_token_type: { name: string };
-  pool_cap_id: string;
   pool_id: string;
   quoter_type: { name: string };
 };
@@ -77,7 +76,6 @@ export function extractPoolInfo(events: EventData<NewPoolEvent>[]): PoolInfo[] {
     const {
       creator,
       pool_id,
-      pool_cap_id,
       coin_type_a,
       coin_type_b,
       lp_token_type,
@@ -86,7 +84,6 @@ export function extractPoolInfo(events: EventData<NewPoolEvent>[]): PoolInfo[] {
     return {
       creator,
       poolId: pool_id,
-      poolCapId: pool_cap_id,
       coinTypeA: `0x${coin_type_a.name}`,
       coinTypeB: `0x${coin_type_b.name}`,
       lpTokenType: `0x${lp_token_type.name}`,
@@ -113,7 +110,6 @@ export type BankList = {
 export type PoolInfo = {
   creator: SuiAddressType;
   poolId: SuiObjectIdType;
-  poolCapId: SuiObjectIdType;
   coinTypeA: string;
   coinTypeB: string;
   lpTokenType: string;

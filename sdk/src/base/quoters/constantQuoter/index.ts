@@ -21,8 +21,8 @@ export class ConstantProductQuoter implements Quoter {
   }
 
   public swap(
+    tx: Transaction,
     args: CpSwapArgs,
-    tx: Transaction = new Transaction()
   ): TransactionResult {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
@@ -44,8 +44,8 @@ export class ConstantProductQuoter implements Quoter {
   }
 
   public quoteSwap(
+    tx: Transaction,
     args: CpQuoteSwapArgs,
-    tx: Transaction = new Transaction()
   ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),

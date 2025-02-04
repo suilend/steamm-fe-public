@@ -9,68 +9,240 @@ import {fromB64} from "@mysten/sui/utils";
 
 /* ============================== BCS =============================== */
 
-export function isBCS(type: string): boolean { type = compressSuiType(type); return type === `${PKG_V30}::bcs::BCS`; }
+export function isBCS(type: string): boolean {
+    type = compressSuiType(type);
+    return type === `${PKG_V30}::bcs::BCS`;
+}
 
-export interface BCSFields { bytes: ToField<Vector<"u8">> }
+export interface BCSFields {
+    bytes: ToField<Vector<"u8">>
+}
 
-export type BCSReified = Reified< BCS, BCSFields >;
+export type BCSReified = Reified<
+    BCS,
+    BCSFields
+>;
 
-export class BCS implements StructClass { __StructClass = true as const;
+export class BCS implements StructClass {
+    __StructClass = true as const;
 
- static readonly $typeName = `${PKG_V30}::bcs::BCS`; static readonly $numTypeParams = 0; static readonly $isPhantom = [] as const;
+    static readonly $typeName = `${PKG_V30}::bcs::BCS`;
+    static readonly $numTypeParams = 0;
+    static readonly $isPhantom = [] as const;
 
- readonly $typeName = BCS.$typeName; readonly $fullTypeName: `${typeof PKG_V30}::bcs::BCS`; readonly $typeArgs: []; readonly $isPhantom = BCS.$isPhantom;
+    readonly $typeName = BCS.$typeName;
+    readonly $fullTypeName: `${typeof PKG_V30}::bcs::BCS`;
+    readonly $typeArgs: [];
+    readonly $isPhantom = BCS.$isPhantom;
 
- readonly bytes: ToField<Vector<"u8">>
+    readonly bytes:
+        ToField<Vector<"u8">>
 
- private constructor(typeArgs: [], fields: BCSFields, ) { this.$fullTypeName = composeSuiType( BCS.$typeName, ...typeArgs ) as `${typeof PKG_V30}::bcs::BCS`; this.$typeArgs = typeArgs;
+    private constructor(typeArgs: [], fields: BCSFields,
+    ) {
+        this.$fullTypeName = composeSuiType(
+            BCS.$typeName,
+            ...typeArgs
+        ) as `${typeof PKG_V30}::bcs::BCS`;
+        this.$typeArgs = typeArgs;
 
- this.bytes = fields.bytes; }
+        this.bytes = fields.bytes;
+    }
 
- static reified( ): BCSReified { return { typeName: BCS.$typeName, fullTypeName: composeSuiType( BCS.$typeName, ...[] ) as `${typeof PKG_V30}::bcs::BCS`, typeArgs: [ ] as [], isPhantom: BCS.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => BCS.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => BCS.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => BCS.fromBcs( data, ), bcs: BCS.bcs, fromJSONField: (field: any) => BCS.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => BCS.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => BCS.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => BCS.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => BCS.fetch( client, id, ), new: ( fields: BCSFields, ) => { return new BCS( [], fields ) }, kind: "StructClassReified", } }
+    static reified(): BCSReified {
+        return {
+            typeName: BCS.$typeName,
+            fullTypeName: composeSuiType(
+                BCS.$typeName,
+                ...[]
+            ) as `${typeof PKG_V30}::bcs::BCS`,
+            typeArgs: [] as [],
+            isPhantom: BCS.$isPhantom,
+            reifiedTypeArgs: [],
+            fromFields: (fields: Record<string, any>) =>
+                BCS.fromFields(
+                    fields,
+                ),
+            fromFieldsWithTypes: (item: FieldsWithTypes) =>
+                BCS.fromFieldsWithTypes(
+                    item,
+                ),
+            fromBcs: (data: Uint8Array) =>
+                BCS.fromBcs(
+                    data,
+                ),
+            bcs: BCS.bcs,
+            fromJSONField: (field: any) =>
+                BCS.fromJSONField(
+                    field,
+                ),
+            fromJSON: (json: Record<string, any>) =>
+                BCS.fromJSON(
+                    json,
+                ),
+            fromSuiParsedData: (content: SuiParsedData) =>
+                BCS.fromSuiParsedData(
+                    content,
+                ),
+            fromSuiObjectData: (content: SuiObjectData) =>
+                BCS.fromSuiObjectData(
+                    content,
+                ),
+            fetch: async (client: SuiClient, id: string) => BCS.fetch(
+                client,
+                id,
+            ),
+            new: (
+                fields: BCSFields,
+            ) => {
+                return new BCS(
+                    [],
+                    fields
+                )
+            },
+            kind: "StructClassReified",
+        }
+    }
 
- static get r() { return BCS.reified() }
+    static get r() {
+        return BCS.reified()
+    }
 
- static phantom( ): PhantomReified<ToTypeStr<BCS>> { return phantom(BCS.reified( )); } static get p() { return BCS.phantom() }
+    static phantom(): PhantomReified<ToTypeStr<BCS>> {
+        return phantom(BCS.reified());
+    }
 
- static get bcs() { return bcs.struct("BCS", {
+    static get p() {
+        return BCS.phantom()
+    }
 
- bytes: bcs.vector(bcs.u8())
+    static get bcs() {
+        return bcs.struct("BCS", {
+            bytes:
+                bcs.vector(bcs.u8())
 
-}) };
+        })
+    };
 
- static fromFields( fields: Record<string, any> ): BCS { return BCS.reified( ).new( { bytes: decodeFromFields(reified.vector("u8"), fields.bytes) } ) }
+    static fromFields(
+         fields: Record<string, any>
+    ): BCS {
+        return BCS.reified().new(
+            {bytes: decodeFromFields(reified.vector("u8"), fields.bytes)}
+        )
+    }
 
- static fromFieldsWithTypes( item: FieldsWithTypes ): BCS { if (!isBCS(item.type)) { throw new Error("not a BCS type");
+    static fromFieldsWithTypes(
+         item: FieldsWithTypes
+    ): BCS {
+        if (!isBCS(item.type)) {
+            throw new Error("not a BCS type");
+        }
 
- }
+        return BCS.reified().new(
+            {bytes: decodeFromFieldsWithTypes(reified.vector("u8"), item.fields.bytes)}
+        )
+    }
 
- return BCS.reified( ).new( { bytes: decodeFromFieldsWithTypes(reified.vector("u8"), item.fields.bytes) } ) }
+    static fromBcs(
+         data: Uint8Array
+    ): BCS {
 
- static fromBcs( data: Uint8Array ): BCS { return BCS.fromFields( BCS.bcs.parse(data) ) }
+        return BCS.fromFields(
+            BCS.bcs.parse(data)
+        )
+    }
 
- toJSONField() { return {
+    toJSONField() {
+        return {
+            bytes: fieldToJSON<Vector<"u8">>(`vector<u8>`, this.bytes),
 
- bytes: fieldToJSON<Vector<"u8">>(`vector<u8>`, this.bytes),
+        }
+    }
 
-} }
+    toJSON() {
+        return {
+            $typeName: this.$typeName,
+            $typeArgs: this.$typeArgs,
+            ...this.toJSONField()
+        }
+    }
 
- toJSON() { return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() } }
+    static fromJSONField(
+         field: any
+    ): BCS {
+        return BCS.reified().new(
+            {bytes: decodeFromJSONField(reified.vector("u8"), field.bytes)}
+        )
+    }
 
- static fromJSONField( field: any ): BCS { return BCS.reified( ).new( { bytes: decodeFromJSONField(reified.vector("u8"), field.bytes) } ) }
+    static fromJSON(
+         json: Record<string, any>
+    ): BCS {
+        if (json.$typeName !== BCS.$typeName) {
+            throw new Error("not a WithTwoGenerics json object")
+        };
 
- static fromJSON( json: Record<string, any> ): BCS { if (json.$typeName !== BCS.$typeName) { throw new Error("not a WithTwoGenerics json object") };
+        return BCS.fromJSONField(
+            json,
+        )
+    }
 
- return BCS.fromJSONField( json, ) }
+    static fromSuiParsedData(
+         content: SuiParsedData
+    ): BCS {
+        if (content.dataType !== "moveObject") {
+            throw new Error("not an object");
+        }
+        if (!isBCS(content.type)) {
+            throw new Error(`object at ${(content.fields as any).id} is not a BCS object`);
+        }
+        return BCS.fromFieldsWithTypes(
+            content
+        );
+    }
 
- static fromSuiParsedData( content: SuiParsedData ): BCS { if (content.dataType !== "moveObject") { throw new Error("not an object"); } if (!isBCS(content.type)) { throw new Error(`object at ${(content.fields as any).id} is not a BCS object`); } return BCS.fromFieldsWithTypes( content ); }
+    static fromSuiObjectData(
+         data: SuiObjectData
+    ): BCS {
+        if (data.bcs) {
+            if (data.bcs.dataType !== "moveObject" || !isBCS(data.bcs.type)) {
+                throw new Error(`object at is not a BCS object`);
+            }
 
- static fromSuiObjectData( data: SuiObjectData ): BCS { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isBCS(data.bcs.type)) { throw new Error(`object at is not a BCS object`); }
+            return BCS.fromBcs(
+                fromB64(data.bcs.bcsBytes)
+            );
+        }
+        if (data.content) {
+            return BCS.fromSuiParsedData(
+                data.content
+            )
+        }
 
- return BCS.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return BCS.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+        throw new Error(
+            "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+        );
+    }
 
- static async fetch( client: SuiClient, id: string ): Promise<BCS> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching BCS object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isBCS(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a BCS object`); }
+    static async fetch(
+        client: SuiClient, id: string
+    ): Promise<BCS> {
+        const res = await client.getObject({
+            id,
+            options: {
+                showBcs: true,
+            },
+        });
+        if (res.error) {
+            throw new Error(`error fetching BCS object at id ${id}: ${res.error.code}`);
+        }
+        if (res.data?.bcs?.dataType !== "moveObject" || !isBCS(res.data.bcs.type)) {
+            throw new Error(`object at id ${id} is not a BCS object`);
+        }
 
- return BCS.fromSuiObjectData( res.data ); }
-
- }
+        return BCS.fromSuiObjectData(
+            res.data
+        );
+    }
+}
