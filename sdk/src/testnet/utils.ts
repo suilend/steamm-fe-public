@@ -1,7 +1,4 @@
-import {
-  Transaction,
-  TransactionArgument,
-} from "@mysten/sui/dist/cjs/transactions";
+import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
 
 import { TEST_FAUCET_TESTNET_PKG_ID } from "./testnet";
 

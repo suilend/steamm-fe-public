@@ -1,4 +1,4 @@
-import { Signer } from "@mysten/sui/dist/cjs/cryptography/keypair";
+import { Signer } from "@mysten/sui/cryptography";
 
 import { PoolModule } from "./modules/poolModule";
 import { RpcModule } from "./modules/rpcModule";
