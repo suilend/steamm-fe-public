@@ -4,6 +4,10 @@ import {
   TransactionResult,
 } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
+
+import { BankFunctions } from "../..";
+import { BankInfo } from "../../types";
+
 import {
   BurnBTokensArgs,
   CTokenAmountArgs,
@@ -12,8 +16,6 @@ import {
   MintBTokensArgs,
   SetBankUtilisationBpsArgs,
 } from "./bankArgs";
-import { BankFunctions } from "../..";
-import { BankInfo } from "../../types";
 
 export * from "./bankArgs";
 export * from "./bankMath";
@@ -29,7 +31,7 @@ export class Bank {
 
   public mintBTokens(
     args: MintBTokensArgs,
-    tx: Transaction = new Transaction()
+    tx: Transaction = new Transaction(),
   ): TransactionResult {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
@@ -43,14 +45,14 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
     return coinA;
   }
 
   public burnBTokens(
     args: BurnBTokensArgs,
-    tx: Transaction = new Transaction()
+    tx: Transaction = new Transaction(),
   ): TransactionResult {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
@@ -64,14 +66,14 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
     return coinA;
   }
 
   public initLending(
     args: InitLendingArgs,
-    tx: Transaction = new Transaction()
+    tx: Transaction = new Transaction(),
   ) {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
@@ -96,7 +98,7 @@ export class Bank {
 
   public cTokenAmount(
     args: CTokenAmountArgs,
-    tx: Transaction = new Transaction()
+    tx: Transaction = new Transaction(),
   ): TransactionArgument {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
@@ -108,13 +110,13 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
   }
 
   public setUtilisationBps(
     args: SetBankUtilisationBpsArgs,
-    tx: Transaction = new Transaction()
+    tx: Transaction = new Transaction(),
   ) {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
@@ -127,7 +129,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -143,7 +145,7 @@ export class Bank {
   // Client-side logic
 
   public needsRebalance(
-    tx: Transaction = new Transaction()
+    tx: Transaction = new Transaction(),
   ): TransactionArgument {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
@@ -161,12 +163,12 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId
+      this.packageId,
     );
   }
 
   public viewTotalFunds(
-    tx: Transaction = new Transaction()
+    tx: Transaction = new Transaction(),
   ): TransactionArgument {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
@@ -178,73 +180,73 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
   }
 
   public viewFundsAvailable(
-    tx: Transaction = new Transaction()
+    tx: Transaction = new Transaction(),
   ): TransactionArgument {
     return BankFunctions.fundsAvailable(
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId
+      this.packageId,
     );
   }
 
   public viewTargetUtilisationBps(
-    tx: Transaction = new Transaction()
+    tx: Transaction = new Transaction(),
   ): TransactionArgument {
     return BankFunctions.targetUtilisationBps(
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId
+      this.packageId,
     );
   }
 
   public viewUtilisationBufferBps(
-    tx: Transaction = new Transaction()
+    tx: Transaction = new Transaction(),
   ): TransactionArgument {
     return BankFunctions.utilisationBufferBps(
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId
+      this.packageId,
     );
   }
 
   public viewTargetUtilisationBpsUnchecked(
-    tx: Transaction = new Transaction()
+    tx: Transaction = new Transaction(),
   ): TransactionArgument {
     return BankFunctions.targetUtilisationBpsUnchecked(
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId
+      this.packageId,
     );
   }
 
   public viewUtilisationBufferBpsUnchecked(
-    tx: Transaction = new Transaction()
+    tx: Transaction = new Transaction(),
   ): TransactionArgument {
     return BankFunctions.utilisationBufferBpsUnchecked(
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId
+      this.packageId,
     );
   }
 
   public viewReserveArrayIndex(
-    tx: Transaction = new Transaction()
+    tx: Transaction = new Transaction(),
   ): TransactionArgument {
     return BankFunctions.reserveArrayIndex(
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId
+      this.packageId,
     );
   }
   public typeArgs(): [string, string, string] {
