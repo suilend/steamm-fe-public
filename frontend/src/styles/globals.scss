@@ -5,8 +5,15 @@
 @layer base {
   :root {
     /* colors */
-    --foreground: 0 0% 0%; // #000000
-    --background: 0 0% 100%; // #FFFFFF
+    --foreground: var(--white);
+    --background: var(--rich-black);
+
+    --jordy-blue: 211 100% 79%; // #94C8FF
+    --rich-black: 213 50% 7%; // #09111B
+    --emerald: 130 50% 65%; // #7BD389
+    --rich-black-light: 218 44% 11%; // #101929
+    --medium-slate-blue: 218 32% 20%; // #222E42
+    --white: 0 0% 100%; // #FFFFFF
   }
 }
 
