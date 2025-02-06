@@ -22,6 +22,18 @@ _check_sui:
         exit 1
     fi
 
+bind:
+    mkdir -p temp
+    git clone --branch testnet git@github.com:solendprotocol/steamm.git temp/git
+
+    rm -rf src/_codegen/_generated/_dependencies/*
+    rm -rf src/_codegen/_generated/_framework/*
+    rm -rf src/_codegen/_generated/steamm/*
+    rm -rf src/_codegen/_generated/.eslintrc.json
+
+    sui-client-gen --manifest ./ --out src/_codegen/_generated
+    rm -rf temp
+
 # Starts the localnet network
 start: _check_sui
     sui start --network.config sui --with-faucet

@@ -4,14 +4,13 @@ import {
   TransactionObjectInput,
   TransactionResult,
 } from "@mysten/sui/transactions";
-
-import { Bank, Pool } from "../base";
-import { DepositQuote, RedeemQuote } from "../base/pool/poolTypes";
-import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
-import { BankInfo, PoolInfo } from "../types";
+import { IModule } from "../interfaces/IModule";
+import { castDepositQuote, castRedeemQuote, castSwapQuote, DepositQuote, RedeemQuote } from "../base/pool/poolTypes";
 import { SuiTypeName } from "../utils";
 import { SuiAddressType } from "../utils";
+import { BankInfo, BankList, PoolInfo } from "../types";
+import { Bank, Pool, PoolScript, SwapQuote } from "../base";
 
 /**
  * Helper class to help interact with pools.
@@ -28,24 +27,22 @@ export class PoolModule implements IModule {
   }
 
   public async depositLiquidityEntry(
-    args: PoolDepositLiquidityArgs,
     tx: Transaction,
+    args: PoolDepositLiquidityArgs,
   ) {
-    const [bTokenA, bTokenB, lpToken, _depositResult] =
-      await this.depositLiquidity(args, tx);
+    const [lpToken, _depositResult] =
+      await this.depositLiquidity(tx, args);
 
-    tx.transferObjects([bTokenA, bTokenB, lpToken], this.sdk.senderAddress);
+    tx.transferObjects([lpToken], this.sdk.senderAddress);
   }
 
   public async depositLiquidity(
-    args: PoolDepositLiquidityArgs,
     tx: Transaction,
+    args: PoolDepositLiquidityArgs,
   ): Promise<
     [
       TransactionArgument,
-      TransactionArgument,
-      TransactionArgument,
-      TransactionArgument,
+      TransactionArgument
     ]
   > {
     const pools = await this.sdk.getPools();
@@ -55,74 +52,40 @@ export class PoolModule implements IModule {
     const bankInfoA = bankList[args.coinTypeA];
     const bankInfoB = bankList[args.coinTypeB];
 
-    const pool = this.getPool(poolInfo);
-    const bankA = this.getBank(bankInfoA);
-    const bankB = this.getBank(bankInfoB);
-
-    const bTokenA = bankA.mintBTokens(
-      {
-        coins: tx.object(args.coinObjA),
-        coinAmount: args.maxA,
-      },
-      tx,
-    );
-
-    const bTokenB = bankB.mintBTokens(
-      {
-        coins: tx.object(args.coinObjB),
-        coinAmount: args.maxB,
-      },
-      tx,
-    );
-
-    const maxbA = tx.moveCall({
-      target: `0x2::coin::value`,
-      typeArguments: [bankInfoA.btokenType],
-      arguments: [tx.object(bTokenA)],
-    });
-    const maxbB = tx.moveCall({
-      target: `0x2::coin::value`,
-      typeArguments: [bankInfoB.btokenType],
-      arguments: [tx.object(bTokenB)],
+    const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+    
+    const [lpToken, depositResult] = poolScript.depositLiquidity(tx, {
+      coinA: tx.object(args.coinObjA),
+      coinB: tx.object(args.coinObjB),
+      maxA: args.maxA,
+      maxB: args.maxB,
     });
 
-    const [lpToken, depositResult] = pool.depositLiquidity(
-      {
-        coinA: bTokenA,
-        coinB: bTokenB,
-        maxA: maxbA,
-        maxB: maxbB,
-      },
-      tx,
-    );
-
-    return [bTokenA, bTokenB, lpToken, depositResult];
+    return [lpToken, depositResult];
   }
 
   public async redeemLiquidityEntry(
-    args: PoolRedeemLiquidityArgs,
     tx: Transaction,
+    args: PoolRedeemLiquidityArgs,
   ) {
-    const [coinA, coinB, bTokenA, bTokenB, _redeemResult] =
-      await this.redeemLiquidity(args, tx);
+    const [coinA, coinB, _redeemResult] =
+      await this.redeemLiquidity(tx, args);
 
     // TODO: destroy or transfer btokens
     tx.transferObjects(
-      [coinA, coinB, bTokenA, bTokenB],
-      this.sdk.senderAddress,
+      [coinA, coinB],
+      this.sdk.senderAddress
     );
   }
 
   public async redeemLiquidity(
-    args: PoolRedeemLiquidityArgs,
     tx: Transaction,
+    args: PoolRedeemLiquidityArgs,
   ): Promise<
     [
       TransactionArgument,
       TransactionArgument,
-      TransactionArgument,
-      TransactionArgument,
-      TransactionArgument,
+      TransactionArgument
     ]
   > {
     const pools = await this.sdk.getPools();
@@ -132,74 +95,22 @@ export class PoolModule implements IModule {
     const bankInfoA = bankList[args.coinTypeA];
     const bankInfoB = bankList[args.coinTypeB];
 
-    const pool = this.getPool(poolInfo);
-    const bankA = this.getBank(bankInfoA);
-    const bankB = this.getBank(bankInfoB);
+    const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
-    const [bTokenA, bTokenB, redeemResult] = pool.redeemLiquidity(
-      {
-        lpCoinObj: tx.object(args.lpCoinObj),
-        minA: args.minA,
-        minB: args.minB,
-      },
-      tx,
-    );
-
-    const bTokenAAmount = tx.moveCall({
-      target: `0x2::coin::value`,
-      typeArguments: [bankInfoA.btokenType],
-      arguments: [bTokenA],
-    });
-    const bTokenBAmount = tx.moveCall({
-      target: `0x2::coin::value`,
-      typeArguments: [bankInfoB.btokenType],
-      arguments: [bTokenB],
+    const [coinA, coinB, redeemResult] = poolScript.redeemLiquidity(tx, {
+      lpCoinObj: tx.object(args.lpCoinObj),
+      minA: args.minA,
+      minB: args.minB,
     });
 
-    const coinA = bankA.burnBTokens(
-      {
-        btokens: bTokenA,
-        btokenAmount: bTokenAAmount,
-      },
-      tx,
-    );
 
-    const coinB = bankB.burnBTokens(
-      {
-        btokens: bTokenB,
-        btokenAmount: bTokenBAmount,
-      },
-      tx,
-    );
-
-    return [coinA, coinB, bTokenA, bTokenB, redeemResult];
-  }
-
-  public async swapEntry(args: PoolSwapArgs, tx: Transaction) {
-    const [coinA, coinB, bTokenA, bTokenB, swapResult] = await this.swap(
-      args,
-      tx,
-    );
-
-    // TODO: destroy or transfer btokens
-    tx.transferObjects(
-      [coinA, coinB, bTokenA, bTokenB],
-      this.sdk.senderAddress,
-    );
+    return [coinA, coinB, redeemResult];
   }
 
   public async swap(
-    args: PoolSwapArgs,
     tx: Transaction,
-  ): Promise<
-    [
-      TransactionArgument,
-      TransactionArgument,
-      TransactionArgument,
-      TransactionArgument,
-      TransactionArgument,
-    ]
-  > {
+    args: PoolSwapArgs,
+  ): Promise<TransactionArgument> {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
 
@@ -207,109 +118,76 @@ export class PoolModule implements IModule {
     const bankInfoA = bankList[args.coinTypeA];
     const bankInfoB = bankList[args.coinTypeB];
 
-    const pool = this.getPool(poolInfo);
-    const bankA = this.getBank(bankInfoA);
-    const bankB = this.getBank(bankInfoB);
+    const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
-    const bTokenA = args.a2b
-      ? bankA.mintBTokens(
-          {
-            coins: tx.object(args.coinAObj),
-            coinAmount: args.amountIn,
-          },
-          tx,
-        )
-      : tx.moveCall({
-          target: `0x2::coin::zero`,
-          typeArguments: [bankInfoA.btokenType],
-        });
-
-    const bTokenB = !args.a2b
-      ? bankB.mintBTokens(
-          {
-            coins: tx.object(args.coinBObj),
-            coinAmount: args.amountIn,
-          },
-          tx,
-        )
-      : tx.moveCall({
-          target: `0x2::coin::zero`,
-          typeArguments: [bankInfoA.btokenType],
-        });
-
-    const swapResult = pool.swap(
-      {
-        coinA: tx.object(bTokenA),
-        coinB: tx.object(bTokenB),
-        a2b: args.a2b,
-        amountIn: args.amountIn,
-        // TODO: Min amount out should be translated from native coin T to bT
-        minAmountOut: args.minAmountOut,
-      },
-      tx,
-    );
-
-    const bTokenAAmount = tx.moveCall({
-      target: `0x2::coin::value`,
-      typeArguments: [bankInfoA.btokenType],
-      arguments: [bTokenA],
-    });
-    const bTokenBAmount = tx.moveCall({
-      target: `0x2::coin::value`,
-      typeArguments: [bankInfoB.btokenType],
-      arguments: [bTokenB],
+    const swapResult = poolScript.swap(tx, {
+      coinA: tx.object(args.coinAObj),
+      coinB: tx.object(args.coinBObj),
+      a2b: args.a2b,
+      amountIn: args.amountIn,
+      minAmountOut: args.minAmountOut,
     });
 
-    const coinA = bankA.burnBTokens(
-      {
-        btokens: bTokenA,
-        btokenAmount: bTokenAAmount,
-      },
-      tx,
-    );
+    return swapResult;
+  }
+  
+  public async quoteSwap(
+    args: QuoteSwapArgs,
+  ): Promise<SwapQuote> {
+    const tx = new Transaction();
+    const pools = await this.sdk.getPools();
+    const bankList = await this.sdk.getBanks();
 
-    const coinB = bankB.burnBTokens(
-      {
-        btokens: bTokenB,
-        btokenAmount: bTokenBAmount,
-      },
-      tx,
-    );
+    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
+    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
+    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
 
-    return [coinA, coinB, bTokenA, bTokenB, swapResult];
+    const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+
+    const quote = poolScript.quoteSwap(tx, {
+      a2b: args.a2b,
+      amountIn: args.amountIn,
+    });
+
+    return castSwapQuote(await this.getQuoteResult<SwapQuote>(tx, quote, "SwapQuote"));
   }
 
   public async quoteDeposit(args: QuoteDepositArgs): Promise<DepositQuote> {
     const tx = new Transaction();
     const pools = await this.sdk.getPools();
     const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
+    
+    const bankList = await this.sdk.getBanks();
+    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
+    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
 
-    const pool = this.getPool(poolInfo);
-    const quote = pool.quoteDeposit(
-      {
+    const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+
+    const quote = poolScript.quoteDeposit(tx, {
         maxA: args.maxA,
         maxB: args.maxB,
       },
-      tx,
     );
 
-    return await this.getQuoteResult<DepositQuote>(tx, quote, "DepositQuote");
+    return castDepositQuote(await this.getQuoteResult<DepositQuote>(tx, quote, "DepositQuote"));
   }
 
   public async quoteRedeem(args: PoolQuoteRedeemArgs): Promise<RedeemQuote> {
     const tx = new Transaction();
     const pools = await this.sdk.getPools();
     const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
+    const bankList = await this.sdk.getBanks();
+    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
+    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
 
-    const pool = this.getPool(poolInfo);
-    const quote = pool.quoteRedeem(
-      {
+    const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+
+    const quote = poolScript.quoteRedeem(tx, {
         lpTokens: args.lpTokens,
       },
-      tx,
     );
 
-    return await this.getQuoteResult<RedeemQuote>(tx, quote, "RedeemQuote");
+    return castRedeemQuote(await this.getQuoteResult<RedeemQuote>(tx, quote, "RedeemQuote"));
   }
 
   private async getQuoteResult<T>(
@@ -319,12 +197,6 @@ export class PoolModule implements IModule {
   ): Promise<T> {
     const pkgAddy = this.sdk.sdkOptions.steamm_config.package_id;
 
-    tx.moveCall({
-      target: `0x2::event::emit`,
-      typeArguments: [`${pkgAddy}::quote::${quoteType}`],
-      arguments: [quote],
-    });
-
     const inspectResults = await this.sdk.fullClient.devInspectTransactionBlock(
       {
         sender: this.sdk.senderAddress,
@@ -332,66 +204,38 @@ export class PoolModule implements IModule {
       },
     );
 
+    // console.log(inspectResults)
     if (inspectResults.error) {
       throw new Error("DevInspect Failed");
     }
 
-    const quoteResult = inspectResults.events[0].parsedJson as T;
+    const quoteResult = (inspectResults.events[0].parsedJson as any).event as T;
     return quoteResult;
   }
 
   private getPool(poolInfo: PoolInfo): Pool {
     return new Pool(this.sdk.sdkOptions.steamm_config.package_id, poolInfo);
   }
+  
+  private getPoolScript(poolInfo: PoolInfo, bankInfoA: BankInfo, bankInfoB: BankInfo): PoolScript {
+    return new PoolScript(this.sdk.sdkOptions.steamm_config.package_id, poolInfo, bankInfoA, bankInfoB);
+  }
 
   private getBank(bankInfo: BankInfo): Bank {
     return new Bank(this.sdk.sdkOptions.steamm_config.package_id, bankInfo);
   }
 
+  private getBankInfoByBToken(bankList: BankList, btokenType: string) {
+    const bankInfo = Object.values(bankList).find(bank => bank.btokenType === btokenType);
+    
+    if (!bankInfo) {
+      throw new Error(`Bank info not found for btokenType: ${btokenType}`);
+    }
+  
+    return bankInfo;
+  }
+
   // TODO
-  // public setPoolSwapFees(
-  //   args: PoolSetPoolSwapFeesArgs,
-  //   tx: Transaction = new Transaction()
-  // ) {
-  //   const callArgs = {
-  //     pool: tx.object(this.pool.id),
-  //     poolCap: args.poolCap,
-  //     swapFeeBps: args.swapFeeBps,
-  //   };
-
-  //   PoolFunctions.setPoolSwapFees(tx, this.typeArgs(), callArgs);
-  // }
-
-  // public setRedemptionFees(
-  //   args: PoolSetRedemptionFeesArgs,
-  //   tx: Transaction = new Transaction()
-  // ) {
-  //   const callArgs = {
-  //     pool: tx.object(this.pool.id),
-  //     poolCap: args.poolCap,
-  //     redemptionFeeBps: args.redemptionFeeBps,
-  //   };
-
-  //   PoolFunctions.setRedemptionFees(tx, this.typeArgs(), callArgs);
-  // }
-
-  // public collectRedemptionFees(
-  //   args: CollectRedemptionFeesArgs,
-  //   tx: Transaction = new Transaction()
-  // ): [TransactionArgument, TransactionArgument] {
-  //   const callArgs = {
-  //     pool: tx.object(this.pool.id),
-  //     cap: args.poolCap,
-  //   };
-
-  //   const [coinA, coinB] = PoolFunctions.collectRedemptionFees(
-  //     tx,
-  //     this.typeArgs(),
-  //     callArgs
-  //   );
-
-  //   return [coinA, coinB];
-  // }
 
   // public collectProtocolFees(
   //   args: CollectProtocolFeesArgs,
@@ -454,6 +298,12 @@ export interface PoolSwapArgs {
   a2b: boolean;
   amountIn: bigint;
   minAmountOut: bigint;
+}
+
+export interface QuoteSwapArgs {
+  pool: SuiAddressType;
+  a2b: boolean;
+  amountIn: bigint;
 }
 
 export interface QuoteDepositArgs {

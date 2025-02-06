@@ -119,8 +119,7 @@ export function test() {
 
       //////////////////////////////////////////////////////////////
 
-      await poolModule.depositLiquidityEntry(
-        {
+      await poolModule.depositLiquidityEntry(tx, {
           pool: pools[0].poolId,
           coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
           coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
@@ -128,8 +127,7 @@ export function test() {
           coinObjB: suiCoin,
           maxA: BigInt("1000000000000000000"),
           maxB: BigInt("1000000000000000000"),
-        },
-        tx
+        }
       );
 
       tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
@@ -187,8 +185,7 @@ export function test() {
 
       //////////////////////////////////////////////////////////////
 
-      await poolModule.depositLiquidityEntry(
-        {
+      await poolModule.depositLiquidityEntry(tx, {
           pool: pools[0].poolId,
           coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
           coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
@@ -196,8 +193,7 @@ export function test() {
           coinObjB: suiCoin,
           maxA: BigInt("1000000000000000000"),
           maxB: BigInt("1000000000000000000"),
-        },
-        tx
+        }
       );
 
       //////////////////////////////////////////////////////////////
@@ -217,8 +213,7 @@ export function test() {
         arguments: [],
       });
 
-      await poolModule.swapEntry(
-        {
+      await poolModule.swap(tx, {
           pool: pools[0].poolId,
           coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
           coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
@@ -227,8 +222,7 @@ export function test() {
           a2b: false,
           amountIn: BigInt("10000000000000"),
           minAmountOut: BigInt("0"),
-        },
-        tx
+        }
       );
 
       tx.transferObjects(
@@ -291,9 +285,8 @@ export function test() {
 
       //////////////////////////////////////////////////////////////
 
-      const [bTokenA, bTokenB, lpToken, _depositResult] =
-        await poolModule.depositLiquidity(
-          {
+      const [lpToken, _depositResult] =
+        await poolModule.depositLiquidity(tx, {
             pool: pools[0].poolId,
             coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
             coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
@@ -301,26 +294,23 @@ export function test() {
             coinObjB: suiCoin,
             maxA: BigInt("1000000000000000000"),
             maxB: BigInt("1000000000000000000"),
-          },
-          tx
+          }
         );
 
       //////////////////////////////////////////////////////////////
 
-      await poolModule.redeemLiquidityEntry(
-        {
+      await poolModule.redeemLiquidityEntry(tx, {
           pool: pools[0].poolId,
           coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
           coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
           lpCoinObj: lpToken,
           minA: BigInt("0"),
           minB: BigInt("0"),
-        },
-        tx
+        }
       );
 
       tx.transferObjects(
-        [suiCoin, usdcCoin, bTokenA, bTokenB],
+        [suiCoin, usdcCoin],
         sdk.senderAddress
       );
 

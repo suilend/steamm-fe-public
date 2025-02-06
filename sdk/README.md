@@ -9,9 +9,9 @@ A TypeScript SDK for interacting with the Steamm program published on npm as [`@
 
 `bun test ./tests/index.test.ts`
 
-### Testnet actions
+### Testnet & Mainnet Beta actions
 
-Currently the protocol is only available on testnet. In order to bypass SUI faucet restrictions we deployed TEST coins with a dedicated faucet. To get coins for the purpose of interacting with the protocol:
+Currently the protocol is only available on testnet and on mainnet beta. In order to bypass SUI faucet restrictions we deployed TEST coins with a dedicated faucet. To get coins for the purpose of interacting with the protocol:
 
 ```ts
 const suiCoin = getTestSui(tx, 1000000000000000000);
@@ -21,18 +21,13 @@ const usdcCoin = getTestUsdc(tx, 1000000000000000000);
 To initiate the sdk:
 
 ```ts
-const sdk = new SteammSDK({
-    fullRpcUrl: "https://fullnode.testnet.sui.io:443",
-    steamm_config: {
-      package_id: STEAMM_TESTNET_PKG_ID,
-      published_at: STEAMM_TESTNET_PKG_ID,
-    },
-    suilend_config: {
-      package_id: SUILEND_TESTNET_PKG_ID,
-      published_at: SUILEND_TESTNET_PKG_ID,
-    },
-});
+const sdk = new SteammSDK(BETA_CONFIG);
+// const sdk = new SteammSDK(TESTNET_CONFIG);
+
+sdk.signer = keypair;
 ```
+
+Use `STEAMM_BETA_PKG_ID` for the mainnet beta package and `STEAMM_TESTNET_PKG_ID` for testnet.
 
 To fetch the pools:
 
@@ -53,8 +48,8 @@ To deposit liquidity:
 await sdk.Pool.depositLiquidityEntry(
     {
       pool: pools[0].poolId,
-      coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
-      coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
+      coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
+      coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
       coinObjA: usdcCoin,
       coinObjB: suiCoin,
       maxA: BigInt("1000000000000000000"),
@@ -69,8 +64,8 @@ To perform a swap:
 await sdk.Pool.swapEntry(
     {
       pool: pools[0].poolId,
-      coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
-      coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
+      coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
+      coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
       coinAObj: usdcCoin,
       coinBObj: suiCoin,
       a2b: false,
@@ -87,8 +82,8 @@ And to redeem liquidity:
 await sdk.Pool.redeemLiquidityEntry(
     {
       pool: pools[0].poolId,
-      coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
-      coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
+      coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
+      coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
       lpCoinObj: lpToken,
       minA: BigInt("0"),
       minB: BigInt("0"),
@@ -97,6 +92,38 @@ await sdk.Pool.redeemLiquidityEntry(
 );
 ```
 
+
+For quotations:
+
+
+Deposit:
+```ts
+const quote = await sdk.Pool.quoteDeposit({
+    pool: pools[0].poolId,
+    maxA: BigInt("1000000000000000000"),
+    maxB: BigInt("1000000000000000000"),
+  },
+);
+```
+
+Redeem:
+```ts
+const quote = await sdk.Pool.quoteRedeem({
+    pool: pools[0].poolId,
+    lpTokens: BigInt("1000000000000000000"),
+  },
+);
+```
+
+Swap:
+```ts
+const quote = await sdk.Pool.quoteSwap({
+    pool: pools[0].poolId,
+    a2b: false,
+    amountIn: BigInt("10000000000000"),
+  },
+);
+```
 
 ---
 

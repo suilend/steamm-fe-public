@@ -1,17 +1,17 @@
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { decodeSuiPrivateKey, ParsedKeypair } from "@mysten/sui/cryptography";
-import { SteammSDK } from "../src/sdk";
 import { Transaction } from "@mysten/sui/transactions";
 import dotenv from "dotenv";
-import { STEAMM_TESTNET_PKG_ID, SUILEND_TESTNET_PKG_ID } from "../src/testnet/testnet";
-import { getTestSui, getTestUsdc } from "../src/testnet/utils";
+import { SteammSDK } from "../../src";
+import { getTestSui, getTestUsdc } from "../../src/test-config/utils";
+import { BETA_CONFIG, STEAMM_BETA_PKG_ID } from "../../src/test-config/mainnet";
 
 dotenv.config();
 
-const suiPrivateKey = process.env.PRIVATE_KEY;
+const suiPrivateKey = process.env.MY_PRIVATE_KEY;
 
 if (!suiPrivateKey) {
-  throw new Error("PRIVATE_KEY is missing in the .env file");
+  throw new Error("MY_PRIVATE_KEY is missing in the .env file");
 }
 
 async function depositLiquidity(suiPrivateKey: string) {
@@ -19,36 +19,24 @@ async function depositLiquidity(suiPrivateKey: string) {
   const decodedKey: ParsedKeypair = decodeSuiPrivateKey(suiPrivateKey);
   const keypair = Ed25519Keypair.fromSecretKey(decodedKey.secretKey);
 
-  const sdk = new SteammSDK({
-    fullRpcUrl: "https://fullnode.testnet.sui.io:443",
-    steamm_config: {
-      package_id: STEAMM_TESTNET_PKG_ID,
-      published_at: STEAMM_TESTNET_PKG_ID,
-    },
-    suilend_config: {
-      package_id: SUILEND_TESTNET_PKG_ID,
-      published_at: SUILEND_TESTNET_PKG_ID,
-    },
-  });
+  const sdk = new SteammSDK(BETA_CONFIG);
 
   const pools = await sdk.getPools();
   sdk.signer = keypair;
   const tx = new Transaction();
 
-  const suiCoin = getTestSui(tx, 1000000000000000000);
-  const usdcCoin = getTestUsdc(tx, 1000000000000000000);
+  const suiCoin = getTestSui(tx, 1000000000000000000, "mainnet");
+  const usdcCoin = getTestUsdc(tx, 1000000000000000000, "mainnet");
 
-  await sdk.Pool.depositLiquidityEntry(
-    {
+  await sdk.Pool.depositLiquidityEntry(tx, {
       pool: pools[0].poolId,
-      coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
-      coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
+      coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
+      coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
       coinObjA: usdcCoin,
       coinObjB: suiCoin,
       maxA: BigInt("1000000000000000000"),
       maxB: BigInt("1000000000000000000"),
     },
-    tx
   );
 
   tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
@@ -62,9 +50,21 @@ async function depositLiquidity(suiPrivateKey: string) {
     console.log("DevResult failed.");
     throw new Error(devResult.error);
   } else {
-    console.log(devResult);
     console.log("DevResult success.");
   }
+
+  // Proceed to submit the transaction
+  // const txResult = await sdk.fullClient.signAndExecuteTransaction({
+  //   transaction: tx,
+  //   signer: keypair,
+  // });
+
+  // if (txResult.errors) {
+  //   console.log(txResult.errors);
+  //   throw new Error("Tx Execution failed!");
+  // } else {
+  //   console.log("Transaction executed successfully:", txResult);
+  // }
 }
 
 depositLiquidity(suiPrivateKey);

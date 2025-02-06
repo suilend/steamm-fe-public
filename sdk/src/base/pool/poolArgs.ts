@@ -61,20 +61,6 @@ export interface PoolQuoteRedeemArgs {
   lpTokens: bigint | TransactionArgument;
 }
 
-export interface PoolSetPoolSwapFeesArgs {
-  poolCap: TransactionObjectInput;
-  swapFeeBps: bigint | TransactionArgument;
-}
-
-export interface PoolSetRedemptionFeesArgs {
-  poolCap: TransactionObjectInput;
-  redemptionFeeBps: bigint | TransactionArgument;
-}
-
-export interface CollectRedemptionFeesArgs {
-  poolCap: TransactionObjectInput;
-}
-
 export interface CollectProtocolFeesArgs {
   globalAdmin: TransactionObjectInput;
 }

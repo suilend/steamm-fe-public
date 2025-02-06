@@ -11,8 +11,8 @@ import {
 
 // TODO: Should be generic args
 export interface Quoter {
-  swap(args: CpSwapArgs, tx: Transaction): TransactionResult;
-  quoteSwap(args: CpQuoteSwapArgs, tx: Transaction): TransactionArgument;
+  swap(tx: Transaction, args: CpSwapArgs): TransactionResult;
+  quoteSwap(tx: Transaction, args: CpQuoteSwapArgs): TransactionArgument;
   poolType(): [string];
   quoterTypes(): [string, string, string];
   poolTypes(): [string, string, string, string];

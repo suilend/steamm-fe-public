@@ -7,24 +7,25 @@ import * as version from "./version/structs";
 import * as weight from "./weight/structs";
 import {StructClassLoader} from "../../../_framework/loader";
 
-export function registerClasses(loader: StructClassLoader) { loader.register(version.Version);
-loader.register(storage.Storage);
-loader.register(storage.ValidatorInfo);
-loader.register(fees.FeeConfig);
-loader.register(fees.FeeConfigBuilder);
-loader.register(events.Event);
-loader.register(cell.Cell);
-loader.register(liquidStaking.AdminCap);
-loader.register(liquidStaking.CollectFeesEvent);
-loader.register(liquidStaking.CreateEvent);
-loader.register(liquidStaking.DecreaseValidatorStakeEvent);
-loader.register(liquidStaking.EpochChangedEvent);
-loader.register(liquidStaking.IncreaseValidatorStakeEvent);
-loader.register(liquidStaking.LIQUID_STAKING);
-loader.register(liquidStaking.LiquidStakingInfo);
-loader.register(liquidStaking.MintEvent);
-loader.register(liquidStaking.RedeemEvent);
-loader.register(weight.WEIGHT);
-loader.register(weight.WeightHook);
-loader.register(weight.WeightHookAdminCap);
- }
+export function registerClasses(loader: StructClassLoader) {
+    loader.register(version.Version);
+    loader.register(storage.Storage);
+    loader.register(storage.ValidatorInfo);
+    loader.register(fees.FeeConfig);
+    loader.register(fees.FeeConfigBuilder);
+    loader.register(events.Event);
+    loader.register(cell.Cell);
+    loader.register(liquidStaking.AdminCap);
+    loader.register(liquidStaking.CollectFeesEvent);
+    loader.register(liquidStaking.CreateEvent);
+    loader.register(liquidStaking.DecreaseValidatorStakeEvent);
+    loader.register(liquidStaking.EpochChangedEvent);
+    loader.register(liquidStaking.IncreaseValidatorStakeEvent);
+    loader.register(liquidStaking.LIQUID_STAKING);
+    loader.register(liquidStaking.LiquidStakingInfo);
+    loader.register(liquidStaking.MintEvent);
+    loader.register(liquidStaking.RedeemEvent);
+    loader.register(weight.WEIGHT);
+    loader.register(weight.WeightHook);
+    loader.register(weight.WeightHookAdminCap);
+}

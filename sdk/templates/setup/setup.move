@@ -13,9 +13,6 @@ use suilend::lending_market_registry::{Self as lending, Registry as LendingRegis
 
 public struct LENDING_MARKET has drop {}
 
-// TODO: You are here!!
-// 1. swrite move module - has lending market type, function to setup lending market, banks, amm pool, setups test currencies, deploys liquidity to pool
-
 #[allow(lint(self_transfer, share_owned))]
 public fun setup(
     lending_registry: &mut LendingRegistry,
@@ -37,7 +34,7 @@ public fun setup(
         ctx,
     );
 
-    let (pool, pool_cap) = cpmm::new<B_USDC, B_SUI, LP_USDC_SUI>(
+    let pool = cpmm::new<B_USDC, B_SUI, LP_USDC_SUI>(
         registry,
         100,
         0,
@@ -69,5 +66,4 @@ public fun setup(
     sui::transfer::public_share_object(lending_market);
     sui::transfer::public_share_object(pool);
     sui::transfer::public_transfer(lending_cap, ctx.sender());
-    sui::transfer::public_transfer(pool_cap, ctx.sender());
 }

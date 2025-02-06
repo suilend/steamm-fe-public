@@ -1,7 +1,7 @@
 // These addresses are filled automatically by the test pipeline
-export const LIQUID_STAKING_PKG_ID = "0xe8de321e0e39438a81a0a50c44777f66d02110a2fdceeed7abb9aa66a703fa1e";
-export const WORMHOLE_PKG_ID = "0x3db1d2f3ab730a0becade44620fe499be4564ce30cb9d74377448c91e48c7cc5";
-export const SPRUNGSUI_PKG_ID = "0x163340d7689ab8def79030e924e37ea70eedadb942896068f0cecf1d38b83656";
-export const PYTH_PKG_ID = "0x5031142443530e4a39e8a62dea121e844ba78204def6be9c9ac9e0b421965231";
-export const SUILEND_PKG_ID = "0x5b0f34b1fbcdef6e37138dd97ab8f87957cb95aefaf365038e4c1a9c1c04b84c";
-export const STEAMM_PKG_ID = "0xaf56413cecc85e990c8abfaf0289f10d2b5bc93cbffc650f814234642eb580b1";
+export const LIQUID_STAKING_PKG_ID = "0xd3fc596d52b3852d03418f9020d34819a25895e733dcccb175392dbc1e8500cd";
+export const WORMHOLE_PKG_ID = "0x7dbce7c483802e1d4dc51aa5f59611350f4a6f48e26c687aed03585d74403486";
+export const SPRUNGSUI_PKG_ID = "0x5fb23a8352fa3d241ef93f96bf379b4c3a5718735682e66de41934b3fc99eab7";
+export const PYTH_PKG_ID = "0x1ccea4acb239c335170d0e1e43ee8528577cfda7c565bd7d383316aea3e3698a";
+export const SUILEND_PKG_ID = "0x27112b7fb79915f8a221cc6c572b3555da632abfe90066aa44214ccff320fe6a";
+export const STEAMM_PKG_ID = "0x66c7be5d143caae0720a18ad75518f38ff767e71c290d1c5b8a4b473be785a92";

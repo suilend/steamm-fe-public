@@ -39,3 +39,9 @@ export interface PoolPrepareBankForPendingWithdrawArgs {
 export interface PoolNeedsLendingActionOnSwapArgs {
   quote: TransactionObjectInput;
 }
+
+export interface LendingObjectsArgs {
+  bankA: TransactionObjectInput;
+  bankB: TransactionObjectInput;
+  lendingMarket: TransactionObjectInput;
+}
