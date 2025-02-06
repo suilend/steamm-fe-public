@@ -8,10 +8,10 @@ import { getTestSui, getTestUsdc } from "../../src/test-config/utils";
 
 dotenv.config();
 
-const suiPrivateKey = process.env.PRIVATE_KEY;
+const suiPrivateKey = process.env.MY_PRIVATE_KEY;
 
 if (!suiPrivateKey) {
-  throw new Error("PRIVATE_KEY is missing in the .env file");
+  throw new Error("MY_PRIVATE_KEY is missing in the .env file");
 }
 
 async function swap(suiPrivateKey: string) {

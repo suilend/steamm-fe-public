@@ -8,10 +8,10 @@ import { BETA_CONFIG, STEAMM_BETA_PKG_ID } from "../../src/test-config/mainnet";
 
 dotenv.config();
 
-const suiPrivateKey = process.env.PRIVATE_KEY;
+const suiPrivateKey = process.env.MY_PRIVATE_KEY;
 
 if (!suiPrivateKey) {
-  throw new Error("PRIVATE_KEY is missing in the .env file");
+  throw new Error("MY_PRIVATE_KEY is missing in the .env file");
 }
 
 async function depositLiquidity(suiPrivateKey: string) {
