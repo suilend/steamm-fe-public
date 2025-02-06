@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import Countdown from "@/components/Countdown";
+import { TITLE } from "@/lib/constants";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -20,7 +21,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Steamm</title>
+        <title>{TITLE}</title>
       </Head>
 
       <div className="flex h-dvh w-full flex-col items-center justify-center">
