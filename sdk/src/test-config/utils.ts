@@ -41,7 +41,7 @@ export function getTestUsdc(
     amount,
     faucetId,
     coinType,
-    
+    network
   );
 }
 
