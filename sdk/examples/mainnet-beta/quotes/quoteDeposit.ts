@@ -1,10 +1,10 @@
 import { decodeSuiPrivateKey, ParsedKeypair } from "@mysten/sui/cryptography";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { SteammSDK } from "../../../src";
-import { TESTNET_CONFIG } from "../../../src/test-config/testnet";
+import { BETA_CONFIG } from "../../../src/test-config/mainnet";
 
 async function quoteDeposit(keypair: Ed25519Keypair) {
-  const sdk = new SteammSDK(TESTNET_CONFIG);
+  const sdk = new SteammSDK(BETA_CONFIG);
 
   const pools = await sdk.getPools();
   sdk.senderAddress = keypair.getPublicKey().toSuiAddress();

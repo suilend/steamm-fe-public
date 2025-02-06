@@ -3,8 +3,8 @@ import { decodeSuiPrivateKey, ParsedKeypair } from "@mysten/sui/cryptography";
 import { Transaction } from "@mysten/sui/transactions";
 import dotenv from "dotenv";
 import { SteammSDK } from "../../src";
-import { STEAMM_TESTNET_PKG_ID, TESTNET_CONFIG } from "../../src/test-config/testnet";
 import { getTestSui, getTestUsdc } from "../../src/test-config/utils";
+import { BETA_CONFIG, STEAMM_BETA_PKG_ID } from "../../src/test-config/mainnet";
 
 dotenv.config();
 
@@ -14,29 +14,30 @@ if (!suiPrivateKey) {
   throw new Error("PRIVATE_KEY is missing in the .env file");
 }
 
-async function depositLiquidity(suiPrivateKey: string) {
+async function swap(suiPrivateKey: string) {
   // Create the keypair from the decoded private key
   const decodedKey: ParsedKeypair = decodeSuiPrivateKey(suiPrivateKey);
   const keypair = Ed25519Keypair.fromSecretKey(decodedKey.secretKey);
 
-  const sdk = new SteammSDK(TESTNET_CONFIG);
+  const sdk = new SteammSDK(BETA_CONFIG);
 
   const pools = await sdk.getPools();
   sdk.signer = keypair;
   const tx = new Transaction();
 
-  const suiCoin = getTestSui(tx, 1000000000000000000, "testnet");
-  const usdcCoin = getTestUsdc(tx, 1000000000000000000, "testnet");
+  const suiCoin = getTestSui(tx, 10000000000000, "mainnet");
+  const usdcCoin = getTestUsdc(tx, 0, "mainnet");
 
-  await sdk.Pool.depositLiquidityEntry(tx, {
+  await sdk.Pool.swap(tx, {
       pool: pools[0].poolId,
-      coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
-      coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
-      coinObjA: usdcCoin,
-      coinObjB: suiCoin,
-      maxA: BigInt("1000000000000000000"),
-      maxB: BigInt("1000000000000000000"),
-    },
+      coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
+      coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
+      coinAObj: usdcCoin,
+      coinBObj: suiCoin,
+      a2b: false,
+      amountIn: BigInt("10000000000000"),
+      minAmountOut: BigInt("0"),
+    }
   );
 
   tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
@@ -67,4 +68,4 @@ async function depositLiquidity(suiPrivateKey: string) {
   // }
 }
 
-depositLiquidity(suiPrivateKey);
+swap(suiPrivateKey);

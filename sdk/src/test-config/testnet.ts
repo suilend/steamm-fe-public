@@ -1,12 +1,16 @@
-export const LIQUID_STAKING_TESTNET_PKG_ID =
-  "0x76b7bd30f4384919b894f6da5971d16ae2df50b945cf00607f70649831e9e743";
-export const WORMHOLE_TESTNET_PKG_ID =
-  "0xa9753842dcb5afc2cfb602d1aa6aaf7f08d69bfded745b7640ed62ef6c2aab68";
-export const SPRUNGSUI_TESTNET_PKG_ID =
-  "0x2f9ddca65c955551f3805dfb635c01a743d21537d24fe548dc888117692400c6";
-export const PYTH_TESTNET_PKG_ID =
-  "0x7788d9e8f33cd8722411a5f76d6124adf92ed56af4920d523a0d580cbca204b3";
 export const SUILEND_TESTNET_PKG_ID =
   "0xf8659699b500cb66c7625b9859e796bbdb62777632c6ea900c937bbe0578acd7";
 export const STEAMM_TESTNET_PKG_ID =
   "0x0248d02e356aa2954eeca9ead0bd3df976eda06044a7d29009f31740d612ac8e";
+
+export const TESTNET_CONFIG = {
+  fullRpcUrl: "https://fullnode.testnet.sui.io:443",
+  steamm_config: {
+    package_id: STEAMM_TESTNET_PKG_ID,
+    published_at: STEAMM_TESTNET_PKG_ID,
+  },
+  suilend_config: {
+    package_id: SUILEND_TESTNET_PKG_ID,
+    published_at: SUILEND_TESTNET_PKG_ID,
+  },
+};

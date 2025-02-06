@@ -3,7 +3,7 @@ import { decodeSuiPrivateKey, ParsedKeypair } from "@mysten/sui/cryptography";
 import { Transaction } from "@mysten/sui/transactions";
 import dotenv from "dotenv";
 import { SteammSDK } from "../../src";
-import { STEAMM_TESTNET_PKG_ID, SUILEND_TESTNET_PKG_ID } from "../../src/test-config/testnet";
+import { STEAMM_TESTNET_PKG_ID, TESTNET_CONFIG } from "../../src/test-config/testnet";
 import { getTestSui, getTestUsdc } from "../../src/test-config/utils";
 
 dotenv.config();
@@ -19,24 +19,14 @@ async function swap(suiPrivateKey: string) {
   const decodedKey: ParsedKeypair = decodeSuiPrivateKey(suiPrivateKey);
   const keypair = Ed25519Keypair.fromSecretKey(decodedKey.secretKey);
 
-  const sdk = new SteammSDK({
-    fullRpcUrl: "https://fullnode.testnet.sui.io:443",
-    steamm_config: {
-      package_id: STEAMM_TESTNET_PKG_ID,
-      published_at: STEAMM_TESTNET_PKG_ID,
-    },
-    suilend_config: {
-      package_id: SUILEND_TESTNET_PKG_ID,
-      published_at: SUILEND_TESTNET_PKG_ID,
-    },
-  });
+  const sdk = new SteammSDK(TESTNET_CONFIG);
 
   const pools = await sdk.getPools();
   sdk.signer = keypair;
   const tx = new Transaction();
 
-  const suiCoin = getTestSui(tx, 10000000000000);
-  const usdcCoin = getTestUsdc(tx, 0);
+  const suiCoin = getTestSui(tx, 10000000000000, "testnet");
+  const usdcCoin = getTestUsdc(tx, 0, "testnet");
 
   await sdk.Pool.swap(tx, {
       pool: pools[0].poolId,
