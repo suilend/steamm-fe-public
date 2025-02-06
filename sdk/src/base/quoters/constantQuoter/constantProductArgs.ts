@@ -13,15 +13,3 @@ export type CpNewArgs = PoolNewArgs & {
 };
 export type CpSwapArgs = PoolSwapBaseArgs & {};
 export type CpQuoteSwapArgs = PoolQuoteSwapBaseArgs & {};
-
-export interface SwapQuote {
-  amountIn: bigint;
-  amountOut: bigint;
-  outputFees: SwapFee;
-  a2b: boolean;
-}
-
-export interface SwapFee {
-  protocolFees: bigint;
-  poolFees: bigint;
-}

@@ -1,7 +1,8 @@
-import { SteammSDK } from "../src/sdk";
-import { STEAMM_TESTNET_PKG_ID, SUILEND_TESTNET_PKG_ID } from "../src/testnet/testnet";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import { SteammSDK } from "../../../src";
+import { STEAMM_TESTNET_PKG_ID, SUILEND_TESTNET_PKG_ID } from "../../../src/test-config/testnet";
 
-async function quoteSwap() {
+async function quoteSwap(keypair: Ed25519Keypair) {
   const sdk = new SteammSDK({
     fullRpcUrl: "https://fullnode.testnet.sui.io:443",
     steamm_config: {
@@ -13,6 +14,8 @@ async function quoteSwap() {
       published_at: SUILEND_TESTNET_PKG_ID,
     },
   });
+
+  sdk.senderAddress = keypair.getPublicKey().toSuiAddress();
 
   const pools = await sdk.getPools();
 
@@ -26,4 +29,4 @@ async function quoteSwap() {
   console.log(quote);
 }
 
-quoteSwap();
+quoteSwap(new Ed25519Keypair());

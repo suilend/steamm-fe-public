@@ -3,7 +3,7 @@ import {
   TransactionArgument,
 } from "@mysten/sui/dist/cjs/transactions";
 import { normalizeSuiObjectId } from "@mysten/sui/utils";
-import { TEST_FAUCET_PKG_ID } from "./testnet/testnet";
+import { TEST_FAUCET_PKG_ID } from "./test-config/testnet";
 
 export interface PoolTypes<A, B, Quoter, W, P> {
   aType: A;

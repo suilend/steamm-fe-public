@@ -1,10 +1,10 @@
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { decodeSuiPrivateKey, ParsedKeypair } from "@mysten/sui/cryptography";
-import { SteammSDK } from "../src/sdk";
 import { Transaction } from "@mysten/sui/transactions";
 import dotenv from "dotenv";
-import { STEAMM_TESTNET_PKG_ID, SUILEND_TESTNET_PKG_ID } from "../src/testnet/testnet";
-import { getTestSui, getTestUsdc } from "../src/testnet/utils";
+import { SteammSDK } from "../../src";
+import { STEAMM_TESTNET_PKG_ID, SUILEND_TESTNET_PKG_ID } from "../../src/test-config/testnet";
+import { getTestSui, getTestUsdc } from "../../src/test-config/utils";
 
 dotenv.config();
 
@@ -35,23 +35,6 @@ async function swap(suiPrivateKey: string) {
   sdk.signer = keypair;
   const tx = new Transaction();
 
-  const suiCoinLiq = getTestSui(tx, 1000000000000000000);
-  const usdcCoinLiq = getTestUsdc(tx, 1000000000000000000);
-
-  await sdk.Pool.depositLiquidityEntry(tx,
-    {
-      pool: pools[0].poolId,
-      coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
-      coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
-      coinObjA: getTestUsdc(tx, 1000000000000000000),
-      coinObjB: getTestSui(tx, 1000000000000000000),
-      maxA: BigInt("1000000000000000000"),
-      maxB: BigInt("1000000000000000000"),
-    }
-  );
-
-  tx.transferObjects([suiCoinLiq, usdcCoinLiq], sdk.senderAddress);
-
   const suiCoin = getTestSui(tx, 10000000000000);
   const usdcCoin = getTestUsdc(tx, 0);
 
@@ -78,9 +61,21 @@ async function swap(suiPrivateKey: string) {
     console.log("DevResult failed.");
     throw new Error(devResult.error);
   } else {
-    console.log(devResult);
     console.log("DevResult success.");
   }
+
+  // Proceed to submit the transaction
+  // const txResult = await sdk.fullClient.signAndExecuteTransaction({
+  //   transaction: tx,
+  //   signer: keypair,
+  // });
+
+  // if (txResult.errors) {
+  //   console.log(txResult.errors);
+  //   throw new Error("Tx Execution failed!");
+  // } else {
+  //   console.log("Transaction executed successfully:", txResult);
+  // }
 }
 
 swap(suiPrivateKey);

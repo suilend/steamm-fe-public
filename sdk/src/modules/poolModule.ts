@@ -6,10 +6,10 @@ import {
 } from "@mysten/sui/transactions";
 import { SteammSDK } from "../sdk";
 import { IModule } from "../interfaces/IModule";
-import { DepositQuote, RedeemQuote } from "../base/pool/poolTypes";
+import { castDepositQuote, castRedeemQuote, castSwapQuote, DepositQuote, RedeemQuote } from "../base/pool/poolTypes";
 import { SuiTypeName } from "../utils";
 import { SuiAddressType } from "../utils";
-import { BankInfo, PoolInfo } from "../types";
+import { BankInfo, BankList, PoolInfo } from "../types";
 import { Bank, Pool, PoolScript, SwapQuote } from "../base";
 
 /**
@@ -139,8 +139,8 @@ export class PoolModule implements IModule {
     const bankList = await this.sdk.getBanks();
 
     const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankInfoA = bankList[poolInfo.coinTypeA];
-    const bankInfoB = bankList[poolInfo.coinTypeB];
+    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
+    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
 
     const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -149,7 +149,7 @@ export class PoolModule implements IModule {
       amountIn: args.amountIn,
     });
 
-    return await this.getQuoteResult<SwapQuote>(tx, quote, "SwapQuote");
+    return castSwapQuote(await this.getQuoteResult<SwapQuote>(tx, quote, "SwapQuote"));
   }
 
   public async quoteDeposit(args: QuoteDepositArgs): Promise<DepositQuote> {
@@ -158,8 +158,8 @@ export class PoolModule implements IModule {
     const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
     
     const bankList = await this.sdk.getBanks();
-    const bankInfoA = bankList[poolInfo.coinTypeA];
-    const bankInfoB = bankList[poolInfo.coinTypeB];
+    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
+    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
 
     const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -169,7 +169,7 @@ export class PoolModule implements IModule {
       },
     );
 
-    return await this.getQuoteResult<DepositQuote>(tx, quote, "DepositQuote");
+    return castDepositQuote(await this.getQuoteResult<DepositQuote>(tx, quote, "DepositQuote"));
   }
 
   public async quoteRedeem(args: PoolQuoteRedeemArgs): Promise<RedeemQuote> {
@@ -177,8 +177,8 @@ export class PoolModule implements IModule {
     const pools = await this.sdk.getPools();
     const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
     const bankList = await this.sdk.getBanks();
-    const bankInfoA = bankList[poolInfo.coinTypeA];
-    const bankInfoB = bankList[poolInfo.coinTypeB];
+    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
+    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
 
     const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -187,7 +187,7 @@ export class PoolModule implements IModule {
       },
     );
 
-    return await this.getQuoteResult<RedeemQuote>(tx, quote, "RedeemQuote");
+    return castRedeemQuote(await this.getQuoteResult<RedeemQuote>(tx, quote, "RedeemQuote"));
   }
 
   private async getQuoteResult<T>(
@@ -197,12 +197,6 @@ export class PoolModule implements IModule {
   ): Promise<T> {
     const pkgAddy = this.sdk.sdkOptions.steamm_config.package_id;
 
-    tx.moveCall({
-      target: `0x2::event::emit`,
-      typeArguments: [`${pkgAddy}::quote::${quoteType}`],
-      arguments: [quote],
-    });
-
     const inspectResults = await this.sdk.fullClient.devInspectTransactionBlock(
       {
         sender: this.sdk.senderAddress,
@@ -210,11 +204,12 @@ export class PoolModule implements IModule {
       }
     );
 
+    // console.log(inspectResults)
     if (inspectResults.error) {
       throw new Error("DevInspect Failed");
     }
 
-    const quoteResult = inspectResults.events[0].parsedJson as T;
+    const quoteResult = (inspectResults.events[0].parsedJson as any).event as T;
     return quoteResult;
   }
 
@@ -228,6 +223,16 @@ export class PoolModule implements IModule {
 
   private getBank(bankInfo: BankInfo): Bank {
     return new Bank(this.sdk.sdkOptions.steamm_config.package_id, bankInfo);
+  }
+
+  private getBankInfoByBToken(bankList: BankList, btokenType: string) {
+    const bankInfo = Object.values(bankList).find(bank => bank.btokenType === btokenType);
+    
+    if (!bankInfo) {
+      throw new Error(`Bank info not found for btokenType: ${btokenType}`);
+    }
+  
+    return bankInfo;
   }
 
   // TODO

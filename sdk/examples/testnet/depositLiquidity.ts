@@ -1,10 +1,10 @@
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { decodeSuiPrivateKey, ParsedKeypair } from "@mysten/sui/cryptography";
-import { SteammSDK } from "../src/sdk";
 import { Transaction } from "@mysten/sui/transactions";
 import dotenv from "dotenv";
-import { STEAMM_TESTNET_PKG_ID, SUILEND_TESTNET_PKG_ID } from "../src/testnet/testnet";
-import { getTestSui, getTestUsdc } from "../src/testnet/utils";
+import { SteammSDK } from "../../src";
+import { STEAMM_TESTNET_PKG_ID, SUILEND_TESTNET_PKG_ID } from "../../src/test-config/testnet";
+import { getTestSui, getTestUsdc } from "../../src/test-config/utils";
 
 dotenv.config();
 
@@ -14,7 +14,7 @@ if (!suiPrivateKey) {
   throw new Error("PRIVATE_KEY is missing in the .env file");
 }
 
-async function redeemLiquidity(suiPrivateKey: string) {
+async function depositLiquidity(suiPrivateKey: string) {
   // Create the keypair from the decoded private key
   const decodedKey: ParsedKeypair = decodeSuiPrivateKey(suiPrivateKey);
   const keypair = Ed25519Keypair.fromSecretKey(decodedKey.secretKey);
@@ -38,27 +38,15 @@ async function redeemLiquidity(suiPrivateKey: string) {
   const suiCoin = getTestSui(tx, 1000000000000000000);
   const usdcCoin = getTestUsdc(tx, 1000000000000000000);
 
-  const [lpToken, _depositResult] =
-    await sdk.Pool.depositLiquidity(tx, 
-      {
-        pool: pools[0].poolId,
-        coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
-        coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
-        coinObjA: usdcCoin,
-        coinObjB: suiCoin,
-        maxA: BigInt("1000000000000000000"),
-        maxB: BigInt("1000000000000000000"),
-      }
-    );
-
-  await sdk.Pool.redeemLiquidityEntry(tx, {
+  await sdk.Pool.depositLiquidityEntry(tx, {
       pool: pools[0].poolId,
       coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
       coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
-      lpCoinObj: lpToken,
-      minA: BigInt("0"),
-      minB: BigInt("0"),
-    }
+      coinObjA: usdcCoin,
+      coinObjB: suiCoin,
+      maxA: BigInt("1000000000000000000"),
+      maxB: BigInt("1000000000000000000"),
+    },
   );
 
   tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
@@ -72,9 +60,21 @@ async function redeemLiquidity(suiPrivateKey: string) {
     console.log("DevResult failed.");
     throw new Error(devResult.error);
   } else {
-    console.log(devResult);
     console.log("DevResult success.");
   }
+
+  // Proceed to submit the transaction
+  // const txResult = await sdk.fullClient.signAndExecuteTransaction({
+  //   transaction: tx,
+  //   signer: keypair,
+  // });
+
+  // if (txResult.errors) {
+  //   console.log(txResult.errors);
+  //   throw new Error("Tx Execution failed!");
+  // } else {
+  //   console.log("Transaction executed successfully:", txResult);
+  // }
 }
 
-redeemLiquidity(suiPrivateKey);
+depositLiquidity(suiPrivateKey);
