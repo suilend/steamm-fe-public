@@ -4,6 +4,10 @@ import {
   TransactionResult,
 } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
+
+import { BankFunctions } from "../..";
+import { BankInfo } from "../../types";
+
 import {
   BurnBTokensArgs,
   CTokenAmountArgs,
@@ -12,8 +16,6 @@ import {
   MintBTokensArgs,
   SetBankUtilisationBpsArgs,
 } from "./bankArgs";
-import { BankFunctions } from "../..";
-import { BankInfo } from "../../types";
 
 export * from "./bankArgs";
 export * from "./bankMath";
@@ -43,7 +45,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
     return coinA;
   }
@@ -64,7 +66,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
     return coinA;
   }
@@ -108,7 +110,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -127,7 +129,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -161,7 +163,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -178,7 +180,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -189,7 +191,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -200,7 +202,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -211,7 +213,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -222,7 +224,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -233,7 +235,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -244,7 +246,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId
+      this.packageId,
     );
   }
   public typeArgs(): [string, string, string] {

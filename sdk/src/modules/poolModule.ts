@@ -193,7 +193,7 @@ export class PoolModule implements IModule {
   private async getQuoteResult<T>(
     tx: Transaction,
     quote: TransactionArgument,
-    quoteType: string
+    quoteType: string,
   ): Promise<T> {
     const pkgAddy = this.sdk.sdkOptions.steamm_config.package_id;
 
@@ -201,7 +201,7 @@ export class PoolModule implements IModule {
       {
         sender: this.sdk.senderAddress,
         transactionBlock: tx,
-      }
+      },
     );
 
     // console.log(inspectResults)

@@ -3,6 +3,12 @@ import {
   TransactionArgument,
   TransactionResult,
 } from "@mysten/sui/transactions";
+
+import { PoolFunctions } from "../..";
+import { PoolInfo } from "../../types";
+import { ConstantProductQuoter } from "../quoters/constantQuoter";
+import { Quoter } from "../quoters/quoter";
+
 import {
   CollectProtocolFeesArgs,
   MigrateArgs,
@@ -12,10 +18,6 @@ import {
   PoolSwapArgs,
   QuoteDepositArgs,
 } from "./poolArgs";
-import { PoolFunctions } from "../..";
-import { PoolInfo } from "../../types";
-import { Quoter } from "../quoters/quoter";
-import { ConstantProductQuoter } from "../quoters/constantQuoter";
 
 export * from "./poolArgs";
 export * from "./poolTypes";
@@ -65,7 +67,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
     return [lpCoin, depositResult];
   }
@@ -85,7 +87,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
     return [coinA, coinB, redeemResult];
   }
@@ -104,7 +106,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
     return quote;
   }
@@ -122,7 +124,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
     return quote;
   }
@@ -140,7 +142,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
 
     return [coinA, coinB];
@@ -159,7 +161,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
 
     return [coinA, coinB];
@@ -183,7 +185,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -194,7 +196,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -205,7 +207,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -216,7 +218,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -227,7 +229,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -238,7 +240,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -249,7 +251,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -258,7 +260,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -394,7 +396,7 @@ export class Pool {
     return PoolFunctions.depositResultDepositA(
       tx,
       depositResult,
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -405,7 +407,7 @@ export class Pool {
     return PoolFunctions.depositResultDepositB(
       tx,
       depositResult,
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -437,7 +439,7 @@ export class Pool {
     return PoolFunctions.redeemResultWithdrawA(
       tx,
       redeemResult,
-      this.packageId
+      this.packageId,
     );
   }
 
@@ -448,7 +450,7 @@ export class Pool {
     return PoolFunctions.redeemResultWithdrawB(
       tx,
       redeemResult,
-      this.packageId
+      this.packageId,
     );
   }
 
