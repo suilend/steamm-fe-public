@@ -20,7 +20,7 @@ export default function Layout({ children }: PropsWithChildren) {
           <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
       ) : process.env.NEXT_PUBLIC_ENVIRONMENT === "production" ? (
-        <div className="flex w-max flex-col items-center gap-6">
+        <div className="fixed inset-0 flex flex-col items-center justify-center gap-6">
           <Image
             src={`${ASSETS_URL}/STEAMM.svg`}
             alt="STEAMM logo"
