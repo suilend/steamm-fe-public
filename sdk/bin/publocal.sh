@@ -46,6 +46,7 @@ cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/Wormhole/* tem
 cp -r temp/git/contracts/steamm/sources/* temp/steamm/sources/
 
 cp -r templates/setup temp/steamm/sources/
+cp -r templates/suilend_setup temp/suilend/sources/
 
 # Copy Move.toml files from templates
 cp templates/liquid_staking.toml temp/liquid_staking/Move.toml
@@ -173,6 +174,36 @@ find_object_id() {
     fi
 }
 
+source_test_fun() {
+    local module="$1"
+    local move_module="$2"
+    local function_name="$3"
+    local file_path="temp/${module}/sources/${move_module}.move"
+
+    # Check if file exists
+    if [ ! -f "$file_path" ]; then
+        echo "Error: File $file_path does not exist"
+        return 1
+    fi
+
+    # Find the line number of the function
+    line_num=$(grep -n "$function_name" "$file_path" | cut -d: -f1)
+    if [ -n "$line_num" ]; then
+        # Delete the line before it (subtract 1 from line number)
+        remove_line=$((line_num - 1))
+        sed -i '' "${remove_line}d" "$file_path"
+    else
+        echo "Function not found in file"
+        return 1
+    fi
+}
+
+
+## Source test functions
+source_test_fun "pyth" "price_info" "new_price_info_object_for_testing"
+source_test_fun "pyth" "price_info" "update_price_info_object_for_testing"
+
+
 sui client --client.config sui/client.yaml faucet
 sleep 1
 
@@ -184,7 +215,6 @@ SPRUNGSUI_RESPONSE=$(publish_package "temp/sprungsui" "SPRUNGSUI_PKG_ID")
 PYTH_RESPONSE=$(publish_package "temp/pyth" "PYTH_PKG_ID")
 SUILEND_RESPONSE=$(publish_package "temp/suilend" "SUILEND_PKG_ID")
 STEAMM_RESPONSE=$(publish_package "temp/steamm" "STEAMM_PKG_ID")
-
 
 # Get relevant object IDs
 lending_market_registry=$(find_object_id "$SUILEND_RESPONSE" ".*::lending_market_registry::Registry")
