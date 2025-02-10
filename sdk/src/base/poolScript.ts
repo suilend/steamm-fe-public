@@ -4,7 +4,7 @@ import {
   Transaction,
   TransactionArgument,
   TransactionResult,
-} from "@mysten/sui/dist/cjs/transactions";
+} from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
 import { PoolScriptFunctions } from "../_codegen";
