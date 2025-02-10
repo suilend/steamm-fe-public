@@ -7,7 +7,6 @@ export const STEAMM_BETA_PKG_ID =
 export const STEAMM_BETA_PUBLISHED_AT =
   "0x2e868e44010e06c0fc925d29f35029b6ef75a50e03d997585980fb2acea45ec6";
 
-
 export const STEAMM_BETA_CONFIG = {
   package_id: STEAMM_BETA_PKG_ID,
   published_at: STEAMM_BETA_PUBLISHED_AT,

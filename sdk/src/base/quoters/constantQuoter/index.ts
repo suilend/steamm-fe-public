@@ -22,10 +22,7 @@ export class ConstantProductQuoter implements Quoter {
     this.poolInfo = poolInfo;
   }
 
-  public swap(
-    tx: Transaction,
-    args: CpSwapArgs,
-  ): TransactionResult {
+  public swap(tx: Transaction, args: CpSwapArgs): TransactionResult {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
       coinA: args.coinA,

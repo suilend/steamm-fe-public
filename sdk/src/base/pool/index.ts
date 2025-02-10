@@ -178,9 +178,7 @@ export class Pool {
 
   // Getter functions
 
-  public viewBalanceAmounts(
-    tx: Transaction,
-  ): TransactionArgument {
+  public viewBalanceAmounts(tx: Transaction): TransactionArgument {
     return PoolFunctions.balanceAmounts(
       tx,
       this.poolTypes(),
@@ -189,9 +187,7 @@ export class Pool {
     );
   }
 
-  public viewBalanceAmountA(
-    tx: Transaction,
-  ): TransactionArgument {
+  public viewBalanceAmountA(tx: Transaction): TransactionArgument {
     return PoolFunctions.balanceAmountA(
       tx,
       this.poolTypes(),
@@ -200,9 +196,7 @@ export class Pool {
     );
   }
 
-  public viewBalanceAmountB(
-    tx: Transaction,
-  ): TransactionArgument {
+  public viewBalanceAmountB(tx: Transaction): TransactionArgument {
     return PoolFunctions.balanceAmountB(
       tx,
       this.poolTypes(),
@@ -211,9 +205,7 @@ export class Pool {
     );
   }
 
-  public viewProtocolFees(
-    tx: Transaction,
-  ): TransactionArgument {
+  public viewProtocolFees(tx: Transaction): TransactionArgument {
     return PoolFunctions.protocolFees(
       tx,
       this.poolTypes(),
@@ -222,9 +214,7 @@ export class Pool {
     );
   }
 
-  public viewPoolFeeConfig(
-    tx: Transaction,
-  ): TransactionArgument {
+  public viewPoolFeeConfig(tx: Transaction): TransactionArgument {
     return PoolFunctions.poolFeeConfig(
       tx,
       this.poolTypes(),
@@ -233,9 +223,7 @@ export class Pool {
     );
   }
 
-  public viewLpSupplyVal(
-    tx: Transaction,
-  ): TransactionArgument {
+  public viewLpSupplyVal(tx: Transaction): TransactionArgument {
     return PoolFunctions.lpSupplyVal(
       tx,
       this.poolTypes(),
@@ -244,9 +232,7 @@ export class Pool {
     );
   }
 
-  public viewTradingData(
-    tx: Transaction,
-  ): TransactionArgument {
+  public viewTradingData(tx: Transaction): TransactionArgument {
     return PoolFunctions.tradingData(
       tx,
       this.poolTypes(),
@@ -320,9 +306,7 @@ export class Pool {
     return PoolFunctions.poolFeesB(tx, tradeData, this.packageId);
   }
 
-  public viewMinimumLiquidity(
-    tx: Transaction,
-  ): TransactionArgument {
+  public viewMinimumLiquidity(tx: Transaction): TransactionArgument {
     return PoolFunctions.minimumLiquidity(tx, this.packageId);
   }
 

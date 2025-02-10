@@ -4,13 +4,20 @@ import {
   TransactionObjectInput,
   TransactionResult,
 } from "@mysten/sui/transactions";
-import { SteammSDK } from "../sdk";
+
+import { Bank, Pool, PoolScript, SwapQuote } from "../base";
+import {
+  DepositQuote,
+  RedeemQuote,
+  castDepositQuote,
+  castRedeemQuote,
+  castSwapQuote,
+} from "../base/pool/poolTypes";
 import { IModule } from "../interfaces/IModule";
-import { castDepositQuote, castRedeemQuote, castSwapQuote, DepositQuote, RedeemQuote } from "../base/pool/poolTypes";
+import { SteammSDK } from "../sdk";
+import { BankInfo, BankList, PoolInfo } from "../types";
 import { SuiTypeName } from "../utils";
 import { SuiAddressType } from "../utils";
-import { BankInfo, BankList, PoolInfo } from "../types";
-import { Bank, Pool, PoolScript, SwapQuote } from "../base";
 
 /**
  * Helper class to help interact with pools.
@@ -30,8 +37,7 @@ export class PoolModule implements IModule {
     tx: Transaction,
     args: PoolDepositLiquidityArgs,
   ) {
-    const [lpToken, _depositResult] =
-      await this.depositLiquidity(tx, args);
+    const [lpToken, _depositResult] = await this.depositLiquidity(tx, args);
 
     tx.transferObjects([lpToken], this.sdk.senderAddress);
   }
@@ -39,12 +45,7 @@ export class PoolModule implements IModule {
   public async depositLiquidity(
     tx: Transaction,
     args: PoolDepositLiquidityArgs,
-  ): Promise<
-    [
-      TransactionArgument,
-      TransactionArgument
-    ]
-  > {
+  ): Promise<[TransactionArgument, TransactionArgument]> {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
 
@@ -53,7 +54,7 @@ export class PoolModule implements IModule {
     const bankInfoB = bankList[args.coinTypeB];
 
     const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
-    
+
     const [lpToken, depositResult] = poolScript.depositLiquidity(tx, {
       coinA: tx.object(args.coinObjA),
       coinB: tx.object(args.coinObjB),
@@ -68,26 +69,16 @@ export class PoolModule implements IModule {
     tx: Transaction,
     args: PoolRedeemLiquidityArgs,
   ) {
-    const [coinA, coinB, _redeemResult] =
-      await this.redeemLiquidity(tx, args);
+    const [coinA, coinB, _redeemResult] = await this.redeemLiquidity(tx, args);
 
     // TODO: destroy or transfer btokens
-    tx.transferObjects(
-      [coinA, coinB],
-      this.sdk.senderAddress
-    );
+    tx.transferObjects([coinA, coinB], this.sdk.senderAddress);
   }
 
   public async redeemLiquidity(
     tx: Transaction,
     args: PoolRedeemLiquidityArgs,
-  ): Promise<
-    [
-      TransactionArgument,
-      TransactionArgument,
-      TransactionArgument
-    ]
-  > {
+  ): Promise<[TransactionArgument, TransactionArgument, TransactionArgument]> {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
 
@@ -102,7 +93,6 @@ export class PoolModule implements IModule {
       minA: args.minA,
       minB: args.minB,
     });
-
 
     return [coinA, coinB, redeemResult];
   }
@@ -130,10 +120,8 @@ export class PoolModule implements IModule {
 
     return swapResult;
   }
-  
-  public async quoteSwap(
-    args: QuoteSwapArgs,
-  ): Promise<SwapQuote> {
+
+  public async quoteSwap(args: QuoteSwapArgs): Promise<SwapQuote> {
     const tx = new Transaction();
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
@@ -149,14 +137,16 @@ export class PoolModule implements IModule {
       amountIn: args.amountIn,
     });
 
-    return castSwapQuote(await this.getQuoteResult<SwapQuote>(tx, quote, "SwapQuote"));
+    return castSwapQuote(
+      await this.getQuoteResult<SwapQuote>(tx, quote, "SwapQuote"),
+    );
   }
 
   public async quoteDeposit(args: QuoteDepositArgs): Promise<DepositQuote> {
     const tx = new Transaction();
     const pools = await this.sdk.getPools();
     const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    
+
     const bankList = await this.sdk.getBanks();
     const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
     const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
@@ -164,12 +154,13 @@ export class PoolModule implements IModule {
     const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
     const quote = poolScript.quoteDeposit(tx, {
-        maxA: args.maxA,
-        maxB: args.maxB,
-      },
-    );
+      maxA: args.maxA,
+      maxB: args.maxB,
+    });
 
-    return castDepositQuote(await this.getQuoteResult<DepositQuote>(tx, quote, "DepositQuote"));
+    return castDepositQuote(
+      await this.getQuoteResult<DepositQuote>(tx, quote, "DepositQuote"),
+    );
   }
 
   public async quoteRedeem(args: PoolQuoteRedeemArgs): Promise<RedeemQuote> {
@@ -183,11 +174,12 @@ export class PoolModule implements IModule {
     const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
     const quote = poolScript.quoteRedeem(tx, {
-        lpTokens: args.lpTokens,
-      },
-    );
+      lpTokens: args.lpTokens,
+    });
 
-    return castRedeemQuote(await this.getQuoteResult<RedeemQuote>(tx, quote, "RedeemQuote"));
+    return castRedeemQuote(
+      await this.getQuoteResult<RedeemQuote>(tx, quote, "RedeemQuote"),
+    );
   }
 
   private async getQuoteResult<T>(
@@ -216,9 +208,18 @@ export class PoolModule implements IModule {
   private getPool(poolInfo: PoolInfo): Pool {
     return new Pool(this.sdk.sdkOptions.steamm_config.package_id, poolInfo);
   }
-  
-  private getPoolScript(poolInfo: PoolInfo, bankInfoA: BankInfo, bankInfoB: BankInfo): PoolScript {
-    return new PoolScript(this.sdk.sdkOptions.steamm_config.package_id, poolInfo, bankInfoA, bankInfoB);
+
+  private getPoolScript(
+    poolInfo: PoolInfo,
+    bankInfoA: BankInfo,
+    bankInfoB: BankInfo,
+  ): PoolScript {
+    return new PoolScript(
+      this.sdk.sdkOptions.steamm_config.package_id,
+      poolInfo,
+      bankInfoA,
+      bankInfoB,
+    );
   }
 
   private getBank(bankInfo: BankInfo): Bank {
@@ -226,12 +227,14 @@ export class PoolModule implements IModule {
   }
 
   private getBankInfoByBToken(bankList: BankList, btokenType: string) {
-    const bankInfo = Object.values(bankList).find(bank => bank.btokenType === btokenType);
-    
+    const bankInfo = Object.values(bankList).find(
+      (bank) => bank.btokenType === btokenType,
+    );
+
     if (!bankInfo) {
       throw new Error(`Bank info not found for btokenType: ${btokenType}`);
     }
-  
+
     return bankInfo;
   }
 
