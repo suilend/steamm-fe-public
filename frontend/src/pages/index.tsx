@@ -1,10 +1,11 @@
 import Head from "next/head";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { Loader2 } from "lucide-react";
 
 import Countdown from "@/components/Countdown";
-import { TITLE } from "@/lib/constants";
+import { ASSETS_URL, TITLE } from "@/lib/constants";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -28,7 +29,17 @@ export default function Home() {
         {isLoading ? (
           <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         ) : (
-          <Countdown />
+          <div className="flex w-max flex-col items-center gap-6">
+            <Image
+              src={`${ASSETS_URL}/STEAMM.svg?`}
+              alt="STEAMM logo"
+              width={64}
+              height={64}
+              quality={100}
+            />
+
+            <Countdown />
+          </div>
         )}
       </div>
     </>
