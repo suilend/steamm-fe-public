@@ -87,45 +87,47 @@ export default function Pools() {
         <title>STEAMM | Pools</title>
       </Head>
 
-      <div className="flex w-full flex-col gap-8">
-        <h1 className="text-h1 text-foreground">Pools</h1>
+      <div className="flex w-full flex-col gap-6 md:gap-8">
+        <div className="flex flex-col gap-4 md:gap-8">
+          <h1 className="text-h1 text-foreground">Pools</h1>
 
-        {/* Charts */}
-        <div className="flex w-full flex-col rounded-md border md:flex-row md:items-stretch">
-          {/* TVL chart */}
-          <div className="flex-1">
-            <div className="w-full p-5">
-              <BarChartStat
-                title="TVL"
-                periodDays={30}
-                periodChangePercent={new BigNumber(-4.92)}
-                data={tvlData}
-              />
+          {/* Stats */}
+          <div className="flex w-full flex-col rounded-md border md:flex-row md:items-stretch">
+            {/* TVL */}
+            <div className="flex-1">
+              <div className="w-full p-5">
+                <BarChartStat
+                  title="TVL"
+                  periodDays={30}
+                  periodChangePercent={new BigNumber(-4.92)}
+                  data={tvlData}
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="h-px w-full bg-border md:h-auto md:w-px" />
+            <div className="h-px w-full bg-border md:h-auto md:w-px" />
 
-          {/* Volume chart */}
-          <div className="flex-1">
-            <div className="w-full p-5">
-              <BarChartStat
-                title="Volume"
-                periodDays={1}
-                periodChangePercent={new BigNumber(2.51)}
-                data={volumeData}
-              />
+            {/* Volume */}
+            <div className="flex-1">
+              <div className="w-full p-5">
+                <BarChartStat
+                  title="Volume"
+                  periodDays={1}
+                  periodChangePercent={new BigNumber(2.51)}
+                  data={volumeData}
+                />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Featured pools */}
-        <div className="flex w-full flex-col gap-6">
+        <div className="flex w-full flex-col gap-3 md:gap-6">
           <h2 className="text-h3 text-foreground">Featured pools</h2>
         </div>
 
         {/* All pools */}
-        <div className="flex w-full flex-col gap-6">
+        <div className="flex w-full flex-col gap-3 md:gap-6">
           <div className="flex flex-row items-center gap-3">
             <h2 className="text-h3 text-foreground">All pools</h2>
             <Tag>{appData.pools.length}</Tag>
