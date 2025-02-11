@@ -181,6 +181,10 @@ export default function BarChartStat({
             processedData.map((d, dIndex) => (
               <div key={d.timestampS} className="flex-1">
                 <Tooltip
+                  rootProps={{
+                    delayDuration: 0,
+                    disableHoverableContent: true,
+                  }}
                   content={
                     <div className="flex flex-col-reverse gap-1">
                       {sortedCategories.map((category, categoryIndex) => (
