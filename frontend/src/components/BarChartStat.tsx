@@ -152,7 +152,7 @@ export default function BarChartStat({
 
         {/* Top right */}
         {data !== undefined && (
-          <div className="flex flex-row gap-3">
+          <div className="flex flex-row flex-wrap justify-end gap-x-3 gap-y-1">
             {sortedCategories.map((category, categoryIndex) => (
               <div
                 key={category}
@@ -174,11 +174,11 @@ export default function BarChartStat({
       {/* Bottom */}
       <div className="flex w-full flex-col gap-3">
         {/* Chart */}
-        <div className="flex h-[200px] w-full transform-gpu flex-row items-stretch">
+        <div className="flex h-[120px] w-full transform-gpu flex-row items-stretch md:h-[200px]">
           {data === undefined ? (
             <Skeleton className="h-full w-full" />
           ) : (
-            processedData.map((d, dIndex) => (
+            processedData.map((d) => (
               <div key={d.timestampS} className="flex-1">
                 <Tooltip
                   rootProps={{
@@ -209,24 +209,18 @@ export default function BarChartStat({
                     </div>
                   }
                 >
-                  <div
-                    className={cn(
-                      "group relative flex h-full w-full flex-col-reverse gap-[2px]",
-                      dIndex !== 0 && "pl-[3px]",
-                      dIndex !== processedData.length - 1 && "pr-[3px]",
-                    )}
-                  >
-                    <div className="absolute inset-y-0 left-1/2 z-[1] w-px -translate-x-1/2 bg-border opacity-0 group-hover:opacity-100" />
+                  <div className="group flex h-full w-full flex-col-reverse items-center gap-[2px] px-0.5 md:px-[3px]">
                     {sortedCategories.map((category, categoryIndex) => (
                       <div
                         key={category}
-                        className="relative z-[1] w-full shrink-0 rounded-[2px] outline outline-2 outline-background"
+                        className="w-full shrink-0 rounded-[2px]"
                         style={{
                           backgroundColor: `hsl(var(--a${5 - categoryIndex}))`,
                           height: `calc((100% - ${(5 - 1) * 2}px) * ${d[category] / maxY})`,
                         }}
                       />
                     ))}
+                    <div className="w-px flex-1 bg-border opacity-0 group-hover:opacity-100" />
                   </div>
                 </Tooltip>
               </div>

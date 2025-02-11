@@ -14,7 +14,12 @@ export default function Layout({ children }: PropsWithChildren) {
   const { appData } = useAppContext();
 
   return (
-    <div className="relative z-[1] flex min-h-dvh w-full flex-col">
+    <div
+      className="relative z-[1] flex min-h-dvh w-full flex-col"
+      style={{
+        background: `url('${ASSETS_URL}/background.png') bottom no-repeat`,
+      }}
+    >
       {!appData ? (
         <div className="fixed inset-0 flex flex-col items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-foreground" />

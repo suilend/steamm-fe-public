@@ -14,8 +14,12 @@ import {
 import useCoinMetadataMap from "@suilend/frontend-sui-next/hooks/useCoinMetadataMap";
 
 import BarChartStat, { BarChartData } from "@/components/BarChartStat";
+import Tag from "@/components/Tag";
+import { useLoadedAppContext } from "@/contexts/AppContext";
 
 export default function Pools() {
+  const { appData } = useLoadedAppContext();
+
   // Charts
   const chartCoinTypes = useMemo(
     () => [
@@ -87,7 +91,7 @@ export default function Pools() {
         <h1 className="text-h1 text-foreground">Pools</h1>
 
         {/* Charts */}
-        <div className="flex w-full flex-row items-stretch rounded-md border">
+        <div className="flex w-full flex-col rounded-md border md:flex-row md:items-stretch">
           {/* TVL chart */}
           <div className="flex-1">
             <div className="w-full p-5">
@@ -100,7 +104,7 @@ export default function Pools() {
             </div>
           </div>
 
-          <div className="w-px bg-border" />
+          <div className="h-px w-full bg-border md:h-auto md:w-px" />
 
           {/* Volume chart */}
           <div className="flex-1">
@@ -122,7 +126,10 @@ export default function Pools() {
 
         {/* All pools */}
         <div className="flex w-full flex-col gap-6">
-          <h2 className="text-h3 text-foreground">All pools</h2>
+          <div className="flex flex-row items-center gap-3">
+            <h2 className="text-h3 text-foreground">All pools</h2>
+            <Tag>{appData.pools.length}</Tag>
+          </div>
         </div>
       </div>
     </>
