@@ -1,0 +1,251 @@
+import { useMemo } from "react";
+
+import BigNumber from "bignumber.js";
+import { format } from "date-fns";
+
+import { formatPercent, formatUsd } from "@suilend/frontend-sui";
+
+import Tooltip from "@/components/Tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+
+export type BarChartData = {
+  timestampS: number;
+  [coinType: string]: number;
+};
+
+const OTHER = "Other";
+
+interface BarChartStatProps {
+  title: string;
+  periodDays: 1 | 7 | 30;
+  periodChangePercent?: BigNumber;
+  data?: BarChartData[];
+}
+
+export default function BarChartStat({
+  title,
+  periodDays,
+  periodChangePercent,
+  data,
+}: BarChartStatProps) {
+  // Data
+  const processedData: BarChartData[] = useMemo(() => {
+    if (!data) return [];
+
+    const coinTypes =
+      data.length > 0
+        ? Object.keys(data[0]).filter((key) => key !== "timestampS")
+        : [];
+
+    if (coinTypes.length > 5) {
+      const coinTypeTotalsMap: Record<string, number> = coinTypes.reduce(
+        (acc, coinType) => ({
+          ...acc,
+          [coinType]: data.reduce((acc2, d) => acc2 + d[coinType], 0),
+        }),
+        {},
+      );
+
+      const sortedCoinTypes = coinTypes
+        .slice()
+        .sort((a, b) => coinTypeTotalsMap[b] - coinTypeTotalsMap[a]);
+      const topCoinTypes = sortedCoinTypes.slice(0, 4);
+      const otherCoinTypes = sortedCoinTypes.slice(4);
+
+      return data.map((d) => ({
+        timestampS: d.timestampS,
+        ...[...topCoinTypes, OTHER].reduce(
+          (acc, category) => ({
+            ...acc,
+            [category]:
+              category !== OTHER
+                ? d[category]
+                : otherCoinTypes.reduce(
+                    (acc2, otherCoinType) => acc2 + d[otherCoinType],
+                    0,
+                  ),
+          }),
+          {},
+        ),
+      }));
+    } else {
+      return data.map((d) => ({
+        timestampS: d.timestampS,
+        ...coinTypes.reduce(
+          (acc, category) => ({ ...acc, [category]: d[category] }),
+          {},
+        ),
+      }));
+    }
+  }, [data]);
+
+  const timestampsS = processedData.map((d) => d.timestampS).flat();
+  const categories =
+    processedData.length > 0
+      ? Object.keys(processedData[0]).filter((key) => key !== "timestampS")
+      : [];
+
+  const processedDataWithTotals: (BarChartData & { total: number })[] =
+    processedData.map((d) => ({
+      ...d,
+      total: categories.reduce((acc, category) => acc + d[category], 0),
+    }));
+
+  const categoryTotalsMap: Record<string, number> = categories.reduce(
+    (acc, category) => ({
+      ...acc,
+      [category]: processedData.reduce((acc2, d) => acc2 + d[category], 0),
+    }),
+    {},
+  );
+  const total = Object.values(categoryTotalsMap).reduce(
+    (acc, categoryTotal) => acc + categoryTotal,
+    0,
+  );
+
+  const sortedCategories = categories.slice().sort((a, b) => {
+    if (a === OTHER) return 1;
+    return categoryTotalsMap[b] - categoryTotalsMap[a];
+  });
+
+  // Min/max
+  const minX = Math.min(...timestampsS);
+  const maxX = Math.max(...timestampsS);
+
+  const minY = 0;
+  const maxY = Math.max(...processedDataWithTotals.map((d) => d.total));
+
+  // Ticks
+  const ticksX = Array.from({ length: 5 }).map((_, index, array) =>
+    Math.round(minX + ((maxX - minX) / (array.length - 1)) * index),
+  );
+
+  return (
+    <div className="flex w-full flex-col gap-6">
+      {/* Top */}
+      <div className="flex flex-row items-start justify-between gap-4">
+        {/* Top left */}
+        <div className="flex flex-col gap-1">
+          <p className="text-p2 text-secondary-foreground">{title}</p>
+          <p className="text-h2 text-foreground">
+            {data === undefined ? (
+              <Skeleton className="h-9 w-20" />
+            ) : (
+              formatUsd(new BigNumber(total))
+            )}
+          </p>
+          {periodChangePercent === undefined ? (
+            <Skeleton className="h-[18px] w-10" />
+          ) : (
+            <p
+              className={cn(
+                "!text-p3",
+                periodChangePercent.gte(0) ? "text-success" : "text-error",
+              )}
+            >
+              {periodChangePercent.gte(0) ? "+" : "-"}
+              {formatPercent(periodChangePercent.abs())}
+            </p>
+          )}
+        </div>
+
+        {/* Top right */}
+        {data !== undefined && (
+          <div className="flex flex-row gap-3">
+            {sortedCategories.map((category, categoryIndex) => (
+              <div
+                key={category}
+                className="flex flex-row items-center gap-1.5"
+              >
+                <div
+                  className="h-3 w-3 rounded-[2px]"
+                  style={{
+                    backgroundColor: `hsl(var(--a${5 - categoryIndex}))`,
+                  }}
+                />
+                <p className="text-p3 text-secondary-foreground">{category}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Bottom */}
+      <div className="flex w-full flex-col gap-3">
+        {/* Chart */}
+        <div className="flex h-[200px] w-full transform-gpu flex-row items-stretch">
+          {data === undefined ? (
+            <Skeleton className="h-full w-full" />
+          ) : (
+            processedData.map((d, dIndex) => (
+              <div key={d.timestampS} className="flex-1">
+                <Tooltip
+                  content={
+                    <div className="flex flex-col-reverse gap-1">
+                      {sortedCategories.map((category, categoryIndex) => (
+                        <div
+                          key={category}
+                          className="flex flex-row items-center gap-1.5"
+                        >
+                          <div
+                            className="h-3 w-3 rounded-[2px]"
+                            style={{
+                              backgroundColor: `hsl(var(--a${5 - categoryIndex}))`,
+                            }}
+                          />
+                          <p className="text-p3 text-secondary-foreground">
+                            {category}
+                          </p>
+                          <p className="text-p3 text-foreground">
+                            {formatUsd(new BigNumber(d[category]))}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  }
+                >
+                  <div
+                    className={cn(
+                      "group relative flex h-full w-full flex-col-reverse gap-[2px]",
+                      dIndex !== 0 && "pl-[3px]",
+                      dIndex !== processedData.length - 1 && "pr-[3px]",
+                    )}
+                  >
+                    <div className="absolute inset-y-0 left-1/2 z-[1] w-px -translate-x-1/2 bg-border opacity-0 group-hover:opacity-100" />
+                    {sortedCategories.map((category, categoryIndex) => (
+                      <div
+                        key={category}
+                        className="relative z-[1] w-full shrink-0 rounded-[2px] outline outline-2 outline-background"
+                        style={{
+                          backgroundColor: `hsl(var(--a${5 - categoryIndex}))`,
+                          height: `calc((100% - ${(5 - 1) * 2}px) * ${d[category] / maxY})`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </Tooltip>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* X-axis */}
+        {data === undefined ? (
+          <Skeleton className="h-[18px] w-full" />
+        ) : (
+          <div className="flex w-full flex-row justify-between">
+            {ticksX.map((tickX) => (
+              <p key={tickX} className="text-p3 text-tertiary-foreground">
+                {format(
+                  new Date(tickX * 1000),
+                  periodDays === 1 ? "HH:mm" : "d MMM",
+                )}
+              </p>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
