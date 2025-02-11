@@ -43,7 +43,7 @@ function WalletItem({ wallet }: WalletItemProps) {
     return null;
   return (
     <button
-      className="group flex h-10 w-full flex-row items-center justify-between gap-2 rounded-md border px-3 transition-colors hover:border-foreground"
+      className="group flex h-10 w-full flex-row items-center justify-between gap-2 rounded-md border px-3 transition-colors hover:bg-border"
       onClick={onClick}
     >
       <div className="flex flex-row items-center gap-2">
@@ -66,7 +66,7 @@ function WalletItem({ wallet }: WalletItemProps) {
       </div>
 
       {wallet.isInstalled && (
-        <p className="text-p3 text-secondary-foreground transition-colors group-hover:text-foreground">
+        <p className="text-p3 text-tertiary-foreground transition-colors group-hover:text-foreground">
           Installed
         </p>
       )}
@@ -94,28 +94,36 @@ export default function ConnectWalletPopover() {
         maxWidth: 280,
       }}
       trigger={
-        <button
-          className={cn(
-            "flex h-10 flex-row items-center gap-2",
-            isConnectWalletDropdownOpen
-              ? "text-foreground"
-              : "text-secondary-foreground transition-colors hover:text-foreground",
-          )}
-        >
-          <WalletIcon size={16} />
-          <p className="text-p2">Connect</p>
-          <Chevron className="-ml-0.5 h-4 w-4" />
+        <button className="group flex h-10 flex-row items-center gap-2 rounded-md border bg-card px-3">
+          <p
+            className={cn(
+              "!text-p2",
+              isConnectWalletDropdownOpen
+                ? "text-foreground"
+                : "text-secondary-foreground transition-colors group-hover:text-foreground",
+            )}
+          >
+            Connect wallet
+          </p>
+          <Chevron
+            className={cn(
+              "-ml-0.5 h-4 w-4",
+              isConnectWalletDropdownOpen
+                ? "text-foreground"
+                : "text-secondary-foreground transition-colors group-hover:text-foreground",
+            )}
+          />
         </button>
       }
     >
-      <div className="flex w-full flex-col gap-2">
+      <div className="flex w-full flex-col gap-3">
         <div className="flex w-full flex-col gap-1">
           {wallets.map((wallet) => (
             <WalletItem key={wallet.name} wallet={wallet} />
           ))}
         </div>
 
-        <p className="text-p3 text-secondary-foreground">
+        <p className="text-p3 text-tertiary-foreground">
           {
             "Don't have a Sui wallet? Get started by trying one of the wallets above."
           }

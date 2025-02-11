@@ -27,21 +27,27 @@ module.exports = {
       "medium-slate-blue": "hsl(var(--medium-slate-blue))",
 
       "primary-foreground": "hsl(var(--primary-foreground))",
-      "secondary-foreground": "hsl(var(--secondary-foreground))",
-      "tertiary-foreground": "hsl(var(--tertiary-foreground))",
-      "button-foreground": "hsl(var(--button-foreground))",
-
       primary: "hsl(var(--primary))",
+      "secondary-foreground": "hsl(var(--secondary-foreground))",
       secondary: "hsl(var(--secondary))",
+      "tertiary-foreground": "hsl(var(--tertiary-foreground))",
       tertiary: "hsl(var(--tertiary))",
 
-      button: "hsl(var(--button))",
-      "button-hover": "hsl(var(--button-hover))",
-      "button-active": "hsl(var(--button-active))",
-      "button-disabled": "hsl(var(--button-disabled))",
+      "button-1-foreground": "hsl(var(--button-1-foreground))",
+      "button-1": "hsl(var(--button-1))",
+      "button-2-foreground": "hsl(var(--button-2-foreground))",
+      "button-2": "hsl(var(--button-2))",
 
-      popover: "hsl(var(--popover))",
+      selected: "hsl(var(--selected))",
+
       border: "hsl(var(--border))",
+      "hover-border": "hsl(var(--hover-border))",
+      "selected-border": "hsl(var(--selected-border))",
+
+      input: "hsl(var(--input))",
+      card: "hsl(var(--card))",
+      popover: "hsl(var(--popover))",
+      tooltip: "hsl(var(--tooltip))",
 
       success: "hsl(var(--success))",
       error: "hsl(var(--error))",

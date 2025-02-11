@@ -15,21 +15,27 @@
     --medium-slate-blue: 218 32% 20%; // #222E42
 
     --primary-foreground: 210 25% 98%; // #FAFBFC
-    --secondary-foreground: 218 29% 72%; // #A3B2CC
-    --tertiary-foreground: 218 15% 40%; // #586376
-    --button-foreground: 211 100% 79%; // #94C8FF
-
     --primary: 218 44% 5%; // #070B12
+    --secondary-foreground: 218 29% 72%; // #A3B2CC
     --secondary: 218 44% 8%; // #0C131F
+    --tertiary-foreground: 218 14% 50%; // #6D7A91
     --tertiary: 217 44% 7%; // #0A101A
 
-    --button: 214 29% 20%; // #243142
-    --button-hover: 213 27% 29%; // #36485E
-    --button-active: 211 27% 35%; // #415871
-    --button-disabled: 219 44% 14%; // #141F33
+    --button-1-foreground: 220 43% 5%; // #080C14
+    --button-1: 211 100% 79%; // #94C8FF
+    --button-2-foreground: 211 100% 79%; // #94C8FF
+    --button-2: 214 29% 20%; // #243142
 
-    --popover: 218 40% 13%; // #141E2F
+    --selected: 217 39% 16%; // #192539
+
     --border: 219 39% 18%; // #1C2940
+    --hover-border: 211 27% 35%; // #415871
+    --selected-border: 211 47% 63%; // #759FCD
+
+    --input: 217 44% 7%; // #0A101A
+    --card: 218 40% 13%; // #141E2F
+    --popover: 218 42% 10%; // #0F1725
+    --tooltip: 219 44% 14%; // #141F33
 
     --success: 130 50% 65%; // #7BD389
     --error: 352 80% 58%; // #E93E54

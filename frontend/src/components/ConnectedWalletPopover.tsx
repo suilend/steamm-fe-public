@@ -44,9 +44,9 @@ export default function ConnectedWalletPopover() {
         maxWidth: 280,
       }}
       trigger={
-        <button className="flex h-10 min-w-0 max-w-40 flex-row items-center gap-2 text-foreground">
+        <button className="group flex h-10 min-w-0 max-w-40 flex-row items-center gap-2 rounded-md border bg-card px-3">
           {isImpersonating ? (
-            <VenetianMask className="h-4 w-4 shrink-0" />
+            <VenetianMask className="h-4 w-4 shrink-0 text-secondary-foreground" />
           ) : wallet?.iconUrl ? (
             <Image
               className="h-4 w-4 min-w-4 shrink-0"
@@ -58,28 +58,45 @@ export default function ConnectedWalletPopover() {
             />
           ) : undefined}
 
-          <p className="overflow-hidden text-ellipsis text-nowrap text-p2">
+          <p
+            className={cn(
+              "overflow-hidden text-ellipsis text-nowrap !text-p2",
+              isOpen
+                ? "text-foreground"
+                : "text-secondary-foreground transition-colors group-hover:text-foreground",
+            )}
+          >
             {(!isImpersonating ? account?.label : undefined) ??
               formatAddress(address)}
           </p>
-          <Chevron className="-ml-0.5 h-4 w-4" />
+          <Chevron
+            className={cn(
+              "-ml-0.5 h-4 w-4 shrink-0",
+              isOpen
+                ? "text-foreground"
+                : "text-secondary-foreground transition-colors group-hover:text-foreground",
+            )}
+          />
         </button>
       }
     >
       <div className="flex w-full flex-col gap-3">
-        <div className="flex w-full flex-col">
-          <p className="text-p2 text-foreground">
-            {(!isImpersonating ? account?.label : "Impersonating") ??
-              "Connected"}
-          </p>
-
-          <div className="flex flex-row items-center gap-2">
+        <div className="flex w-full flex-row items-center justify-between gap-2">
+          {/* Left */}
+          <div className="flex flex-col">
+            <p className="text-p2 text-foreground">
+              {(!isImpersonating ? account?.label : "Impersonating") ??
+                "Connected"}
+            </p>
             <Tooltip title={address}>
-              <p className="text-p2 text-secondary-foreground">
+              <p className="text-p3 text-secondary-foreground">
                 {formatAddress(address)}
               </p>
             </Tooltip>
+          </div>
 
+          {/* Right */}
+          <div className="flex flex-row items-center gap-2">
             <CopyToClipboardButton value={address} />
             <OpenOnExplorerButton url={explorer.buildAddressUrl(address)} />
           </div>
@@ -87,7 +104,7 @@ export default function ConnectedWalletPopover() {
 
         {hasDisconnect && (
           <button
-            className="group flex h-10 w-full flex-row items-center rounded-md border px-3 transition-colors hover:border-foreground"
+            className="group flex h-10 w-full flex-row items-center rounded-md border px-3 transition-colors hover:bg-border"
             onClick={disconnectWallet}
           >
             <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
@@ -103,8 +120,8 @@ export default function ConnectedWalletPopover() {
                 className={cn(
                   "group flex h-10 w-full flex-row items-center justify-between rounded-md border px-3",
                   a.address === address
-                    ? "cursor-default border-foreground"
-                    : "transition-colors hover:border-foreground",
+                    ? "cursor-default bg-border"
+                    : "transition-colors hover:bg-border",
                 )}
                 onClick={
                   a.address === address ? undefined : () => switchAccount(a)
@@ -127,7 +144,7 @@ export default function ConnectedWalletPopover() {
                       "overflow-hidden text-ellipsis text-nowrap !text-p3",
                       a.address === address
                         ? "text-foreground"
-                        : "text-secondary-foreground transition-colors group-hover:text-foreground",
+                        : "text-tertiary-foreground transition-colors group-hover:text-foreground",
                     )}
                   >
                     {a.label}

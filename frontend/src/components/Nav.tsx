@@ -4,7 +4,12 @@ import { useRouter } from "next/router";
 import ConnectWalletButton from "@/components/ConnectWalletButton";
 import Container from "@/components/Container";
 import Logo from "@/components/Logo";
-import { ADMIN_URL, POOLS_URL, ROOT_URL } from "@/lib/navigation";
+import {
+  ADMIN_URL,
+  POOLS_URL,
+  PORTFOLIO_URL,
+  ROOT_URL,
+} from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 const NAV_HEIGHT = 64; // px
@@ -17,6 +22,7 @@ type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   { url: ROOT_URL, title: "Swap" },
   { url: POOLS_URL, title: "Pools" },
+  { url: PORTFOLIO_URL, title: "Portfolio" },
 ];
 export const ADMIN_NAV_ITEM: NavItem = {
   url: ADMIN_URL,
