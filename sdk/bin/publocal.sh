@@ -203,6 +203,9 @@ source_test_fun() {
 
 ## Source test functions
 echo "[INFO] Sourcing test functions"
+ls temp/
+ls temp/pyth/
+ls temp/pyth/sources
 source_test_fun "pyth" "price_info" "new_price_info_object_for_testing"
 source_test_fun "pyth" "price_info" "update_price_info_object_for_testing"
 
