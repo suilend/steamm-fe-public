@@ -81,7 +81,7 @@ function HeaderColumn({
         ))}
       <p
         className={cn(
-          "!text-p3 text-secondary-foreground transition-colors",
+          "!text-p2 text-secondary-foreground transition-colors",
           sortState?.column === id
             ? "text-foreground"
             : "group-hover:text-foreground",

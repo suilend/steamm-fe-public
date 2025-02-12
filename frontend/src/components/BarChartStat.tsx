@@ -132,13 +132,13 @@ export default function BarChartStat({
         {/* Top left */}
         <div className="flex flex-col gap-1">
           <p className="text-p2 text-secondary-foreground">{title}</p>
-          <p className="text-h2 text-foreground">
-            {data === undefined ? (
-              <Skeleton className="h-9 w-20" />
-            ) : (
-              formatUsd(new BigNumber(total))
-            )}
-          </p>
+          {data === undefined ? (
+            <Skeleton className="h-[36px] w-20" />
+          ) : (
+            <p className="text-h2 text-foreground">
+              {formatUsd(new BigNumber(total))}
+            </p>
+          )}
           {periodChangePercent === undefined ? (
             <Skeleton className="h-[18px] w-10" />
           ) : (
@@ -192,7 +192,7 @@ export default function BarChartStat({
         {/* Chart */}
         <div className="-mx-[2px] flex h-[calc(120px+24px)] transform-gpu flex-row items-stretch md:-mx-[3px] md:h-[calc(150px+24px)]">
           {data === undefined ? (
-            <Skeleton className="h-full w-full" />
+            <Skeleton className="h-full w-full bg-card/50" />
           ) : (
             processedData.map((d) => (
               <div key={d.timestampS} className="flex-1">

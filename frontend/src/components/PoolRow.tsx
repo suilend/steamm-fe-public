@@ -35,6 +35,13 @@ export default function PoolRow({
     .map((coinType) => coinMetadataMap?.[coinType])
     .every(Boolean);
 
+  // Pair
+  const formattedPair = hasCoinMetadata
+    ? pool.assetCoinTypes
+        .map((coinType) => coinMetadataMap![coinType].symbol)
+        .join("/")
+    : undefined;
+
   return (
     <Link
       className={cn(
@@ -63,9 +70,8 @@ export default function PoolRow({
             <TokenLogo
               key={coinType}
               className={cn(
-                index !== 0 &&
-                  "-ml-2 bg-secondary outline outline-1 outline-secondary",
-                !hasCoinMetadata && "animate-none",
+                index !== 0 && "-ml-2 outline outline-1 outline-secondary",
+                !hasCoinMetadata ? "animate-none" : "bg-secondary",
               )}
               token={
                 hasCoinMetadata
@@ -78,12 +84,10 @@ export default function PoolRow({
         </div>
 
         {!hasCoinMetadata ? (
-          <Skeleton className="h-6 w-20 animate-none" />
+          <Skeleton className="h-[24px] w-20 animate-none" />
         ) : (
           <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
-            {pool.assetCoinTypes
-              .map((coinType) => coinMetadataMap![coinType].symbol)
-              .join("/")}
+            {formattedPair}
           </p>
         )}
       </div>
@@ -130,9 +134,8 @@ export default function PoolRow({
             <TokenLogo
               key={coinType}
               className={cn(
-                index !== 0 &&
-                  "-ml-1 bg-secondary outline outline-1 outline-secondary",
-                !hasCoinMetadata && "animate-none",
+                index !== 0 && "-ml-1 outline outline-1 outline-secondary",
+                !hasCoinMetadata ? "animate-none" : "bg-secondary",
               )}
               token={
                 hasCoinMetadata

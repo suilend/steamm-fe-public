@@ -36,6 +36,13 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
     .map((coinType) => coinMetadataMap?.[coinType])
     .every(Boolean);
 
+  // Pair
+  const formattedPair = hasCoinMetadata
+    ? poolGroup.assetCoinTypes
+        .map((coinType) => coinMetadataMap![coinType].symbol)
+        .join("/")
+    : undefined;
+
   // Calculations
   const totalTvlUsd = poolGroup.pools.reduce(
     (acc, pool) => acc.plus(pool.tvlUsd),
@@ -103,9 +110,8 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
             {poolGroup.assetCoinTypes.map((coinType, index) => (
               <TokenLogo
                 className={cn(
-                  index !== 0 &&
-                    "-ml-2 bg-secondary outline outline-1 outline-secondary",
-                  !hasCoinMetadata && "animate-none",
+                  index !== 0 && "-ml-2 outline outline-1 outline-secondary",
+                  !hasCoinMetadata ? "animate-none" : "bg-secondary",
                 )}
                 key={coinType}
                 token={
@@ -119,12 +125,10 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
           </div>
 
           {!hasCoinMetadata ? (
-            <Skeleton className="h-6 w-20 animate-none" />
+            <Skeleton className="h-[24px] w-20 animate-none" />
           ) : (
             <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
-              {poolGroup.assetCoinTypes
-                .map((coinType) => coinMetadataMap![coinType].symbol)
-                .join("/")}
+              {formattedPair}
             </p>
           )}
         </div>
@@ -162,7 +166,9 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
           className="flex h-full flex-row items-center gap-2"
           style={columnStyleMap.aprPercent}
         >
-          <p className="text-p3 text-tertiary-foreground">Up to</p>
+          {poolGroup.pools.length > 1 && (
+            <p className="text-p3 text-tertiary-foreground">Up to</p>
+          )}
           <p className="text-p1 text-foreground">
             {formatPercent(maxAprPercent)}
           </p>

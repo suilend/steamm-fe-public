@@ -35,6 +35,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             type: PoolType.CONSTANT,
             tvlUsd: new BigNumber(103512),
             volumeUsd: new BigNumber(1251),
+            feesUsd: new BigNumber(125.09),
             apr: {
               assetCoinTypes: [NORMALIZED_SUI_COINTYPE],
               percent: new BigNumber(9.5),
@@ -47,6 +48,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             type: PoolType.PYTH_ORACLE,
             tvlUsd: new BigNumber(23512),
             volumeUsd: new BigNumber(11000),
+            feesUsd: new BigNumber(98.1),
             apr: {
               assetCoinTypes: [NORMALIZED_SUI_COINTYPE],
               percent: new BigNumber(12.95),
@@ -59,6 +61,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             type: PoolType.STABLE_SWAP,
             tvlUsd: new BigNumber(10100001),
             volumeUsd: new BigNumber(1251712),
+            feesUsd: new BigNumber(58512.51),
             apr: {
               assetCoinTypes: [NORMALIZED_SUI_COINTYPE],
               percent: new BigNumber(78.11),
@@ -77,6 +80,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             type: PoolType.CONSTANT,
             tvlUsd: new BigNumber(1995),
             volumeUsd: new BigNumber(110),
+            feesUsd: new BigNumber(0.94),
             apr: {
               assetCoinTypes: [
                 NORMALIZED_SUI_COINTYPE,
@@ -98,6 +102,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             type: PoolType.CONSTANT,
             tvlUsd: new BigNumber(98000),
             volumeUsd: new BigNumber(12000),
+            feesUsd: new BigNumber(1877.19),
             apr: {
               assetCoinTypes: [NORMALIZED_SEND_COINTYPE],
               percent: new BigNumber(64.1),

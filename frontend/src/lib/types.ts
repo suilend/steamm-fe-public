@@ -19,6 +19,7 @@ export type Pool = {
   type: PoolType;
   tvlUsd: BigNumber;
   volumeUsd: BigNumber;
+  feesUsd: BigNumber;
   apr: {
     assetCoinTypes: string[];
     percent: BigNumber;

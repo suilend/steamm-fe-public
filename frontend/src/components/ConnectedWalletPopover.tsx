@@ -81,24 +81,23 @@ export default function ConnectedWalletPopover() {
       }
     >
       <div className="flex w-full flex-col gap-3">
-        <div className="flex w-full flex-row items-center justify-between gap-2">
-          {/* Left */}
-          <div className="flex flex-col">
-            <p className="text-p2 text-foreground">
-              {(!isImpersonating ? account?.label : "Impersonating") ??
-                "Connected"}
-            </p>
+        <div className="flex w-full flex-col">
+          <p className="text-p1 text-foreground">
+            {(!isImpersonating ? account?.label : "Impersonating") ??
+              "Connected"}
+          </p>
+
+          <div className="flex flex-row items-center gap-2">
             <Tooltip title={address}>
-              <p className="text-p3 text-secondary-foreground">
+              <p className="text-p2 text-secondary-foreground">
                 {formatAddress(address)}
               </p>
             </Tooltip>
-          </div>
 
-          {/* Right */}
-          <div className="flex flex-row items-center gap-2">
-            <CopyToClipboardButton value={address} />
-            <OpenOnExplorerButton url={explorer.buildAddressUrl(address)} />
+            <div className="flex flex-row items-center gap-1">
+              <CopyToClipboardButton value={address} />
+              <OpenOnExplorerButton url={explorer.buildAddressUrl(address)} />
+            </div>
           </div>
         </div>
 
