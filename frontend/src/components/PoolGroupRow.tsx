@@ -1,8 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useLocalStorage } from "usehooks-ts";
 
 import { formatPercent, formatUsd, getToken } from "@suilend/frontend-sui";
 
@@ -25,10 +24,7 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
   const { coinMetadataMap } = useLoadedAppContext();
 
   // State
-  const [isExpanded, setIsExpanded] = useLocalStorage<boolean>(
-    `PoolGroupRow_isExpanded_${poolGroup.id}`,
-    false,
-  );
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const Chevron = isExpanded ? ChevronUp : ChevronDown;
 
   // CoinMetadata
@@ -59,7 +55,7 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
     <>
       <div
         className={cn(
-          "group flex h-[56px] w-full min-w-max cursor-pointer flex-row",
+          "group relative z-[1] flex h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row",
           isExpanded ? "bg-tertiary" : "transition-colors hover:bg-tertiary",
           (isExpanded || !isLast) && "h-[calc(56px+1px)] border-b",
         )}

@@ -38,7 +38,7 @@ export default function PoolRow({
   return (
     <Link
       className={cn(
-        "group flex h-[56px] w-full min-w-max cursor-pointer flex-row transition-colors hover:bg-tertiary",
+        "group relative z-[1] flex h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row transition-colors hover:bg-tertiary",
         !isLastTableRow && "h-[calc(56px+1px)] border-b",
       )}
       href={`${POOLS_URL}/${pool.id}`}

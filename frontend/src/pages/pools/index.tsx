@@ -65,7 +65,10 @@ export default function Pools() {
         <div className="flex w-full flex-col gap-6">
           <h2 className="text-h3 text-foreground">Featured pools</h2>
 
-          <PoolsTable poolGroups={featuredPoolGroups} />
+          <PoolsTable
+            className="max-h-[480px]"
+            poolGroups={featuredPoolGroups}
+          />
         </div>
 
         {/* All pools */}
@@ -80,7 +83,10 @@ export default function Pools() {
             </Tag>
           </div>
 
-          <PoolsTable poolGroups={appData.poolGroups} />
+          <PoolsTable
+            className="max-h-[480px]"
+            poolGroups={appData.poolGroups}
+          />
         </div>
       </div>
     </>

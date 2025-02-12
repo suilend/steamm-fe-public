@@ -1,6 +1,7 @@
 import { CSSProperties, PropsWithChildren, useMemo, useState } from "react";
 
 import BigNumber from "bignumber.js";
+import { ClassValue } from "clsx";
 import { ArrowDown, ArrowUp } from "lucide-react";
 
 import PoolGroupRow from "@/components/PoolGroupRow";
@@ -22,19 +23,19 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   tvlUsd: {
     flex: 1,
-    minWidth: 100, // px
+    minWidth: 120, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   volumeUsd: {
     flex: 1,
-    minWidth: 100, // px
+    minWidth: 120, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   aprPercent: {
     flex: 1,
-    minWidth: 150, // px
+    minWidth: 120, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -93,10 +94,11 @@ function HeaderColumn({
 }
 
 interface PoolsTableProps {
+  className?: ClassValue;
   poolGroups?: PoolGroup[];
 }
 
-export default function PoolsTable({ poolGroups }: PoolsTableProps) {
+export default function PoolsTable({ className, poolGroups }: PoolsTableProps) {
   // Sort
   const [sortState, setSortState] = useState<SortState | undefined>(undefined);
 
@@ -164,9 +166,14 @@ export default function PoolsTable({ poolGroups }: PoolsTableProps) {
   }, [poolGroups, sortState]);
 
   return (
-    <div className="flex w-full flex-col overflow-x-auto rounded-md border bg-background">
+    <div
+      className={cn(
+        "relative w-full overflow-auto rounded-md border bg-background",
+        className,
+      )}
+    >
       {/* Header */}
-      <div className="flex h-[calc(40px+1px)] w-full min-w-max flex-row border-b bg-secondary">
+      <div className="sticky left-0 top-0 z-[2] flex h-[calc(40px+1px)] w-full min-w-max shrink-0 flex-row border-b bg-secondary">
         <HeaderColumn id="pair">Pair</HeaderColumn>
         <HeaderColumn id="type">Type</HeaderColumn>
         <HeaderColumn
@@ -198,7 +205,7 @@ export default function PoolsTable({ poolGroups }: PoolsTableProps) {
             <Skeleton
               key={index}
               className={cn(
-                "h-[56px] w-full",
+                "relative z-[1] h-[56px] w-full",
                 index !== array.length - 1 && "h-[calc(56px+1px)] border-b",
               )}
             />
