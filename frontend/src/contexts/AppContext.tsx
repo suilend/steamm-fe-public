@@ -21,16 +21,24 @@ import {
   SteammSDK,
 } from "@suilend/steamm-sdk";
 
+import { BarChartData } from "@/components/BarChartStat";
 import useFetchAppData from "@/fetchers/useFetchAppData";
+import { PoolGroup } from "@/lib/types";
 
 export interface AppData {
   banks: BankList;
   pools: PoolInfo[];
+
+  poolGroups: PoolGroup[];
+  tvlData: BarChartData[];
+  volumeData: BarChartData[];
+  coinTypes: string[];
 }
 
 interface AppContext {
   steammClient: SteammSDK | undefined;
   appData: AppData | undefined;
+  coinMetadataMap: Record<string, CoinMetadata> | undefined;
 
   rawBalancesMap: Record<string, BigNumber> | undefined;
   balancesCoinMetadataMap: Record<string, CoinMetadata> | undefined;
@@ -46,6 +54,7 @@ type LoadedAppContext = AppContext & {
 const AppContext = createContext<AppContext>({
   steammClient: undefined,
   appData: undefined,
+  coinMetadataMap: undefined,
 
   rawBalancesMap: undefined,
   balancesCoinMetadataMap: undefined,
@@ -80,6 +89,9 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   // App data
   const { data: appData, mutateData: mutateAppData } =
     useFetchAppData(steammClient);
+
+  // CoinMetadataMap
+  const coinMetadataMap = useCoinMetadataMap(appData?.coinTypes ?? []);
 
   // Balances
   const { data: rawBalancesMap, mutateData: mutateRawBalancesMap } =
@@ -122,6 +134,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     () => ({
       steammClient,
       appData,
+      coinMetadataMap,
 
       rawBalancesMap,
       balancesCoinMetadataMap,
@@ -132,6 +145,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     [
       steammClient,
       appData,
+      coinMetadataMap,
       rawBalancesMap,
       balancesCoinMetadataMap,
       getBalance,

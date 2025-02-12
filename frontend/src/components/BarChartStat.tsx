@@ -2,11 +2,13 @@ import { useMemo } from "react";
 
 import BigNumber from "bignumber.js";
 import { format } from "date-fns";
+import { capitalize } from "lodash";
 
 import { formatPercent, formatUsd } from "@suilend/frontend-sui";
 
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLoadedAppContext } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
 
 export type BarChartData = {
@@ -14,7 +16,7 @@ export type BarChartData = {
   [coinType: string]: number;
 };
 
-const OTHER = "Other";
+const OTHER = "other";
 
 interface BarChartStatProps {
   title: string;
@@ -29,6 +31,8 @@ export default function BarChartStat({
   periodChangePercent,
   data,
 }: BarChartStatProps) {
+  const { coinMetadataMap } = useLoadedAppContext();
+
   // Data
   const processedData: BarChartData[] = useMemo(() => {
     if (!data) return [];
@@ -122,7 +126,7 @@ export default function BarChartStat({
   );
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="flex w-full flex-col">
       {/* Top */}
       <div className="flex flex-row items-start justify-between gap-4">
         {/* Top left */}
@@ -161,10 +165,22 @@ export default function BarChartStat({
                 <div
                   className="h-3 w-3 rounded-[2px]"
                   style={{
-                    backgroundColor: `hsl(var(--a${5 - categoryIndex}))`,
+                    backgroundColor: `hsl(var(--a${sortedCategories.length - categoryIndex}))`,
                   }}
                 />
-                <p className="text-p3 text-secondary-foreground">{category}</p>
+                {category !== OTHER ? (
+                  !coinMetadataMap?.[category] ? (
+                    <Skeleton className="h-[18px] w-10" />
+                  ) : (
+                    <p className="text-p3 text-secondary-foreground">
+                      {coinMetadataMap[category].symbol}
+                    </p>
+                  )
+                ) : (
+                  <p className="text-p3 text-secondary-foreground">
+                    {capitalize(category)}
+                  </p>
+                )}
               </div>
             ))}
           </div>
@@ -174,7 +190,7 @@ export default function BarChartStat({
       {/* Bottom */}
       <div className="flex w-full flex-col gap-3">
         {/* Chart */}
-        <div className="flex h-[120px] w-full transform-gpu flex-row items-stretch md:h-[200px]">
+        <div className="-mx-[2px] flex h-[calc(120px+24px)] transform-gpu flex-row items-stretch md:-mx-[3px] md:h-[calc(150px+24px)]">
           {data === undefined ? (
             <Skeleton className="h-full w-full" />
           ) : (
@@ -195,12 +211,23 @@ export default function BarChartStat({
                           <div
                             className="h-3 w-3 rounded-[2px]"
                             style={{
-                              backgroundColor: `hsl(var(--a${5 - categoryIndex}))`,
+                              backgroundColor: `hsl(var(--a${sortedCategories.length - categoryIndex}))`,
                             }}
                           />
-                          <p className="text-p3 text-secondary-foreground">
-                            {category}
-                          </p>
+                          {category !== OTHER ? (
+                            !coinMetadataMap?.[category] ? (
+                              <Skeleton className="h-[18px] w-10" />
+                            ) : (
+                              <p className="text-p3 text-secondary-foreground">
+                                {coinMetadataMap[category].symbol}
+                              </p>
+                            )
+                          ) : (
+                            <p className="text-p3 text-secondary-foreground">
+                              {capitalize(category)}
+                            </p>
+                          )}
+
                           <p className="text-p3 text-foreground">
                             {formatUsd(new BigNumber(d[category]))}
                           </p>
@@ -209,14 +236,14 @@ export default function BarChartStat({
                     </div>
                   }
                 >
-                  <div className="group flex h-full w-full flex-col-reverse items-center gap-[2px] px-0.5 md:px-[3px]">
+                  <div className="group flex h-full w-full flex-col-reverse items-center gap-[2px] px-[2px] md:px-[3px]">
                     {sortedCategories.map((category, categoryIndex) => (
                       <div
                         key={category}
                         className="w-full shrink-0 rounded-[2px]"
                         style={{
-                          backgroundColor: `hsl(var(--a${5 - categoryIndex}))`,
-                          height: `calc((100% - ${(5 - 1) * 2}px) * ${d[category] / maxY})`,
+                          backgroundColor: `hsl(var(--a${sortedCategories.length - categoryIndex}))`,
+                          height: `calc((100% - 24px - ${(sortedCategories.length - 1) * 2}px) * ${d[category] / maxY})`,
                         }}
                       />
                     ))}

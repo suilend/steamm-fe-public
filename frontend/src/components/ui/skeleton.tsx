@@ -6,7 +6,7 @@ function Skeleton({
 }: React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
-      className={cn("block animate-pulse bg-foreground/10", className)}
+      className={cn("block animate-pulse bg-card/50", className)}
       {...props}
     />
   );

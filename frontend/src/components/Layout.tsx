@@ -40,7 +40,7 @@ export default function Layout({ children }: PropsWithChildren) {
         <>
           <Nav />
 
-          <Container className="relative z-[1] flex-1 py-4 md:py-8">
+          <Container className="relative z-[1] flex-1 py-6 md:py-8">
             {children}
           </Container>
 
