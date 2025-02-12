@@ -34,10 +34,12 @@ fi
 
 
 # Create source directories
+printf "[INFO] Building Steamm package"  >&2
 mkdir -p temp/liquid_staking/sources temp/pyth/sources temp/sprungsui/sources temp/suilend/sources temp/wormhole/sources temp/steamm/sources
-sui move build --path temp/git/contracts/steamm
+sui move build --path temp/git/contracts/steamm --silence-warnings --no-lint
 
 # Copy dependencies from build to local directories
+printf "[INFO] Copying state"  >&2
 cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/liquid_staking/* temp/liquid_staking/sources/
 cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/Pyth/* temp/pyth/sources/
 cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/sprungsui/* temp/sprungsui/sources/
@@ -133,7 +135,7 @@ publish_package() {
     INITIAL_DIR=$(pwd)
     
     # Change to package directory
-    RESPONSE=$(sui client --client.config sui/client.yaml publish $FOLDER_NAME --silence-warnings --no-lint --json)
+    RESPONSE=$(sui client --client.config sui/client.yaml publish $FOLDER_NAME --skip-dependency-verification --silence-warnings --no-lint --json)
     RESULT=$(echo "$RESPONSE" | jq -r '.effects.status.status')
 
     if [ $RESULT != "success" ]; then
@@ -185,13 +187,18 @@ source_test_fun() {
         echo "Error: File $file_path does not exist"
         return 1
     fi
-
-    # Find the line number of the function
+    
     line_num=$(grep -n "$function_name" "$file_path" | cut -d: -f1)
     if [ -n "$line_num" ]; then
         # Delete the line before it (subtract 1 from line number)
         remove_line=$((line_num - 1))
-        sed -i '' "${remove_line}d" "$file_path"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS version
+            sed -i '' "${remove_line}d" "$file_path"
+        else
+            # Linux version
+            sed -i "${remove_line}d" "$file_path"
+        fi
     else
         echo "Function not found in file"
         return 1
@@ -200,9 +207,12 @@ source_test_fun() {
 
 
 ## Source test functions
+printf "[INFO] Sourcing test functions" >&2
 source_test_fun "pyth" "price_info" "new_price_info_object_for_testing"
 source_test_fun "pyth" "price_info" "update_price_info_object_for_testing"
 
+
+printf "[INFO] Publishing packages" >&2
 
 sui client --client.config sui/client.yaml faucet
 sleep 1
@@ -216,6 +226,7 @@ PYTH_RESPONSE=$(publish_package "temp/pyth" "PYTH_PKG_ID")
 SUILEND_RESPONSE=$(publish_package "temp/suilend" "SUILEND_PKG_ID")
 STEAMM_RESPONSE=$(publish_package "temp/steamm" "STEAMM_PKG_ID")
 
+printf "[INFO] Fetching object IDs" >&2
 # Get relevant object IDs
 lending_market_registry=$(find_object_id "$SUILEND_RESPONSE" ".*::lending_market_registry::Registry")
 echo "lending_market_registry: $lending_market_registry"
