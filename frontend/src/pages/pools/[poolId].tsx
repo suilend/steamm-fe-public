@@ -395,7 +395,7 @@ function Pool() {
             </div>
 
             <div className="max-md:w-full md:flex-1">
-              <div className="h-[200px] w-full rounded-md border p-5" />
+              <div className="h-[400px] w-full rounded-md border p-5" />
             </div>
           </div>
         </div>
