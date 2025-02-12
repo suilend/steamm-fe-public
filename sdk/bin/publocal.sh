@@ -34,10 +34,12 @@ fi
 
 
 # Create source directories
+echo "[INFO] Building Steamm package"
 mkdir -p temp/liquid_staking/sources temp/pyth/sources temp/sprungsui/sources temp/suilend/sources temp/wormhole/sources temp/steamm/sources
-sui move build --path temp/git/contracts/steamm
+sui move build --path temp/git/contracts/steamm --silence-warnings --no-lint
 
 # Copy dependencies from build to local directories
+echo "[INFO] Copying state"
 cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/liquid_staking/* temp/liquid_staking/sources/
 cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/Pyth/* temp/pyth/sources/
 cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/sprungsui/* temp/sprungsui/sources/
@@ -200,9 +202,12 @@ source_test_fun() {
 
 
 ## Source test functions
+echo "[INFO] Sourcing test functions"
 source_test_fun "pyth" "price_info" "new_price_info_object_for_testing"
 source_test_fun "pyth" "price_info" "update_price_info_object_for_testing"
 
+
+echo "[INFO] Publishing packages"
 
 sui client --client.config sui/client.yaml faucet
 sleep 1
@@ -216,6 +221,7 @@ PYTH_RESPONSE=$(publish_package "temp/pyth" "PYTH_PKG_ID")
 SUILEND_RESPONSE=$(publish_package "temp/suilend" "SUILEND_PKG_ID")
 STEAMM_RESPONSE=$(publish_package "temp/steamm" "STEAMM_PKG_ID")
 
+echo "[INFO] Fetching object IDs"
 # Get relevant object IDs
 lending_market_registry=$(find_object_id "$SUILEND_RESPONSE" ".*::lending_market_registry::Registry")
 echo "lending_market_registry: $lending_market_registry"
