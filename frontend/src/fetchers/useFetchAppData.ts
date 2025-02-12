@@ -115,8 +115,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const featuredPoolGroupIds = ["1", "3"];
 
     // TVL (dummy data)
-    const tvlData: BarChartData[] = [];
+    const tvlUsd = new BigNumber(1275152);
 
+    const tvlData: BarChartData[] = [];
     for (let i = 0; i < 32; i++) {
       tvlData.push({
         timestampS: 1739253600 + i * 24 * 60 * 60,
@@ -138,8 +139,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     }
 
     // Volume (dummy data)
-    const volumeData: BarChartData[] = [];
+    const volumeUsd = new BigNumber(669152);
 
+    const volumeData: BarChartData[] = [];
     for (let i = 0; i < 32; i++) {
       volumeData.push({
         timestampS: 1739253600 + i * 60 * 60,
@@ -180,7 +182,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
       poolGroups,
       featuredPoolGroupIds,
+      tvlUsd,
       tvlData,
+      volumeUsd,
       volumeData,
       coinTypes: uniqueCoinTypes,
     };

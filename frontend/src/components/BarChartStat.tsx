@@ -4,12 +4,12 @@ import BigNumber from "bignumber.js";
 import { format } from "date-fns";
 import { capitalize } from "lodash";
 
-import { formatPercent, formatUsd } from "@suilend/frontend-sui";
+import { formatUsd } from "@suilend/frontend-sui";
 
+import PercentChange from "@/components/PercentChange";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { cn } from "@/lib/utils";
 
 export type BarChartData = {
   timestampS: number;
@@ -20,13 +20,15 @@ const OTHER = "other";
 
 interface BarChartStatProps {
   title: string;
+  valueUsd: BigNumber;
   periodDays: 1 | 7 | 30;
-  periodChangePercent?: BigNumber;
-  data?: BarChartData[];
+  periodChangePercent: BigNumber;
+  data: BarChartData[];
 }
 
 export default function BarChartStat({
   title,
+  valueUsd,
   periodDays,
   periodChangePercent,
   data,
@@ -35,8 +37,6 @@ export default function BarChartStat({
 
   // Data
   const processedData: BarChartData[] = useMemo(() => {
-    if (!data) return [];
-
     const coinTypes =
       data.length > 0
         ? Object.keys(data[0]).filter((key) => key !== "timestampS")
@@ -103,11 +103,6 @@ export default function BarChartStat({
     }),
     {},
   );
-  const total = Object.values(categoryTotalsMap).reduce(
-    (acc, categoryTotal) => acc + categoryTotal,
-    0,
-  );
-
   const sortedCategories = categories.slice().sort((a, b) => {
     if (a === OTHER) return 1;
     return categoryTotalsMap[b] - categoryTotalsMap[a];
@@ -132,26 +127,13 @@ export default function BarChartStat({
         {/* Top left */}
         <div className="flex flex-col gap-1">
           <p className="text-p2 text-secondary-foreground">{title}</p>
-          {data === undefined ? (
-            <Skeleton className="h-[36px] w-20" />
-          ) : (
+
+          <div className="flex flex-col">
             <p className="text-h2 text-foreground">
-              {formatUsd(new BigNumber(total))}
+              {formatUsd(new BigNumber(valueUsd))}
             </p>
-          )}
-          {periodChangePercent === undefined ? (
-            <Skeleton className="h-[18px] w-10" />
-          ) : (
-            <p
-              className={cn(
-                "!text-p3",
-                periodChangePercent.gte(0) ? "text-success" : "text-error",
-              )}
-            >
-              {periodChangePercent.gte(0) ? "+" : "-"}
-              {formatPercent(periodChangePercent.abs())}
-            </p>
-          )}
+            <PercentChange value={periodChangePercent} />
+          </div>
         </div>
 
         {/* Top right */}
@@ -191,85 +173,77 @@ export default function BarChartStat({
       <div className="flex w-full flex-col gap-3">
         {/* Chart */}
         <div className="-mx-[2px] flex h-[calc(120px+24px)] transform-gpu flex-row items-stretch md:-mx-[3px] md:h-[calc(150px+24px)]">
-          {data === undefined ? (
-            <Skeleton className="h-full w-full bg-card/50" />
-          ) : (
-            processedData.map((d) => (
-              <div key={d.timestampS} className="flex-1">
-                <Tooltip
-                  rootProps={{
-                    delayDuration: 0,
-                    disableHoverableContent: true,
-                  }}
-                  content={
-                    <div className="flex flex-col-reverse gap-1">
-                      {sortedCategories.map((category, categoryIndex) => (
-                        <div
-                          key={category}
-                          className="flex flex-row items-center gap-1.5"
-                        >
-                          <div
-                            className="h-3 w-3 rounded-[2px]"
-                            style={{
-                              backgroundColor: `hsl(var(--a${sortedCategories.length - categoryIndex}))`,
-                            }}
-                          />
-                          {category !== OTHER ? (
-                            !coinMetadataMap?.[category] ? (
-                              <Skeleton className="h-[18px] w-10" />
-                            ) : (
-                              <p className="text-p3 text-secondary-foreground">
-                                {coinMetadataMap[category].symbol}
-                              </p>
-                            )
-                          ) : (
-                            <p className="text-p3 text-secondary-foreground">
-                              {capitalize(category)}
-                            </p>
-                          )}
-
-                          <p className="text-p3 text-foreground">
-                            {formatUsd(new BigNumber(d[category]))}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  }
-                >
-                  <div className="group flex h-full w-full flex-col-reverse items-center gap-[2px] px-[2px] md:px-[3px]">
+          {processedData.map((d) => (
+            <div key={d.timestampS} className="flex-1">
+              <Tooltip
+                rootProps={{
+                  delayDuration: 0,
+                  disableHoverableContent: true,
+                }}
+                content={
+                  <div className="flex flex-col-reverse gap-1">
                     {sortedCategories.map((category, categoryIndex) => (
                       <div
                         key={category}
-                        className="w-full shrink-0 rounded-[2px]"
-                        style={{
-                          backgroundColor: `hsl(var(--a${sortedCategories.length - categoryIndex}))`,
-                          height: `calc((100% - 24px - ${(sortedCategories.length - 1) * 2}px) * ${d[category] / maxY})`,
-                        }}
-                      />
+                        className="flex flex-row items-center gap-1.5"
+                      >
+                        <div
+                          className="h-3 w-3 rounded-[2px]"
+                          style={{
+                            backgroundColor: `hsl(var(--a${sortedCategories.length - categoryIndex}))`,
+                          }}
+                        />
+                        {category !== OTHER ? (
+                          !coinMetadataMap?.[category] ? (
+                            <Skeleton className="h-[18px] w-10" />
+                          ) : (
+                            <p className="text-p3 text-secondary-foreground">
+                              {coinMetadataMap[category].symbol}
+                            </p>
+                          )
+                        ) : (
+                          <p className="text-p3 text-secondary-foreground">
+                            {capitalize(category)}
+                          </p>
+                        )}
+
+                        <p className="text-p3 text-foreground">
+                          {formatUsd(new BigNumber(d[category]))}
+                        </p>
+                      </div>
                     ))}
-                    <div className="w-px flex-1 bg-border opacity-0 group-hover:opacity-100" />
                   </div>
-                </Tooltip>
-              </div>
-            ))
-          )}
+                }
+              >
+                <div className="group flex h-full w-full flex-col-reverse items-center gap-[2px] px-[2px] md:px-[3px]">
+                  {sortedCategories.map((category, categoryIndex) => (
+                    <div
+                      key={category}
+                      className="w-full shrink-0 rounded-[2px]"
+                      style={{
+                        backgroundColor: `hsl(var(--a${sortedCategories.length - categoryIndex}))`,
+                        height: `calc((100% - 24px - ${(sortedCategories.length - 1) * 2}px) * ${d[category] / maxY})`,
+                      }}
+                    />
+                  ))}
+                  <div className="w-px flex-1 bg-border opacity-0 group-hover:opacity-100" />
+                </div>
+              </Tooltip>
+            </div>
+          ))}
         </div>
 
         {/* X-axis */}
-        {data === undefined ? (
-          <Skeleton className="h-[18px] w-full" />
-        ) : (
-          <div className="flex w-full flex-row justify-between">
-            {ticksX.map((tickX) => (
-              <p key={tickX} className="text-p3 text-tertiary-foreground">
-                {format(
-                  new Date(tickX * 1000),
-                  periodDays === 1 ? "HH:mm" : "d MMM",
-                )}
-              </p>
-            ))}
-          </div>
-        )}
+        <div className="flex w-full flex-row justify-between">
+          {ticksX.map((tickX) => (
+            <p key={tickX} className="text-p3 text-tertiary-foreground">
+              {format(
+                new Date(tickX * 1000),
+                periodDays === 1 ? "HH:mm a" : "d MMM",
+              )}
+            </p>
+          ))}
+        </div>
       </div>
     </div>
   );

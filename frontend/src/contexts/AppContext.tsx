@@ -32,7 +32,9 @@ export interface AppData {
 
   poolGroups: PoolGroup[];
   featuredPoolGroupIds: string[];
+  tvlUsd: BigNumber;
   tvlData: BarChartData[];
+  volumeUsd: BigNumber;
   volumeData: BarChartData[];
   coinTypes: string[];
 }

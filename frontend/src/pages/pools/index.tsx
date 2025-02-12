@@ -37,7 +37,8 @@ export default function Pools() {
             <div className="flex-1">
               <div className="w-full p-5">
                 <BarChartStat
-                  title="30D TVL"
+                  title="TVL"
+                  valueUsd={appData.tvlUsd}
                   periodDays={30}
                   periodChangePercent={new BigNumber(-4.92)}
                   data={appData.tvlData}
@@ -51,7 +52,8 @@ export default function Pools() {
             <div className="flex-1">
               <div className="w-full p-5">
                 <BarChartStat
-                  title="24H Volume"
+                  title="Volume"
+                  valueUsd={appData.volumeUsd}
                   periodDays={1}
                   periodChangePercent={new BigNumber(2.51)}
                   data={appData.volumeData}
