@@ -1,6 +1,6 @@
 export const TWITTER = "@steammfi";
 
-export const TITLE = "Steamm | Superfluid Automated Market Maker";
+export const TITLE = "STEAMM | Superfluid Automated Market Maker";
 export const DESCRIPTION = "Superfluid Automated Market Maker";
 
 export const TOAST_DURATION = 4 * 1000;

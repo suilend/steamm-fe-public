@@ -5,20 +5,72 @@
 @layer base {
   :root {
     /* colors */
-    --foreground: var(--white);
-    --background: var(--rich-black);
+    --foreground: var(--primary-foreground);
+    --background: var(--primary);
 
     --jordy-blue: 211 100% 79%; // #94C8FF
     --rich-black: 213 50% 7%; // #09111B
     --emerald: 130 50% 65%; // #7BD389
     --rich-black-light: 218 44% 11%; // #101929
     --medium-slate-blue: 218 32% 20%; // #222E42
-    --white: 0 0% 100%; // #FFFFFF
+
+    --primary-foreground: 210 25% 98%; // #FAFBFC
+    --primary: 218 44% 5%; // #070B12
+    --secondary-foreground: 218 29% 72%; // #A3B2CC
+    --secondary: 217 44% 7%; // #0A101A
+    --tertiary-foreground: 218 14% 50%; // #6D7A91
+    --tertiary: 218 44% 8%; // #0C131F
+
+    --button-1-foreground: 220 43% 5%; // #080C14
+    --button-1: 211 100% 79%; // #94C8FF
+    --button-2-foreground: 211 100% 79%; // #94C8FF
+    --button-2: 214 29% 20%; // #243142
+
+    --selected: 217 39% 16%; // #192539
+
+    --border: 219 39% 18%; // #1C2940
+    --hover-border: 211 27% 35%; // #415871
+    --selected-border: 211 47% 63%; // #759FCD
+
+    --input: 217 44% 7%; // #0A101A
+    --card: 218 40% 13%; // #141E2F
+    --popover: 218 42% 10%; // #0F1725
+    --tooltip: 219 44% 14%; // #141F33
+
+    --success: 130 50% 65%; // #7BD389
+    --error: 352 80% 58%; // #E93E54
+
+    --a1: 130 21% 51%; // #679B6F
+    --a1-active: 130 50% 65%; // #7BD389
+    --a1-disabled: 153 20% 19%; // #273B32
+
+    --a2: 130 16% 39%; // #547459
+    --a2-active: 129 26% 64%; // #8ABB91
+    --a2-disabled: 166 16% 15%; // #212E2B
+
+    --a3: 211 34% 77%; // #B0C4D8
+    --a3-active: 203 72% 85%; // #BCDFF4
+    --a3-disabled: 213 15% 29%; // #3F4955
+
+    --a4: 211 29% 60%; // #7C99B8
+    --a4-active: 211 100% 79%; // #94C8FF
+    --a4-disabled: 212 23% 24%; // #2E3B4A
+
+    --a5: 217 33% 27%; // #2E3F5C
+    --a5-active: 219 34% 50%; // #5573AB
+    --a5-disabled: 219 39% 20%; // #1F2D47
   }
 }
 
 @layer base {
-  body {
-    @apply bg-background text-foreground;
+  * {
+    @apply border-border;
   }
+  body {
+    @apply bg-background text-p2 text-foreground;
+  }
+}
+
+.recharts-active-dot {
+  opacity: 0;
 }

@@ -1,13 +1,23 @@
-// export * as PoolScriptFunctions from "./poolScriptFunctions";
-
+import {
+  Transaction,
+  TransactionArgument,
+  TransactionResult,
+} from "@mysten/sui/dist/cjs/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
+
 import { PoolScriptFunctions } from "../_codegen";
 import { BankInfo, PoolInfo } from "../types";
-import { Bank, LendingObjectsArgs } from "./bank";
-import { Pool, PoolDepositLiquidityArgs, PoolQuoteRedeemArgs, PoolQuoteSwapArgs, PoolRedeemLiquidityArgs, PoolSwapArgs, QuoteDepositArgs } from "./pool";
-import { ConstantProductQuoter } from "./quoters";
-import { Quoter } from "./quoters/quoter";
-import { Transaction, TransactionArgument, TransactionResult } from "@mysten/sui/dist/cjs/transactions";
+
+import { Bank } from "./bank";
+import {
+  Pool,
+  PoolDepositLiquidityArgs,
+  PoolQuoteDepositArgs,
+  PoolQuoteRedeemArgs,
+  PoolQuoteSwapArgs,
+  PoolRedeemLiquidityArgs,
+  PoolSwapArgs,
+} from "./pool";
 
 export class PoolScript {
   public packageId: string;
@@ -15,38 +25,47 @@ export class PoolScript {
   public bankA: Bank;
   public bankB: Bank;
 
-  constructor(packageId: string, poolInfo: PoolInfo, bankInfoA: BankInfo, bankInfoB: BankInfo) {
-      this.pool = new Pool(packageId, poolInfo);
-      this.bankA = new Bank(packageId, bankInfoA);
-      this.bankB = new Bank(packageId, bankInfoB);
-      this.packageId = packageId;
+  constructor(
+    packageId: string,
+    poolInfo: PoolInfo,
+    bankInfoA: BankInfo,
+    bankInfoB: BankInfo,
+  ) {
+    this.pool = new Pool(packageId, poolInfo);
+    this.bankA = new Bank(packageId, bankInfoA);
+    this.bankB = new Bank(packageId, bankInfoB);
+    this.packageId = packageId;
 
-      const [bTokenAType, bTokenBType, quoterType, lpTokenType] = this.pool.poolTypes();
-      const [lendingMarketType, coinTypeA, _bTokenAType] = this.bankA.typeArgs();
-      const [_lendingMarketType, coinTypeB, _bTokenBType] = this.bankB.typeArgs();
+    const [bTokenAType, bTokenBType, _quoterType, _lpTokenType] =
+      this.pool.poolTypes();
+    const [lendingMarketType, _coinTypeA, _bTokenAType] = this.bankA.typeArgs();
+    const [_lendingMarketType, _coinTypeB, _bTokenBType] =
+      this.bankB.typeArgs();
 
-      if (lendingMarketType !== _lendingMarketType) {
-        throw new Error(`Lending market mismatch: ${lendingMarketType} !== ${_lendingMarketType}`);
-      }
-      
-      if (bTokenAType !== _bTokenAType) {
-        throw new Error(`BTokenType A mismatch: ${bTokenAType} !== ${_bTokenAType}`);
-      }
-      
-      if (bTokenBType !== _bTokenBType) {
-        throw new Error(`BTokenType B mismatch: ${bTokenBType} !== ${_bTokenBType}`);
-      }
+    if (lendingMarketType !== _lendingMarketType) {
+      throw new Error(
+        `Lending market mismatch: ${lendingMarketType} !== ${_lendingMarketType}`,
+      );
     }
 
+    if (bTokenAType !== _bTokenAType) {
+      throw new Error(
+        `BTokenType A mismatch: ${bTokenAType} !== ${_bTokenAType}`,
+      );
+    }
 
-//   public swap(args: PoolSwapArgs, tx: Transaction): TransactionResult {
-//     return this.quoter.swap(args, tx);
-//   }
+    if (bTokenBType !== _bTokenBType) {
+      throw new Error(
+        `BTokenType B mismatch: ${bTokenBType} !== ${_bTokenBType}`,
+      );
+    }
+  }
 
-  public swap(
-    tx: Transaction,
-    args: PoolSwapArgs,
-  ): TransactionResult {
+  //   public swap(args: PoolSwapArgs, tx: Transaction): TransactionResult {
+  //     return this.quoter.swap(args, tx);
+  //   }
+
+  public swap(tx: Transaction, args: PoolSwapArgs): TransactionResult {
     const callArgs = {
       pool: tx.object(this.pool.poolInfo.poolId),
       bankA: tx.object(this.bankA.bankInfo.bankId),
@@ -64,14 +83,16 @@ export class PoolScript {
       tx,
       this.poolScriptTypesNoQuoter(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
 
     return swapResult;
   }
 
-
-  public quoteSwap(tx: Transaction, args: PoolQuoteSwapArgs): TransactionArgument {
+  public quoteSwap(
+    tx: Transaction,
+    args: PoolQuoteSwapArgs,
+  ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.pool.poolInfo.poolId),
       bankA: tx.object(this.bankA.bankInfo.bankId),
@@ -81,12 +102,12 @@ export class PoolScript {
       a2B: args.a2b,
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
-    
+
     const quote = PoolScriptFunctions.quoteCpmmSwap(
       tx,
       this.poolScriptTypesNoQuoter(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
 
     return quote;
@@ -112,7 +133,7 @@ export class PoolScript {
       tx,
       this.poolScriptTypes(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
 
     return [lpCoin, depositResult];
@@ -121,13 +142,13 @@ export class PoolScript {
   public redeemLiquidity(
     tx: Transaction,
     args: PoolRedeemLiquidityArgs,
-  ): [TransactionArgument, TransactionArgument, TransactionArgument] {    
+  ): [TransactionArgument, TransactionArgument, TransactionArgument] {
     const callArgs = {
       pool: tx.object(this.pool.poolInfo.poolId),
       bankA: tx.object(this.bankA.bankInfo.bankId),
       bankB: tx.object(this.bankB.bankInfo.bankId),
       lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
-      lpTokens: args.lpCoinObj,
+      lpTokens: args.lpCoin,
       minA: args.minA,
       minB: args.minB,
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
@@ -137,30 +158,30 @@ export class PoolScript {
       tx,
       this.poolScriptTypes(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
     return [coinA, coinB, redeemResult];
   }
 
   public quoteDeposit(
     tx: Transaction,
-    args: QuoteDepositArgs,
+    args: PoolQuoteDepositArgs,
   ): TransactionArgument {
     const callArgs = {
-        pool: tx.object(this.pool.poolInfo.poolId),
-        bankA: tx.object(this.bankA.bankInfo.bankId),
-        bankB: tx.object(this.bankB.bankInfo.bankId),
-        lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
-        maxA: args.maxA,
-        maxB: args.maxB,
-        clock: tx.object(SUI_CLOCK_OBJECT_ID),
+      pool: tx.object(this.pool.poolInfo.poolId),
+      bankA: tx.object(this.bankA.bankInfo.bankId),
+      bankB: tx.object(this.bankB.bankInfo.bankId),
+      lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
+      maxA: args.maxA,
+      maxB: args.maxB,
+      clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
     const quote = PoolScriptFunctions.quoteDeposit(
       tx,
       this.poolScriptTypes(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
     return quote;
   }
@@ -168,7 +189,7 @@ export class PoolScript {
   public quoteRedeem(
     tx: Transaction,
     args: PoolQuoteRedeemArgs,
-): TransactionArgument {
+  ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.pool.poolInfo.poolId),
       bankA: tx.object(this.bankA.bankInfo.bankId),
@@ -182,14 +203,22 @@ export class PoolScript {
       tx,
       this.poolScriptTypes(),
       callArgs,
-      this.packageId
+      this.packageId,
     );
     return quote;
   }
 
-
-  public poolScriptTypes(): [string, string, string, string, string, string, string] {
-    const [bTokenAType, bTokenBType, quoterType, lpTokenType] = this.pool.poolTypes();
+  public poolScriptTypes(): [
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+  ] {
+    const [bTokenAType, bTokenBType, quoterType, lpTokenType] =
+      this.pool.poolTypes();
     const [lendingMarketType, coinTypeA, _bTokenAType] = this.bankA.typeArgs();
     const [_lendingMarketType, coinTypeB, _bTokenBType] = this.bankB.typeArgs();
 
@@ -203,9 +232,17 @@ export class PoolScript {
       lpTokenType,
     ];
   }
-  
-  public poolScriptTypesNoQuoter(): [string, string, string, string, string, string] {
-    const [bTokenAType, bTokenBType, quoterType, lpTokenType] = this.pool.poolTypes();
+
+  public poolScriptTypesNoQuoter(): [
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+  ] {
+    const [bTokenAType, bTokenBType, quoterType, lpTokenType] =
+      this.pool.poolTypes();
     const [lendingMarketType, coinTypeA, _bTokenAType] = this.bankA.typeArgs();
     const [_lendingMarketType, coinTypeB, _bTokenBType] = this.bankB.typeArgs();
 

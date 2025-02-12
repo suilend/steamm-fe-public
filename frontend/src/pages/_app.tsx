@@ -14,6 +14,10 @@ import {
   useSettingsContext,
 } from "@suilend/frontend-sui-next";
 
+import Layout from "@/components/Layout";
+import Toaster from "@/components/Toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AppContextProvider } from "@/contexts/AppContext";
 import { TITLE } from "@/lib/constants";
 import { fontClassNames } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
@@ -27,12 +31,12 @@ function WalletContextProviderWrapper({ children }: PropsWithChildren) {
   useEffect(() => {
     if (didRegisterMsafeWalletRef.current) return;
 
-    // registerWallet(new MSafeWallet("Steamm", rpc.url, "sui:mainnet"));
+    // registerWallet(new MSafeWallet("STEAMM", rpc.url, "sui:mainnet"));
     didRegisterMsafeWalletRef.current = true;
   }, [rpc.url]);
 
   return (
-    <WalletContextProvider appName="Steamm">{children}</WalletContextProvider>
+    <WalletContextProvider appName="STEAMM">{children}</WalletContextProvider>
   );
 }
 
@@ -63,7 +67,14 @@ export default function App({ Component, pageProps }: AppProps) {
       <main id="__app_main" className={cn(fontClassNames)}>
         <SettingsContextProvider>
           <WalletContextProviderWrapper>
-            <Component {...pageProps} />
+            <AppContextProvider>
+              <TooltipProvider>
+                <Layout>
+                  <Component {...pageProps} />
+                </Layout>
+                <Toaster />
+              </TooltipProvider>
+            </AppContextProvider>
           </WalletContextProviderWrapper>
         </SettingsContextProvider>
       </main>

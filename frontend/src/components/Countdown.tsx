@@ -28,7 +28,7 @@ export default function Countdown() {
         <p className="text-[48px] font-medium">
           {`${launchDuration.days ?? 0}`.padStart(2, "0")}
         </p>
-        <p>DD</p>
+        <p className="text-p2 text-secondary-foreground">DD</p>
       </div>
 
       <p className="text-[48px] font-medium">:</p>
@@ -38,7 +38,7 @@ export default function Countdown() {
         <p className="text-[48px] font-medium">
           {`${launchDuration.hours ?? 0}`.padStart(2, "0")}
         </p>
-        <p>HH</p>
+        <p className="text-p2 text-secondary-foreground">HH</p>
       </div>
 
       <p className="text-[48px] font-medium">:</p>
@@ -48,7 +48,7 @@ export default function Countdown() {
         <p className="text-[48px] font-medium">
           {`${launchDuration.minutes ?? 0}`.padStart(2, "0")}
         </p>
-        <p>MM</p>
+        <p className="text-p2 text-secondary-foreground">MM</p>
       </div>
 
       <p className="text-[48px] font-medium">:</p>
@@ -58,7 +58,7 @@ export default function Countdown() {
         <p className="text-[48px] font-medium">
           {`${launchDuration.seconds ?? 0}`.padStart(2, "0")}
         </p>
-        <p>SS</p>
+        <p className="text-p2 text-secondary-foreground">SS</p>
       </div>
     </div>
   );

@@ -133,12 +133,10 @@ export class DepositResult implements StructClass {
 
   static get bcs() {
     return bcs.struct("DepositResult", {
-      user: bcs
-        .bytes(32)
-        .transform({
-          input: (val: string) => fromHEX(val),
-          output: (val: Uint8Array) => toHEX(val),
-        }),
+      user: bcs.bytes(32).transform({
+        input: (val: string) => fromHEX(val),
+        output: (val: Uint8Array) => toHEX(val),
+      }),
       pool_id: ID.bcs,
       deposit_a: bcs.u64(),
       deposit_b: bcs.u64(),
@@ -362,12 +360,10 @@ export class NewPoolResult implements StructClass {
 
   static get bcs() {
     return bcs.struct("NewPoolResult", {
-      creator: bcs
-        .bytes(32)
-        .transform({
-          input: (val: string) => fromHEX(val),
-          output: (val: Uint8Array) => toHEX(val),
-        }),
+      creator: bcs.bytes(32).transform({
+        input: (val: string) => fromHEX(val),
+        output: (val: Uint8Array) => toHEX(val),
+      }),
       pool_id: ID.bcs,
       coin_type_a: TypeName.bcs,
       coin_type_b: TypeName.bcs,
@@ -1143,12 +1139,10 @@ export class RedeemResult implements StructClass {
 
   static get bcs() {
     return bcs.struct("RedeemResult", {
-      user: bcs
-        .bytes(32)
-        .transform({
-          input: (val: string) => fromHEX(val),
-          output: (val: Uint8Array) => toHEX(val),
-        }),
+      user: bcs.bytes(32).transform({
+        input: (val: string) => fromHEX(val),
+        output: (val: Uint8Array) => toHEX(val),
+      }),
       pool_id: ID.bcs,
       withdraw_a: bcs.u64(),
       withdraw_b: bcs.u64(),
@@ -1372,12 +1366,10 @@ export class SwapResult implements StructClass {
 
   static get bcs() {
     return bcs.struct("SwapResult", {
-      user: bcs
-        .bytes(32)
-        .transform({
-          input: (val: string) => fromHEX(val),
-          output: (val: Uint8Array) => toHEX(val),
-        }),
+      user: bcs.bytes(32).transform({
+        input: (val: string) => fromHEX(val),
+        output: (val: Uint8Array) => toHEX(val),
+      }),
       pool_id: ID.bcs,
       amount_in: bcs.u64(),
       amount_out: bcs.u64(),

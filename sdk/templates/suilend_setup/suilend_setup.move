@@ -71,6 +71,7 @@ module suilend::setup {
     }
 
     public fun default_price_info_obj(
+        idx: u8,
         clock: &Clock,
         ctx: &mut TxContext
     ): PriceInfoObject {

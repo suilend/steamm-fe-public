@@ -26,7 +26,7 @@ dotenv.config();
 // }
 
 export function test() {
-  describe("describe", () => {
+  describe("test depost, swap and redeem", () => {
     let keypair: Ed25519Keypair;
     let suiTreasuryCap: string;
     let usdcTreasuryCap: string;
@@ -295,6 +295,8 @@ export function test() {
         maxB: BigInt("1000000000000000000"),
       });
 
+      tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
+
       //////////////////////////////////////////////////////////////
 
       await poolModule.redeemLiquidityEntry(tx, {
@@ -305,8 +307,6 @@ export function test() {
         minA: BigInt("0"),
         minB: BigInt("0"),
       });
-
-      tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
 
       const devResult = await sdk.fullClient.devInspectTransactionBlock({
         transactionBlock: tx,

@@ -1,5 +1,5 @@
-export * from "./interfaces/IModule";
 export * from "./_codegen";
+export * from "./interfaces";
 export * from "./sdk";
 export * from "./base";
 export * from "./modules";

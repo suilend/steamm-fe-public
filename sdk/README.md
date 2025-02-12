@@ -36,10 +36,10 @@ To fetch the pools:
 const pools = await sdk.getPools();
 ```
 
-Alternatively one can fetch all the pools for a dedicated pair:
+Alternatively, one can fetch all pools for a dedicated pair:
 
 ```ts
-// Note: type1 nd type2 do not correspond to the token type's position in the pool
+// Note: type1 and type2 do not correspond to the token type's position in the pool
 const pools = await sdk.getPoolsByType(coinType1, coinType2);
 ```
 
@@ -51,8 +51,8 @@ await sdk.Pool.depositLiquidityEntry(
     pool: pools[0].poolId,
     coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
     coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
-    CoinA: usdcCoin,
-    CoinB: suiCoin,
+    coinA: usdcCoin,
+    coinB: suiCoin,
     maxA: BigInt("1000000000000000000"),
     maxB: BigInt("1000000000000000000"),
   },
