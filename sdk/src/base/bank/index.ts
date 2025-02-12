@@ -11,6 +11,7 @@ import { BankInfo } from "../../types";
 import {
   BurnBTokensArgs,
   CTokenAmountArgs,
+  CreateBankArgs,
   InitLendingArgs,
   MigrateBankArgs,
   MintBTokensArgs,
@@ -240,14 +241,23 @@ export class Bank {
   }
 }
 
-// TODO
-// public createBank(
-//   pType: string,
-//   tType: string,
-//   registryID: string,
-//   tx: Transaction,
-// ) {
-//   const registry = tx.object(registryID);
+export function createBank(
+  tx: Transaction,
+  args: CreateBankArgs,
+  packageId: string,
+): TransactionArgument {
+  const { lendingMarketType, coinType, btokenType } = args;
 
-//   BankFunctions.createBankAndShare(tx, [pType, tType], registry);
-// }
+  return BankFunctions.createBankAndShare(
+    tx,
+    [lendingMarketType, coinType, btokenType],
+    {
+      registry: tx.object(args.registry),
+      metaT: tx.object(args.coinMetaT),
+      metaB: tx.object(args.coinMetaBToken),
+      btokenTreasury: tx.object(args.btokenTreasury),
+      lendingMarket: tx.object(args.lendingMarket),
+    },
+    packageId,
+  );
+}
