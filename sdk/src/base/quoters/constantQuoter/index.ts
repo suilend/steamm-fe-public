@@ -9,7 +9,11 @@ import { PoolInfo } from "../../../types";
 import { MigrateArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
 
-import { CpQuoteSwapArgs, CpSwapArgs } from "./constantProductArgs";
+import {
+  CpQuoteSwapArgs,
+  CpSwapArgs,
+  CreateCpPoolArgs,
+} from "./constantProductArgs";
 
 export * from "./constantProductArgs";
 
@@ -124,22 +128,36 @@ export class ConstantProductQuoter implements Quoter {
   }
 }
 
-// TODO
-// export function newPool(args: CpNewArgs): Transaction {
-//   const tx = new Transaction();
+export function createPool(
+  tx: Transaction,
+  args: CreateCpPoolArgs,
+  packageId: string,
+): TransactionArgument {
+  const {
+    coinTypeA,
+    coinTypeB,
+    lpTokenType,
+    registry,
+    swapFeeBps,
+    offset,
+    coinMetaA,
+    coinMetaB,
+    lpTokenMeta,
+    lpTreasury,
+  } = args;
 
-//   const callArgs: NewArgs = {
-//     metaA: args.coinMetadataA,
-//     metaB: args.coinMetadataB,
-//     metaLp: args.coinMetadataLp,
-//     lpTreasury: args.LpTreasury,
-//     registry: args.registry,
-//     swapFeeBps: args.swapFeeBps,
-//     offset: args.offset,
-//   };
-//   const pool = ConstantProductFunctions.new_(tx, this.quoterTypes(), callArgs);
-
-//   tx.shareObject(pool, this.poolType());
-
-//   return tx;
-// }
+  return ConstantProductFunctions.new_(
+    tx,
+    [coinTypeA, coinTypeB, lpTokenType],
+    {
+      registry,
+      swapFeeBps,
+      offset,
+      metaA: coinMetaA,
+      metaB: coinMetaB,
+      metaLp: lpTokenMeta,
+      lpTreasury,
+    },
+    packageId,
+  );
+}
