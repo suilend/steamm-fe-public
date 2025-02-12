@@ -103,7 +103,7 @@ export default function ConnectWalletPopover() {
                 : "text-secondary-foreground transition-colors group-hover:text-foreground",
             )}
           >
-            Connect wallet
+            Connect<span className="max-md:hidden"> wallet</span>
           </p>
           <Chevron
             className={cn(

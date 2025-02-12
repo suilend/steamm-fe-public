@@ -21,6 +21,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
   const dataFetcher = async () => {
     const banks = await steammClient.getBanks();
     const pools = await steammClient.getPools();
+    console.log("XXX", banks, pools);
 
     // Pools (dummy data)
     const poolGroups: PoolGroup[] = [
@@ -118,7 +119,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const tvlUsd = new BigNumber(1275152);
 
     const tvlData: BarChartData[] = [];
-    for (let i = 0; i < 32; i++) {
+    for (let i = 0; i < 30; i++) {
       tvlData.push({
         timestampS: 1739253600 + i * 24 * 60 * 60,
         ...[
@@ -142,9 +143,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const volumeUsd = new BigNumber(669152);
 
     const volumeData: BarChartData[] = [];
-    for (let i = 0; i < 32; i++) {
+    for (let i = 0; i < 30; i++) {
       volumeData.push({
-        timestampS: 1739253600 + i * 60 * 60,
+        timestampS: 1739253600 + i * 24 * 60 * 60,
         ...[
           NORMALIZED_SUI_COINTYPE,
           NORMALIZED_SEND_COINTYPE,

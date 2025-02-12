@@ -188,14 +188,14 @@ export default function PoolsTable({ className, poolGroups }: PoolsTableProps) {
           sortState={sortState}
           toggleSortByColumn={toggleSortByColumn}
         >
-          24H Volume
+          Volume 24h
         </HeaderColumn>
         <HeaderColumn
           id="aprPercent"
           sortState={sortState}
           toggleSortByColumn={toggleSortByColumn}
         >
-          24H APR
+          APR 24h
         </HeaderColumn>
       </div>
 

@@ -18,6 +18,7 @@ import { useSettingsContext } from "@suilend/frontend-sui-next";
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import LineChartStat, { LineChartData } from "@/components/LineChartStat";
 import OpenOnExplorerButton from "@/components/OpenOnExplorerButton";
+import PercentChange from "@/components/PercentChange";
 import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
@@ -66,9 +67,9 @@ function Pool() {
   // Temp
   const volumeData = useMemo(() => {
     const result: LineChartData[] = [];
-    for (let i = 0; i < 32; i++) {
+    for (let i = 0; i < 30; i++) {
       result.push({
-        timestampS: 1739253600 + i * 60 * 60,
+        timestampS: 1739253600 + 24 * i * 60 * 60,
         valueUsd: 100 + Math.random() * 100,
       });
     }
@@ -78,7 +79,7 @@ function Pool() {
 
   const poolAddress =
     "0x2e868e44010e06c0fc925d29f35029b6ef75a50e03d997585980fb2acea45ec6";
-  const mintAddress =
+  const creatorAddress =
     "0x6191f9a47c411cc169ee4b0292f08531e4d442d4cb9ec61333016d2e9dee1205";
 
   return (
@@ -93,7 +94,7 @@ function Pool() {
         <div className="flex w-full flex-row items-center justify-between">
           {/* Breadcrumb */}
           <div className="flex flex-row items-center gap-2">
-            <Link href={POOLS_URL} className="group">
+            <Link className="group" href={POOLS_URL}>
               <p className="text-p2 text-tertiary-foreground transition-colors group-hover:text-foreground">
                 Pools
               </p>
@@ -109,7 +110,8 @@ function Pool() {
         </div>
 
         <div className="flex w-full flex-col gap-6">
-          <div className="flex w-full flex-col max-md:gap-6 md:flex-row md:items-center md:justify-between">
+          {/* Top */}
+          <div className="flex w-full flex-col max-lg:gap-6 lg:flex-row lg:items-center lg:justify-between">
             {/* Title */}
             <div className="flex flex-row items-center gap-3">
               <div
@@ -146,57 +148,82 @@ function Pool() {
             </div>
 
             {/* Stats */}
-            <div className="flex flex-row gap-6 md:gap-12">
-              <div className="flex flex-col gap-1 md:items-end">
+            <div className="grid grid-cols-2 gap-6 md:flex md:flex-row md:gap-12">
+              <div className="flex flex-col gap-1">
                 <p className="text-p2 text-secondary-foreground">TVL</p>
-                <Tooltip title={formatUsd(pool.tvlUsd, { exact: true })}>
-                  <p className="text-p1 text-foreground">
-                    {formatUsd(pool.tvlUsd)}
-                  </p>
-                </Tooltip>
+
+                <div className="flex flex-row items-baseline gap-1.5">
+                  <Tooltip title={formatUsd(pool.tvlUsd, { exact: true })}>
+                    <p className="text-p1 text-foreground">
+                      {formatUsd(pool.tvlUsd)}
+                    </p>
+                  </Tooltip>
+                  <PercentChange
+                    value={new BigNumber(-5 + Math.random() * 10)}
+                  />
+                </div>
               </div>
 
-              <div className="flex flex-col gap-1 md:items-end">
-                <p className="text-p2 text-secondary-foreground">24H Volume</p>
-                <Tooltip title={formatUsd(pool.volumeUsd, { exact: true })}>
-                  <p className="text-p1 text-foreground">
-                    {formatUsd(pool.volumeUsd)}
-                  </p>
-                </Tooltip>
+              <div className="flex flex-col gap-1">
+                <p className="text-p2 text-secondary-foreground">Volume 24h</p>
+
+                <div className="flex flex-row items-baseline gap-1.5">
+                  <Tooltip title={formatUsd(pool.volumeUsd, { exact: true })}>
+                    <p className="text-p1 text-foreground">
+                      {formatUsd(pool.volumeUsd)}
+                    </p>
+                  </Tooltip>
+                  <PercentChange
+                    value={new BigNumber(-5 + Math.random() * 10)}
+                  />
+                </div>
               </div>
 
-              <div className="flex flex-col gap-1 md:items-end">
-                <p className="text-p2 text-secondary-foreground">24H Fees</p>
-                <Tooltip title={formatUsd(pool.feesUsd, { exact: true })}>
-                  <p className="text-p1 text-foreground">
-                    {formatUsd(pool.feesUsd)}
-                  </p>
-                </Tooltip>
+              <div className="flex flex-col gap-1">
+                <p className="text-p2 text-secondary-foreground">Fees 24h</p>
+
+                <div className="flex flex-row items-baseline gap-1.5">
+                  <Tooltip title={formatUsd(pool.feesUsd, { exact: true })}>
+                    <p className="text-p1 text-foreground">
+                      {formatUsd(pool.feesUsd)}
+                    </p>
+                  </Tooltip>
+                  <PercentChange
+                    value={new BigNumber(-5 + Math.random() * 10)}
+                  />
+                </div>
               </div>
 
-              <div className="flex flex-col gap-1 md:items-end">
-                <p className="text-p2 text-secondary-foreground">24H APR</p>
-                <p className="text-p1 text-foreground">
-                  {formatPercent(pool.apr.percent)}
-                </p>
+              <div className="flex flex-col gap-1">
+                <p className="text-p2 text-secondary-foreground">APR 24h</p>
+
+                <div className="flex flex-row items-baseline gap-1.5">
+                  <p className="text-p1 text-foreground">
+                    {formatPercent(pool.apr.percent)}
+                  </p>
+                  <PercentChange
+                    value={new BigNumber(-5 + Math.random() * 10)}
+                  />
+                </div>
               </div>
             </div>
           </div>
 
           <div className="flex w-full flex-col gap-1 md:flex-row">
+            {/* Left */}
             <div className="flex flex-col gap-1 max-md:w-full md:flex-1">
               {/* Chart */}
               <div className="w-full rounded-md border p-5">
                 <LineChartStat
-                  title="Volume"
+                  title="Volume 30d"
                   valueUsd={pool.volumeUsd}
-                  periodDays={1}
+                  periodDays={30}
                   periodChangePercent={new BigNumber(2.51)}
                   data={volumeData}
                 />
               </div>
 
-              {/* Stats */}
+              {/* Parameters */}
               <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5 lg:grid-cols-2">
                 <PoolStat label="Composition">
                   <div className="flex w-full flex-col gap-2">
@@ -375,18 +402,18 @@ function Pool() {
                   </div>
                 </PoolStat>
 
-                <PoolStat label="LP mint">
+                <PoolStat label="Creator address">
                   <div className="flex flex-row items-center gap-2">
-                    <Tooltip title={mintAddress}>
+                    <Tooltip title={creatorAddress}>
                       <p className="text-p2 text-foreground">
-                        {formatAddress(mintAddress)}
+                        {formatAddress(creatorAddress)}
                       </p>
                     </Tooltip>
 
                     <div className="flex flex-row items-center gap-1">
-                      <CopyToClipboardButton value={mintAddress} />
+                      <CopyToClipboardButton value={creatorAddress} />
                       <OpenOnExplorerButton
-                        url={explorer.buildAddressUrl(mintAddress)}
+                        url={explorer.buildAddressUrl(creatorAddress)}
                       />
                     </div>
                   </div>
@@ -394,8 +421,61 @@ function Pool() {
               </div>
             </div>
 
+            {/* Right */}
             <div className="max-md:w-full md:flex-1">
-              <div className="h-[400px] w-full rounded-md border p-5" />
+              {/* Actions */}
+              <div className="flex w-full flex-col gap-4 rounded-md border p-5">
+                <div className="flex w-full flex-row items-center justify-between">
+                  <div className="flex flex-row gap-1">
+                    <Link
+                      className={cn(
+                        "group flex h-10 flex-row items-center rounded-md border px-3",
+                        "bg-border",
+                      )}
+                      href=""
+                    >
+                      <p
+                        className={cn(
+                          "text-secondary-foreground transition-colors group-hover:text-foreground",
+                          "text-foreground",
+                        )}
+                      >
+                        Deposit
+                      </p>
+                    </Link>
+                    <Link
+                      className={cn(
+                        "group flex h-10 flex-row items-center rounded-md border px-3",
+                        "transition-colors hover:bg-border",
+                      )}
+                      href=""
+                    >
+                      <p
+                        className={cn(
+                          "text-secondary-foreground transition-colors group-hover:text-foreground",
+                        )}
+                      >
+                        Withdraw
+                      </p>
+                    </Link>
+                    <Link
+                      className={cn(
+                        "group flex h-10 flex-row items-center rounded-md border px-3",
+                        "transition-colors hover:bg-border",
+                      )}
+                      href=""
+                    >
+                      <p
+                        className={cn(
+                          "text-secondary-foreground transition-colors group-hover:text-foreground",
+                        )}
+                      >
+                        Swap
+                      </p>
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

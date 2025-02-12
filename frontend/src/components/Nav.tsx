@@ -60,7 +60,7 @@ export default function Nav() {
             {/* Start */}
             <div className="flex shrink-0 flex-row items-center gap-8">
               {/* Logo */}
-              <Link href={ROOT_URL} className="w-max">
+              <Link className="w-max" href={ROOT_URL}>
                 <Logo />
               </Link>
 
@@ -76,9 +76,9 @@ export default function Nav() {
 
                   return (
                     <Component
-                      href={item.url as string}
                       key={item.title}
                       className="group flex h-10 flex-row items-center gap-2"
+                      href={item.url as string}
                     >
                       <p
                         className={cn(

@@ -123,12 +123,12 @@ export default function BarChartStat({
   return (
     <div className="flex w-full flex-col">
       {/* Top */}
-      <div className="flex flex-row items-start justify-between gap-4">
+      <div className="flex flex-row items-start justify-between">
         {/* Top left */}
         <div className="flex flex-col gap-1">
           <p className="text-p2 text-secondary-foreground">{title}</p>
 
-          <div className="flex flex-col">
+          <div className="flex flex-row items-baseline gap-2">
             <p className="text-h2 text-foreground">
               {formatUsd(new BigNumber(valueUsd))}
             </p>
@@ -239,7 +239,7 @@ export default function BarChartStat({
             <p key={tickX} className="text-p3 text-tertiary-foreground">
               {format(
                 new Date(tickX * 1000),
-                periodDays === 1 ? "HH:mm a" : "d MMM",
+                periodDays === 1 ? "h:mm a" : "d MMM",
               )}
             </p>
           ))}

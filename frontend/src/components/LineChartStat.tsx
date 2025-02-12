@@ -33,7 +33,7 @@ function TooltipContent({ periodDays, d, viewBox, x }: TooltipContentProps) {
         <p className="text-p3 text-secondary-foreground">
           {format(
             new Date(d.timestampS * 1000),
-            periodDays === 1 ? "HH:mm a" : "d MMM",
+            periodDays === 1 ? "h:mm a" : "d MMM h:mm a",
           )}
         </p>
         <p className="text-p3 text-foreground">
@@ -78,14 +78,14 @@ export default function LineChartStat({
   );
 
   return (
-    <div className="flex w-full flex-col">
+    <div className="flex w-full flex-col gap-6">
       {/* Top */}
-      <div className="flex flex-row items-start justify-between gap-4">
+      <div className="flex flex-row items-start justify-between">
         {/* Top left */}
         <div className="flex flex-col gap-1">
           <p className="text-p2 text-secondary-foreground">{title}</p>
 
-          <div className="flex flex-col">
+          <div className="flex flex-row items-baseline gap-2">
             <p className="text-h2 text-foreground">
               {formatUsd(new BigNumber(valueUsd))}
             </p>
@@ -99,7 +99,7 @@ export default function LineChartStat({
       {/* Bottom */}
       <div className="flex w-full flex-col gap-3">
         {/* Chart */}
-        <div className="-mx-[2px] flex h-[calc(120px+24px)] transform-gpu flex-row items-stretch md:-mx-[3px] md:h-[calc(150px+24px)]">
+        <div className="-mx-[2px] flex h-[120px] transform-gpu flex-row items-stretch md:-mx-[3px] md:h-[150px]">
           <Recharts.ResponsiveContainer width="100%" height="100%">
             <Recharts.ComposedChart
               data={data}
@@ -125,6 +125,7 @@ export default function LineChartStat({
                 </linearGradient>
               </defs>
               <Recharts.Line
+                type="monotone"
                 dataKey="valueUsd"
                 isAnimationActive={false}
                 stroke="hsl(var(--foreground))"
@@ -132,7 +133,7 @@ export default function LineChartStat({
                 strokeWidth={2}
               />
               <Recharts.Area
-                type="linear"
+                type="monotone"
                 dataKey="valueUsd"
                 isAnimationActive={false}
                 fill={`url(#${gradientId})`}
@@ -181,7 +182,7 @@ export default function LineChartStat({
             <p key={tickX} className="text-p3 text-tertiary-foreground">
               {format(
                 new Date(tickX * 1000),
-                periodDays === 1 ? "HH:mm a" : "d MMM",
+                periodDays === 1 ? "h:mm a" : "d MMM",
               )}
             </p>
           ))}
