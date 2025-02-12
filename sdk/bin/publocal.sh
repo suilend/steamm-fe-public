@@ -135,7 +135,7 @@ publish_package() {
     INITIAL_DIR=$(pwd)
     
     # Change to package directory
-    RESPONSE=$(sui client --client.config sui/client.yaml publish $FOLDER_NAME --silence-warnings --no-lint --json)
+    RESPONSE=$(sui client --client.config sui/client.yaml publish $FOLDER_NAME ----skip-dependency-verification --silence-warnings --no-lint --json)
     RESULT=$(echo "$RESPONSE" | jq -r '.effects.status.status')
 
     if [ $RESULT != "success" ]; then
@@ -219,55 +219,53 @@ sleep 1
 
 sui client --client.config sui/client.yaml addresses
 
-sui client --client.config sui/client.yaml publish temp/liquid_staking --silence-warnings --no-lint --json
+LIQUID_STAKING_RESPONSE=$(publish_package "temp/liquid_staking" "LIQUID_STAKING_PKG_ID")
+WORMHOLE_RESPONSE=$(publish_package "temp/wormhole" "WORMHOLE_PKG_ID")
+SPRUNGSUI_RESPONSE=$(publish_package "temp/sprungsui" "SPRUNGSUI_PKG_ID") 
+PYTH_RESPONSE=$(publish_package "temp/pyth" "PYTH_PKG_ID")
+SUILEND_RESPONSE=$(publish_package "temp/suilend" "SUILEND_PKG_ID")
+STEAMM_RESPONSE=$(publish_package "temp/steamm" "STEAMM_PKG_ID")
 
-# LIQUID_STAKING_RESPONSE=$(publish_package "temp/liquid_staking" "LIQUID_STAKING_PKG_ID")
-# WORMHOLE_RESPONSE=$(publish_package "temp/wormhole" "WORMHOLE_PKG_ID")
-# SPRUNGSUI_RESPONSE=$(publish_package "temp/sprungsui" "SPRUNGSUI_PKG_ID") 
-# PYTH_RESPONSE=$(publish_package "temp/pyth" "PYTH_PKG_ID")
-# SUILEND_RESPONSE=$(publish_package "temp/suilend" "SUILEND_PKG_ID")
-# STEAMM_RESPONSE=$(publish_package "temp/steamm" "STEAMM_PKG_ID")
+printf "[INFO] Fetching object IDs" >&2
+# Get relevant object IDs
+lending_market_registry=$(find_object_id "$SUILEND_RESPONSE" ".*::lending_market_registry::Registry")
+echo "lending_market_registry: $lending_market_registry"
 
-# printf "[INFO] Fetching object IDs" >&2
-# # Get relevant object IDs
-# lending_market_registry=$(find_object_id "$SUILEND_RESPONSE" ".*::lending_market_registry::Registry")
-# echo "lending_market_registry: $lending_market_registry"
+registry=$(find_object_id "$STEAMM_RESPONSE" ".*::registry::Registry")
+echo "registry: $registry"
 
-# registry=$(find_object_id "$STEAMM_RESPONSE" ".*::registry::Registry")
-# echo "registry: $registry"
+lp_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::lp_usdc_sui::LP_USDC_SUI>")
+echo "lp_metadata: $lp_metadata"
 
-# lp_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::lp_usdc_sui::LP_USDC_SUI>")
-# echo "lp_metadata: $lp_metadata"
+lp_treasury_cap=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::TreasuryCap<.*::lp_usdc_sui::LP_USDC_SUI>")
+echo "lp_treasury_cap: $lp_treasury_cap"
 
-# lp_treasury_cap=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::TreasuryCap<.*::lp_usdc_sui::LP_USDC_SUI>")
-# echo "lp_treasury_cap: $lp_treasury_cap"
+usdc_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::usdc::USDC>")
+echo "usdc_metadata: $usdc_metadata"
 
-# usdc_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::usdc::USDC>")
-# echo "usdc_metadata: $usdc_metadata"
+sui_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::sui::SUI>")
+echo "sui_metadata: $sui_metadata"
 
-# sui_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::sui::SUI>")
-# echo "sui_metadata: $sui_metadata"
+b_usdc_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::b_usdc::B_USDC>")
+echo "b_usdc_metadata: $b_usdc_metadata"
 
-# b_usdc_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::b_usdc::B_USDC>")
-# echo "b_usdc_metadata: $b_usdc_metadata"
+b_sui_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::b_sui::B_SUI>")
+echo "b_sui_metadata: $b_sui_metadata"
 
-# b_sui_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::b_sui::B_SUI>")
-# echo "b_sui_metadata: $b_sui_metadata"
+b_usdc_treasury_cap=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::TreasuryCap<.*::b_usdc::B_USDC>")
+echo "b_usdc_treasury_cap: $b_usdc_treasury_cap"
 
-# b_usdc_treasury_cap=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::TreasuryCap<.*::b_usdc::B_USDC>")
-# echo "b_usdc_treasury_cap: $b_usdc_treasury_cap"
+b_sui_treasury_cap=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::TreasuryCap<.*::b_sui::B_SUI>")
+echo "b_sui_treasury_cap: $b_sui_treasury_cap"
 
-# b_sui_treasury_cap=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::TreasuryCap<.*::b_sui::B_SUI>")
-# echo "b_sui_treasury_cap: $b_sui_treasury_cap"
-
-# PACKAGE_ID=$(echo "$STEAMM_RESPONSE" | grep -A 3 '"type": "published"' | grep "packageId" | cut -d'"' -f4)
-# echo "PACKAGE_ID: $PACKAGE_ID"
+PACKAGE_ID=$(echo "$STEAMM_RESPONSE" | grep -A 3 '"type": "published"' | grep "packageId" | cut -d'"' -f4)
+echo "PACKAGE_ID: $PACKAGE_ID"
 
 
-# sui client --client.config sui/client.yaml call --package "$PACKAGE_ID" --module setup --function setup --args "$lending_market_registry" "$registry" "$lp_metadata" "$lp_treasury_cap" "$usdc_metadata" "$sui_metadata" "$b_usdc_metadata" "$b_sui_metadata" "$b_usdc_treasury_cap" "$b_sui_treasury_cap" > /dev/null
+sui client --client.config sui/client.yaml call --package "$PACKAGE_ID" --module setup --function setup --args "$lending_market_registry" "$registry" "$lp_metadata" "$lp_treasury_cap" "$usdc_metadata" "$sui_metadata" "$b_usdc_metadata" "$b_sui_metadata" "$b_usdc_treasury_cap" "$b_sui_treasury_cap" > /dev/null
 
-# # Reset back to initial environment
-# if [ "$INITIAL_ENV" != "localnet" ]; then
-#     echo "Switching back to previous environment"
-#     sui client --client.config sui/client.yaml switch --env "$INITIAL_ENV"
-# fi
+# Reset back to initial environment
+if [ "$INITIAL_ENV" != "localnet" ]; then
+    echo "Switching back to previous environment"
+    sui client --client.config sui/client.yaml switch --env "$INITIAL_ENV"
+fi
