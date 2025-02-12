@@ -1,0 +1,10 @@
+tests/
+temp/
+bin/
+sui/
+templates/
+gen.toml
+justfile
+.env.example
+.env
+.prettierrc
