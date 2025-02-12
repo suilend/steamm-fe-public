@@ -135,7 +135,7 @@ publish_package() {
     INITIAL_DIR=$(pwd)
     
     # Change to package directory
-    RESPONSE=$(sui client --client.config sui/client.yaml publish $FOLDER_NAME ----skip-dependency-verification --silence-warnings --no-lint --json)
+    RESPONSE=$(sui client --client.config sui/client.yaml publish $FOLDER_NAME --skip-dependency-verification --silence-warnings --no-lint --json)
     RESULT=$(echo "$RESPONSE" | jq -r '.effects.status.status')
 
     if [ $RESULT != "success" ]; then
