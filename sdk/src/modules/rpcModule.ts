@@ -1,6 +1,5 @@
 import {
   DevInspectResults,
-  DynamicFieldInfo,
   DynamicFieldPage,
   PaginatedEvents,
   PaginatedObjectsResponse,
@@ -19,8 +18,6 @@ import { Transaction } from "@mysten/sui/transactions";
 import {
   PhantomReified,
   Reified,
-  ToTypeArgument,
-  TypeArgument,
 } from "../../src/_codegen/_generated/_framework/reified";
 import { Bank } from "../../src/_codegen/_generated/steamm/bank/structs";
 import {
@@ -28,8 +25,6 @@ import {
   CpQuoterFields,
 } from "../../src/_codegen/_generated/steamm/cpmm/structs";
 import { Pool } from "../../src/_codegen/_generated/steamm/pool/structs";
-import { Registry } from "../../src/_codegen/_generated/steamm/registry/structs";
-import { REGISTRY_AMM_KEY_BETA } from "../config";
 import { DataPage, PaginationArgs, SuiObjectIdType } from "../types";
 import { extractGenerics } from "../utils";
 

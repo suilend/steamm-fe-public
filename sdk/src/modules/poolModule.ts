@@ -1,10 +1,4 @@
-import { SuiObjectDataOptions, SuiObjectResponse } from "@mysten/sui/client";
-import {
-  Transaction,
-  TransactionArgument,
-  TransactionObjectInput,
-  TransactionResult,
-} from "@mysten/sui/transactions";
+import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
 
 import {
   Bank,
