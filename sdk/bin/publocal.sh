@@ -189,6 +189,9 @@ source_test_fun() {
     fi
 
     # Find the line number of the function
+    LSS=$(cat "$file_path")
+    printf "File: $LSS" >&2
+
     line_num=$(grep -n "$function_name" "$file_path" | cut -d: -f1)
     if [ -n "$line_num" ]; then
         # Delete the line before it (subtract 1 from line number)
