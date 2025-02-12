@@ -189,18 +189,25 @@ source_test_fun() {
     fi
 
     # Find the line number of the function
-    LSS=$(cat "$file_path")
-    printf "File: $LSS" >&2
+    # LSS=$(cat "$file_path")
+    # printf "File: $LSS" >&2
 
     line_numz=$(grep -n "$function_name" "$file_path")
-    printf "line numz: $line_numz" >&2
+    printf "line numz: $line_numz;" >&2
+    printf "" >&2
     
     line_num=$(grep -n "$function_name" "$file_path" | cut -d: -f1)
-    printf "Line number: $line_num" >&2
+    printf "Line number: $line_num;" >&2
     if [ -n "$line_num" ]; then
         # Delete the line before it (subtract 1 from line number)
         remove_line=$((line_num - 1))
-        sed -i '' "${remove_line}d" "$file_path"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS version
+            sed -i '' "${remove_line}d" "$file_path"
+        else
+            # Linux version
+            sed -i "${remove_line}d" "$file_path"
+        fi
     else
         echo "Function not found in file"
         return 1
@@ -209,12 +216,12 @@ source_test_fun() {
 
 
 ## Source test functions
-echo "[INFO] Sourcing test functions"
+printf "[INFO] Sourcing test functions" >&2
 source_test_fun "pyth" "price_info" "new_price_info_object_for_testing"
 source_test_fun "pyth" "price_info" "update_price_info_object_for_testing"
 
 
-echo "[INFO] Publishing packages"
+printf "[INFO] Publishing packages" >&2
 
 sui client --client.config sui/client.yaml faucet
 sleep 1
