@@ -1,6 +1,6 @@
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { SteammSDK } from "../../../src";
-import { TESTNET_CONFIG } from "../../../src/test-config/testnet";
+
+import { SteammSDK, TESTNET_CONFIG } from "../../../src";
 
 async function quoteRedeem(keypair: Ed25519Keypair) {
   const sdk = new SteammSDK(TESTNET_CONFIG);
@@ -9,10 +9,9 @@ async function quoteRedeem(keypair: Ed25519Keypair) {
   const pools = await sdk.getPools();
 
   const quote = await sdk.Pool.quoteRedeem({
-      pool: pools[0].poolId,
-      lpTokens: BigInt("1000000000000000000"),
-    },
-  );
+    pool: pools[0].poolId,
+    lpTokens: BigInt("1000000000000000000"),
+  });
 
   console.log(quote);
 }

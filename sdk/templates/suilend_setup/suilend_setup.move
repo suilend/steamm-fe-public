@@ -10,7 +10,9 @@ module suilend::setup {
     use pyth::price_identifier;
     use pyth::i64;
 
-    public fun setup<T, P>(
+    public fun setup_reserve<P, T>(
+        lending_market: &mut LendingMarket<P>,
+        owner_cap: &mut LendingMarketOwnerCap<P>,
         type_to_index: u64,
         meta: &CoinMetadata<T>,
         config: ReserveConfig,
@@ -18,14 +20,10 @@ module suilend::setup {
         price: &PriceInfoObject,
         clock: &Clock,
         ctx: &mut TxContext
-    ): (LendingMarketOwnerCap<P>, LendingMarket<P>) {
-        let (owner_cap, mut lending_market) = create_lending_market<P>(
-            ctx
-        );
-
+    ) {
         lending_market::add_reserve<P, T>(
-            &owner_cap,
-            &mut lending_market,
+            owner_cap,
+            lending_market,
             price,
             default_reserve_config(ctx),
             meta,
@@ -35,7 +33,7 @@ module suilend::setup {
 
 
         let ctokens = lending_market::deposit_liquidity_and_mint_ctokens<P, T>(
-            &mut lending_market,
+            lending_market,
             type_to_index,
             clock,
             depo,
@@ -43,18 +41,13 @@ module suilend::setup {
         );
 
         lending_market::update_reserve_config<P, T>(
-            &owner_cap,
-            &mut lending_market,
+            owner_cap,
+            lending_market,
             type_to_index,
             config
         );
 
         transfer::public_transfer(ctokens, ctx.sender());
-
-        return (
-            owner_cap,
-            lending_market,
-        )
     }
 
     public fun reserve_args(
@@ -75,6 +68,13 @@ module suilend::setup {
         reserve_config::destroy(config);
 
         reserve_config::build(builder, ctx)
+    }
+
+    public fun default_price_info_obj(
+        clock: &Clock,
+        ctx: &mut TxContext
+    ): PriceInfoObject {
+        new_price_info_obj(0, 0, idx, clock, ctx)
     }
 
     public fun new_price_info_obj(

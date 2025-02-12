@@ -1,5 +1,19 @@
-import { SuiObjectIdType } from "./modules/rpcModule";
 import { SuiAddressType } from "./utils";
+
+export type SuiObjectIdType = string;
+
+/**
+ * Represents query parameters for pagination.
+ */
+export type PageQuery = {
+  cursor?: any;
+  limit?: number | null;
+};
+
+/**
+ * Represents arguments for pagination, with options for fetching all data or using PageQuery.
+ */
+export type PaginationArgs = "all" | PageQuery;
 
 /**
  * Represents a paginated data page with optional cursor and limit.

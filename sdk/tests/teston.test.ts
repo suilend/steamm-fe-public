@@ -1,18 +1,21 @@
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+/* eslint-disable */
 import {
+  ParsedKeypair,
   decodeSuiPrivateKey,
   encodeSuiPrivateKey,
-  ParsedKeypair,
 } from "@mysten/sui/cryptography";
-import { SteammSDK } from "../src/sdk";
-import { STEAMM_PKG_ID, SUILEND_PKG_ID } from "./packages";
-import { describe, it, expect, beforeAll } from "bun:test";
-import { PoolModule } from "../src/modules/poolModule";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
-import { RpcModule } from "../src/modules/rpcModule";
+import { beforeAll, describe, expect, it } from "bun:test";
 import dotenv from "dotenv";
+
+import { PoolModule } from "../src/modules/poolModule";
+import { RpcModule } from "../src/modules/rpcModule";
+import { SteammSDK } from "../src/sdk";
 import { BankList, PoolInfo } from "../src/types";
 import { BankInfo } from "../src/types";
+
+import { STEAMM_PKG_ID, SUILEND_PKG_ID } from "./packages";
 
 dotenv.config();
 
@@ -73,13 +76,13 @@ export function test() {
       suiTreasuryCap = ownedObjs.data.find(
         (obj) =>
           obj.data?.type ===
-          `0x2::coin::TreasuryCap<${STEAMM_PKG_ID}::sui::SUI>`
-      )!.data?.objectId!;
+          `0x2::coin::TreasuryCap<${STEAMM_PKG_ID}::sui::SUI>`,
+      )?.data?.objectId!;
 
       usdcTreasuryCap = ownedObjs.data.find(
         (obj) =>
           obj.data?.type ===
-          `0x2::coin::TreasuryCap<${STEAMM_PKG_ID}::usdc::USDC>`
+          `0x2::coin::TreasuryCap<${STEAMM_PKG_ID}::usdc::USDC>`,
       )!.data?.objectId!;
     });
 
@@ -120,15 +123,14 @@ export function test() {
       //////////////////////////////////////////////////////////////
 
       await poolModule.depositLiquidityEntry(tx, {
-          pool: pools[0].poolId,
-          coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
-          coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
-          coinObjA: usdcCoin,
-          coinObjB: suiCoin,
-          maxA: BigInt("1000000000000000000"),
-          maxB: BigInt("1000000000000000000"),
-        }
-      );
+        pool: pools[0].poolId,
+        coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
+        coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
+        coinA: usdcCoin,
+        coinB: suiCoin,
+        maxA: BigInt("1000000000000000000"),
+        maxB: BigInt("1000000000000000000"),
+      });
 
       tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
 
@@ -186,15 +188,14 @@ export function test() {
       //////////////////////////////////////////////////////////////
 
       await poolModule.depositLiquidityEntry(tx, {
-          pool: pools[0].poolId,
-          coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
-          coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
-          coinObjA: usdcCoin,
-          coinObjB: suiCoin,
-          maxA: BigInt("1000000000000000000"),
-          maxB: BigInt("1000000000000000000"),
-        }
-      );
+        pool: pools[0].poolId,
+        coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
+        coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
+        coinA: usdcCoin,
+        coinB: suiCoin,
+        maxA: BigInt("1000000000000000000"),
+        maxB: BigInt("1000000000000000000"),
+      });
 
       //////////////////////////////////////////////////////////////
 
@@ -214,20 +215,19 @@ export function test() {
       });
 
       await poolModule.swap(tx, {
-          pool: pools[0].poolId,
-          coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
-          coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
-          coinAObj: usdSwapCoin,
-          coinBObj: suiSwapCoin,
-          a2b: false,
-          amountIn: BigInt("10000000000000"),
-          minAmountOut: BigInt("0"),
-        }
-      );
+        pool: pools[0].poolId,
+        coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
+        coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
+        coinA: usdSwapCoin,
+        coinB: suiSwapCoin,
+        a2b: false,
+        amountIn: BigInt("10000000000000"),
+        minAmountOut: BigInt("0"),
+      });
 
       tx.transferObjects(
         [suiSwapCoin, usdSwapCoin, suiCoin, usdcCoin],
-        sdk.senderAddress
+        sdk.senderAddress,
       );
 
       const devResult = await sdk.fullClient.devInspectTransactionBlock({
@@ -285,34 +285,28 @@ export function test() {
 
       //////////////////////////////////////////////////////////////
 
-      const [lpToken, _depositResult] =
-        await poolModule.depositLiquidity(tx, {
-            pool: pools[0].poolId,
-            coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
-            coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
-            coinObjA: usdcCoin,
-            coinObjB: suiCoin,
-            maxA: BigInt("1000000000000000000"),
-            maxB: BigInt("1000000000000000000"),
-          }
-        );
+      const [lpToken, _depositResult] = await poolModule.depositLiquidity(tx, {
+        pool: pools[0].poolId,
+        coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
+        coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
+        coinA: usdcCoin,
+        coinB: suiCoin,
+        maxA: BigInt("1000000000000000000"),
+        maxB: BigInt("1000000000000000000"),
+      });
 
       //////////////////////////////////////////////////////////////
 
       await poolModule.redeemLiquidityEntry(tx, {
-          pool: pools[0].poolId,
-          coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
-          coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
-          lpCoinObj: lpToken,
-          minA: BigInt("0"),
-          minB: BigInt("0"),
-        }
-      );
+        pool: pools[0].poolId,
+        coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
+        coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
+        lpCoin: lpToken,
+        minA: BigInt("0"),
+        minB: BigInt("0"),
+      });
 
-      tx.transferObjects(
-        [suiCoin, usdcCoin],
-        sdk.senderAddress
-      );
+      tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
 
       const devResult = await sdk.fullClient.devInspectTransactionBlock({
         transactionBlock: tx,

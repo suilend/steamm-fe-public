@@ -71,10 +71,7 @@ export class Bank {
     return coinA;
   }
 
-  public initLending(
-    tx: Transaction,
-    args: InitLendingArgs,
-  ) {
+  public initLending(tx: Transaction, args: InitLendingArgs) {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
       globalAdmin: args.globalAdmin,
@@ -114,10 +111,7 @@ export class Bank {
     );
   }
 
-  public setUtilisationBps(
-    tx: Transaction,
-    args: SetBankUtilisationBpsArgs,
-  ) {
+  public setUtilisationBps(tx: Transaction, args: SetBankUtilisationBpsArgs) {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
       globalAdmin: args.globalAdmin,
@@ -144,9 +138,7 @@ export class Bank {
 
   // Client-side logic
 
-  public needsRebalance(
-    tx: Transaction,
-  ): TransactionArgument {
+  public needsRebalance(tx: Transaction): TransactionArgument {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
       lendingMarket: tx.object(this.bankInfo.lendingMarketId),
@@ -167,9 +159,7 @@ export class Bank {
     );
   }
 
-  public viewTotalFunds(
-    tx: Transaction,
-  ): TransactionArgument {
+  public viewTotalFunds(tx: Transaction): TransactionArgument {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
       lendingMarket: tx.object(this.bankInfo.lendingMarketId),
@@ -184,9 +174,7 @@ export class Bank {
     );
   }
 
-  public viewFundsAvailable(
-    tx: Transaction,
-  ): TransactionArgument {
+  public viewFundsAvailable(tx: Transaction): TransactionArgument {
     return BankFunctions.fundsAvailable(
       tx,
       this.typeArgs(),
@@ -195,9 +183,7 @@ export class Bank {
     );
   }
 
-  public viewTargetUtilisationBps(
-    tx: Transaction,
-  ): TransactionArgument {
+  public viewTargetUtilisationBps(tx: Transaction): TransactionArgument {
     return BankFunctions.targetUtilisationBps(
       tx,
       this.typeArgs(),
@@ -206,9 +192,7 @@ export class Bank {
     );
   }
 
-  public viewUtilisationBufferBps(
-    tx: Transaction,
-  ): TransactionArgument {
+  public viewUtilisationBufferBps(tx: Transaction): TransactionArgument {
     return BankFunctions.utilisationBufferBps(
       tx,
       this.typeArgs(),
@@ -239,9 +223,7 @@ export class Bank {
     );
   }
 
-  public viewReserveArrayIndex(
-    tx: Transaction,
-  ): TransactionArgument {
+  public viewReserveArrayIndex(tx: Transaction): TransactionArgument {
     return BankFunctions.reserveArrayIndex(
       tx,
       this.typeArgs(),

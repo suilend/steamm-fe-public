@@ -23,8 +23,6 @@ export interface SwapFee {
   poolFees: bigint;
 }
 
-
-
 export function castDepositQuote(obj: any): DepositQuote {
   return {
     depositA: BigInt(obj.deposit_a),

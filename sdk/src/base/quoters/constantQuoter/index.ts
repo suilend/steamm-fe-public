@@ -9,7 +9,7 @@ import { PoolInfo } from "../../../types";
 import { MigrateArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
 
-import { CpNewArgs, CpQuoteSwapArgs, CpSwapArgs } from "./constantProductArgs";
+import { CpQuoteSwapArgs, CpSwapArgs } from "./constantProductArgs";
 
 export * from "./constantProductArgs";
 
@@ -22,10 +22,7 @@ export class ConstantProductQuoter implements Quoter {
     this.poolInfo = poolInfo;
   }
 
-  public swap(
-    tx: Transaction,
-    args: CpSwapArgs,
-  ): TransactionResult {
+  public swap(tx: Transaction, args: CpSwapArgs): TransactionResult {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
       coinA: args.coinA,

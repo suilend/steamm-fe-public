@@ -1,10 +1,15 @@
+import { ParsedKeypair, decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { decodeSuiPrivateKey, ParsedKeypair } from "@mysten/sui/cryptography";
 import { Transaction } from "@mysten/sui/transactions";
 import dotenv from "dotenv";
-import { SteammSDK } from "../../src";
-import { STEAMM_TESTNET_PKG_ID, TESTNET_CONFIG } from "../../src/test-config/testnet";
-import { getTestSui, getTestUsdc } from "../../src/test-config/utils";
+
+import {
+  STEAMM_TESTNET_PKG_ID,
+  SteammSDK,
+  TESTNET_CONFIG,
+  getTestSui,
+  getTestUsdc,
+} from "../../src";
 
 dotenv.config();
 
@@ -29,16 +34,15 @@ async function swap(suiPrivateKey: string) {
   const usdcCoin = getTestUsdc(tx, 0, "testnet");
 
   await sdk.Pool.swap(tx, {
-      pool: pools[0].poolId,
-      coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
-      coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
-      coinAObj: usdcCoin,
-      coinBObj: suiCoin,
-      a2b: false,
-      amountIn: BigInt("10000000000000"),
-      minAmountOut: BigInt("0"),
-    }
-  );
+    pool: pools[0].poolId,
+    coinTypeA: `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`,
+    coinTypeB: `${STEAMM_TESTNET_PKG_ID}::sui::SUI`,
+    coinA: usdcCoin,
+    coinB: suiCoin,
+    a2b: false,
+    amountIn: BigInt("10000000000000"),
+    minAmountOut: BigInt("0"),
+  });
 
   tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
 
