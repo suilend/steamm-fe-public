@@ -27,10 +27,10 @@ export type DataPage<T> = {
 export type NewPoolEvent = {
   coin_type_a: { name: string };
   coin_type_b: { name: string };
-  creator: string;
   lp_token_type: { name: string };
   pool_id: string;
   quoter_type: { name: string };
+  swap_fee_bps: string;
 };
 
 export type NewBankEvent = {
@@ -88,20 +88,20 @@ export function extractBankList(events: EventData<NewBankEvent>[]): BankList {
 export function extractPoolInfo(events: EventData<NewPoolEvent>[]): PoolInfo[] {
   return events.map((event) => {
     const {
-      creator,
       pool_id,
       coin_type_a,
       coin_type_b,
       lp_token_type,
       quoter_type,
+      swap_fee_bps,
     } = event.parsedJson.event;
     return {
-      creator,
       poolId: pool_id,
       coinTypeA: `0x${coin_type_a.name}`,
       coinTypeB: `0x${coin_type_b.name}`,
       lpTokenType: `0x${lp_token_type.name}`,
       quoterType: `0x${quoter_type.name}`,
+      swapFeeBps: parseInt(swap_fee_bps),
     };
   });
 }
@@ -122,12 +122,12 @@ export type BankList = {
 };
 
 export type PoolInfo = {
-  creator: SuiAddressType;
   poolId: SuiObjectIdType;
   coinTypeA: string;
   coinTypeB: string;
   lpTokenType: string;
   quoterType: string;
+  swapFeeBps: number;
 };
 
 export type BankInfo = {
