@@ -34,12 +34,12 @@ fi
 
 
 # Create source directories
-echo "[INFO] Building Steamm package"
+printf "[INFO] Building Steamm package"  >&2
 mkdir -p temp/liquid_staking/sources temp/pyth/sources temp/sprungsui/sources temp/suilend/sources temp/wormhole/sources temp/steamm/sources
 sui move build --path temp/git/contracts/steamm --silence-warnings --no-lint
 
 # Copy dependencies from build to local directories
-echo "[INFO] Copying state"
+printf "[INFO] Copying state"  >&2
 cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/liquid_staking/* temp/liquid_staking/sources/
 cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/Pyth/* temp/pyth/sources/
 cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/sprungsui/* temp/sprungsui/sources/
@@ -187,17 +187,8 @@ source_test_fun() {
         echo "Error: File $file_path does not exist"
         return 1
     fi
-
-    # Find the line number of the function
-    # LSS=$(cat "$file_path")
-    # printf "File: $LSS" >&2
-
-    line_numz=$(grep -n "$function_name" "$file_path")
-    printf "line numz: $line_numz;" >&2
-    printf "" >&2
     
     line_num=$(grep -n "$function_name" "$file_path" | cut -d: -f1)
-    printf "Line number: $line_num;" >&2
     if [ -n "$line_num" ]; then
         # Delete the line before it (subtract 1 from line number)
         remove_line=$((line_num - 1))
@@ -228,53 +219,55 @@ sleep 1
 
 sui client --client.config sui/client.yaml addresses
 
-LIQUID_STAKING_RESPONSE=$(publish_package "temp/liquid_staking" "LIQUID_STAKING_PKG_ID")
-WORMHOLE_RESPONSE=$(publish_package "temp/wormhole" "WORMHOLE_PKG_ID")
-SPRUNGSUI_RESPONSE=$(publish_package "temp/sprungsui" "SPRUNGSUI_PKG_ID") 
-PYTH_RESPONSE=$(publish_package "temp/pyth" "PYTH_PKG_ID")
-SUILEND_RESPONSE=$(publish_package "temp/suilend" "SUILEND_PKG_ID")
-STEAMM_RESPONSE=$(publish_package "temp/steamm" "STEAMM_PKG_ID")
+sui client --client.config sui/client.yaml publish temp/liquid_staking --silence-warnings --no-lint --json
 
-echo "[INFO] Fetching object IDs"
-# Get relevant object IDs
-lending_market_registry=$(find_object_id "$SUILEND_RESPONSE" ".*::lending_market_registry::Registry")
-echo "lending_market_registry: $lending_market_registry"
+# LIQUID_STAKING_RESPONSE=$(publish_package "temp/liquid_staking" "LIQUID_STAKING_PKG_ID")
+# WORMHOLE_RESPONSE=$(publish_package "temp/wormhole" "WORMHOLE_PKG_ID")
+# SPRUNGSUI_RESPONSE=$(publish_package "temp/sprungsui" "SPRUNGSUI_PKG_ID") 
+# PYTH_RESPONSE=$(publish_package "temp/pyth" "PYTH_PKG_ID")
+# SUILEND_RESPONSE=$(publish_package "temp/suilend" "SUILEND_PKG_ID")
+# STEAMM_RESPONSE=$(publish_package "temp/steamm" "STEAMM_PKG_ID")
 
-registry=$(find_object_id "$STEAMM_RESPONSE" ".*::registry::Registry")
-echo "registry: $registry"
+# printf "[INFO] Fetching object IDs" >&2
+# # Get relevant object IDs
+# lending_market_registry=$(find_object_id "$SUILEND_RESPONSE" ".*::lending_market_registry::Registry")
+# echo "lending_market_registry: $lending_market_registry"
 
-lp_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::lp_usdc_sui::LP_USDC_SUI>")
-echo "lp_metadata: $lp_metadata"
+# registry=$(find_object_id "$STEAMM_RESPONSE" ".*::registry::Registry")
+# echo "registry: $registry"
 
-lp_treasury_cap=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::TreasuryCap<.*::lp_usdc_sui::LP_USDC_SUI>")
-echo "lp_treasury_cap: $lp_treasury_cap"
+# lp_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::lp_usdc_sui::LP_USDC_SUI>")
+# echo "lp_metadata: $lp_metadata"
 
-usdc_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::usdc::USDC>")
-echo "usdc_metadata: $usdc_metadata"
+# lp_treasury_cap=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::TreasuryCap<.*::lp_usdc_sui::LP_USDC_SUI>")
+# echo "lp_treasury_cap: $lp_treasury_cap"
 
-sui_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::sui::SUI>")
-echo "sui_metadata: $sui_metadata"
+# usdc_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::usdc::USDC>")
+# echo "usdc_metadata: $usdc_metadata"
 
-b_usdc_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::b_usdc::B_USDC>")
-echo "b_usdc_metadata: $b_usdc_metadata"
+# sui_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::sui::SUI>")
+# echo "sui_metadata: $sui_metadata"
 
-b_sui_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::b_sui::B_SUI>")
-echo "b_sui_metadata: $b_sui_metadata"
+# b_usdc_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::b_usdc::B_USDC>")
+# echo "b_usdc_metadata: $b_usdc_metadata"
 
-b_usdc_treasury_cap=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::TreasuryCap<.*::b_usdc::B_USDC>")
-echo "b_usdc_treasury_cap: $b_usdc_treasury_cap"
+# b_sui_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::b_sui::B_SUI>")
+# echo "b_sui_metadata: $b_sui_metadata"
 
-b_sui_treasury_cap=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::TreasuryCap<.*::b_sui::B_SUI>")
-echo "b_sui_treasury_cap: $b_sui_treasury_cap"
+# b_usdc_treasury_cap=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::TreasuryCap<.*::b_usdc::B_USDC>")
+# echo "b_usdc_treasury_cap: $b_usdc_treasury_cap"
 
-PACKAGE_ID=$(echo "$STEAMM_RESPONSE" | grep -A 3 '"type": "published"' | grep "packageId" | cut -d'"' -f4)
-echo "PACKAGE_ID: $PACKAGE_ID"
+# b_sui_treasury_cap=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::TreasuryCap<.*::b_sui::B_SUI>")
+# echo "b_sui_treasury_cap: $b_sui_treasury_cap"
+
+# PACKAGE_ID=$(echo "$STEAMM_RESPONSE" | grep -A 3 '"type": "published"' | grep "packageId" | cut -d'"' -f4)
+# echo "PACKAGE_ID: $PACKAGE_ID"
 
 
-sui client --client.config sui/client.yaml call --package "$PACKAGE_ID" --module setup --function setup --args "$lending_market_registry" "$registry" "$lp_metadata" "$lp_treasury_cap" "$usdc_metadata" "$sui_metadata" "$b_usdc_metadata" "$b_sui_metadata" "$b_usdc_treasury_cap" "$b_sui_treasury_cap" > /dev/null
+# sui client --client.config sui/client.yaml call --package "$PACKAGE_ID" --module setup --function setup --args "$lending_market_registry" "$registry" "$lp_metadata" "$lp_treasury_cap" "$usdc_metadata" "$sui_metadata" "$b_usdc_metadata" "$b_sui_metadata" "$b_usdc_treasury_cap" "$b_sui_treasury_cap" > /dev/null
 
-# Reset back to initial environment
-if [ "$INITIAL_ENV" != "localnet" ]; then
-    echo "Switching back to previous environment"
-    sui client --client.config sui/client.yaml switch --env "$INITIAL_ENV"
-fi
+# # Reset back to initial environment
+# if [ "$INITIAL_ENV" != "localnet" ]; then
+#     echo "Switching back to previous environment"
+#     sui client --client.config sui/client.yaml switch --env "$INITIAL_ENV"
+# fi
