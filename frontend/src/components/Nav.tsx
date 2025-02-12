@@ -16,12 +16,13 @@ const NAV_HEIGHT = 64; // px
 
 type NavItem = {
   url: string;
+  startsWithUrl?: string;
   title: string;
 };
 
 export const NAV_ITEMS: NavItem[] = [
   { url: ROOT_URL, title: "Swap" },
-  { url: POOLS_URL, title: "Pools" },
+  { url: POOLS_URL, startsWithUrl: POOLS_URL, title: "Pools" },
   { url: PORTFOLIO_URL, title: "Portfolio" },
 ];
 export const ADMIN_NAV_ITEM: NavItem = {
@@ -66,8 +67,10 @@ export default function Nav() {
               {/* Items */}
               <div className="flex flex-row gap-6">
                 {navItems.map((item) => {
-                  const isSelected =
-                    router.pathname.replace("[[...slug]]", "") === item.url;
+                  const isSelected = item.startsWithUrl
+                    ? router.asPath.startsWith(item.startsWithUrl)
+                    : router.asPath === item.url;
+
                   const isDisabled = !item.url;
                   const Component = !isDisabled ? Link : "div";
 

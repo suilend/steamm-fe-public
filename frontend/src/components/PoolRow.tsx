@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useMemo } from "react";
 
 import { formatPercent, formatUsd, getToken } from "@suilend/frontend-sui";
@@ -8,18 +9,17 @@ import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { Pool, PoolGroup, poolTypeNameMap } from "@/lib/types";
+import { POOLS_URL } from "@/lib/navigation";
+import { Pool, poolTypeNameMap } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolRowProps {
-  poolGroup: PoolGroup;
   pool: Pool;
   isLastPoolInGroup?: boolean;
   isLastTableRow?: boolean;
 }
 
 export default function PoolRow({
-  poolGroup,
   pool,
   isLastPoolInGroup,
   isLastTableRow,
@@ -28,20 +28,20 @@ export default function PoolRow({
 
   // CoinMetadata
   const coinTypes = useMemo(
-    () => [...poolGroup.assetCoinTypes, ...pool.apr.assetCoinTypes],
-    [poolGroup.assetCoinTypes, pool.apr.assetCoinTypes],
+    () => [...pool.assetCoinTypes, ...pool.apr.assetCoinTypes],
+    [pool.assetCoinTypes, pool.apr.assetCoinTypes],
   );
   const hasCoinMetadata = coinTypes
     .map((coinType) => coinMetadataMap?.[coinType])
     .every(Boolean);
 
   return (
-    <div
+    <Link
       className={cn(
         "group flex h-[56px] w-full min-w-max cursor-pointer flex-row transition-colors hover:bg-tertiary",
         !isLastTableRow && "h-[calc(56px+1px)] border-b",
       )}
-      onClick={() => {}}
+      href={`${POOLS_URL}/${pool.id}`}
     >
       {/* Pair */}
       <div
@@ -59,7 +59,7 @@ export default function PoolRow({
             !hasCoinMetadata && "animate-pulse",
           )}
         >
-          {poolGroup.assetCoinTypes.map((coinType, index) => (
+          {pool.assetCoinTypes.map((coinType, index) => (
             <TokenLogo
               key={coinType}
               className={cn(
@@ -81,7 +81,7 @@ export default function PoolRow({
           <Skeleton className="h-6 w-20 animate-none" />
         ) : (
           <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
-            {poolGroup.assetCoinTypes
+            {pool.assetCoinTypes
               .map((coinType) => coinMetadataMap![coinType].symbol)
               .join("/")}
           </p>
@@ -148,6 +148,6 @@ export default function PoolRow({
           {formatPercent(pool.apr.percent)}
         </p>
       </div>
-    </div>
+    </Link>
   );
 }

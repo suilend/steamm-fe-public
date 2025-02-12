@@ -31,6 +31,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           {
             id: "1",
             poolGroupId: "1",
+            assetCoinTypes: [NORMALIZED_SUI_COINTYPE, NORMALIZED_USDC_COINTYPE],
             type: PoolType.CONSTANT,
             tvlUsd: new BigNumber(103512),
             volumeUsd: new BigNumber(1251),
@@ -42,6 +43,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           {
             id: "2",
             poolGroupId: "1",
+            assetCoinTypes: [NORMALIZED_SUI_COINTYPE, NORMALIZED_USDC_COINTYPE],
             type: PoolType.PYTH_ORACLE,
             tvlUsd: new BigNumber(23512),
             volumeUsd: new BigNumber(11000),
@@ -53,6 +55,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           {
             id: "3",
             poolGroupId: "1",
+            assetCoinTypes: [NORMALIZED_SUI_COINTYPE, NORMALIZED_USDC_COINTYPE],
             type: PoolType.STABLE_SWAP,
             tvlUsd: new BigNumber(10100001),
             volumeUsd: new BigNumber(1251712),
@@ -70,6 +73,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           {
             id: "4",
             poolGroupId: "2",
+            assetCoinTypes: [NORMALIZED_DEEP_COINTYPE, NORMALIZED_FUD_COINTYPE],
             type: PoolType.CONSTANT,
             tvlUsd: new BigNumber(1995),
             volumeUsd: new BigNumber(110),
@@ -90,6 +94,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           {
             id: "5",
             poolGroupId: "3",
+            assetCoinTypes: [NORMALIZED_SUI_COINTYPE, NORMALIZED_SEND_COINTYPE],
             type: PoolType.CONSTANT,
             tvlUsd: new BigNumber(98000),
             volumeUsd: new BigNumber(12000),

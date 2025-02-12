@@ -177,7 +177,6 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
         poolGroup.pools.map((pool, index) => (
           <PoolRow
             key={pool.id}
-            poolGroup={poolGroup}
             pool={pool}
             isLastPoolInGroup={index === poolGroup.pools.length - 1}
             isLastTableRow={isLast && index === poolGroup.pools.length - 1}
