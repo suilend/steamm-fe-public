@@ -13,10 +13,10 @@ import {
   CollectProtocolFeesArgs,
   MigrateArgs,
   PoolDepositLiquidityArgs,
+  PoolQuoteDepositArgs,
   PoolQuoteRedeemArgs,
   PoolRedeemLiquidityArgs,
   PoolSwapArgs,
-  QuoteDepositArgs,
 } from "./poolArgs";
 
 export * from "./poolArgs";
@@ -78,7 +78,7 @@ export class Pool {
   ): [TransactionArgument, TransactionArgument, TransactionArgument] {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
-      lpTokens: args.lpCoinObj,
+      lpTokens: args.lpCoin,
       minA: args.minA,
       minB: args.minB,
     };
@@ -94,7 +94,7 @@ export class Pool {
 
   public quoteDeposit(
     tx: Transaction,
-    args: QuoteDepositArgs,
+    args: PoolQuoteDepositArgs,
   ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),

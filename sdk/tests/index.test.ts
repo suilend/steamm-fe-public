@@ -1,5 +1,6 @@
+import { beforeAll, describe, expect, it } from "bun:test";
+
 import { test as testonTest } from "./teston.test";
-import { describe, it, expect, beforeAll } from "bun:test";
 
 describe("Test Suite", () => {
   // Run all tests from teston.test.ts

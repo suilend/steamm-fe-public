@@ -81,3 +81,29 @@ export function patchFixSuiObjectId(data: any) {
     }
   }
 }
+
+export function extractGenerics(typeString: string): string[] {
+  const match = typeString.match(/<(.+)>/);
+  if (!match) return [];
+
+  // Split by comma while handling nested generics
+  const generics = [];
+  let depth = 0,
+    current = "";
+
+  for (const char of match[1]) {
+    if (char === "<") depth++;
+    if (char === ">") depth--;
+
+    if (char === "," && depth === 0) {
+      generics.push(current.trim());
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  if (current) generics.push(current.trim());
+
+  return generics;
+}

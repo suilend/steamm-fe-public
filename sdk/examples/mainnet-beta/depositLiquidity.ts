@@ -1,10 +1,15 @@
+import { ParsedKeypair, decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { decodeSuiPrivateKey, ParsedKeypair } from "@mysten/sui/cryptography";
 import { Transaction } from "@mysten/sui/transactions";
 import dotenv from "dotenv";
-import { SteammSDK } from "../../src";
-import { getTestSui, getTestUsdc } from "../../src/test-config/utils";
-import { BETA_CONFIG, STEAMM_BETA_PKG_ID } from "../../src/test-config/mainnet";
+
+import {
+  BETA_CONFIG,
+  STEAMM_BETA_PKG_ID,
+  SteammSDK,
+  getTestSui,
+  getTestUsdc,
+} from "../../src";
 
 dotenv.config();
 
@@ -29,15 +34,14 @@ async function depositLiquidity(suiPrivateKey: string) {
   const usdcCoin = getTestUsdc(tx, 1000000000000000000, "mainnet");
 
   await sdk.Pool.depositLiquidityEntry(tx, {
-      pool: pools[0].poolId,
-      coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
-      coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
-      coinObjA: usdcCoin,
-      coinObjB: suiCoin,
-      maxA: BigInt("1000000000000000000"),
-      maxB: BigInt("1000000000000000000"),
-    },
-  );
+    pool: pools[0].poolId,
+    coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
+    coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
+    coinA: usdcCoin,
+    coinB: suiCoin,
+    maxA: BigInt("1000000000000000000"),
+    maxB: BigInt("1000000000000000000"),
+  });
 
   tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
 

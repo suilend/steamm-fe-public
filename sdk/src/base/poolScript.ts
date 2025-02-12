@@ -1,5 +1,3 @@
-// export * as PoolScriptFunctions from "./poolScriptFunctions";
-
 import {
   Transaction,
   TransactionArgument,
@@ -10,18 +8,16 @@ import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 import { PoolScriptFunctions } from "../_codegen";
 import { BankInfo, PoolInfo } from "../types";
 
-import { Bank, LendingObjectsArgs } from "./bank";
+import { Bank } from "./bank";
 import {
   Pool,
   PoolDepositLiquidityArgs,
+  PoolQuoteDepositArgs,
   PoolQuoteRedeemArgs,
   PoolQuoteSwapArgs,
   PoolRedeemLiquidityArgs,
   PoolSwapArgs,
-  QuoteDepositArgs,
 } from "./pool";
-import { ConstantProductQuoter } from "./quoters";
-import { Quoter } from "./quoters/quoter";
 
 export class PoolScript {
   public packageId: string;
@@ -40,10 +36,11 @@ export class PoolScript {
     this.bankB = new Bank(packageId, bankInfoB);
     this.packageId = packageId;
 
-    const [bTokenAType, bTokenBType, quoterType, lpTokenType] =
+    const [bTokenAType, bTokenBType, _quoterType, _lpTokenType] =
       this.pool.poolTypes();
-    const [lendingMarketType, coinTypeA, _bTokenAType] = this.bankA.typeArgs();
-    const [_lendingMarketType, coinTypeB, _bTokenBType] = this.bankB.typeArgs();
+    const [lendingMarketType, _coinTypeA, _bTokenAType] = this.bankA.typeArgs();
+    const [_lendingMarketType, _coinTypeB, _bTokenBType] =
+      this.bankB.typeArgs();
 
     if (lendingMarketType !== _lendingMarketType) {
       throw new Error(
@@ -151,7 +148,7 @@ export class PoolScript {
       bankA: tx.object(this.bankA.bankInfo.bankId),
       bankB: tx.object(this.bankB.bankInfo.bankId),
       lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
-      lpTokens: args.lpCoinObj,
+      lpTokens: args.lpCoin,
       minA: args.minA,
       minB: args.minB,
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
@@ -168,7 +165,7 @@ export class PoolScript {
 
   public quoteDeposit(
     tx: Transaction,
-    args: QuoteDepositArgs,
+    args: PoolQuoteDepositArgs,
   ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.pool.poolInfo.poolId),

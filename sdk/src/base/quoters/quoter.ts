@@ -9,7 +9,6 @@ import {
   CpSwapArgs,
 } from "./constantQuoter/constantProductArgs";
 
-// TODO: Should be generic args
 export interface Quoter {
   swap(tx: Transaction, args: CpSwapArgs): TransactionResult;
   quoteSwap(tx: Transaction, args: CpQuoteSwapArgs): TransactionArgument;

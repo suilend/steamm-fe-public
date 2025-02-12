@@ -3,11 +3,6 @@ import {
   TransactionObjectInput,
 } from "@mysten/sui/transactions";
 
-import {
-  CpQuoteSwapArgs,
-  CpSwapArgs,
-} from "../quoters/constantQuoter/constantProductArgs";
-
 export interface PoolNewArgs {
   coinMetadataA: TransactionObjectInput;
   coinMetadataB: TransactionObjectInput;
@@ -16,11 +11,7 @@ export interface PoolNewArgs {
   registry: TransactionObjectInput;
   swapFeeBps: bigint | TransactionArgument;
 }
-
-export type PoolSwapArgs = CpSwapArgs; // Add more types here for new quoters
-export type PoolQuoteSwapArgs = CpQuoteSwapArgs; // Add more types here for new quoters
-
-export interface PoolSwapBaseArgs {
+export interface PoolSwapArgs {
   coinA: TransactionObjectInput;
   coinB: TransactionObjectInput;
   a2b: boolean | TransactionArgument;
@@ -30,11 +21,10 @@ export interface PoolSwapBaseArgs {
 
 export interface PoolExecuteSwapArgs {
   intent: TransactionObjectInput;
-
   minAmountOut: bigint | TransactionArgument;
 }
 
-export interface PoolQuoteSwapBaseArgs {
+export interface PoolQuoteSwapArgs {
   amountIn: bigint | TransactionArgument;
   a2b: boolean | TransactionArgument;
 }
@@ -47,12 +37,12 @@ export interface PoolDepositLiquidityArgs {
 }
 
 export interface PoolRedeemLiquidityArgs {
-  lpCoinObj: TransactionObjectInput;
+  lpCoin: TransactionObjectInput;
   minA: bigint | TransactionArgument;
   minB: bigint | TransactionArgument;
 }
 
-export interface QuoteDepositArgs {
+export interface PoolQuoteDepositArgs {
   maxA: bigint | TransactionArgument;
   maxB: bigint | TransactionArgument;
 }

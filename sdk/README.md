@@ -51,12 +51,12 @@ await sdk.Pool.depositLiquidityEntry(
     pool: pools[0].poolId,
     coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
     coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
-    coinObjA: usdcCoin,
-    coinObjB: suiCoin,
+    coinA: usdcCoin,
+    coinB: suiCoin,
     maxA: BigInt("1000000000000000000"),
     maxB: BigInt("1000000000000000000"),
   },
-  tx
+  tx,
 );
 ```
 
@@ -68,13 +68,13 @@ await sdk.Pool.swapEntry(
     pool: pools[0].poolId,
     coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
     coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
-    coinAObj: usdcCoin,
-    coinBObj: suiCoin,
+    coinA: usdcCoin,
+    coinB: suiCoin,
     a2b: false,
     amountIn: BigInt("10000000000000"),
     minAmountOut: BigInt("0"),
   },
-  tx
+  tx,
 );
 ```
 
@@ -86,11 +86,11 @@ await sdk.Pool.redeemLiquidityEntry(
     pool: pools[0].poolId,
     coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
     coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
-    lpCoinObj: lpToken,
+    lpCoin: lpToken,
     minA: BigInt("0"),
     minB: BigInt("0"),
   },
-  tx
+  tx,
 );
 ```
 

@@ -9,7 +9,7 @@ import { PoolInfo } from "../../../types";
 import { MigrateArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
 
-import { CpNewArgs, CpQuoteSwapArgs, CpSwapArgs } from "./constantProductArgs";
+import { CpQuoteSwapArgs, CpSwapArgs } from "./constantProductArgs";
 
 export * from "./constantProductArgs";
 

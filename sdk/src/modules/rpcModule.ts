@@ -8,32 +8,25 @@ import {
   SuiObjectDataOptions,
   SuiObjectResponse,
   SuiObjectResponseQuery,
+  SuiParsedData,
   SuiTransactionBlockResponse,
 } from "@mysten/sui/client";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Secp256k1Keypair } from "@mysten/sui/keypairs/secp256k1";
 import { Transaction } from "@mysten/sui/transactions";
 
-export type SuiObjectIdType = string;
-
-export type DataPage<T> = {
-  data: T[];
-  nextCursor?: any;
-  hasNextPage: boolean;
-};
-
-/**
- * Represents query parameters for pagination.
- */
-export type PageQuery = {
-  cursor?: any;
-  limit?: number | null;
-};
-
-/**
- * Represents arguments for pagination, with options for fetching all data or using PageQuery.
- */
-export type PaginationArgs = "all" | PageQuery;
+import {
+  PhantomReified,
+  Reified,
+} from "../../src/_codegen/_generated/_framework/reified";
+import { Bank } from "../../src/_codegen/_generated/steamm/bank/structs";
+import {
+  CpQuoter,
+  CpQuoterFields,
+} from "../../src/_codegen/_generated/steamm/cpmm/structs";
+import { Pool } from "../../src/_codegen/_generated/steamm/pool/structs";
+import { DataPage, PaginationArgs, SuiObjectIdType } from "../types";
+import { extractGenerics } from "../utils";
 
 /**
  * Represents a module for making RPC (Remote Procedure Call) requests.
@@ -279,5 +272,139 @@ export class RpcModule extends SuiClient {
     }
 
     return undefined;
+  }
+
+  /**
+   * Get a pool object strate by its ID
+   * @param objectId - The ID of the pool
+   * @returns Promise resolving to the pool state
+   */
+  async fetchPool(
+    objectId: SuiObjectIdType,
+  ): Promise<Pool<string, string, CpQuoter, string>> {
+    try {
+      const object = await this.getObject({
+        id: objectId,
+        options: {
+          showContent: true,
+          showType: true,
+        },
+      });
+
+      if (!object.data) {
+        throw new Error(`Pool with ID ${objectId} not found or has no data`);
+      }
+
+      if (!object.data) {
+        throw new Error(`Pool with ID ${objectId} not found or has no data`);
+      }
+
+      if (object.error) {
+        throw new Error(`Error fetching pool: ${object.error}`);
+      }
+
+      if (!object.data.content) {
+        throw new Error(`Unable to parse data for Pool with ID ${objectId}`);
+      }
+
+      if (!object.data.type) {
+        throw new Error(`Unable to parse type for Pool with ID ${objectId}`);
+      }
+
+      const parsedData: SuiParsedData = object.data.content as SuiParsedData;
+      const poolTypes = extractGenerics(object.data.type);
+
+      const parsedTypes: [
+        PhantomReified<string>,
+        PhantomReified<string>,
+        Reified<CpQuoter, CpQuoterFields>,
+        PhantomReified<string>,
+      ] = [
+        {
+          phantomType: poolTypes[0],
+          kind: "PhantomReified",
+        },
+        {
+          phantomType: poolTypes[1],
+          kind: "PhantomReified",
+        },
+        CpQuoter.reified(),
+        {
+          phantomType: poolTypes[3],
+          kind: "PhantomReified",
+        },
+      ];
+
+      return Pool.fromSuiParsedData(parsedTypes, parsedData);
+    } catch (error) {
+      console.error("Error fetching shared object:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get a bank object strate by its ID
+   * @param objectId - The ID of the bank
+   * @returns Promise resolving to the bank state
+   */
+  async fetchBank(
+    objectId: SuiObjectIdType,
+  ): Promise<Bank<string, string, string>> {
+    try {
+      const object = await this.getObject({
+        id: objectId,
+        options: {
+          showContent: true,
+          showType: true,
+        },
+      });
+
+      if (!object.data) {
+        throw new Error(`Bank with ID ${objectId} not found or has no data`);
+      }
+
+      if (!object.data) {
+        throw new Error(`Bank with ID ${objectId} not found or has no data`);
+      }
+
+      if (object.error) {
+        throw new Error(`Error fetching bank: ${object.error}`);
+      }
+
+      if (!object.data.content) {
+        throw new Error(`Unable to parse data for Bank with ID ${objectId}`);
+      }
+
+      if (!object.data.type) {
+        throw new Error(`Unable to parse type for Bank with ID ${objectId}`);
+      }
+
+      const parsedData: SuiParsedData = object.data.content as SuiParsedData;
+      const bankTypes = extractGenerics(object.data.type);
+
+      const parsedTypes: [
+        PhantomReified<string>,
+        PhantomReified<string>,
+        PhantomReified<string>,
+      ] = [
+        {
+          phantomType: bankTypes[0],
+          kind: "PhantomReified",
+        },
+        {
+          phantomType: bankTypes[1],
+          kind: "PhantomReified",
+        },
+        {
+          phantomType: bankTypes[2],
+          kind: "PhantomReified",
+        },
+      ];
+
+      return Bank.fromSuiParsedData(parsedTypes, parsedData);
+    } catch (error) {
+      console.error("Error fetching shared object:", error);
+      throw error;
+    }
   }
 }

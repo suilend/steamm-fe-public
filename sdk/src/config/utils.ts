@@ -1,6 +1,6 @@
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
 
-import { STEAMM_BETA_PKG_ID } from "./mainnet";
+import { STEAMM_BETA_PKG_ID } from "./mainnetBeta";
 import { STEAMM_TESTNET_PKG_ID } from "./testnet";
 
 const SUI_TESTNET_FAUCET =

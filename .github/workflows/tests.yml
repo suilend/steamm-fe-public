@@ -7,8 +7,8 @@ on:
 jobs:
   move-test:
     runs-on: ubuntu-latest
-    container: 
-      image: mysten/sui-tools:mainnet 
+    container:
+      image: mysten/sui-tools:mainnet
       ports:
         - 80
     steps:
@@ -27,7 +27,10 @@ jobs:
 
       - name: Install unzip
         run: apt-get install -y unzip
-      
+
+      - name: Install sed
+        run: apt-get install -y sed
+
       - name: Install bun
         uses: oven-sh/setup-bun@v1
         with:
@@ -72,12 +75,12 @@ jobs:
           echo "ACTIVE_ADDRESS=$ACTIVE_ADDRESS" >> $GITHUB_ENV
           PRIVATE_KEY=$(sui keytool --keystore-path sui/sui.keystore export --key-identity $ACTIVE_ADDRESS --json | jq -r '.exportedPrivateKey')
           echo "PRIVATE_KEY=$PRIVATE_KEY" >> $GITHUB_ENV
-      
+
       - name: Setup localnet state
         run: |
           cd sdk
           bash ./bin/publocal.sh --ci
-      
+
       - name: Run tests
         run: |
           cd sdk
