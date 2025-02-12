@@ -7,9 +7,10 @@ import { useLocalStorage } from "usehooks-ts";
 import { formatPercent, formatUsd, getToken } from "@suilend/frontend-sui";
 
 import PoolRow from "@/components/PoolRow";
-import { poolsTableColumnStyles } from "@/components/PoolsTable";
+import { columnStyleMap } from "@/components/PoolsTable";
 import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
+import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { PoolGroup } from "@/lib/types";
@@ -67,9 +68,10 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
         {/* Pair */}
         <div
           className="flex h-full flex-row items-center gap-3"
-          style={poolsTableColumnStyles.pair}
+          style={columnStyleMap.pair}
         >
-          <div className="-mr-3 w-16">
+          <div className="-mr-3 flex h-full w-16 flex-col">
+            <div className="w-full flex-1" />
             <Tag
               className="w-max"
               labelClassName={cn(
@@ -89,6 +91,11 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
               />
               {poolGroup.pools.length}
             </Tag>
+            <div className="relative w-full flex-1">
+              {isExpanded && (
+                <div className="absolute bottom-0 left-4 top-0 w-px bg-border" />
+              )}
+            </div>
           </div>
 
           <div
@@ -125,29 +132,35 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
         {/* Type */}
         <div
           className="flex h-full flex-row items-center"
-          style={poolsTableColumnStyles.type}
+          style={columnStyleMap.type}
         />
 
         {/* TVL */}
         <div
           className="flex h-full flex-row items-center"
-          style={poolsTableColumnStyles.tvlUsd}
+          style={columnStyleMap.tvlUsd}
         >
-          <p className="text-p1 text-foreground">{formatUsd(totalTvlUsd)}</p>
+          <Tooltip title={formatUsd(totalTvlUsd, { exact: true })}>
+            <p className="text-p1 text-foreground">{formatUsd(totalTvlUsd)}</p>
+          </Tooltip>
         </div>
 
         {/* Volume */}
         <div
           className="flex h-full flex-row items-center"
-          style={poolsTableColumnStyles.volumeUsd}
+          style={columnStyleMap.volumeUsd}
         >
-          <p className="text-p1 text-foreground">{formatUsd(totalVolumeUsd)}</p>
+          <Tooltip title={formatUsd(totalVolumeUsd, { exact: true })}>
+            <p className="text-p1 text-foreground">
+              {formatUsd(totalVolumeUsd)}
+            </p>
+          </Tooltip>
         </div>
 
         {/* APR */}
         <div
           className="flex h-full flex-row items-center gap-2"
-          style={poolsTableColumnStyles.aprPercent}
+          style={columnStyleMap.aprPercent}
         >
           <p className="text-p3 text-tertiary-foreground">Up to</p>
           <p className="text-p1 text-foreground">
@@ -162,7 +175,8 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
             key={pool.id}
             poolGroup={poolGroup}
             pool={pool}
-            isLast={isLast ? index === poolGroup.pools.length - 1 : false}
+            isLastPoolInGroup={index === poolGroup.pools.length - 1}
+            isLastTableRow={isLast && index === poolGroup.pools.length - 1}
           />
         ))}
     </>

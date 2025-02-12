@@ -61,7 +61,10 @@ export default function Pools() {
           <div className="flex flex-row items-center gap-3">
             <h2 className="text-h3 text-foreground">All pools</h2>
             <Tag>
-              {appData.poolGroups.reduce((acc, pg) => acc + pg.pools.length, 0)}
+              {appData.poolGroups.reduce(
+                (acc, poolGroup) => acc + poolGroup.pools.length,
+                0,
+              )}
             </Tag>
           </div>
 

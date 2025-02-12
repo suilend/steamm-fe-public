@@ -14,6 +14,7 @@ export const poolTypeNameMap: Record<PoolType, string> = {
 
 export type Pool = {
   id: string;
+  poolGroupId: string;
   type: PoolType;
   tvlUsd: BigNumber;
   volumeUsd: BigNumber;

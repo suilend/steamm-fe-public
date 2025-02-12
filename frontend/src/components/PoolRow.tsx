@@ -2,9 +2,10 @@ import { useMemo } from "react";
 
 import { formatPercent, formatUsd, getToken } from "@suilend/frontend-sui";
 
-import { poolsTableColumnStyles } from "@/components/PoolsTable";
+import { columnStyleMap } from "@/components/PoolsTable";
 import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
+import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { Pool, PoolGroup, poolTypeNameMap } from "@/lib/types";
@@ -13,10 +14,16 @@ import { cn } from "@/lib/utils";
 interface PoolRowProps {
   poolGroup: PoolGroup;
   pool: Pool;
-  isLast?: boolean;
+  isLastPoolInGroup?: boolean;
+  isLastTableRow?: boolean;
 }
 
-export default function PoolRow({ poolGroup, pool, isLast }: PoolRowProps) {
+export default function PoolRow({
+  poolGroup,
+  pool,
+  isLastPoolInGroup,
+  isLastTableRow,
+}: PoolRowProps) {
   const { coinMetadataMap } = useLoadedAppContext();
 
   // CoinMetadata
@@ -32,16 +39,19 @@ export default function PoolRow({ poolGroup, pool, isLast }: PoolRowProps) {
     <div
       className={cn(
         "group flex h-[56px] w-full min-w-max cursor-pointer flex-row transition-colors hover:bg-tertiary",
-        !isLast && "h-[calc(56px+1px)] border-b",
+        !isLastTableRow && "h-[calc(56px+1px)] border-b",
       )}
       onClick={() => {}}
     >
       {/* Pair */}
       <div
         className="flex h-full flex-row items-center gap-3"
-        style={poolsTableColumnStyles.pair}
+        style={columnStyleMap.pair}
       >
-        <div className="-mr-3 w-16" />
+        <div className="relative -mr-3 h-full w-16 pl-4">
+          {!isLastPoolInGroup && <div className="h-full w-px bg-border" />}
+          <div className="absolute left-4 top-0 h-1/2 w-5 rounded-bl-md border-b border-l" />
+        </div>
 
         <div
           className={cn("flex flex-row", !hasCoinMetadata && "animate-pulse")}
@@ -77,7 +87,7 @@ export default function PoolRow({ poolGroup, pool, isLast }: PoolRowProps) {
       {/* Type */}
       <div
         className="flex h-full flex-row items-center"
-        style={poolsTableColumnStyles.type}
+        style={columnStyleMap.type}
       >
         <Tag labelClassName="transition-colors group-hover:text-foreground">
           {poolTypeNameMap[pool.type]}
@@ -87,23 +97,27 @@ export default function PoolRow({ poolGroup, pool, isLast }: PoolRowProps) {
       {/* TVL */}
       <div
         className="flex h-full flex-row items-center"
-        style={poolsTableColumnStyles.tvlUsd}
+        style={columnStyleMap.tvlUsd}
       >
-        <p className="text-p1 text-foreground">{formatUsd(pool.tvlUsd)}</p>
+        <Tooltip title={formatUsd(pool.tvlUsd, { exact: true })}>
+          <p className="text-p1 text-foreground">{formatUsd(pool.tvlUsd)}</p>
+        </Tooltip>
       </div>
 
       {/* Volume */}
       <div
         className="flex h-full flex-row items-center"
-        style={poolsTableColumnStyles.volumeUsd}
+        style={columnStyleMap.volumeUsd}
       >
-        <p className="text-p1 text-foreground">{formatUsd(pool.volumeUsd)}</p>
+        <Tooltip title={formatUsd(pool.volumeUsd, { exact: true })}>
+          <p className="text-p1 text-foreground">{formatUsd(pool.volumeUsd)}</p>
+        </Tooltip>
       </div>
 
       {/* APR */}
       <div
         className="flex h-full flex-row items-center gap-2"
-        style={poolsTableColumnStyles.aprPercent}
+        style={columnStyleMap.aprPercent}
       >
         <div
           className={cn("flex flex-row", !hasCoinMetadata && "animate-pulse")}
