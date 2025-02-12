@@ -104,7 +104,8 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
             {poolGroup.assetCoinTypes.map((coinType, index) => (
               <TokenLogo
                 className={cn(
-                  index !== 0 && "-ml-2 outline outline-1 outline-secondary",
+                  index !== 0 &&
+                    "-ml-2 bg-secondary outline outline-1 outline-secondary",
                   !hasCoinMetadata && "animate-none",
                 )}
                 key={coinType}

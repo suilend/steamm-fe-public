@@ -60,7 +60,8 @@ export default function PoolRow({
             <TokenLogo
               key={coinType}
               className={cn(
-                index !== 0 && "-ml-2 outline outline-1 outline-secondary",
+                index !== 0 &&
+                  "-ml-2 bg-secondary outline outline-1 outline-secondary",
                 !hasCoinMetadata && "animate-none",
               )}
               token={
@@ -126,7 +127,8 @@ export default function PoolRow({
             <TokenLogo
               key={coinType}
               className={cn(
-                index !== 0 && "-ml-1 outline outline-1 outline-secondary",
+                index !== 0 &&
+                  "-ml-1 bg-secondary outline outline-1 outline-secondary",
                 !hasCoinMetadata && "animate-none",
               )}
               token={

@@ -1,4 +1,5 @@
 import Head from "next/head";
+import { useMemo } from "react";
 
 import BigNumber from "bignumber.js";
 
@@ -10,6 +11,15 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 
 export default function Pools() {
   const { appData } = useLoadedAppContext();
+
+  // Featured pools
+  const featuredPoolGroups = useMemo(
+    () =>
+      appData.poolGroups.filter((poolGroup) =>
+        appData.featuredPoolGroupIds.includes(poolGroup.id),
+      ),
+    [appData.poolGroups, appData.featuredPoolGroupIds],
+  );
 
   return (
     <>
@@ -54,6 +64,8 @@ export default function Pools() {
         {/* Featured pools */}
         <div className="flex w-full flex-col gap-6">
           <h2 className="text-h3 text-foreground">Featured pools</h2>
+
+          <PoolsTable poolGroups={featuredPoolGroups} />
         </div>
 
         {/* All pools */}

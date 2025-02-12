@@ -83,7 +83,26 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           },
         ],
       },
+      {
+        id: "3",
+        assetCoinTypes: [NORMALIZED_SUI_COINTYPE, NORMALIZED_SEND_COINTYPE],
+        pools: [
+          {
+            id: "5",
+            poolGroupId: "3",
+            type: PoolType.CONSTANT,
+            tvlUsd: new BigNumber(98000),
+            volumeUsd: new BigNumber(12000),
+            apr: {
+              assetCoinTypes: [NORMALIZED_SEND_COINTYPE],
+              percent: new BigNumber(64.1),
+            },
+          },
+        ],
+      },
     ];
+
+    const featuredPoolGroupIds = ["1", "3"];
 
     // TVL (dummy data)
     const tvlData: BarChartData[] = [];
@@ -150,6 +169,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       pools,
 
       poolGroups,
+      featuredPoolGroupIds,
       tvlData,
       volumeData,
       coinTypes: uniqueCoinTypes,

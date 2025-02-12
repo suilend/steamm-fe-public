@@ -30,6 +30,7 @@ export interface AppData {
   pools: PoolInfo[];
 
   poolGroups: PoolGroup[];
+  featuredPoolGroupIds: string[];
   tvlData: BarChartData[];
   volumeData: BarChartData[];
   coinTypes: string[];
