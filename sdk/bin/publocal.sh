@@ -192,6 +192,9 @@ source_test_fun() {
     LSS=$(cat "$file_path")
     printf "File: $LSS" >&2
 
+    line_numz=$(grep -n "$function_name" "$file_path")
+    printf "line numz: $line_numz" >&2
+    
     line_num=$(grep -n "$function_name" "$file_path" | cut -d: -f1)
     printf "Line number: $line_num" >&2
     if [ -n "$line_num" ]; then
