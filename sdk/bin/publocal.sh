@@ -189,7 +189,11 @@ source_test_fun() {
     fi
 
     # Find the line number of the function
+    LSS=$(cat "$file_path")
+    printf "File: $LSS" >&2
+
     line_num=$(grep -n "$function_name" "$file_path" | cut -d: -f1)
+    printf "Line number: $line_num" >&2
     if [ -n "$line_num" ]; then
         # Delete the line before it (subtract 1 from line number)
         remove_line=$((line_num - 1))
@@ -208,6 +212,7 @@ source_test_fun "pyth" "price_info" "update_price_info_object_for_testing"
 
 
 echo "[INFO] Publishing packages"
+
 sui client --client.config sui/client.yaml faucet
 sleep 1
 
