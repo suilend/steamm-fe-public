@@ -189,9 +189,6 @@ source_test_fun() {
     fi
 
     # Find the line number of the function
-    LSS=$(cat "$file_path")
-    printf "File: $LSS" >&2
-
     line_num=$(grep -n "$function_name" "$file_path" | cut -d: -f1)
     if [ -n "$line_num" ]; then
         # Delete the line before it (subtract 1 from line number)
@@ -206,15 +203,11 @@ source_test_fun() {
 
 ## Source test functions
 echo "[INFO] Sourcing test functions"
-ls temp/
-ls temp/pyth/
-ls temp/pyth/sources
 source_test_fun "pyth" "price_info" "new_price_info_object_for_testing"
 source_test_fun "pyth" "price_info" "update_price_info_object_for_testing"
 
 
 echo "[INFO] Publishing packages"
-
 sui client --client.config sui/client.yaml faucet
 sleep 1
 
