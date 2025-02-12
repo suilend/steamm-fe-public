@@ -48,13 +48,16 @@ export default function PoolRow({
         className="flex h-full flex-row items-center gap-3"
         style={columnStyleMap.pair}
       >
-        <div className="relative -mr-3 h-full w-16 pl-4">
+        <div className="relative -mr-3 h-full w-16 shrink-0 pl-4">
           {!isLastPoolInGroup && <div className="h-full w-px bg-border" />}
           <div className="absolute left-4 top-0 h-1/2 w-5 rounded-bl-md border-b border-l" />
         </div>
 
         <div
-          className={cn("flex flex-row", !hasCoinMetadata && "animate-pulse")}
+          className={cn(
+            "flex shrink-0 flex-row",
+            !hasCoinMetadata && "animate-pulse",
+          )}
         >
           {poolGroup.assetCoinTypes.map((coinType, index) => (
             <TokenLogo
@@ -77,7 +80,7 @@ export default function PoolRow({
         {!hasCoinMetadata ? (
           <Skeleton className="h-6 w-20 animate-none" />
         ) : (
-          <p className="text-p1 text-foreground">
+          <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
             {poolGroup.assetCoinTypes
               .map((coinType) => coinMetadataMap![coinType].symbol)
               .join("/")}

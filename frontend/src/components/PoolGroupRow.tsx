@@ -70,7 +70,7 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
           className="flex h-full flex-row items-center gap-3"
           style={columnStyleMap.pair}
         >
-          <div className="-mr-3 flex h-full w-16 flex-col">
+          <div className="-mr-3 flex h-full w-16 shrink-0 flex-col">
             <div className="w-full flex-1" />
             <Tag
               className="w-max"
@@ -99,7 +99,10 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
           </div>
 
           <div
-            className={cn("flex flex-row", !hasCoinMetadata && "animate-pulse")}
+            className={cn(
+              "flex shrink-0 flex-row",
+              !hasCoinMetadata && "animate-pulse",
+            )}
           >
             {poolGroup.assetCoinTypes.map((coinType, index) => (
               <TokenLogo
@@ -122,7 +125,7 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
           {!hasCoinMetadata ? (
             <Skeleton className="h-6 w-20 animate-none" />
           ) : (
-            <p className="text-p1 text-foreground">
+            <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
               {poolGroup.assetCoinTypes
                 .map((coinType) => coinMetadataMap![coinType].symbol)
                 .join("/")}
