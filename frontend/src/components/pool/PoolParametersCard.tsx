@@ -199,25 +199,6 @@ export default function PoolParametersCard() {
           })}
         </p>
       </Parameter>
-
-      <Parameter label="Creator address">
-        <div className="flex flex-row items-center gap-2">
-          <Tooltip title={pool.creatorAddress}>
-            <p className="text-p2 text-foreground">
-              {pool.creatorAddress ? formatAddress(pool.creatorAddress) : "--"}
-            </p>
-          </Tooltip>
-
-          {pool.creatorAddress && (
-            <div className="flex flex-row items-center gap-1">
-              <CopyToClipboardButton value={pool.creatorAddress} />
-              <OpenOnExplorerButton
-                url={explorer.buildAddressUrl(pool.creatorAddress)}
-              />
-            </div>
-          )}
-        </div>
-      </Parameter>
     </div>
   );
 }

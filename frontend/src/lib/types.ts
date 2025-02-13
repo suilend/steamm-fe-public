@@ -15,7 +15,6 @@ export const poolTypeNameMap: Record<PoolType, string> = {
 export type ParsedPool = {
   id: string;
   type?: PoolType;
-  creatorAddress?: string;
 
   lpTokenType: string;
   btokenTypes: [string, string];

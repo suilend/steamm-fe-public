@@ -81,7 +81,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       const type = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
         ? PoolType.CONSTANT
         : undefined; // TODO: Add support for other pool types
-      const creatorAddress = poolInfo.creator;
 
       const btokenTypeA = poolInfo.coinTypeA;
       const btokenTypeB = poolInfo.coinTypeB;
@@ -140,7 +139,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       pools.push({
         id,
         type,
-        creatorAddress,
 
         lpTokenType: poolInfo.lpTokenType,
         btokenTypes: [btokenTypeA, btokenTypeB],
