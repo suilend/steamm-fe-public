@@ -19,8 +19,8 @@ import {
   SteammSDK,
 } from "@suilend/steamm-sdk";
 
-import { ChartData } from "@/components/HistoricalDataChart";
 import useFetchAppData from "@/fetchers/useFetchAppData";
+import { ChartData } from "@/lib/chart";
 import { ParsedPool } from "@/lib/types";
 
 export interface AppData {
@@ -79,7 +79,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       steamm_config: STEAMM_BETA_CONFIG,
       suilend_config: SUILEND_BETA_CONFIG,
     });
-    // sdk.signer = address;
 
     return sdk;
   }, [rpc.url]);

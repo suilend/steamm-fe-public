@@ -39,3 +39,10 @@ export type PoolGroup = {
   coinTypes: [string, string];
   pools: ParsedPool[];
 };
+
+export type SubmitButtonState = {
+  isLoading?: boolean;
+  isDisabled?: boolean;
+  title?: string;
+  description?: string;
+};
