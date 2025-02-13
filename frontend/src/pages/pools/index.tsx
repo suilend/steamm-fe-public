@@ -73,7 +73,7 @@ export default function PoolsPage() {
                 <HistoricalDataChart
                   title="TVL"
                   value={formatUsd(appData.tvlUsd)}
-                  chartType={ChartType.BAR}
+                  chartType={ChartType.LINE}
                   periodDays={30}
                   periodChangePercent={new BigNumber(-5 + Math.random() * 10)}
                   data={appData.tvlData}

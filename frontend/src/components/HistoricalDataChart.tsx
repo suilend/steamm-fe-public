@@ -346,12 +346,12 @@ export default function HistoricalDataChart({
           ) : (
             <Recharts.ResponsiveContainer width="100%" height="100%">
               <Recharts.ComposedChart
-                data={data}
+                data={processedData}
                 margin={{
-                  top: 2,
-                  right: 2,
-                  bottom: 2,
-                  left: 2,
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  left: 0,
                 }}
               >
                 <defs>
@@ -368,22 +368,27 @@ export default function HistoricalDataChart({
                     />
                   </linearGradient>
                 </defs>
-                <Recharts.Line
-                  type="monotone"
-                  dataKey="valueUsd"
-                  isAnimationActive={false}
-                  stroke="hsl(var(--jordy-blue))"
-                  dot={false}
-                  strokeWidth={2}
-                />
-                <Recharts.Area
-                  type="monotone"
-                  dataKey="valueUsd"
-                  isAnimationActive={false}
-                  fill={`url(#${gradientId})`}
-                  dot={false}
-                  strokeWidth={0}
-                />
+                {sortedCategories.map((category, categoryIndex) => (
+                  <Recharts.Area
+                    key={category}
+                    type="monotone"
+                    dataKey={category}
+                    stackId="1"
+                    isAnimationActive={false}
+                    fill={
+                      sortedCategories.length > 1
+                        ? `hsl(var(--a${sortedCategories.length - categoryIndex}))`
+                        : `url(#${gradientId})`
+                    }
+                    fillOpacity={1}
+                    stroke={
+                      sortedCategories.length > 1
+                        ? "hsl(var(--background))"
+                        : "hsl(var(--jordy-blue))"
+                    }
+                    strokeWidth={sortedCategories.length > 1 ? 3 : 2}
+                  />
+                ))}
                 <Recharts.Tooltip
                   isAnimationActive={false}
                   cursor={{

@@ -193,8 +193,11 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         timestampS: 1739253600 + i * 24 * 60 * 60,
         ...[
           NORMALIZED_SUI_COINTYPE,
-          NORMALIZED_SEND_COINTYPE,
+          NORMALIZED_DEEP_COINTYPE,
           NORMALIZED_USDC_COINTYPE,
+          NORMALIZED_SEND_COINTYPE,
+          NORMALIZED_sSUI_COINTYPE,
+          NORMALIZED_AUSD_COINTYPE,
         ].reduce(
           (acc, coinType) => ({
             ...acc,
