@@ -61,6 +61,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     ];
     for (const poolInfo of poolInfos) {
       const coinTypes = [
+        poolInfo.lpTokenType,
         bTokenTypeToCoinTypeMap[poolInfo.coinTypeA],
         bTokenTypeToCoinTypeMap[poolInfo.coinTypeB],
       ];
@@ -141,6 +142,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         type,
         creatorAddress,
 
+        lpTokenType: poolInfo.lpTokenType,
         btokenTypes: [btokenTypeA, btokenTypeB],
         coinTypes: [coinTypeA, coinTypeB],
         balances: [balanceA, balanceB],

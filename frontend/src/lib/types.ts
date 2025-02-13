@@ -17,6 +17,7 @@ export type ParsedPool = {
   type?: PoolType;
   creatorAddress?: string;
 
+  lpTokenType: string;
   btokenTypes: [string, string];
   coinTypes: [string, string];
   balances: [BigNumber, BigNumber];

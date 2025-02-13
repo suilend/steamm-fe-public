@@ -9,7 +9,10 @@ import {
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
 
-import { useSettingsContext } from "@suilend/frontend-sui-next";
+import {
+  useSettingsContext,
+  useWalletContext,
+} from "@suilend/frontend-sui-next";
 import useFetchBalances from "@suilend/frontend-sui-next/fetchers/useFetchBalances";
 import useCoinMetadataMap from "@suilend/frontend-sui-next/hooks/useCoinMetadataMap";
 import useRefreshOnBalancesChange from "@suilend/frontend-sui-next/hooks/useRefreshOnBalancesChange";
@@ -70,7 +73,7 @@ export const useLoadedAppContext = () => useAppContext() as LoadedAppContext;
 
 export function AppContextProvider({ children }: PropsWithChildren) {
   const { rpc } = useSettingsContext();
-  // const { address } = useWalletContext();
+  const { address } = useWalletContext();
 
   // STEAMM client
   const steammClient = useMemo(() => {
@@ -79,9 +82,12 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       steamm_config: STEAMM_BETA_CONFIG,
       suilend_config: SUILEND_BETA_CONFIG,
     });
+    sdk.senderAddress =
+      address ??
+      "0x0000000000000000000000000000000000000000000000000000000000000000"; // Address must be set to use the SDK
 
     return sdk;
-  }, [rpc.url]);
+  }, [rpc.url, address]);
 
   // App data
   const { data: appData, mutateData: mutateAppData } =
