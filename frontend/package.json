@@ -2,7 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "A TypeScript frontend for interacting with the Steamm program",
+  "description": "A TypeScript frontend for interacting with the STEAMM program",
   "author": "Suilend",
   "license": "MIT",
   "scripts": {

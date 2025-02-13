@@ -34,7 +34,7 @@ fi
 
 
 # Create source directories
-printf "[INFO] Building Steamm package"  >&2
+printf "[INFO] Building STEAMM package"  >&2
 mkdir -p temp/liquid_staking/sources temp/pyth/sources temp/sprungsui/sources temp/suilend/sources temp/wormhole/sources temp/steamm/sources
 sui move build --path temp/git/contracts/steamm --silence-warnings --no-lint
 

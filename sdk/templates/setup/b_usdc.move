@@ -2,7 +2,7 @@ module steamm::b_usdc;
 
 const NAME: vector<u8> = b"bToken USDC";
 const SYMBOL: vector<u8> = b"bUSDC";
-const DESCRIPTION: vector<u8> = b"Steamm bToken";
+const DESCRIPTION: vector<u8> = b"STEAMM bToken";
 const DECIMALS: u8 = 9;
 
 public struct B_USDC has drop {}

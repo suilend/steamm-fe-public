@@ -1,8 +1,8 @@
 module steamm::lp_usdc_sui;
 
-const NAME: vector<u8> = b"Steamm LP Token bUSDC-bSUI";
+const NAME: vector<u8> = b"STEAMM LP Token bUSDC-bSUI";
 const SYMBOL: vector<u8> = b"steammLP bUSDC-bSUI";
-const DESCRIPTION: vector<u8> = b"Steamm LP Token";
+const DESCRIPTION: vector<u8> = b"STEAMM LP Token";
 const DECIMALS: u8 = 9;
 
 public struct LP_USDC_SUI has drop {}
