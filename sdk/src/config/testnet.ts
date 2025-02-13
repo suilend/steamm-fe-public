@@ -1,7 +1,10 @@
 export const SUILEND_TESTNET_PKG_ID =
-  "0xf8659699b500cb66c7625b9859e796bbdb62777632c6ea900c937bbe0578acd7";
+  "0xd868b023d126ac793280c505d6f1f96378459e6d7087f2d0b9a40fa84e73926a";
 export const STEAMM_TESTNET_PKG_ID =
-  "0x0248d02e356aa2954eeca9ead0bd3df976eda06044a7d29009f31740d612ac8e";
+  "0x2f8751f6ff9554bd16849e5002b88147ad6549102bfd0ff04d509b666aa477ca";
+
+export const TEST_SUI_TESTNET_TYPE = `${STEAMM_TESTNET_PKG_ID}::sui::SUI`;
+export const TEST_USDC_TESTNET_TYPE = `${STEAMM_TESTNET_PKG_ID}::usdc::USDC`;
 
 export const TESTNET_CONFIG = {
   fullRpcUrl: "https://fullnode.testnet.sui.io:443",

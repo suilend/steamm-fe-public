@@ -100,7 +100,7 @@ export class SteammSDK {
     return bankList;
   }
 
-  async getPools(): Promise<PoolInfo[]> {
+  async getPools(coinTypes?: [string, string]): Promise<PoolInfo[]> {
     const pkgAddy = this.sdkOptions.steamm_config.package_id;
 
     let eventData: EventData<NewPoolEvent>[] = [];
@@ -113,6 +113,23 @@ export class SteammSDK {
 
     eventData = res.data.reduce((acc, curr) => acc.concat(curr), []);
     pools = extractPoolInfo(eventData);
+
+    // get pools by coin types
+    if (coinTypes) {
+      const banks = await this.getBanks();
+      const bcoinTypes = {
+        coinType1: banks[coinTypes[0]].btokenType,
+        coinType2: banks[coinTypes[1]].btokenType,
+      };
+
+      pools = pools.filter(
+        (pool) =>
+          pool.coinTypeA === bcoinTypes.coinType1 ||
+          pool.coinTypeB === bcoinTypes.coinType1 ||
+          pool.coinTypeA === bcoinTypes.coinType2 ||
+          pool.coinTypeB === bcoinTypes.coinType2,
+      );
+    }
 
     return pools;
   }

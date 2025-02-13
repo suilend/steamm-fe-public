@@ -4,14 +4,14 @@ import { STEAMM_BETA_PKG_ID } from "./mainnetBeta";
 import { STEAMM_TESTNET_PKG_ID } from "./testnet";
 
 const SUI_TESTNET_FAUCET =
-  "0x6138cdbc64a4e620bb5b66e8a3b87099fdcaed580fab67316ddc7bfb9bb460f4";
+  "0xe8a6641b683683a63b80a2ed75f328a7385852be33fbd3468ad07c75f12040e9";
 const USDC_TESTNET_FAUCET =
-  "0x372bcf55b8f0220fa273fe34982c648c9e7cf44f28e1ebd0d899211634ebf12b";
+  "0xadb49ed4c32b491cc399766faa20460cde003d6e0203b3625ea11be25612c2dc";
 
 const SUI_BETA_FAUCET =
-  "0xab20e561f4a3a77361ff13298dd111b38f4c44457785ec7cec15c48903d272fb";
+  "0x9d0becdf94261d9767b66f1eeee042cf17a2cb5cca534241c4405faaea3b24a2";
 const USDC_BETA_FAUCET =
-  "0xc259c0212f5b5e7dd409324163ac557bda8b63a1bc86e667cd76ecb7d67bc9f7";
+  "0xdc117526e0177bc1aa7ce9b5f8df35c9440e9ad433831663c951edfda407a04e";
 
 export function getTestSui(
   tx: Transaction,
