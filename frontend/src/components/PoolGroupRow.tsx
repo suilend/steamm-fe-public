@@ -1,7 +1,6 @@
-import { useMemo, useState } from "react";
-
 import BigNumber from "bignumber.js";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useLocalStorage } from "usehooks-ts";
 
 import { formatPercent, formatUsd, getToken } from "@suilend/frontend-sui";
 
@@ -16,30 +15,32 @@ import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolGroupRowProps {
+  tableId: string;
   poolGroup: PoolGroup;
   isLast?: boolean;
 }
 
-export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
-  const { coinMetadataMap } = useLoadedAppContext();
+export default function PoolGroupRow({
+  tableId,
+  poolGroup,
+  isLast,
+}: PoolGroupRowProps) {
+  const { appData } = useLoadedAppContext();
 
   // State
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useLocalStorage<boolean>(
+    `${tableId}_PoolGroupRow_isExpanded`,
+    false,
+  );
   const Chevron = isExpanded ? ChevronUp : ChevronDown;
 
   // CoinMetadata
-  const coinTypes = useMemo(
-    () => [...poolGroup.assetCoinTypes],
-    [poolGroup.assetCoinTypes],
-  );
-  const hasCoinMetadata = coinTypes
-    .map((coinType) => coinMetadataMap?.[coinType])
-    .every(Boolean);
+  const hasCoinMetadata = true;
 
   // Pair
   const formattedPair = hasCoinMetadata
-    ? poolGroup.assetCoinTypes
-        .map((coinType) => coinMetadataMap![coinType].symbol)
+    ? poolGroup.coinTypes
+        .map((coinType) => appData.poolCoinMetadataMap[coinType].symbol)
         .join("/")
     : undefined;
 
@@ -107,7 +108,7 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
               !hasCoinMetadata && "animate-pulse",
             )}
           >
-            {poolGroup.assetCoinTypes.map((coinType, index) => (
+            {poolGroup.coinTypes.map((coinType, index) => (
               <TokenLogo
                 className={cn(
                   index !== 0 && "-ml-2 outline outline-1 outline-secondary",
@@ -116,7 +117,7 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
                 key={coinType}
                 token={
                   hasCoinMetadata
-                    ? getToken(coinType, coinMetadataMap![coinType])
+                    ? getToken(coinType, appData.poolCoinMetadataMap[coinType])
                     : undefined
                 }
                 size={24}
@@ -124,7 +125,7 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
             ))}
           </div>
 
-          {!hasCoinMetadata ? (
+          {!formattedPair ? (
             <Skeleton className="h-[24px] w-20 animate-none" />
           ) : (
             <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
