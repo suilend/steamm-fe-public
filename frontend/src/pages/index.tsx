@@ -1,6 +1,6 @@
 import Head from "next/head";
 
-export default function Swap() {
+export default function SwapPage() {
   return (
     <>
       <Head>

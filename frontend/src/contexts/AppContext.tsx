@@ -9,40 +9,38 @@ import {
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
 
-import { NORMALIZED_SEND_COINTYPE } from "@suilend/frontend-sui";
-import { useSettingsContext } from "@suilend/frontend-sui-next";
+import {
+  useSettingsContext,
+  useWalletContext,
+} from "@suilend/frontend-sui-next";
 import useFetchBalances from "@suilend/frontend-sui-next/fetchers/useFetchBalances";
 import useCoinMetadataMap from "@suilend/frontend-sui-next/hooks/useCoinMetadataMap";
 import useRefreshOnBalancesChange from "@suilend/frontend-sui-next/hooks/useRefreshOnBalancesChange";
 import {
-  BankList,
-  PoolInfo,
   STEAMM_BETA_CONFIG,
   SUILEND_BETA_CONFIG,
   SteammSDK,
 } from "@suilend/steamm-sdk";
 
-import { BarChartData } from "@/components/BarChartStat";
 import useFetchAppData from "@/fetchers/useFetchAppData";
-import { PoolGroup } from "@/lib/types";
+import { ChartData } from "@/lib/chart";
+import { ParsedPool } from "@/lib/types";
 
 export interface AppData {
-  banks: BankList;
-  pools: PoolInfo[];
+  pools: ParsedPool[];
+  poolCoinTypes: string[];
+  poolCoinMetadataMap: Record<string, CoinMetadata>;
+  featuredCoinTypePairs: [string, string][];
 
-  poolGroups: PoolGroup[];
-  featuredPoolGroupIds: string[];
   tvlUsd: BigNumber;
-  tvlData: BarChartData[];
+  tvlData: ChartData[];
   volumeUsd: BigNumber;
-  volumeData: BarChartData[];
-  coinTypes: string[];
+  volumeData: ChartData[];
 }
 
 interface AppContext {
   steammClient: SteammSDK | undefined;
   appData: AppData | undefined;
-  coinMetadataMap: Record<string, CoinMetadata> | undefined;
 
   rawBalancesMap: Record<string, BigNumber> | undefined;
   balancesCoinMetadataMap: Record<string, CoinMetadata> | undefined;
@@ -58,7 +56,6 @@ type LoadedAppContext = AppContext & {
 const AppContext = createContext<AppContext>({
   steammClient: undefined,
   appData: undefined,
-  coinMetadataMap: undefined,
 
   rawBalancesMap: undefined,
   balancesCoinMetadataMap: undefined,
@@ -76,7 +73,7 @@ export const useLoadedAppContext = () => useAppContext() as LoadedAppContext;
 
 export function AppContextProvider({ children }: PropsWithChildren) {
   const { rpc } = useSettingsContext();
-  // const { address } = useWalletContext();
+  const { address } = useWalletContext();
 
   // STEAMM client
   const steammClient = useMemo(() => {
@@ -85,17 +82,16 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       steamm_config: STEAMM_BETA_CONFIG,
       suilend_config: SUILEND_BETA_CONFIG,
     });
-    // sdk.signer = address;
+    sdk.senderAddress =
+      address ??
+      "0x0000000000000000000000000000000000000000000000000000000000000000"; // Address must be set to use the SDK
 
     return sdk;
-  }, [rpc.url]);
+  }, [rpc.url, address]);
 
   // App data
   const { data: appData, mutateData: mutateAppData } =
     useFetchAppData(steammClient);
-
-  // CoinMetadataMap
-  const coinMetadataMap = useCoinMetadataMap(appData?.coinTypes ?? []);
 
   // Balances
   const { data: rawBalancesMap, mutateData: mutateRawBalancesMap } =
@@ -138,7 +134,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     () => ({
       steammClient,
       appData,
-      coinMetadataMap,
 
       rawBalancesMap,
       balancesCoinMetadataMap,
@@ -149,7 +144,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     [
       steammClient,
       appData,
-      coinMetadataMap,
       rawBalancesMap,
       balancesCoinMetadataMap,
       getBalance,

@@ -13,7 +13,7 @@ type Column = "pair" | "type" | "tvlUsd" | "volumeUsd" | "aprPercent";
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
     flex: 2,
-    minWidth: 250, // px
+    minWidth: 280, // px
     paddingLeft: 4 * 5, // px
   },
   type: {
@@ -95,10 +95,15 @@ function HeaderColumn({
 
 interface PoolsTableProps {
   className?: ClassValue;
+  tableId: string;
   poolGroups?: PoolGroup[];
 }
 
-export default function PoolsTable({ className, poolGroups }: PoolsTableProps) {
+export default function PoolsTable({
+  className,
+  tableId,
+  poolGroups,
+}: PoolsTableProps) {
   // Sort
   const [sortState, setSortState] = useState<SortState | undefined>(undefined);
 
@@ -134,7 +139,11 @@ export default function PoolsTable({ className, poolGroups }: PoolsTableProps) {
     return poolGroups
       .map((poolGroup) => ({
         ...poolGroup,
-        pools: sortedPools.filter((pool) => pool.poolGroupId === poolGroup.id),
+        pools: sortedPools.filter(
+          (pool) =>
+            pool.coinTypes[0] === poolGroup.coinTypes[0] &&
+            pool.coinTypes[1] === poolGroup.coinTypes[1],
+        ),
       }))
       .sort((a, b) => {
         if (sortState.column === "aprPercent") {
@@ -188,14 +197,14 @@ export default function PoolsTable({ className, poolGroups }: PoolsTableProps) {
           sortState={sortState}
           toggleSortByColumn={toggleSortByColumn}
         >
-          Volume 24h
+          Volume (24H)
         </HeaderColumn>
         <HeaderColumn
           id="aprPercent"
           sortState={sortState}
           toggleSortByColumn={toggleSortByColumn}
         >
-          APR 24h
+          APR (24H)
         </HeaderColumn>
       </div>
 
@@ -213,6 +222,7 @@ export default function PoolsTable({ className, poolGroups }: PoolsTableProps) {
         : sortedPoolGroups.map((poolGroup, index, array) => (
             <PoolGroupRow
               key={poolGroup.id}
+              tableId={tableId}
               poolGroup={poolGroup}
               isLast={index === array.length - 1}
             />

@@ -1,6 +1,6 @@
 import Head from "next/head";
 
-export default function Portfolio() {
+export default function PortfolioPage() {
   return (
     <>
       <Head>

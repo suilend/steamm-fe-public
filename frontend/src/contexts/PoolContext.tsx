@@ -9,14 +9,14 @@ import {
 
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { POOLS_URL } from "@/lib/navigation";
-import { Pool } from "@/lib/types";
+import { ParsedPool } from "@/lib/types";
 
 interface PoolContext {
-  pool: Pool;
+  pool: ParsedPool;
 }
 
 const PoolContext = createContext<PoolContext>({
-  pool: {} as Pool,
+  pool: {} as ParsedPool,
 });
 
 export const usePoolContext = () => useContext(PoolContext);
@@ -29,12 +29,8 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
 
   // Pool
   const pool = useMemo(
-    () =>
-      appData.poolGroups
-        .map((poolGroup) => poolGroup.pools)
-        .flat()
-        .find((pool) => pool.id === poolId),
-    [appData.poolGroups, poolId],
+    () => appData.pools.find((pool) => pool.id === poolId),
+    [appData.pools, poolId],
   );
 
   useEffect(() => {
@@ -44,7 +40,7 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
   // Context
   const contextValue: PoolContext = useMemo(
     () => ({
-      pool: pool as Pool,
+      pool: pool as ParsedPool,
     }),
     [pool],
   );

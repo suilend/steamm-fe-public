@@ -2,23 +2,57 @@ import Head from "next/head";
 import { useMemo } from "react";
 
 import BigNumber from "bignumber.js";
+import { v4 as uuidv4 } from "uuid";
 
-import BarChartStat from "@/components/BarChartStat";
+import { formatUsd } from "@suilend/frontend-sui";
+
 import Divider from "@/components/Divider";
+import HistoricalDataChart from "@/components/HistoricalDataChart";
 import PoolsTable from "@/components/PoolsTable";
 import Tag from "@/components/Tag";
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import { ChartType, formatCoinTypeCategory } from "@/lib/chart";
+import { ParsedPool, PoolGroup } from "@/lib/types";
 
-export default function Pools() {
+export default function PoolsPage() {
   const { appData } = useLoadedAppContext();
 
-  // Featured pools
+  // Group pools by pair
+  const poolGroups = useMemo(() => {
+    const poolGroupsByPair: Record<string, ParsedPool[]> = {};
+
+    for (const pool of appData.pools) {
+      const pair = pool.coinTypes.join("/");
+
+      if (!poolGroupsByPair[pair]) poolGroupsByPair[pair] = [pool];
+      else poolGroupsByPair[pair].push(pool);
+    }
+
+    return Object.values(poolGroupsByPair).reduce(
+      (acc, pools) => [
+        ...acc,
+        {
+          id: uuidv4(),
+          coinTypes: pools[0].coinTypes,
+          pools,
+        },
+      ],
+      [] as PoolGroup[],
+    );
+  }, [appData.pools]);
+
+  // Featured pairs
   const featuredPoolGroups = useMemo(
     () =>
-      appData.poolGroups.filter((poolGroup) =>
-        appData.featuredPoolGroupIds.includes(poolGroup.id),
+      poolGroups.filter(
+        (poolGroup) =>
+          !!appData.featuredCoinTypePairs.find(
+            (pair) =>
+              poolGroup.coinTypes[0] === pair[0] &&
+              poolGroup.coinTypes[1] === pair[1],
+          ),
       ),
-    [appData.poolGroups, appData.featuredPoolGroupIds],
+    [poolGroups, appData.featuredCoinTypePairs],
   );
 
   return (
@@ -36,12 +70,19 @@ export default function Pools() {
             {/* TVL */}
             <div className="flex-1">
               <div className="w-full p-5">
-                <BarChartStat
-                  title="TVL 30d"
-                  valueUsd={appData.tvlUsd}
+                <HistoricalDataChart
+                  title="TVL"
+                  value={formatUsd(appData.tvlUsd)}
+                  chartType={ChartType.LINE}
                   periodDays={30}
-                  periodChangePercent={new BigNumber(-4.92)}
                   data={appData.tvlData}
+                  formatCategory={(category) =>
+                    formatCoinTypeCategory(
+                      category,
+                      appData.poolCoinMetadataMap,
+                    )
+                  }
+                  formatValue={(value) => formatUsd(new BigNumber(value))}
                 />
               </div>
             </div>
@@ -51,12 +92,20 @@ export default function Pools() {
             {/* Volume */}
             <div className="flex-1">
               <div className="w-full p-5">
-                <BarChartStat
-                  title="Volume 30d"
-                  valueUsd={appData.volumeUsd}
+                <HistoricalDataChart
+                  title="Volume (30D)"
+                  value={formatUsd(appData.volumeUsd)}
+                  chartType={ChartType.BAR}
                   periodDays={30}
-                  periodChangePercent={new BigNumber(2.51)}
+                  periodChangePercent={new BigNumber(-5 + Math.random() * 10)}
                   data={appData.volumeData}
+                  formatCategory={(category) =>
+                    formatCoinTypeCategory(
+                      category,
+                      appData.poolCoinMetadataMap,
+                    )
+                  }
+                  formatValue={(value) => formatUsd(new BigNumber(value))}
                 />
               </div>
             </div>
@@ -69,6 +118,7 @@ export default function Pools() {
 
           <PoolsTable
             className="max-h-[480px]"
+            tableId="featured-pools"
             poolGroups={featuredPoolGroups}
           />
         </div>
@@ -78,7 +128,7 @@ export default function Pools() {
           <div className="flex flex-row items-center gap-3">
             <h2 className="text-h3 text-foreground">All pools</h2>
             <Tag>
-              {appData.poolGroups.reduce(
+              {poolGroups.reduce(
                 (acc, poolGroup) => acc + poolGroup.pools.length,
                 0,
               )}
@@ -87,7 +137,8 @@ export default function Pools() {
 
           <PoolsTable
             className="max-h-[480px]"
-            poolGroups={appData.poolGroups}
+            tableId="pools"
+            poolGroups={poolGroups}
           />
         </div>
       </div>

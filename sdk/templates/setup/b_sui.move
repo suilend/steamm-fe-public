@@ -2,7 +2,7 @@ module steamm::b_sui;
 
 const NAME: vector<u8> = b"bToken SUI";
 const SYMBOL: vector<u8> = b"bSUI";
-const DESCRIPTION: vector<u8> = b"Steamm bToken";
+const DESCRIPTION: vector<u8> = b"STEAMM bToken";
 const DECIMALS: u8 = 9;
 
 public struct B_SUI has drop {}

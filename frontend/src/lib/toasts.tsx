@@ -10,15 +10,19 @@ export const showSuccessTxnToast = (
   txUrl: string,
   data?: Omit<ExternalToast, "action" | "duration">,
 ) =>
-  showSuccessToast(title, {
-    ...(data ?? {}),
-    action: (
-      <Link
-        className="actionButton block flex flex-col justify-center text-secondary-foreground transition-colors hover:text-foreground"
-        href={txUrl}
-        target="_blank"
-      >
-        <ExternalLink className="h-4 w-4" />
-      </Link>
-    ),
-  });
+  showSuccessToast(
+    title,
+    {
+      ...(data ?? {}),
+      action: (
+        <Link
+          className="actionButton block flex flex-col justify-center text-secondary-foreground transition-colors hover:text-foreground"
+          href={txUrl}
+          target="_blank"
+        >
+          <ExternalLink className="h-4 w-4" />
+        </Link>
+      ),
+    },
+    true,
+  );
