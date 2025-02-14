@@ -1,4 +1,7 @@
-import { TransactionArgument } from "@mysten/sui/transactions";
+import {
+  TransactionArgument,
+  TransactionObjectInput,
+} from "@mysten/sui/transactions";
 
 import {
   PoolNewArgs,
@@ -11,3 +14,16 @@ export type CpNewArgs = PoolNewArgs & {
 };
 export type CpSwapArgs = PoolSwapArgs & {};
 export type CpQuoteSwapArgs = PoolQuoteSwapArgs & {};
+
+export interface CreateCpPoolArgs {
+  coinTypeA: string;
+  coinTypeB: string;
+  lpTokenType: string;
+  registry: string | TransactionObjectInput;
+  swapFeeBps: bigint | TransactionArgument;
+  offset: bigint | TransactionArgument;
+  coinMetaA: string | TransactionObjectInput;
+  coinMetaB: string | TransactionObjectInput;
+  lpTokenMeta: string | TransactionObjectInput;
+  lpTreasury: string | TransactionObjectInput;
+}

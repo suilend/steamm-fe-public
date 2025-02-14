@@ -21,7 +21,7 @@ import {
 } from "../base/pool/poolTypes";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
-import { BankInfo, BankList, PoolInfo, SuiObjectIdType } from "../types";
+import { BankInfo, BankList, PoolInfo } from "../types";
 import { SuiTypeName } from "../utils";
 import { SuiAddressType } from "../utils";
 

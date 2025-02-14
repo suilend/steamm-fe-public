@@ -45,3 +45,14 @@ export interface LendingObjectsArgs {
   bankB: TransactionObjectInput;
   lendingMarket: TransactionObjectInput;
 }
+
+export interface CreateBankArgs {
+  lendingMarketType: string;
+  coinType: string;
+  btokenType: string;
+  registry: string | TransactionObjectInput;
+  coinMetaT: string | TransactionObjectInput;
+  coinMetaBToken: string | TransactionObjectInput;
+  btokenTreasury: string | TransactionObjectInput;
+  lendingMarket: string | TransactionObjectInput;
+}

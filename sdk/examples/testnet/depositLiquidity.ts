@@ -54,21 +54,23 @@ async function depositLiquidity(suiPrivateKey: string) {
     console.log("DevResult failed.");
     throw new Error(devResult.error);
   } else {
+    console.log(devResult);
     console.log("DevResult success.");
   }
 
   // Proceed to submit the transaction
-  // const txResult = await sdk.fullClient.signAndExecuteTransaction({
-  //   transaction: tx,
-  //   signer: keypair,
-  // });
+  console.log("Signing and executing the transaction...");
+  const txResult = await sdk.fullClient.signAndExecuteTransaction({
+    transaction: tx,
+    signer: keypair,
+  });
 
-  // if (txResult.errors) {
-  //   console.log(txResult.errors);
-  //   throw new Error("Tx Execution failed!");
-  // } else {
-  //   console.log("Transaction executed successfully:", txResult);
-  // }
+  if (txResult.errors) {
+    console.log(txResult.errors);
+    throw new Error("Tx Execution failed!");
+  } else {
+    console.log("Transaction executed successfully:", txResult);
+  }
 }
 
 depositLiquidity(suiPrivateKey);

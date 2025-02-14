@@ -86,10 +86,6 @@ export function test() {
       )!.data?.objectId!;
     });
 
-    // beforeEach(async () => {});
-
-    // afterAll(async () => {});
-
     it("setup && listen to pool/bank creation events", async () => {
       const pools = await sdk.getPools();
       const banks = await sdk.getBanks();

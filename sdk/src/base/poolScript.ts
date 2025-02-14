@@ -61,10 +61,6 @@ export class PoolScript {
     }
   }
 
-  //   public swap(args: PoolSwapArgs, tx: Transaction): TransactionResult {
-  //     return this.quoter.swap(args, tx);
-  //   }
-
   public swap(tx: Transaction, args: PoolSwapArgs): TransactionResult {
     const callArgs = {
       pool: tx.object(this.pool.poolInfo.poolId),

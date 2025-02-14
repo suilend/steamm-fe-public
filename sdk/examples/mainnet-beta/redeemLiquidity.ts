@@ -7,6 +7,8 @@ import {
   BETA_CONFIG,
   STEAMM_BETA_PKG_ID,
   SteammSDK,
+  TEST_SUI_BETA_TYPE,
+  TEST_USDC_BETA_TYPE,
   getTestSui,
   getTestUsdc,
 } from "../../src";
@@ -26,7 +28,7 @@ async function redeemLiquidity(suiPrivateKey: string) {
 
   const sdk = new SteammSDK(BETA_CONFIG);
 
-  const pools = await sdk.getPools();
+  const pools = await sdk.getPools([TEST_SUI_BETA_TYPE, TEST_USDC_BETA_TYPE]);
   sdk.signer = keypair;
   const tx = new Transaction();
 
@@ -63,6 +65,7 @@ async function redeemLiquidity(suiPrivateKey: string) {
     console.log("DevResult failed.");
     throw new Error(devResult.error);
   } else {
+    console.log(devResult);
     console.log("DevResult success.");
   }
 

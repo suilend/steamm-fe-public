@@ -19,7 +19,7 @@ if [ "$CI" = false ]; then
 
     # Create suilend directory if it doesn't exist and cd into it
     mkdir -p temp &&
-    git clone --branch testnet git@github.com:solendprotocol/steamm.git temp/git
+    git clone --branch fee-types git@github.com:solendprotocol/steamm.git temp/git
 else
     ./bin/unpublocal.sh --ci
 fi
@@ -242,6 +242,15 @@ echo "lp_treasury_cap: $lp_treasury_cap"
 
 usdc_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::usdc::USDC>")
 echo "usdc_metadata: $usdc_metadata"
+
+sui_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::sui::SUI>")
+echo "sui_metadata: $sui_metadata"
+
+usdc_treasury_cap=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::TreasuryCap<.*::usdc::USDC>")
+echo "usdc_treasury_cap: $usdc_treasury_cap"
+
+sui_treasury_cap=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::TreasuryCap<.*::sui::SUI>")
+echo "sui_treasury_cap: $sui_treasury_cap"
 
 sui_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::sui::SUI>")
 echo "sui_metadata: $sui_metadata"
