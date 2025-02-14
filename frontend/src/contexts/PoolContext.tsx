@@ -8,7 +8,7 @@ import {
 } from "react";
 
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { POOLS_URL } from "@/lib/navigation";
+import { ROOT_URL } from "@/lib/navigation";
 import { ParsedPool } from "@/lib/types";
 
 interface PoolContext {
@@ -34,7 +34,7 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
   );
 
   useEffect(() => {
-    if (!pool) router.replace(POOLS_URL); // Redirect to Pools page if poolId is not valid
+    if (!pool) router.replace(ROOT_URL); // Redirect to Pools page if poolId is not valid
   }, [pool, router]);
 
   // Context

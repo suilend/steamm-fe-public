@@ -9,7 +9,7 @@ import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { POOLS_URL } from "@/lib/navigation";
+import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { PoolPosition, poolTypeNameMap } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -45,7 +45,7 @@ export default function PoolPositionRow({
         "group relative z-[1] flex h-[72px] w-full min-w-max shrink-0 cursor-pointer flex-row transition-colors hover:bg-tertiary",
         !isLast && "h-[calc(72px+1px)] border-b",
       )}
-      href={`${POOLS_URL}/${position.pool.id}`}
+      href={`${POOL_URL_PREFIX}/${position.pool.id}`}
     >
       {/* Pair */}
       <div
