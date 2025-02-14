@@ -174,24 +174,30 @@ export default function PoolsTable({
       </div>
 
       {/* Rows */}
-      {sortedPoolGroups === undefined
-        ? Array.from({ length: 3 }).map((_, index, array) => (
-            <Skeleton
-              key={index}
-              className={cn(
-                "relative z-[1] h-[56px] w-full",
-                index !== array.length - 1 && "h-[calc(56px+1px)] border-b",
-              )}
-            />
-          ))
-        : sortedPoolGroups.map((poolGroup, index, array) => (
-            <PoolGroupRow
-              key={poolGroup.id}
-              tableId={tableId}
-              poolGroup={poolGroup}
-              isLast={index === array.length - 1}
-            />
-          ))}
+      {sortedPoolGroups === undefined ? (
+        Array.from({ length: 3 }).map((_, index, array) => (
+          <Skeleton
+            key={index}
+            className={cn(
+              "relative z-[1] h-[56px] w-full",
+              index !== array.length - 1 && "h-[calc(56px+1px)] border-b",
+            )}
+          />
+        ))
+      ) : sortedPoolGroups.length === 0 ? (
+        <div className="flex h-[56px] w-full flex-row items-center justify-center">
+          <p className="text-p2 text-tertiary-foreground">No pools</p>
+        </div>
+      ) : (
+        sortedPoolGroups.map((poolGroup, index, array) => (
+          <PoolGroupRow
+            key={poolGroup.id}
+            tableId={tableId}
+            poolGroup={poolGroup}
+            isLast={index === array.length - 1}
+          />
+        ))
+      )}
     </div>
   );
 }
