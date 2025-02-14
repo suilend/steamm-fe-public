@@ -177,12 +177,20 @@ export default function PoolPositionRow({
         style={columnStyleMap.pnl}
       >
         <div className="flex flex-col items-end gap-0.5">
-          <p className="text-p1 text-success">
-            +{formatPercent(position.pnl.percent)}
-          </p>
-          <p className="text-p2 text-success">
-            +{formatUsd(position.pnl.amountUsd)}
-          </p>
+          {position.pnl.percent === undefined ? (
+            <Skeleton className="h-6 w-20" />
+          ) : (
+            <p className="text-p1 text-success">
+              +{formatPercent(position.pnl.percent)}
+            </p>
+          )}
+          {position.pnl.amountUsd === undefined ? (
+            <Skeleton className="h-[21px] w-20" />
+          ) : (
+            <p className="text-p2 text-success">
+              +{formatUsd(position.pnl.amountUsd)}
+            </p>
+          )}
         </div>
       </div>
     </Link>

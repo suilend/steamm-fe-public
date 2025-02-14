@@ -73,6 +73,14 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       bTokenTypeToCoinTypeMap[btokenType] = normalizeStructTag(coinType);
     }
 
+    const lendingMarketIdTypeMap = Object.values(bankList).reduce(
+      (acc, bank) => ({
+        ...acc,
+        [bank.lendingMarketId]: bank.lendingMarketType,
+      }),
+      {},
+    );
+
     // Pools
     const poolInfos = await steammClient.getPools();
 
@@ -237,6 +245,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     }
 
     return {
+      lendingMarketIdTypeMap,
+
       pools,
       poolCoinTypes,
       poolCoinMetadataMap,
@@ -249,7 +259,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
   };
 
   const { data, mutate } = useSWR<AppData>("appData", dataFetcher, {
-    refreshInterval: 30 * 1000 * 1000, // 30 * 1000,
+    refreshInterval: 30 * 1000,
     onSuccess: (data) => {
       console.log("Refreshed app data", data);
     },

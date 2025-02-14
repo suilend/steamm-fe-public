@@ -117,7 +117,7 @@ function DepositTab({ formatValue }: TabProps) {
         maxB: index === 0 ? BigInt(MAX_U64.toString()) : BigInt(submitAmount),
       });
       setQuote(quote);
-      console.log("XXX deposit quote:", quote);
+      console.log("DepositTab.onValueChange - quote:", quote);
 
       setValues((prev) => {
         if (prev[index] !== formattedValue) return prev;

@@ -17,6 +17,7 @@ import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import useFetchObligations from "@/fetchers/useFetchObligations";
 import { PoolPosition } from "@/lib/types";
 
 export default function PortfolioPage() {
@@ -50,6 +51,11 @@ export default function PortfolioPage() {
     [rawBalancesMap, balancesCoinMetadataMap, getBalance],
   );
 
+  // Obligations
+  const { data: obligationsData, mutateData: mutateObligationsData } =
+    useFetchObligations();
+  console.log("XXX obligationsData", obligationsData);
+
   // Positions
   const positions: PoolPosition[] = useMemo(
     () =>
@@ -63,20 +69,21 @@ export default function PortfolioPage() {
             amount: lpTokenBalanceMap[pool.lpTokenType].balance,
             amountUsd: undefined, // Fetched below
           },
+          depositedAmountUsd: undefined, // TODO
           isStaked: false, // TODO - FETCH
           claimableRewards: {
             [NORMALIZED_SUI_COINTYPE]: new BigNumber(5.1),
             [NORMALIZED_DEEP_COINTYPE]: new BigNumber(1.051),
           }, // TODO - FETCH
           pnl: {
-            percent: new BigNumber(3.5), // TODO - BACKEND
-            amountUsd: new BigNumber(1000), // TODO - BACKEND
+            percent: undefined, // TODO
+            amountUsd: undefined, // TODO
           },
         })),
     [appData.pools, lpTokenBalanceMap],
   );
 
-  // Positions - Balances in USD
+  // Positions - Balances in USD (on-chain)
   const [poolBalancesUsd, setPoolBalancesUsd] = useState<
     Record<string, BigNumber>
   >({});
@@ -84,7 +91,6 @@ export default function PortfolioPage() {
   useEffect(() => {
     (async () => {
       try {
-        console.log("XXX fetching poolBalancesUsd");
         const result: Record<string, BigNumber> = {};
 
         const redeemQuotes = await Promise.all(
@@ -142,6 +148,10 @@ export default function PortfolioPage() {
     [positions, poolBalancesUsd],
   );
 
+  // Positions - depositedAmountUsd (backend)
+
+  // Positions - PnL (backend)
+
   // Summary
   const netWorthUsd: BigNumber | undefined = useMemo(
     () =>
@@ -150,23 +160,36 @@ export default function PortfolioPage() {
       )
         ? undefined
         : positionsWithFetchedData.reduce(
-            (sum, position) => sum.plus(position.balance.amountUsd ?? 0),
+            (sum, position) => sum.plus(position.balance.amountUsd),
             new BigNumber(0),
           ),
     [positionsWithFetchedData],
   );
 
   const totalDepositedUsd = useMemo(
-    () => new BigNumber(0), // TODO - BACKEND
-    [],
+    () =>
+      positionsWithFetchedData.some(
+        (position) => position.depositedAmountUsd === undefined,
+      )
+        ? undefined
+        : positionsWithFetchedData.reduce(
+            (sum, position) =>
+              sum.plus(position.depositedAmountUsd as BigNumber),
+            new BigNumber(0),
+          ),
+    [positionsWithFetchedData],
   );
 
   const totalPnlUsd = useMemo(
     () =>
-      positionsWithFetchedData.reduce(
-        (sum, position) => sum.plus(position.pnl.amountUsd ?? 0),
-        new BigNumber(0),
-      ),
+      positionsWithFetchedData.some(
+        (position) => position.pnl.amountUsd === undefined,
+      )
+        ? undefined
+        : positionsWithFetchedData.reduce(
+            (sum, position) => sum.plus(position.pnl.amountUsd as BigNumber),
+            new BigNumber(0),
+          ),
     [positionsWithFetchedData],
   );
 
@@ -250,9 +273,14 @@ export default function PortfolioPage() {
               <p className="text-p2 text-secondary-foreground">
                 Total deposited
               </p>
-              <p className="text-h3 text-foreground">
-                {formatUsd(totalDepositedUsd)}
-              </p>
+
+              {totalDepositedUsd === undefined ? (
+                <Skeleton className="h-[30px] w-20" />
+              ) : (
+                <p className="text-h3 text-foreground">
+                  {formatUsd(totalDepositedUsd)}
+                </p>
+              )}
             </div>
           </div>
 
@@ -262,7 +290,12 @@ export default function PortfolioPage() {
           <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1">
             <div className="flex w-full flex-col gap-1 p-5">
               <p className="text-p2 text-secondary-foreground">Total PnL</p>
-              <p className="text-h3 text-success">{formatUsd(totalPnlUsd)}</p>
+
+              {totalPnlUsd === undefined ? (
+                <Skeleton className="h-[30px] w-20" />
+              ) : (
+                <p className="text-h3 text-success">{formatUsd(totalPnlUsd)}</p>
+              )}
             </div>
           </div>
 

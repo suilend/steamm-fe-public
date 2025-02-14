@@ -46,11 +46,12 @@ export type PoolPosition = {
     amount: BigNumber;
     amountUsd?: BigNumber;
   };
+  depositedAmountUsd?: BigNumber;
   isStaked: boolean;
   claimableRewards: Record<string, BigNumber>;
   pnl: {
-    percent: BigNumber;
-    amountUsd: BigNumber;
+    percent?: BigNumber;
+    amountUsd?: BigNumber;
   };
 };
 
