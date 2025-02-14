@@ -1,14 +1,18 @@
 import { Signer } from "@mysten/sui/cryptography";
 
+import { Bank, BankScript, Pool, PoolScript } from "./base";
+import { BankModule } from "./modules/bankModule";
 import { PoolModule } from "./modules/poolModule";
 import { RpcModule } from "./modules/rpcModule";
 import {
+  BankInfo,
   BankList,
   DataPage,
   EventData,
   NewBankEvent,
   NewPoolEvent,
   Package,
+  PackageInfo,
   PoolInfo,
   SteammConfigs,
   SuilendConfigs,
@@ -27,6 +31,7 @@ export type SdkOptions = {
 export class SteammSDK {
   protected _rpcModule: RpcModule;
   protected _pool: PoolModule;
+  protected _bank: BankModule;
   protected _sdkOptions: SdkOptions;
 
   protected _signer: Signer | undefined;
@@ -39,6 +44,7 @@ export class SteammSDK {
     });
 
     this._pool = new PoolModule(this);
+    this._bank = new BankModule(this);
 
     patchFixSuiObjectId(this.sdkOptions);
   }
@@ -57,6 +63,10 @@ export class SteammSDK {
   set signer(signer: Signer) {
     this._signer = signer;
     this._senderAddress = signer.getPublicKey().toSuiAddress();
+  }
+
+  get signer(): Signer | undefined {
+    return this._signer;
   }
 
   /**
@@ -81,6 +91,67 @@ export class SteammSDK {
    */
   get Pool(): PoolModule {
     return this._pool;
+  }
+
+  /**
+   * Getter for the Pool property.
+   * @returns {BankModule} The Pool property value.
+   */
+  get Bank(): BankModule {
+    return this._bank;
+  }
+
+  getPool(poolInfo: PoolInfo): Pool {
+    return new Pool(this.packageInfo(), poolInfo);
+  }
+
+  getBank(bankInfo: BankInfo): Bank {
+    return new Bank(this.packageInfo(), bankInfo);
+  }
+
+  getPoolScript(
+    poolInfo: PoolInfo,
+    bankInfoA: BankInfo,
+    bankInfoB: BankInfo,
+  ): PoolScript {
+    return new PoolScript(
+      this.packageInfo(),
+      this.scriptPackageInfo(),
+      poolInfo,
+      bankInfoA,
+      bankInfoB,
+    );
+  }
+
+  getBankScript(bankInfoX: BankInfo, bankInfoY: BankInfo): BankScript {
+    return new BankScript(
+      this.packageInfo(),
+      this.scriptPackageInfo(),
+      bankInfoX,
+      bankInfoY,
+    );
+  }
+
+  public packageInfo(): PackageInfo {
+    return {
+      sourcePkgId: this.sourcePkgId(),
+      publishedAt: this.publishedAt(),
+    };
+  }
+
+  public scriptPackageInfo(): PackageInfo {
+    return {
+      sourcePkgId: this.sdkOptions.steamm_script_config.package_id,
+      publishedAt: this.sdkOptions.steamm_script_config.published_at,
+    };
+  }
+
+  public sourcePkgId(): string {
+    return this.sdkOptions.steamm_config.package_id;
+  }
+
+  public publishedAt(): string {
+    return this.sdkOptions.steamm_config.published_at;
   }
 
   async getBanks(): Promise<BankList> {
@@ -125,10 +196,10 @@ export class SteammSDK {
 
       pools = pools.filter(
         (pool) =>
-          pool.coinTypeA === bcoinTypes.coinType1 ||
-          pool.coinTypeB === bcoinTypes.coinType1 ||
-          pool.coinTypeA === bcoinTypes.coinType2 ||
-          pool.coinTypeB === bcoinTypes.coinType2,
+          (pool.coinTypeA === bcoinTypes.coinType1 &&
+            pool.coinTypeB === bcoinTypes.coinType2) ||
+          (pool.coinTypeA === bcoinTypes.coinType2 &&
+            pool.coinTypeB === bcoinTypes.coinType1),
       );
     }
 

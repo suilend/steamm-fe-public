@@ -1,5 +1,10 @@
 import { SuiAddressType } from "./utils";
 
+export interface PackageInfo {
+  sourcePkgId: string;
+  publishedAt: string;
+}
+
 export type SuiObjectIdType = string;
 
 /**
@@ -108,8 +113,7 @@ export function extractPoolInfo(events: EventData<NewPoolEvent>[]): PoolInfo[] {
 
 export type SteammConfigs = {
   registryId: SuiObjectIdType;
-  globalConfigId: SuiObjectIdType;
-  adminCapId: SuiObjectIdType;
+  globalAdmin: SuiObjectIdType;
 };
 
 export type SuilendConfigs = {

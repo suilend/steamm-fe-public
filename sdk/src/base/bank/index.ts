@@ -6,7 +6,7 @@ import {
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
 import { BankFunctions } from "../..";
-import { BankInfo } from "../../types";
+import { BankInfo, PackageInfo } from "../../types";
 
 import {
   BurnBTokensArgs,
@@ -22,12 +22,14 @@ export * from "./bankArgs";
 export * from "./bankMath";
 
 export class Bank {
-  public packageId: string;
+  public sourcePkgId: string;
+  public publishedAt: string;
   public bankInfo: BankInfo;
 
-  constructor(packageId: string, bankInfo: BankInfo) {
+  constructor(pkgInfo: PackageInfo, bankInfo: BankInfo) {
     this.bankInfo = bankInfo;
-    this.packageId = packageId;
+    this.sourcePkgId = pkgInfo.sourcePkgId;
+    this.publishedAt = pkgInfo.publishedAt;
   }
 
   public mintBTokens(
@@ -37,18 +39,18 @@ export class Bank {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
       lendingMarket: tx.object(this.bankInfo.lendingMarketId),
-      coins: args.coins,
+      coinT: args.coin,
       coinAmount: args.coinAmount,
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const coinA = BankFunctions.mintBtokens(
+    const bToken = BankFunctions.mintBtokens(
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
-    return coinA;
+    return bToken;
   }
 
   public burnBTokens(
@@ -63,13 +65,13 @@ export class Bank {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const coinA = BankFunctions.burnBtokens(
+    const coin = BankFunctions.burnBtokens(
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
-    return coinA;
+    return coin;
   }
 
   public initLending(tx: Transaction, args: InitLendingArgs) {
@@ -81,7 +83,7 @@ export class Bank {
       utilisationBufferBps: args.utilisationBufferBps,
     };
 
-    BankFunctions.initLending(tx, this.typeArgs(), callArgs, this.packageId);
+    BankFunctions.initLending(tx, this.typeArgs(), callArgs, this.publishedAt);
   }
 
   public rebalance(tx: Transaction) {
@@ -91,7 +93,7 @@ export class Bank {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    BankFunctions.rebalance(tx, this.typeArgs(), callArgs, this.packageId);
+    BankFunctions.rebalance(tx, this.typeArgs(), callArgs, this.publishedAt);
   }
 
   public compoundInterestIfAny(tx: Transaction) {
@@ -105,7 +107,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -124,7 +126,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -142,7 +144,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -158,7 +160,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -190,7 +192,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -205,7 +207,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -214,7 +216,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -223,7 +225,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -232,7 +234,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -243,7 +245,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -254,7 +256,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -263,7 +265,7 @@ export class Bank {
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
-      this.packageId,
+      this.publishedAt,
     );
   }
   public typeArgs(): [string, string, string] {
@@ -278,7 +280,7 @@ export class Bank {
 export function createBank(
   tx: Transaction,
   args: CreateBankArgs,
-  packageId: string,
+  pkgInfo: PackageInfo,
 ): TransactionArgument {
   const { lendingMarketType, coinType, btokenType } = args;
 
@@ -292,6 +294,6 @@ export function createBank(
       btokenTreasury: tx.object(args.btokenTreasury),
       lendingMarket: tx.object(args.lendingMarket),
     },
-    packageId,
+    pkgInfo.publishedAt,
   );
 }

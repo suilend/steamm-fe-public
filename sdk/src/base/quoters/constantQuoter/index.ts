@@ -5,7 +5,7 @@ import {
 } from "@mysten/sui/transactions";
 
 import { ConstantProductFunctions } from "../../..";
-import { PoolInfo } from "../../../types";
+import { PackageInfo, PoolInfo } from "../../../types";
 import { MigrateArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
 
@@ -18,11 +18,13 @@ import {
 export * from "./constantProductArgs";
 
 export class ConstantProductQuoter implements Quoter {
-  public packageId: string;
+  public sourcePkgId: string;
+  public publishedAt: string;
   public poolInfo: PoolInfo;
 
-  constructor(packageId: string, poolInfo: PoolInfo) {
-    this.packageId = packageId;
+  constructor(pkgInfo: PackageInfo, poolInfo: PoolInfo) {
+    this.sourcePkgId = pkgInfo.sourcePkgId;
+    this.publishedAt = pkgInfo.publishedAt;
     this.poolInfo = poolInfo;
   }
 
@@ -40,7 +42,7 @@ export class ConstantProductQuoter implements Quoter {
       tx,
       this.quoterTypes(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
 
     return swapResult;
@@ -60,14 +62,14 @@ export class ConstantProductQuoter implements Quoter {
       tx,
       this.quoterTypes(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
     return quote;
   }
 
   public poolType(): [string] {
     return [
-      `${this.packageId}::pool::Pool<${this.poolInfo.coinTypeA},
+      `${this.sourcePkgId}::pool::Pool<${this.poolInfo.coinTypeA},
       ${this.poolInfo.coinTypeB},
       ${this.poolInfo.quoterType},
       ${this.poolInfo.lpTokenType}>`,
@@ -98,6 +100,7 @@ export class ConstantProductQuoter implements Quoter {
       tx,
       this.quoterTypes(),
       tx.object(this.poolInfo.poolId),
+      this.publishedAt,
     );
   }
 
@@ -106,6 +109,7 @@ export class ConstantProductQuoter implements Quoter {
       tx,
       this.quoterTypes(),
       tx.object(this.poolInfo.poolId),
+      this.publishedAt,
     );
   }
 
@@ -122,6 +126,7 @@ export class ConstantProductQuoter implements Quoter {
       tx,
       this.quoterTypes(),
       callArgs,
+      this.publishedAt,
     );
 
     return [coinA, coinB];
@@ -131,8 +136,8 @@ export class ConstantProductQuoter implements Quoter {
 export function createPool(
   tx: Transaction,
   args: CreateCpPoolArgs,
-  packageId: string,
-): TransactionArgument {
+  pkgInfo: PackageInfo,
+) {
   const {
     coinTypeA,
     coinTypeB,
@@ -146,7 +151,7 @@ export function createPool(
     lpTreasury,
   } = args;
 
-  return ConstantProductFunctions.new_(
+  const pool = ConstantProductFunctions.new_(
     tx,
     [coinTypeA, coinTypeB, lpTokenType],
     {
@@ -158,6 +163,16 @@ export function createPool(
       metaLp: lpTokenMeta,
       lpTreasury,
     },
-    packageId,
+    pkgInfo.publishedAt,
   );
+
+  const quoterType = `${pkgInfo.sourcePkgId}::cpmm::CpQuoter`;
+
+  return tx.moveCall({
+    target: `0x2::transfer::public_share_object`,
+    typeArguments: [
+      `${pkgInfo.sourcePkgId}::pool::Pool<${coinTypeA}, ${coinTypeB}, ${quoterType}, ${lpTokenType}>`,
+    ],
+    arguments: [pool],
+  });
 }

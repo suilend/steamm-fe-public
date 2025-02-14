@@ -74,7 +74,7 @@ export class RouterModule implements IModule {
       const bankInfoA = bankList[hop.coinTypeA];
       const bankInfoB = bankList[hop.coinTypeB];
 
-      const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+      const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
       // if first
       const coinA = hop.a2b ? btokens[i] : btokens[i + 1];
@@ -174,14 +174,8 @@ export class RouterModule implements IModule {
     const bankInfoX = bankList[coinTypeIn];
     const bankInfoY = bankList[coinTypeOut];
 
-    const bankX = new Bank(
-      this.sdk.sdkOptions.steamm_config.published_at,
-      bankInfoX,
-    );
-    const bankY = new Bank(
-      this.sdk.sdkOptions.steamm_config.published_at,
-      bankInfoY,
-    );
+    const bankX = new Bank(this.sdk.packageInfo(), bankInfoX);
+    const bankY = new Bank(this.sdk.packageInfo(), bankInfoY);
 
     const firstBTokenAmountIn = this.getBTokenAmountInForQuote(
       tx,
@@ -198,7 +192,7 @@ export class RouterModule implements IModule {
       const bankInfoA = bankList[hop.coinTypeA];
       const bankInfoB = bankList[hop.coinTypeB];
 
-      const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+      const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
       const quote = poolScript.quoteSwap(tx, {
         a2b: hop.a2b,
@@ -253,41 +247,12 @@ export class RouterModule implements IModule {
     return quoteResult;
   }
 
-  private getPoolScript(
-    poolInfo: PoolInfo,
-    bankInfoA: BankInfo,
-    bankInfoB: BankInfo,
-  ): PoolScript {
-    return new PoolScript(
-      this.sdk.sdkOptions.steamm_config.package_id,
-      poolInfo,
-      bankInfoA,
-      bankInfoB,
-    );
-  }
-
   private getBankScript(bankInfoA: BankInfo, bankInfoB: BankInfo): BankScript {
     return new BankScript(
       this.sdk.sdkOptions.steamm_config.package_id,
       bankInfoA,
       bankInfoB,
     );
-  }
-
-  private getBank(bankInfo: BankInfo): Bank {
-    return new Bank(this.sdk.sdkOptions.steamm_config.package_id, bankInfo);
-  }
-
-  private getBankInfoByBToken(bankList: BankList, btokenType: string) {
-    const bankInfo = Object.values(bankList).find(
-      (bank) => bank.btokenType === btokenType,
-    );
-
-    if (!bankInfo) {
-      throw new Error(`Bank info not found for btokenType: ${btokenType}`);
-    }
-
-    return bankInfo;
   }
 
   public mintBTokens(
@@ -322,13 +287,10 @@ export class RouterModule implements IModule {
       const bToken =
         i === 0
           ? (() => {
-              const bank = new Bank(
-                this.sdk.sdkOptions.steamm_config.published_at,
-                bankInfo,
-              );
+              const bank = new Bank(this.sdk.packageInfo(), bankInfo);
 
               return bank.mintBTokens(tx, {
-                coins: coinIn,
+                coin: coinIn,
                 coinAmount: amountIn,
               });
             })()
@@ -347,10 +309,7 @@ export class RouterModule implements IModule {
     bankInfo: BankInfo,
     bToken: TransactionObjectInput,
   ) {
-    const bankIn = new Bank(
-      this.sdk.sdkOptions.steamm_config.published_at,
-      bankInfo,
-    );
+    const bankIn = new Bank(this.sdk.packageInfo(), bankInfo);
 
     const amountIn: TransactionResult = this.sdk.fullClient.coinValue(
       tx,

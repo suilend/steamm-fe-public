@@ -6,7 +6,7 @@ import {
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
 import { PoolScriptFunctions } from "../_codegen";
-import { BankInfo, PoolInfo } from "../types";
+import { BankInfo, PackageInfo, PoolInfo } from "../types";
 
 import { Bank } from "./bank";
 import {
@@ -20,25 +20,30 @@ import {
 } from "./pool";
 
 export class PoolScript {
-  public packageId: string;
+  public sourcePkgId: string;
+  public publishedAt: string;
   public pool: Pool;
   public bankA: Bank;
   public bankB: Bank;
 
   constructor(
-    packageId: string,
+    steammPkgInfo: PackageInfo,
+    scriptPkgInfo: PackageInfo,
     poolInfo: PoolInfo,
     bankInfoA: BankInfo,
     bankInfoB: BankInfo,
   ) {
-    this.pool = new Pool(packageId, poolInfo);
-    this.bankA = new Bank(packageId, bankInfoA);
-    this.bankB = new Bank(packageId, bankInfoB);
-    this.packageId = packageId;
+    this.pool = new Pool(steammPkgInfo, poolInfo);
+    this.bankA = new Bank(steammPkgInfo, bankInfoA);
+    this.bankB = new Bank(steammPkgInfo, bankInfoB);
+    this.sourcePkgId = scriptPkgInfo.sourcePkgId;
+    this.publishedAt = scriptPkgInfo.publishedAt;
 
     const [bTokenAType, bTokenBType, _quoterType, _lpTokenType] =
       this.pool.poolTypes();
+
     const [lendingMarketType, _coinTypeA, _bTokenAType] = this.bankA.typeArgs();
+
     const [_lendingMarketType, _coinTypeB, _bTokenBType] =
       this.bankB.typeArgs();
 
@@ -79,7 +84,7 @@ export class PoolScript {
       tx,
       this.poolScriptTypesNoQuoter(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
 
     return swapResult;
@@ -103,7 +108,7 @@ export class PoolScript {
       tx,
       this.poolScriptTypesNoQuoter(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
 
     return quote;
@@ -129,7 +134,7 @@ export class PoolScript {
       tx,
       this.poolScriptTypes(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
 
     return [lpCoin, depositResult];
@@ -154,7 +159,7 @@ export class PoolScript {
       tx,
       this.poolScriptTypes(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
     return [coinA, coinB, redeemResult];
   }
@@ -177,7 +182,7 @@ export class PoolScript {
       tx,
       this.poolScriptTypes(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
     return quote;
   }
@@ -199,7 +204,7 @@ export class PoolScript {
       tx,
       this.poolScriptTypes(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
     return quote;
   }

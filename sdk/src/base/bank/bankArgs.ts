@@ -10,7 +10,7 @@ export interface InitLendingArgs {
 }
 
 export interface MintBTokensArgs {
-  coins: TransactionObjectInput;
+  coin: TransactionObjectInput;
   coinAmount: bigint | TransactionArgument;
 }
 

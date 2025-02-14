@@ -1,4 +1,9 @@
+import {
+  SuiObjectChange,
+  SuiTransactionBlockResponse,
+} from "@mysten/sui/client";
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
+import { normalizeSuiAddress } from "@mysten/sui/utils";
 
 import {
   Bank,
@@ -11,6 +16,7 @@ import {
   PoolScript,
   PoolSwapArgs,
   SwapQuote,
+  createPool,
 } from "../base";
 import {
   DepositQuote,
@@ -19,11 +25,14 @@ import {
   castRedeemQuote,
   castSwapQuote,
 } from "../base/pool/poolTypes";
+import { createCoinBytecode, getTreasuryAndCoinMeta } from "../coinGen";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
 import { BankInfo, BankList, PoolInfo } from "../types";
 import { SuiTypeName } from "../utils";
 import { SuiAddressType } from "../utils";
+
+const LP_TOKEN_URI = "TODO";
 
 /**
  * Helper class to help interact with pools.
@@ -59,7 +68,7 @@ export class PoolModule implements IModule {
     const bankInfoA = bankList[args.coinTypeA];
     const bankInfoB = bankList[args.coinTypeB];
 
-    const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
     const [lpToken, depositResult] = poolScript.depositLiquidity(tx, {
       coinA: tx.object(args.coinA),
@@ -91,7 +100,7 @@ export class PoolModule implements IModule {
     const bankInfoA = bankList[args.coinTypeA];
     const bankInfoB = bankList[args.coinTypeB];
 
-    const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
     const [coinA, coinB, redeemResult] = poolScript.redeemLiquidity(tx, {
       lpCoin: tx.object(args.lpCoin),
@@ -113,7 +122,7 @@ export class PoolModule implements IModule {
     const bankInfoA = bankList[args.coinTypeA];
     const bankInfoB = bankList[args.coinTypeB];
 
-    const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
     const swapResult = poolScript.swap(tx, {
       coinA: tx.object(args.coinA),
@@ -135,7 +144,7 @@ export class PoolModule implements IModule {
     const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
     const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
 
-    const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
     const quote = poolScript.quoteSwap(tx, {
       a2b: args.a2b,
@@ -156,7 +165,7 @@ export class PoolModule implements IModule {
     const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
     const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
 
-    const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
     const quote = poolScript.quoteDeposit(tx, {
       maxA: args.maxA,
@@ -176,7 +185,7 @@ export class PoolModule implements IModule {
     const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
     const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
 
-    const poolScript = this.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
     const quote = poolScript.quoteRedeem(tx, {
       lpTokens: args.lpTokens,
@@ -185,6 +194,86 @@ export class PoolModule implements IModule {
     return castRedeemQuote(
       await this.getQuoteResult<RedeemQuote>(tx, quote, "RedeemQuote"),
     );
+  }
+
+  public async createLpToken(
+    coinASymbol: string,
+    coinBSymbol: string,
+    sender: SuiAddressType,
+  ): Promise<Transaction> {
+    // Construct LP token name
+    const lpName = `STEAMM_LP ${coinASymbol}-${coinBSymbol}`;
+
+    // Construct LP token symbol
+    const lpSymbol = `STEAMM LP ${coinASymbol}-${coinBSymbol}`;
+
+    // LP token description
+    const lpDescription = "STEAMM LP Token";
+
+    const structName = `STEAMM_LP_${coinASymbol}_${coinBSymbol}`;
+    const moduleName = `steamm_lp_${coinASymbol}_${coinBSymbol}`;
+
+    const bytecode = await createCoinBytecode(
+      structName.toUpperCase().replace(/\s+/g, "_"),
+      moduleName.toLowerCase().replace(/\s+/g, "_"),
+      lpSymbol,
+      lpName,
+      lpDescription,
+      LP_TOKEN_URI,
+    );
+
+    // Step 1: Create the coin
+    const tx = new Transaction();
+    const [upgradeCap] = tx.publish({
+      modules: [[...bytecode]],
+      dependencies: [normalizeSuiAddress("0x1"), normalizeSuiAddress("0x2")],
+    });
+
+    tx.transferObjects([upgradeCap], tx.pure.address(sender));
+
+    return tx;
+  }
+
+  public async createPool(
+    tx: Transaction,
+    publishTxResponse: SuiTransactionBlockResponse,
+    args: {
+      btokenTypeA: string;
+      btokenTypeB: string;
+      swapFeeBps: bigint;
+      offset: bigint;
+      coinMetaA: string;
+      coinMetaB: string;
+    },
+  ) {
+    // Step 2: Get the treasury Cap id from the transaction
+    const [lpTreasuryId, lpMetadataId, lpTokenType] =
+      getTreasuryAndCoinMeta(publishTxResponse);
+
+    // wait until the sui rpc recognizes the treasuryCapId
+    while (true) {
+      const object = await this.sdk.fullClient.getObject({ id: lpTreasuryId });
+      if (object.error) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } else {
+        break;
+      }
+    }
+
+    const callArgs = {
+      coinTypeA: args.btokenTypeA,
+      coinTypeB: args.btokenTypeB,
+      lpTokenType: lpTokenType,
+      registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
+      swapFeeBps: args.swapFeeBps,
+      offset: args.offset,
+      coinMetaA: args.coinMetaA,
+      coinMetaB: args.coinMetaB,
+      lpTokenMeta: lpMetadataId,
+      lpTreasury: lpTreasuryId,
+    };
+
+    createPool(tx, callArgs, this.sdk.packageInfo());
   }
 
   private async getQuoteResult<T>(
@@ -208,27 +297,6 @@ export class PoolModule implements IModule {
 
     const quoteResult = (inspectResults.events[0].parsedJson as any).event as T;
     return quoteResult;
-  }
-
-  private getPool(poolInfo: PoolInfo): Pool {
-    return new Pool(this.sdk.sdkOptions.steamm_config.package_id, poolInfo);
-  }
-
-  private getPoolScript(
-    poolInfo: PoolInfo,
-    bankInfoA: BankInfo,
-    bankInfoB: BankInfo,
-  ): PoolScript {
-    return new PoolScript(
-      this.sdk.sdkOptions.steamm_config.package_id,
-      poolInfo,
-      bankInfoA,
-      bankInfoB,
-    );
-  }
-
-  private getBank(bankInfo: BankInfo): Bank {
-    return new Bank(this.sdk.sdkOptions.steamm_config.package_id, bankInfo);
   }
 
   private getBankInfoByBToken(bankList: BankList, btokenType: string) {

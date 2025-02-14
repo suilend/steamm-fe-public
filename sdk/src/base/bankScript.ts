@@ -3,19 +3,26 @@ import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
 import { PoolScriptFunctions } from "../_codegen";
 import { ToMultiSwapRouteArgs } from "../_codegen/_generated/steamm/pool-script/functions";
-import { BankInfo } from "../types";
+import { BankInfo, PackageInfo } from "../types";
 
 import { Bank } from "./bank";
 
 export class BankScript {
-  public packageId: string;
+  public sourcePkgId: string;
+  public publishedAt: string;
   public bankX: Bank;
   public bankY: Bank;
 
-  constructor(packageId: string, bankInfoX: BankInfo, bankInfoY: BankInfo) {
-    this.bankX = new Bank(packageId, bankInfoX);
-    this.bankY = new Bank(packageId, bankInfoY);
-    this.packageId = packageId;
+  constructor(
+    steammPkgInfo: PackageInfo,
+    scriptPkgInfo: PackageInfo,
+    bankInfoX: BankInfo,
+    bankInfoY: BankInfo,
+  ) {
+    this.bankX = new Bank(steammPkgInfo, bankInfoX);
+    this.bankY = new Bank(steammPkgInfo, bankInfoY);
+    this.sourcePkgId = scriptPkgInfo.sourcePkgId;
+    this.publishedAt = scriptPkgInfo.publishedAt;
 
     const [lendingMarketType, _coinTypeX, _bTokenXType] = this.bankX.typeArgs();
     const [_lendingMarketType, _coinTypeY, _bTokenYType] =
@@ -58,7 +65,7 @@ export class BankScript {
       tx,
       [lendingMarketType, coinTypeX, coinTypeY, bTokenXType, bTokenYType],
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
     return quote;
   }

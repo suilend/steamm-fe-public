@@ -75,7 +75,6 @@ export function test() {
       ];
 
       const routes = findAllRoutes("MEME1", "MEME2", pools);
-      console.log(routes);
 
       expect(routes.length).toBe(1);
 

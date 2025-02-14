@@ -26,6 +26,7 @@
     "url": "https://github.com/suilend/steamm-fe/issues"
   },
   "dependencies": {
+    "@mysten/move-bytecode-template": "^0.1.0",
     "bignumber.js": "^9.1.2",
     "dotenv": "^16.4.7"
   },
