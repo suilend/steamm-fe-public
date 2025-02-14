@@ -16,6 +16,7 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { PoolContextProvider, usePoolContext } from "@/contexts/PoolContext";
+import { formatPair } from "@/lib/format";
 import { ROOT_URL } from "@/lib/navigation";
 import { poolTypeNameMap } from "@/lib/types";
 
@@ -24,9 +25,11 @@ function PoolPage() {
   const { pool } = usePoolContext();
 
   // Pair
-  const formattedPair = pool.coinTypes
-    .map((coinType) => appData.poolCoinMetadataMap[coinType].symbol)
-    .join("/");
+  const formattedPair = formatPair(
+    pool.coinTypes.map(
+      (coinType) => appData.poolCoinMetadataMap[coinType].symbol,
+    ),
+  );
 
   return (
     <>

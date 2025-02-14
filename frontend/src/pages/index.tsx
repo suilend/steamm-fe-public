@@ -12,6 +12,7 @@ import PoolsTable from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { ChartType, formatCoinTypeCategory } from "@/lib/chart";
+import { formatPair } from "@/lib/format";
 import { ParsedPool, PoolGroup } from "@/lib/types";
 
 export default function PoolsPage() {
@@ -32,10 +33,11 @@ export default function PoolsPage() {
     const poolGroupsByPair: Record<string, ParsedPool[]> = {};
 
     for (const pool of appData.pools) {
-      const pair = pool.coinTypes.join("/");
+      const formattedPair = formatPair(pool.coinTypes);
 
-      if (!poolGroupsByPair[pair]) poolGroupsByPair[pair] = [pool];
-      else poolGroupsByPair[pair].push(pool);
+      if (!poolGroupsByPair[formattedPair])
+        poolGroupsByPair[formattedPair] = [pool];
+      else poolGroupsByPair[formattedPair].push(pool);
     }
 
     return Object.values(poolGroupsByPair).reduce(

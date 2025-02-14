@@ -11,6 +11,7 @@ import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import { formatPair } from "@/lib/format";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -33,11 +34,6 @@ export default function PoolGroupRow({
     false,
   );
   const Chevron = isExpanded ? ChevronUp : ChevronDown;
-
-  // Pair
-  const formattedPair = poolGroup.coinTypes
-    .map((coinType) => appData.poolCoinMetadataMap[coinType].symbol)
-    .join("/");
 
   // Calculations
   const totalTvlUsd = poolGroup.pools.reduce(
@@ -103,7 +99,11 @@ export default function PoolGroupRow({
 
           <TokenLogos coinTypes={poolGroup.coinTypes} size={24} />
           <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
-            {formattedPair}
+            {formatPair(
+              poolGroup.coinTypes.map(
+                (coinType) => appData.poolCoinMetadataMap[coinType].symbol,
+              ),
+            )}
           </p>
         </div>
 

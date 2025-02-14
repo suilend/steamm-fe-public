@@ -8,6 +8,7 @@ import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import { formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { ParsedPool, poolTypeNameMap } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -24,11 +25,6 @@ export default function PoolRow({
   isLastTableRow,
 }: PoolRowProps) {
   const { appData } = useLoadedAppContext();
-
-  // Pair
-  const formattedPair = pool.coinTypes
-    .map((coinType) => appData.poolCoinMetadataMap[coinType].symbol)
-    .join("/");
 
   return (
     <Link
@@ -50,7 +46,11 @@ export default function PoolRow({
 
         <TokenLogos coinTypes={pool.coinTypes} size={24} />
         <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
-          {formattedPair}
+          {formatPair(
+            pool.coinTypes.map(
+              (coinType) => appData.poolCoinMetadataMap[coinType].symbol,
+            ),
+          )}
         </p>
         <Tag labelClassName="transition-colors group-hover:text-foreground">
           {formatPercent(pool.feeTierPercent)}

@@ -57,7 +57,7 @@ export default function CoinInput({
       <div className="flex-1">
         <input
           id={getCoinInputId(coinType)}
-          className="h-[60px] w-full min-w-0 border-0 bg-[transparent] pl-0 text-right text-h1 text-foreground placeholder:text-tertiary-foreground focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          className="h-[60px] w-full min-w-0 border-0 bg-[transparent] text-right text-h1 text-foreground placeholder:text-tertiary-foreground focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           type="number"
           placeholder="0"
           value={value}
