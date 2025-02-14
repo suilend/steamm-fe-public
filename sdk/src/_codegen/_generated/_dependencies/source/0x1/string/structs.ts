@@ -2,7 +2,7 @@ import * as reified from "../../../../_framework/reified";
 import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFields, decodeFromFieldsWithTypes, decodeFromJSONField, fieldToJSON, phantom} from "../../../../_framework/reified";
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {Vector} from "../../../../_framework/vector";
-import {PKG_V13} from "../index";
+import {PKG_V14} from "../index";
 import {bcs} from "@mysten/sui/bcs";
 import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
 import {fromB64} from "@mysten/sui/utils";
@@ -11,7 +11,7 @@ import {fromB64} from "@mysten/sui/utils";
 
 export function isString(type: string): boolean {
     type = compressSuiType(type);
-    return type === `${PKG_V13}::string::String`;
+    return type === `${PKG_V14}::string::String`;
 }
 
 export interface StringFields {
@@ -26,12 +26,12 @@ export type StringReified = Reified<
 export class String implements StructClass {
     __StructClass = true as const;
 
-    static readonly $typeName = `${PKG_V13}::string::String`;
+    static readonly $typeName = `${PKG_V14}::string::String`;
     static readonly $numTypeParams = 0;
     static readonly $isPhantom = [] as const;
 
     readonly $typeName = String.$typeName;
-    readonly $fullTypeName: `${typeof PKG_V13}::string::String`;
+    readonly $fullTypeName: `${typeof PKG_V14}::string::String`;
     readonly $typeArgs: [];
     readonly $isPhantom = String.$isPhantom;
 
@@ -43,7 +43,7 @@ export class String implements StructClass {
         this.$fullTypeName = composeSuiType(
             String.$typeName,
             ...typeArgs
-        ) as `${typeof PKG_V13}::string::String`;
+        ) as `${typeof PKG_V14}::string::String`;
         this.$typeArgs = typeArgs;
 
         this.bytes = fields.bytes;
@@ -55,7 +55,7 @@ export class String implements StructClass {
             fullTypeName: composeSuiType(
                 String.$typeName,
                 ...[]
-            ) as `${typeof PKG_V13}::string::String`,
+            ) as `${typeof PKG_V14}::string::String`,
             typeArgs: [] as [],
             isPhantom: String.$isPhantom,
             reifiedTypeArgs: [],

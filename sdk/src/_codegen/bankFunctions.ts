@@ -19,4 +19,6 @@ export {
   totalFunds,
   utilisationBufferBps,
   utilisationBufferBpsUnchecked,
+  toBtokens,
+  fromBtokens,
 } from "./_generated/steamm/bank/functions";

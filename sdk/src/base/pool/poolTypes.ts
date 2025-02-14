@@ -18,6 +18,11 @@ export interface SwapQuote {
   a2b: boolean;
 }
 
+export interface MultiSwapQuote {
+  amountIn: bigint;
+  amountOut: bigint;
+}
+
 export interface SwapFee {
   protocolFees: bigint;
   poolFees: bigint;
@@ -46,6 +51,13 @@ export function castSwapQuote(obj: any): SwapQuote {
     amountIn: BigInt(obj.amount_in),
     amountOut: BigInt(obj.amount_out),
     outputFees: castSwapFee(obj.output_fees),
+  };
+}
+
+export function castMultiSwapQuote(obj: any): MultiSwapQuote {
+  return {
+    amountIn: BigInt(obj.amount_in),
+    amountOut: BigInt(obj.amount_out),
   };
 }
 

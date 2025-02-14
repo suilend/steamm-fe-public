@@ -94,6 +94,40 @@ export class Bank {
     BankFunctions.rebalance(tx, this.typeArgs(), callArgs, this.packageId);
   }
 
+  public compoundInterestIfAny(tx: Transaction) {
+    const callArgs = {
+      bank: tx.object(this.bankInfo.bankId),
+      lendingMarket: tx.object(this.bankInfo.lendingMarketId),
+      clock: tx.object(SUI_CLOCK_OBJECT_ID),
+    };
+
+    BankFunctions.compoundInterestIfAny(
+      tx,
+      this.typeArgs(),
+      callArgs,
+      this.packageId,
+    );
+  }
+
+  public toBTokens(
+    tx: Transaction,
+    args: { amount: bigint | TransactionArgument },
+  ): TransactionArgument {
+    const callArgs = {
+      bank: tx.object(this.bankInfo.bankId),
+      lendingMarket: tx.object(this.bankInfo.lendingMarketId),
+      clock: tx.object(SUI_CLOCK_OBJECT_ID),
+      amount: args.amount,
+    };
+
+    return BankFunctions.toBtokens(
+      tx,
+      this.typeArgs(),
+      callArgs,
+      this.packageId,
+    );
+  }
+
   public cTokenAmount(
     tx: Transaction,
     args: CTokenAmountArgs,

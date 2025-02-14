@@ -13,7 +13,11 @@ import {
 } from "@mysten/sui/client";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Secp256k1Keypair } from "@mysten/sui/keypairs/secp256k1";
-import { Transaction } from "@mysten/sui/transactions";
+import {
+  Transaction,
+  TransactionArgument,
+  TransactionResult,
+} from "@mysten/sui/transactions";
 
 import {
   PhantomReified,
@@ -186,6 +190,25 @@ export class RpcModule extends SuiClient {
       Number(gasUsed.storageCost) -
       Number(gasUsed.storageRebate);
     return estimateGas;
+  }
+
+  zeroCoin(tx: Transaction, coinType: string): TransactionResult {
+    return tx.moveCall({
+      target: `0x2::coin::zero`,
+      typeArguments: [coinType],
+    });
+  }
+
+  coinValue(
+    tx: Transaction,
+    coin: TransactionArgument,
+    coinType: string,
+  ): TransactionResult {
+    return tx.moveCall({
+      target: `0x2::coin::value`,
+      typeArguments: [coinType],
+      arguments: [coin],
+    });
   }
 
   /**

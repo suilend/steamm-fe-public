@@ -2,7 +2,7 @@ import * as reified from "../../../../_framework/reified";
 import {PhantomReified, Reified, StructClass, ToField, ToTypeArgument, ToTypeStr, TypeArgument, assertFieldsWithTypesArgsMatch, assertReifiedTypeArgsMatch, decodeFromFields, decodeFromFieldsWithTypes, decodeFromJSONField, extractType, fieldToJSON, phantom, toBcs} from "../../../../_framework/reified";
 import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from "../../../../_framework/util";
 import {Vector} from "../../../../_framework/vector";
-import {PKG_V13} from "../index";
+import {PKG_V14} from "../index";
 import {BcsType, bcs} from "@mysten/sui/bcs";
 import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
 import {fromB64} from "@mysten/sui/utils";
@@ -11,7 +11,7 @@ import {fromB64} from "@mysten/sui/utils";
 
 export function isOption(type: string): boolean {
     type = compressSuiType(type);
-    return type.startsWith(`${PKG_V13}::option::Option` + '<');
+    return type.startsWith(`${PKG_V14}::option::Option` + '<');
 }
 
 export interface OptionFields<Element extends TypeArgument> {
@@ -26,7 +26,7 @@ export type OptionReified<Element extends TypeArgument> = Reified<
 export class Option<Element extends TypeArgument> implements StructClass {
     __StructClass = true as const;
 
-    static readonly $typeName = `${PKG_V13}::option::Option`;
+    static readonly $typeName = `${PKG_V14}::option::Option`;
     static readonly $numTypeParams = 1;
     static readonly $isPhantom = [false,] as const;
 
@@ -35,7 +35,7 @@ export class Option<Element extends TypeArgument> implements StructClass {
     ;
 
     readonly $typeName = Option.$typeName;
-    readonly $fullTypeName: `${typeof PKG_V13}::option::Option<${ToTypeStr<Element>}>`;
+    readonly $fullTypeName: `${typeof PKG_V14}::option::Option<${ToTypeStr<Element>}>`;
     readonly $typeArgs: [ToTypeStr<Element>];
     readonly $isPhantom = Option.$isPhantom;
 
@@ -47,7 +47,7 @@ export class Option<Element extends TypeArgument> implements StructClass {
         this.$fullTypeName = composeSuiType(
             Option.$typeName,
             ...typeArgs
-        ) as `${typeof PKG_V13}::option::Option<${ToTypeStr<Element>}>`;
+        ) as `${typeof PKG_V14}::option::Option<${ToTypeStr<Element>}>`;
         this.$typeArgs = typeArgs;
 
         this.vec = fields.vec;
@@ -61,7 +61,7 @@ export class Option<Element extends TypeArgument> implements StructClass {
             fullTypeName: composeSuiType(
                 Option.$typeName,
                 ...[extractType(Element)]
-            ) as `${typeof PKG_V13}::option::Option<${ToTypeStr<ToTypeArgument<Element>>}>`,
+            ) as `${typeof PKG_V14}::option::Option<${ToTypeStr<ToTypeArgument<Element>>}>`,
             typeArgs: [
                 extractType(Element)
             ] as [ToTypeStr<ToTypeArgument<Element>>],

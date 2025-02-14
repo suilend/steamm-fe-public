@@ -5,4 +5,6 @@ export {
   depositLiquidity,
   redeemLiquidity,
   cpmmSwap,
-} from "./_generated/steamm/script-v1/functions";
+  destroyOrTransfer,
+  toMultiSwapRoute,
+} from "./_generated/steamm/pool-script/functions";
