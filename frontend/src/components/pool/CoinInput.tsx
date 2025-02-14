@@ -49,9 +49,7 @@ export default function CoinInput({
         >
           <Wallet className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
           <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
-            {formatToken(getBalance(coinType), {
-              exact: false,
-            })}
+            {formatToken(getBalance(coinType), { exact: false })}
           </p>
         </button>
       </div>

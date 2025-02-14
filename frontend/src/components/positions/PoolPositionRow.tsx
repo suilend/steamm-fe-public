@@ -95,9 +95,13 @@ export default function PoolPositionRow({
           {position.balance.amountUsd === undefined ? (
             <Skeleton className="h-[24px] w-16" />
           ) : (
-            <p className="text-p1 text-foreground">
-              {formatUsd(position.balance.amountUsd)}
-            </p>
+            <Tooltip
+              title={formatUsd(position.balance.amountUsd, { exact: true })}
+            >
+              <p className="text-p1 text-foreground">
+                {formatUsd(position.balance.amountUsd)}
+              </p>
+            </Tooltip>
           )}
 
           <div className="flex flex-row items-center gap-1.5">
@@ -187,9 +191,13 @@ export default function PoolPositionRow({
           {position.pnl.amountUsd === undefined ? (
             <Skeleton className="h-[21px] w-16" />
           ) : (
-            <p className="text-p2 text-success">
-              +{formatUsd(position.pnl.amountUsd)}
-            </p>
+            <Tooltip
+              title={`+${formatUsd(position.pnl.amountUsd, { exact: true })}`}
+            >
+              <p className="text-p2 text-success">
+                +{formatUsd(position.pnl.amountUsd)}
+              </p>
+            </Tooltip>
           )}
         </div>
       </div>

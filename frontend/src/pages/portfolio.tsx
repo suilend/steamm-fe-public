@@ -15,6 +15,7 @@ import Divider from "@/components/Divider";
 import PoolPositionsTable from "@/components/positions/PoolPositionsTable";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
+import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import useFetchObligations from "@/fetchers/useFetchObligations";
@@ -258,9 +259,11 @@ export default function PortfolioPage() {
               {netWorthUsd === undefined ? (
                 <Skeleton className="h-[30px] w-20" />
               ) : (
-                <p className="text-h3 text-foreground">
-                  {formatUsd(netWorthUsd)}
-                </p>
+                <Tooltip title={formatUsd(netWorthUsd, { exact: true })}>
+                  <p className="w-max text-h3 text-foreground">
+                    {formatUsd(netWorthUsd)}
+                  </p>
+                </Tooltip>
               )}
             </div>
           </div>
@@ -277,9 +280,11 @@ export default function PortfolioPage() {
               {totalDepositedUsd === undefined ? (
                 <Skeleton className="h-[30px] w-20" />
               ) : (
-                <p className="text-h3 text-foreground">
-                  {formatUsd(totalDepositedUsd)}
-                </p>
+                <Tooltip title={formatUsd(totalDepositedUsd, { exact: true })}>
+                  <p className="w-max text-h3 text-foreground">
+                    {formatUsd(totalDepositedUsd)}
+                  </p>
+                </Tooltip>
               )}
             </div>
           </div>
@@ -294,7 +299,11 @@ export default function PortfolioPage() {
               {totalPnlUsd === undefined ? (
                 <Skeleton className="h-[30px] w-20" />
               ) : (
-                <p className="text-h3 text-success">{formatUsd(totalPnlUsd)}</p>
+                <Tooltip title={formatUsd(totalPnlUsd, { exact: true })}>
+                  <p className="w-max text-h3 text-success">
+                    {formatUsd(totalPnlUsd)}
+                  </p>
+                </Tooltip>
               )}
             </div>
           </div>

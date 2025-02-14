@@ -66,9 +66,15 @@ export default function PoolParametersCard() {
             </div>
 
             <div className="flex flex-row items-center gap-1.5">
-              <p className="text-p2 text-foreground">
-                {formatToken(pool.balances[0], { exact: false })}
-              </p>
+              <Tooltip
+                title={formatToken(pool.balances[0], {
+                  dp: appData.poolCoinMetadataMap[pool.coinTypes[0]].decimals,
+                })}
+              >
+                <p className="text-p2 text-foreground">
+                  {formatToken(pool.balances[0], { exact: false })}
+                </p>
+              </Tooltip>
 
               <p className="text-p3 text-tertiary-foreground">
                 (
@@ -125,9 +131,15 @@ export default function PoolParametersCard() {
             </div>
 
             <div className="flex flex-row items-center gap-1.5">
-              <p className="text-p2 text-foreground">
-                {formatToken(pool.balances[1], { exact: false })}
-              </p>
+              <Tooltip
+                title={formatToken(pool.balances[1], {
+                  dp: appData.poolCoinMetadataMap[pool.coinTypes[1]].decimals,
+                })}
+              >
+                <p className="text-p2 text-foreground">
+                  {formatToken(pool.balances[1], { exact: false })}
+                </p>
+              </Tooltip>
 
               <p className="text-p3 text-tertiary-foreground">
                 (
