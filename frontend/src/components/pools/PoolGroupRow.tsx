@@ -2,14 +2,13 @@ import BigNumber from "bignumber.js";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useLocalStorage } from "usehooks-ts";
 
-import { formatPercent, formatUsd, getToken } from "@suilend/frontend-sui";
+import { formatPercent, formatUsd } from "@suilend/frontend-sui";
 
-import PoolRow from "@/components/PoolRow";
-import { columnStyleMap } from "@/components/PoolsTable";
+import PoolRow from "@/components/pools/PoolRow";
+import { columnStyleMap } from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
-import TokenLogo from "@/components/TokenLogo";
+import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -34,15 +33,10 @@ export default function PoolGroupRow({
   );
   const Chevron = isExpanded ? ChevronUp : ChevronDown;
 
-  // CoinMetadata
-  const hasCoinMetadata = true;
-
   // Pair
-  const formattedPair = hasCoinMetadata
-    ? poolGroup.coinTypes
-        .map((coinType) => appData.poolCoinMetadataMap[coinType].symbol)
-        .join("/")
-    : undefined;
+  const formattedPair = poolGroup.coinTypes
+    .map((coinType) => appData.poolCoinMetadataMap[coinType].symbol)
+    .join("/");
 
   // Calculations
   const totalTvlUsd = poolGroup.pools.reduce(
@@ -102,36 +96,10 @@ export default function PoolGroupRow({
             </div>
           </div>
 
-          <div
-            className={cn(
-              "flex shrink-0 flex-row",
-              !hasCoinMetadata && "animate-pulse",
-            )}
-          >
-            {poolGroup.coinTypes.map((coinType, index) => (
-              <TokenLogo
-                className={cn(
-                  index !== 0 && "-ml-2 outline outline-1 outline-secondary",
-                  !hasCoinMetadata ? "animate-none" : "bg-secondary",
-                )}
-                key={coinType}
-                token={
-                  hasCoinMetadata
-                    ? getToken(coinType, appData.poolCoinMetadataMap[coinType])
-                    : undefined
-                }
-                size={24}
-              />
-            ))}
-          </div>
-
-          {!formattedPair ? (
-            <Skeleton className="h-[24px] w-20 animate-none" />
-          ) : (
-            <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
-              {formattedPair}
-            </p>
-          )}
+          <TokenLogos coinTypes={poolGroup.coinTypes} size={24} />
+          <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
+            {formattedPair}
+          </p>
         </div>
 
         {/* Type */}

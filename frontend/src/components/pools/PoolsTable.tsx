@@ -1,15 +1,17 @@
-import { CSSProperties, PropsWithChildren, useMemo, useState } from "react";
+import { CSSProperties, useMemo, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
-import { ArrowDown, ArrowUp } from "lucide-react";
 
-import PoolGroupRow from "@/components/PoolGroupRow";
+import PoolGroupRow from "@/components/pools/PoolGroupRow";
+import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type Column = "pair" | "type" | "tvlUsd" | "volumeUsd" | "aprPercent";
+type SortableColumn = "tvlUsd" | "volumeUsd" | "aprPercent";
+
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
     flex: 2,
@@ -41,58 +43,6 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
 };
 
-type SortableColumn = "tvlUsd" | "volumeUsd" | "aprPercent";
-enum SortDirection {
-  ASC = "asc",
-  DESC = "desc",
-}
-type SortState = { column: SortableColumn; direction: SortDirection };
-
-interface HeaderColumnProps extends PropsWithChildren {
-  id: Column;
-  sortState?: SortState;
-  toggleSortByColumn?: (column: SortableColumn) => void;
-}
-
-function HeaderColumn({
-  id,
-  sortState,
-  toggleSortByColumn,
-  children,
-}: HeaderColumnProps) {
-  const isSortable = toggleSortByColumn !== undefined;
-
-  return (
-    <div
-      className={cn(
-        "flex h-full flex-row items-center",
-        isSortable && "group cursor-pointer gap-1.5",
-      )}
-      style={columnStyleMap[id]}
-      onClick={
-        isSortable ? () => toggleSortByColumn(id as SortableColumn) : undefined
-      }
-    >
-      {sortState?.column === id &&
-        (sortState.direction === SortDirection.DESC ? (
-          <ArrowDown className="h-4 w-4 text-button-2-foreground" />
-        ) : (
-          <ArrowUp className="h-4 w-4 text-button-2-foreground" />
-        ))}
-      <p
-        className={cn(
-          "!text-p2 text-secondary-foreground transition-colors",
-          sortState?.column === id
-            ? "text-foreground"
-            : "group-hover:text-foreground",
-        )}
-      >
-        {children}
-      </p>
-    </div>
-  );
-}
-
 interface PoolsTableProps {
   className?: ClassValue;
   tableId: string;
@@ -105,6 +55,8 @@ export default function PoolsTable({
   poolGroups,
 }: PoolsTableProps) {
   // Sort
+  type SortState = { column: SortableColumn; direction: SortDirection };
+
   const [sortState, setSortState] = useState<SortState | undefined>(undefined);
 
   const toggleSortByColumn = (column: SortableColumn) => {
@@ -183,26 +135,39 @@ export default function PoolsTable({
     >
       {/* Header */}
       <div className="sticky left-0 top-0 z-[2] flex h-[calc(40px+1px)] w-full min-w-max shrink-0 flex-row border-b bg-secondary">
-        <HeaderColumn id="pair">Pair</HeaderColumn>
-        <HeaderColumn id="type">Type</HeaderColumn>
-        <HeaderColumn
+        <HeaderColumn<Column, SortableColumn>
+          id="pair"
+          style={columnStyleMap.pair}
+        >
+          Pair
+        </HeaderColumn>
+        <HeaderColumn<Column, SortableColumn>
+          id="type"
+          style={columnStyleMap.type}
+        >
+          Type
+        </HeaderColumn>
+        <HeaderColumn<Column, SortableColumn>
           id="tvlUsd"
           sortState={sortState}
           toggleSortByColumn={toggleSortByColumn}
+          style={columnStyleMap.tvlUsd}
         >
           TVL
         </HeaderColumn>
-        <HeaderColumn
+        <HeaderColumn<Column, SortableColumn>
           id="volumeUsd"
           sortState={sortState}
           toggleSortByColumn={toggleSortByColumn}
+          style={columnStyleMap.volumeUsd}
         >
           Volume (24H)
         </HeaderColumn>
-        <HeaderColumn
+        <HeaderColumn<Column, SortableColumn>
           id="aprPercent"
           sortState={sortState}
           toggleSortByColumn={toggleSortByColumn}
+          style={columnStyleMap.aprPercent}
         >
           APR (24H)
         </HeaderColumn>

@@ -8,7 +8,7 @@ import { formatUsd } from "@suilend/frontend-sui";
 
 import Divider from "@/components/Divider";
 import HistoricalDataChart from "@/components/HistoricalDataChart";
-import PoolsTable from "@/components/PoolsTable";
+import PoolsTable from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { ChartType, formatCoinTypeCategory } from "@/lib/chart";
@@ -16,6 +16,16 @@ import { ParsedPool, PoolGroup } from "@/lib/types";
 
 export default function PoolsPage() {
   const { appData } = useLoadedAppContext();
+
+  // TVL
+  const totalTvlUsd = useMemo(
+    () =>
+      appData.pools.reduce(
+        (acc, pool) => acc.plus(pool.tvlUsd),
+        new BigNumber(0),
+      ),
+    [appData.pools],
+  );
 
   // Group pools by pair
   const poolGroups = useMemo(() => {
@@ -72,10 +82,10 @@ export default function PoolsPage() {
               <div className="w-full p-5">
                 <HistoricalDataChart
                   title="TVL"
-                  value={formatUsd(appData.tvlUsd)}
+                  value={formatUsd(totalTvlUsd)}
                   chartType={ChartType.LINE}
                   periodDays={30}
-                  data={appData.tvlData}
+                  data={appData.historicalTvlUsd}
                   formatCategory={(category) =>
                     formatCoinTypeCategory(
                       category,
@@ -98,7 +108,7 @@ export default function PoolsPage() {
                   chartType={ChartType.BAR}
                   periodDays={30}
                   periodChangePercent={new BigNumber(-5 + Math.random() * 10)}
-                  data={appData.volumeData}
+                  data={appData.historicalVolumeUsd}
                   formatCategory={(category) =>
                     formatCoinTypeCategory(
                       category,

@@ -4,45 +4,36 @@ import Link from "next/link";
 import BigNumber from "bignumber.js";
 import { ChevronRight } from "lucide-react";
 
-import { formatPercent, formatUsd, getToken } from "@suilend/frontend-sui";
+import { formatPercent, formatUsd } from "@suilend/frontend-sui";
 
 import PercentChange from "@/components/PercentChange";
 import PoolActionsCard from "@/components/pool/PoolActionsCard";
 import PoolChartCard from "@/components/pool/PoolChartCard";
 import PoolParametersCard from "@/components/pool/PoolParametersCard";
 import Tag from "@/components/Tag";
-import TokenLogo from "@/components/TokenLogo";
+import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { PoolContextProvider, usePoolContext } from "@/contexts/PoolContext";
 import { POOLS_URL } from "@/lib/navigation";
 import { poolTypeNameMap } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 function PoolPage() {
   const { appData } = useLoadedAppContext();
   const { pool } = usePoolContext();
 
-  // CoinMetadata
-  const hasCoinMetadata = true;
-
   // Pair
-  const formattedPair = hasCoinMetadata
-    ? pool.coinTypes
-        .map((coinType) => appData.poolCoinMetadataMap[coinType].symbol)
-        .join("/")
-    : undefined;
+  const formattedPair = pool.coinTypes
+    .map((coinType) => appData.poolCoinMetadataMap[coinType].symbol)
+    .join("/");
 
   return (
     <>
-      {formattedPair && (
-        <Head>
-          <title>STEAMM | {formattedPair}</title>
-        </Head>
-      )}
+      <Head>
+        <title>STEAMM | {formattedPair}</title>
+      </Head>
 
-      <div className="flex w-full flex-col gap-8">
+      <div className="flex w-full flex-col gap-4">
         <div className="flex w-full flex-row items-center justify-between">
           {/* Breadcrumb */}
           <div className="flex flex-row items-center gap-2">
@@ -53,11 +44,7 @@ function PoolPage() {
             </Link>
 
             <ChevronRight className="h-4 w-4 text-tertiary-foreground" />
-            {!formattedPair ? (
-              <Skeleton className="h-[21px] w-20" />
-            ) : (
-              <p className="text-p2 text-foreground">{formattedPair}</p>
-            )}
+            <p className="text-p2 text-foreground">{formattedPair}</p>
           </div>
         </div>
 
@@ -66,39 +53,8 @@ function PoolPage() {
           <div className="flex w-full flex-col max-lg:gap-6 lg:flex-row lg:items-center lg:justify-between">
             {/* Title */}
             <div className="flex flex-row items-center gap-3">
-              <div
-                className={cn(
-                  "flex flex-row",
-                  !hasCoinMetadata && "animate-pulse",
-                )}
-              >
-                {pool.coinTypes.map((coinType, index) => (
-                  <TokenLogo
-                    key={coinType}
-                    className={cn(
-                      index !== 0 &&
-                        "-ml-2 outline outline-1 outline-background",
-                      !hasCoinMetadata ? "animate-none" : "bg-background",
-                    )}
-                    token={
-                      hasCoinMetadata
-                        ? getToken(
-                            coinType,
-                            appData.poolCoinMetadataMap[coinType],
-                          )
-                        : undefined
-                    }
-                    size={32}
-                  />
-                ))}
-              </div>
-
-              {!formattedPair ? (
-                <Skeleton className="h-[36px] w-32" />
-              ) : (
-                <h1 className="text-h2 text-foreground">{formattedPair}</h1>
-              )}
-
+              <TokenLogos coinTypes={pool.coinTypes} size={32} />
+              <h1 className="text-h2 text-foreground">{formattedPair}</h1>
               {pool.type && <Tag>{poolTypeNameMap[pool.type]}</Tag>}
             </div>
 

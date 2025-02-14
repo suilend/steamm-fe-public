@@ -22,7 +22,7 @@ import {
 } from "@suilend/frontend-sui-next";
 import { DepositQuote } from "@suilend/steamm-sdk";
 
-import CoinInput, { getCoinInputId } from "@/components/CoinInput";
+import CoinInput, { getCoinInputId } from "@/components/pool/CoinInput";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { showSuccessTxnToast } from "@/lib/toasts";

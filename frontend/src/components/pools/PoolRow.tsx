@@ -1,12 +1,11 @@
 import Link from "next/link";
 
-import { formatPercent, formatUsd, getToken } from "@suilend/frontend-sui";
+import { formatPercent, formatUsd } from "@suilend/frontend-sui";
 
-import { columnStyleMap } from "@/components/PoolsTable";
+import { columnStyleMap } from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
-import TokenLogo from "@/components/TokenLogo";
+import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { POOLS_URL } from "@/lib/navigation";
 import { ParsedPool, poolTypeNameMap } from "@/lib/types";
@@ -25,15 +24,10 @@ export default function PoolRow({
 }: PoolRowProps) {
   const { appData } = useLoadedAppContext();
 
-  // CoinMetadata
-  const hasCoinMetadata = true;
-
   // Pair
-  const formattedPair = hasCoinMetadata
-    ? pool.coinTypes
-        .map((coinType) => appData.poolCoinMetadataMap[coinType].symbol)
-        .join("/")
-    : undefined;
+  const formattedPair = pool.coinTypes
+    .map((coinType) => appData.poolCoinMetadataMap[coinType].symbol)
+    .join("/");
 
   return (
     <Link
@@ -53,38 +47,13 @@ export default function PoolRow({
           <div className="absolute left-4 top-0 h-1/2 w-5 rounded-bl-md border-b border-l" />
         </div>
 
-        <div
-          className={cn(
-            "flex shrink-0 flex-row",
-            !hasCoinMetadata && "animate-pulse",
-          )}
-        >
-          {pool.coinTypes.map((coinType, index) => (
-            <TokenLogo
-              key={coinType}
-              className={cn(
-                index !== 0 && "-ml-2 outline outline-1 outline-secondary",
-                !hasCoinMetadata ? "animate-none" : "bg-secondary",
-              )}
-              token={
-                hasCoinMetadata
-                  ? getToken(coinType, appData.poolCoinMetadataMap[coinType])
-                  : undefined
-              }
-              size={24}
-            />
-          ))}
-        </div>
-
-        {!formattedPair ? (
-          <Skeleton className="h-[24px] w-20 animate-none" />
-        ) : (
-          <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
-            {formattedPair}
-          </p>
-        )}
-
-        <Tag>{formatPercent(pool.feeTierPercent)}</Tag>
+        <TokenLogos coinTypes={pool.coinTypes} size={24} />
+        <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
+          {formattedPair}
+        </p>
+        <Tag labelClassName="transition-colors group-hover:text-foreground">
+          {formatPercent(pool.feeTierPercent)}
+        </Tag>
       </div>
 
       {/* Type */}
@@ -126,26 +95,7 @@ export default function PoolRow({
         className="flex h-full flex-row items-center gap-2"
         style={columnStyleMap.aprPercent}
       >
-        <div
-          className={cn("flex flex-row", !hasCoinMetadata && "animate-pulse")}
-        >
-          {pool.apr.coinTypes.map((coinType, index) => (
-            <TokenLogo
-              key={coinType}
-              className={cn(
-                index !== 0 && "-ml-1 outline outline-1 outline-secondary",
-                !hasCoinMetadata ? "animate-none" : "bg-secondary",
-              )}
-              token={
-                hasCoinMetadata
-                  ? getToken(coinType, appData.poolCoinMetadataMap[coinType])
-                  : undefined
-              }
-              size={16}
-            />
-          ))}
-        </div>
-
+        <TokenLogos coinTypes={pool.apr.coinTypes} size={16} />
         <p className="text-p1 text-foreground">
           {formatPercent(pool.apr.percent)}
         </p>

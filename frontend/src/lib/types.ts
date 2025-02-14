@@ -40,6 +40,20 @@ export type PoolGroup = {
   pools: ParsedPool[];
 };
 
+export type PoolPosition = {
+  pool: ParsedPool;
+  balance: {
+    amount: BigNumber;
+    amountUsd?: BigNumber;
+  };
+  isStaked: boolean;
+  claimableRewards: Record<string, BigNumber>;
+  pnl: {
+    percent: BigNumber;
+    amountUsd: BigNumber;
+  };
+};
+
 export type SubmitButtonState = {
   isLoading?: boolean;
   isDisabled?: boolean;

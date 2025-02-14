@@ -192,11 +192,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     ];
 
     // TVL (dummy data)
-    const tvlUsd = new BigNumber(1275152);
-
-    const tvlData: ChartData[] = [];
+    const historicalTvlUsd: ChartData[] = [];
     for (let i = 0; i < 30; i++) {
-      tvlData.push({
+      historicalTvlUsd.push({
         timestampS: 1739253600 + i * 24 * 60 * 60,
         ...[
           NORMALIZED_SUI_COINTYPE,
@@ -217,10 +215,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
     // Volume (dummy data)
     const volumeUsd = new BigNumber(669152);
-
-    const volumeData: ChartData[] = [];
+    const historicalVolumeUsd: ChartData[] = [];
     for (let i = 0; i < 30; i++) {
-      volumeData.push({
+      historicalVolumeUsd.push({
         timestampS: 1739253600 + i * 24 * 60 * 60,
         ...[
           NORMALIZED_SUI_COINTYPE,
@@ -245,10 +242,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       poolCoinMetadataMap,
       featuredCoinTypePairs,
 
-      tvlUsd,
-      tvlData,
+      historicalTvlUsd,
       volumeUsd,
-      volumeData,
+      historicalVolumeUsd,
     };
   };
 
