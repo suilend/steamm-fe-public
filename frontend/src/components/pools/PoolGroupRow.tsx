@@ -9,6 +9,7 @@ import { columnStyleMap } from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -44,10 +45,14 @@ export default function PoolGroupRow({
     new BigNumber(0),
   );
 
-  const totalVolumeUsd = poolGroup.pools.reduce(
-    (acc, pool) => acc.plus(pool.volumeUsd),
-    new BigNumber(0),
-  );
+  const totalVolumeUsd_24h = poolGroup.pools.some(
+    (pool) => pool.volumeUsd_24h === undefined,
+  )
+    ? undefined
+    : poolGroup.pools.reduce(
+        (acc, pool) => acc.plus(pool.volumeUsd_24h as BigNumber),
+        new BigNumber(0),
+      );
 
   const maxAprPercent = BigNumber.max(
     ...poolGroup.pools.map((pool) => pool.apr.percent),
@@ -121,13 +126,17 @@ export default function PoolGroupRow({
         {/* Volume */}
         <div
           className="flex h-full flex-row items-center"
-          style={columnStyleMap.volumeUsd}
+          style={columnStyleMap.volumeUsd_24h}
         >
-          <Tooltip title={formatUsd(totalVolumeUsd, { exact: true })}>
-            <p className="text-p1 text-foreground">
-              {formatUsd(totalVolumeUsd)}
-            </p>
-          </Tooltip>
+          {totalVolumeUsd_24h === undefined ? (
+            <Skeleton className="h-[24px] w-16" />
+          ) : (
+            <Tooltip title={formatUsd(totalVolumeUsd_24h, { exact: true })}>
+              <p className="text-p1 text-foreground">
+                {formatUsd(totalVolumeUsd_24h)}
+              </p>
+            </Tooltip>
+          )}
         </div>
 
         {/* APR */}

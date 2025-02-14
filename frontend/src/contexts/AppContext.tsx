@@ -34,9 +34,9 @@ export interface AppData {
   poolCoinMetadataMap: Record<string, CoinMetadata>;
   featuredCoinTypePairs: [string, string][];
 
-  historicalTvlUsd: ChartData[];
-  volumeUsd: BigNumber;
-  historicalVolumeUsd: ChartData[];
+  historicalTvlUsd_30d: ChartData[];
+  volumeUsd_30d: BigNumber;
+  historicalVolumeUsd_30d: ChartData[];
 }
 
 interface AppContext {

@@ -156,8 +156,10 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       }
 
       const tvlUsd = balanceA.times(priceA).plus(balanceB.times(priceB));
-      const volumeUsd = new BigNumber(Math.random() * 1000); // 24h, TEMP
-      const feesUsd = new BigNumber(Math.random() * 100); // 24h, TEMP
+      const volumeUsd_24h = undefined;
+      const volumeUsd_30d = undefined;
+      const feesUsd_24h = undefined;
+      const feesUsd_30d = undefined;
       const apr = {
         coinTypes: [coinTypeA], // TEMP
         percent: new BigNumber(2.3), // 24h, TEMP
@@ -186,8 +188,10 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         prices: [priceA, priceB],
 
         tvlUsd,
-        volumeUsd,
-        feesUsd,
+        volumeUsd_24h,
+        volumeUsd_30d,
+        feesUsd_24h,
+        feesUsd_30d,
         apr,
 
         feeTierPercent,
@@ -200,9 +204,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     ];
 
     // TVL (dummy data)
-    const historicalTvlUsd: ChartData[] = [];
+    const historicalTvlUsd_30d: ChartData[] = [];
     for (let i = 0; i < 30; i++) {
-      historicalTvlUsd.push({
+      historicalTvlUsd_30d.push({
         timestampS: 1739253600 + i * 24 * 60 * 60,
         ...[
           NORMALIZED_SUI_COINTYPE,
@@ -222,10 +226,11 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     }
 
     // Volume (dummy data)
-    const volumeUsd = new BigNumber(669152);
-    const historicalVolumeUsd: ChartData[] = [];
+    const volumeUsd_30d = new BigNumber(669152);
+
+    const historicalVolumeUsd_30d: ChartData[] = [];
     for (let i = 0; i < 30; i++) {
-      historicalVolumeUsd.push({
+      historicalVolumeUsd_30d.push({
         timestampS: 1739253600 + i * 24 * 60 * 60,
         ...[
           NORMALIZED_SUI_COINTYPE,
@@ -252,9 +257,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       poolCoinMetadataMap,
       featuredCoinTypePairs,
 
-      historicalTvlUsd,
-      volumeUsd,
-      historicalVolumeUsd,
+      historicalTvlUsd_30d,
+      volumeUsd_30d,
+      historicalVolumeUsd_30d,
     };
   };
 

@@ -23,8 +23,10 @@ export type ParsedPool = {
   prices: [BigNumber, BigNumber];
 
   tvlUsd: BigNumber;
-  volumeUsd: BigNumber;
-  feesUsd: BigNumber;
+  volumeUsd_24h?: BigNumber;
+  volumeUsd_30d?: BigNumber;
+  feesUsd_24h?: BigNumber;
+  feesUsd_30d?: BigNumber;
   apr: {
     coinTypes: string[];
     percent: BigNumber;

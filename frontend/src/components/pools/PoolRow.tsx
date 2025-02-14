@@ -6,6 +6,7 @@ import { columnStyleMap } from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { POOLS_URL } from "@/lib/navigation";
 import { ParsedPool, poolTypeNameMap } from "@/lib/types";
@@ -83,11 +84,17 @@ export default function PoolRow({
       {/* Volume */}
       <div
         className="flex h-full flex-row items-center"
-        style={columnStyleMap.volumeUsd}
+        style={columnStyleMap.volumeUsd_24h}
       >
-        <Tooltip title={formatUsd(pool.volumeUsd, { exact: true })}>
-          <p className="text-p1 text-foreground">{formatUsd(pool.volumeUsd)}</p>
-        </Tooltip>
+        {pool.volumeUsd_24h === undefined ? (
+          <Skeleton className="h-[24px] w-16" />
+        ) : (
+          <Tooltip title={formatUsd(pool.volumeUsd_24h, { exact: true })}>
+            <p className="text-p1 text-foreground">
+              {formatUsd(pool.volumeUsd_24h)}
+            </p>
+          </Tooltip>
+        )}
       </div>
 
       {/* APR */}

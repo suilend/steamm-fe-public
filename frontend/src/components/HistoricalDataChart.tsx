@@ -79,6 +79,7 @@ function TooltipContent({
                       backgroundColor: `hsl(var(--a${sortedCategories.length - categoryIndex}))`,
                     }}
                   />
+
                   {formattedCategory === undefined ? (
                     <Skeleton className="h-[18px] w-10" />
                   ) : (
@@ -103,11 +104,11 @@ function TooltipContent({
 interface HistoricalDataChartProps {
   className?: ClassValue;
   title: string;
-  value: string;
+  value?: string;
   chartType: ChartType;
   periodDays: 1 | 7 | 30;
-  periodChangePercent?: BigNumber;
-  data: ChartData[];
+  periodChangePercent?: BigNumber | null;
+  data?: ChartData[];
   formatCategory: (category: string) => string | undefined;
   formatValue: (value: number) => string;
 }
@@ -126,7 +127,9 @@ export default function HistoricalDataChart({
   const gradientId = useRef<string>(uuidv4()).current;
 
   // Data
-  const processedData: ChartData[] = useMemo(() => {
+  const processedData: ChartData[] | undefined = useMemo(() => {
+    if (data === undefined) return undefined;
+
     const categories =
       data.length > 0
         ? Object.keys(data[0]).filter((key) => key !== "timestampS")
@@ -174,25 +177,41 @@ export default function HistoricalDataChart({
     }
   }, [data]);
 
-  const timestampsS = processedData.map((d) => d.timestampS).flat();
+  const timestampsS =
+    processedData === undefined
+      ? []
+      : processedData.map((d) => d.timestampS).flat();
+
   const categories =
-    processedData.length > 0
-      ? Object.keys(processedData[0]).filter((key) => key !== "timestampS")
-      : [];
+    processedData === undefined
+      ? []
+      : processedData.length > 0
+        ? Object.keys(processedData[0]).filter((key) => key !== "timestampS")
+        : [];
 
-  const processedDataWithTotals: (ChartData & { [TOTAL]: number })[] =
-    processedData.map((d) => ({
-      ...d,
-      [TOTAL]: categories.reduce((acc, category) => acc + d[category], 0),
-    }));
+  const processedDataWithTotals:
+    | (ChartData & { [TOTAL]: number })[]
+    | undefined =
+    processedData === undefined
+      ? undefined
+      : processedData.map((d) => ({
+          ...d,
+          [TOTAL]: categories.reduce((acc, category) => acc + d[category], 0),
+        }));
 
-  const categoryTotalsMap: Record<string, number> = categories.reduce(
-    (acc, category) => ({
-      ...acc,
-      [category]: processedData.reduce((acc2, d) => acc2 + d[category], 0),
-    }),
-    {},
-  );
+  const categoryTotalsMap: Record<string, number> =
+    processedData === undefined
+      ? {}
+      : categories.reduce(
+          (acc, category) => ({
+            ...acc,
+            [category]: processedData.reduce(
+              (acc2, d) => acc2 + d[category],
+              0,
+            ),
+          }),
+          {},
+        );
   const sortedCategories = categories.slice().sort((a, b) => {
     if (a === OTHER_CATEGORY) return 1; // Always last
     return categoryTotalsMap[b] - categoryTotalsMap[a];
@@ -203,7 +222,10 @@ export default function HistoricalDataChart({
   const maxX = Math.max(...timestampsS);
 
   const minY = 0;
-  const maxY = Math.max(...processedDataWithTotals.map((d) => d[TOTAL]));
+  const maxY =
+    processedDataWithTotals === undefined
+      ? 0
+      : Math.max(...processedDataWithTotals.map((d) => d[TOTAL]));
 
   // Ticks
   const ticksX = Array.from({ length: 5 }).map((_, index, array) =>
@@ -218,11 +240,19 @@ export default function HistoricalDataChart({
         <div className="flex flex-col gap-1">
           <p className="text-p2 text-secondary-foreground">{title}</p>
 
-          <div className="flex flex-row items-baseline gap-2">
-            <p className="text-h2 text-foreground">{value}</p>
-            {periodChangePercent !== undefined && (
-              <PercentChange value={periodChangePercent} />
+          <div className="flex flex-row items-center gap-2">
+            {value === undefined ? (
+              <Skeleton className="h-[36px] w-20" />
+            ) : (
+              <p className="text-h2 text-foreground">{value}</p>
             )}
+
+            {periodChangePercent !== null &&
+              (periodChangePercent === undefined ? (
+                <Skeleton className="h-[18px] w-10" />
+              ) : (
+                <PercentChange value={periodChangePercent} />
+              ))}
           </div>
         </div>
 
@@ -243,6 +273,7 @@ export default function HistoricalDataChart({
                       backgroundColor: `hsl(var(--a${sortedCategories.length - categoryIndex}))`,
                     }}
                   />
+
                   {formattedCategory === undefined ? (
                     <Skeleton className="h-[18px] w-10" />
                   ) : (
@@ -261,185 +292,201 @@ export default function HistoricalDataChart({
       <div className="flex w-full flex-col gap-3">
         {/* Chart */}
         <div className="h-[150px] transform-gpu md:h-[180px]">
-          {chartType === ChartType.BAR ? (
-            <div className="relative -mx-[2px] h-full">
-              <Recharts.ResponsiveContainer className="absolute inset-0 z-[2]">
-                <Recharts.BarChart
-                  data={processedData}
-                  margin={{
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                    left: 0,
-                  }}
-                  barCategoryGap={0}
-                >
-                  <Recharts.Bar
-                    dataKey={sortedCategories[0]}
-                    isAnimationActive={false}
-                    fill="transparent"
-                    activeBar={<ActiveBar />}
-                  />
-                  <Recharts.Tooltip
-                    isAnimationActive={false}
-                    cursor={{
-                      fill: "transparent",
-                    }}
-                    trigger="hover"
-                    wrapperStyle={{
-                      transform: undefined,
-                      position: undefined,
-                      top: undefined,
-                      left: undefined,
-                    }}
-                    content={({ active, payload, viewBox, coordinate }) => {
-                      if (
-                        !active ||
-                        !payload?.[0]?.payload ||
-                        !viewBox ||
-                        coordinate?.x === undefined
-                      )
-                        return null;
-
-                      return (
-                        <TooltipContent
-                          periodDays={periodDays}
-                          formatCategory={formatCategory}
-                          formatValue={formatValue}
-                          sortedCategories={sortedCategories}
-                          d={payload[0].payload as ChartData}
-                          viewBox={viewBox as ViewBox}
-                          x={coordinate.x}
-                        />
-                      );
-                    }}
-                  />
-                </Recharts.BarChart>
-              </Recharts.ResponsiveContainer>
-
-              <div className="relative z-[1] flex h-full transform-gpu flex-row items-stretch">
-                {processedData.map((d) => (
-                  <div
-                    key={d.timestampS}
-                    className="group flex flex-1 flex-row justify-center px-[2px]"
-                  >
-                    <div className="flex h-full w-full max-w-[8px] flex-col-reverse items-center gap-[2px]">
-                      {sortedCategories.map((category, categoryIndex) => (
-                        <div
-                          key={category}
-                          className="w-full shrink-0 rounded-[2px]"
-                          style={{
-                            backgroundColor:
-                              sortedCategories.length > 1
-                                ? `hsl(var(--a${sortedCategories.length - categoryIndex}))`
-                                : "hsl(var(--jordy-blue))",
-                            height: `calc((100% - ${(sortedCategories.length - 1) * 2}px) * ${d[category] / maxY})`,
-                          }}
-                        />
-                      ))}
-                      <div className="w-px flex-1 bg-border opacity-0 group-hover:opacity-100" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {processedData === undefined ? (
+            <Skeleton className="h-full w-full" />
           ) : (
-            <Recharts.ResponsiveContainer width="100%" height="100%">
-              <Recharts.ComposedChart
-                data={processedData}
-                margin={{
-                  top: 0,
-                  right: 0,
-                  bottom: 0,
-                  left: 0,
-                }}
-              >
-                <defs>
-                  <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="0%"
-                      stopColor="hsl(var(--jordy-blue))"
-                      stopOpacity={0.25}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor="hsl(var(--jordy-blue))"
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                </defs>
-                {sortedCategories.map((category, categoryIndex) => (
-                  <Recharts.Area
-                    key={category}
-                    type="monotone"
-                    dataKey={category}
-                    stackId="1"
-                    isAnimationActive={false}
-                    fill={
-                      sortedCategories.length > 1
-                        ? `hsl(var(--a${sortedCategories.length - categoryIndex}))`
-                        : `url(#${gradientId})`
-                    }
-                    fillOpacity={1}
-                    stroke={
-                      sortedCategories.length > 1
-                        ? "hsl(var(--background))"
-                        : "hsl(var(--jordy-blue))"
-                    }
-                    strokeWidth={sortedCategories.length > 1 ? 3 : 2}
-                  />
-                ))}
-                <Recharts.Tooltip
-                  isAnimationActive={false}
-                  cursor={{
-                    stroke: "hsla(var(--foreground) / 25%)",
-                    strokeWidth: 1,
-                  }}
-                  trigger="hover"
-                  wrapperStyle={{
-                    transform: undefined,
-                    position: undefined,
-                    top: undefined,
-                    left: undefined,
-                  }}
-                  content={({ active, payload, viewBox, coordinate }) => {
-                    if (
-                      !active ||
-                      !payload?.[0]?.payload ||
-                      !viewBox ||
-                      coordinate?.x === undefined
-                    )
-                      return null;
-
-                    return (
-                      <TooltipContent
-                        periodDays={periodDays}
-                        formatCategory={formatCategory}
-                        formatValue={formatValue}
-                        sortedCategories={sortedCategories}
-                        d={payload[0].payload as ChartData}
-                        viewBox={viewBox as ViewBox}
-                        x={coordinate.x}
+            <>
+              {chartType === ChartType.BAR ? (
+                <div className="relative -mx-[2px] h-full">
+                  <Recharts.ResponsiveContainer className="absolute inset-0 z-[2]">
+                    <Recharts.BarChart
+                      data={processedData}
+                      margin={{
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0,
+                      }}
+                      barCategoryGap={0}
+                    >
+                      <Recharts.Bar
+                        dataKey={sortedCategories[0]}
+                        isAnimationActive={false}
+                        fill="transparent"
+                        activeBar={<ActiveBar />}
                       />
-                    );
-                  }}
-                />
-              </Recharts.ComposedChart>
-            </Recharts.ResponsiveContainer>
+                      <Recharts.Tooltip
+                        isAnimationActive={false}
+                        cursor={{
+                          fill: "transparent",
+                        }}
+                        trigger="hover"
+                        wrapperStyle={{
+                          transform: undefined,
+                          position: undefined,
+                          top: undefined,
+                          left: undefined,
+                        }}
+                        content={({ active, payload, viewBox, coordinate }) => {
+                          if (
+                            !active ||
+                            !payload?.[0]?.payload ||
+                            !viewBox ||
+                            coordinate?.x === undefined
+                          )
+                            return null;
+
+                          return (
+                            <TooltipContent
+                              periodDays={periodDays}
+                              formatCategory={formatCategory}
+                              formatValue={formatValue}
+                              sortedCategories={sortedCategories}
+                              d={payload[0].payload as ChartData}
+                              viewBox={viewBox as ViewBox}
+                              x={coordinate.x}
+                            />
+                          );
+                        }}
+                      />
+                    </Recharts.BarChart>
+                  </Recharts.ResponsiveContainer>
+
+                  <div className="relative z-[1] flex h-full transform-gpu flex-row items-stretch">
+                    {processedData.map((d) => (
+                      <div
+                        key={d.timestampS}
+                        className="group flex flex-1 flex-row justify-center px-[2px]"
+                      >
+                        <div className="flex h-full w-full max-w-[8px] flex-col-reverse items-center gap-[2px]">
+                          {sortedCategories.map((category, categoryIndex) => (
+                            <div
+                              key={category}
+                              className="w-full shrink-0 rounded-[2px]"
+                              style={{
+                                backgroundColor:
+                                  sortedCategories.length > 1
+                                    ? `hsl(var(--a${sortedCategories.length - categoryIndex}))`
+                                    : "hsl(var(--jordy-blue))",
+                                height: `calc((100% - ${(sortedCategories.length - 1) * 2}px) * ${d[category] / maxY})`,
+                              }}
+                            />
+                          ))}
+                          <div className="w-px flex-1 bg-border opacity-0 group-hover:opacity-100" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <Recharts.ResponsiveContainer width="100%" height="100%">
+                  <Recharts.ComposedChart
+                    data={processedData}
+                    margin={{
+                      top: 0,
+                      right: 0,
+                      bottom: 0,
+                      left: 0,
+                    }}
+                  >
+                    <defs>
+                      <linearGradient
+                        id={gradientId}
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="hsl(var(--jordy-blue))"
+                          stopOpacity={0.25}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="hsl(var(--jordy-blue))"
+                          stopOpacity={0}
+                        />
+                      </linearGradient>
+                    </defs>
+                    {sortedCategories.map((category, categoryIndex) => (
+                      <Recharts.Area
+                        key={category}
+                        type="monotone"
+                        dataKey={category}
+                        stackId="1"
+                        isAnimationActive={false}
+                        fill={
+                          sortedCategories.length > 1
+                            ? `hsl(var(--a${sortedCategories.length - categoryIndex}))`
+                            : `url(#${gradientId})`
+                        }
+                        fillOpacity={1}
+                        stroke={
+                          sortedCategories.length > 1
+                            ? "hsl(var(--background))"
+                            : "hsl(var(--jordy-blue))"
+                        }
+                        strokeWidth={sortedCategories.length > 1 ? 3 : 2}
+                      />
+                    ))}
+                    <Recharts.Tooltip
+                      isAnimationActive={false}
+                      cursor={{
+                        stroke: "hsla(var(--foreground) / 25%)",
+                        strokeWidth: 1,
+                      }}
+                      trigger="hover"
+                      wrapperStyle={{
+                        transform: undefined,
+                        position: undefined,
+                        top: undefined,
+                        left: undefined,
+                      }}
+                      content={({ active, payload, viewBox, coordinate }) => {
+                        if (
+                          !active ||
+                          !payload?.[0]?.payload ||
+                          !viewBox ||
+                          coordinate?.x === undefined
+                        )
+                          return null;
+
+                        return (
+                          <TooltipContent
+                            periodDays={periodDays}
+                            formatCategory={formatCategory}
+                            formatValue={formatValue}
+                            sortedCategories={sortedCategories}
+                            d={payload[0].payload as ChartData}
+                            viewBox={viewBox as ViewBox}
+                            x={coordinate.x}
+                          />
+                        );
+                      }}
+                    />
+                  </Recharts.ComposedChart>
+                </Recharts.ResponsiveContainer>
+              )}
+            </>
           )}
         </div>
 
         {/* X-axis */}
-        <div className="flex w-full flex-row justify-between">
-          {ticksX.map((tickX) => (
-            <p key={tickX} className="text-p3 text-tertiary-foreground">
-              {format(
-                new Date(tickX * 1000),
-                periodDays === 1 ? "h:mm a" : "d MMM",
-              )}
-            </p>
-          ))}
-        </div>
+        {processedData === undefined ? (
+          <Skeleton className="h-[18px] w-full" />
+        ) : (
+          <div className="flex w-full flex-row justify-between">
+            {ticksX.map((tickX) => (
+              <p key={tickX} className="text-p3 text-tertiary-foreground">
+                {format(
+                  new Date(tickX * 1000),
+                  periodDays === 1 ? "h:mm a" : "d MMM",
+                )}
+              </p>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

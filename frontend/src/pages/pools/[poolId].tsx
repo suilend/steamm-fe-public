@@ -13,6 +13,7 @@ import PoolParametersCard from "@/components/pool/PoolParametersCard";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { PoolContextProvider, usePoolContext } from "@/contexts/PoolContext";
 import { POOLS_URL } from "@/lib/navigation";
@@ -63,7 +64,7 @@ function PoolPage() {
               <div className="flex flex-col gap-1">
                 <p className="text-p2 text-secondary-foreground">TVL</p>
 
-                <div className="flex flex-row items-baseline gap-1.5">
+                <div className="flex flex-row items-center gap-1.5">
                   <Tooltip title={formatUsd(pool.tvlUsd, { exact: true })}>
                     <p className="text-p1 text-foreground">
                       {formatUsd(pool.tvlUsd)}
@@ -77,12 +78,19 @@ function PoolPage() {
                   Volume (24H)
                 </p>
 
-                <div className="flex flex-row items-baseline gap-1.5">
-                  <Tooltip title={formatUsd(pool.volumeUsd, { exact: true })}>
-                    <p className="text-p1 text-foreground">
-                      {formatUsd(pool.volumeUsd)}
-                    </p>
-                  </Tooltip>
+                <div className="flex flex-row items-center gap-1.5">
+                  {pool.volumeUsd_24h === undefined ? (
+                    <Skeleton className="h-[24px] w-16" />
+                  ) : (
+                    <Tooltip
+                      title={formatUsd(pool.volumeUsd_24h, { exact: true })}
+                    >
+                      <p className="text-p1 text-foreground">
+                        {formatUsd(pool.volumeUsd_24h)}
+                      </p>
+                    </Tooltip>
+                  )}
+
                   <PercentChange
                     value={new BigNumber(-5 + Math.random() * 10)}
                   />
@@ -92,12 +100,19 @@ function PoolPage() {
               <div className="flex flex-col gap-1">
                 <p className="text-p2 text-secondary-foreground">Fees (24H)</p>
 
-                <div className="flex flex-row items-baseline gap-1.5">
-                  <Tooltip title={formatUsd(pool.feesUsd, { exact: true })}>
-                    <p className="text-p1 text-foreground">
-                      {formatUsd(pool.feesUsd)}
-                    </p>
-                  </Tooltip>
+                <div className="flex flex-row items-center gap-1.5">
+                  {pool.feesUsd_24h === undefined ? (
+                    <Skeleton className="h-[24px] w-16" />
+                  ) : (
+                    <Tooltip
+                      title={formatUsd(pool.feesUsd_24h, { exact: true })}
+                    >
+                      <p className="text-p1 text-foreground">
+                        {formatUsd(pool.feesUsd_24h)}
+                      </p>
+                    </Tooltip>
+                  )}
+
                   <PercentChange
                     value={new BigNumber(-5 + Math.random() * 10)}
                   />
@@ -107,7 +122,7 @@ function PoolPage() {
               <div className="flex flex-col gap-1">
                 <p className="text-p2 text-secondary-foreground">APR (24H)</p>
 
-                <div className="flex flex-row items-baseline gap-1.5">
+                <div className="flex flex-row items-center gap-1.5">
                   <p className="text-p1 text-foreground">
                     {formatPercent(pool.apr.percent)}
                   </p>

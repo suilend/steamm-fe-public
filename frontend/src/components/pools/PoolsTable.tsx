@@ -9,8 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Column = "pair" | "type" | "tvlUsd" | "volumeUsd" | "aprPercent";
-type SortableColumn = "tvlUsd" | "volumeUsd" | "aprPercent";
+type Column = "pair" | "type" | "tvlUsd" | "volumeUsd_24h" | "aprPercent";
+type SortableColumn = "tvlUsd" | "volumeUsd_24h" | "aprPercent";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
@@ -29,7 +29,7 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
-  volumeUsd: {
+  volumeUsd_24h: {
     flex: 1,
     minWidth: 120, // px
     justifyContent: "end",
@@ -84,8 +84,12 @@ export default function PoolsTable({
         }
 
         return sortState.direction === SortDirection.DESC
-          ? +b[sortState.column].minus(a[sortState.column])
-          : +a[sortState.column].minus(b[sortState.column]);
+          ? +(b[sortState.column] as BigNumber).minus(
+              a[sortState.column] as BigNumber,
+            )
+          : +(a[sortState.column] as BigNumber).minus(
+              b[sortState.column] as BigNumber,
+            );
       });
 
     return poolGroups
@@ -156,17 +160,35 @@ export default function PoolsTable({
           TVL
         </HeaderColumn>
         <HeaderColumn<Column, SortableColumn>
-          id="volumeUsd"
+          id="volumeUsd_24h"
           sortState={sortState}
-          toggleSortByColumn={toggleSortByColumn}
-          style={columnStyleMap.volumeUsd}
+          toggleSortByColumn={
+            (poolGroups ?? []).every(
+              (poolGroup) =>
+                !!poolGroup.pools.every(
+                  (pool) => pool.volumeUsd_24h !== undefined,
+                ),
+            )
+              ? toggleSortByColumn
+              : undefined
+          }
+          style={columnStyleMap.volumeUsd_24h}
         >
           Volume (24H)
         </HeaderColumn>
         <HeaderColumn<Column, SortableColumn>
           id="aprPercent"
           sortState={sortState}
-          toggleSortByColumn={toggleSortByColumn}
+          toggleSortByColumn={
+            (poolGroups ?? []).every(
+              (poolGroup) =>
+                !!poolGroup.pools.every(
+                  (pool) => pool.apr.percent !== undefined,
+                ),
+            )
+              ? toggleSortByColumn
+              : undefined
+          }
           style={columnStyleMap.aprPercent}
         >
           APR (24H)

@@ -85,7 +85,8 @@ export default function PoolsPage() {
                   value={formatUsd(totalTvlUsd)}
                   chartType={ChartType.LINE}
                   periodDays={30}
-                  data={appData.historicalTvlUsd}
+                  periodChangePercent={null}
+                  data={appData.historicalTvlUsd_30d}
                   formatCategory={(category) =>
                     formatCoinTypeCategory(
                       category,
@@ -104,11 +105,15 @@ export default function PoolsPage() {
               <div className="w-full p-5">
                 <HistoricalDataChart
                   title="Volume (30D)"
-                  value={formatUsd(appData.volumeUsd)}
+                  value={
+                    appData.volumeUsd_30d !== undefined
+                      ? formatUsd(appData.volumeUsd_30d)
+                      : undefined
+                  }
                   chartType={ChartType.BAR}
                   periodDays={30}
                   periodChangePercent={new BigNumber(-5 + Math.random() * 10)}
-                  data={appData.historicalVolumeUsd}
+                  data={appData.historicalVolumeUsd_30d}
                   formatCategory={(category) =>
                     formatCoinTypeCategory(
                       category,

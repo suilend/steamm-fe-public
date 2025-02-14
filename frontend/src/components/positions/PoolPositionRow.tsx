@@ -93,7 +93,7 @@ export default function PoolPositionRow({
       >
         <div className="flex flex-col items-end gap-0.5">
           {position.balance.amountUsd === undefined ? (
-            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-[24px] w-16" />
           ) : (
             <p className="text-p1 text-foreground">
               {formatUsd(position.balance.amountUsd)}
@@ -178,14 +178,14 @@ export default function PoolPositionRow({
       >
         <div className="flex flex-col items-end gap-0.5">
           {position.pnl.percent === undefined ? (
-            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-[24px] w-16" />
           ) : (
             <p className="text-p1 text-success">
               +{formatPercent(position.pnl.percent)}
             </p>
           )}
           {position.pnl.amountUsd === undefined ? (
-            <Skeleton className="h-[21px] w-20" />
+            <Skeleton className="h-[21px] w-16" />
           ) : (
             <p className="text-p2 text-success">
               +{formatUsd(position.pnl.amountUsd)}
