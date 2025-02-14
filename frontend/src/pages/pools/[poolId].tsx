@@ -113,9 +113,6 @@ function PoolPage() {
                       {formatUsd(pool.tvlUsd)}
                     </p>
                   </Tooltip>
-                  <PercentChange
-                    value={new BigNumber(-5 + Math.random() * 10)}
-                  />
                 </div>
               </div>
 

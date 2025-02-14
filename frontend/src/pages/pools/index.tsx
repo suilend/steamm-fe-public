@@ -75,7 +75,6 @@ export default function PoolsPage() {
                   value={formatUsd(appData.tvlUsd)}
                   chartType={ChartType.LINE}
                   periodDays={30}
-                  periodChangePercent={new BigNumber(-5 + Math.random() * 10)}
                   data={appData.tvlData}
                   formatCategory={(category) =>
                     formatCoinTypeCategory(

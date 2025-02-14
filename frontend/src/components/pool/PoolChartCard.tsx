@@ -29,7 +29,7 @@ type ChartConfig = {
   title: string;
   value: string;
   chartType: ChartType;
-  percentChange: BigNumber;
+  percentChange?: BigNumber;
   data: ChartData[];
   formatValue: (value: number) => string;
 };
@@ -103,12 +103,11 @@ export default function PoolChartCard() {
         title: chartStatNameMap[ChartStat.TVL],
         value: formatUsd(pool.tvlUsd),
         chartType: ChartType.LINE,
-        percentChange: new BigNumber(-5 + Math.random() * 10),
         data: historicalTvlData,
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.VOLUME]: {
-        title: chartStatNameMap[ChartStat.VOLUME],
+        title: `${chartStatNameMap[ChartStat.VOLUME]} (30D)`,
         value: formatUsd(pool.volumeUsd),
         chartType: ChartType.BAR,
         percentChange: new BigNumber(-5 + Math.random() * 10),
@@ -116,7 +115,7 @@ export default function PoolChartCard() {
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.FEES]: {
-        title: chartStatNameMap[ChartStat.FEES],
+        title: `${chartStatNameMap[ChartStat.FEES]} (30D)`,
         value: formatUsd(pool.feesUsd),
         chartType: ChartType.BAR,
         percentChange: new BigNumber(-5 + Math.random() * 10),
@@ -124,7 +123,7 @@ export default function PoolChartCard() {
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.APR]: {
-        title: chartStatNameMap[ChartStat.APR],
+        title: `${chartStatNameMap[ChartStat.APR]} (30D)`,
         value: formatPercent(pool.apr.percent),
         chartType: ChartType.LINE,
         percentChange: new BigNumber(-5 + Math.random() * 10),

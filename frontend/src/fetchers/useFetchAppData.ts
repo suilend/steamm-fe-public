@@ -1,3 +1,5 @@
+import { normalizeStructTag } from "@mysten/sui/utils";
+import { SuiPriceServiceConnection } from "@pythnetwork/pyth-sui-js";
 import BigNumber from "bignumber.js";
 import useSWR from "swr";
 
@@ -16,8 +18,9 @@ import {
   LENDING_MARKET_ID,
   LENDING_MARKET_TYPE,
   SuilendClient,
-  initializeSuilend,
+  WAD,
 } from "@suilend/sdk";
+import * as simulate from "@suilend/sdk/utils/simulate";
 import { SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
@@ -28,15 +31,38 @@ export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
 
   const dataFetcher = async () => {
+    // Suilend
     const suilendClient = await SuilendClient.initialize(
       LENDING_MARKET_ID,
       LENDING_MARKET_TYPE,
       suiClient,
     );
 
-    const { reserveMap } = await initializeSuilend(suiClient, suilendClient);
+    const nowMs = Date.now();
+    const nowS = Math.floor(nowMs / 1000);
 
-    const suiPrice = reserveMap[NORMALIZED_SUI_COINTYPE].price; // TEMP
+    const rawReserves = suilendClient.lendingMarket.reserves.filter((r) =>
+      [NORMALIZED_SUI_COINTYPE, NORMALIZED_USDC_COINTYPE].includes(
+        normalizeStructTag(r.coinType.name),
+      ),
+    );
+    const refreshedRawReserves = await simulate.refreshReservePrice(
+      rawReserves.map((r) => simulate.compoundReserveInterest(r, nowS)),
+      new SuiPriceServiceConnection("https://hermes.pyth.network"),
+    );
+
+    const priceMap = refreshedRawReserves.reduce(
+      (acc, r) => {
+        const coinType = normalizeStructTag(r.coinType.name);
+        const price = new BigNumber(r.price.value.toString()).div(WAD);
+
+        return { ...acc, [coinType]: price };
+      },
+      {} as Record<string, BigNumber>,
+    );
+
+    const suiPrice = priceMap[NORMALIZED_SUI_COINTYPE];
+    const usdcPrice = priceMap[NORMALIZED_USDC_COINTYPE];
 
     // Banks
     const bTokenTypeToCoinTypeMap: Record<string, string> = {};
@@ -44,7 +70,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const bankList = await steammClient.getBanks();
     for (const bank of Object.values(bankList)) {
       const { coinType, btokenType } = bank;
-      bTokenTypeToCoinTypeMap[btokenType] = coinType;
+      bTokenTypeToCoinTypeMap[btokenType] = normalizeStructTag(coinType);
     }
 
     // Pools
@@ -103,15 +129,20 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       );
 
       let priceA, priceB;
-      if (isSui(coinTypeA)) {
-        priceA = suiPrice;
-        priceB = balanceA.div(balanceB).times(priceA);
-      } else if (isSui(coinTypeB)) {
+      if (isSui(coinTypeB)) {
         priceB = suiPrice;
-        priceA = balanceB.div(balanceA).times(priceB);
+        priceA =
+          coinTypeA === NORMALIZED_USDC_COINTYPE
+            ? usdcPrice
+            : balanceB.div(balanceA).times(priceB);
+      } else if (coinTypeB === NORMALIZED_USDC_COINTYPE) {
+        priceB = usdcPrice;
+        priceA = isSui(coinTypeA)
+          ? suiPrice
+          : balanceB.div(balanceA).times(priceB);
       } else {
         console.error(
-          `One of the pool coins must be SUI, skipping pool with id: ${id}`,
+          `Quote asset must be one of SUI, USDC - skipping pool with id: ${id}`,
         );
         continue;
       }
@@ -128,7 +159,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         pool.poolFeeConfig.feeNumerator.toString(),
       )
         .div(pool.poolFeeConfig.feeDenominator.toString())
-        .times(100);
+        .times(100); // TODO: Replace with poolInfo.swapFeeBps
       const protocolFeePercent = new BigNumber(
         pool.protocolFees.config.feeNumerator.toString(),
       )
