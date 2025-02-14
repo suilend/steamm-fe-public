@@ -43,7 +43,7 @@ function WalletItem({ wallet }: WalletItemProps) {
     return null;
   return (
     <button
-      className="group flex h-10 w-full flex-row items-center justify-between gap-2 rounded-md border px-3 transition-colors hover:bg-border"
+      className="group flex h-10 w-full flex-row items-center justify-between gap-2 rounded-md border px-3 transition-colors hover:bg-border/50"
       onClick={onClick}
     >
       <div className="flex flex-row items-center gap-2">

@@ -84,6 +84,7 @@ export default function PoolsPage() {
               <div className="w-full p-5">
                 <HistoricalDataChart
                   title="TVL"
+                  hideTitlePeriod
                   value={formatUsd(totalTvlUsd)}
                   chartType={ChartType.LINE}
                   periodDays={30}
@@ -106,7 +107,7 @@ export default function PoolsPage() {
             <div className="flex-1">
               <div className="w-full p-5">
                 <HistoricalDataChart
-                  title="Volume (30D)"
+                  title="Volume"
                   value={
                     appData.volumeUsd_30d !== undefined
                       ? formatUsd(appData.volumeUsd_30d)

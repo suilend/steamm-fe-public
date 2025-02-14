@@ -8,6 +8,7 @@ import {
 
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
+import { useLocalStorage } from "usehooks-ts";
 
 import {
   useSettingsContext,
@@ -48,6 +49,9 @@ interface AppContext {
   getBalance: (coinType: string) => BigNumber;
 
   refresh: () => Promise<void>; // Refreshes appData, and balances
+
+  slippagePercent: number;
+  setSlippagePercent: (slippagePercent: number) => void;
 }
 type LoadedAppContext = AppContext & {
   steammClient: SteammSDK;
@@ -65,6 +69,11 @@ const AppContext = createContext<AppContext>({
   },
 
   refresh: async () => {
+    throw Error("AppContextProvider not initialized");
+  },
+
+  slippagePercent: 1,
+  setSlippagePercent: () => {
     throw Error("AppContextProvider not initialized");
   },
 });
@@ -130,6 +139,12 @@ export function AppContextProvider({ children }: PropsWithChildren) {
 
   useRefreshOnBalancesChange(refresh);
 
+  // Slippage
+  const [slippagePercent, setSlippagePercent] = useLocalStorage<number>(
+    "slippagePercent",
+    1,
+  );
+
   // Context
   const contextValue: AppContext = useMemo(
     () => ({
@@ -141,6 +156,9 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       getBalance,
 
       refresh,
+
+      slippagePercent,
+      setSlippagePercent,
     }),
     [
       steammClient,
@@ -149,6 +167,8 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       balancesCoinMetadataMap,
       getBalance,
       refresh,
+      slippagePercent,
+      setSlippagePercent,
     ],
   );
 

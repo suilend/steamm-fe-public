@@ -23,6 +23,7 @@ import {
 import { DepositQuote } from "@suilend/steamm-sdk";
 
 import CoinInput, { getCoinInputId } from "@/components/pool/CoinInput";
+import SlippagePopover from "@/components/SlippagePopover";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { showSuccessTxnToast } from "@/lib/toasts";
@@ -75,7 +76,8 @@ interface TabProps {
 function DepositTab({ formatValue }: TabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, getBalance, refresh } = useLoadedAppContext();
+  const { steammClient, appData, getBalance, refresh, slippagePercent } =
+    useLoadedAppContext();
   const { pool } = usePoolContext();
 
   // Value
@@ -207,7 +209,7 @@ function DepositTab({ formatValue }: TabProps) {
 
       const submitAmountA = quote.depositA.toString();
       const submitAmountB = new BigNumber(quote.depositB.toString())
-        .times(1 + 3 / 100) // TODO: 3% slippage
+        .times(1 + slippagePercent / 100)
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
 
@@ -387,7 +389,7 @@ export default function PoolActionsCard() {
 
   return (
     <div className="flex w-full flex-col gap-4 rounded-md border p-5">
-      <div className="flex w-full flex-row items-center justify-between">
+      <div className="flex w-full flex-row items-end justify-between">
         {/* Tabs */}
         <div className="flex flex-row gap-1">
           {Object.values(Action).map((action) => (
@@ -397,7 +399,7 @@ export default function PoolActionsCard() {
                 "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors",
                 selectedAction === action
                   ? "cursor-default bg-border"
-                  : "hover:bg-border",
+                  : "hover:bg-border/50",
               )}
               onClick={() => onSelectedActionChange(action)}
             >
@@ -414,6 +416,8 @@ export default function PoolActionsCard() {
             </button>
           ))}
         </div>
+
+        <SlippagePopover />
       </div>
 
       {selectedAction === Action.DEPOSIT && (

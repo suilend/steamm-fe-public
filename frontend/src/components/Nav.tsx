@@ -23,8 +23,8 @@ type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   { url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX },
-  { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
   { url: PORTFOLIO_URL, title: "Portfolio" },
+  { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
 ];
 export const ADMIN_NAV_ITEM: NavItem = {
   url: ADMIN_URL,

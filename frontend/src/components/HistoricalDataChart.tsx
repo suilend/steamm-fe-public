@@ -104,6 +104,7 @@ function TooltipContent({
 interface HistoricalDataChartProps {
   className?: ClassValue;
   title: string;
+  hideTitlePeriod?: boolean;
   value?: string;
   chartType: ChartType;
   periodDays: 1 | 7 | 30;
@@ -116,6 +117,7 @@ interface HistoricalDataChartProps {
 export default function HistoricalDataChart({
   className,
   title,
+  hideTitlePeriod,
   value,
   chartType,
   periodDays,
@@ -238,7 +240,12 @@ export default function HistoricalDataChart({
       <div className="flex flex-row items-start justify-between">
         {/* Top left */}
         <div className="flex flex-col gap-1">
-          <p className="text-p2 text-secondary-foreground">{title}</p>
+          <div className="flex flex-row items-baseline gap-1.5">
+            <p className="text-p2 text-secondary-foreground">{title}</p>
+            {!hideTitlePeriod && (
+              <p className="text-p3 text-tertiary-foreground">{periodDays}D</p>
+            )}
+          </div>
 
           <div className="flex flex-row items-center gap-2">
             {value === undefined ? (

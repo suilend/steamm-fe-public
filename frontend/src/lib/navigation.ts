@@ -1,7 +1,7 @@
 export const ROOT_URL = "/";
 export const POOL_URL_PREFIX = "/pool";
-export const SWAP_URL = "/swap";
 export const PORTFOLIO_URL = "/portfolio";
+export const SWAP_URL = "/swap";
 export const ADMIN_URL = "/admin";
 
 export const SUILEND_URL = "https://suilend.fi";

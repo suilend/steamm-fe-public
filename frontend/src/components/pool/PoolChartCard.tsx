@@ -27,6 +27,7 @@ const chartStatNameMap: Record<ChartStat, string> = {
 
 type ChartConfig = {
   title: string;
+  hideTitlePeriod?: boolean;
   value?: string;
   chartType: ChartType;
   periodChangePercent?: BigNumber | null;
@@ -102,6 +103,7 @@ export default function PoolChartCard() {
     () => ({
       [ChartStat.TVL]: {
         title: chartStatNameMap[ChartStat.TVL],
+        hideTitlePeriod: true,
         value: formatUsd(pool.tvlUsd),
         chartType: ChartType.LINE,
         periodChangePercent: null,
@@ -109,7 +111,7 @@ export default function PoolChartCard() {
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.VOLUME]: {
-        title: `${chartStatNameMap[ChartStat.VOLUME]} (30D)`,
+        title: chartStatNameMap[ChartStat.VOLUME],
         value:
           pool.volumeUsd_30d !== undefined
             ? formatUsd(pool.volumeUsd_30d)
@@ -120,7 +122,7 @@ export default function PoolChartCard() {
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.FEES]: {
-        title: `${chartStatNameMap[ChartStat.FEES]} (30D)`,
+        title: chartStatNameMap[ChartStat.FEES],
         value:
           pool.feesUsd_30d !== undefined
             ? formatUsd(pool.feesUsd_30d)
@@ -131,7 +133,7 @@ export default function PoolChartCard() {
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.APR]: {
-        title: `${chartStatNameMap[ChartStat.APR]} (30D)`,
+        title: chartStatNameMap[ChartStat.APR],
         value: formatPercent(pool.apr.percent),
         chartType: ChartType.LINE,
         periodChangePercent: new BigNumber(-5 + Math.random() * 10),
@@ -173,6 +175,7 @@ export default function PoolChartCard() {
       <HistoricalDataChart
         className="relative z-[1]"
         title={chartConfig.title}
+        hideTitlePeriod={chartConfig.hideTitlePeriod}
         value={chartConfig.value}
         chartType={chartConfig.chartType}
         periodDays={30}
@@ -182,7 +185,7 @@ export default function PoolChartCard() {
         formatValue={chartConfig.formatValue}
       />
 
-      <div className="absolute right-5 top-5 z-[2] flex flex-row items-center gap-1">
+      <div className="absolute right-5 top-5 z-[2] flex flex-row gap-1">
         {Object.values(ChartStat).map((chartStat) => (
           <button
             key={chartStat}
@@ -190,7 +193,7 @@ export default function PoolChartCard() {
               "group flex h-6 flex-row items-center rounded-md border px-2 transition-colors",
               selectedChartStat === chartStat
                 ? "cursor-default bg-border"
-                : "hover:bg-border",
+                : "hover:bg-border/50",
             )}
             onClick={() => onSelectedChartStatChange(chartStat)}
           >
