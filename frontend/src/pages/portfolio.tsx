@@ -185,7 +185,7 @@ export default function PortfolioPage() {
               new BigNumber(0),
             )
             .div(
-              positionsWithFetchedData.length > 1
+              positionsWithFetchedData.length > 0
                 ? positionsWithFetchedData.reduce(
                     (sum, position) => sum.plus(position.balance.amountUsd),
                     new BigNumber(0),
