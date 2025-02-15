@@ -1,8 +1,9 @@
 import { useRouter } from "next/router";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
+import { debounce } from "lodash";
 import { Loader2 } from "lucide-react";
 
 import {
@@ -20,7 +21,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { DepositQuote } from "@suilend/steamm-sdk";
+import { DepositQuote, RedeemQuote } from "@suilend/steamm-sdk";
 
 import CoinInput, { getCoinInputId } from "@/components/pool/CoinInput";
 import SlippagePopover from "@/components/SlippagePopover";
@@ -88,28 +89,29 @@ function DepositTab({ formatValue }: TabProps) {
   >(undefined);
   const [quote, setQuote] = useState<DepositQuote | undefined>(undefined);
 
-  const onValueChange = async (value: string, index: number) => {
+  const fetchQuote = async (
+    _value: string,
+    formattedValue: string,
+    index: number,
+  ) => {
+    console.log(
+      "DepositTab.fetchQuote - _value:",
+      _value,
+      "formattedValue:",
+      formattedValue,
+      "index:",
+      index,
+    );
+
     const dps = [
       appData.poolCoinMetadataMap[pool.coinTypes[0]].decimals,
       appData.poolCoinMetadataMap[pool.coinTypes[1]].decimals,
     ];
 
-    const isValueValid = new BigNumber(value || 0).gt(0);
-    const formattedValue = formatValue(value, dps[index]);
-    setValues((prev) => [
-      index === 0 ? formattedValue : isValueValid ? prev[0] : "",
-      index === 0 ? (isValueValid ? prev[1] : "") : formattedValue,
-    ]);
-
-    if (!isValueValid) {
-      setFetchingQuoteForIndex(undefined);
-      setQuote(undefined);
-      return;
-    }
     try {
       setFetchingQuoteForIndex(1 - index);
 
-      const submitAmount = new BigNumber(value || 0)
+      const submitAmount = new BigNumber(_value || 0)
         .times(10 ** dps[index])
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
@@ -118,13 +120,13 @@ function DepositTab({ formatValue }: TabProps) {
         maxA: index === 0 ? BigInt(submitAmount) : BigInt(MAX_U64.toString()),
         maxB: index === 0 ? BigInt(MAX_U64.toString()) : BigInt(submitAmount),
       });
-      setQuote(quote);
       console.log("DepositTab.onValueChange - quote:", quote);
 
       setValues((prev) => {
         if (prev[index] !== formattedValue) return prev;
 
         setFetchingQuoteForIndex(undefined);
+        setQuote(quote);
 
         return [
           index === 0
@@ -154,6 +156,30 @@ function DepositTab({ formatValue }: TabProps) {
     }
   };
 
+  const onValueChange = (_value: string, index: number) => {
+    console.log("DepositTab.onValueChange - _value:", _value);
+
+    const dps = [
+      appData.poolCoinMetadataMap[pool.coinTypes[0]].decimals,
+      appData.poolCoinMetadataMap[pool.coinTypes[1]].decimals,
+    ];
+
+    const isValueValid = new BigNumber(_value || 0).gt(0);
+    const formattedValue = formatValue(_value, dps[index]);
+    setValues((prev) => [
+      index === 0 ? formattedValue : isValueValid ? prev[0] : "",
+      index === 0 ? (isValueValid ? prev[1] : "") : formattedValue,
+    ]);
+
+    if (!isValueValid) {
+      setFetchingQuoteForIndex(undefined);
+      setQuote(undefined);
+      return;
+    }
+
+    fetchQuote(_value, formattedValue, index);
+  };
+
   // Value - max
   const onCoinBalanceClick = (index: number) => {
     const coinType = pool.coinTypes[index];
@@ -175,6 +201,7 @@ function DepositTab({ formatValue }: TabProps) {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
+    // TODO: Check Rootlets
     if (isSubmitting) return { isDisabled: true, isLoading: true };
 
     if (Object.values(values).some((value) => value === ""))
@@ -199,8 +226,6 @@ function DepositTab({ formatValue }: TabProps) {
     try {
       setIsSubmitting(true);
 
-      const transaction = new Transaction();
-
       const [coinTypeA, coinTypeB] = pool.coinTypes;
       const [coinMetadataA, coinMetadataB] = [
         appData.poolCoinMetadataMap[coinTypeA],
@@ -212,6 +237,8 @@ function DepositTab({ formatValue }: TabProps) {
         .times(1 + slippagePercent / 100)
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
+
+      const transaction = new Transaction();
 
       const coinA = coinWithBalance({
         balance: BigInt(submitAmountA),
@@ -265,13 +292,18 @@ function DepositTab({ formatValue }: TabProps) {
         { dp: coinMetadataB.decimals, trimTrailingZeros: true },
       );
 
-      showSuccessTxnToast("Deposited", txUrl, {
+      showSuccessTxnToast("Deposited liquidity", txUrl, {
         description: `${balanceChangeAFormatted} ${coinMetadataA.symbol} and ${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
       });
       setValues(["", ""]);
       setQuote(undefined);
     } catch (err) {
-      showErrorToast("Failed to deposit", err as Error, undefined, true);
+      showErrorToast(
+        "Failed to deposit liquidity",
+        err as Error,
+        undefined,
+        true,
+      );
       console.error(err);
     } finally {
       document.getElementById(getCoinInputId(pool.coinTypes[0]))?.focus();
@@ -307,6 +339,221 @@ function DepositTab({ formatValue }: TabProps) {
   );
 }
 
+function WithdrawTab({ formatValue }: TabProps) {
+  const { explorer } = useSettingsContext();
+  const { address, signExecuteAndWaitForTransaction } = useWalletContext();
+  const { steammClient, appData, getBalance, refresh, slippagePercent } =
+    useLoadedAppContext();
+  const { pool } = usePoolContext();
+
+  // Value
+  const [value, setValue] = useState<string>("");
+
+  const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false);
+  const [quote, setQuote] = useState<RedeemQuote | undefined>(undefined);
+
+  const fetchQuote = async (_value: string, formattedValue: string) => {
+    console.log(
+      "WithdrawTab.fetchQuote - _value:",
+      _value,
+      "formattedValue:",
+      formattedValue,
+    );
+
+    const dp = appData.poolCoinMetadataMap[pool.lpTokenType].decimals;
+
+    try {
+      setIsFetchingQuote(true);
+
+      console.log("XXX", +getBalance(pool.lpTokenType));
+      const submitAmount = new BigNumber(
+        new BigNumber(_value || 0).div(100).times(getBalance(pool.lpTokenType)),
+      )
+        .times(10 ** dp)
+        .integerValue(BigNumber.ROUND_DOWN)
+        .toString();
+      const quote = await steammClient.Pool.quoteRedeem({
+        pool: pool.id,
+        lpTokens: BigInt(submitAmount),
+      });
+      console.log("WithdrawTab.fetchQuote - quote:", quote);
+
+      setValue((prev) => {
+        if (prev !== formattedValue) return prev;
+
+        setIsFetchingQuote(false);
+        setQuote(quote);
+        return prev;
+      });
+    } catch (err) {
+      showErrorToast("Failed to fetch quote", err as Error);
+      console.error(err);
+
+      setIsFetchingQuote(false);
+      setQuote(undefined);
+    }
+  };
+  const debouncedFetchQuote = useRef(debounce(fetchQuote, 100)).current;
+
+  const onValueChange = async (_value: string) => {
+    console.log("WithdrawTab.onValueChange - _value:", _value);
+
+    const dp = appData.poolCoinMetadataMap[pool.lpTokenType].decimals;
+
+    const isValueValid = new BigNumber(_value || 0).gt(0);
+    const formattedValue = formatValue(_value, dp);
+    setValue(formattedValue);
+
+    if (!isValueValid) {
+      setIsFetchingQuote(false);
+      setQuote(undefined);
+      return;
+    }
+
+    debouncedFetchQuote(_value, formattedValue);
+  };
+
+  // Value - max
+  const onCoinBalanceClick = () => {
+    const coinType = pool.lpTokenType;
+    const coinMetadata = appData.poolCoinMetadataMap[coinType];
+    const balance = getBalance(coinType);
+
+    onValueChange(balance.toFixed(coinMetadata.decimals, BigNumber.ROUND_DOWN));
+  };
+
+  // Submit
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const submitButtonState: SubmitButtonState = (() => {
+    if (!address) return { isDisabled: true, title: "Connect wallet" };
+    // Check Rootlets
+    if (isSubmitting) return { isDisabled: true, isLoading: true };
+
+    if (value === "") return { isDisabled: true, title: "Enter an amount" };
+    if (new BigNumber(value).lt(0))
+      return { isDisabled: true, title: "Enter a +ve amount" };
+    if (new BigNumber(value).eq(0))
+      return { isDisabled: true, title: "Enter a non-zero amount" };
+
+    // TODO: Check balance
+
+    return {
+      title: "Withdraw",
+      isDisabled: isFetchingQuote,
+    };
+  })();
+
+  const onSubmitClick = async () => {
+    if (submitButtonState.isDisabled) return;
+    if (!address || !quote) return;
+
+    try {
+      setIsSubmitting(true);
+
+      const [coinTypeA, coinTypeB] = pool.coinTypes;
+      const [coinMetadataA, coinMetadataB] = [
+        appData.poolCoinMetadataMap[coinTypeA],
+        appData.poolCoinMetadataMap[coinTypeB],
+      ];
+
+      const submitAmountLp = new BigNumber(value)
+        .times(10 ** coinMetadataA.decimals)
+        .integerValue(BigNumber.ROUND_DOWN)
+        .toString();
+
+      const submitAmountA = quote.withdrawA.toString();
+      const submitAmountB = new BigNumber(quote.withdrawB.toString())
+        .times(1 + slippagePercent / 100)
+        .integerValue(BigNumber.ROUND_DOWN)
+        .toString();
+
+      const transaction = new Transaction();
+
+      const lpCoin = coinWithBalance({
+        balance: BigInt(submitAmountLp),
+        type: pool.lpTokenType,
+        useGasCoin: false,
+      })(transaction);
+
+      await steammClient.Pool.redeemLiquidityEntry(transaction, {
+        pool: pool.id,
+        coinTypeA,
+        coinTypeB,
+        lpCoin,
+        minA: BigInt(submitAmountA),
+        minB: BigInt(submitAmountB),
+      });
+
+      transaction.transferObjects([lpCoin], address);
+
+      const res = await signExecuteAndWaitForTransaction(transaction);
+      const txUrl = explorer.buildTxUrl(res.digest);
+
+      const balanceChangeA = getBalanceChange(
+        res,
+        address,
+        getToken(coinTypeA, appData.poolCoinMetadataMap[coinTypeA]),
+        1,
+      );
+      const balanceChangeB = getBalanceChange(
+        res,
+        address,
+        getToken(coinTypeB, appData.poolCoinMetadataMap[coinTypeB]),
+        1,
+      );
+
+      const balanceChangeAFormatted = formatToken(
+        balanceChangeA !== undefined
+          ? balanceChangeA
+          : new BigNumber(submitAmountA).div(10 ** coinMetadataA.decimals),
+        { dp: coinMetadataA.decimals, trimTrailingZeros: true },
+      );
+      const balanceChangeBFormatted = formatToken(
+        balanceChangeB !== undefined
+          ? balanceChangeB
+          : new BigNumber(submitAmountB).div(10 ** coinMetadataB.decimals),
+        { dp: coinMetadataB.decimals, trimTrailingZeros: true },
+      );
+
+      showSuccessTxnToast("Withdrew liquidity", txUrl, {
+        description: `${balanceChangeAFormatted} ${coinMetadataA.symbol} and ${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
+      });
+      setValue("");
+      setQuote(undefined);
+    } catch (err) {
+      showErrorToast(
+        "Failed to withdraw liquidity",
+        err as Error,
+        undefined,
+        true,
+      );
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+      refresh();
+    }
+  };
+
+  return (
+    <>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={0.1}
+        value={value}
+        onChange={(e) => onValueChange(e.target.value)}
+      />
+
+      <SubmitButton
+        submitButtonState={submitButtonState}
+        onClick={onSubmitClick}
+      />
+    </>
+  );
+}
+
 export default function PoolActionsCard() {
   const router = useRouter();
   const queryParams = {
@@ -314,9 +561,6 @@ export default function PoolActionsCard() {
       | Action
       | undefined,
   };
-
-  const { appData, getBalance } = useLoadedAppContext();
-  const { pool } = usePoolContext();
 
   // Tabs
   const selectedAction =
@@ -348,44 +592,6 @@ export default function PoolActionsCard() {
 
     return formattedValue;
   }, []);
-
-  // Value - withdraw
-  const [withdrawValue, setWithdrawValue] = useState<string>("");
-
-  const onWithdrawValueChange = (value: string) => {
-    const coinType = pool.lpTokenType;
-    const coinMetadata = appData.poolCoinMetadataMap[coinType];
-
-    const formattedValue = formatValue(value, coinMetadata.decimals);
-    setWithdrawValue(formattedValue);
-  };
-
-  // Value - swap
-  const [swapValue, setSwapValue] = useState<string>("");
-
-  const onSwapValueChange = (value: string) => {};
-
-  // Value - max
-  const onCoinBalanceClick = (index: number) => {
-    switch (selectedAction) {
-      case Action.WITHDRAW: {
-        const coinType = pool.lpTokenType;
-        const coinMetadata = appData.poolCoinMetadataMap[coinType];
-        const balance = getBalance(coinType);
-
-        onWithdrawValueChange(
-          balance.toFixed(coinMetadata.decimals, BigNumber.ROUND_DOWN),
-        );
-        document.getElementById(getCoinInputId(coinType))?.focus();
-
-        break;
-      }
-      case Action.SWAP: {
-        // TODO
-        break;
-      }
-    }
-  };
 
   return (
     <div className="flex w-full flex-col gap-4 rounded-md border p-5">
@@ -422,6 +628,9 @@ export default function PoolActionsCard() {
 
       {selectedAction === Action.DEPOSIT && (
         <DepositTab formatValue={formatValue} />
+      )}
+      {selectedAction === Action.WITHDRAW && (
+        <WithdrawTab formatValue={formatValue} />
       )}
     </div>
   );

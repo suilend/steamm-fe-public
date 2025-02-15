@@ -116,21 +116,26 @@ export default function SlippagePopover() {
           ))}
         </div>
 
-        <div className="flex w-full flex-col gap-1">
+        <div className="flex w-full flex-col gap-2">
           <p className="text-p3 text-secondary-foreground">Custom</p>
-          <input
-            className="h-10 w-full min-w-0 rounded-md border-0 bg-input px-3 text-p1 text-foreground placeholder:text-tertiary-foreground focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            type="number"
-            placeholder={`${
-              slippagePercent.toFixed(2).at(-1)! === "0"
-                ? slippagePercent.toFixed(1)
-                : slippagePercent.toFixed(2)
-            }%`}
-            value={value}
-            onChange={(e) => formatAndSetSlippagePercent(e.target.value)}
-            onWheel={(e) => e.currentTarget.blur()}
-            step="any"
-          />
+          <div className="relative w-full">
+            <input
+              className="relative z-[1] h-10 w-full min-w-0 rounded-md border bg-input px-3 text-p1 text-foreground placeholder:text-tertiary-foreground focus-visible:border-focus focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              type="number"
+              placeholder={`${
+                slippagePercent.toFixed(2).at(-1)! === "0"
+                  ? slippagePercent.toFixed(1)
+                  : slippagePercent.toFixed(2)
+              }%`}
+              value={value}
+              onChange={(e) => formatAndSetSlippagePercent(e.target.value)}
+              onWheel={(e) => e.currentTarget.blur()}
+              step="any"
+            />
+            <p className="pointer-events-none absolute right-3 top-1/2 z-[2] -translate-y-1/2 text-p2 text-secondary-foreground">
+              %
+            </p>
+          </div>
         </div>
       </div>
     </Popover>
