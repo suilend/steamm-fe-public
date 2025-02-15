@@ -39,7 +39,7 @@ export default function PoolParametersCard() {
 
   return (
     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5 lg:grid-cols-2">
-      <Parameter label="Composition">
+      <Parameter className="gap-1.5" label="Pool composition">
         <div className="flex w-full flex-col gap-2">
           {/* Top */}
           <div className="flex w-full flex-row justify-between">

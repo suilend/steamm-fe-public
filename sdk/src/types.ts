@@ -3,6 +3,11 @@ export interface PackageInfo {
   publishedAt: string;
 }
 
+export interface PackageInfo {
+  sourcePkgId: string;
+  publishedAt: string;
+}
+
 export type SuiObjectIdType = string;
 
 /**
