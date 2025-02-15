@@ -19,7 +19,7 @@ if [ "$CI" = false ]; then
 
     # Create suilend directory if it doesn't exist and cd into it
     mkdir -p temp &&
-    git clone --branch fee-types git@github.com:solendprotocol/steamm.git temp/git
+    git clone --branch swap-router git@github.com:solendprotocol/steamm.git temp/git
 else
     ./bin/unpublocal.sh --ci
 fi
@@ -34,8 +34,8 @@ fi
 
 
 # Create source directories
-printf "[INFO] Building STEAMM package"  >&2
-mkdir -p temp/liquid_staking/sources temp/pyth/sources temp/sprungsui/sources temp/suilend/sources temp/wormhole/sources temp/steamm/sources
+printf "[INFO] Building Steamm package"  >&2
+mkdir -p temp/liquid_staking/sources temp/pyth/sources temp/sprungsui/sources temp/suilend/sources temp/wormhole/sources temp/steamm/sources temp/steamm_scripts/sources
 sui move build --path temp/git/contracts/steamm --silence-warnings --no-lint
 
 # Copy dependencies from build to local directories
@@ -46,6 +46,7 @@ cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/sprungsui/* te
 cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/suilend/* temp/suilend/sources/
 cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/Wormhole/* temp/wormhole/sources/
 cp -r temp/git/contracts/steamm/sources/* temp/steamm/sources/
+cp -r temp/git/contracts/steamm_scripts/sources/* temp/steamm_scripts/sources/
 
 cp -r templates/setup temp/steamm/sources/
 cp -r templates/suilend_setup temp/suilend/sources/
@@ -57,6 +58,7 @@ cp templates/sprungsui.toml temp/sprungsui/Move.toml
 cp templates/suilend.toml temp/suilend/Move.toml
 cp templates/wormhole.toml temp/wormhole/Move.toml
 cp templates/steamm.toml temp/steamm/Move.toml
+cp templates/steamm_scripts.toml temp/steamm_scripts/Move.toml
 
 ##### 2. Publish contracts & populate TOMLs ####
 
@@ -225,14 +227,20 @@ SPRUNGSUI_RESPONSE=$(publish_package "temp/sprungsui" "SPRUNGSUI_PKG_ID")
 PYTH_RESPONSE=$(publish_package "temp/pyth" "PYTH_PKG_ID")
 SUILEND_RESPONSE=$(publish_package "temp/suilend" "SUILEND_PKG_ID")
 STEAMM_RESPONSE=$(publish_package "temp/steamm" "STEAMM_PKG_ID")
+STEAMM_SCRIPT_RESPONSE=$(publish_package "temp/steamm_scripts" "STEAMM_SCRIPT_PKG_ID")
 
 printf "[INFO] Fetching object IDs" >&2
+
+LENDING_MARKET_PACKAGE_ID=$(echo "$SUILEND_RESPONSE" | grep -A 3 '"type": "published"' | grep "packageId" | cut -d'"' -f4)
 # Get relevant object IDs
 lending_market_registry=$(find_object_id "$SUILEND_RESPONSE" ".*::lending_market_registry::Registry")
 echo "lending_market_registry: $lending_market_registry"
 
 registry=$(find_object_id "$STEAMM_RESPONSE" ".*::registry::Registry")
 echo "registry: $registry"
+
+global_admin=$(find_object_id "$STEAMM_RESPONSE" ".*::global_admin::GlobalAdmin")
+echo "global_admin: $global_admin"
 
 lp_metadata=$(find_object_id "$STEAMM_RESPONSE" "0x2::coin::CoinMetadata<.*::lp_usdc_sui::LP_USDC_SUI>")
 echo "lp_metadata: $lp_metadata"
@@ -270,8 +278,18 @@ echo "b_sui_treasury_cap: $b_sui_treasury_cap"
 PACKAGE_ID=$(echo "$STEAMM_RESPONSE" | grep -A 3 '"type": "published"' | grep "packageId" | cut -d'"' -f4)
 echo "PACKAGE_ID: $PACKAGE_ID"
 
+SETUP_RESPONSE=$(sui client --client.config sui/client.yaml call --package "$PACKAGE_ID" --module setup --function setup --args "$lending_market_registry" "$registry" "$lp_metadata" "$lp_treasury_cap" "$usdc_metadata" "$sui_metadata" "$b_usdc_metadata" "$b_sui_metadata" "$b_usdc_treasury_cap" "$b_sui_treasury_cap" --json)
 
-sui client --client.config sui/client.yaml call --package "$PACKAGE_ID" --module setup --function setup --args "$lending_market_registry" "$registry" "$lp_metadata" "$lp_treasury_cap" "$usdc_metadata" "$sui_metadata" "$b_usdc_metadata" "$b_sui_metadata" "$b_usdc_treasury_cap" "$b_sui_treasury_cap" > /dev/null
+lending_market=$(find_object_id "$SETUP_RESPONSE" ".*::lending_market::LendingMarket<")
+echo "lending_market: $lending_market"
+lending_market_type="$PACKAGE_ID::setup::LENDING_MARKET"
+echo "lending_market_type: $lending_market_type"
+
+
+populate_ts "$registry" "REGISTRY_ID"
+populate_ts "$global_admin" "GLOBAL_ADMIN_ID"
+populate_ts "$lending_market" "LENDING_MARKET_ID"
+populate_ts "$lending_market_type" "LENDING_MARKET_TYPE"
 
 # Reset back to initial environment
 if [ "$INITIAL_ENV" != "localnet" ]; then

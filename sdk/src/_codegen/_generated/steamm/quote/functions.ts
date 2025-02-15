@@ -239,19 +239,6 @@ export function mintLp(
     })
 }
 
-export function outputFeeRate(
-    tx: Transaction,
-    swapQuote: TransactionObjectInput,
-    publishedAt: string = PUBLISHED_AT
-) {
-    return tx.moveCall({
-        target: `${publishedAt}::quote::output_fee_rate`,
-        arguments: [
-            obj(tx, swapQuote)
-        ],
-    })
-}
-
 export function outputFees(
     tx: Transaction,
     swapQuote: TransactionObjectInput,

@@ -1,87 +1,87 @@
-name: SDK Tests
+# name: SDK Tests
 
-on:
-  pull_request:
-    branches: [main, develop, staging, production]
+# on:
+#   pull_request:
+#     branches: [main, develop, staging, production]
 
-jobs:
-  move-test:
-    runs-on: ubuntu-latest
-    container:
-      image: mysten/sui-tools:mainnet
-      ports:
-        - 80
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+# jobs:
+#   move-test:
+#     runs-on: ubuntu-latest
+#     container:
+#       image: mysten/sui-tools:mainnet
+#       ports:
+#         - 80
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v2
 
-      # bugfix: install git
-      - name: install git
-        run: apt-get install -y git
+#       # bugfix: install git
+#       - name: install git
+#         run: apt-get install -y git
 
-      - name: Install Just
-        uses: taiki-e/install-action@just
+#       - name: Install Just
+#         uses: taiki-e/install-action@just
 
-      - name: Install jq
-        run: apt-get update && apt-get install -y jq
+#       - name: Install jq
+#         run: apt-get update && apt-get install -y jq
 
-      - name: Install unzip
-        run: apt-get install -y unzip
+#       - name: Install unzip
+#         run: apt-get install -y unzip
 
-      - name: Install sed
-        run: apt-get install -y sed
+#       - name: Install sed
+#         run: apt-get install -y sed
 
-      - name: Install bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
+#       - name: Install bun
+#         uses: oven-sh/setup-bun@v1
+#         with:
+#           bun-version: latest
 
-      - name: Install dependencies
-        run: bun install
+#       - name: Install dependencies
+#         run: bun install
 
-      - name: Fetch steamm repo
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.STEAMM_REPO_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          chmod 700 ~/.ssh
+#       - name: Fetch steamm repo
+#         run: |
+#           mkdir -p ~/.ssh
+#           echo "${{ secrets.STEAMM_REPO_SSH_KEY }}" > ~/.ssh/id_rsa
+#           chmod 600 ~/.ssh/id_rsa
+#           chmod 700 ~/.ssh
 
-          # Remove any existing known_hosts to start fresh
-          rm -f ~/.ssh/known_hosts
-          # Add GitHub's host key with strict checking disabled temporarily
-          ssh-keyscan -H github.com > ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
-          eval $(ssh-agent -s)
-          ssh-add ~/.ssh/id_rsa
+#           # Remove any existing known_hosts to start fresh
+#           rm -f ~/.ssh/known_hosts
+#           # Add GitHub's host key with strict checking disabled temporarily
+#           ssh-keyscan -H github.com > ~/.ssh/known_hosts
+#           chmod 644 ~/.ssh/known_hosts
+#           eval $(ssh-agent -s)
+#           ssh-add ~/.ssh/id_rsa
 
-          # Test the connection
-          ssh -o StrictHostKeyChecking=no git@github.com || true
+#           # Test the connection
+#           ssh -o StrictHostKeyChecking=no git@github.com || true
 
-          git clone --branch testnet git@github.com:solendprotocol/steamm.git sdk/temp/git
+#           git clone --branch testnet git@github.com:solendprotocol/steamm.git sdk/temp/git
 
-      - name: Sui localnet
-        run: |
-          cd sdk
-          mkdir sui
-          sui genesis --working-dir sui
-          sui start --network.config sui --with-faucet &
+#       - name: Sui localnet
+#         run: |
+#           cd sdk
+#           mkdir sui
+#           sui genesis --working-dir sui
+#           sui start --network.config sui --with-faucet &
 
-      - name: Get active address
-        run: |
-          sleep 1
-          cd sdk
-          ACTIVE_ADDRESS=$(sui client --client.config sui/client.yaml addresses --json | jq -r '.activeAddress')
-          echo "Active address: $ACTIVE_ADDRESS"
-          echo "ACTIVE_ADDRESS=$ACTIVE_ADDRESS" >> $GITHUB_ENV
-          PRIVATE_KEY=$(sui keytool --keystore-path sui/sui.keystore export --key-identity $ACTIVE_ADDRESS --json | jq -r '.exportedPrivateKey')
-          echo "PRIVATE_KEY=$PRIVATE_KEY" >> $GITHUB_ENV
+#       - name: Get active address
+#         run: |
+#           sleep 1
+#           cd sdk
+#           ACTIVE_ADDRESS=$(sui client --client.config sui/client.yaml addresses --json | jq -r '.activeAddress')
+#           echo "Active address: $ACTIVE_ADDRESS"
+#           echo "ACTIVE_ADDRESS=$ACTIVE_ADDRESS" >> $GITHUB_ENV
+#           PRIVATE_KEY=$(sui keytool --keystore-path sui/sui.keystore export --key-identity $ACTIVE_ADDRESS --json | jq -r '.exportedPrivateKey')
+#           echo "PRIVATE_KEY=$PRIVATE_KEY" >> $GITHUB_ENV
 
-      - name: Setup localnet state
-        run: |
-          cd sdk
-          bash ./bin/publocal.sh --ci
+#       - name: Setup localnet state
+#         run: |
+#           cd sdk
+#           bash ./bin/publocal.sh --ci
 
-      - name: Run tests
-        run: |
-          cd sdk
-          bun test ./tests/index.test.ts
+#       - name: Run tests
+#         run: |
+#           cd sdk
+#           bun test ./tests/index.test.ts

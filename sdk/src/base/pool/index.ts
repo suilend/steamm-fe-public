@@ -5,7 +5,7 @@ import {
 } from "@mysten/sui/transactions";
 
 import { PoolFunctions } from "../..";
-import { PoolInfo } from "../../types";
+import { PackageInfo, PoolInfo } from "../../types";
 import { ConstantProductQuoter } from "../quoters/constantQuoter";
 import { Quoter } from "../quoters/quoter";
 
@@ -23,21 +23,23 @@ export * from "./poolArgs";
 export * from "./poolTypes";
 
 export class Pool {
-  public packageId: string;
+  public sourcePkgId: string;
+  public publishedAt: string;
   public poolInfo: PoolInfo;
   public quoter: Quoter;
 
-  constructor(packageId: string, poolInfo: PoolInfo) {
+  constructor(pkgInfo: PackageInfo, poolInfo: PoolInfo) {
+    this.sourcePkgId = pkgInfo.sourcePkgId;
+    this.publishedAt = pkgInfo.publishedAt;
     this.poolInfo = poolInfo;
-    this.packageId = packageId;
 
-    this.quoter = this.createQuoter(packageId, poolInfo);
+    this.quoter = this.createQuoter(pkgInfo, poolInfo);
   }
 
-  private createQuoter(packageId: string, poolInfo: PoolInfo): Quoter {
+  private createQuoter(pkgInfo: PackageInfo, poolInfo: PoolInfo): Quoter {
     switch (poolInfo.quoterType) {
-      case `${packageId}::cpmm::CpQuoter`:
-        return new ConstantProductQuoter(packageId, poolInfo);
+      case `${pkgInfo.sourcePkgId}::cpmm::CpQuoter`:
+        return new ConstantProductQuoter(pkgInfo, poolInfo);
       default:
         throw new Error(`Unsupported quoter type: ${poolInfo.quoterType}`);
     }
@@ -67,7 +69,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
     return [lpCoin, depositResult];
   }
@@ -87,7 +89,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
     return [coinA, coinB, redeemResult];
   }
@@ -106,7 +108,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
     return quote;
   }
@@ -124,7 +126,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
     return quote;
   }
@@ -142,7 +144,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
 
     return [coinA, coinB];
@@ -161,7 +163,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       callArgs,
-      this.packageId,
+      this.publishedAt,
     );
 
     return [coinA, coinB];
@@ -183,7 +185,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -192,7 +194,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -201,7 +203,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -210,7 +212,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -219,7 +221,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -228,7 +230,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -237,7 +239,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -246,7 +248,7 @@ export class Pool {
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -254,123 +256,131 @@ export class Pool {
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.totalSwapAInAmount(tx, tradeData, this.packageId);
+    return PoolFunctions.totalSwapAInAmount(tx, tradeData, this.publishedAt);
   }
 
   public viewTotalSwapBOutAmount(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.totalSwapBOutAmount(tx, tradeData, this.packageId);
+    return PoolFunctions.totalSwapBOutAmount(tx, tradeData, this.publishedAt);
   }
 
   public viewTotalSwapAOutAmount(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.totalSwapAOutAmount(tx, tradeData, this.packageId);
+    return PoolFunctions.totalSwapAOutAmount(tx, tradeData, this.publishedAt);
   }
 
   public viewTotalSwapBInAmount(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.totalSwapBInAmount(tx, tradeData, this.packageId);
+    return PoolFunctions.totalSwapBInAmount(tx, tradeData, this.publishedAt);
   }
 
   public viewProtocolFeesA(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.protocolFeesA(tx, tradeData, this.packageId);
+    return PoolFunctions.protocolFeesA(tx, tradeData, this.publishedAt);
   }
 
   public viewProtocolFeesB(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.protocolFeesB(tx, tradeData, this.packageId);
+    return PoolFunctions.protocolFeesB(tx, tradeData, this.publishedAt);
   }
 
   public viewPoolFeesA(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.poolFeesA(tx, tradeData, this.packageId);
+    return PoolFunctions.poolFeesA(tx, tradeData, this.publishedAt);
   }
 
   public viewPoolFeesB(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.poolFeesB(tx, tradeData, this.packageId);
+    return PoolFunctions.poolFeesB(tx, tradeData, this.publishedAt);
   }
 
   public viewMinimumLiquidity(tx: Transaction): TransactionArgument {
-    return PoolFunctions.minimumLiquidity(tx, this.packageId);
+    return PoolFunctions.minimumLiquidity(tx, this.publishedAt);
   }
 
   public viewSwapResultUser(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.swapResultUser(tx, swapResult, this.packageId);
+    return PoolFunctions.swapResultUser(tx, swapResult, this.publishedAt);
   }
 
   public viewSwapResultPoolId(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.swapResultPoolId(tx, swapResult, this.packageId);
+    return PoolFunctions.swapResultPoolId(tx, swapResult, this.publishedAt);
   }
 
   public viewSwapResultAmountIn(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.swapResultAmountIn(tx, swapResult, this.packageId);
+    return PoolFunctions.swapResultAmountIn(tx, swapResult, this.publishedAt);
   }
 
   public viewSwapResultAmountOut(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.swapResultAmountOut(tx, swapResult, this.packageId);
+    return PoolFunctions.swapResultAmountOut(tx, swapResult, this.publishedAt);
   }
 
   public viewSwapResultProtocolFees(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.swapResultProtocolFees(tx, swapResult, this.packageId);
+    return PoolFunctions.swapResultProtocolFees(
+      tx,
+      swapResult,
+      this.publishedAt,
+    );
   }
 
   public viewSwapResultPoolFees(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.swapResultPoolFees(tx, swapResult, this.packageId);
+    return PoolFunctions.swapResultPoolFees(tx, swapResult, this.publishedAt);
   }
 
   public viewSwapResultA2b(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.swapResultA2b(tx, swapResult, this.packageId);
+    return PoolFunctions.swapResultA2b(tx, swapResult, this.publishedAt);
   }
 
   public viewDepositResultUser(
     tx: Transaction,
     depositResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.depositResultUser(tx, depositResult, this.packageId);
+    return PoolFunctions.depositResultUser(tx, depositResult, this.publishedAt);
   }
 
   public viewDepositResultPoolId(
     tx: Transaction,
     depositResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.depositResultPoolId(tx, depositResult, this.packageId);
+    return PoolFunctions.depositResultPoolId(
+      tx,
+      depositResult,
+      this.publishedAt,
+    );
   }
 
   public viewDepositResultDepositA(
@@ -380,7 +390,7 @@ export class Pool {
     return PoolFunctions.depositResultDepositA(
       tx,
       depositResult,
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -391,7 +401,7 @@ export class Pool {
     return PoolFunctions.depositResultDepositB(
       tx,
       depositResult,
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -399,21 +409,25 @@ export class Pool {
     tx: Transaction,
     depositResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.depositResultMintLp(tx, depositResult, this.packageId);
+    return PoolFunctions.depositResultMintLp(
+      tx,
+      depositResult,
+      this.publishedAt,
+    );
   }
 
   public viewRedeemResultUser(
     tx: Transaction,
     redeemResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.redeemResultUser(tx, redeemResult, this.packageId);
+    return PoolFunctions.redeemResultUser(tx, redeemResult, this.publishedAt);
   }
 
   public viewRedeemResultPoolId(
     tx: Transaction,
     redeemResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.redeemResultPoolId(tx, redeemResult, this.packageId);
+    return PoolFunctions.redeemResultPoolId(tx, redeemResult, this.publishedAt);
   }
 
   public viewRedeemResultWithdrawA(
@@ -423,7 +437,7 @@ export class Pool {
     return PoolFunctions.redeemResultWithdrawA(
       tx,
       redeemResult,
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -434,7 +448,7 @@ export class Pool {
     return PoolFunctions.redeemResultWithdrawB(
       tx,
       redeemResult,
-      this.packageId,
+      this.publishedAt,
     );
   }
 
@@ -442,6 +456,6 @@ export class Pool {
     tx: Transaction,
     redeemResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.redeemResultBurnLp(tx, redeemResult, this.packageId);
+    return PoolFunctions.redeemResultBurnLp(tx, redeemResult, this.publishedAt);
   }
 }

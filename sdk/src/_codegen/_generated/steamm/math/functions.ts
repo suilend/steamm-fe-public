@@ -70,23 +70,6 @@ export function minNonZero(
     })
 }
 
-export interface SafeCompareMulU64Args {
-    a1: bigint | TransactionArgument; b1: bigint | TransactionArgument; a2: bigint | TransactionArgument; b2: bigint | TransactionArgument
-}
-
-export function safeCompareMulU64(
-    tx: Transaction,
-    args: SafeCompareMulU64Args,
-    publishedAt: string = PUBLISHED_AT
-) {
-    return tx.moveCall({
-        target: `${publishedAt}::math::safe_compare_mul_u64`,
-        arguments: [
-            pure(tx, args.a1, `u64`), pure(tx, args.b1, `u64`), pure(tx, args.a2, `u64`), pure(tx, args.b2, `u64`)
-        ],
-    })
-}
-
 export interface SafeMulDivArgs {
     x: bigint | TransactionArgument; y: bigint | TransactionArgument; z: bigint | TransactionArgument
 }

@@ -13,7 +13,7 @@ export function quoteDeposit(
     publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
-        target: `${publishedAt}::script_v1::quote_deposit`,
+        target: `${publishedAt}::pool_script::quote_deposit`,
         typeArguments: typeArgs,
         arguments: [
             obj(tx, args.pool), obj(tx, args.bankA), obj(tx, args.bankB), obj(tx, args.lendingMarket), pure(tx, args.maxA, `u64`), pure(tx, args.maxB, `u64`), obj(tx, args.clock)
@@ -32,7 +32,7 @@ export function quoteRedeem(
     publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
-        target: `${publishedAt}::script_v1::quote_redeem`,
+        target: `${publishedAt}::pool_script::quote_redeem`,
         typeArguments: typeArgs,
         arguments: [
             obj(tx, args.pool), obj(tx, args.bankA), obj(tx, args.bankB), obj(tx, args.lendingMarket), pure(tx, args.lpTokens, `u64`), obj(tx, args.clock)
@@ -51,7 +51,7 @@ export function depositLiquidity(
     publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
-        target: `${publishedAt}::script_v1::deposit_liquidity`,
+        target: `${publishedAt}::pool_script::deposit_liquidity`,
         typeArguments: typeArgs,
         arguments: [
             obj(tx, args.pool), obj(tx, args.bankA), obj(tx, args.bankB), obj(tx, args.lendingMarket), obj(tx, args.coinA), obj(tx, args.coinB), pure(tx, args.maxA, `u64`), pure(tx, args.maxB, `u64`), obj(tx, args.clock)
@@ -70,7 +70,7 @@ export function redeemLiquidity(
     publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
-        target: `${publishedAt}::script_v1::redeem_liquidity`,
+        target: `${publishedAt}::pool_script::redeem_liquidity`,
         typeArguments: typeArgs,
         arguments: [
             obj(tx, args.pool), obj(tx, args.bankA), obj(tx, args.bankB), obj(tx, args.lendingMarket), obj(tx, args.lpTokens), pure(tx, args.minA, `u64`), pure(tx, args.minB, `u64`), obj(tx, args.clock)
@@ -89,7 +89,7 @@ export function cpmmSwap(
     publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
-        target: `${publishedAt}::script_v1::cpmm_swap`,
+        target: `${publishedAt}::pool_script::cpmm_swap`,
         typeArguments: typeArgs,
         arguments: [
             obj(tx, args.pool), obj(tx, args.bankA), obj(tx, args.bankB), obj(tx, args.lendingMarket), obj(tx, args.coinA), obj(tx, args.coinB), pure(tx, args.a2B, `bool`), pure(tx, args.amountIn, `u64`), pure(tx, args.minAmountOut, `u64`), obj(tx, args.clock)
@@ -97,21 +97,17 @@ export function cpmmSwap(
     })
 }
 
-export interface DestroyOrTransferArgs {
-    btokenA: TransactionObjectInput; btokenB: TransactionObjectInput
-}
-
 export function destroyOrTransfer(
     tx: Transaction,
-    typeArgs: [string, string],
-    args: DestroyOrTransferArgs,
+    typeArg: string,
+    token: TransactionObjectInput,
     publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
-        target: `${publishedAt}::script_v1::destroy_or_transfer`,
-        typeArguments: typeArgs,
+        target: `${publishedAt}::pool_script::destroy_or_transfer`,
+        typeArguments: [typeArg],
         arguments: [
-            obj(tx, args.btokenA), obj(tx, args.btokenB)
+            obj(tx, token)
         ],
     })
 }
@@ -127,10 +123,29 @@ export function quoteCpmmSwap(
     publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
-        target: `${publishedAt}::script_v1::quote_cpmm_swap`,
+        target: `${publishedAt}::pool_script::quote_cpmm_swap`,
         typeArguments: typeArgs,
         arguments: [
             obj(tx, args.pool), obj(tx, args.bankA), obj(tx, args.bankB), obj(tx, args.lendingMarket), pure(tx, args.a2B, `bool`), pure(tx, args.amountIn, `u64`), obj(tx, args.clock)
+        ],
+    })
+}
+
+export interface ToMultiSwapRouteArgs {
+    bankX: TransactionObjectInput; bankY: TransactionObjectInput; lendingMarket: TransactionObjectInput; x2Y: boolean | TransactionArgument; amountIn: bigint | TransactionArgument; amountOut: bigint | TransactionArgument; clock: TransactionObjectInput
+}
+
+export function toMultiSwapRoute(
+    tx: Transaction,
+    typeArgs: [string, string, string, string, string],
+    args: ToMultiSwapRouteArgs,
+    publishedAt: string = PUBLISHED_AT
+) {
+    return tx.moveCall({
+        target: `${publishedAt}::pool_script::to_multi_swap_route`,
+        typeArguments: typeArgs,
+        arguments: [
+            obj(tx, args.bankX), obj(tx, args.bankY), obj(tx, args.lendingMarket), pure(tx, args.x2Y, `bool`), pure(tx, args.amountIn, `u64`), pure(tx, args.amountOut, `u64`), obj(tx, args.clock)
         ],
     })
 }

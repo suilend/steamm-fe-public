@@ -3,6 +3,8 @@ import {
   TransactionObjectInput,
 } from "@mysten/sui/transactions";
 
+// TODO: change TransactionObjectInput to TransactionArgument
+
 export interface PoolNewArgs {
   coinMetadataA: TransactionObjectInput;
   coinMetadataB: TransactionObjectInput;
@@ -19,19 +21,14 @@ export interface PoolSwapArgs {
   minAmountOut: bigint | TransactionArgument;
 }
 
-export interface PoolExecuteSwapArgs {
-  intent: TransactionObjectInput;
-  minAmountOut: bigint | TransactionArgument;
-}
-
 export interface PoolQuoteSwapArgs {
   amountIn: bigint | TransactionArgument;
   a2b: boolean | TransactionArgument;
 }
 
 export interface PoolDepositLiquidityArgs {
-  coinA: TransactionObjectInput;
-  coinB: TransactionObjectInput;
+  coinA: TransactionArgument;
+  coinB: TransactionArgument;
   maxA: bigint | TransactionArgument;
   maxB: bigint | TransactionArgument;
 }

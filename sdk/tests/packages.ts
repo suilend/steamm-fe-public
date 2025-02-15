@@ -1,7 +1,23 @@
 // These addresses are filled automatically by the test pipeline
-export const LIQUID_STAKING_PKG_ID = "";
-export const WORMHOLE_PKG_ID = "";
-export const SPRUNGSUI_PKG_ID = "";
-export const PYTH_PKG_ID = "";
-export const SUILEND_PKG_ID = "";
-export const STEAMM_PKG_ID = "";
+export const LIQUID_STAKING_PKG_ID =
+  "0x15c0123fbd2f91f043c0c1e1af0c585681cdbc1dc88df238b5cc357d2c0e9bd9";
+export const WORMHOLE_PKG_ID =
+  "0xb112f0896b8295ce7202d3383540cc4e53eaf7ff116fdb1db358b956ae028486";
+export const SPRUNGSUI_PKG_ID =
+  "0xf4dba6e5c8567f33a506e1516effde278ae83018a9186ffe01e375495287fb6b";
+export const PYTH_PKG_ID =
+  "0x4c666d35a93c85ec001fadc47b26aba71e124b6c49879bdf147a110961597af5";
+export const SUILEND_PKG_ID =
+  "0x643757ef5340120465a319173090ce71a392490314e008e4f7a104999af356c8";
+export const STEAMM_PKG_ID =
+  "0x4329c86552c182dd08fc203456622f91b52a2b1948daebe9d5efe38ce77a430b";
+export const STEAMM_SCRIPT_PKG_ID =
+  "0xee077195f76b926538756701a04ff18cfb2076c3d55a84c0347fff6a183541dd";
+export const REGISTRY_ID =
+  "0x2de2099e737de9b11b2caa931ce76ad00e76f01fc5a4d5bea148a7c28b610ab2";
+export const GLOBAL_ADMIN_ID =
+  "0x52e3c49fd57841c3ea074032e9c58d395247811092794f2e0179f593575af089";
+export const LENDING_MARKET_ID =
+  "0x5a05d78620903fa00d3741b7df02c941cb9d5c797ba8cb1e92f78a576c313fd2";
+export const LENDING_MARKET_TYPE =
+  "0x4329c86552c182dd08fc203456622f91b52a2b1948daebe9d5efe38ce77a430b::setup::LENDING_MARKET";

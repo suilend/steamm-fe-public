@@ -347,7 +347,7 @@ export function minimumLiquidity(
 }
 
 export interface MintBtokensArgs {
-    bank: TransactionObjectInput; lendingMarket: TransactionObjectInput; coins: TransactionObjectInput; coinAmount: bigint | TransactionArgument; clock: TransactionObjectInput
+    bank: TransactionObjectInput; lendingMarket: TransactionObjectInput; coinT: TransactionObjectInput; coinAmount: bigint | TransactionArgument; clock: TransactionObjectInput
 }
 
 export function mintBtokens(
@@ -360,7 +360,7 @@ export function mintBtokens(
         target: `${publishedAt}::bank::mint_btokens`,
         typeArguments: typeArgs,
         arguments: [
-            obj(tx, args.bank), obj(tx, args.lendingMarket), obj(tx, args.coins), pure(tx, args.coinAmount, `u64`), obj(tx, args.clock)
+            obj(tx, args.bank), obj(tx, args.lendingMarket), obj(tx, args.coinT), pure(tx, args.coinAmount, `u64`), obj(tx, args.clock)
         ],
     })
 }

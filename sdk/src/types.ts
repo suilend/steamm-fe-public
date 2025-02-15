@@ -1,5 +1,10 @@
 import { SuiAddressType } from "./utils";
 
+export interface PackageInfo {
+  sourcePkgId: string;
+  publishedAt: string;
+}
+
 export type SuiObjectIdType = string;
 
 /**
@@ -108,8 +113,7 @@ export function extractPoolInfo(events: EventData<NewPoolEvent>[]): PoolInfo[] {
 
 export type SteammConfigs = {
   registryId: SuiObjectIdType;
-  globalConfigId: SuiObjectIdType;
-  adminCapId: SuiObjectIdType;
+  globalAdmin: SuiObjectIdType;
 };
 
 export type SuilendConfigs = {
@@ -120,6 +124,39 @@ export type SuilendConfigs = {
 export type BankList = {
   [key: string]: BankInfo;
 };
+
+export function getBankFromBToken(
+  bankList: BankList,
+  bTokenType: string,
+): BankInfo {
+  const bankInfos = Object.values(bankList);
+  const bankInfo = bankInfos.find(
+    (bankInfo) => bankInfo.btokenType === bTokenType,
+  );
+
+  if (!bankInfo) {
+    throw new Error(
+      `BankInfo not found for the given bTokenType: ${bTokenType}`,
+    );
+  }
+
+  return bankInfo;
+}
+
+export function getBankFromUnderlying(
+  bankList: BankList,
+  coinType: string,
+): BankInfo {
+  const bankInfo = bankList[coinType];
+
+  if (!bankInfo) {
+    throw new Error(
+      `BankInfo not found for the given underlying coin: ${coinType}`,
+    );
+  }
+
+  return bankInfo;
+}
 
 export type PoolInfo = {
   poolId: SuiObjectIdType;

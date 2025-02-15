@@ -15,15 +15,17 @@ import { SteammSDK } from "../src/sdk";
 import { BankList, PoolInfo } from "../src/types";
 import { BankInfo } from "../src/types";
 
-import { STEAMM_PKG_ID, SUILEND_PKG_ID } from "./packages";
+import {
+  GLOBAL_ADMIN_ID,
+  LENDING_MARKET_ID,
+  LENDING_MARKET_TYPE,
+  REGISTRY_ID,
+  STEAMM_PKG_ID,
+  STEAMM_SCRIPT_PKG_ID,
+  SUILEND_PKG_ID,
+} from "./packages";
 
 dotenv.config();
-
-// const suiPrivateKey = process.env.PRIVATE_KEY;
-
-// if (!suiPrivateKey) {
-//   throw new Error("PRIVATE_KEY is missing in the .env file");
-// }
 
 export function test() {
   describe("test depost, swap and redeem", () => {
@@ -55,10 +57,22 @@ export function test() {
         steamm_config: {
           package_id: STEAMM_PKG_ID,
           published_at: STEAMM_PKG_ID,
+          config: {
+            registryId: REGISTRY_ID,
+            globalAdmin: GLOBAL_ADMIN_ID,
+          },
         },
         suilend_config: {
           package_id: SUILEND_PKG_ID,
           published_at: SUILEND_PKG_ID,
+          config: {
+            lendingMarketId: LENDING_MARKET_ID,
+            lendingMarketType: LENDING_MARKET_TYPE,
+          },
+        },
+        steamm_script_config: {
+          package_id: STEAMM_SCRIPT_PKG_ID,
+          published_at: STEAMM_SCRIPT_PKG_ID,
         },
       });
       pools = await sdk.getPools();

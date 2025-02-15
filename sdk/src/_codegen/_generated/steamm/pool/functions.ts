@@ -156,6 +156,19 @@ export function assertLiquidity(
     })
 }
 
+export function assertSwapFeeBps(
+    tx: Transaction,
+    swapFeeBps: bigint | TransactionArgument,
+    publishedAt: string = PUBLISHED_AT
+) {
+    return tx.moveCall({
+        target: `${publishedAt}::pool::assert_swap_fee_bps`,
+        arguments: [
+            pure(tx, swapFeeBps, `u64`)
+        ],
+    })
+}
+
 export function balanceAmountA(
     tx: Transaction,
     typeArgs: [string, string, string, string],

@@ -1,2 +1,3 @@
 [packages]
 steamm = { local = "temp/git/contracts/steamm/" }
+steamm_scripts = { local = "temp/git/contracts/steamm_scripts/" }
