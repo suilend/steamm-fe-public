@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from "bun:test";
 
+import { test as errTest } from "./err.test";
 import { test as routerTest } from "./router.test";
 import { test as testonTest } from "./teston.test";
 import { test as unitTest } from "./unit.test";
@@ -9,7 +10,5 @@ describe("Test Suite", () => {
   // testonTest();
   // unitTest();
   routerTest();
-  // Add more test imports and calls here
-  // import { test as anotherTest } from './another.test';
-  // anotherTest();
+  // errTest();
 });

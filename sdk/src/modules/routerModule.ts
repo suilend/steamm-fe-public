@@ -87,9 +87,9 @@ export class RouterModule implements IModule {
               swapResults[i - 1],
               this.sdk.sdkOptions.steamm_config.published_at,
             );
-      // const minAmountOut =
-      //   i === args.route.length - 1 ? args.quote.amountOut : BigInt(0); // TODO: add some slippage param for the last swap
-      const minAmountOut = BigInt(0); // Fix the quote
+      const minAmountOut =
+        i === args.route.length - 1 ? args.quote.amountOut : BigInt(0); // TODO: add some slippage param for the last swap
+      // const minAmountOut = BigInt(0); // Fix the quote
 
       console.log("args.quote.amountOut: ", args.quote.amountOut);
       console.log("Min Amount out: ", minAmountOut);
@@ -115,7 +115,6 @@ export class RouterModule implements IModule {
     );
 
     for (const [btoken, bankInfo] of zip(btokens, bankInfos)) {
-      console.log("Destroying btoken:", btoken);
       this.destroyOrTransfer(tx, bankInfo.btokenType, btoken);
     }
   }
@@ -146,7 +145,6 @@ export class RouterModule implements IModule {
     // TODO: programmable tx is better
     const quotes = [];
     for (const route of routes) {
-      console.log("Getting quote for route");
       const quote = await this.quoteSwapRoute(
         tx,
         coinPair.coinIn,
@@ -161,7 +159,6 @@ export class RouterModule implements IModule {
     let bestQuoteIndex = 0;
     let maxAmountOut = BigInt(0);
 
-    console.log("Checking best quote");
     quotes.forEach((quote, index) => {
       if (quote.amountOut > maxAmountOut) {
         maxAmountOut = quote.amountOut;
@@ -169,7 +166,6 @@ export class RouterModule implements IModule {
       }
     });
 
-    console.log("BEst quote is...");
     // Return the route with the best quote
     return { route: routes[bestQuoteIndex], quote: quotes[bestQuoteIndex] };
   }
@@ -337,7 +333,6 @@ export class RouterModule implements IModule {
 
     let i = 0;
     for (const coinType of coinTypes) {
-      console.log("coinzzz: ", coinType);
       // TOODO: revisit
       const bankInfo =
         bankData.find((bank) => bank.btokenType === coinType) ??
