@@ -58,8 +58,8 @@ export default function SlippagePopover() {
       trigger={
         <button
           className={cn(
-            "group flex h-6 flex-row items-center gap-1 rounded-[12px] border px-2 transition-colors",
-            isOpen ? "cursor-default bg-border" : "hover:bg-border",
+            "group flex h-6 flex-row items-center gap-1.5 rounded-[12px] border px-2 transition-colors",
+            isOpen ? "cursor-default bg-border" : "hover:bg-border/50",
           )}
         >
           <SlidersHorizontal
@@ -72,7 +72,7 @@ export default function SlippagePopover() {
           />
           <p
             className={cn(
-              "!text-p2 transition-colors",
+              "!text-p3 transition-colors",
               isOpen
                 ? "text-foreground"
                 : "text-secondary-foreground group-hover:text-foreground",
@@ -118,6 +118,7 @@ export default function SlippagePopover() {
 
         <div className="flex w-full flex-col gap-2">
           <p className="text-p3 text-secondary-foreground">Custom</p>
+
           <div className="relative w-full">
             <input
               className="relative z-[1] h-10 w-full min-w-0 rounded-md border bg-input px-3 text-p1 text-foreground placeholder:text-tertiary-foreground focus-visible:border-focus focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
