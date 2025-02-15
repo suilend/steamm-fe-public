@@ -5,18 +5,17 @@ import {
   TransactionResult,
 } from "@mysten/sui/transactions";
 
-import {
-  PoolFunctions,
-  PoolScriptFunctions,
-  QuoteFunctions,
-} from "../_codegen";
-import { Bank, BankScript, PoolScript, SwapQuote } from "../base";
+import { PoolFunctions, QuoteFunctions } from "../_codegen";
+import { Bank, BankScript, SwapQuote } from "../base";
 import { MultiSwapQuote, castMultiSwapQuote } from "../base/pool/poolTypes";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
-import { BankInfo, BankList, PoolInfo } from "../types";
-
-import { SwapArgs } from "./poolModule";
+import {
+  BankInfo,
+  BankList,
+  getBankFromBToken,
+  getBankFromUnderlying,
+} from "../types";
 
 export interface CoinPair {
   coinIn: string;
@@ -47,22 +46,22 @@ export class RouterModule implements IModule {
     return this._sdk;
   }
 
-  public async swapRoute(
+  public async swapWithRoute(
     tx: Transaction,
-    args: { swapArgs: SwapArgs; route: Route; quote: MultiSwapQuote },
+    args: {
+      coinIn: TransactionObjectInput;
+      route: Route;
+      quote: MultiSwapQuote;
+    },
   ) {
     const bankList = await this.sdk.getBanks();
     const pools = await this.sdk.getPools();
-
-    const coinIn: TransactionObjectInput = args.swapArgs.a2b
-      ? args.swapArgs.coinA
-      : args.swapArgs.coinB;
 
     const [btokens, bankInfos] = this.mintBTokens(
       tx,
       bankList,
       args.route,
-      coinIn,
+      args.coinIn,
       args.quote.amountIn,
     );
 
@@ -71,10 +70,10 @@ export class RouterModule implements IModule {
 
     for (const hop of args.route) {
       const poolInfo = pools.find((pool) => pool.poolId === hop.poolId)!;
-      const bankInfoA = bankList[hop.coinTypeA];
-      const bankInfoB = bankList[hop.coinTypeB];
+      const bankInfoA = getBankFromBToken(bankList, hop.coinTypeA);
+      const bankInfoB = getBankFromBToken(bankList, hop.coinTypeB);
 
-      const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+      const pool = this.sdk.getPool(poolInfo);
 
       // if first
       const coinA = hop.a2b ? btokens[i] : btokens[i + 1];
@@ -88,10 +87,14 @@ export class RouterModule implements IModule {
               swapResults[i - 1],
               this.sdk.sdkOptions.steamm_config.published_at,
             );
-      const minAmountOut =
-        i === args.route.length - 1 ? args.quote.amountOut : BigInt(0); // TODO: add some slippage param for the last swap
+      // const minAmountOut =
+      //   i === args.route.length - 1 ? args.quote.amountOut : BigInt(0); // TODO: add some slippage param for the last swap
+      const minAmountOut = BigInt(0); // Fix the quote
 
-      const swapResult = poolScript.swap(tx, {
+      console.log("args.quote.amountOut: ", args.quote.amountOut);
+      console.log("Min Amount out: ", minAmountOut);
+
+      const swapResult = pool.swap(tx, {
         coinA,
         coinB,
         a2b: hop.a2b,
@@ -112,6 +115,7 @@ export class RouterModule implements IModule {
     );
 
     for (const [btoken, bankInfo] of zip(btokens, bankInfos)) {
+      console.log("Destroying btoken:", btoken);
       this.destroyOrTransfer(tx, bankInfo.btokenType, btoken);
     }
   }
@@ -120,15 +124,21 @@ export class RouterModule implements IModule {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
 
-    const bTokenIn = bankList[coinPair.coinIn].btokenType;
-    const bTokenOut = bankList[coinPair.coinOut].btokenType;
+    const bTokenIn = getBankFromUnderlying(
+      bankList,
+      coinPair.coinIn,
+    ).btokenType;
+    const bTokenOut = getBankFromUnderlying(
+      bankList,
+      coinPair.coinOut,
+    ).btokenType;
 
     return findAllRoutes(bTokenIn, bTokenOut, pools);
   }
 
   public async getBestSwapRoute(
     coinPair: CoinPair,
-    args: SwapArgs,
+    amountIn: bigint,
   ): Promise<{ route: Route; quote: MultiSwapQuote }> {
     const tx = new Transaction();
     const routes = await this.findSwapRoutes(coinPair);
@@ -136,12 +146,13 @@ export class RouterModule implements IModule {
     // TODO: programmable tx is better
     const quotes = [];
     for (const route of routes) {
+      console.log("Getting quote for route");
       const quote = await this.quoteSwapRoute(
         tx,
         coinPair.coinIn,
         coinPair.coinOut,
         route,
-        args,
+        amountIn,
       );
       quotes.push(quote);
     }
@@ -150,6 +161,7 @@ export class RouterModule implements IModule {
     let bestQuoteIndex = 0;
     let maxAmountOut = BigInt(0);
 
+    console.log("Checking best quote");
     quotes.forEach((quote, index) => {
       if (quote.amountOut > maxAmountOut) {
         maxAmountOut = quote.amountOut;
@@ -157,6 +169,7 @@ export class RouterModule implements IModule {
       }
     });
 
+    console.log("BEst quote is...");
     // Return the route with the best quote
     return { route: routes[bestQuoteIndex], quote: quotes[bestQuoteIndex] };
   }
@@ -166,31 +179,44 @@ export class RouterModule implements IModule {
     coinTypeIn: string,
     coinTypeOut: string,
     route: Route,
-    args: SwapArgs,
+    amountIn: bigint,
   ): Promise<MultiSwapQuote> {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
 
-    const bankInfoX = bankList[coinTypeIn];
-    const bankInfoY = bankList[coinTypeOut];
+    const bankInfoX = getBankFromUnderlying(bankList, coinTypeIn);
+    const bankInfoY = getBankFromUnderlying(bankList, coinTypeOut);
 
     const bankX = new Bank(this.sdk.packageInfo(), bankInfoX);
     const bankY = new Bank(this.sdk.packageInfo(), bankInfoY);
+    const dummyTx = new Transaction();
 
+    console.log("getBTokenAmountInForQuote");
     const firstBTokenAmountIn = this.getBTokenAmountInForQuote(
       tx,
       bankX,
       bankY,
       route[0].a2b, // first hop direction
-      args.amountIn,
+      amountIn,
     );
 
-    let nextBTokenAmountIn = firstBTokenAmountIn;
+    const firstBTokenAmountInDummy = this.getBTokenAmountInForQuote(
+      dummyTx,
+      bankX,
+      bankY,
+      route[0].a2b, // first hop direction
+      amountIn,
+    );
+
+    let nextBTokenAmountIn: TransactionResult = firstBTokenAmountIn;
+
+    console.log("route: ", route);
 
     for (const hop of route) {
       const poolInfo = pools.find((pool) => pool.poolId === hop.poolId)!;
-      const bankInfoA = bankList[hop.coinTypeA];
-      const bankInfoB = bankList[hop.coinTypeB];
+
+      const bankInfoA = getBankFromBToken(bankList, hop.coinTypeA);
+      const bankInfoB = getBankFromBToken(bankList, hop.coinTypeB);
 
       const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -198,6 +224,32 @@ export class RouterModule implements IModule {
         a2b: hop.a2b,
         amountIn: nextBTokenAmountIn,
       });
+
+      console.log("HOP: ", hop);
+
+      // const quoteRes = await this.sdk.Pool.quoteSwap(
+      //   {
+      //     pool: poolScript.pool.poolInfo.poolId,
+      //     a2b: true,
+      //     amountIn: firstBTokenAmountInDummy,
+      //   },
+      //   dummyTx,
+      // );
+
+      // console.log("quote res:", quoteRes);
+
+      // const quoteRes = await this.sdk.Pool.quoteSwap(
+      //   {
+      //     pool: poolScript.pool.poolInfo.poolId,
+      //     a2b: true,
+      //     amountIn: firstBTokenAmountInDummy,
+      //   },
+      //   dummyTx,
+      // );
+
+      // console.log("quote res:", quoteRes);
+
+      // nextBTokenAmountIn = tx.pure.u64(BigInt("49253"));
 
       nextBTokenAmountIn = QuoteFunctions.amountOut(
         tx,
@@ -208,11 +260,14 @@ export class RouterModule implements IModule {
 
     const bankScript = this.getBankScript(bankInfoX, bankInfoY);
 
+    console.log("toMultiSwapRoute");
     const multiSwapQuote = bankScript.toMultiSwapRoute(tx, {
       x2y: true, // it's always true
       amountIn: firstBTokenAmountIn,
       amountOut: nextBTokenAmountIn,
     });
+
+    console.log("THE QUOTE TX: ", JSON.stringify(tx.getData()));
 
     // TODO: fix script package ID
     return castMultiSwapQuote(
@@ -235,11 +290,14 @@ export class RouterModule implements IModule {
       {
         sender: this.sdk.senderAddress,
         transactionBlock: tx,
+        additionalArgs: { showRawTxnDataAndEffects: true },
       },
     );
 
     // console.log(inspectResults)
     if (inspectResults.error) {
+      console.log(inspectResults);
+      console.log(JSON.stringify(tx.getData()));
       throw new Error("DevInspect Failed");
     }
 
@@ -249,7 +307,8 @@ export class RouterModule implements IModule {
 
   private getBankScript(bankInfoA: BankInfo, bankInfoB: BankInfo): BankScript {
     return new BankScript(
-      this.sdk.sdkOptions.steamm_config.package_id,
+      this.sdk.packageInfo(),
+      this.sdk.scriptPackageInfo(),
       bankInfoA,
       bankInfoB,
     );
@@ -278,6 +337,8 @@ export class RouterModule implements IModule {
 
     let i = 0;
     for (const coinType of coinTypes) {
+      console.log("coinzzz: ", coinType);
+      // TOODO: revisit
       const bankInfo =
         bankData.find((bank) => bank.btokenType === coinType) ??
         (() => {
@@ -311,27 +372,35 @@ export class RouterModule implements IModule {
   ) {
     const bankIn = new Bank(this.sdk.packageInfo(), bankInfo);
 
-    const amountIn: TransactionResult = this.sdk.fullClient.coinValue(
+    const amount: TransactionResult = this.sdk.fullClient.coinValue(
       tx,
       tx.object(bToken),
       bankInfo.btokenType,
     );
 
-    bankIn.burnBTokens(tx, { btokens: bToken, btokenAmount: amountIn });
+    const coin = bankIn.burnBTokens(tx, {
+      btokens: bToken,
+      btokenAmount: amount,
+    });
+
+    // TODO: Merge this with the main coin - when it is coinIn, when its coinOut transfer
+    tx.transferObjects([coin], this.sdk.senderAddress);
   }
 
   public destroyOrTransfer(
     tx: Transaction,
     btokenType: string,
-    btoken: TransactionObjectInput,
-  ): TransactionArgument {
-    const quote = PoolScriptFunctions.destroyOrTransfer(
-      tx,
-      btokenType,
-      { btoken },
-      this.sdk.sdkOptions.steamm_config.package_id,
-    );
-    return quote;
+    btoken: TransactionResult,
+  ) {
+    // TODO: use destroyOrTransfer
+    // PoolScriptFunctions.destroyOrTransfer(
+    //   tx,
+    //   btokenType,
+    //   { btoken },
+    //   this.sdk.publishedAt(),
+    // );
+
+    tx.transferObjects([btoken], this.sdk.senderAddress);
   }
 
   public getBTokenAmountInForQuote(
@@ -340,7 +409,7 @@ export class RouterModule implements IModule {
     bankY: Bank,
     x2y: boolean,
     amountIn: bigint | TransactionArgument,
-  ): TransactionArgument {
+  ): TransactionResult {
     bankX.compoundInterestIfAny(tx);
     bankY.compoundInterestIfAny(tx);
 

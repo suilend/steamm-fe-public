@@ -93,7 +93,7 @@ export class PoolScript {
   public quoteSwap(
     tx: Transaction,
     args: PoolQuoteSwapArgs,
-  ): TransactionArgument {
+  ): TransactionResult {
     const callArgs = {
       pool: tx.object(this.pool.poolInfo.poolId),
       bankA: tx.object(this.bankA.bankInfo.bankId),

@@ -1,6 +1,7 @@
 import { Signer } from "@mysten/sui/cryptography";
 
 import { Bank, BankScript, Pool, PoolScript } from "./base";
+import { RouterModule } from "./modules";
 import { BankModule } from "./modules/bankModule";
 import { PoolModule } from "./modules/poolModule";
 import { RpcModule } from "./modules/rpcModule";
@@ -31,6 +32,7 @@ export type SdkOptions = {
 export class SteammSDK {
   protected _rpcModule: RpcModule;
   protected _pool: PoolModule;
+  protected _router: RouterModule;
   protected _bank: BankModule;
   protected _sdkOptions: SdkOptions;
 
@@ -45,6 +47,7 @@ export class SteammSDK {
 
     this._pool = new PoolModule(this);
     this._bank = new BankModule(this);
+    this._router = new RouterModule(this);
 
     patchFixSuiObjectId(this.sdkOptions);
   }
@@ -99,6 +102,10 @@ export class SteammSDK {
    */
   get Bank(): BankModule {
     return this._bank;
+  }
+
+  get Router(): RouterModule {
+    return this._router;
   }
 
   getPool(poolInfo: PoolInfo): Pool {

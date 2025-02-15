@@ -114,7 +114,7 @@ export class Bank {
   public toBTokens(
     tx: Transaction,
     args: { amount: bigint | TransactionArgument },
-  ): TransactionArgument {
+  ): TransactionResult {
     const callArgs = {
       bank: tx.object(this.bankInfo.bankId),
       lendingMarket: tx.object(this.bankInfo.lendingMarketId),

@@ -234,6 +234,7 @@ export function test() {
     // });
 
     it("Swap router", async () => {
+      console.log("1");
       const coinAData = await createCoinAndBankHelper(sdk, "A");
       const coinBData = await createCoinAndBankHelper(sdk, "B");
       const coinCData = await createCoinAndBankHelper(sdk, "C");
@@ -242,6 +243,7 @@ export function test() {
       // const coinFData = await createCoinAndBankHelper(sdk, "F");
 
       // get banks
+      console.log("2");
       const banks = await sdk.getBanks();
       const bankA = banks[coinAData.coinType];
       const bankB = banks[coinBData.coinType];
@@ -250,6 +252,7 @@ export function test() {
       // const bankE = banks[coinEData.coinType];
       // const bankF = banks[coinFData.coinType];
 
+      console.log("3");
       const lpAB = await createPoolHelper(sdk, coinAData, coinBData);
       const lpBC = await createPoolHelper(sdk, coinBData, coinCData);
       // const lpAD = await createPoolHelper(sdk, coinAData, coinDData);
@@ -272,33 +275,43 @@ export function test() {
         await sdk.getPools([coinBData.coinType, coinCData.coinType])
       )[0];
 
+      console.log("4");
       const depositTx = new Transaction();
 
       const coinA = mintCoin(depositTx, coinAData.coinType, coinAData.treasury);
       const coinB = mintCoin(depositTx, coinBData.coinType, coinBData.treasury);
       const coinC = mintCoin(depositTx, coinCData.coinType, coinCData.treasury);
 
-      sdk.Pool.depositLiquidityEntry(depositTx, {
+      console.log("5");
+      const x = BigInt("10000000");
+      console.log("5.1");
+
+      await sdk.Pool.depositLiquidityEntry(depositTx, {
         pool: poolAB.poolId,
         coinA: coinA,
         coinB: coinB,
         coinTypeA: coinAData.coinType,
         coinTypeB: coinBData.coinType,
-        maxA: BigInt(10000000),
-        maxB: BigInt(10000000),
+        maxA: BigInt("10000000"),
+        maxB: BigInt("10000000"),
       });
 
-      sdk.Pool.depositLiquidityEntry(depositTx, {
+      console.log("5.2");
+
+      await sdk.Pool.depositLiquidityEntry(depositTx, {
         pool: poolBC.poolId,
         coinA: coinB,
         coinB: coinC,
         coinTypeA: coinBData.coinType,
         coinTypeB: coinCData.coinType,
-        maxA: BigInt(10000000),
-        maxB: BigInt(10000000),
+        maxA: BigInt("10000000"),
+        maxB: BigInt("10000000"),
       });
 
+      console.log("5.4");
       depositTx.transferObjects([coinA, coinB, coinC], sdk.senderAddress);
+
+      console.log("5.5");
 
       const txResult = await sdk.fullClient.signAndExecuteTransaction({
         transaction: depositTx,
@@ -309,7 +322,59 @@ export function test() {
         },
       });
 
-      console.log(txResult);
+      console.log("6");
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // const routes = await sdk.Router.findSwapRoutes({
+      //   coinIn: coinAData.coinType,
+      //   coinOut: coinCData.coinType,
+      // });
+
+      // console.log(routes);
+
+      console.log("Getting routes");
+      const { route, quote } = await sdk.Router.getBestSwapRoute(
+        {
+          coinIn: coinAData.coinType,
+          coinOut: coinCData.coinType,
+        },
+        BigInt("50000"),
+      );
+
+      console.log("quoteX:", quote);
+
+      // quoteX: {
+      //   amountIn: 50000n,
+      //   amountOut: 49253n,
+      // }
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const swapTx = new Transaction();
+      const coinIn = mintCoin(swapTx, coinAData.coinType, coinAData.treasury);
+
+      await sdk.Router.swapWithRoute(swapTx, {
+        coinIn: coinIn,
+        route,
+        quote,
+      });
+
+      swapTx.transferObjects([coinIn], sdk.senderAddress);
+
+      console.log("data after");
+      console.log(JSON.stringify(swapTx.getData()));
+
+      const swapTxResult = await sdk.fullClient.signAndExecuteTransaction({
+        transaction: swapTx,
+        signer: keypair,
+        options: {
+          showEffects: true,
+          showEvents: true,
+        },
+      });
+
+      console.log(swapTxResult);
     });
   });
 }

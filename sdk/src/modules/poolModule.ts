@@ -135,8 +135,10 @@ export class PoolModule implements IModule {
     return swapResult;
   }
 
-  public async quoteSwap(args: QuoteSwapArgs): Promise<SwapQuote> {
-    const tx = new Transaction();
+  public async quoteSwap(
+    args: QuoteSwapArgs,
+    tx: Transaction = new Transaction(),
+  ): Promise<SwapQuote> {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
 
@@ -292,6 +294,7 @@ export class PoolModule implements IModule {
 
     // console.log(inspectResults)
     if (inspectResults.error) {
+      console.log(inspectResults);
       throw new Error("DevInspect Failed");
     }
 
