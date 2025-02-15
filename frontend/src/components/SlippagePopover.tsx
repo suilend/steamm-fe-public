@@ -117,7 +117,7 @@ export default function SlippagePopover() {
         </div>
 
         <div className="flex w-full flex-col gap-2">
-          <p className="text-p3 text-secondary-foreground">Custom</p>
+          <p className="text-p2 text-secondary-foreground">Custom</p>
 
           <div className="relative w-full">
             <input
