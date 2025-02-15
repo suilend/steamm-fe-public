@@ -318,3 +318,19 @@ if [ "$INITIAL_ENV" != "localnet" ]; then
     echo "Switching back to previous environment"
     sui client --client.config sui/client.yaml switch --env "$INITIAL_ENV"
 fi
+
+if [ "$CI" = false ]; then
+    # Export temporary private key to env - needed for tests
+    ACTIVE_ADDRESS=$(sui client --client.config sui/client.yaml addresses --json | jq -r '.activeAddress')
+    echo "Active address: $ACTIVE_ADDRESS"
+    TEMP_KEY=$(sui keytool --keystore-path sui/sui.keystore export --key-identity $ACTIVE_ADDRESS --json | jq -r '.exportedPrivateKey')
+
+    # Replace the TEMP_KEY variable in the .env file
+    if grep -q '^TEMP_KEY=' .env; then
+        sed -i '' "s|^TEMP_KEY=.*|TEMP_KEY=\"$TEMP_KEY\"|" .env
+    else
+        printf "\nTEMP_KEY=\"%s\"\n" $TEMP_KEY >> .env
+    fi
+else
+    ./bin/unpublocal.sh --ci
+fi

@@ -6,9 +6,10 @@ import Container from "@/components/Container";
 import Logo from "@/components/Logo";
 import {
   ADMIN_URL,
-  POOLS_URL,
+  POOL_URL_PREFIX,
   PORTFOLIO_URL,
   ROOT_URL,
+  SWAP_URL,
 } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
@@ -21,9 +22,9 @@ type NavItem = {
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  { url: ROOT_URL, title: "Swap" },
-  { url: POOLS_URL, startsWithUrl: POOLS_URL, title: "Pools" },
+  { url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX },
   { url: PORTFOLIO_URL, title: "Portfolio" },
+  { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
 ];
 export const ADMIN_NAV_ITEM: NavItem = {
   url: ADMIN_URL,
@@ -67,9 +68,10 @@ export default function Nav() {
               {/* Items */}
               <div className="flex flex-row gap-6">
                 {navItems.map((item) => {
-                  const isSelected = item.startsWithUrl
-                    ? router.asPath.startsWith(item.startsWithUrl)
-                    : router.asPath === item.url;
+                  const isSelected =
+                    router.asPath === item.url ||
+                    (item.startsWithUrl &&
+                      router.asPath.startsWith(item.startsWithUrl));
 
                   const isDisabled = !item.url;
                   const Component = !isDisabled ? Link : "div";

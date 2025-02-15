@@ -1,19 +1,21 @@
-import { CSSProperties, PropsWithChildren, useMemo, useState } from "react";
+import { CSSProperties, useMemo, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
-import { ArrowDown, ArrowUp } from "lucide-react";
 
-import PoolGroupRow from "@/components/PoolGroupRow";
+import PoolGroupRow from "@/components/pools/PoolGroupRow";
+import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Column = "pair" | "type" | "tvlUsd" | "volumeUsd" | "aprPercent";
+type Column = "pair" | "type" | "tvlUsd" | "volumeUsd_24h" | "aprPercent";
+type SortableColumn = "tvlUsd" | "volumeUsd_24h" | "aprPercent";
+
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
     flex: 2,
-    minWidth: 250, // px
+    minWidth: 280, // px
     paddingLeft: 4 * 5, // px
   },
   type: {
@@ -27,7 +29,7 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
-  volumeUsd: {
+  volumeUsd_24h: {
     flex: 1,
     minWidth: 120, // px
     justifyContent: "end",
@@ -41,65 +43,20 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
 };
 
-type SortableColumn = "tvlUsd" | "volumeUsd" | "aprPercent";
-enum SortDirection {
-  ASC = "asc",
-  DESC = "desc",
-}
-type SortState = { column: SortableColumn; direction: SortDirection };
-
-interface HeaderColumnProps extends PropsWithChildren {
-  id: Column;
-  sortState?: SortState;
-  toggleSortByColumn?: (column: SortableColumn) => void;
-}
-
-function HeaderColumn({
-  id,
-  sortState,
-  toggleSortByColumn,
-  children,
-}: HeaderColumnProps) {
-  const isSortable = toggleSortByColumn !== undefined;
-
-  return (
-    <div
-      className={cn(
-        "flex h-full flex-row items-center",
-        isSortable && "group cursor-pointer gap-1.5",
-      )}
-      style={columnStyleMap[id]}
-      onClick={
-        isSortable ? () => toggleSortByColumn(id as SortableColumn) : undefined
-      }
-    >
-      {sortState?.column === id &&
-        (sortState.direction === SortDirection.DESC ? (
-          <ArrowDown className="h-4 w-4 text-button-2-foreground" />
-        ) : (
-          <ArrowUp className="h-4 w-4 text-button-2-foreground" />
-        ))}
-      <p
-        className={cn(
-          "!text-p2 text-secondary-foreground transition-colors",
-          sortState?.column === id
-            ? "text-foreground"
-            : "group-hover:text-foreground",
-        )}
-      >
-        {children}
-      </p>
-    </div>
-  );
-}
-
 interface PoolsTableProps {
   className?: ClassValue;
+  tableId: string;
   poolGroups?: PoolGroup[];
 }
 
-export default function PoolsTable({ className, poolGroups }: PoolsTableProps) {
+export default function PoolsTable({
+  className,
+  tableId,
+  poolGroups,
+}: PoolsTableProps) {
   // Sort
+  type SortState = { column: SortableColumn; direction: SortDirection };
+
   const [sortState, setSortState] = useState<SortState | undefined>(undefined);
 
   const toggleSortByColumn = (column: SortableColumn) => {
@@ -127,14 +84,22 @@ export default function PoolsTable({ className, poolGroups }: PoolsTableProps) {
         }
 
         return sortState.direction === SortDirection.DESC
-          ? +b[sortState.column].minus(a[sortState.column])
-          : +a[sortState.column].minus(b[sortState.column]);
+          ? +(b[sortState.column] as BigNumber).minus(
+              a[sortState.column] as BigNumber,
+            )
+          : +(a[sortState.column] as BigNumber).minus(
+              b[sortState.column] as BigNumber,
+            );
       });
 
     return poolGroups
       .map((poolGroup) => ({
         ...poolGroup,
-        pools: sortedPools.filter((pool) => pool.poolGroupId === poolGroup.id),
+        pools: sortedPools.filter(
+          (pool) =>
+            pool.coinTypes[0] === poolGroup.coinTypes[0] &&
+            pool.coinTypes[1] === poolGroup.coinTypes[1],
+        ),
       }))
       .sort((a, b) => {
         if (sortState.column === "aprPercent") {
@@ -174,49 +139,87 @@ export default function PoolsTable({ className, poolGroups }: PoolsTableProps) {
     >
       {/* Header */}
       <div className="sticky left-0 top-0 z-[2] flex h-[calc(40px+1px)] w-full min-w-max shrink-0 flex-row border-b bg-secondary">
-        <HeaderColumn id="pair">Pair</HeaderColumn>
-        <HeaderColumn id="type">Type</HeaderColumn>
-        <HeaderColumn
+        <HeaderColumn<Column, SortableColumn>
+          id="pair"
+          style={columnStyleMap.pair}
+        >
+          Pair
+        </HeaderColumn>
+        <HeaderColumn<Column, SortableColumn>
+          id="type"
+          style={columnStyleMap.type}
+        >
+          Type
+        </HeaderColumn>
+        <HeaderColumn<Column, SortableColumn>
           id="tvlUsd"
           sortState={sortState}
           toggleSortByColumn={toggleSortByColumn}
+          style={columnStyleMap.tvlUsd}
         >
           TVL
         </HeaderColumn>
-        <HeaderColumn
-          id="volumeUsd"
+        <HeaderColumn<Column, SortableColumn>
+          id="volumeUsd_24h"
           sortState={sortState}
-          toggleSortByColumn={toggleSortByColumn}
+          toggleSortByColumn={
+            (poolGroups ?? []).every(
+              (poolGroup) =>
+                !!poolGroup.pools.every(
+                  (pool) => pool.volumeUsd_24h !== undefined,
+                ),
+            )
+              ? toggleSortByColumn
+              : undefined
+          }
+          style={columnStyleMap.volumeUsd_24h}
         >
-          Volume 24h
+          Volume (24H)
         </HeaderColumn>
-        <HeaderColumn
+        <HeaderColumn<Column, SortableColumn>
           id="aprPercent"
           sortState={sortState}
-          toggleSortByColumn={toggleSortByColumn}
+          toggleSortByColumn={
+            (poolGroups ?? []).every(
+              (poolGroup) =>
+                !!poolGroup.pools.every(
+                  (pool) => pool.apr.percent !== undefined,
+                ),
+            )
+              ? toggleSortByColumn
+              : undefined
+          }
+          style={columnStyleMap.aprPercent}
         >
-          APR 24h
+          APR (24H)
         </HeaderColumn>
       </div>
 
       {/* Rows */}
-      {sortedPoolGroups === undefined
-        ? Array.from({ length: 3 }).map((_, index, array) => (
-            <Skeleton
-              key={index}
-              className={cn(
-                "relative z-[1] h-[56px] w-full",
-                index !== array.length - 1 && "h-[calc(56px+1px)] border-b",
-              )}
-            />
-          ))
-        : sortedPoolGroups.map((poolGroup, index, array) => (
-            <PoolGroupRow
-              key={poolGroup.id}
-              poolGroup={poolGroup}
-              isLast={index === array.length - 1}
-            />
-          ))}
+      {sortedPoolGroups === undefined ? (
+        Array.from({ length: 3 }).map((_, index, array) => (
+          <Skeleton
+            key={index}
+            className={cn(
+              "relative z-[1] h-[56px] w-full",
+              index !== array.length - 1 && "h-[calc(56px+1px)] border-b",
+            )}
+          />
+        ))
+      ) : sortedPoolGroups.length === 0 ? (
+        <div className="flex h-[56px] w-full flex-row items-center justify-center">
+          <p className="text-p2 text-tertiary-foreground">No pools</p>
+        </div>
+      ) : (
+        sortedPoolGroups.map((poolGroup, index, array) => (
+          <PoolGroupRow
+            key={poolGroup.id}
+            tableId={tableId}
+            poolGroup={poolGroup}
+            isLast={index === array.length - 1}
+          />
+        ))
+      )}
     </div>
   );
 }

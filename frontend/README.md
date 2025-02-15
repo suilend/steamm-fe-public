@@ -1,6 +1,6 @@
 # steamm-fe/frontend
 
-A TypeScript frontend for interacting with the Steamm program.
+A TypeScript frontend for interacting with the STEAMM program.
 
 ## How to run
 

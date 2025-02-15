@@ -12,22 +12,54 @@ export const poolTypeNameMap: Record<PoolType, string> = {
   [PoolType.STABLE_SWAP]: "Stable swap",
 };
 
-export type Pool = {
+export type ParsedPool = {
   id: string;
-  poolGroupId: string;
-  assetCoinTypes: [string, string];
-  type: PoolType;
+  type?: PoolType;
+
+  lpTokenType: string;
+  btokenTypes: [string, string];
+  coinTypes: [string, string];
+  balances: [BigNumber, BigNumber];
+  prices: [BigNumber, BigNumber];
+
   tvlUsd: BigNumber;
-  volumeUsd: BigNumber;
-  feesUsd: BigNumber;
+  volumeUsd_24h?: BigNumber;
+  volumeUsd_30d?: BigNumber;
+  feesUsd_24h?: BigNumber;
+  feesUsd_30d?: BigNumber;
   apr: {
-    assetCoinTypes: string[];
+    coinTypes: string[];
     percent: BigNumber;
   };
+
+  feeTierPercent: BigNumber;
+  protocolFeePercent: BigNumber;
 };
 
 export type PoolGroup = {
   id: string;
-  assetCoinTypes: [string, string];
-  pools: Pool[];
+  coinTypes: [string, string];
+  pools: ParsedPool[];
+};
+
+export type PoolPosition = {
+  pool: ParsedPool;
+  balance: {
+    amount: BigNumber;
+    amountUsd?: BigNumber;
+  };
+  depositedAmountUsd?: BigNumber;
+  isStaked: boolean;
+  claimableRewards: Record<string, BigNumber>;
+  pnl: {
+    percent?: BigNumber;
+    amountUsd?: BigNumber;
+  };
+};
+
+export type SubmitButtonState = {
+  isLoading?: boolean;
+  isDisabled?: boolean;
+  title?: string;
+  description?: string;
 };

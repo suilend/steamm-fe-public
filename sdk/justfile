@@ -48,13 +48,11 @@ fstart: _check_sui
 # Publishes packages to localnet and runs ts tests
 setup:
     bash -c './bin/publocal.sh'
-    bash -b './bin/sourcekey.sh'
 unset:
     bash -c './bin/unpublocal.sh'
 
 test:
     bash -c './bin/publocal.sh'
-    bash -b './bin/sourcekey.sh'
     bun test ./tests/index.test.ts
     bash -c './bin/unpublocal.sh'
 

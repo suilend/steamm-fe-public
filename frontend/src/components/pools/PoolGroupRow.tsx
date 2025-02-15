@@ -1,47 +1,39 @@
-import { useMemo, useState } from "react";
-
 import BigNumber from "bignumber.js";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useLocalStorage } from "usehooks-ts";
 
-import { formatPercent, formatUsd, getToken } from "@suilend/frontend-sui";
+import { formatPercent, formatUsd } from "@suilend/frontend-sui";
 
-import PoolRow from "@/components/PoolRow";
-import { columnStyleMap } from "@/components/PoolsTable";
+import PoolRow from "@/components/pools/PoolRow";
+import { columnStyleMap } from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
-import TokenLogo from "@/components/TokenLogo";
+import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import { formatPair } from "@/lib/format";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolGroupRowProps {
+  tableId: string;
   poolGroup: PoolGroup;
   isLast?: boolean;
 }
 
-export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
-  const { coinMetadataMap } = useLoadedAppContext();
+export default function PoolGroupRow({
+  tableId,
+  poolGroup,
+  isLast,
+}: PoolGroupRowProps) {
+  const { appData } = useLoadedAppContext();
 
   // State
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
-  const Chevron = isExpanded ? ChevronUp : ChevronDown;
-
-  // CoinMetadata
-  const coinTypes = useMemo(
-    () => [...poolGroup.assetCoinTypes],
-    [poolGroup.assetCoinTypes],
+  const [isExpanded, setIsExpanded] = useLocalStorage<boolean>(
+    `${tableId}_PoolGroupRow_isExpanded`,
+    false,
   );
-  const hasCoinMetadata = coinTypes
-    .map((coinType) => coinMetadataMap?.[coinType])
-    .every(Boolean);
-
-  // Pair
-  const formattedPair = hasCoinMetadata
-    ? poolGroup.assetCoinTypes
-        .map((coinType) => coinMetadataMap![coinType].symbol)
-        .join("/")
-    : undefined;
+  const Chevron = isExpanded ? ChevronUp : ChevronDown;
 
   // Calculations
   const totalTvlUsd = poolGroup.pools.reduce(
@@ -49,10 +41,14 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
     new BigNumber(0),
   );
 
-  const totalVolumeUsd = poolGroup.pools.reduce(
-    (acc, pool) => acc.plus(pool.volumeUsd),
-    new BigNumber(0),
-  );
+  const totalVolumeUsd_24h = poolGroup.pools.some(
+    (pool) => pool.volumeUsd_24h === undefined,
+  )
+    ? undefined
+    : poolGroup.pools.reduce(
+        (acc, pool) => acc.plus(pool.volumeUsd_24h as BigNumber),
+        new BigNumber(0),
+      );
 
   const maxAprPercent = BigNumber.max(
     ...poolGroup.pools.map((pool) => pool.apr.percent),
@@ -101,36 +97,14 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
             </div>
           </div>
 
-          <div
-            className={cn(
-              "flex shrink-0 flex-row",
-              !hasCoinMetadata && "animate-pulse",
+          <TokenLogos coinTypes={poolGroup.coinTypes} size={24} />
+          <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
+            {formatPair(
+              poolGroup.coinTypes.map(
+                (coinType) => appData.poolCoinMetadataMap[coinType].symbol,
+              ),
             )}
-          >
-            {poolGroup.assetCoinTypes.map((coinType, index) => (
-              <TokenLogo
-                className={cn(
-                  index !== 0 && "-ml-2 outline outline-1 outline-secondary",
-                  !hasCoinMetadata ? "animate-none" : "bg-secondary",
-                )}
-                key={coinType}
-                token={
-                  hasCoinMetadata
-                    ? getToken(coinType, coinMetadataMap![coinType])
-                    : undefined
-                }
-                size={24}
-              />
-            ))}
-          </div>
-
-          {!hasCoinMetadata ? (
-            <Skeleton className="h-[24px] w-20 animate-none" />
-          ) : (
-            <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
-              {formattedPair}
-            </p>
-          )}
+          </p>
         </div>
 
         {/* Type */}
@@ -152,13 +126,17 @@ export default function PoolGroupRow({ poolGroup, isLast }: PoolGroupRowProps) {
         {/* Volume */}
         <div
           className="flex h-full flex-row items-center"
-          style={columnStyleMap.volumeUsd}
+          style={columnStyleMap.volumeUsd_24h}
         >
-          <Tooltip title={formatUsd(totalVolumeUsd, { exact: true })}>
-            <p className="text-p1 text-foreground">
-              {formatUsd(totalVolumeUsd)}
-            </p>
-          </Tooltip>
+          {totalVolumeUsd_24h === undefined ? (
+            <Skeleton className="h-[24px] w-16" />
+          ) : (
+            <Tooltip title={formatUsd(totalVolumeUsd_24h, { exact: true })}>
+              <p className="text-p1 text-foreground">
+                {formatUsd(totalVolumeUsd_24h)}
+              </p>
+            </Tooltip>
+          )}
         </div>
 
         {/* APR */}

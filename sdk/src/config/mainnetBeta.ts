@@ -23,9 +23,6 @@ export const STEAMM_SCRIPT_PKG_ID =
 export const STEAMM_SCRIPT_PUBLISHED_AT =
   "0x772b3d9c5d170f8225a231fa4f0366eef608117099191d316482139c2bc223fc";
 
-export const TEST_SUI_BETA_TYPE = `${STEAMM_BETA_PKG_ID}::sui::SUI`;
-export const TEST_USDC_BETA_TYPE = `${STEAMM_BETA_PKG_ID}::usdc::USDC`;
-
 export const STEAMM_BETA_CONFIG = {
   package_id: STEAMM_BETA_PKG_ID,
   published_at: STEAMM_BETA_PUBLISHED_AT,

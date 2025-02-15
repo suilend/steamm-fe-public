@@ -64,10 +64,10 @@ export function test() {
     });
 
     beforeAll(async () => {
-      const suiPrivateKey = process.env.PRIVATE_KEY;
+      const suiPrivateKey = process.env.TEMP_KEY;
 
       if (!suiPrivateKey) {
-        throw new Error("PRIVATE_KEY is missing in the .env file");
+        throw new Error("TEMP_KEY is missing in the .env file");
       }
 
       // Create the keypair from the decoded private key

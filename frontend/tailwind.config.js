@@ -42,8 +42,8 @@ module.exports = {
 
       border: "hsl(var(--border))",
       "hover-border": "hsl(var(--hover-border))",
-      "selected-border": "hsl(var(--selected-border))",
 
+      focus: "hsl(var(--focus))",
       input: "hsl(var(--input))",
       card: "hsl(var(--card))",
       popover: "hsl(var(--popover))",
