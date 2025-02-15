@@ -7,8 +7,8 @@ import { test as unitTest } from "./unit.test";
 
 describe("Test Suite", () => {
   // Run all tests from teston.test.ts
-  // testonTest();
-  // unitTest();
+  testonTest();
+  unitTest();
   routerTest();
-  // errTest();
+  errTest();
 });

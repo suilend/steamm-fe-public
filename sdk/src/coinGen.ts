@@ -1,5 +1,3 @@
-import assert from "assert";
-
 import { bcs } from "@mysten/bcs";
 import {
   update_constants,
@@ -7,14 +5,9 @@ import {
 } from "@mysten/move-bytecode-template";
 import init from "@mysten/move-bytecode-template";
 import {
-  SuiClient,
   SuiObjectChange,
   SuiTransactionBlockResponse,
 } from "@mysten/sui/client";
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { Transaction } from "@mysten/sui/transactions";
-import { fromBase64, normalizeSuiAddress } from "@mysten/sui/utils";
-// import url from "@mysten/move-bytecode-template/move_bytecode_template_bg.wasm?url";
 
 // Initialize the WASM module
 let initialized = false;

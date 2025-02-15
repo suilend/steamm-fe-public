@@ -6,7 +6,7 @@ import {
 } from "@mysten/sui/transactions";
 
 import { PoolFunctions, QuoteFunctions } from "../_codegen";
-import { Bank, BankScript, SwapQuote } from "../base";
+import { Bank, BankScript } from "../base";
 import { MultiSwapQuote, castMultiSwapQuote } from "../base/pool/poolTypes";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
@@ -89,10 +89,6 @@ export class RouterModule implements IModule {
             );
       const minAmountOut =
         i === args.route.length - 1 ? args.quote.amountOut : BigInt(0); // TODO: add some slippage param for the last swap
-      // const minAmountOut = BigInt(0); // Fix the quote
-
-      console.log("args.quote.amountOut: ", args.quote.amountOut);
-      console.log("Min Amount out: ", minAmountOut);
 
       const swapResult = pool.swap(tx, {
         coinA,
@@ -187,7 +183,6 @@ export class RouterModule implements IModule {
     const bankY = new Bank(this.sdk.packageInfo(), bankInfoY);
     const dummyTx = new Transaction();
 
-    console.log("getBTokenAmountInForQuote");
     const firstBTokenAmountIn = this.getBTokenAmountInForQuote(
       tx,
       bankX,
@@ -196,17 +191,7 @@ export class RouterModule implements IModule {
       amountIn,
     );
 
-    const firstBTokenAmountInDummy = this.getBTokenAmountInForQuote(
-      dummyTx,
-      bankX,
-      bankY,
-      route[0].a2b, // first hop direction
-      amountIn,
-    );
-
     let nextBTokenAmountIn: TransactionResult = firstBTokenAmountIn;
-
-    console.log("route: ", route);
 
     for (const hop of route) {
       const poolInfo = pools.find((pool) => pool.poolId === hop.poolId)!;
@@ -221,67 +206,32 @@ export class RouterModule implements IModule {
         amountIn: nextBTokenAmountIn,
       });
 
-      console.log("HOP: ", hop);
-
-      // const quoteRes = await this.sdk.Pool.quoteSwap(
-      //   {
-      //     pool: poolScript.pool.poolInfo.poolId,
-      //     a2b: true,
-      //     amountIn: firstBTokenAmountInDummy,
-      //   },
-      //   dummyTx,
-      // );
-
-      // console.log("quote res:", quoteRes);
-
-      // const quoteRes = await this.sdk.Pool.quoteSwap(
-      //   {
-      //     pool: poolScript.pool.poolInfo.poolId,
-      //     a2b: true,
-      //     amountIn: firstBTokenAmountInDummy,
-      //   },
-      //   dummyTx,
-      // );
-
-      // console.log("quote res:", quoteRes);
-
-      // nextBTokenAmountIn = tx.pure.u64(BigInt("49253"));
-
-      nextBTokenAmountIn = QuoteFunctions.amountOut(
+      const amountOut = QuoteFunctions.amountOut(
         tx,
         quote,
         this.sdk.sdkOptions.steamm_config.published_at,
       );
+
+      nextBTokenAmountIn = amountOut;
     }
 
     const bankScript = this.getBankScript(bankInfoX, bankInfoY);
 
-    console.log("toMultiSwapRoute");
-    const multiSwapQuote = bankScript.toMultiSwapRoute(tx, {
+    bankScript.toMultiSwapRoute(tx, {
       x2y: true, // it's always true
       amountIn: firstBTokenAmountIn,
       amountOut: nextBTokenAmountIn,
     });
 
-    console.log("THE QUOTE TX: ", JSON.stringify(tx.getData()));
-
-    // TODO: fix script package ID
     return castMultiSwapQuote(
-      await this.getQuoteResult<SwapQuote>(
-        tx,
-        multiSwapQuote,
-        "MultiSwapQuote",
-      ),
+      await this.getQuoteResult<MultiSwapQuote>(tx, "MultiRouteSwapQuote"),
     );
   }
 
   private async getQuoteResult<T>(
     tx: Transaction,
-    quote: TransactionArgument,
     quoteType: string,
   ): Promise<T> {
-    const pkgAddy = this.sdk.sdkOptions.steamm_config.package_id;
-
     const inspectResults = await this.sdk.fullClient.devInspectTransactionBlock(
       {
         sender: this.sdk.senderAddress,
@@ -290,14 +240,21 @@ export class RouterModule implements IModule {
       },
     );
 
-    // console.log(inspectResults)
     if (inspectResults.error) {
       console.log(inspectResults);
-      console.log(JSON.stringify(tx.getData()));
+      // console.log(JSON.stringify(tx.getData()));
       throw new Error("DevInspect Failed");
     }
 
-    const quoteResult = (inspectResults.events[0].parsedJson as any).event as T;
+    const quoteEvent = inspectResults.events.find((event) =>
+      event.type.includes(quoteType),
+    );
+
+    if (!quoteEvent) {
+      throw new Error(`Quote event of type ${quoteType} not found in events`);
+    }
+
+    const quoteResult = (quoteEvent.parsedJson as any).event as T;
     return quoteResult;
   }
 
@@ -387,15 +344,11 @@ export class RouterModule implements IModule {
     btokenType: string,
     btoken: TransactionResult,
   ) {
-    // TODO: use destroyOrTransfer
-    // PoolScriptFunctions.destroyOrTransfer(
-    //   tx,
-    //   btokenType,
-    //   { btoken },
-    //   this.sdk.publishedAt(),
-    // );
-
-    tx.transferObjects([btoken], this.sdk.senderAddress);
+    return tx.moveCall({
+      target: `${this.sdk.scriptPackageInfo().publishedAt}::pool_script::destroy_or_transfer`,
+      typeArguments: [btokenType],
+      arguments: [btoken],
+    });
   }
 
   public getBTokenAmountInForQuote(

@@ -12,7 +12,7 @@ import dotenv from "dotenv";
 import { PoolModule } from "../src/modules/poolModule";
 import { RpcModule } from "../src/modules/rpcModule";
 import { SteammSDK } from "../src/sdk";
-import { BankList, PoolInfo } from "../src/types";
+import { BankList, DataPage, PoolInfo } from "../src/types";
 import { BankInfo } from "../src/types";
 
 import {
@@ -24,6 +24,7 @@ import {
   STEAMM_SCRIPT_PKG_ID,
   SUILEND_PKG_ID,
 } from "./packages";
+import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ export function test() {
     let usdcTreasuryCap: string;
     let sdk: SteammSDK;
     let pools: PoolInfo[];
+    let pool: PoolInfo;
     let banks: BankList;
 
     beforeAll(async () => {
@@ -77,27 +79,35 @@ export function test() {
       });
       pools = await sdk.getPools();
       banks = await sdk.getBanks();
+      pool = (
+        await sdk.getPools([
+          `${STEAMM_PKG_ID}::usdc::USDC`,
+          `${STEAMM_PKG_ID}::sui::SUI`,
+        ])
+      )[0];
 
       sdk.signer = keypair;
 
-      const ownedObjs = await sdk.fullClient.getOwnedObjects({
-        owner: sdk.senderAddress,
-        options: {
-          showType: true,
-        },
-      });
+      const ownedPagedObjs: DataPage<PaginatedObjectsResponse[]> =
+        await sdk.fullClient.getOwnedObjectsByPage(sdk.senderAddress, {
+          options: {
+            showType: true,
+          },
+        });
 
-      suiTreasuryCap = ownedObjs.data.find(
-        (obj) =>
-          obj.data?.type ===
-          `0x2::coin::TreasuryCap<${STEAMM_PKG_ID}::sui::SUI>`,
-      )?.data?.objectId!;
+      const ownedObjs = ownedPagedObjs.data
+        .flatMap((pages) => pages)
+        .flatMap((pages) => pages.data) as SuiObjectData[];
 
-      usdcTreasuryCap = ownedObjs.data.find(
+      suiTreasuryCap = ownedObjs.find(
         (obj) =>
-          obj.data?.type ===
-          `0x2::coin::TreasuryCap<${STEAMM_PKG_ID}::usdc::USDC>`,
-      )!.data?.objectId!;
+          obj.type === `0x2::coin::TreasuryCap<${STEAMM_PKG_ID}::sui::SUI>`,
+      )!.objectId!;
+
+      usdcTreasuryCap = ownedObjs.find(
+        (obj) =>
+          obj.type === `0x2::coin::TreasuryCap<${STEAMM_PKG_ID}::usdc::USDC>`,
+      )!.objectId!;
     });
 
     it("setup && listen to pool/bank creation events", async () => {
@@ -133,7 +143,7 @@ export function test() {
       //////////////////////////////////////////////////////////////
 
       await poolModule.depositLiquidityEntry(tx, {
-        pool: pools[0].poolId,
+        pool: pool.poolId,
         coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
         coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
         coinA: usdcCoin,
@@ -198,7 +208,7 @@ export function test() {
       //////////////////////////////////////////////////////////////
 
       await poolModule.depositLiquidityEntry(tx, {
-        pool: pools[0].poolId,
+        pool: pool.poolId,
         coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
         coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
         coinA: usdcCoin,
@@ -225,7 +235,7 @@ export function test() {
       });
 
       await poolModule.swap(tx, {
-        pool: pools[0].poolId,
+        pool: pool.poolId,
         coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
         coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
         coinA: usdSwapCoin,
@@ -296,7 +306,7 @@ export function test() {
       //////////////////////////////////////////////////////////////
 
       const [lpToken, _depositResult] = await poolModule.depositLiquidity(tx, {
-        pool: pools[0].poolId,
+        pool: pool.poolId,
         coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
         coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
         coinA: usdcCoin,
@@ -310,7 +320,7 @@ export function test() {
       //////////////////////////////////////////////////////////////
 
       await poolModule.redeemLiquidityEntry(tx, {
-        pool: pools[0].poolId,
+        pool: pool.poolId,
         coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
         coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
         lpCoin: lpToken,

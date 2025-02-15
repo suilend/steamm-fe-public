@@ -207,12 +207,34 @@ source_test_fun() {
     fi
 }
 
+source_package_fun() {
+    local module="$1"
+    local move_module="$2"
+    local function_name="$3"
+    local file_path="temp/${module}/sources/${move_module}.move"
+
+    # Check if file exists
+    if [ ! -f "$file_path" ]; then
+        echo "Error: File $file_path does not exist"
+        return 1
+    fi
+    
+    # Replace "public(package) fun function_name" with "public fun function_name"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS version
+        sed -i '' "s/public(package) fun $function_name/public fun $function_name/" "$file_path"
+    else
+        # Linux version
+        sed -i "s/public(package) fun $function_name/public fun $function_name/" "$file_path"
+    fi
+}
+
 
 ## Source test functions
 printf "[INFO] Sourcing test functions" >&2
 source_test_fun "pyth" "price_info" "new_price_info_object_for_testing"
 source_test_fun "pyth" "price_info" "update_price_info_object_for_testing"
-
+source_package_fun "steamm_scripts" "events" "emit_event"
 
 printf "[INFO] Publishing packages" >&2
 

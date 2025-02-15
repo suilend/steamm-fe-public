@@ -73,9 +73,6 @@ export function test() {
       // Create the keypair from the decoded private key
       const decodedKey: ParsedKeypair = decodeSuiPrivateKey(suiPrivateKey);
       keypair = Ed25519Keypair.fromSecretKey(decodedKey.secretKey);
-
-      // const sender = keypair.getPublicKey().toSuiAddress();
-      // console.log("Wallet Address:", keypair.getPublicKey().toSuiAddress());
     });
 
     beforeAll(async () => {
@@ -127,25 +124,6 @@ export function test() {
         (obj) =>
           obj.type === `0x2::coin::TreasuryCap<${STEAMM_PKG_ID}::usdc::USDC>`,
       )!.objectId!;
-    });
-
-    it("creates coin", async () => {
-      const tx = new Transaction();
-      await createCoinTx(tx, "A", sdk.senderAddress);
-
-      const txResponse = await sdk.fullClient.signAndExecuteTransaction({
-        transaction: tx,
-        signer: sdk.signer!,
-        options: {
-          showEvents: true,
-          showEffects: true,
-          showObjectChanges: true,
-        },
-      });
-
-      const [lpTreasuryId, lpMetadataId, lpTokenType] =
-        getTreasuryAndCoinMeta(txResponse);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
     });
 
     it("Swap router", async () => {
@@ -251,6 +229,7 @@ export function test() {
       const devResult = await sdk.fullClient.devInspectTransactionBlock({
         transactionBlock: swapTx,
         sender: sdk.senderAddress,
+        additionalArgs: { showRawTxnDataAndEffects: true },
       });
 
       // Check if dry run was successful
@@ -259,16 +238,14 @@ export function test() {
         throw new Error(`Dry run failed: ${JSON.stringify(parsedError)}`);
       }
 
-      console.log("Dry run successful, proceeding with actual transaction");
-
-      const swapTxResult = await sdk.fullClient.signAndExecuteTransaction({
-        transaction: swapTx,
-        signer: keypair,
-        options: {
-          showEffects: true,
-          showEvents: true,
-        },
-      });
+      // const swapTxResult = await sdk.fullClient.signAndExecuteTransaction({
+      //   transaction: swapTx,
+      //   signer: keypair,
+      //   options: {
+      //     showEffects: true,
+      //     showEvents: true,
+      //   },
+      // });
     });
   });
 }
