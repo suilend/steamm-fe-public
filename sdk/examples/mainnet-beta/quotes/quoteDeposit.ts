@@ -12,7 +12,6 @@ async function quoteDeposit(keypair: Ed25519Keypair) {
   const sdk = new SteammSDK(BETA_CONFIG);
 
   const pool = (await sdk.getPools([SUI_COIN_TYPE, USDC_COIN_TYPE]))[0];
-  console.log("pool:", pool);
   sdk.senderAddress = keypair.getPublicKey().toSuiAddress();
 
   const quote = await sdk.Pool.quoteDeposit({
