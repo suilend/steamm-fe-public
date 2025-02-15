@@ -16,11 +16,11 @@ public struct LENDING_MARKET has drop {}
 #[allow(lint(self_transfer, share_owned))]
 public fun setup(
     lending_registry: &mut LendingRegistry,
-    // Steamm Pool
+    // STEAMM Pool
     registry: &mut Registry,
     meta_lp_usdc_sui: &mut CoinMetadata<LP_USDC_SUI>,
     lp_treasury: TreasuryCap<LP_USDC_SUI>,
-    // Steamm Bank
+    // STEAMM Bank
     meta_usdc: &CoinMetadata<USDC>,
     meta_sui: &CoinMetadata<SUI>,
     meta_b_usdc: &mut CoinMetadata<B_USDC>,

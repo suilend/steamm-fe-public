@@ -15,14 +15,14 @@ export default function Toaster() {
       toastOptions={{
         classNames: {
           toast: cn(
-            "bg-secondary text-foreground border !border-border gap-1 py-3 px-3 flex flex-col items-start justify-start rounded-md",
+            "bg-popover text-foreground border !border-border gap-1 py-3 px-3 flex flex-col items-start justify-start rounded-md",
             styles.toast,
           ),
           content: "gap-1.5",
-          icon: cn("absolute top-3.5 left-3 w-4 h-4 m-0", styles.icon),
-          title: "px-6 text-foreground text-p2 font-sans font-normal",
+          icon: cn("absolute top-4 left-3 w-4 h-4 m-0", styles.icon),
+          title: "px-6 text-foreground text-p1 font-sans font-normal",
           description:
-            "text-secondary-foreground text-p3 font-sans font-normal",
+            "text-secondary-foreground text-p2 font-sans font-normal",
         },
         style: {
           "--toast-close-button-start": "auto",
@@ -39,7 +39,6 @@ export default function Toaster() {
         right: md ? 24 : 16,
         bottom: md ? 24 : 16,
       }}
-      duration={100000}
     />
   );
 }

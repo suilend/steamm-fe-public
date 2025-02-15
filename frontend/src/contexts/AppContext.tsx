@@ -8,47 +8,50 @@ import {
 
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
+import { useLocalStorage } from "usehooks-ts";
 
-import { NORMALIZED_SEND_COINTYPE } from "@suilend/frontend-sui";
-import { useSettingsContext } from "@suilend/frontend-sui-next";
+import {
+  useSettingsContext,
+  useWalletContext,
+} from "@suilend/frontend-sui-next";
 import useFetchBalances from "@suilend/frontend-sui-next/fetchers/useFetchBalances";
 import useCoinMetadataMap from "@suilend/frontend-sui-next/hooks/useCoinMetadataMap";
 import useRefreshOnBalancesChange from "@suilend/frontend-sui-next/hooks/useRefreshOnBalancesChange";
 import {
-  BankList,
-  PoolInfo,
   STEAMM_BETA_CONFIG,
   SUILEND_BETA_CONFIG,
   SteammSDK,
 } from "@suilend/steamm-sdk";
 
-import { BarChartData } from "@/components/BarChartStat";
 import useFetchAppData from "@/fetchers/useFetchAppData";
-import { PoolGroup } from "@/lib/types";
+import { ChartData } from "@/lib/chart";
+import { ParsedPool } from "@/lib/types";
 
 export interface AppData {
-  banks: BankList;
-  pools: PoolInfo[];
+  lendingMarketIdTypeMap: Record<string, string>;
 
-  poolGroups: PoolGroup[];
-  featuredPoolGroupIds: string[];
-  tvlUsd: BigNumber;
-  tvlData: BarChartData[];
-  volumeUsd: BigNumber;
-  volumeData: BarChartData[];
-  coinTypes: string[];
+  pools: ParsedPool[];
+  poolCoinTypes: string[];
+  poolCoinMetadataMap: Record<string, CoinMetadata>;
+  featuredCoinTypePairs: [string, string][];
+
+  historicalTvlUsd_30d: ChartData[];
+  volumeUsd_30d: BigNumber;
+  historicalVolumeUsd_30d: ChartData[];
 }
 
 interface AppContext {
   steammClient: SteammSDK | undefined;
   appData: AppData | undefined;
-  coinMetadataMap: Record<string, CoinMetadata> | undefined;
 
   rawBalancesMap: Record<string, BigNumber> | undefined;
   balancesCoinMetadataMap: Record<string, CoinMetadata> | undefined;
   getBalance: (coinType: string) => BigNumber;
 
   refresh: () => Promise<void>; // Refreshes appData, and balances
+
+  slippagePercent: number;
+  setSlippagePercent: (slippagePercent: number) => void;
 }
 type LoadedAppContext = AppContext & {
   steammClient: SteammSDK;
@@ -58,7 +61,6 @@ type LoadedAppContext = AppContext & {
 const AppContext = createContext<AppContext>({
   steammClient: undefined,
   appData: undefined,
-  coinMetadataMap: undefined,
 
   rawBalancesMap: undefined,
   balancesCoinMetadataMap: undefined,
@@ -69,6 +71,11 @@ const AppContext = createContext<AppContext>({
   refresh: async () => {
     throw Error("AppContextProvider not initialized");
   },
+
+  slippagePercent: 1,
+  setSlippagePercent: () => {
+    throw Error("AppContextProvider not initialized");
+  },
 });
 
 export const useAppContext = () => useContext(AppContext);
@@ -76,7 +83,7 @@ export const useLoadedAppContext = () => useAppContext() as LoadedAppContext;
 
 export function AppContextProvider({ children }: PropsWithChildren) {
   const { rpc } = useSettingsContext();
-  // const { address } = useWalletContext();
+  const { address } = useWalletContext();
 
   // STEAMM client
   const steammClient = useMemo(() => {
@@ -85,17 +92,16 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       steamm_config: STEAMM_BETA_CONFIG,
       suilend_config: SUILEND_BETA_CONFIG,
     });
-    // sdk.signer = address;
+    sdk.senderAddress =
+      address ??
+      "0x0000000000000000000000000000000000000000000000000000000000000000"; // Address must be set to use the SDK
 
     return sdk;
-  }, [rpc.url]);
+  }, [rpc.url, address]);
 
   // App data
   const { data: appData, mutateData: mutateAppData } =
     useFetchAppData(steammClient);
-
-  // CoinMetadataMap
-  const coinMetadataMap = useCoinMetadataMap(appData?.coinTypes ?? []);
 
   // Balances
   const { data: rawBalancesMap, mutateData: mutateRawBalancesMap } =
@@ -133,27 +139,36 @@ export function AppContextProvider({ children }: PropsWithChildren) {
 
   useRefreshOnBalancesChange(refresh);
 
+  // Slippage
+  const [slippagePercent, setSlippagePercent] = useLocalStorage<number>(
+    "slippagePercent",
+    1,
+  );
+
   // Context
   const contextValue: AppContext = useMemo(
     () => ({
       steammClient,
       appData,
-      coinMetadataMap,
 
       rawBalancesMap,
       balancesCoinMetadataMap,
       getBalance,
 
       refresh,
+
+      slippagePercent,
+      setSlippagePercent,
     }),
     [
       steammClient,
       appData,
-      coinMetadataMap,
       rawBalancesMap,
       balancesCoinMetadataMap,
       getBalance,
       refresh,
+      slippagePercent,
+      setSlippagePercent,
     ],
   );
 

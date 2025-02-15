@@ -103,7 +103,7 @@ export default function ConnectedWalletPopover() {
 
         {hasDisconnect && (
           <button
-            className="group flex h-10 w-full flex-row items-center rounded-md border px-3 transition-colors hover:bg-border"
+            className="group flex h-10 w-full flex-row items-center rounded-md border px-3 transition-colors hover:bg-border/50"
             onClick={disconnectWallet}
           >
             <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
@@ -120,7 +120,7 @@ export default function ConnectedWalletPopover() {
                   "group flex h-10 w-full flex-row items-center justify-between rounded-md border px-3",
                   a.address === address
                     ? "cursor-default bg-border"
-                    : "transition-colors hover:bg-border",
+                    : "transition-colors hover:bg-border/50",
                 )}
                 onClick={
                   a.address === address ? undefined : () => switchAccount(a)

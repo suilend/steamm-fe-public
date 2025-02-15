@@ -1,6 +1,6 @@
 import Head from "next/head";
 
-export default function Admin() {
+export default function AdminPage() {
   return (
     <>
       <Head>

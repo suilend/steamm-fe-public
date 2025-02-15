@@ -1,3 +1,9 @@
+import BigNumber from "bignumber.js";
+
+import { formatUsd } from "@suilend/frontend-sui";
+
+import { AppData } from "@/contexts/AppContext";
+
 export type ViewBox = {
   width: number;
   height: number;
@@ -29,3 +35,26 @@ export const getTooltipStyle = (width: number, viewBox: ViewBox, x: number) => {
 
   return { width, top, left, right };
 };
+
+export enum ChartType {
+  LINE = "line",
+  BAR = "bar",
+}
+
+export type ChartData = {
+  timestampS: number;
+  [category: string]: number;
+};
+
+export const OTHER_CATEGORY = "Other";
+
+export const formatCoinTypeCategory = (
+  category: string,
+  poolCoinMetadataMap: AppData["poolCoinMetadataMap"],
+): string | undefined => {
+  if (category === OTHER_CATEGORY) return "Other";
+  return poolCoinMetadataMap[category]?.symbol;
+};
+
+export const formatValueUsd = (valueUsd: number): string =>
+  formatUsd(new BigNumber(valueUsd));
