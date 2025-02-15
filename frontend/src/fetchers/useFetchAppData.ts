@@ -165,11 +165,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         percent: new BigNumber(2.3), // 24h, TEMP
       };
 
-      const feeTierPercent = new BigNumber(
-        pool.poolFeeConfig.feeNumerator.toString(),
-      )
-        .div(pool.poolFeeConfig.feeDenominator.toString())
-        .times(100); // TODO: Replace with poolInfo.swapFeeBps
+      const feeTierPercent = new BigNumber(poolInfo.swapFeeBps).div(100);
       const protocolFeePercent = new BigNumber(
         pool.protocolFees.config.feeNumerator.toString(),
       )
