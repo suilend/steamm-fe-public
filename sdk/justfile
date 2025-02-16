@@ -46,13 +46,11 @@ fstart: _check_sui
     sui start --network.config sui --with-faucet
 
 # Publishes packages to localnet and runs ts tests
-setup:
+pub:
     bash -c './bin/publocal.sh'
-unset:
+unpub:
     bash -c './bin/unpublocal.sh'
 
 test:
-    bash -c './bin/publocal.sh'
     bun test ./tests/index.test.ts
-    bash -c './bin/unpublocal.sh'
 
