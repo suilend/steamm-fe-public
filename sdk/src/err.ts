@@ -2,7 +2,7 @@ import {
   DevInspectResults,
   DryRunTransactionBlockResponse,
   SuiTransactionBlockResponse,
-} from "@mysten/sui/dist/cjs/client";
+} from "@mysten/sui/client";
 
 export type ErrorInfo = {
   tag: string;
