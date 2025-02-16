@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import { useCallback, useRef, useState } from "react";
 
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
+import { SUI_DECIMALS } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
 import {
@@ -14,6 +15,7 @@ import {
 
 import {
   MAX_U64,
+  NORMALIZED_SUI_COINTYPE,
   SUI_GAS_MIN,
   formatInteger,
   formatPercent,
@@ -267,7 +269,12 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
     onValueChange(
       (isSui(coinType)
-        ? BigNumber.max(0, balance.minus(SUI_GAS_MIN))
+        ? BigNumber.max(
+            0,
+            new BigNumber(balance.minus(SUI_GAS_MIN)).div(
+              1 + slippagePercent / 100,
+            ),
+          )
         : balance
       ).toFixed(coinMetadata.decimals, BigNumber.ROUND_DOWN),
       index,
@@ -291,11 +298,56 @@ function DepositTab({ formatValue }: DepositTabProps) {
     if (Object.values(values).some((value) => new BigNumber(value).eq(0)))
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
-    // TODO: Check balance
+    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
+      return {
+        isDisabled: true,
+        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+      };
+
+    if (quote) {
+      if (
+        pool.coinTypes.includes(NORMALIZED_SUI_COINTYPE) &&
+        new BigNumber(
+          getBalance(NORMALIZED_SUI_COINTYPE).minus(SUI_GAS_MIN),
+        ).lt(
+          new BigNumber(
+            (pool.coinTypes.indexOf(NORMALIZED_SUI_COINTYPE) === 0
+              ? quote.depositA
+              : quote.depositB
+            ).toString(),
+          )
+            .div(10 ** SUI_DECIMALS)
+            .times(1 + slippagePercent / 100),
+        )
+      )
+        return {
+          isDisabled: true,
+          title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+        };
+
+      for (let i = 0; i < pool.coinTypes.length; i++) {
+        const coinType = pool.coinTypes[i];
+        const coinMetadata = appData.poolCoinMetadataMap[coinType];
+
+        if (
+          getBalance(coinType).lt(
+            new BigNumber(
+              (i === 0 ? quote.depositA : quote.depositB).toString(),
+            )
+              .div(10 ** coinMetadata.decimals)
+              .times(1 + slippagePercent / 100),
+          )
+        )
+          return {
+            isDisabled: true,
+            title: `Insufficient ${coinMetadata.symbol}`,
+          };
+      }
+    }
 
     return {
       title: "Deposit",
-      isDisabled: fetchingQuoteForIndex !== undefined,
+      isDisabled: fetchingQuoteForIndex !== undefined || !quote,
     };
   })();
 
