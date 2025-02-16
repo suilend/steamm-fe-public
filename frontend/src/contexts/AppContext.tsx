@@ -19,6 +19,7 @@ import useCoinMetadataMap from "@suilend/frontend-sui-next/hooks/useCoinMetadata
 import useRefreshOnBalancesChange from "@suilend/frontend-sui-next/hooks/useRefreshOnBalancesChange";
 import {
   STEAMM_BETA_CONFIG,
+  STEAMM_SCRIPT_CONFIG,
   SUILEND_BETA_CONFIG,
   SteammSDK,
 } from "@suilend/steamm-sdk";
@@ -90,6 +91,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     const sdk = new SteammSDK({
       fullRpcUrl: rpc.url,
       steamm_config: STEAMM_BETA_CONFIG,
+      steamm_script_config: STEAMM_SCRIPT_CONFIG,
       suilend_config: SUILEND_BETA_CONFIG,
     });
     sdk.senderAddress =
