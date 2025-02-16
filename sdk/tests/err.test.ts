@@ -40,7 +40,6 @@ export function test() {
       const errorMsg = "other error type";
 
       const parsedErr = parseMoveAbortError(errorMsg) as string;
-      console.log(parsedErr);
       expect(parsedErr).toBe("Error is not move abort: other error type");
     });
   });

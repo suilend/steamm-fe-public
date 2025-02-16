@@ -277,7 +277,7 @@ export class RouterModule implements IModule {
     const bankData: BankInfo[] = Object.values(banks);
     const coinTypes: string[] = [];
     const bTokens: TransactionObjectInput[] = [];
-    const bankDataToReturn: TransactionObjectInput[] = [];
+    const bankDataToReturn: BankInfo[] = [];
 
     for (const hop of route) {
       if (coinTypes.length === 0) {

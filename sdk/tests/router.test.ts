@@ -39,7 +39,6 @@ import {
   createPoolHelper,
   mintCoin,
 } from "./utils";
-import { getTreasuryAndCoinMeta } from "../src/coinGen";
 import {
   PaginatedObjectsResponse,
   SuiObjectData,
