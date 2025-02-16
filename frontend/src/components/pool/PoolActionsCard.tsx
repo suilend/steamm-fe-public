@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useCallback, useRef, useState } from "react";
+import { Fragment, useCallback, useRef, useState } from "react";
 
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import { SUI_DECIMALS } from "@mysten/sui/utils";
@@ -275,15 +275,9 @@ function DepositTab({ formatValue }: DepositTabProps) {
     const balance = getBalance(coinType);
 
     onValueChange(
-      (isSui(coinType)
-        ? BigNumber.max(
-            0,
-            new BigNumber(balance.minus(SUI_GAS_MIN)).div(
-              1 + slippagePercent / 100,
-            ),
-          )
-        : balance
-      ).toFixed(coinMetadata.decimals, BigNumber.ROUND_DOWN),
+      (isSui(coinType) ? BigNumber.max(0, balance.minus(SUI_GAS_MIN)) : balance)
+        .div(index === 0 ? 1 : 1 + slippagePercent / 100)
+        .toFixed(coinMetadata.decimals, BigNumber.ROUND_DOWN),
       index,
       true,
     );
@@ -325,7 +319,11 @@ function DepositTab({ formatValue }: DepositTabProps) {
             ).toString(),
           )
             .div(10 ** SUI_DECIMALS)
-            .times(1 + slippagePercent / 100),
+            .times(
+              pool.coinTypes.indexOf(NORMALIZED_SUI_COINTYPE) === 0
+                ? 1
+                : 1 + slippagePercent / 100,
+            ),
         )
       )
         return {
@@ -343,7 +341,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
               (i === 0 ? quote.depositA : quote.depositB).toString(),
             )
               .div(10 ** coinMetadata.decimals)
-              .times(1 + slippagePercent / 100),
+              .times(i === 0 ? 1 : 1 + slippagePercent / 100),
           )
         )
           return {
@@ -475,6 +473,44 @@ function DepositTab({ formatValue }: DepositTabProps) {
         submitButtonState={submitButtonState}
         onClick={onSubmitClick}
       />
+
+      {(fetchingQuoteForIndex !== undefined || quote) && (
+        <div className="flex w-full flex-col gap-2">
+          {/* Maximum outflow */}
+          <div className="flex w-full flex-row justify-between">
+            <p className="text-p2 text-secondary-foreground">Maximum outflow</p>
+
+            <div className="flex flex-col items-end gap-1">
+              {pool.coinTypes.map((coinType, index) => {
+                const coinMetadata = appData.poolCoinMetadataMap[coinType];
+
+                return (
+                  <Fragment key={coinType}>
+                    {fetchingQuoteForIndex !== undefined || !quote ? (
+                      <Skeleton className="h-[21px] w-24" />
+                    ) : (
+                      <p className="text-p2 text-foreground">
+                        {formatToken(
+                          new BigNumber(
+                            (index === 0
+                              ? quote.depositA
+                              : quote.depositB
+                            ).toString(),
+                          )
+                            .times(index === 0 ? 1 : 1 + slippagePercent / 100)
+                            .div(10 ** coinMetadata.decimals),
+                          { dp: coinMetadata.decimals },
+                        )}{" "}
+                        {coinMetadata.symbol}
+                      </p>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -773,6 +809,44 @@ function WithdrawTab() {
         submitButtonState={submitButtonState}
         onClick={onSubmitClick}
       />
+
+      {(isFetchingQuote || quote) && (
+        <div className="flex w-full flex-col gap-2">
+          {/* Minimum inflow */}
+          <div className="flex w-full flex-row justify-between">
+            <p className="text-p2 text-secondary-foreground">Minimum inflow</p>
+
+            <div className="flex flex-col items-end gap-1">
+              {pool.coinTypes.map((coinType, index) => {
+                const coinMetadata = appData.poolCoinMetadataMap[coinType];
+
+                return (
+                  <Fragment key={coinType}>
+                    {isFetchingQuote || !quote ? (
+                      <Skeleton className="h-[21px] w-24" />
+                    ) : (
+                      <p className="text-p2 text-foreground">
+                        {formatToken(
+                          new BigNumber(
+                            (index === 0
+                              ? quote.withdrawA
+                              : quote.withdrawB
+                            ).toString(),
+                          )
+                            .div(index === 0 ? 1 : 1 + slippagePercent / 100)
+                            .div(10 ** coinMetadata.decimals),
+                          { dp: coinMetadata.decimals },
+                        )}{" "}
+                        {coinMetadata.symbol}
+                      </p>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -1206,30 +1280,9 @@ function SwapTab({ formatValue }: SwapTabProps) {
             )}
           </div>
 
-          {/* Minimum received */}
-          <div className="flex w-full flex-row items-center justify-between">
-            <p className="text-p2 text-secondary-foreground">
-              Minimum received
-            </p>
-
-            {isFetchingQuote || !quote ? (
-              <Skeleton className="h-[21px] w-24" />
-            ) : (
-              <p className="text-p2 text-foreground">
-                {formatToken(
-                  new BigNumber(quote.amountOut.toString())
-                    .div(1 + slippagePercent / 100)
-                    .div(10 ** inactiveCoinMetadata.decimals),
-                  { dp: inactiveCoinMetadata.decimals },
-                )}{" "}
-                {inactiveCoinMetadata.symbol}
-              </p>
-            )}
-          </div>
-
           {/* Fees */}
           <div className="flex w-full flex-row items-center justify-between">
-            <p className="text-p2 text-secondary-foreground">Included fees</p>
+            <p className="text-p2 text-secondary-foreground">Fees</p>
 
             {isFetchingQuote || !quote ? (
               <Skeleton className="h-[21px] w-24" />
@@ -1241,6 +1294,25 @@ function SwapTab({ formatValue }: SwapTabProps) {
                       quote.outputFees.poolFees + quote.outputFees.protocolFees
                     ).toString(),
                   ).div(10 ** inactiveCoinMetadata.decimals),
+                  { dp: inactiveCoinMetadata.decimals },
+                )}{" "}
+                {inactiveCoinMetadata.symbol}
+              </p>
+            )}
+          </div>
+
+          {/* Minimum inflow */}
+          <div className="flex w-full flex-row items-center justify-between">
+            <p className="text-p2 text-secondary-foreground">Minimum inflow</p>
+
+            {isFetchingQuote || !quote ? (
+              <Skeleton className="h-[21px] w-24" />
+            ) : (
+              <p className="text-p2 text-foreground">
+                {formatToken(
+                  new BigNumber(quote.amountOut.toString())
+                    .div(1 + slippagePercent / 100)
+                    .div(10 ** inactiveCoinMetadata.decimals),
                   { dp: inactiveCoinMetadata.decimals },
                 )}{" "}
                 {inactiveCoinMetadata.symbol}
