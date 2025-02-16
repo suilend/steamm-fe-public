@@ -10,12 +10,12 @@ import { Bank, BankScript } from "../base";
 import { MultiSwapQuote, castMultiSwapQuote } from "../base/pool/poolTypes";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
+import { BankInfo } from "../types";
 import {
-  BankInfo,
-  BankList,
   getBankFromBToken,
   getBankFromUnderlying,
-} from "../types";
+  getPoolInfo,
+} from "../utils";
 
 export interface CoinPair {
   coinIn: string;
@@ -54,12 +54,10 @@ export class RouterModule implements IModule {
       quote: MultiSwapQuote;
     },
   ) {
-    const bankList = await this.sdk.getBanks();
     const pools = await this.sdk.getPools();
 
-    const [btokens, bankInfos] = this.mintBTokens(
+    const [btokens, bankInfos] = await this.mintBTokens(
       tx,
-      bankList,
       args.route,
       args.coinIn,
       args.quote.amountIn,
@@ -69,7 +67,7 @@ export class RouterModule implements IModule {
     let i = 0;
 
     for (const hop of args.route) {
-      const poolInfo = pools.find((pool) => pool.poolId === hop.poolId)!;
+      const poolInfo = getPoolInfo(pools, hop.poolId);
 
       const pool = this.sdk.getPool(poolInfo);
 
@@ -185,7 +183,6 @@ export class RouterModule implements IModule {
 
     const bankX = new Bank(this.sdk.packageInfo(), bankInfoX);
     const bankY = new Bank(this.sdk.packageInfo(), bankInfoY);
-    const dummyTx = new Transaction();
 
     const firstBTokenAmountIn = this.getBTokenAmountInForQuote(
       tx,
@@ -198,7 +195,7 @@ export class RouterModule implements IModule {
     let nextBTokenAmountIn: TransactionResult = firstBTokenAmountIn;
 
     for (const hop of route) {
-      const poolInfo = pools.find((pool) => pool.poolId === hop.poolId)!;
+      const poolInfo = getPoolInfo(pools, hop.poolId);
 
       const bankInfoA = getBankFromBToken(bankList, hop.coinTypeA);
       const bankInfoB = getBankFromBToken(bankList, hop.coinTypeB);
@@ -258,6 +255,7 @@ export class RouterModule implements IModule {
       throw new Error(`Quote event of type ${quoteType} not found in events`);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const quoteResult = (quoteEvent.parsedJson as any).event as T;
     return quoteResult;
   }
@@ -271,14 +269,12 @@ export class RouterModule implements IModule {
     );
   }
 
-  public mintBTokens(
+  public async mintBTokens(
     tx: Transaction,
-    banks: BankList,
     route: Route,
     coinIn: TransactionObjectInput,
     amountIn: bigint,
-  ): [TransactionResult[], BankInfo[]] {
-    const bankData: BankInfo[] = Object.values(banks);
+  ): Promise<[TransactionResult[], BankInfo[]]> {
     const coinTypes: string[] = [];
     const bTokens: TransactionResult[] = [];
     const bankDataToReturn: BankInfo[] = [];
@@ -304,12 +300,7 @@ export class RouterModule implements IModule {
 
     let i = 0;
     for (const coinType of coinTypes) {
-      // TOODO: revisit
-      const bankInfo =
-        bankData.find((bank) => bank.btokenType === coinType) ??
-        (() => {
-          throw new Error(`Bank info not found for bTokenType ${coinType}`);
-        })();
+      const bankInfo = getBankFromBToken(await this.sdk.getBanks(), coinType);
 
       const bToken =
         i === 0

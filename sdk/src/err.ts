@@ -228,6 +228,7 @@ export function parseMoveAbortError(
   if (!match) return `Unable to parse: ${errorString}`;
 
   const [
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _,
     address,
     name,

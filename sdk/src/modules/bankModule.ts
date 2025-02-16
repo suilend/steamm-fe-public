@@ -1,4 +1,3 @@
-import { SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
@@ -22,6 +21,7 @@ export class BankModule implements IModule {
   }
 
   public async createBToken(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     bytecode: any,
     sender: SuiAddressType,
   ): Promise<Transaction> {

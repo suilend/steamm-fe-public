@@ -1,5 +1,7 @@
 import { normalizeSuiObjectId } from "@mysten/sui/utils";
 
+import { BankInfo, BankList, PoolInfo } from "./types";
+
 export interface PoolTypes<A, B, Quoter, W, P> {
   aType: A;
   bType: B;
@@ -68,6 +70,7 @@ export function fixSuiObjectId(value: string): string {
  *
  * @param {any} data - The data object to be patched.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function patchFixSuiObjectId(data: any) {
   for (const key in data) {
     const type = typeof data[key];
@@ -106,4 +109,45 @@ export function extractGenerics(typeString: string): string[] {
   if (current) generics.push(current.trim());
 
   return generics;
+}
+
+export function getBankFromBToken(
+  bankList: BankList,
+  bTokenType: string,
+): BankInfo {
+  const bankInfos = Object.values(bankList);
+  const bankInfo = bankInfos.find(
+    (bankInfo) => bankInfo.btokenType === bTokenType,
+  );
+
+  if (!bankInfo) {
+    throw new Error(
+      `BankInfo not found for the given bTokenType: ${bTokenType}`,
+    );
+  }
+
+  return bankInfo;
+}
+
+export function getBankFromUnderlying(
+  bankList: BankList,
+  coinType: string,
+): BankInfo {
+  const bankInfo = bankList[coinType];
+
+  if (!bankInfo) {
+    throw new Error(
+      `BankInfo not found for the given underlying coin: ${coinType}`,
+    );
+  }
+
+  return bankInfo;
+}
+
+export function getPoolInfo(pools: PoolInfo[], poolId: string) {
+  const poolInfo = pools.find((pool) => pool.poolId === poolId);
+  if (!poolInfo) {
+    throw new Error(`PoolInfo not found for the given poolId: ${poolId}`);
+  }
+  return poolInfo;
 }

@@ -1,4 +1,3 @@
-import { SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
@@ -21,8 +20,7 @@ import {
 } from "../base/pool/poolTypes";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
-import { BankList } from "../types";
-import { SuiTypeName } from "../utils";
+import { SuiTypeName, getBankFromBToken, getPoolInfo } from "../utils";
 import { SuiAddressType } from "../utils";
 
 /**
@@ -43,6 +41,7 @@ export class PoolModule implements IModule {
     tx: Transaction,
     args: DepositLiquidityArgs,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [lpToken, _depositResult] = await this.depositLiquidity(tx, args);
 
     tx.transferObjects([lpToken], this.sdk.senderAddress);
@@ -55,7 +54,7 @@ export class PoolModule implements IModule {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
 
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
+    const poolInfo = getPoolInfo(pools, args.pool);
     const bankInfoA = bankList[args.coinTypeA];
     const bankInfoB = bankList[args.coinTypeB];
 
@@ -75,6 +74,7 @@ export class PoolModule implements IModule {
     tx: Transaction,
     args: RedeemLiquidityArgs,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [coinA, coinB, _redeemResult] = await this.redeemLiquidity(tx, args);
 
     tx.transferObjects([coinA, coinB], this.sdk.senderAddress);
@@ -87,7 +87,7 @@ export class PoolModule implements IModule {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
 
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
+    const poolInfo = getPoolInfo(pools, args.pool);
     const bankInfoA = bankList[args.coinTypeA];
     const bankInfoB = bankList[args.coinTypeB];
 
@@ -109,7 +109,7 @@ export class PoolModule implements IModule {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
 
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
+    const poolInfo = getPoolInfo(pools, args.pool);
     const bankInfoA = bankList[args.coinTypeA];
     const bankInfoB = bankList[args.coinTypeB];
 
@@ -133,9 +133,9 @@ export class PoolModule implements IModule {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
 
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
-    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
+    const poolInfo = getPoolInfo(pools, args.pool);
+    const bankInfoA = getBankFromBToken(bankList, poolInfo.coinTypeA);
+    const bankInfoB = getBankFromBToken(bankList, poolInfo.coinTypeB);
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -150,11 +150,11 @@ export class PoolModule implements IModule {
   public async quoteDeposit(args: QuoteDepositArgs): Promise<DepositQuote> {
     const tx = new Transaction();
     const pools = await this.sdk.getPools();
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
+    const poolInfo = getPoolInfo(pools, args.pool);
 
     const bankList = await this.sdk.getBanks();
-    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
-    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
+    const bankInfoA = getBankFromBToken(bankList, poolInfo.coinTypeA);
+    const bankInfoB = getBankFromBToken(bankList, poolInfo.coinTypeB);
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -169,10 +169,10 @@ export class PoolModule implements IModule {
   public async quoteRedeem(args: QuoteRedeemArgs): Promise<RedeemQuote> {
     const tx = new Transaction();
     const pools = await this.sdk.getPools();
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
+    const poolInfo = getPoolInfo(pools, args.pool);
     const bankList = await this.sdk.getBanks();
-    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
-    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
+    const bankInfoA = getBankFromBToken(bankList, poolInfo.coinTypeA);
+    const bankInfoB = getBankFromBToken(bankList, poolInfo.coinTypeB);
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -184,6 +184,7 @@ export class PoolModule implements IModule {
   }
 
   public async createLpToken(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     bytecode: any,
     sender: SuiAddressType,
   ): Promise<Transaction> {
@@ -255,20 +256,9 @@ export class PoolModule implements IModule {
       throw new Error("DevInspect Failed");
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const quoteResult = (inspectResults.events[0].parsedJson as any).event as T;
     return quoteResult;
-  }
-
-  private getBankInfoByBToken(bankList: BankList, btokenType: string) {
-    const bankInfo = Object.values(bankList).find(
-      (bank) => bank.btokenType === btokenType,
-    );
-
-    if (!bankInfo) {
-      throw new Error(`Bank info not found for btokenType: ${btokenType}`);
-    }
-
-    return bankInfo;
   }
 
   // TODO
