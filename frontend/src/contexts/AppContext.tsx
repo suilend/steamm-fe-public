@@ -31,6 +31,7 @@ import { ChartData } from "@/lib/chart";
 import { ParsedPool } from "@/lib/types";
 
 export interface AppData {
+  bTokenTypeCoinTypeMap: Record<string, string>;
   lendingMarketIdTypeMap: Record<string, string>;
 
   pools: ParsedPool[];

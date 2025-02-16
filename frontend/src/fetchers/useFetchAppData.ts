@@ -65,12 +65,12 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const usdcPrice = priceMap[NORMALIZED_USDC_COINTYPE];
 
     // Banks
-    const bTokenTypeToCoinTypeMap: Record<string, string> = {};
+    const bTokenTypeCoinTypeMap: Record<string, string> = {};
 
     const bankList = await steammClient.getBanks();
     for (const bank of Object.values(bankList)) {
       const { coinType, btokenType } = bank;
-      bTokenTypeToCoinTypeMap[btokenType] = normalizeStructTag(coinType);
+      bTokenTypeCoinTypeMap[btokenType] = normalizeStructTag(coinType);
     }
 
     const lendingMarketIdTypeMap = Object.values(bankList).reduce(
@@ -96,8 +96,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     for (const poolInfo of poolInfos) {
       const coinTypes = [
         poolInfo.lpTokenType,
-        bTokenTypeToCoinTypeMap[poolInfo.coinTypeA],
-        bTokenTypeToCoinTypeMap[poolInfo.coinTypeB],
+        bTokenTypeCoinTypeMap[poolInfo.coinTypeA],
+        bTokenTypeCoinTypeMap[poolInfo.coinTypeB],
       ];
       poolCoinTypes.push(...coinTypes);
     }
@@ -124,8 +124,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       )
         continue; // Skip pools with test btokens
 
-      const coinTypeA = bTokenTypeToCoinTypeMap[btokenTypeA];
-      const coinTypeB = bTokenTypeToCoinTypeMap[btokenTypeB];
+      const coinTypeA = bTokenTypeCoinTypeMap[btokenTypeA];
+      const coinTypeB = bTokenTypeCoinTypeMap[btokenTypeB];
 
       const pool = await steammClient.fullClient.fetchPool(poolInfo.poolId);
 
@@ -250,6 +250,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     }
 
     return {
+      bTokenTypeCoinTypeMap,
       lendingMarketIdTypeMap,
 
       pools,

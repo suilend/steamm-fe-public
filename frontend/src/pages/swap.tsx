@@ -1,13 +1,21 @@
 import Head from "next/head";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 import { clone, debounce } from "lodash";
+import { ArrowRight } from "lucide-react";
 
 import {
+  NORMALIZED_SEND_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
-  NORMALIZED_USDC_COINTYPE,
   SUI_GAS_MIN,
   formatInteger,
   formatToken,
@@ -28,6 +36,7 @@ import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import ExchangeRateParameter from "@/components/swap/ExchangeRateParameter";
 import PriceDifferenceLabel from "@/components/swap/PriceDifferenceLabel";
 import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
+import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { getQuoteRatio } from "@/lib/swap";
@@ -49,7 +58,7 @@ export default function SwapPage() {
   // CoinTypes
   const [inCoinType, setInCoinType] = useState<string>(NORMALIZED_SUI_COINTYPE);
   const [outCoinType, setOutCoinType] = useState<string>(
-    NORMALIZED_USDC_COINTYPE,
+    NORMALIZED_SEND_COINTYPE,
   );
 
   const [inCoinMetadata, outCoinMetadata] = [
@@ -87,6 +96,33 @@ export default function SwapPage() {
   const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false);
   const [quote, setQuote] = useState<MultiSwapQuote | undefined>(undefined);
   const [route, setRoute] = useState<Route | undefined>(undefined);
+  const flattenedRoute = useMemo(() => {
+    if (!route) return undefined;
+
+    const result: { poolId: string; bTokenType: string }[] = [];
+    for (let i = 0; i < route.length; i++) {
+      const r = route[i];
+      if (i === 0) {
+        result.push(
+          {
+            poolId: r.poolId,
+            bTokenType: r.a2b ? r.coinTypeA : r.coinTypeB,
+          },
+          {
+            poolId: r.poolId,
+            bTokenType: r.a2b ? r.coinTypeB : r.coinTypeA,
+          },
+        );
+      } else {
+        result.push({
+          poolId: r.poolId,
+          bTokenType: r.a2b ? r.coinTypeB : r.coinTypeA,
+        });
+      }
+    }
+
+    return result;
+  }, [route]);
 
   const fetchQuote = useCallback(
     async (
@@ -427,13 +463,36 @@ export default function SwapPage() {
           </div>
 
           {(isFetchingQuote || quote) && (
-            <PriceDifferenceLabel
-              inCoinType={inCoinType}
-              outCoinType={outCoinType}
-              oracleRatio={oracleRatio}
-              isFetchingQuote={isFetchingQuote}
-              quote={quote}
-            />
+            <div className="flex w-full flex-row items-center justify-between">
+              <PriceDifferenceLabel
+                inCoinType={inCoinType}
+                outCoinType={outCoinType}
+                oracleRatio={oracleRatio}
+                isFetchingQuote={isFetchingQuote}
+                quote={quote}
+              />
+
+              {isFetchingQuote || !quote || !route ? (
+                <Skeleton className="h-[21px] w-40" />
+              ) : (
+                <div className="flex flex-row items-center gap-1">
+                  {flattenedRoute!.map((r, index) => (
+                    <Fragment key={r.bTokenType}>
+                      <p className="text-p2 text-secondary-foreground">
+                        {
+                          appData.poolCoinMetadataMap[
+                            appData.bTokenTypeCoinTypeMap[r.bTokenType]
+                          ].symbol
+                        }
+                      </p>
+                      {index !== flattenedRoute!.length - 1 && (
+                        <ArrowRight className="h-3 w-3 text-secondary-foreground" />
+                      )}
+                    </Fragment>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           <SubmitButton
