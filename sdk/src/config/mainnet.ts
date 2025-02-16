@@ -23,26 +23,30 @@ export const STEAMM_SCRIPT_PKG_ID =
 export const STEAMM_SCRIPT_PUBLISHED_AT =
   "0x7e69a01e9d856fdbfa315a3b0835d828ce632d3dd2fdc3d80de256895fca9e0a";
 
+export const STEAMM_CONFIG = {
+  package_id: STEAMM_PKG_ID,
+  published_at: STEAMM_PUBLISHED_AT,
+  config: {
+    registryId: REGISTRY_OBJECT_ID,
+    globalAdmin: GLOBAL_ADMIN_OBJECT_ID,
+  },
+};
+export const SUILEND_CONFIG = {
+  package_id: SUILEND_PKG_ID,
+  published_at: SUILEND_PUBLISHED_AT,
+  config: {
+    lendingMarketId: LENDING_MARKET_ID,
+    lendingMarketType: LENDING_MARKET_TYPE,
+  },
+};
+export const STEAMM_SCRIPT_CONFIG = {
+  package_id: STEAMM_SCRIPT_PKG_ID,
+  published_at: STEAMM_SCRIPT_PUBLISHED_AT,
+};
+
 export const MAINNET_CONFIG = {
   fullRpcUrl: "https://fullnode.mainnet.sui.io:443",
-  steamm_config: {
-    package_id: STEAMM_PKG_ID,
-    published_at: STEAMM_PUBLISHED_AT,
-    config: {
-      registryId: REGISTRY_OBJECT_ID,
-      globalAdmin: GLOBAL_ADMIN_OBJECT_ID,
-    },
-  },
-  suilend_config: {
-    package_id: SUILEND_PUBLISHED_AT,
-    published_at: SUILEND_PKG_ID,
-    config: {
-      lendingMarketId: LENDING_MARKET_ID,
-      lendingMarketType: LENDING_MARKET_TYPE,
-    },
-  },
-  steamm_script_config: {
-    package_id: STEAMM_SCRIPT_PKG_ID,
-    published_at: STEAMM_SCRIPT_PUBLISHED_AT,
-  },
+  steamm_config: STEAMM_CONFIG,
+  suilend_config: SUILEND_CONFIG,
+  steamm_script_config: STEAMM_SCRIPT_CONFIG,
 };
