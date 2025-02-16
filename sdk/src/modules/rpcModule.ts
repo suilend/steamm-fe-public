@@ -22,13 +22,13 @@ import {
 import {
   PhantomReified,
   Reified,
-} from "../../src/_codegen/_generated/_framework/reified";
-import { Bank } from "../../src/_codegen/_generated/steamm/bank/structs";
+} from "../_codegen/_generated/_framework/reified";
+import { Bank } from "../_codegen/_generated/steamm/bank/structs";
 import {
   CpQuoter,
   CpQuoterFields,
-} from "../../src/_codegen/_generated/steamm/cpmm/structs";
-import { Pool } from "../../src/_codegen/_generated/steamm/pool/structs";
+} from "../_codegen/_generated/steamm/cpmm/structs";
+import { Pool } from "../_codegen/_generated/steamm/pool/structs";
 import { DataPage, PaginationArgs, SuiObjectIdType } from "../types";
 import { extractGenerics } from "../utils";
 
