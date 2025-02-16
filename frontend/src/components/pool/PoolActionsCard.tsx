@@ -97,8 +97,15 @@ interface DepositTabProps {
 function DepositTab({ formatValue }: DepositTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, getBalance, refresh, slippagePercent } =
-    useLoadedAppContext();
+  const {
+    steammClient,
+    appData,
+    getBalance,
+    refresh,
+    slippagePercent,
+    hasRootlets,
+    isWhitelisted,
+  } = useLoadedAppContext();
   const { pool } = usePoolContext();
 
   // Value
@@ -288,7 +295,8 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    // TODO: Check Rootlets
+    if (!hasRootlets && !isWhitelisted)
+      return { isDisabled: true, title: "Beta for Rootlets only" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
 
     if (Object.values(values).some((value) => value === ""))
@@ -474,8 +482,15 @@ function DepositTab({ formatValue }: DepositTabProps) {
 function WithdrawTab() {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, getBalance, refresh, slippagePercent } =
-    useLoadedAppContext();
+  const {
+    steammClient,
+    appData,
+    getBalance,
+    refresh,
+    slippagePercent,
+    hasRootlets,
+    isWhitelisted,
+  } = useLoadedAppContext();
   const { pool } = usePoolContext();
 
   // Value
@@ -535,7 +550,8 @@ function WithdrawTab() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    // Check Rootlets
+    if (!hasRootlets && !isWhitelisted)
+      return { isDisabled: true, title: "Beta for Rootlets only" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
 
     if (value === "") return { isDisabled: true, title: "Enter an amount" };
@@ -768,8 +784,15 @@ interface SwapTabProps {
 function SwapTab({ formatValue }: SwapTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, getBalance, refresh, slippagePercent } =
-    useLoadedAppContext();
+  const {
+    steammClient,
+    appData,
+    getBalance,
+    refresh,
+    slippagePercent,
+    hasRootlets,
+    isWhitelisted,
+  } = useLoadedAppContext();
   const { pool } = usePoolContext();
 
   // Active index
@@ -930,7 +953,8 @@ function SwapTab({ formatValue }: SwapTabProps) {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    // TODO: Check Rootlets
+    if (!hasRootlets && !isWhitelisted)
+      return { isDisabled: true, title: "Beta for Rootlets only" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
 
     if (value === "") return { isDisabled: true, title: "Enter an amount" };
