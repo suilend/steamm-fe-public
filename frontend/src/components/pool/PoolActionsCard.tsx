@@ -5,13 +5,7 @@ import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import { SUI_DECIMALS } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
-import {
-  AlertTriangle,
-  ArrowRightLeft,
-  ArrowUpDown,
-  Info,
-  Loader2,
-} from "lucide-react";
+import { AlertTriangle, ArrowRightLeft, ArrowUpDown, Info } from "lucide-react";
 
 import {
   MAX_U64,
@@ -39,13 +33,13 @@ import {
 
 import CoinInput, { getCoinInputId } from "@/components/pool/CoinInput";
 import SlippagePopover from "@/components/SlippagePopover";
+import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import TokenLogo from "@/components/TokenLogo";
 import TokenLogos from "@/components/TokenLogos";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { SubmitButtonState } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD = 1;
@@ -65,29 +59,6 @@ const actionNameMap: Record<Action, string> = {
 
 enum QueryParams {
   ACTION = "action",
-}
-
-interface SubmitButtonProps {
-  submitButtonState: SubmitButtonState;
-  onClick: () => void;
-}
-
-function SubmitButton({ submitButtonState, onClick }: SubmitButtonProps) {
-  return (
-    <button
-      className="flex h-14 w-full flex-row items-center justify-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
-      disabled={submitButtonState.isDisabled}
-      onClick={onClick}
-    >
-      {submitButtonState.isLoading ? (
-        <Loader2 className="h-6 w-6 animate-spin text-button-1-foreground" />
-      ) : (
-        <p className="text-p1 text-button-1-foreground">
-          {submitButtonState.title}
-        </p>
-      )}
-    </button>
-  );
 }
 
 interface DepositTabProps {
@@ -1324,6 +1295,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
     </>
   );
 }
+
 export default function PoolActionsCard() {
   const router = useRouter();
   const queryParams = {

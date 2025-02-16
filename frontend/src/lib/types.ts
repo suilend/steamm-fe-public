@@ -56,10 +56,3 @@ export type PoolPosition = {
     amountUsd?: BigNumber;
   };
 };
-
-export type SubmitButtonState = {
-  isLoading?: boolean;
-  isDisabled?: boolean;
-  title?: string;
-  description?: string;
-};

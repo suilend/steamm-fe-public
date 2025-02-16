@@ -85,7 +85,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const poolInfos = await steammClient.getPools();
 
     const poolCoinTypes: string[] = [
-      // TEMP
+      // TEMP (used for dummy TVL and volume data)
       NORMALIZED_SUI_COINTYPE,
       NORMALIZED_DEEP_COINTYPE,
       NORMALIZED_USDC_COINTYPE,
@@ -161,8 +161,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       const feesUsd_24h = undefined;
       const feesUsd_30d = undefined;
       const apr = {
-        coinTypes: [coinTypeA], // TEMP
-        percent: new BigNumber(2.3), // 24h, TEMP
+        coinTypes: [coinTypeA], // TODO
+        percent: new BigNumber(2.3), // 24h, TODO
       };
 
       const feeTierPercent = new BigNumber(poolInfo.swapFeeBps).div(100);
@@ -199,8 +199,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       [NORMALIZED_SUI_COINTYPE, NORMALIZED_USDC_COINTYPE],
     ];
 
-    // TVL (dummy data)
-    const historicalTvlUsd_30d: ChartData[] = [];
+    // TVL
+    const historicalTvlUsd_30d: ChartData[] = []; // TODO
     for (let i = 0; i < 30; i++) {
       historicalTvlUsd_30d.push({
         timestampS: 1739253600 + i * 24 * 60 * 60,
@@ -221,10 +221,10 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       });
     }
 
-    // Volume (dummy data)
-    const volumeUsd_30d = new BigNumber(669152);
+    // Volume
+    const volumeUsd_30d = new BigNumber(669152); // TODO
 
-    const historicalVolumeUsd_30d: ChartData[] = [];
+    const historicalVolumeUsd_30d: ChartData[] = []; // TODO
     for (let i = 0; i < 30; i++) {
       historicalVolumeUsd_30d.push({
         timestampS: 1739253600 + i * 24 * 60 * 60,

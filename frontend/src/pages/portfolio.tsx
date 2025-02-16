@@ -73,8 +73,8 @@ export default function PortfolioPage() {
           depositedAmountUsd: undefined, // TODO
           isStaked: false, // TODO - FETCH
           claimableRewards: {
-            [NORMALIZED_SUI_COINTYPE]: new BigNumber(5.1),
-            [NORMALIZED_DEEP_COINTYPE]: new BigNumber(1.051),
+            [NORMALIZED_SUI_COINTYPE]: new BigNumber(5.1), // TODO
+            [NORMALIZED_DEEP_COINTYPE]: new BigNumber(1.051), // TODO
           }, // TODO - FETCH
           pnl: {
             percent: undefined, // TODO

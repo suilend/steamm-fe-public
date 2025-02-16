@@ -115,7 +115,7 @@ export default function PoolsPage() {
                   }
                   chartType={ChartType.BAR}
                   periodDays={30}
-                  periodChangePercent={new BigNumber(-5 + Math.random() * 10)}
+                  periodChangePercent={null}
                   data={appData.historicalVolumeUsd_30d}
                   formatCategory={(category) =>
                     formatCoinTypeCategory(

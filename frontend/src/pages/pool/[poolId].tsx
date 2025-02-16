@@ -1,12 +1,10 @@
 import Head from "next/head";
 import Link from "next/link";
 
-import BigNumber from "bignumber.js";
 import { ChevronRight } from "lucide-react";
 
 import { formatPercent, formatUsd } from "@suilend/frontend-sui";
 
-import PercentChange from "@/components/PercentChange";
 import PoolActionsCard from "@/components/pool/PoolActionsCard";
 import PoolChartCard from "@/components/pool/PoolChartCard";
 import PoolParametersCard from "@/components/pool/PoolParametersCard";
@@ -94,9 +92,9 @@ function PoolPage() {
                     </Tooltip>
                   )}
 
-                  <PercentChange
+                  {/* <PercentChange
                     value={new BigNumber(-5 + Math.random() * 10)}
-                  />
+                  /> */}
                 </div>
               </div>
 
@@ -116,9 +114,9 @@ function PoolPage() {
                     </Tooltip>
                   )}
 
-                  <PercentChange
+                  {/* <PercentChange
                     value={new BigNumber(-5 + Math.random() * 10)}
-                  />
+                  /> */}
                 </div>
               </div>
 
@@ -129,9 +127,9 @@ function PoolPage() {
                   <p className="text-p1 text-foreground">
                     {formatPercent(pool.apr.percent)}
                   </p>
-                  <PercentChange
+                  {/* <PercentChange
                     value={new BigNumber(-5 + Math.random() * 10)}
-                  />
+                  /> */}
                 </div>
               </div>
             </div>

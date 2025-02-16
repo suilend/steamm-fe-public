@@ -117,7 +117,7 @@ export default function PoolChartCard() {
             ? formatUsd(pool.volumeUsd_30d)
             : undefined,
         chartType: ChartType.BAR,
-        periodChangePercent: new BigNumber(-5 + Math.random() * 10),
+        periodChangePercent: null,
         data: historicalVolumeUsd_30d,
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
@@ -128,7 +128,7 @@ export default function PoolChartCard() {
             ? formatUsd(pool.feesUsd_30d)
             : undefined,
         chartType: ChartType.BAR,
-        periodChangePercent: new BigNumber(-5 + Math.random() * 10),
+        periodChangePercent: null,
         data: historicalFeesUsd_30d,
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
@@ -136,7 +136,7 @@ export default function PoolChartCard() {
         title: chartStatNameMap[ChartStat.APR],
         value: formatPercent(pool.apr.percent),
         chartType: ChartType.LINE,
-        periodChangePercent: new BigNumber(-5 + Math.random() * 10),
+        periodChangePercent: null,
         data: historicalAprPercent_30d,
         formatValue: (value) => formatPercent(new BigNumber(value)),
       },
