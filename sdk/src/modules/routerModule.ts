@@ -273,10 +273,10 @@ export class RouterModule implements IModule {
     route: Route,
     coinIn: TransactionObjectInput,
     amountIn: bigint,
-  ): [TransactionObjectInput[], BankInfo[]] {
+  ): [TransactionResult[], BankInfo[]] {
     const bankData: BankInfo[] = Object.values(banks);
     const coinTypes: string[] = [];
-    const bTokens: TransactionObjectInput[] = [];
+    const bTokens: TransactionResult[] = [];
     const bankDataToReturn: BankInfo[] = [];
 
     for (const hop of route) {
