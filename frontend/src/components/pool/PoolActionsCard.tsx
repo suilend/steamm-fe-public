@@ -2,12 +2,20 @@ import { useRouter } from "next/router";
 import { useCallback, useRef, useState } from "react";
 
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
+import { SUI_DECIMALS } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
-import { ArrowUpDown, Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRightLeft,
+  ArrowUpDown,
+  Info,
+  Loader2,
+} from "lucide-react";
 
 import {
   MAX_U64,
+  NORMALIZED_SUI_COINTYPE,
   SUI_GAS_MIN,
   formatInteger,
   formatPercent,
@@ -22,7 +30,12 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { DepositQuote, RedeemQuote, SwapQuote } from "@suilend/steamm-sdk";
+import {
+  DepositQuote,
+  RedeemQuote,
+  SteammSDK,
+  SwapQuote,
+} from "@suilend/steamm-sdk";
 
 import CoinInput, { getCoinInputId } from "@/components/pool/CoinInput";
 import SlippagePopover from "@/components/SlippagePopover";
@@ -34,6 +47,9 @@ import { usePoolContext } from "@/contexts/PoolContext";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { SubmitButtonState } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+const PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD = 1;
+const PRICE_DIFFERENCE_PERCENT_DESTRUCTIVE_THRESHOLD = 8;
 
 enum Action {
   DEPOSIT = "deposit",
@@ -81,8 +97,15 @@ interface DepositTabProps {
 function DepositTab({ formatValue }: DepositTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, getBalance, refresh, slippagePercent } =
-    useLoadedAppContext();
+  const {
+    steammClient,
+    appData,
+    getBalance,
+    refresh,
+    slippagePercent,
+    hasRootlets,
+    isWhitelisted,
+  } = useLoadedAppContext();
   const { pool } = usePoolContext();
 
   // Value
@@ -94,7 +117,11 @@ function DepositTab({ formatValue }: DepositTabProps) {
   >(undefined);
   const [quote, setQuote] = useState<DepositQuote | undefined>(undefined);
 
-  const fetchQuote = async (_value: string, index: number) => {
+  const fetchQuote = async (
+    _steammClient: SteammSDK,
+    _value: string,
+    index: number,
+  ) => {
     console.log(
       "DepositTab.fetchQuote - _value(=formattedValue):",
       _value,
@@ -116,7 +143,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
         .times(10 ** dps[index])
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
-      const quote = await steammClient.Pool.quoteDeposit({
+      const quote = await _steammClient.Pool.quoteDeposit({
         pool: pool.id,
         maxA: index === 0 ? BigInt(submitAmount) : BigInt(MAX_U64.toString()),
         maxB: index === 0 ? BigInt(MAX_U64.toString()) : BigInt(submitAmount),
@@ -165,26 +192,80 @@ function DepositTab({ formatValue }: DepositTabProps) {
       appData.poolCoinMetadataMap[pool.coinTypes[1]].decimals,
     ];
 
-    const isValueValid = new BigNumber(_value || 0).gt(0);
     const formattedValue = formatValue(_value, dps[index]);
-    setValues((prev) => {
+
+    // formattedValue === "" || formattedValue < 0
+    if (formattedValue === "" || new BigNumber(formattedValue).lt(0)) {
       const newValues: [string, string] = [
-        index === 0 ? formattedValue : isValueValid ? prev[0] : "",
-        index === 0 ? (isValueValid ? prev[1] : "") : formattedValue,
+        index === 0 ? formattedValue : "",
+        index === 0 ? "" : formattedValue,
       ];
       valuesRef.current = newValues;
+      setValues(newValues);
 
-      return newValues;
-    });
-
-    if (!isValueValid) {
       setFetchingQuoteForIndex(undefined);
       setQuote(undefined);
       return;
     }
 
+    // formattedValue >= 0
+    if (pool.tvlUsd.eq(0)) {
+      const newValues: [string, string] = [
+        index === 0 ? formattedValue : values[0],
+        index === 0 ? values[1] : formattedValue,
+      ];
+      valuesRef.current = newValues;
+      setValues(newValues);
+
+      // Initial deposit (set fake quote) (one of the values may be "")
+      setFetchingQuoteForIndex(undefined);
+      setQuote({
+        initialDeposit: true,
+        depositA: BigInt(
+          new BigNumber(valuesRef.current[0] || 0)
+            .times(10 ** dps[0])
+            .integerValue(BigNumber.ROUND_DOWN)
+            .toString(),
+        ),
+        depositB: BigInt(
+          new BigNumber(valuesRef.current[1] || 0)
+            .times(10 ** dps[1])
+            .integerValue(BigNumber.ROUND_DOWN)
+            .toString(),
+        ),
+        mintLp: BigInt(0), // Not used
+      });
+      return;
+    }
+
+    // formattedValue === 0
+    if (new BigNumber(formattedValue).eq(0)) {
+      const newValues: [string, string] = [
+        index === 0 ? formattedValue : "0",
+        index === 0 ? "0" : formattedValue,
+      ];
+      valuesRef.current = newValues;
+      setValues(newValues);
+
+      setFetchingQuoteForIndex(undefined);
+      setQuote(undefined);
+      return;
+    }
+
+    // formattedValue > 0
+    const newValues: [string, string] = [
+      index === 0 ? formattedValue : values[0],
+      index === 0 ? values[1] : formattedValue,
+    ];
+    valuesRef.current = newValues;
+    setValues(newValues);
+
     setFetchingQuoteForIndex(1 - index);
-    (isImmediate ? fetchQuote : debouncedFetchQuote)(formattedValue, index);
+    (isImmediate ? fetchQuote : debouncedFetchQuote)(
+      steammClient,
+      formattedValue,
+      index,
+    );
   };
 
   // Value - max
@@ -195,7 +276,12 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
     onValueChange(
       (isSui(coinType)
-        ? BigNumber.max(0, balance.minus(SUI_GAS_MIN))
+        ? BigNumber.max(
+            0,
+            new BigNumber(balance.minus(SUI_GAS_MIN)).div(
+              1 + slippagePercent / 100,
+            ),
+          )
         : balance
       ).toFixed(coinMetadata.decimals, BigNumber.ROUND_DOWN),
       index,
@@ -209,7 +295,8 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    // TODO: Check Rootlets
+    if (!hasRootlets && !isWhitelisted)
+      return { isDisabled: true, title: "Beta for Rootlets only" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
 
     if (Object.values(values).some((value) => value === ""))
@@ -219,11 +306,56 @@ function DepositTab({ formatValue }: DepositTabProps) {
     if (Object.values(values).some((value) => new BigNumber(value).eq(0)))
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
-    // TODO: Check balance
+    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
+      return {
+        isDisabled: true,
+        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+      };
+
+    if (quote) {
+      if (
+        pool.coinTypes.includes(NORMALIZED_SUI_COINTYPE) &&
+        new BigNumber(
+          getBalance(NORMALIZED_SUI_COINTYPE).minus(SUI_GAS_MIN),
+        ).lt(
+          new BigNumber(
+            (pool.coinTypes.indexOf(NORMALIZED_SUI_COINTYPE) === 0
+              ? quote.depositA
+              : quote.depositB
+            ).toString(),
+          )
+            .div(10 ** SUI_DECIMALS)
+            .times(1 + slippagePercent / 100),
+        )
+      )
+        return {
+          isDisabled: true,
+          title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+        };
+
+      for (let i = 0; i < pool.coinTypes.length; i++) {
+        const coinType = pool.coinTypes[i];
+        const coinMetadata = appData.poolCoinMetadataMap[coinType];
+
+        if (
+          getBalance(coinType).lt(
+            new BigNumber(
+              (i === 0 ? quote.depositA : quote.depositB).toString(),
+            )
+              .div(10 ** coinMetadata.decimals)
+              .times(1 + slippagePercent / 100),
+          )
+        )
+          return {
+            isDisabled: true,
+            title: `Insufficient ${coinMetadata.symbol}`,
+          };
+      }
+    }
 
     return {
       title: "Deposit",
-      isDisabled: fetchingQuoteForIndex !== undefined,
+      isDisabled: fetchingQuoteForIndex !== undefined || !quote,
     };
   })();
 
@@ -327,17 +459,15 @@ function DepositTab({ formatValue }: DepositTabProps) {
       <div className="flex w-full min-w-0 flex-col gap-1">
         <CoinInput
           coinType={pool.coinTypes[0]}
-          value={values[0]}
+          value={fetchingQuoteForIndex === 0 ? undefined : values[0]}
           onChange={(value) => onValueChange(value, 0)}
           onBalanceClick={() => onCoinBalanceClick(0)}
-          isLoading={fetchingQuoteForIndex === 0}
         />
         <CoinInput
           coinType={pool.coinTypes[1]}
-          value={values[1]}
+          value={fetchingQuoteForIndex === 1 ? undefined : values[1]}
           onChange={(value) => onValueChange(value, 1)}
           onBalanceClick={() => onCoinBalanceClick(1)}
-          isLoading={fetchingQuoteForIndex === 1}
         />
       </div>
 
@@ -352,8 +482,15 @@ function DepositTab({ formatValue }: DepositTabProps) {
 function WithdrawTab() {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, getBalance, refresh, slippagePercent } =
-    useLoadedAppContext();
+  const {
+    steammClient,
+    appData,
+    getBalance,
+    refresh,
+    slippagePercent,
+    hasRootlets,
+    isWhitelisted,
+  } = useLoadedAppContext();
   const { pool } = usePoolContext();
 
   // Value
@@ -363,7 +500,7 @@ function WithdrawTab() {
   const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false);
   const [quote, setQuote] = useState<RedeemQuote | undefined>(undefined);
 
-  const fetchQuote = async (_value: string) => {
+  const fetchQuote = async (_steammClient: SteammSDK, _value: string) => {
     console.log(
       "WithdrawTab.fetchQuote - _value:",
       _value,
@@ -380,7 +517,7 @@ function WithdrawTab() {
         .times(10 ** appData.poolCoinMetadataMap[pool.lpTokenType].decimals)
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
-      const quote = await steammClient.Pool.quoteRedeem({
+      const quote = await _steammClient.Pool.quoteRedeem({
         pool: pool.id,
         lpTokens: BigInt(submitAmount),
       });
@@ -400,15 +537,12 @@ function WithdrawTab() {
   const onValueChange = async (_value: string, isImmediate?: boolean) => {
     console.log("WithdrawTab.onValueChange - _value:", _value);
 
-    setValue(() => {
-      const newValue = _value;
-      valueRef.current = _value;
-
-      return newValue;
-    });
+    const newValue = _value;
+    valueRef.current = _value;
+    setValue(newValue);
 
     setIsFetchingQuote(true);
-    (isImmediate ? fetchQuote : debouncedFetchQuote)(_value);
+    (isImmediate ? fetchQuote : debouncedFetchQuote)(steammClient, _value);
   };
 
   // Submit
@@ -416,7 +550,8 @@ function WithdrawTab() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    // Check Rootlets
+    if (!hasRootlets && !isWhitelisted)
+      return { isDisabled: true, title: "Beta for Rootlets only" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
 
     if (value === "") return { isDisabled: true, title: "Enter an amount" };
@@ -429,11 +564,15 @@ function WithdrawTab() {
     )
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
-    // TODO: Check balance
+    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
+      return {
+        isDisabled: true,
+        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+      };
 
     return {
       title: "Withdraw",
-      isDisabled: isFetchingQuote,
+      isDisabled: isFetchingQuote || !quote,
     };
   })();
 
@@ -543,7 +682,7 @@ function WithdrawTab() {
 
         <div className="flex w-full flex-row items-center gap-2">
           <input
-            className="h-5 min-w-0 flex-1 appearance-none bg-[transparent] [&::-webkit-slider-runnable-track]:rounded-[12px] [&::-webkit-slider-runnable-track]:bg-border/50 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[500px] [&::-webkit-slider-thumb]:bg-foreground"
+            className="h-6 min-w-0 flex-1 appearance-none bg-[transparent] [&::-webkit-slider-runnable-track]:rounded-[10px] [&::-webkit-slider-runnable-track]:bg-border/50 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[10px] [&::-webkit-slider-thumb]:bg-foreground"
             type="range"
             min={0}
             max={100}
@@ -559,14 +698,13 @@ function WithdrawTab() {
         <div className="flex w-full flex-row justify-between">
           <div className="flex w-full flex-row items-center gap-2">
             <TokenLogos coinTypes={pool.coinTypes} size={16} />
-            <p className="text-p1 text-foreground">
+            <p className="text-p2 text-foreground">
               {formatToken(
                 new BigNumber(value)
                   .div(100)
                   .times(getBalance(pool.lpTokenType)),
                 { dp: appData.poolCoinMetadataMap[pool.lpTokenType].decimals },
-              )}{" "}
-              LP tokens
+              )}
             </p>
           </div>
 
@@ -589,12 +727,7 @@ function WithdrawTab() {
       <div className="flex w-full flex-col gap-2">
         <p className="text-p2 text-secondary-foreground">You receive</p>
 
-        <div
-          className={cn(
-            "flex w-full flex-col gap-3 rounded-md border p-4",
-            isFetchingQuote && "animate-pulse",
-          )}
-        >
+        <div className="flex w-full flex-col gap-3 rounded-md border p-4">
           {pool.coinTypes.map((coinType, index) => {
             const coinMetadata = appData.poolCoinMetadataMap[coinType];
 
@@ -613,23 +746,23 @@ function WithdrawTab() {
                   </p>
                 </div>
 
-                <p className="text-p1 text-foreground">
-                  {isFetchingQuote && !quote ? (
-                    <Skeleton className="h-[24px] w-20" />
-                  ) : (
-                    formatToken(
-                      new BigNumber(
-                        quote
-                          ? (index === 0
+                {isFetchingQuote ? (
+                  <Skeleton className="h-[24px] w-24" />
+                ) : (
+                  <p className="text-p1 text-foreground">
+                    {quote
+                      ? formatToken(
+                          new BigNumber(
+                            (index === 0
                               ? quote.withdrawA
                               : quote.withdrawB
-                            ).toString()
-                          : 0,
-                      ).div(10 ** coinMetadata.decimals),
-                      { dp: coinMetadata.decimals },
-                    )
-                  )}
-                </p>
+                            ).toString(),
+                          ).div(10 ** coinMetadata.decimals),
+                          { dp: coinMetadata.decimals },
+                        )
+                      : "--"}
+                  </p>
+                )}
               </div>
             );
           })}
@@ -651,20 +784,38 @@ interface SwapTabProps {
 function SwapTab({ formatValue }: SwapTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, getBalance, refresh, slippagePercent } =
-    useLoadedAppContext();
+  const {
+    steammClient,
+    appData,
+    getBalance,
+    refresh,
+    slippagePercent,
+    hasRootlets,
+    isWhitelisted,
+  } = useLoadedAppContext();
   const { pool } = usePoolContext();
 
-  // Value
+  // Active index
   const [activeCoinIndex, setActiveCoinIndex] = useState<0 | 1>(0);
+  const activeCoinType = pool.coinTypes[activeCoinIndex];
+  const activeCoinMetadata = appData.poolCoinMetadataMap[activeCoinType];
 
+  const inactiveIndex = (1 - activeCoinIndex) as 0 | 1;
+  const inactiveCoinType = pool.coinTypes[inactiveIndex];
+  const inactiveCoinMetadata = appData.poolCoinMetadataMap[inactiveCoinType];
+
+  // Value
   const [value, setValue] = useState<string>("");
   const valueRef = useRef<string>(value);
 
   const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false);
   const [quote, setQuote] = useState<SwapQuote | undefined>(undefined);
 
-  const fetchQuote = async (_value: string, _activeCoinIndex: number) => {
+  const fetchQuote = async (
+    _steammClient: SteammSDK,
+    _value: string,
+    _activeCoinIndex: number,
+  ) => {
     console.log(
       "SwapTab.fetchQuote - _value(=formattedValue):",
       _value,
@@ -685,7 +836,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
         )
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
-      const quote = await steammClient.Pool.quoteSwap({
+      const quote = await _steammClient.Pool.quoteSwap({
         pool: pool.id,
         a2b: _activeCoinIndex === 0,
         amountIn: BigInt(submitAmount),
@@ -706,30 +857,64 @@ function SwapTab({ formatValue }: SwapTabProps) {
   const onValueChange = (_value: string, isImmediate?: boolean) => {
     console.log("SwapTab.onValueChange - _value:", _value);
 
-    const isValueValid = new BigNumber(_value || 0).gt(0);
-    const formattedValue = formatValue(
-      _value,
-      appData.poolCoinMetadataMap[pool.coinTypes[activeCoinIndex]].decimals,
-    );
-    setValue(() => {
-      const newValue = formattedValue;
-      valueRef.current = newValue;
+    const formattedValue = formatValue(_value, activeCoinMetadata.decimals);
 
-      return newValue;
-    });
+    const newValue = formattedValue;
+    valueRef.current = newValue;
+    setValue(newValue);
 
-    if (!isValueValid) {
+    // formattedValue === "" || formattedValue <= 0
+    if (new BigNumber(formattedValue || 0).lte(0)) {
       setIsFetchingQuote(false);
       setQuote(undefined);
       return;
     }
 
+    // formattedValue > 0
     setIsFetchingQuote(true);
     (isImmediate ? fetchQuote : debouncedFetchQuote)(
+      steammClient,
       formattedValue,
       activeCoinIndex,
     );
   };
+
+  // Ratio
+  const currentRatio = pool.balances[inactiveIndex].div(
+    pool.balances[activeCoinIndex],
+  );
+
+  const [isShowingReversedQuoteRatio, setIsShowingReversedQuoteRatio] =
+    useState<boolean>(false);
+  const quoteRatio =
+    quote !== undefined
+      ? new BigNumber(
+          new BigNumber(quote.amountOut.toString()).div(
+            10 ** inactiveCoinMetadata.decimals,
+          ),
+        ).div(
+          new BigNumber(quote.amountIn.toString()).div(
+            10 ** activeCoinMetadata.decimals,
+          ),
+        )
+      : undefined;
+  const reversedQuoteRatio =
+    quoteRatio !== undefined ? quoteRatio.pow(-1) : undefined;
+
+  const priceDifferencePercent =
+    quoteRatio !== undefined
+      ? BigNumber.max(
+          0,
+          new BigNumber(currentRatio.minus(quoteRatio))
+            .div(currentRatio)
+            .times(100),
+        )
+      : undefined;
+  const PriceDifferenceIcon = priceDifferencePercent?.gte(
+    PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD,
+  )
+    ? AlertTriangle
+    : Info;
 
   // Value - max
   const onCoinBalanceClick = () => {
@@ -753,13 +938,14 @@ function SwapTab({ formatValue }: SwapTabProps) {
     setActiveCoinIndex(newActiveCoinIndex);
     setQuote(undefined);
 
-    document.getElementById(getCoinInputId(pool.coinTypes[0]))?.focus();
+    document.getElementById(getCoinInputId(activeCoinType))?.focus();
 
-    const isValueValid = new BigNumber(value || 0).gt(0);
-    if (!isValueValid) return;
+    // value === "" || value <= 0
+    if (new BigNumber(value || 0).lte(0)) return;
 
+    // value > 0
     setIsFetchingQuote(true);
-    fetchQuote(value, newActiveCoinIndex);
+    fetchQuote(steammClient, value, newActiveCoinIndex);
   };
 
   // Submit
@@ -767,7 +953,8 @@ function SwapTab({ formatValue }: SwapTabProps) {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    // TODO: Check Rootlets
+    if (!hasRootlets && !isWhitelisted)
+      return { isDisabled: true, title: "Beta for Rootlets only" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
 
     if (value === "") return { isDisabled: true, title: "Enter an amount" };
@@ -776,11 +963,42 @@ function SwapTab({ formatValue }: SwapTabProps) {
     if (new BigNumber(value).eq(0))
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
-    // TODO: Check balance
+    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
+      return {
+        isDisabled: true,
+        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+      };
+
+    if (quote) {
+      if (
+        isSui(activeCoinType) &&
+        new BigNumber(getBalance(activeCoinType).minus(SUI_GAS_MIN)).lt(
+          new BigNumber(quote.amountIn.toString()).div(
+            10 ** activeCoinMetadata.decimals,
+          ),
+        )
+      )
+        return {
+          isDisabled: true,
+          title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+        };
+
+      if (
+        getBalance(activeCoinType).lt(
+          new BigNumber(quote.amountIn.toString()).div(
+            10 ** activeCoinMetadata.decimals,
+          ),
+        )
+      )
+        return {
+          isDisabled: true,
+          title: `Insufficient ${activeCoinMetadata.symbol}`,
+        };
+    }
 
     return {
       title: "Swap",
-      isDisabled: isFetchingQuote,
+      isDisabled: isFetchingQuote || !quote,
     };
   })();
 
@@ -897,39 +1115,140 @@ function SwapTab({ formatValue }: SwapTabProps) {
 
         <CoinInput
           className="relative z-[1]"
-          coinType={pool.coinTypes[1 - activeCoinIndex]}
+          coinType={inactiveCoinType}
           value={
-            isFetchingQuote && !quote
+            isFetchingQuote
               ? undefined
               : quote
                 ? formatValue(
                     new BigNumber(quote.amountOut.toString())
-                      .div(
-                        10 **
-                          appData.poolCoinMetadataMap[
-                            pool.coinTypes[1 - activeCoinIndex]
-                          ].decimals,
-                      )
+                      .div(10 ** inactiveCoinMetadata.decimals)
                       .toFixed(
-                        appData.poolCoinMetadataMap[
-                          pool.coinTypes[1 - activeCoinIndex]
-                        ].decimals,
+                        inactiveCoinMetadata.decimals,
                         BigNumber.ROUND_DOWN,
                       ),
-                    appData.poolCoinMetadataMap[
-                      pool.coinTypes[1 - activeCoinIndex]
-                    ].decimals,
+                    inactiveCoinMetadata.decimals,
                   )
                 : ""
           }
-          isLoading={isFetchingQuote}
         />
       </div>
+
+      {(isFetchingQuote || quote) && (
+        <div className="flex w-full flex-col gap-1">
+          {/* Price difference */}
+          {isFetchingQuote || !quote ? (
+            <Skeleton className="h-[21px] w-40" />
+          ) : (
+            <p
+              className={cn(
+                "text-p2 text-foreground",
+                priceDifferencePercent!.gte(
+                  PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD,
+                ) &&
+                  cn(
+                    "text-warning",
+                    priceDifferencePercent!.gte(
+                      PRICE_DIFFERENCE_PERCENT_DESTRUCTIVE_THRESHOLD,
+                    ) && "text-error",
+                  ),
+              )}
+            >
+              <PriceDifferenceIcon className="mb-0.5 mr-1.5 inline h-3.5 w-3.5" />
+              {formatPercent(BigNumber.max(0, priceDifferencePercent!))} Price
+              difference
+            </p>
+          )}
+        </div>
+      )}
 
       <SubmitButton
         submitButtonState={submitButtonState}
         onClick={onSubmitClick}
       />
+
+      {(isFetchingQuote || quote) && (
+        <div className="flex w-full flex-col gap-2">
+          {/* Exchange rate */}
+          <div className="flex w-full flex-row items-center justify-between">
+            <p className="text-p2 text-secondary-foreground">Exchange rate</p>
+
+            {isFetchingQuote || !quote ? (
+              <Skeleton className="h-[21px] w-48" />
+            ) : (
+              <button
+                className="group flex flex-row items-center gap-2"
+                onClick={() => setIsShowingReversedQuoteRatio((prev) => !prev)}
+              >
+                <p className="text-p2 text-foreground">
+                  {!isShowingReversedQuoteRatio ? (
+                    <>
+                      1 {activeCoinMetadata.symbol}
+                      {" ≈ "}
+                      {formatToken(quoteRatio!, {
+                        dp: inactiveCoinMetadata.decimals,
+                      })}{" "}
+                      {inactiveCoinMetadata.symbol}
+                    </>
+                  ) : (
+                    <>
+                      1 {inactiveCoinMetadata.symbol}
+                      {" ≈ "}
+                      {formatToken(reversedQuoteRatio!, {
+                        dp: activeCoinMetadata.decimals,
+                      })}{" "}
+                      {activeCoinMetadata.symbol}
+                    </>
+                  )}
+                </p>
+                <ArrowRightLeft className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
+              </button>
+            )}
+          </div>
+
+          {/* Minimum received */}
+          <div className="flex w-full flex-row items-center justify-between">
+            <p className="text-p2 text-secondary-foreground">
+              Minimum received
+            </p>
+
+            {isFetchingQuote || !quote ? (
+              <Skeleton className="h-[21px] w-24" />
+            ) : (
+              <p className="text-p2 text-foreground">
+                {formatToken(
+                  new BigNumber(quote.amountOut.toString())
+                    .div(1 + slippagePercent / 100)
+                    .div(10 ** inactiveCoinMetadata.decimals),
+                  { dp: inactiveCoinMetadata.decimals },
+                )}{" "}
+                {inactiveCoinMetadata.symbol}
+              </p>
+            )}
+          </div>
+
+          {/* Fees */}
+          <div className="flex w-full flex-row items-center justify-between">
+            <p className="text-p2 text-secondary-foreground">Included fees</p>
+
+            {isFetchingQuote || !quote ? (
+              <Skeleton className="h-[21px] w-24" />
+            ) : (
+              <p className="text-p2 text-foreground">
+                {formatToken(
+                  new BigNumber(
+                    (
+                      quote.outputFees.poolFees + quote.outputFees.protocolFees
+                    ).toString(),
+                  ).div(10 ** inactiveCoinMetadata.decimals),
+                  { dp: inactiveCoinMetadata.decimals },
+                )}{" "}
+                {inactiveCoinMetadata.symbol}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -940,6 +1259,8 @@ export default function PoolActionsCard() {
       | Action
       | undefined,
   };
+
+  const { pool } = usePoolContext();
 
   // Tabs
   const selectedAction =
@@ -977,29 +1298,37 @@ export default function PoolActionsCard() {
       <div className="flex w-full flex-row items-center justify-between">
         {/* Tabs */}
         <div className="flex flex-row gap-1">
-          {Object.values(Action).map((action) => (
-            <button
-              key={action}
-              className={cn(
-                "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors",
-                selectedAction === action
-                  ? "cursor-default bg-border"
-                  : "hover:bg-border/50",
-              )}
-              onClick={() => onSelectedActionChange(action)}
-            >
-              <p
+          {Object.values(Action).map((action) => {
+            if (
+              pool.tvlUsd.eq(0) &&
+              [Action.WITHDRAW, Action.SWAP].includes(action)
+            )
+              return null;
+
+            return (
+              <button
+                key={action}
                 className={cn(
-                  "!text-p2 transition-colors",
+                  "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors",
                   selectedAction === action
-                    ? "text-foreground"
-                    : "text-secondary-foreground group-hover:text-foreground",
+                    ? "cursor-default bg-border"
+                    : "hover:bg-border/50",
                 )}
+                onClick={() => onSelectedActionChange(action)}
               >
-                {actionNameMap[action]}
-              </p>
-            </button>
-          ))}
+                <p
+                  className={cn(
+                    "!text-p2 transition-colors",
+                    selectedAction === action
+                      ? "text-foreground"
+                      : "text-secondary-foreground group-hover:text-foreground",
+                  )}
+                >
+                  {actionNameMap[action]}
+                </p>
+              </button>
+            );
+          })}
         </div>
 
         <SlippagePopover />

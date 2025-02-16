@@ -6,6 +6,7 @@ import {
   useMemo,
 } from "react";
 
+import { KioskItem } from "@mysten/kiosk";
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
 import { useLocalStorage } from "usehooks-ts";
@@ -19,11 +20,13 @@ import useCoinMetadataMap from "@suilend/frontend-sui-next/hooks/useCoinMetadata
 import useRefreshOnBalancesChange from "@suilend/frontend-sui-next/hooks/useRefreshOnBalancesChange";
 import {
   STEAMM_BETA_CONFIG,
+  STEAMM_SCRIPT_CONFIG,
   SUILEND_BETA_CONFIG,
   SteammSDK,
 } from "@suilend/steamm-sdk";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
+import useFetchOwnedKiosks from "@/fetchers/useFetchOwnedKiosks";
 import { ChartData } from "@/lib/chart";
 import { ParsedPool } from "@/lib/types";
 
@@ -52,6 +55,9 @@ interface AppContext {
 
   slippagePercent: number;
   setSlippagePercent: (slippagePercent: number) => void;
+
+  hasRootlets: boolean;
+  isWhitelisted: boolean;
 }
 type LoadedAppContext = AppContext & {
   steammClient: SteammSDK;
@@ -76,6 +82,9 @@ const AppContext = createContext<AppContext>({
   setSlippagePercent: () => {
     throw Error("AppContextProvider not initialized");
   },
+
+  hasRootlets: false,
+  isWhitelisted: false,
 });
 
 export const useAppContext = () => useContext(AppContext);
@@ -90,6 +99,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     const sdk = new SteammSDK({
       fullRpcUrl: rpc.url,
       steamm_config: STEAMM_BETA_CONFIG,
+      steamm_script_config: STEAMM_SCRIPT_CONFIG,
       suilend_config: SUILEND_BETA_CONFIG,
     });
     sdk.senderAddress =
@@ -145,6 +155,34 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     1,
   );
 
+  // Rootlets
+  const ROOTLETS_TYPE =
+    "0x8f74a7d632191e29956df3843404f22d27bd84d92cca1b1abde621d033098769::rootlet::Rootlet";
+
+  const { data: ownedKiosks, mutateData: mutateOwnedKiosks } =
+    useFetchOwnedKiosks();
+
+  const hasRootlets = useMemo(
+    () =>
+      (ownedKiosks ?? []).reduce(
+        (acc, { kiosk }) => [
+          ...acc,
+          ...kiosk.items.filter((item) => item.type === ROOTLETS_TYPE),
+        ],
+        [] as KioskItem[],
+      ).length > 0,
+    [ownedKiosks],
+  );
+
+  const isWhitelisted = useMemo(
+    () =>
+      !!address &&
+      [
+        "0x6191f9a47c411cc169ee4b0292f08531e4d442d4cb9ec61333016d2e9dee1205",
+      ].includes(address),
+    [address],
+  );
+
   // Context
   const contextValue: AppContext = useMemo(
     () => ({
@@ -159,6 +197,9 @@ export function AppContextProvider({ children }: PropsWithChildren) {
 
       slippagePercent,
       setSlippagePercent,
+
+      hasRootlets,
+      isWhitelisted,
     }),
     [
       steammClient,
@@ -169,6 +210,8 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       refresh,
       slippagePercent,
       setSlippagePercent,
+      hasRootlets,
+      isWhitelisted,
     ],
   );
 

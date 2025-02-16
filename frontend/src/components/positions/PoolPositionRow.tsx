@@ -104,7 +104,7 @@ export default function PoolPositionRow({
             </Tooltip>
           )}
 
-          <div className="flex flex-row items-center gap-1.5">
+          <div className="flex flex-row items-center gap-2">
             <TokenLogos coinTypes={position.pool.coinTypes} size={16} />
             <Tooltip
               title={formatToken(position.balance.amount, {

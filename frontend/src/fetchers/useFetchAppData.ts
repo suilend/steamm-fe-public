@@ -142,12 +142,12 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         priceA =
           coinTypeA === NORMALIZED_USDC_COINTYPE
             ? usdcPrice
-            : balanceB.div(balanceA).times(priceB);
+            : balanceB.div(balanceA).times(priceB); // Assumes the pool is balanced (only works for CPMM quoter)
       } else if (coinTypeB === NORMALIZED_USDC_COINTYPE) {
         priceB = usdcPrice;
         priceA = isSui(coinTypeA)
           ? suiPrice
-          : balanceB.div(balanceA).times(priceB);
+          : balanceB.div(balanceA).times(priceB); // Assumes the pool is balanced (only works for CPMM quoter)
       } else {
         console.error(
           `Quote asset must be one of SUI, USDC - skipping pool with id: ${id}`,
@@ -165,11 +165,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         percent: new BigNumber(2.3), // 24h, TEMP
       };
 
-      const feeTierPercent = new BigNumber(
-        pool.poolFeeConfig.feeNumerator.toString(),
-      )
-        .div(pool.poolFeeConfig.feeDenominator.toString())
-        .times(100); // TODO: Replace with poolInfo.swapFeeBps
+      const feeTierPercent = new BigNumber(poolInfo.swapFeeBps).div(100);
       const protocolFeePercent = new BigNumber(
         pool.protocolFees.config.feeNumerator.toString(),
       )
