@@ -22,7 +22,12 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { DepositQuote, RedeemQuote, SwapQuote } from "@suilend/steamm-sdk";
+import {
+  DepositQuote,
+  RedeemQuote,
+  SteammSDK,
+  SwapQuote,
+} from "@suilend/steamm-sdk";
 
 import CoinInput, { getCoinInputId } from "@/components/pool/CoinInput";
 import SlippagePopover from "@/components/SlippagePopover";
@@ -94,7 +99,11 @@ function DepositTab({ formatValue }: DepositTabProps) {
   >(undefined);
   const [quote, setQuote] = useState<DepositQuote | undefined>(undefined);
 
-  const fetchQuote = async (_value: string, index: number) => {
+  const fetchQuote = async (
+    _steammClient: SteammSDK,
+    _value: string,
+    index: number,
+  ) => {
     console.log(
       "DepositTab.fetchQuote - _value(=formattedValue):",
       _value,
@@ -116,7 +125,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
         .times(10 ** dps[index])
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
-      const quote = await steammClient.Pool.quoteDeposit({
+      const quote = await _steammClient.Pool.quoteDeposit({
         pool: pool.id,
         maxA: index === 0 ? BigInt(submitAmount) : BigInt(MAX_U64.toString()),
         maxB: index === 0 ? BigInt(MAX_U64.toString()) : BigInt(submitAmount),
@@ -165,26 +174,80 @@ function DepositTab({ formatValue }: DepositTabProps) {
       appData.poolCoinMetadataMap[pool.coinTypes[1]].decimals,
     ];
 
-    const isValueValid = new BigNumber(_value || 0).gt(0);
     const formattedValue = formatValue(_value, dps[index]);
-    setValues((prev) => {
+
+    // _value === "" || _value < 0
+    if (_value === "" || new BigNumber(_value).lt(0)) {
       const newValues: [string, string] = [
-        index === 0 ? formattedValue : isValueValid ? prev[0] : "",
-        index === 0 ? (isValueValid ? prev[1] : "") : formattedValue,
+        index === 0 ? formattedValue : "",
+        index === 0 ? "" : formattedValue,
       ];
       valuesRef.current = newValues;
+      setValues(newValues);
 
-      return newValues;
-    });
-
-    if (!isValueValid) {
       setFetchingQuoteForIndex(undefined);
       setQuote(undefined);
       return;
     }
 
+    // _value >= 0
+    if (pool.tvlUsd.eq(0)) {
+      const newValues: [string, string] = [
+        index === 0 ? formattedValue : values[0],
+        index === 0 ? values[1] : formattedValue,
+      ];
+      valuesRef.current = newValues;
+      setValues(newValues);
+
+      // Initial deposit (set fake quote) (one of the values may be "")
+      setFetchingQuoteForIndex(undefined);
+      setQuote({
+        initialDeposit: true,
+        depositA: BigInt(
+          new BigNumber(valuesRef.current[0] || 0)
+            .times(10 ** dps[0])
+            .integerValue(BigNumber.ROUND_DOWN)
+            .toString(),
+        ),
+        depositB: BigInt(
+          new BigNumber(valuesRef.current[1] || 0)
+            .times(10 ** dps[1])
+            .integerValue(BigNumber.ROUND_DOWN)
+            .toString(),
+        ),
+        mintLp: BigInt(0), // Not used
+      });
+      return;
+    }
+
+    // _value === 0
+    if (new BigNumber(_value).eq(0)) {
+      const newValues: [string, string] = [
+        index === 0 ? formattedValue : "0",
+        index === 0 ? "0" : formattedValue,
+      ];
+      valuesRef.current = newValues;
+      setValues(newValues);
+
+      setFetchingQuoteForIndex(undefined);
+      setQuote(undefined);
+      return;
+    }
+
+    // _value > 0
+    const newValues: [string, string] = [
+      index === 0 ? formattedValue : values[0],
+      index === 0 ? values[1] : formattedValue,
+    ];
+    valuesRef.current = newValues;
+    setValues(newValues);
+
     setFetchingQuoteForIndex(1 - index);
-    (isImmediate ? fetchQuote : debouncedFetchQuote)(formattedValue, index);
+    (isImmediate ? fetchQuote : debouncedFetchQuote)(
+      steammClient,
+      formattedValue,
+      index,
+    );
   };
 
   // Value - max
@@ -363,7 +426,7 @@ function WithdrawTab() {
   const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false);
   const [quote, setQuote] = useState<RedeemQuote | undefined>(undefined);
 
-  const fetchQuote = async (_value: string) => {
+  const fetchQuote = async (_steammClient: SteammSDK, _value: string) => {
     console.log(
       "WithdrawTab.fetchQuote - _value:",
       _value,
@@ -380,7 +443,7 @@ function WithdrawTab() {
         .times(10 ** appData.poolCoinMetadataMap[pool.lpTokenType].decimals)
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
-      const quote = await steammClient.Pool.quoteRedeem({
+      const quote = await _steammClient.Pool.quoteRedeem({
         pool: pool.id,
         lpTokens: BigInt(submitAmount),
       });
@@ -400,15 +463,12 @@ function WithdrawTab() {
   const onValueChange = async (_value: string, isImmediate?: boolean) => {
     console.log("WithdrawTab.onValueChange - _value:", _value);
 
-    setValue(() => {
-      const newValue = _value;
-      valueRef.current = _value;
-
-      return newValue;
-    });
+    const newValue = _value;
+    valueRef.current = _value;
+    setValue(newValue);
 
     setIsFetchingQuote(true);
-    (isImmediate ? fetchQuote : debouncedFetchQuote)(_value);
+    (isImmediate ? fetchQuote : debouncedFetchQuote)(steammClient, _value);
   };
 
   // Submit
@@ -664,7 +724,11 @@ function SwapTab({ formatValue }: SwapTabProps) {
   const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false);
   const [quote, setQuote] = useState<SwapQuote | undefined>(undefined);
 
-  const fetchQuote = async (_value: string, _activeCoinIndex: number) => {
+  const fetchQuote = async (
+    _steammClient: SteammSDK,
+    _value: string,
+    _activeCoinIndex: number,
+  ) => {
     console.log(
       "SwapTab.fetchQuote - _value(=formattedValue):",
       _value,
@@ -685,7 +749,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
         )
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
-      const quote = await steammClient.Pool.quoteSwap({
+      const quote = await _steammClient.Pool.quoteSwap({
         pool: pool.id,
         a2b: _activeCoinIndex === 0,
         amountIn: BigInt(submitAmount),
@@ -711,12 +775,10 @@ function SwapTab({ formatValue }: SwapTabProps) {
       _value,
       appData.poolCoinMetadataMap[pool.coinTypes[activeCoinIndex]].decimals,
     );
-    setValue(() => {
-      const newValue = formattedValue;
-      valueRef.current = newValue;
 
-      return newValue;
-    });
+    const newValue = formattedValue;
+    valueRef.current = newValue;
+    setValue(newValue);
 
     if (!isValueValid) {
       setIsFetchingQuote(false);
@@ -726,6 +788,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
 
     setIsFetchingQuote(true);
     (isImmediate ? fetchQuote : debouncedFetchQuote)(
+      steammClient,
       formattedValue,
       activeCoinIndex,
     );
@@ -759,7 +822,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
     if (!isValueValid) return;
 
     setIsFetchingQuote(true);
-    fetchQuote(value, newActiveCoinIndex);
+    fetchQuote(steammClient, value, newActiveCoinIndex);
   };
 
   // Submit
@@ -941,6 +1004,8 @@ export default function PoolActionsCard() {
       | undefined,
   };
 
+  const { pool } = usePoolContext();
+
   // Tabs
   const selectedAction =
     queryParams[QueryParams.ACTION] &&
@@ -977,29 +1042,37 @@ export default function PoolActionsCard() {
       <div className="flex w-full flex-row items-center justify-between">
         {/* Tabs */}
         <div className="flex flex-row gap-1">
-          {Object.values(Action).map((action) => (
-            <button
-              key={action}
-              className={cn(
-                "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors",
-                selectedAction === action
-                  ? "cursor-default bg-border"
-                  : "hover:bg-border/50",
-              )}
-              onClick={() => onSelectedActionChange(action)}
-            >
-              <p
+          {Object.values(Action).map((action) => {
+            if (
+              pool.tvlUsd.eq(0) &&
+              [Action.WITHDRAW, Action.SWAP].includes(action)
+            )
+              return null;
+
+            return (
+              <button
+                key={action}
                 className={cn(
-                  "!text-p2 transition-colors",
+                  "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors",
                   selectedAction === action
-                    ? "text-foreground"
-                    : "text-secondary-foreground group-hover:text-foreground",
+                    ? "cursor-default bg-border"
+                    : "hover:bg-border/50",
                 )}
+                onClick={() => onSelectedActionChange(action)}
               >
-                {actionNameMap[action]}
-              </p>
-            </button>
-          ))}
+                <p
+                  className={cn(
+                    "!text-p2 transition-colors",
+                    selectedAction === action
+                      ? "text-foreground"
+                      : "text-secondary-foreground group-hover:text-foreground",
+                  )}
+                >
+                  {actionNameMap[action]}
+                </p>
+              </button>
+            );
+          })}
         </div>
 
         <SlippagePopover />
