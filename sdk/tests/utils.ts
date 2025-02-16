@@ -11,7 +11,9 @@ import {
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
 import { SteammSDK, SuiAddressType } from "../src";
-import { createCoinBytecode, getTreasuryAndCoinMeta } from "../src/coinGen";
+
+import { createCoinBytecode, getTreasuryAndCoinMeta } from "./coinGen";
+import { createBToken2, createLpToken2 } from "./createHelper";
 
 export interface CoinData {
   treasury: string;
@@ -113,11 +115,7 @@ export async function createBTokenHelper(
   coinType: string,
   coinMeta: string,
 ): Promise<[string, string, string]> {
-  const tx = await sdk.Bank.createBToken(
-    coinType,
-    coinSymbol,
-    sdk.senderAddress,
-  );
+  const tx = await createBToken2(coinType, coinSymbol, sdk.senderAddress);
 
   const coinTxResponse = await sdk.fullClient.signAndExecuteTransaction({
     transaction: tx,
@@ -134,9 +132,12 @@ export async function createBTokenHelper(
 
   const newBankTx = new Transaction();
 
-  await sdk.Bank.createBank(newBankTx, coinTxResponse, {
+  await sdk.Bank.createBank(newBankTx, {
     coinType: coinType,
     coinMetaT: coinMeta,
+    bTokenTreasuryId,
+    bTokenMetadataId,
+    bTokenTokenType,
   });
 
   const newBankTxResponse = await sdk.fullClient.signAndExecuteTransaction({
@@ -157,7 +158,7 @@ export async function createPoolHelper(
   coinAData: CoinData,
   coinBData: CoinData,
 ): Promise<LpData> {
-  const tx = await sdk.Pool.createLpToken(
+  const tx = await createLpToken2(
     coinAData.bTokenSymbol,
     coinBData.bTokenSymbol,
     sdk.senderAddress,
@@ -180,7 +181,10 @@ export async function createPoolHelper(
 
   const newPoolTx = new Transaction();
 
-  await sdk.Pool.createPool(newPoolTx, coinTxResponse, {
+  await sdk.Pool.createPool(newPoolTx, {
+    lpTreasuryId,
+    lpMetadataId,
+    lpTokenType,
     btokenTypeA: coinAData.btokenType,
     btokenTypeB: coinBData.btokenType,
     swapFeeBps: BigInt(100),

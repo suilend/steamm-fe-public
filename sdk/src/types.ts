@@ -1,4 +1,7 @@
-import { SuiAddressType } from "./utils";
+export interface PackageInfo {
+  sourcePkgId: string;
+  publishedAt: string;
+}
 
 export interface PackageInfo {
   sourcePkgId: string;

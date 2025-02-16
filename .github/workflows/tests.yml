@@ -73,8 +73,8 @@
 #           ACTIVE_ADDRESS=$(sui client --client.config sui/client.yaml addresses --json | jq -r '.activeAddress')
 #           echo "Active address: $ACTIVE_ADDRESS"
 #           echo "ACTIVE_ADDRESS=$ACTIVE_ADDRESS" >> $GITHUB_ENV
-#           PRIVATE_KEY=$(sui keytool --keystore-path sui/sui.keystore export --key-identity $ACTIVE_ADDRESS --json | jq -r '.exportedPrivateKey')
-#           echo "PRIVATE_KEY=$PRIVATE_KEY" >> $GITHUB_ENV
+#           TEMP_KEY=$(sui keytool --keystore-path sui/sui.keystore export --key-identity $ACTIVE_ADDRESS --json | jq -r '.exportedPrivateKey')
+#           echo "TEMP_KEY=$TEMP_KEY" >> $GITHUB_ENV
 
 #       - name: Setup localnet state
 #         run: |

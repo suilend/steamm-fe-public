@@ -1,19 +1,13 @@
-import {
-  SuiObjectChange,
-  SuiTransactionBlockResponse,
-} from "@mysten/sui/client";
+import { SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
 import {
-  Bank,
-  Pool,
   PoolDepositLiquidityArgs,
   PoolQuoteDepositArgs,
   PoolQuoteRedeemArgs,
   PoolQuoteSwapArgs,
   PoolRedeemLiquidityArgs,
-  PoolScript,
   PoolSwapArgs,
   SwapQuote,
   createPool,
@@ -25,14 +19,11 @@ import {
   castRedeemQuote,
   castSwapQuote,
 } from "../base/pool/poolTypes";
-import { createCoinBytecode, getTreasuryAndCoinMeta } from "../coinGen";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
-import { BankInfo, BankList, PoolInfo } from "../types";
+import { BankList } from "../types";
 import { SuiTypeName } from "../utils";
 import { SuiAddressType } from "../utils";
-
-const LP_TOKEN_URI = "TODO";
 
 /**
  * Helper class to help interact with pools.
@@ -148,14 +139,12 @@ export class PoolModule implements IModule {
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
-    const quote = poolScript.quoteSwap(tx, {
+    poolScript.quoteSwap(tx, {
       a2b: args.a2b,
       amountIn: args.amountIn,
     });
 
-    return castSwapQuote(
-      await this.getQuoteResult<SwapQuote>(tx, quote, "SwapQuote"),
-    );
+    return castSwapQuote(await this.getQuoteResult<SwapQuote>(tx));
   }
 
   public async quoteDeposit(args: QuoteDepositArgs): Promise<DepositQuote> {
@@ -169,14 +158,12 @@ export class PoolModule implements IModule {
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
-    const quote = poolScript.quoteDeposit(tx, {
+    poolScript.quoteDeposit(tx, {
       maxA: args.maxA,
       maxB: args.maxB,
     });
 
-    return castDepositQuote(
-      await this.getQuoteResult<DepositQuote>(tx, quote, "DepositQuote"),
-    );
+    return castDepositQuote(await this.getQuoteResult<DepositQuote>(tx));
   }
 
   public async quoteRedeem(args: QuoteRedeemArgs): Promise<RedeemQuote> {
@@ -189,41 +176,17 @@ export class PoolModule implements IModule {
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
-    const quote = poolScript.quoteRedeem(tx, {
+    poolScript.quoteRedeem(tx, {
       lpTokens: args.lpTokens,
     });
 
-    return castRedeemQuote(
-      await this.getQuoteResult<RedeemQuote>(tx, quote, "RedeemQuote"),
-    );
+    return castRedeemQuote(await this.getQuoteResult<RedeemQuote>(tx));
   }
 
   public async createLpToken(
-    coinASymbol: string,
-    coinBSymbol: string,
+    bytecode: any,
     sender: SuiAddressType,
   ): Promise<Transaction> {
-    // Construct LP token name
-    const lpName = `STEAMM_LP ${coinASymbol}-${coinBSymbol}`;
-
-    // Construct LP token symbol
-    const lpSymbol = `STEAMM LP ${coinASymbol}-${coinBSymbol}`;
-
-    // LP token description
-    const lpDescription = "STEAMM LP Token";
-
-    const structName = `STEAMM_LP_${coinASymbol}_${coinBSymbol}`;
-    const moduleName = `steamm_lp_${coinASymbol}_${coinBSymbol}`;
-
-    const bytecode = await createCoinBytecode(
-      structName.toUpperCase().replace(/\s+/g, "_"),
-      moduleName.toLowerCase().replace(/\s+/g, "_"),
-      lpSymbol,
-      lpName,
-      lpDescription,
-      LP_TOKEN_URI,
-    );
-
     // Step 1: Create the coin
     const tx = new Transaction();
     const [upgradeCap] = tx.publish({
@@ -238,8 +201,10 @@ export class PoolModule implements IModule {
 
   public async createPool(
     tx: Transaction,
-    publishTxResponse: SuiTransactionBlockResponse,
     args: {
+      lpTreasuryId: string;
+      lpMetadataId: string;
+      lpTokenType: string;
       btokenTypeA: string;
       btokenTypeB: string;
       swapFeeBps: bigint;
@@ -248,13 +213,11 @@ export class PoolModule implements IModule {
       coinMetaB: string;
     },
   ) {
-    // Step 2: Get the treasury Cap id from the transaction
-    const [lpTreasuryId, lpMetadataId, lpTokenType] =
-      getTreasuryAndCoinMeta(publishTxResponse);
-
     // wait until the sui rpc recognizes the treasuryCapId
     while (true) {
-      const object = await this.sdk.fullClient.getObject({ id: lpTreasuryId });
+      const object = await this.sdk.fullClient.getObject({
+        id: args.lpTreasuryId,
+      });
       if (object.error) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       } else {
@@ -265,26 +228,20 @@ export class PoolModule implements IModule {
     const callArgs = {
       coinTypeA: args.btokenTypeA,
       coinTypeB: args.btokenTypeB,
-      lpTokenType: lpTokenType,
+      lpTokenType: args.lpTokenType,
       registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
       swapFeeBps: args.swapFeeBps,
       offset: args.offset,
       coinMetaA: args.coinMetaA,
       coinMetaB: args.coinMetaB,
-      lpTokenMeta: lpMetadataId,
-      lpTreasury: lpTreasuryId,
+      lpTokenMeta: args.lpMetadataId,
+      lpTreasury: args.lpTreasuryId,
     };
 
     createPool(tx, callArgs, this.sdk.packageInfo());
   }
 
-  private async getQuoteResult<T>(
-    tx: Transaction,
-    quote: TransactionArgument,
-    quoteType: string,
-  ): Promise<T> {
-    const pkgAddy = this.sdk.sdkOptions.steamm_config.package_id;
-
+  private async getQuoteResult<T>(tx: Transaction): Promise<T> {
     const inspectResults = await this.sdk.fullClient.devInspectTransactionBlock(
       {
         sender: this.sdk.senderAddress,

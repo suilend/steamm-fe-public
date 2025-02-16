@@ -207,12 +207,34 @@ source_test_fun() {
     fi
 }
 
+source_package_fun() {
+    local module="$1"
+    local move_module="$2"
+    local function_name="$3"
+    local file_path="temp/${module}/sources/${move_module}.move"
+
+    # Check if file exists
+    if [ ! -f "$file_path" ]; then
+        echo "Error: File $file_path does not exist"
+        return 1
+    fi
+    
+    # Replace "public(package) fun function_name" with "public fun function_name"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS version
+        sed -i '' "s/public(package) fun $function_name/public fun $function_name/" "$file_path"
+    else
+        # Linux version
+        sed -i "s/public(package) fun $function_name/public fun $function_name/" "$file_path"
+    fi
+}
+
 
 ## Source test functions
 printf "[INFO] Sourcing test functions" >&2
 source_test_fun "pyth" "price_info" "new_price_info_object_for_testing"
 source_test_fun "pyth" "price_info" "update_price_info_object_for_testing"
-
+source_package_fun "steamm_scripts" "events" "emit_event"
 
 printf "[INFO] Publishing packages" >&2
 
@@ -295,4 +317,20 @@ populate_ts "$lending_market_type" "LENDING_MARKET_TYPE"
 if [ "$INITIAL_ENV" != "localnet" ]; then
     echo "Switching back to previous environment"
     sui client --client.config sui/client.yaml switch --env "$INITIAL_ENV"
+fi
+
+if [ "$CI" = false ]; then
+    # Export temporary private key to env - needed for tests
+    ACTIVE_ADDRESS=$(sui client --client.config sui/client.yaml addresses --json | jq -r '.activeAddress')
+    echo "Active address: $ACTIVE_ADDRESS"
+    TEMP_KEY=$(sui keytool --keystore-path sui/sui.keystore export --key-identity $ACTIVE_ADDRESS --json | jq -r '.exportedPrivateKey')
+
+    # Replace the TEMP_KEY variable in the .env file
+    if grep -q '^TEMP_KEY=' .env; then
+        sed -i '' "s|^TEMP_KEY=.*|TEMP_KEY=\"$TEMP_KEY\"|" .env
+    else
+        printf "\nTEMP_KEY=\"%s\"\n" $TEMP_KEY >> .env
+    fi
+else
+    ./bin/unpublocal.sh --ci
 fi
