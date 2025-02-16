@@ -39,7 +39,7 @@ export default function PortfolioPage() {
           .filter((coinType) =>
             balancesCoinMetadataMap![coinType].name
               .toLowerCase()
-              .includes("Steamm LP Token".toLowerCase()),
+              .includes("STEAMM LP".toLowerCase()),
           )
           .map((coinType) => [
             coinType,

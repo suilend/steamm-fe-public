@@ -16,7 +16,6 @@ interface CoinInputProps {
   value?: string;
   onChange?: (value: string) => void;
   onBalanceClick?: () => void;
-  isLoading?: boolean;
 }
 
 export default function CoinInput({
@@ -25,17 +24,15 @@ export default function CoinInput({
   value,
   onChange,
   onBalanceClick,
-  isLoading,
 }: CoinInputProps) {
   const { appData, getBalance } = useLoadedAppContext();
 
-  const isBalanceClickable = !!onBalanceClick && !isLoading;
+  const isBalanceClickable = !!onBalanceClick && value !== undefined;
 
   return (
     <div
       className={cn(
         "flex w-full flex-row items-center justify-between gap-4 rounded-md border bg-input p-5 focus-within:border-focus",
-        isLoading && "animate-pulse",
         className,
       )}
     >
@@ -88,7 +85,6 @@ export default function CoinInput({
             readOnly={!onChange}
             onWheel={(e) => e.currentTarget.blur()}
             step="any"
-            disabled={isLoading}
           />
         </div>
       )}

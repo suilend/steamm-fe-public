@@ -5,9 +5,7 @@ module.exports = {
   content: ["./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
-    fontFamily: {
-      sans: ["var(--font-aspekta)"],
-    },
+    fontFamily: { sans: ["var(--font-aspekta)"] },
     fontSize: {
       h1: ["28px"],
       h2: ["24px"],
@@ -50,6 +48,7 @@ module.exports = {
       tooltip: "hsl(var(--tooltip))",
 
       success: "hsl(var(--success))",
+      warning: "hsl(var(--warning))",
       error: "hsl(var(--error))",
 
       a1: "hsl(var(--a1))",
@@ -72,11 +71,7 @@ module.exports = {
       "a5-active": "hsl(var(--a5-active))",
       "a5-disabled": "hsl(var(--a5-disabled))",
     },
-    borderRadius: {
-      sm: "4px",
-      md: "8px",
-      lg: "12px",
-    },
+    borderRadius: { sm: "4px", md: "8px", lg: "12px" },
   },
   plugins: [require("tailwindcss-animate")],
 };

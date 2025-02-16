@@ -4,7 +4,13 @@ import { useCallback, useRef, useState } from "react";
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
-import { ArrowUpDown, Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRightLeft,
+  ArrowUpDown,
+  Info,
+  Loader2,
+} from "lucide-react";
 
 import {
   MAX_U64,
@@ -39,6 +45,9 @@ import { usePoolContext } from "@/contexts/PoolContext";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { SubmitButtonState } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+const PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD = 1;
+const PRICE_DIFFERENCE_PERCENT_DESTRUCTIVE_THRESHOLD = 8;
 
 enum Action {
   DEPOSIT = "deposit",
@@ -176,8 +185,8 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
     const formattedValue = formatValue(_value, dps[index]);
 
-    // _value === "" || _value < 0
-    if (_value === "" || new BigNumber(_value).lt(0)) {
+    // formattedValue === "" || formattedValue < 0
+    if (formattedValue === "" || new BigNumber(formattedValue).lt(0)) {
       const newValues: [string, string] = [
         index === 0 ? formattedValue : "",
         index === 0 ? "" : formattedValue,
@@ -190,7 +199,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
       return;
     }
 
-    // _value >= 0
+    // formattedValue >= 0
     if (pool.tvlUsd.eq(0)) {
       const newValues: [string, string] = [
         index === 0 ? formattedValue : values[0],
@@ -220,8 +229,8 @@ function DepositTab({ formatValue }: DepositTabProps) {
       return;
     }
 
-    // _value === 0
-    if (new BigNumber(_value).eq(0)) {
+    // formattedValue === 0
+    if (new BigNumber(formattedValue).eq(0)) {
       const newValues: [string, string] = [
         index === 0 ? formattedValue : "0",
         index === 0 ? "0" : formattedValue,
@@ -234,7 +243,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
       return;
     }
 
-    // _value > 0
+    // formattedValue > 0
     const newValues: [string, string] = [
       index === 0 ? formattedValue : values[0],
       index === 0 ? values[1] : formattedValue,
@@ -390,17 +399,15 @@ function DepositTab({ formatValue }: DepositTabProps) {
       <div className="flex w-full min-w-0 flex-col gap-1">
         <CoinInput
           coinType={pool.coinTypes[0]}
-          value={values[0]}
+          value={fetchingQuoteForIndex === 0 ? undefined : values[0]}
           onChange={(value) => onValueChange(value, 0)}
           onBalanceClick={() => onCoinBalanceClick(0)}
-          isLoading={fetchingQuoteForIndex === 0}
         />
         <CoinInput
           coinType={pool.coinTypes[1]}
-          value={values[1]}
+          value={fetchingQuoteForIndex === 1 ? undefined : values[1]}
           onChange={(value) => onValueChange(value, 1)}
           onBalanceClick={() => onCoinBalanceClick(1)}
-          isLoading={fetchingQuoteForIndex === 1}
         />
       </div>
 
@@ -603,7 +610,7 @@ function WithdrawTab() {
 
         <div className="flex w-full flex-row items-center gap-2">
           <input
-            className="h-5 min-w-0 flex-1 appearance-none bg-[transparent] [&::-webkit-slider-runnable-track]:rounded-[12px] [&::-webkit-slider-runnable-track]:bg-border/50 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[500px] [&::-webkit-slider-thumb]:bg-foreground"
+            className="h-6 min-w-0 flex-1 appearance-none bg-[transparent] [&::-webkit-slider-runnable-track]:rounded-[10px] [&::-webkit-slider-runnable-track]:bg-border/50 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[10px] [&::-webkit-slider-thumb]:bg-foreground"
             type="range"
             min={0}
             max={100}
@@ -619,14 +626,13 @@ function WithdrawTab() {
         <div className="flex w-full flex-row justify-between">
           <div className="flex w-full flex-row items-center gap-2">
             <TokenLogos coinTypes={pool.coinTypes} size={16} />
-            <p className="text-p1 text-foreground">
+            <p className="text-p2 text-foreground">
               {formatToken(
                 new BigNumber(value)
                   .div(100)
                   .times(getBalance(pool.lpTokenType)),
                 { dp: appData.poolCoinMetadataMap[pool.lpTokenType].decimals },
-              )}{" "}
-              LP tokens
+              )}
             </p>
           </div>
 
@@ -649,12 +655,7 @@ function WithdrawTab() {
       <div className="flex w-full flex-col gap-2">
         <p className="text-p2 text-secondary-foreground">You receive</p>
 
-        <div
-          className={cn(
-            "flex w-full flex-col gap-3 rounded-md border p-4",
-            isFetchingQuote && "animate-pulse",
-          )}
-        >
+        <div className="flex w-full flex-col gap-3 rounded-md border p-4">
           {pool.coinTypes.map((coinType, index) => {
             const coinMetadata = appData.poolCoinMetadataMap[coinType];
 
@@ -673,23 +674,23 @@ function WithdrawTab() {
                   </p>
                 </div>
 
-                <p className="text-p1 text-foreground">
-                  {isFetchingQuote && !quote ? (
-                    <Skeleton className="h-[24px] w-20" />
-                  ) : (
-                    formatToken(
-                      new BigNumber(
-                        quote
-                          ? (index === 0
+                {isFetchingQuote ? (
+                  <Skeleton className="h-[24px] w-24" />
+                ) : (
+                  <p className="text-p1 text-foreground">
+                    {quote
+                      ? formatToken(
+                          new BigNumber(
+                            (index === 0
                               ? quote.withdrawA
                               : quote.withdrawB
-                            ).toString()
-                          : 0,
-                      ).div(10 ** coinMetadata.decimals),
-                      { dp: coinMetadata.decimals },
-                    )
-                  )}
-                </p>
+                            ).toString(),
+                          ).div(10 ** coinMetadata.decimals),
+                          { dp: coinMetadata.decimals },
+                        )
+                      : "--"}
+                  </p>
+                )}
               </div>
             );
           })}
@@ -715,9 +716,16 @@ function SwapTab({ formatValue }: SwapTabProps) {
     useLoadedAppContext();
   const { pool } = usePoolContext();
 
-  // Value
+  // Active index
   const [activeCoinIndex, setActiveCoinIndex] = useState<0 | 1>(0);
+  const activeCoinType = pool.coinTypes[activeCoinIndex];
+  const activeCoinMetadata = appData.poolCoinMetadataMap[activeCoinType];
 
+  const inactiveIndex = (1 - activeCoinIndex) as 0 | 1;
+  const inactiveCoinType = pool.coinTypes[inactiveIndex];
+  const inactiveCoinMetadata = appData.poolCoinMetadataMap[inactiveCoinType];
+
+  // Value
   const [value, setValue] = useState<string>("");
   const valueRef = useRef<string>(value);
 
@@ -770,22 +778,20 @@ function SwapTab({ formatValue }: SwapTabProps) {
   const onValueChange = (_value: string, isImmediate?: boolean) => {
     console.log("SwapTab.onValueChange - _value:", _value);
 
-    const isValueValid = new BigNumber(_value || 0).gt(0);
-    const formattedValue = formatValue(
-      _value,
-      appData.poolCoinMetadataMap[pool.coinTypes[activeCoinIndex]].decimals,
-    );
+    const formattedValue = formatValue(_value, activeCoinMetadata.decimals);
 
     const newValue = formattedValue;
     valueRef.current = newValue;
     setValue(newValue);
 
-    if (!isValueValid) {
+    // formattedValue === "" || formattedValue <= 0
+    if (new BigNumber(formattedValue || 0).lte(0)) {
       setIsFetchingQuote(false);
       setQuote(undefined);
       return;
     }
 
+    // formattedValue > 0
     setIsFetchingQuote(true);
     (isImmediate ? fetchQuote : debouncedFetchQuote)(
       steammClient,
@@ -793,6 +799,43 @@ function SwapTab({ formatValue }: SwapTabProps) {
       activeCoinIndex,
     );
   };
+
+  // Ratio
+  const currentRatio = pool.balances[inactiveIndex].div(
+    pool.balances[activeCoinIndex],
+  );
+
+  const [isShowingReversedQuoteRatio, setIsShowingReversedQuoteRatio] =
+    useState<boolean>(false);
+  const quoteRatio =
+    quote !== undefined
+      ? new BigNumber(
+          new BigNumber(quote.amountOut.toString()).div(
+            10 ** inactiveCoinMetadata.decimals,
+          ),
+        ).div(
+          new BigNumber(quote.amountIn.toString()).div(
+            10 ** activeCoinMetadata.decimals,
+          ),
+        )
+      : undefined;
+  const reversedQuoteRatio =
+    quoteRatio !== undefined ? quoteRatio.pow(-1) : undefined;
+
+  const priceDifferencePercent =
+    quoteRatio !== undefined
+      ? BigNumber.max(
+          0,
+          new BigNumber(currentRatio.minus(quoteRatio))
+            .div(currentRatio)
+            .times(100),
+        )
+      : undefined;
+  const PriceDifferenceIcon = priceDifferencePercent?.gte(
+    PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD,
+  )
+    ? AlertTriangle
+    : Info;
 
   // Value - max
   const onCoinBalanceClick = () => {
@@ -816,11 +859,12 @@ function SwapTab({ formatValue }: SwapTabProps) {
     setActiveCoinIndex(newActiveCoinIndex);
     setQuote(undefined);
 
-    document.getElementById(getCoinInputId(pool.coinTypes[0]))?.focus();
+    document.getElementById(getCoinInputId(activeCoinType))?.focus();
 
-    const isValueValid = new BigNumber(value || 0).gt(0);
-    if (!isValueValid) return;
+    // value === "" || value <= 0
+    if (new BigNumber(value || 0).lte(0)) return;
 
+    // value > 0
     setIsFetchingQuote(true);
     fetchQuote(steammClient, value, newActiveCoinIndex);
   };
@@ -960,39 +1004,140 @@ function SwapTab({ formatValue }: SwapTabProps) {
 
         <CoinInput
           className="relative z-[1]"
-          coinType={pool.coinTypes[1 - activeCoinIndex]}
+          coinType={inactiveCoinType}
           value={
-            isFetchingQuote && !quote
+            isFetchingQuote
               ? undefined
               : quote
                 ? formatValue(
                     new BigNumber(quote.amountOut.toString())
-                      .div(
-                        10 **
-                          appData.poolCoinMetadataMap[
-                            pool.coinTypes[1 - activeCoinIndex]
-                          ].decimals,
-                      )
+                      .div(10 ** inactiveCoinMetadata.decimals)
                       .toFixed(
-                        appData.poolCoinMetadataMap[
-                          pool.coinTypes[1 - activeCoinIndex]
-                        ].decimals,
+                        inactiveCoinMetadata.decimals,
                         BigNumber.ROUND_DOWN,
                       ),
-                    appData.poolCoinMetadataMap[
-                      pool.coinTypes[1 - activeCoinIndex]
-                    ].decimals,
+                    inactiveCoinMetadata.decimals,
                   )
                 : ""
           }
-          isLoading={isFetchingQuote}
         />
       </div>
+
+      {(isFetchingQuote || quote) && (
+        <div className="flex w-full flex-col gap-1">
+          {/* Price difference */}
+          {isFetchingQuote || !quote ? (
+            <Skeleton className="h-[21px] w-40" />
+          ) : (
+            <p
+              className={cn(
+                "text-p2 text-foreground",
+                priceDifferencePercent!.gte(
+                  PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD,
+                ) &&
+                  cn(
+                    "text-warning",
+                    priceDifferencePercent!.gte(
+                      PRICE_DIFFERENCE_PERCENT_DESTRUCTIVE_THRESHOLD,
+                    ) && "text-error",
+                  ),
+              )}
+            >
+              <PriceDifferenceIcon className="mb-0.5 mr-1.5 inline h-3.5 w-3.5" />
+              {formatPercent(BigNumber.max(0, priceDifferencePercent!))} Price
+              difference
+            </p>
+          )}
+        </div>
+      )}
 
       <SubmitButton
         submitButtonState={submitButtonState}
         onClick={onSubmitClick}
       />
+
+      {(isFetchingQuote || quote) && (
+        <div className="flex w-full flex-col gap-2">
+          {/* Exchange rate */}
+          <div className="flex w-full flex-row items-center justify-between">
+            <p className="text-p2 text-secondary-foreground">Exchange rate</p>
+
+            {isFetchingQuote || !quote ? (
+              <Skeleton className="h-[21px] w-48" />
+            ) : (
+              <button
+                className="group flex flex-row items-center gap-2"
+                onClick={() => setIsShowingReversedQuoteRatio((prev) => !prev)}
+              >
+                <p className="text-p2 text-foreground">
+                  {!isShowingReversedQuoteRatio ? (
+                    <>
+                      1 {activeCoinMetadata.symbol}
+                      {" ≈ "}
+                      {formatToken(quoteRatio!, {
+                        dp: inactiveCoinMetadata.decimals,
+                      })}{" "}
+                      {inactiveCoinMetadata.symbol}
+                    </>
+                  ) : (
+                    <>
+                      1 {inactiveCoinMetadata.symbol}
+                      {" ≈ "}
+                      {formatToken(reversedQuoteRatio!, {
+                        dp: activeCoinMetadata.decimals,
+                      })}{" "}
+                      {activeCoinMetadata.symbol}
+                    </>
+                  )}
+                </p>
+                <ArrowRightLeft className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
+              </button>
+            )}
+          </div>
+
+          {/* Minimum received */}
+          <div className="flex w-full flex-row items-center justify-between">
+            <p className="text-p2 text-secondary-foreground">
+              Minimum received
+            </p>
+
+            {isFetchingQuote || !quote ? (
+              <Skeleton className="h-[21px] w-24" />
+            ) : (
+              <p className="text-p2 text-foreground">
+                {formatToken(
+                  new BigNumber(quote.amountOut.toString())
+                    .div(1 + slippagePercent / 100)
+                    .div(10 ** inactiveCoinMetadata.decimals),
+                  { dp: inactiveCoinMetadata.decimals },
+                )}{" "}
+                {inactiveCoinMetadata.symbol}
+              </p>
+            )}
+          </div>
+
+          {/* Fees */}
+          <div className="flex w-full flex-row items-center justify-between">
+            <p className="text-p2 text-secondary-foreground">Included fees</p>
+
+            {isFetchingQuote || !quote ? (
+              <Skeleton className="h-[21px] w-24" />
+            ) : (
+              <p className="text-p2 text-foreground">
+                {formatToken(
+                  new BigNumber(
+                    (
+                      quote.outputFees.poolFees + quote.outputFees.protocolFees
+                    ).toString(),
+                  ).div(10 ** inactiveCoinMetadata.decimals),
+                  { dp: inactiveCoinMetadata.decimals },
+                )}{" "}
+                {inactiveCoinMetadata.symbol}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
