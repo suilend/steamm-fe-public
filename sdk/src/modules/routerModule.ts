@@ -70,14 +70,18 @@ export class RouterModule implements IModule {
 
     for (const hop of args.route) {
       const poolInfo = pools.find((pool) => pool.poolId === hop.poolId)!;
-      const bankInfoA = getBankFromBToken(bankList, hop.coinTypeA);
-      const bankInfoB = getBankFromBToken(bankList, hop.coinTypeB);
 
       const pool = this.sdk.getPool(poolInfo);
 
-      // if first
-      const coinA = hop.a2b ? btokens[i] : btokens[i + 1];
-      const coinB = hop.a2b ? btokens[i + 1] : btokens[i];
+      const coinAIndex = bankInfos.findIndex(
+        (bankInfo) => bankInfo.btokenType === poolInfo.coinTypeA,
+      );
+      const coinBIndex = bankInfos.findIndex(
+        (bankInfo) => bankInfo.btokenType === poolInfo.coinTypeB,
+      );
+
+      const coinA = btokens[coinAIndex];
+      const coinB = btokens[coinBIndex];
 
       const amountIn =
         i === 0
@@ -281,10 +285,20 @@ export class RouterModule implements IModule {
 
     for (const hop of route) {
       if (coinTypes.length === 0) {
-        coinTypes.push(hop.coinTypeA);
-        coinTypes.push(hop.coinTypeB);
+        if (hop.a2b) {
+          coinTypes.push(hop.coinTypeA);
+          coinTypes.push(hop.coinTypeB);
+        } else {
+          coinTypes.push(hop.coinTypeB);
+          coinTypes.push(hop.coinTypeA);
+        }
       } else {
-        coinTypes.push(hop.coinTypeB);
+        if (!coinTypes.includes(hop.coinTypeA)) {
+          coinTypes.push(hop.coinTypeA);
+        }
+        if (!coinTypes.includes(hop.coinTypeB)) {
+          coinTypes.push(hop.coinTypeB);
+        }
       }
     }
 
