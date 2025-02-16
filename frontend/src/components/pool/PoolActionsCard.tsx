@@ -548,11 +548,15 @@ function WithdrawTab() {
     )
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
-    // TODO: Check balance
+    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
+      return {
+        isDisabled: true,
+        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+      };
 
     return {
       title: "Withdraw",
-      isDisabled: isFetchingQuote,
+      isDisabled: isFetchingQuote || !quote,
     };
   })();
 
@@ -935,11 +939,42 @@ function SwapTab({ formatValue }: SwapTabProps) {
     if (new BigNumber(value).eq(0))
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
-    // TODO: Check balance
+    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
+      return {
+        isDisabled: true,
+        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+      };
+
+    if (quote) {
+      if (
+        isSui(activeCoinType) &&
+        new BigNumber(getBalance(activeCoinType).minus(SUI_GAS_MIN)).lt(
+          new BigNumber(quote.amountIn.toString()).div(
+            10 ** activeCoinMetadata.decimals,
+          ),
+        )
+      )
+        return {
+          isDisabled: true,
+          title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+        };
+
+      if (
+        getBalance(activeCoinType).lt(
+          new BigNumber(quote.amountIn.toString()).div(
+            10 ** activeCoinMetadata.decimals,
+          ),
+        )
+      )
+        return {
+          isDisabled: true,
+          title: `Insufficient ${activeCoinMetadata.symbol}`,
+        };
+    }
 
     return {
       title: "Swap",
-      isDisabled: isFetchingQuote,
+      isDisabled: isFetchingQuote || !quote,
     };
   })();
 
