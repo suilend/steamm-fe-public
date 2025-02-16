@@ -76,16 +76,18 @@ export default function PoolParametersCard() {
                 </p>
               </Tooltip>
 
-              <p className="text-p3 text-tertiary-foreground">
-                (
-                {formatPercent(
-                  pool.balances[0]
-                    .times(pool.prices[0])
-                    .div(pool.tvlUsd)
-                    .times(100),
-                )}
-                )
-              </p>
+              {!pool.tvlUsd.eq(0) && (
+                <p className="text-p3 text-tertiary-foreground">
+                  (
+                  {formatPercent(
+                    pool.balances[0]
+                      .times(pool.prices[0])
+                      .div(pool.tvlUsd)
+                      .times(100),
+                  )}
+                  )
+                </p>
+              )}
             </div>
           </div>
 
@@ -94,10 +96,12 @@ export default function PoolParametersCard() {
             <div
               className="h-full bg-jordy-blue"
               style={{
-                width: `${pool.balances[0]
-                  .times(pool.prices[0])
-                  .div(pool.tvlUsd)
-                  .times(100)}%`,
+                width: !pool.tvlUsd.eq(0)
+                  ? `${pool.balances[0]
+                      .times(pool.prices[0])
+                      .div(pool.tvlUsd)
+                      .times(100)}%`
+                  : "0%",
               }}
             />
             <div className="h-full flex-1 bg-border" />
@@ -141,16 +145,18 @@ export default function PoolParametersCard() {
                 </p>
               </Tooltip>
 
-              <p className="text-p3 text-tertiary-foreground">
-                (
-                {formatPercent(
-                  pool.balances[1]
-                    .times(pool.prices[1])
-                    .div(pool.tvlUsd)
-                    .times(100),
-                )}
-                )
-              </p>
+              {!pool.tvlUsd.eq(0) && (
+                <p className="text-p3 text-tertiary-foreground">
+                  (
+                  {formatPercent(
+                    pool.balances[1]
+                      .times(pool.prices[1])
+                      .div(pool.tvlUsd)
+                      .times(100),
+                  )}
+                  )
+                </p>
+              )}
             </div>
           </div>
 
@@ -159,10 +165,12 @@ export default function PoolParametersCard() {
             <div
               className="h-full bg-jordy-blue"
               style={{
-                width: `${pool.balances[1]
-                  .times(pool.prices[1])
-                  .div(pool.tvlUsd)
-                  .times(100)}%`,
+                width: !pool.tvlUsd.eq(0)
+                  ? `${pool.balances[1]
+                      .times(pool.prices[1])
+                      .div(pool.tvlUsd)
+                      .times(100)}%`
+                  : "0%",
               }}
             />
             <div className="h-full flex-1 bg-border" />
@@ -185,12 +193,18 @@ export default function PoolParametersCard() {
 
       <Parameter label="Current price">
         <p className="text-p2 text-foreground">
-          1 {appData.poolCoinMetadataMap[pool.coinTypes[0]].symbol}
-          {" ≈ "}
-          {formatToken(pool.balances[1].div(pool.balances[0]), {
-            dp: appData.poolCoinMetadataMap[pool.coinTypes[1]].decimals,
-          })}{" "}
-          {appData.poolCoinMetadataMap[pool.coinTypes[1]].symbol}
+          {pool.balances.every((balance) => !balance.eq(0)) ? (
+            <>
+              1 {appData.poolCoinMetadataMap[pool.coinTypes[0]].symbol}
+              {" ≈ "}
+              {formatToken(pool.balances[1].div(pool.balances[0]), {
+                dp: appData.poolCoinMetadataMap[pool.coinTypes[1]].decimals,
+              })}{" "}
+              {appData.poolCoinMetadataMap[pool.coinTypes[1]].symbol}
+            </>
+          ) : (
+            "N/A"
+          )}
         </p>
       </Parameter>
 
