@@ -52,9 +52,6 @@ export default function PoolRow({
             ),
           )}
         </p>
-        <Tag labelClassName="transition-colors group-hover:text-foreground">
-          {formatPercent(pool.feeTierPercent)}
-        </Tag>
       </div>
 
       {/* Type */}

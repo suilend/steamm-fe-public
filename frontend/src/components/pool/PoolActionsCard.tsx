@@ -5,7 +5,6 @@ import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import { SUI_DECIMALS } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
-import { AlertTriangle, ArrowRightLeft, ArrowUpDown, Info } from "lucide-react";
 
 import {
   MAX_U64,
@@ -34,6 +33,9 @@ import {
 import CoinInput, { getCoinInputId } from "@/components/pool/CoinInput";
 import SlippagePopover from "@/components/SlippagePopover";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
+import ExchangeRateParameter from "@/components/swap/ExchangeRateParameter";
+import PriceDifferenceLabel from "@/components/swap/PriceDifferenceLabel";
+import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
 import TokenLogo from "@/components/TokenLogo";
 import TokenLogos from "@/components/TokenLogos";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,9 +43,6 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
-
-const PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD = 1;
-const PRICE_DIFFERENCE_PERCENT_DESTRUCTIVE_THRESHOLD = 8;
 
 enum Action {
   DEPOSIT = "deposit",
@@ -393,13 +392,13 @@ function DepositTab({ formatValue }: DepositTabProps) {
       const balanceChangeAFormatted = formatToken(
         balanceChangeA !== undefined
           ? balanceChangeA
-          : new BigNumber(values[0]),
+          : new BigNumber(quote.depositA.toString()),
         { dp: coinMetadataA.decimals, trimTrailingZeros: true },
       );
       const balanceChangeBFormatted = formatToken(
         balanceChangeB !== undefined
           ? balanceChangeB
-          : new BigNumber(values[1]),
+          : new BigNumber(quote.depositB.toString()),
         { dp: coinMetadataB.decimals, trimTrailingZeros: true },
       );
 
@@ -651,13 +650,17 @@ function WithdrawTab() {
       const balanceChangeAFormatted = formatToken(
         balanceChangeA !== undefined
           ? balanceChangeA
-          : new BigNumber(submitAmountA).div(10 ** coinMetadataA.decimals),
+          : new BigNumber(quote.withdrawA.toString()).div(
+              10 ** coinMetadataA.decimals,
+            ),
         { dp: coinMetadataA.decimals, trimTrailingZeros: true },
       );
       const balanceChangeBFormatted = formatToken(
         balanceChangeB !== undefined
           ? balanceChangeB
-          : new BigNumber(submitAmountB).div(10 ** coinMetadataB.decimals),
+          : new BigNumber(quote.withdrawB.toString()).div(
+              10 ** coinMetadataB.decimals,
+            ),
         { dp: coinMetadataB.decimals, trimTrailingZeros: true },
       );
 
@@ -840,7 +843,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
   } = useLoadedAppContext();
   const { pool } = usePoolContext();
 
-  // Active index
+  // CoinTypes
   const [activeCoinIndex, setActiveCoinIndex] = useState<0 | 1>(0);
   const activeCoinType = pool.coinTypes[activeCoinIndex];
   const activeCoinMetadata = appData.poolCoinMetadataMap[activeCoinType];
@@ -924,66 +927,35 @@ function SwapTab({ formatValue }: SwapTabProps) {
     );
   };
 
-  // Ratio
-  const currentRatio = pool.balances[inactiveIndex].div(
+  // Ratios
+  const oracleRatio = pool.balances[inactiveIndex].div(
     pool.balances[activeCoinIndex],
   );
 
-  const [isShowingReversedQuoteRatio, setIsShowingReversedQuoteRatio] =
-    useState<boolean>(false);
-  const quoteRatio =
-    quote !== undefined
-      ? new BigNumber(
-          new BigNumber(quote.amountOut.toString()).div(
-            10 ** inactiveCoinMetadata.decimals,
-          ),
-        ).div(
-          new BigNumber(quote.amountIn.toString()).div(
-            10 ** activeCoinMetadata.decimals,
-          ),
-        )
-      : undefined;
-  const reversedQuoteRatio =
-    quoteRatio !== undefined ? quoteRatio.pow(-1) : undefined;
-
-  const priceDifferencePercent =
-    quoteRatio !== undefined
-      ? BigNumber.max(
-          0,
-          new BigNumber(currentRatio.minus(quoteRatio))
-            .div(currentRatio)
-            .times(100),
-        )
-      : undefined;
-  const PriceDifferenceIcon = priceDifferencePercent?.gte(
-    PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD,
-  )
-    ? AlertTriangle
-    : Info;
-
   // Value - max
   const onCoinBalanceClick = () => {
-    const coinType = pool.coinTypes[activeCoinIndex];
-    const coinMetadata = appData.poolCoinMetadataMap[coinType];
-    const balance = getBalance(coinType);
+    const balance = getBalance(activeCoinType);
 
     onValueChange(
-      (isSui(coinType)
+      (isSui(activeCoinType)
         ? BigNumber.max(0, balance.minus(SUI_GAS_MIN))
         : balance
-      ).toFixed(coinMetadata.decimals, BigNumber.ROUND_DOWN),
+      ).toFixed(activeCoinMetadata.decimals, BigNumber.ROUND_DOWN),
       true,
     );
-    document.getElementById(getCoinInputId(coinType))?.focus();
+    document.getElementById(getCoinInputId(activeCoinType))?.focus();
   };
 
   // Reverse
   const reverseAssets = () => {
     const newActiveCoinIndex = (1 - activeCoinIndex) as 0 | 1;
+    const newActiveCoinType = pool.coinTypes[newActiveCoinIndex];
     setActiveCoinIndex(newActiveCoinIndex);
     setQuote(undefined);
 
-    document.getElementById(getCoinInputId(activeCoinType))?.focus();
+    setTimeout(() =>
+      document.getElementById(getCoinInputId(newActiveCoinType))?.focus(),
+    );
 
     // value === "" || value <= 0
     if (new BigNumber(value || 0).lte(0)) return;
@@ -1113,13 +1085,21 @@ function SwapTab({ formatValue }: SwapTabProps) {
       const balanceChangeAFormatted = formatToken(
         balanceChangeA !== undefined
           ? balanceChangeA
-          : new BigNumber(activeCoinIndex === 0 ? amountIn : minAmountOut),
+          : new BigNumber(
+              activeCoinIndex === 0
+                ? quote.amountIn.toString()
+                : quote.amountOut.toString(),
+            ),
         { dp: coinMetadataA.decimals, trimTrailingZeros: true },
       );
       const balanceChangeBFormatted = formatToken(
         balanceChangeB !== undefined
           ? balanceChangeB
-          : new BigNumber(activeCoinIndex === 0 ? minAmountOut : amountIn),
+          : new BigNumber(
+              activeCoinIndex === 0
+                ? quote.amountOut.toString()
+                : quote.amountIn.toString(),
+            ),
         { dp: coinMetadataB.decimals, trimTrailingZeros: true },
       );
 
@@ -1132,7 +1112,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
       showErrorToast("Failed to swap", err as Error, undefined, true);
       console.error(err);
     } finally {
-      document.getElementById(getCoinInputId(pool.coinTypes[0]))?.focus();
+      document.getElementById(getCoinInputId(activeCoinType))?.focus();
       setIsSubmitting(false);
       refresh();
     }
@@ -1149,14 +1129,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
           onBalanceClick={() => onCoinBalanceClick()}
         />
 
-        <div className="relative z-[2] -my-[18px] flex h-8 w-8 rounded-[16px] bg-background">
-          <button
-            className="flex h-full w-full flex-row items-center justify-center rounded-[16px] bg-button-1 transition-colors hover:bg-button-1/80"
-            onClick={reverseAssets}
-          >
-            <ArrowUpDown className="h-4 w-4 text-button-1-foreground" />
-          </button>
-        </div>
+        <ReverseAssetsButton onClick={reverseAssets} />
 
         <CoinInput
           className="relative z-[1]"
@@ -1180,31 +1153,13 @@ function SwapTab({ formatValue }: SwapTabProps) {
       </div>
 
       {(isFetchingQuote || quote) && (
-        <div className="flex w-full flex-col gap-1">
-          {/* Price difference */}
-          {isFetchingQuote || !quote ? (
-            <Skeleton className="h-[21px] w-40" />
-          ) : (
-            <p
-              className={cn(
-                "text-p2 text-foreground",
-                priceDifferencePercent!.gte(
-                  PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD,
-                ) &&
-                  cn(
-                    "text-warning",
-                    priceDifferencePercent!.gte(
-                      PRICE_DIFFERENCE_PERCENT_DESTRUCTIVE_THRESHOLD,
-                    ) && "text-error",
-                  ),
-              )}
-            >
-              <PriceDifferenceIcon className="mb-0.5 mr-1.5 inline h-3.5 w-3.5" />
-              {formatPercent(BigNumber.max(0, priceDifferencePercent!))} Price
-              difference
-            </p>
-          )}
-        </div>
+        <PriceDifferenceLabel
+          inCoinType={activeCoinType}
+          outCoinType={inactiveCoinType}
+          oracleRatio={oracleRatio}
+          isFetchingQuote={isFetchingQuote}
+          quote={quote}
+        />
       )}
 
       <SubmitButton
@@ -1214,42 +1169,12 @@ function SwapTab({ formatValue }: SwapTabProps) {
 
       {(isFetchingQuote || quote) && (
         <div className="flex w-full flex-col gap-2">
-          {/* Exchange rate */}
-          <div className="flex w-full flex-row items-center justify-between">
-            <p className="text-p2 text-secondary-foreground">Exchange rate</p>
-
-            {isFetchingQuote || !quote ? (
-              <Skeleton className="h-[21px] w-48" />
-            ) : (
-              <button
-                className="group flex flex-row items-center gap-2"
-                onClick={() => setIsShowingReversedQuoteRatio((prev) => !prev)}
-              >
-                <p className="text-p2 text-foreground">
-                  {!isShowingReversedQuoteRatio ? (
-                    <>
-                      1 {activeCoinMetadata.symbol}
-                      {" ≈ "}
-                      {formatToken(quoteRatio!, {
-                        dp: inactiveCoinMetadata.decimals,
-                      })}{" "}
-                      {inactiveCoinMetadata.symbol}
-                    </>
-                  ) : (
-                    <>
-                      1 {inactiveCoinMetadata.symbol}
-                      {" ≈ "}
-                      {formatToken(reversedQuoteRatio!, {
-                        dp: activeCoinMetadata.decimals,
-                      })}{" "}
-                      {activeCoinMetadata.symbol}
-                    </>
-                  )}
-                </p>
-                <ArrowRightLeft className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
-              </button>
-            )}
-          </div>
+          <ExchangeRateParameter
+            inCoinType={activeCoinType}
+            outCoinType={inactiveCoinType}
+            isFetchingQuote={isFetchingQuote}
+            quote={quote}
+          />
 
           {/* Fees */}
           <div className="flex w-full flex-row items-center justify-between">

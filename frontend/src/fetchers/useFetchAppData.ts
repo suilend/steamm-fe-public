@@ -142,12 +142,16 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         priceA =
           coinTypeA === NORMALIZED_USDC_COINTYPE
             ? usdcPrice
-            : balanceB.div(balanceA).times(priceB); // Assumes the pool is balanced (only works for CPMM quoter)
+            : !balanceA.eq(0)
+              ? balanceB.div(balanceA).times(priceB)
+              : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
       } else if (coinTypeB === NORMALIZED_USDC_COINTYPE) {
         priceB = usdcPrice;
         priceA = isSui(coinTypeA)
           ? suiPrice
-          : balanceB.div(balanceA).times(priceB); // Assumes the pool is balanced (only works for CPMM quoter)
+          : !balanceA.eq(0)
+            ? balanceB.div(balanceA).times(priceB)
+            : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
       } else {
         console.error(
           `Quote asset must be one of SUI, USDC - skipping pool with id: ${id}`,

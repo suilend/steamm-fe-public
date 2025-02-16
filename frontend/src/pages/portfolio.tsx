@@ -247,110 +247,114 @@ export default function PortfolioPage() {
       </Head>
 
       <div className="flex w-full flex-col gap-8">
-        <h1 className="text-h1 text-foreground">Portfolio</h1>
+        <div className="flex w-full flex-col gap-6">
+          <h1 className="text-h1 text-foreground">Portfolio</h1>
 
-        {/* Stats */}
-        <div className="grid w-full grid-cols-2 rounded-md border md:flex md:flex-row md:items-stretch">
-          {/* Net worth */}
-          <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1">
-            <div className="flex w-full flex-col gap-1 p-5">
-              <p className="text-p2 text-secondary-foreground">Net worth</p>
+          {/* Stats */}
+          <div className="grid w-full grid-cols-2 rounded-md border md:flex md:flex-row md:items-stretch">
+            {/* Net worth */}
+            <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1">
+              <div className="flex w-full flex-col gap-1 p-5">
+                <p className="text-p2 text-secondary-foreground">Net worth</p>
 
-              {netWorthUsd === undefined ? (
-                <Skeleton className="h-[30px] w-20" />
-              ) : (
-                <Tooltip title={formatUsd(netWorthUsd, { exact: true })}>
-                  <p className="w-max text-h3 text-foreground">
-                    {formatUsd(netWorthUsd)}
-                  </p>
-                </Tooltip>
-              )}
+                {netWorthUsd === undefined ? (
+                  <Skeleton className="h-[30px] w-20" />
+                ) : (
+                  <Tooltip title={formatUsd(netWorthUsd, { exact: true })}>
+                    <p className="w-max text-h3 text-foreground">
+                      {formatUsd(netWorthUsd)}
+                    </p>
+                  </Tooltip>
+                )}
+              </div>
             </div>
-          </div>
 
-          <Divider className="h-auto w-px max-md:hidden" />
+            <Divider className="h-auto w-px max-md:hidden" />
 
-          {/* Deposited */}
-          <div className="max-md:w-full max-md:border-b md:flex-1">
-            <div className="flex w-full flex-col gap-1 p-5">
-              <p className="text-p2 text-secondary-foreground">
-                Total deposited
-              </p>
-
-              {totalDepositedUsd === undefined ? (
-                <Skeleton className="h-[30px] w-20" />
-              ) : (
-                <Tooltip title={formatUsd(totalDepositedUsd, { exact: true })}>
-                  <p className="w-max text-h3 text-foreground">
-                    {formatUsd(totalDepositedUsd)}
-                  </p>
-                </Tooltip>
-              )}
-            </div>
-          </div>
-
-          <Divider className="h-auto w-px max-md:hidden" />
-
-          {/* PnL */}
-          <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1">
-            <div className="flex w-full flex-col gap-1 p-5">
-              <p className="text-p2 text-secondary-foreground">Total PnL</p>
-
-              {totalPnlUsd === undefined ? (
-                <Skeleton className="h-[30px] w-20" />
-              ) : (
-                <Tooltip title={formatUsd(totalPnlUsd, { exact: true })}>
-                  <p className="w-max text-h3 text-success">
-                    {formatUsd(totalPnlUsd)}
-                  </p>
-                </Tooltip>
-              )}
-            </div>
-          </div>
-
-          <Divider className="h-auto w-px max-md:hidden" />
-
-          {/* APR */}
-          <div className="max-md:w-full max-md:border-b md:flex-1">
-            <div className="flex w-full flex-col gap-1 p-5">
-              <p className="text-p2 text-secondary-foreground">Average APR</p>
-
-              {averageAprPercent === undefined ? (
-                <Skeleton className="h-[30px] w-20" />
-              ) : (
-                <p className="text-h3 text-foreground">
-                  {formatPercent(averageAprPercent)}
+            {/* Deposited */}
+            <div className="max-md:w-full max-md:border-b md:flex-1">
+              <div className="flex w-full flex-col gap-1 p-5">
+                <p className="text-p2 text-secondary-foreground">
+                  Total deposited
                 </p>
-              )}
-            </div>
-          </div>
 
-          <Divider className="h-auto w-px max-md:hidden" />
-
-          {/* Rewards */}
-          <div className="max-md:w-full md:flex-1">
-            <div className="flex w-full flex-col gap-1 p-5">
-              <p className="text-p2 text-secondary-foreground">
-                Claimable rewards
-              </p>
-
-              {Object.keys(claimableRewards).length > 0 ? (
-                <div className="flex h-[30px] flex-row items-center gap-3">
-                  <TokenLogos
-                    coinTypes={Object.keys(claimableRewards)}
-                    size={20}
-                  />
-
-                  <button
-                    className="flex h-6 flex-row items-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80"
-                    onClick={onClaimRewardsClick}
+                {totalDepositedUsd === undefined ? (
+                  <Skeleton className="h-[30px] w-20" />
+                ) : (
+                  <Tooltip
+                    title={formatUsd(totalDepositedUsd, { exact: true })}
                   >
-                    <p className="text-p3 text-button-2-foreground">Claim</p>
-                  </button>
-                </div>
-              ) : (
-                <p className="text-h3 text-foreground">--</p>
-              )}
+                    <p className="w-max text-h3 text-foreground">
+                      {formatUsd(totalDepositedUsd)}
+                    </p>
+                  </Tooltip>
+                )}
+              </div>
+            </div>
+
+            <Divider className="h-auto w-px max-md:hidden" />
+
+            {/* PnL */}
+            <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1">
+              <div className="flex w-full flex-col gap-1 p-5">
+                <p className="text-p2 text-secondary-foreground">Total PnL</p>
+
+                {totalPnlUsd === undefined ? (
+                  <Skeleton className="h-[30px] w-20" />
+                ) : (
+                  <Tooltip title={formatUsd(totalPnlUsd, { exact: true })}>
+                    <p className="w-max text-h3 text-success">
+                      {formatUsd(totalPnlUsd)}
+                    </p>
+                  </Tooltip>
+                )}
+              </div>
+            </div>
+
+            <Divider className="h-auto w-px max-md:hidden" />
+
+            {/* APR */}
+            <div className="max-md:w-full max-md:border-b md:flex-1">
+              <div className="flex w-full flex-col gap-1 p-5">
+                <p className="text-p2 text-secondary-foreground">Average APR</p>
+
+                {averageAprPercent === undefined ? (
+                  <Skeleton className="h-[30px] w-20" />
+                ) : (
+                  <p className="text-h3 text-foreground">
+                    {formatPercent(averageAprPercent)}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <Divider className="h-auto w-px max-md:hidden" />
+
+            {/* Rewards */}
+            <div className="max-md:w-full md:flex-1">
+              <div className="flex w-full flex-col gap-1 p-5">
+                <p className="text-p2 text-secondary-foreground">
+                  Claimable rewards
+                </p>
+
+                {Object.keys(claimableRewards).length > 0 ? (
+                  <div className="flex h-[30px] flex-row items-center gap-3">
+                    <TokenLogos
+                      coinTypes={Object.keys(claimableRewards)}
+                      size={20}
+                    />
+
+                    <button
+                      className="flex h-6 flex-row items-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80"
+                      onClick={onClaimRewardsClick}
+                    >
+                      <p className="text-p3 text-button-2-foreground">Claim</p>
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-h3 text-foreground">--</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
