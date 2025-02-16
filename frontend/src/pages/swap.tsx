@@ -47,11 +47,9 @@ export default function SwapPage() {
   } = useLoadedAppContext();
 
   // CoinTypes
-  const [inCoinType, setInCoinType] = useState<string>(
-    NORMALIZED_USDC_COINTYPE,
-  );
+  const [inCoinType, setInCoinType] = useState<string>(NORMALIZED_SUI_COINTYPE);
   const [outCoinType, setOutCoinType] = useState<string>(
-    NORMALIZED_SUI_COINTYPE,
+    NORMALIZED_USDC_COINTYPE,
   );
 
   const [inCoinMetadata, outCoinMetadata] = [
@@ -86,7 +84,6 @@ export default function SwapPage() {
   const [oracleQuote, setOracleQuote] = useState<MultiSwapQuote | undefined>(
     undefined,
   );
-
   const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false);
   const [quote, setQuote] = useState<MultiSwapQuote | undefined>(undefined);
   const [route, setRoute] = useState<Route | undefined>(undefined);
@@ -106,6 +103,8 @@ export default function SwapPage() {
         _inCoinType,
         "_outCoinType:",
         _outCoinType,
+        "isOracle:",
+        isOracle,
         "valueRef.current:",
         valueRef.current,
       );
@@ -126,12 +125,12 @@ export default function SwapPage() {
 
         if (valueRef.current !== _value && !isOracle) return;
         console.log(
-          "SwapPage.fetchQuote - quote:",
+          "SwapPage.fetchQuote - isOracle:",
+          isOracle,
+          "quote:",
           quote,
           "route:",
           route,
-          "isOracle:",
-          isOracle,
         );
 
         if (!isOracle) {
@@ -156,7 +155,7 @@ export default function SwapPage() {
     fetchQuote(
       steammClient,
       new BigNumber(
-        10 ** (-1 * Math.round(inCoinMetadata.decimals * (1 / 3))), // TODO: 1/3 is arbitrary, use a better heuristic
+        10 ** (-1 * Math.round(inCoinMetadata.decimals * (1 / 2))), // TODO: 1 / 2 is arbitrary, use a better heuristic
       ).toFixed(inCoinMetadata.decimals, BigNumber.ROUND_DOWN),
       inCoinType,
       outCoinType,
@@ -202,6 +201,7 @@ export default function SwapPage() {
     outCoinMetadata,
     oracleQuote,
   );
+  console.log("SwapPage - oracleRatio:", oracleRatio?.toString());
 
   // Value - max
   const onCoinBalanceClick = () => {
@@ -231,13 +231,12 @@ export default function SwapPage() {
     fetchQuote(
       steammClient,
       new BigNumber(
-        10 ** (-1 * Math.round(newInCoinMetadata.decimals * (1 / 3))), // TODO: 1/3 is arbitrary, use a better heuristic
+        10 ** (-1 * Math.round(newInCoinMetadata.decimals * (1 / 2))), // TODO: 1 / 2 is arbitrary, use a better heuristic
       ).toFixed(newInCoinMetadata.decimals, BigNumber.ROUND_DOWN),
       newInCoinType,
       newOutCoinType,
       true,
     );
-
     setQuote(undefined);
 
     setTimeout(() =>
@@ -307,7 +306,7 @@ export default function SwapPage() {
   })();
 
   const onSubmitClick = async () => {
-    console.log("SwapTab.onSubmitClick");
+    console.log("SwapPage.onSubmitClick");
 
     if (submitButtonState.isDisabled) return;
     if (!address || !quote || !route) return;
