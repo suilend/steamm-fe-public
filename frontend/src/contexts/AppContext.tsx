@@ -175,11 +175,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   );
 
   const isWhitelisted = useMemo(
-    () =>
-      !!address &&
-      [
-        "0x6191f9a47c411cc169ee4b0292f08531e4d442d4cb9ec61333016d2e9dee1205",
-      ].includes(address),
+    () => !!address && [""].includes(address),
     [address],
   );
 
