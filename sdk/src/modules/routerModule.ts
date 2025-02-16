@@ -11,11 +11,7 @@ import { MultiSwapQuote, castMultiSwapQuote } from "../base/pool/poolTypes";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
 import { BankInfo, BankList } from "../types";
-import {
-  getBankFromBToken,
-  getBankFromUnderlying,
-  getPoolInfo,
-} from "../utils";
+import { getBankFromBToken, getBankFromUnderlying } from "../utils";
 
 export interface CoinPair {
   coinIn: string;
@@ -69,19 +65,15 @@ export class RouterModule implements IModule {
     let i = 0;
 
     for (const hop of args.route) {
-      const poolInfo = getPoolInfo(pools, hop.poolId);
+      const poolInfo = pools.find((pool) => pool.poolId === hop.poolId)!;
+      const bankInfoA = getBankFromBToken(bankList, hop.coinTypeA);
+      const bankInfoB = getBankFromBToken(bankList, hop.coinTypeB);
 
       const pool = this.sdk.getPool(poolInfo);
 
-      const coinAIndex = bankInfos.findIndex(
-        (bankInfo) => bankInfo.btokenType === poolInfo.coinTypeA,
-      );
-      const coinBIndex = bankInfos.findIndex(
-        (bankInfo) => bankInfo.btokenType === poolInfo.coinTypeB,
-      );
-
-      const coinA = btokens[coinAIndex];
-      const coinB = btokens[coinBIndex];
+      // if first
+      const coinA = hop.a2b ? btokens[i] : btokens[i + 1];
+      const coinB = hop.a2b ? btokens[i + 1] : btokens[i];
 
       const amountIn =
         i === 0
@@ -185,6 +177,7 @@ export class RouterModule implements IModule {
 
     const bankX = new Bank(this.sdk.packageInfo(), bankInfoX);
     const bankY = new Bank(this.sdk.packageInfo(), bankInfoY);
+    const dummyTx = new Transaction();
 
     const firstBTokenAmountIn = this.getBTokenAmountInForQuote(
       tx,
@@ -197,7 +190,7 @@ export class RouterModule implements IModule {
     let nextBTokenAmountIn: TransactionResult = firstBTokenAmountIn;
 
     for (const hop of route) {
-      const poolInfo = getPoolInfo(pools, hop.poolId);
+      const poolInfo = pools.find((pool) => pool.poolId === hop.poolId)!;
 
       const bankInfoA = getBankFromBToken(bankList, hop.coinTypeA);
       const bankInfoB = getBankFromBToken(bankList, hop.coinTypeB);
@@ -276,28 +269,18 @@ export class RouterModule implements IModule {
     route: Route,
     coinIn: TransactionObjectInput,
     amountIn: bigint,
-  ): [TransactionResult[], BankInfo[]] {
+  ): [TransactionObjectInput[], BankInfo[]] {
     const bankData: BankInfo[] = Object.values(banks);
     const coinTypes: string[] = [];
-    const bTokens: TransactionResult[] = [];
+    const bTokens: TransactionObjectInput[] = [];
     const bankDataToReturn: BankInfo[] = [];
 
     for (const hop of route) {
       if (coinTypes.length === 0) {
-        if (hop.a2b) {
-          coinTypes.push(hop.coinTypeA);
-          coinTypes.push(hop.coinTypeB);
-        } else {
-          coinTypes.push(hop.coinTypeB);
-          coinTypes.push(hop.coinTypeA);
-        }
+        coinTypes.push(hop.coinTypeA);
+        coinTypes.push(hop.coinTypeB);
       } else {
-        if (!coinTypes.includes(hop.coinTypeA)) {
-          coinTypes.push(hop.coinTypeA);
-        }
-        if (!coinTypes.includes(hop.coinTypeB)) {
-          coinTypes.push(hop.coinTypeB);
-        }
+        coinTypes.push(hop.coinTypeB);
       }
     }
 
