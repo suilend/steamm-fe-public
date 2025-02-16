@@ -22,7 +22,7 @@ import {
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
 import { BankList } from "../types";
-import { SuiTypeName } from "../utils";
+import { SuiTypeName, getBankFromUnderlying } from "../utils";
 import { SuiAddressType } from "../utils";
 
 /**
@@ -56,8 +56,8 @@ export class PoolModule implements IModule {
     const bankList = await this.sdk.getBanks();
 
     const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankInfoA = bankList[args.coinTypeA];
-    const bankInfoB = bankList[args.coinTypeB];
+    const bankInfoA = getBankFromUnderlying(bankList, args.coinTypeA);
+    const bankInfoB = getBankFromUnderlying(bankList, args.coinTypeB);
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -88,8 +88,8 @@ export class PoolModule implements IModule {
     const bankList = await this.sdk.getBanks();
 
     const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankInfoA = bankList[args.coinTypeA];
-    const bankInfoB = bankList[args.coinTypeB];
+    const bankInfoA = getBankFromUnderlying(bankList, args.coinTypeA);
+    const bankInfoB = getBankFromUnderlying(bankList, args.coinTypeB);
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -110,8 +110,8 @@ export class PoolModule implements IModule {
     const bankList = await this.sdk.getBanks();
 
     const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankInfoA = bankList[args.coinTypeA];
-    const bankInfoB = bankList[args.coinTypeB];
+    const bankInfoA = getBankFromUnderlying(bankList, args.coinTypeA);
+    const bankInfoB = getBankFromUnderlying(bankList, args.coinTypeB);
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -259,6 +259,7 @@ export class PoolModule implements IModule {
     return quoteResult;
   }
 
+  // TODO: remove
   private getBankInfoByBToken(bankList: BankList, btokenType: string) {
     const bankInfo = Object.values(bankList).find(
       (bank) => bank.btokenType === btokenType,

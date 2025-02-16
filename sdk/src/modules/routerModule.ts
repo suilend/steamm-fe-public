@@ -10,12 +10,12 @@ import { Bank, BankScript } from "../base";
 import { MultiSwapQuote, castMultiSwapQuote } from "../base/pool/poolTypes";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
+import { BankInfo, BankList } from "../types";
 import {
-  BankInfo,
-  BankList,
   getBankFromBToken,
   getBankFromUnderlying,
-} from "../types";
+  getPoolInfo,
+} from "../utils";
 
 export interface CoinPair {
   coinIn: string;
@@ -69,7 +69,7 @@ export class RouterModule implements IModule {
     let i = 0;
 
     for (const hop of args.route) {
-      const poolInfo = pools.find((pool) => pool.poolId === hop.poolId)!;
+      const poolInfo = getPoolInfo(pools, hop.poolId);
 
       const pool = this.sdk.getPool(poolInfo);
 
@@ -185,7 +185,6 @@ export class RouterModule implements IModule {
 
     const bankX = new Bank(this.sdk.packageInfo(), bankInfoX);
     const bankY = new Bank(this.sdk.packageInfo(), bankInfoY);
-    const dummyTx = new Transaction();
 
     const firstBTokenAmountIn = this.getBTokenAmountInForQuote(
       tx,
@@ -198,7 +197,7 @@ export class RouterModule implements IModule {
     let nextBTokenAmountIn: TransactionResult = firstBTokenAmountIn;
 
     for (const hop of route) {
-      const poolInfo = pools.find((pool) => pool.poolId === hop.poolId)!;
+      const poolInfo = getPoolInfo(pools, hop.poolId);
 
       const bankInfoA = getBankFromBToken(bankList, hop.coinTypeA);
       const bankInfoB = getBankFromBToken(bankList, hop.coinTypeB);

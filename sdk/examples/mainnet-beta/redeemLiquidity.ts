@@ -1,20 +1,12 @@
 import { ParsedKeypair, decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { Transaction } from "@mysten/sui/transactions";
+import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import dotenv from "dotenv";
 
-import { BETA_CONFIG, STEAMM_BETA_PKG_ID, SteammSDK } from "../../src";
+import { BETA_CONFIG, SteammSDK } from "../../src";
 
-dotenv.config();
-
-const suiPrivateKey = process.env.MY_PRIVATE_KEY;
-
-if (!suiPrivateKey) {
-  throw new Error("MY_PRIVATE_KEY is missing in the .env file");
-}
-
-const SUI_COIN_TYPE =
-  "0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI";
+const SEND_COIN_TYPE =
+  "0xb45fcfcc2cc07ce0702cc2d229621e046c906ef14d9b25e8e4d25f6e8763fef7::send::SEND";
 
 const USDC_COIN_TYPE =
   "0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC";
@@ -26,16 +18,20 @@ async function redeemLiquidity(suiPrivateKey: string) {
 
   const sdk = new SteammSDK(BETA_CONFIG);
 
-  const pool = (await sdk.getPools([SUI_COIN_TYPE, USDC_COIN_TYPE]))[0];
+  const pool = (await sdk.getPools([SEND_COIN_TYPE, USDC_COIN_TYPE]))[0];
   sdk.signer = keypair;
   const tx = new Transaction();
 
-  const lpToken = tx.object("<ADD_LP_TOKNE_COIN_HERE>");
+  const lpToken = coinWithBalance({
+    balance: BigInt("10000"),
+    type: pool.lpTokenType,
+    useGasCoin: false,
+  })(tx);
 
   await sdk.Pool.redeemLiquidityEntry(tx, {
     pool: pool.poolId,
-    coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
-    coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
+    coinTypeA: `${SEND_COIN_TYPE}`,
+    coinTypeB: `${USDC_COIN_TYPE}`,
     lpCoin: lpToken,
     minA: BigInt("0"),
     minB: BigInt("0"),
@@ -66,6 +62,14 @@ async function redeemLiquidity(suiPrivateKey: string) {
   // } else {
   //   console.log("Transaction executed successfully:", txResult);
   // }
+}
+
+dotenv.config();
+
+const suiPrivateKey = process.env.MY_PRIVATE_KEY;
+
+if (!suiPrivateKey) {
+  throw new Error("MY_PRIVATE_KEY is missing in the .env file");
 }
 
 redeemLiquidity(suiPrivateKey);
