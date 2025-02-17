@@ -40,9 +40,11 @@ export default function PriceDifferenceLabel({
     oracleRatio !== undefined && quoteRatio !== undefined
       ? BigNumber.max(
           0,
-          new BigNumber(oracleRatio.minus(quoteRatio))
-            .div(oracleRatio)
-            .times(100),
+          !oracleRatio.eq(0)
+            ? new BigNumber(oracleRatio.minus(quoteRatio))
+                .div(oracleRatio)
+                .times(100)
+            : new BigNumber(0),
         )
       : undefined;
 

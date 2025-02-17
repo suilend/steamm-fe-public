@@ -36,6 +36,7 @@ import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import ExchangeRateParameter from "@/components/swap/ExchangeRateParameter";
 import PriceDifferenceLabel from "@/components/swap/PriceDifferenceLabel";
 import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
+import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { getQuoteRatio } from "@/lib/swap";
@@ -473,24 +474,33 @@ export default function SwapPage() {
               />
 
               {isFetchingQuote || !quote || !route ? (
-                <Skeleton className="h-[21px] w-40" />
+                <Skeleton className="h-[21px] w-16" />
               ) : (
-                <div className="flex flex-row items-center gap-1">
-                  {flattenedRoute!.map((r, index) => (
-                    <Fragment key={r.bTokenType}>
-                      <p className="text-p2 text-secondary-foreground">
-                        {
-                          appData.poolCoinMetadataMap[
-                            appData.bTokenTypeCoinTypeMap[r.bTokenType]
-                          ].symbol
-                        }
-                      </p>
-                      {index !== flattenedRoute!.length - 1 && (
-                        <ArrowRight className="h-3 w-3 text-secondary-foreground" />
-                      )}
-                    </Fragment>
-                  ))}
-                </div>
+                <Tooltip
+                  content={
+                    <div className="flex flex-row items-center gap-1">
+                      {flattenedRoute!.map((r, index) => (
+                        <Fragment key={r.bTokenType}>
+                          <p className="text-p3 text-foreground">
+                            {
+                              appData.poolCoinMetadataMap[
+                                appData.bTokenTypeCoinTypeMap[r.bTokenType]
+                              ].symbol
+                            }
+                          </p>
+                          {index !== flattenedRoute!.length - 1 && (
+                            <ArrowRight className="h-3 w-3 text-foreground" />
+                          )}
+                        </Fragment>
+                      ))}
+                    </div>
+                  }
+                >
+                  <p className="text-p2 text-secondary-foreground">
+                    {route.length} hop
+                    {route.length > 1 && "s"}
+                  </p>
+                </Tooltip>
               )}
             </div>
           )}
