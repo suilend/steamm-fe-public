@@ -17,9 +17,13 @@ export default function Countdown() {
   }, []);
 
   const launchDuration = intervalToDuration({
-    start: currentDate,
+    start: new Date(Math.min(currentDate.getTime(), LAUNCH_TIMESTAMP_MS)),
     end: new Date(LAUNCH_TIMESTAMP_MS),
   });
+
+  useEffect(() => {
+    if (currentDate.getTime() > LAUNCH_TIMESTAMP_MS) window.location.reload();
+  }, [currentDate]);
 
   return (
     <div className="flex flex-row gap-2">

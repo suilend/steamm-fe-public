@@ -8,7 +8,7 @@ import Countdown from "@/components/Countdown";
 import Footer from "@/components/Footer";
 import Nav from "@/components/Nav";
 import { useAppContext } from "@/contexts/AppContext";
-import { ASSETS_URL } from "@/lib/constants";
+import { ASSETS_URL, LAUNCH_TIMESTAMP_MS } from "@/lib/constants";
 
 export default function Layout({ children }: PropsWithChildren) {
   const { appData } = useAppContext();
@@ -24,7 +24,8 @@ export default function Layout({ children }: PropsWithChildren) {
         <div className="fixed inset-0 flex flex-col items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
-      ) : process.env.NEXT_PUBLIC_ENVIRONMENT === "production" ? (
+      ) : process.env.NEXT_PUBLIC_ENVIRONMENT === "production" &&
+        Date.now() < LAUNCH_TIMESTAMP_MS ? (
         <div className="fixed inset-0 flex flex-col items-center justify-center gap-6">
           <Image
             src={`${ASSETS_URL}/STEAMM.svg`}
