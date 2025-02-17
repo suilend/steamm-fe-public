@@ -1,7 +1,7 @@
 {
   "name": "@suilend/steamm-sdk-local",
   "version": "0.0.9",
-  "private": true,
+  "private": false,
   "description": "A TypeScript SDK for interacting with the STEAMM program",
   "author": "Suilend",
   "license": "MIT",
