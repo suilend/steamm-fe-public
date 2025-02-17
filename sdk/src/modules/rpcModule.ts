@@ -304,7 +304,6 @@ export class RpcModule extends SuiClient {
    */
   async fetchPool(
     objectId: SuiObjectIdType,
-    pkgId: string,
   ): Promise<Pool<string, string, CpQuoter, string>> {
     try {
       const object = await this.getObject({
@@ -359,7 +358,7 @@ export class RpcModule extends SuiClient {
         },
       ];
 
-      return Pool.fromSuiParsedData(parsedTypes, parsedData, pkgId);
+      return Pool.fromSuiParsedData(parsedTypes, parsedData);
     } catch (error) {
       console.error("Error fetching shared object:", error);
       throw error;
