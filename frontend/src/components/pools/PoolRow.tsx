@@ -97,12 +97,16 @@ export default function PoolRow({
       {/* APR */}
       <div
         className="flex h-full flex-row items-center gap-2"
-        style={columnStyleMap.aprPercent}
+        style={columnStyleMap.aprPercent_24h}
       >
-        <TokenLogos coinTypes={pool.apr.coinTypes} size={16} />
-        <p className="text-p1 text-foreground">
-          {formatPercent(pool.apr.percent)}
-        </p>
+        {/* <TokenLogos coinTypes={pool.apr.coinTypes} size={16} /> */}
+        {pool.aprPercent_24h === undefined ? (
+          <Skeleton className="h-[24px] w-16" />
+        ) : (
+          <p className="text-p1 text-foreground">
+            {formatPercent(pool.aprPercent_24h)}
+          </p>
+        )}
       </div>
     </Link>
   );

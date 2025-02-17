@@ -18,6 +18,7 @@ import Layout from "@/components/Layout";
 import Toaster from "@/components/Toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppContextProvider } from "@/contexts/AppContext";
+import { StatsContextProvider } from "@/contexts/StatsContext";
 import { TITLE } from "@/lib/constants";
 import { fontClassNames } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
@@ -68,12 +69,14 @@ export default function App({ Component, pageProps }: AppProps) {
         <SettingsContextProvider>
           <WalletContextProviderWrapper>
             <AppContextProvider>
-              <TooltipProvider>
-                <Layout>
-                  <Component {...pageProps} />
-                </Layout>
-                <Toaster />
-              </TooltipProvider>
+              <StatsContextProvider>
+                <TooltipProvider>
+                  <Layout>
+                    <Component {...pageProps} />
+                  </Layout>
+                  <Toaster />
+                </TooltipProvider>
+              </StatsContextProvider>
             </AppContextProvider>
           </WalletContextProviderWrapper>
         </SettingsContextProvider>

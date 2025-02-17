@@ -8,6 +8,7 @@ import { shallowPushQuery } from "@suilend/frontend-sui-next";
 
 import HistoricalDataChart from "@/components/HistoricalDataChart";
 import { usePoolContext } from "@/contexts/PoolContext";
+import { useStatsContext } from "@/contexts/StatsContext";
 import { ChartData, ChartType } from "@/lib/chart";
 import { cn } from "@/lib/utils";
 
@@ -47,57 +48,9 @@ export default function PoolChartCard() {
       | undefined,
   };
 
+  const { statsData } = useStatsContext();
+
   const { pool } = usePoolContext();
-
-  // Data
-  const historicalTvlUsd_30d = useMemo(() => {
-    const result: ChartData[] = [];
-    for (let i = 0; i < 30; i++) {
-      result.push({
-        timestampS: 1739253600 + 24 * i * 60 * 60,
-        valueUsd: 1000 * Math.random(),
-      });
-    }
-
-    return result;
-  }, []);
-
-  const historicalVolumeUsd_30d = useMemo(() => {
-    const result: ChartData[] = [];
-    for (let i = 0; i < 30; i++) {
-      result.push({
-        timestampS: 1739253600 + 24 * i * 60 * 60,
-        valueUsd: 1000 * Math.random(),
-      });
-    }
-
-    return result;
-  }, []);
-
-  // const historicalFeesUsd_30d = useMemo(() => {
-  //   const result: ChartData[] = [];
-  //   for (let i = 0; i < 30; i++) {
-  //     result.push({
-  //       timestampS: 1739253600 + 24 * i * 60 * 60,
-  //       valueUsd: 100 * Math.random(),
-  //     });
-  //   }
-
-  //   return result;
-  // }, []);
-  const historicalFeesUsd_30d = undefined;
-
-  const historicalAprPercent_30d = useMemo(() => {
-    const result: ChartData[] = [];
-    for (let i = 0; i < 30; i++) {
-      result.push({
-        timestampS: 1739253600 + 24 * i * 60 * 60,
-        valueUsd: 3 + Math.random() * 5,
-      });
-    }
-
-    return result;
-  }, []);
 
   const chartConfigMap: Record<ChartStat, ChartConfig> = useMemo(
     () => ({
@@ -107,49 +60,53 @@ export default function PoolChartCard() {
         value: formatUsd(pool.tvlUsd),
         chartType: ChartType.LINE,
         periodChangePercent: null,
-        data: historicalTvlUsd_30d,
+        data: statsData?.poolHistoricalTvlUsd_24h_map?.[pool.id],
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.VOLUME]: {
         title: chartStatNameMap[ChartStat.VOLUME],
         value:
-          pool.volumeUsd_30d !== undefined
-            ? formatUsd(pool.volumeUsd_30d)
-            : undefined,
+          statsData?.poolVolumeUsd_24h_map?.[pool.id] === undefined
+            ? undefined
+            : formatUsd(statsData.poolVolumeUsd_24h_map[pool.id]),
         chartType: ChartType.BAR,
         periodChangePercent: null,
-        data: historicalVolumeUsd_30d,
+        data: statsData?.poolHistoricalVolumeUsd_24h_map?.[pool.id],
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.FEES]: {
         title: chartStatNameMap[ChartStat.FEES],
         value:
-          pool.feesUsd_30d !== undefined
-            ? formatUsd(pool.feesUsd_30d)
-            : undefined,
+          statsData?.poolFeesUsd_24h_map?.[pool.id] === undefined
+            ? undefined
+            : formatUsd(statsData.poolFeesUsd_24h_map[pool.id]),
         chartType: ChartType.BAR,
         periodChangePercent: null,
-        data: historicalFeesUsd_30d,
+        data: statsData?.poolHistoricalFeesUsd_24h_map?.[pool.id],
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.APR]: {
         title: chartStatNameMap[ChartStat.APR],
-        value: formatPercent(pool.apr.percent),
+        value:
+          statsData?.poolApr_24h_map?.[pool.id] === undefined
+            ? undefined
+            : formatPercent(statsData.poolApr_24h_map[pool.id]),
         chartType: ChartType.LINE,
         periodChangePercent: null,
-        data: historicalAprPercent_30d,
+        data: statsData?.poolHistoricalApr_24h_map?.[pool.id],
         formatValue: (value) => formatPercent(new BigNumber(value)),
       },
     }),
     [
       pool.tvlUsd,
-      historicalTvlUsd_30d,
-      pool.volumeUsd_30d,
-      historicalVolumeUsd_30d,
-      pool.feesUsd_30d,
-      historicalFeesUsd_30d,
-      pool.apr.percent,
-      historicalAprPercent_30d,
+      statsData?.poolHistoricalTvlUsd_24h_map,
+      pool.id,
+      statsData?.poolVolumeUsd_24h_map,
+      statsData?.poolHistoricalVolumeUsd_24h_map,
+      statsData?.poolFeesUsd_24h_map,
+      statsData?.poolHistoricalFeesUsd_24h_map,
+      statsData?.poolApr_24h_map,
+      statsData?.poolHistoricalApr_24h_map,
     ],
   );
 
@@ -178,7 +135,7 @@ export default function PoolChartCard() {
         hideTitlePeriod={chartConfig.hideTitlePeriod}
         value={chartConfig.value}
         chartType={chartConfig.chartType}
-        periodDays={30}
+        periodDays={1}
         periodChangePercent={chartConfig.periodChangePercent}
         data={chartConfig.data}
         formatCategory={(category) => category}

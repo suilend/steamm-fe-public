@@ -30,7 +30,7 @@ export default function PoolGroupRow({
 
   // State
   const [isExpanded, setIsExpanded] = useLocalStorage<boolean>(
-    `${tableId}_PoolGroupRow_isExpanded`,
+    `${tableId}_PoolGroupRow_${formatPair(poolGroup.coinTypes)}_isExpanded`,
     false,
   );
   const Chevron = isExpanded ? ChevronUp : ChevronDown;
@@ -46,13 +46,15 @@ export default function PoolGroupRow({
   )
     ? undefined
     : poolGroup.pools.reduce(
-        (acc, pool) => acc.plus(pool.volumeUsd_24h as BigNumber),
+        (acc, pool) => acc.plus(pool.volumeUsd_24h!),
         new BigNumber(0),
       );
 
-  const maxAprPercent = BigNumber.max(
-    ...poolGroup.pools.map((pool) => pool.apr.percent),
-  );
+  const maxAprPercent_24h = poolGroup.pools.some(
+    (pool) => pool.aprPercent_24h === undefined,
+  )
+    ? undefined
+    : BigNumber.max(...poolGroup.pools.map((pool) => pool.aprPercent_24h!));
 
   return (
     <>
@@ -142,14 +144,19 @@ export default function PoolGroupRow({
         {/* APR */}
         <div
           className="flex h-full flex-row items-center gap-2"
-          style={columnStyleMap.aprPercent}
+          style={columnStyleMap.aprPercent_24h}
         >
           {poolGroup.pools.length > 1 && (
             <p className="text-p3 text-tertiary-foreground">Up to</p>
           )}
-          <p className="text-p1 text-foreground">
-            {formatPercent(maxAprPercent)}
-          </p>
+
+          {maxAprPercent_24h === undefined ? (
+            <Skeleton className="h-[24px] w-16" />
+          ) : (
+            <p className="text-p1 text-foreground">
+              {formatPercent(maxAprPercent_24h)}
+            </p>
+          )}
         </div>
       </div>
 

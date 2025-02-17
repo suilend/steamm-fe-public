@@ -24,7 +24,6 @@ import * as simulate from "@suilend/sdk/utils/simulate";
 import { SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
-import { ChartData } from "@/lib/chart";
 import { ParsedPool, PoolType } from "@/lib/types";
 
 export default function useFetchAppData(steammClient: SteammSDK) {
@@ -160,14 +159,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       }
 
       const tvlUsd = balanceA.times(priceA).plus(balanceB.times(priceB));
-      const volumeUsd_24h = undefined;
-      const volumeUsd_30d = undefined;
-      const feesUsd_24h = undefined;
-      const feesUsd_30d = undefined;
-      const apr = {
-        coinTypes: [coinTypeA], // TODO
-        percent: new BigNumber(2.3), // 24h, TODO
-      };
 
       const feeTierPercent = new BigNumber(poolInfo.swapFeeBps).div(100);
       const protocolFeePercent = new BigNumber(
@@ -188,11 +179,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         prices: [priceA, priceB],
 
         tvlUsd,
-        volumeUsd_24h,
-        volumeUsd_30d,
-        feesUsd_24h,
-        feesUsd_30d,
-        apr,
 
         feeTierPercent,
         protocolFeePercent,
@@ -200,52 +186,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     }
 
     const featuredCoinTypePairs: [[string, string]] = [["", ""]];
-
-    // TVL
-    const historicalTvlUsd_30d: ChartData[] = []; // TODO
-    for (let i = 0; i < 30; i++) {
-      historicalTvlUsd_30d.push({
-        timestampS: 1739253600 + i * 24 * 60 * 60,
-        ...[
-          NORMALIZED_SUI_COINTYPE,
-          NORMALIZED_DEEP_COINTYPE,
-          NORMALIZED_USDC_COINTYPE,
-          NORMALIZED_SEND_COINTYPE,
-          NORMALIZED_sSUI_COINTYPE,
-          NORMALIZED_AUSD_COINTYPE,
-        ].reduce(
-          (acc, coinType, index) => ({
-            ...acc,
-            [coinType]: Math.random() * 1.5 ** index * 1000,
-          }),
-          {},
-        ),
-      });
-    }
-
-    // Volume
-    const volumeUsd_30d = new BigNumber(669152); // TODO
-
-    const historicalVolumeUsd_30d: ChartData[] = []; // TODO
-    for (let i = 0; i < 30; i++) {
-      historicalVolumeUsd_30d.push({
-        timestampS: 1739253600 + i * 24 * 60 * 60,
-        ...[
-          NORMALIZED_SUI_COINTYPE,
-          NORMALIZED_DEEP_COINTYPE,
-          NORMALIZED_USDC_COINTYPE,
-          NORMALIZED_SEND_COINTYPE,
-          NORMALIZED_sSUI_COINTYPE,
-          NORMALIZED_AUSD_COINTYPE,
-        ].reduce(
-          (acc, coinType) => ({
-            ...acc,
-            [coinType]: Math.random() * 1000,
-          }),
-          {},
-        ),
-      });
-    }
 
     return {
       bTokenTypeCoinTypeMap,
@@ -255,10 +195,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       poolCoinTypes,
       poolCoinMetadataMap,
       featuredCoinTypePairs,
-
-      historicalTvlUsd_30d,
-      volumeUsd_30d,
-      historicalVolumeUsd_30d,
     };
   };
 

@@ -11,12 +11,14 @@ import HistoricalDataChart from "@/components/HistoricalDataChart";
 import PoolsTable from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import { useStatsContext } from "@/contexts/StatsContext";
 import { ChartType, formatCoinTypeCategory } from "@/lib/chart";
 import { formatPair } from "@/lib/format";
 import { ParsedPool, PoolGroup } from "@/lib/types";
 
 export default function PoolsPage() {
   const { appData } = useLoadedAppContext();
+  const { statsData } = useStatsContext();
 
   // TVL
   const totalTvlUsd = useMemo(
@@ -46,12 +48,20 @@ export default function PoolsPage() {
         {
           id: uuidv4(),
           coinTypes: pools[0].coinTypes,
-          pools,
+          pools: pools.map((pool) => ({
+            ...pool,
+            volumeUsd_24h: statsData?.poolVolumeUsd_24h_map?.[pool.id],
+            aprPercent_24h: statsData?.poolApr_24h_map?.[pool.id],
+          })),
         },
       ],
       [] as PoolGroup[],
     );
-  }, [appData.pools]);
+  }, [
+    appData.pools,
+    statsData?.poolVolumeUsd_24h_map,
+    statsData?.poolApr_24h_map,
+  ]);
 
   // Featured pairs
   const featuredPoolGroups = useMemo(
@@ -89,7 +99,7 @@ export default function PoolsPage() {
                   chartType={ChartType.LINE}
                   periodDays={30}
                   periodChangePercent={null}
-                  data={appData.historicalTvlUsd_30d}
+                  data={undefined}
                   formatCategory={(category) =>
                     formatCoinTypeCategory(
                       category,
@@ -108,15 +118,11 @@ export default function PoolsPage() {
               <div className="w-full p-5">
                 <HistoricalDataChart
                   title="Volume"
-                  value={
-                    appData.volumeUsd_30d !== undefined
-                      ? formatUsd(appData.volumeUsd_30d)
-                      : undefined
-                  }
+                  value={undefined}
                   chartType={ChartType.BAR}
                   periodDays={30}
                   periodChangePercent={null}
-                  data={appData.historicalVolumeUsd_30d}
+                  data={undefined}
                   formatCategory={(category) =>
                     formatCoinTypeCategory(
                       category,
@@ -131,15 +137,17 @@ export default function PoolsPage() {
         </div>
 
         {/* Featured pools */}
-        <div className="flex w-full flex-col gap-6">
-          <h2 className="text-h3 text-foreground">Featured pools</h2>
+        {featuredPoolGroups.length > 0 && (
+          <div className="flex w-full flex-col gap-6">
+            <h2 className="text-h3 text-foreground">Featured pools</h2>
 
-          <PoolsTable
-            className="max-h-[480px]"
-            tableId="featured-pools"
-            poolGroups={featuredPoolGroups}
-          />
-        </div>
+            <PoolsTable
+              className="max-h-[480px]"
+              tableId="featured-pools"
+              poolGroups={featuredPoolGroups}
+            />
+          </div>
+        )}
 
         {/* All pools */}
         <div className="flex w-full flex-col gap-6">

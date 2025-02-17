@@ -9,8 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Column = "pair" | "type" | "tvlUsd" | "volumeUsd_24h" | "aprPercent";
-type SortableColumn = "tvlUsd" | "volumeUsd_24h" | "aprPercent";
+type Column = "pair" | "type" | "tvlUsd" | "volumeUsd_24h" | "aprPercent_24h";
+type SortableColumn = "tvlUsd" | "volumeUsd_24h" | "aprPercent_24h";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
@@ -35,7 +35,7 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
-  aprPercent: {
+  aprPercent_24h: {
     flex: 1,
     minWidth: 120, // px
     justifyContent: "end",
@@ -76,21 +76,11 @@ export default function PoolsTable({
     const sortedPools = poolGroups
       .map((poolGroup) => poolGroup.pools)
       .flat()
-      .sort((a, b) => {
-        if (sortState.column === "aprPercent") {
-          return sortState.direction === SortDirection.DESC
-            ? +b.apr.percent.minus(a.apr.percent)
-            : +a.apr.percent.minus(b.apr.percent);
-        }
-
-        return sortState.direction === SortDirection.DESC
-          ? +(b[sortState.column] as BigNumber).minus(
-              a[sortState.column] as BigNumber,
-            )
-          : +(a[sortState.column] as BigNumber).minus(
-              b[sortState.column] as BigNumber,
-            );
-      });
+      .sort((a, b) =>
+        sortState.direction === SortDirection.DESC
+          ? +b[sortState.column]! - +a[sortState.column]!
+          : +a[sortState.column]! - +b[sortState.column]!,
+      );
 
     return poolGroups
       .map((poolGroup) => ({
@@ -102,31 +92,46 @@ export default function PoolsTable({
         ),
       }))
       .sort((a, b) => {
-        if (sortState.column === "aprPercent") {
-          const aMaxAprPercent = BigNumber.max(
-            ...a.pools.map((pool) => pool.apr.percent),
+        if (sortState.column === "tvlUsd") {
+          const aTotal = a.pools.reduce(
+            (acc, pool) => acc.plus(pool.tvlUsd),
+            new BigNumber(0),
           );
-          const bMaxAprPercent = BigNumber.max(
-            ...b.pools.map((pool) => pool.apr.percent),
+          const bTotal = b.pools.reduce(
+            (acc, pool) => acc.plus(pool.tvlUsd),
+            new BigNumber(0),
           );
 
           return sortState.direction === SortDirection.DESC
-            ? +bMaxAprPercent.minus(aMaxAprPercent)
-            : +aMaxAprPercent.minus(bMaxAprPercent);
+            ? +bTotal.minus(aTotal)
+            : +aTotal.minus(bTotal);
+        } else if (sortState.column === "volumeUsd_24h") {
+          const aTotal = a.pools.reduce(
+            (acc, pool) => acc.plus(pool.volumeUsd_24h!),
+            new BigNumber(0),
+          );
+          const bTotal = b.pools.reduce(
+            (acc, pool) => acc.plus(pool.volumeUsd_24h!),
+            new BigNumber(0),
+          );
+
+          return sortState.direction === SortDirection.DESC
+            ? +bTotal.minus(aTotal)
+            : +aTotal.minus(bTotal);
+        } else if (sortState.column === "aprPercent_24h") {
+          const aMaxAprPercent_24h = BigNumber.max(
+            ...a.pools.map((pool) => pool.aprPercent_24h!),
+          );
+          const bMaxAprPercent_24h = BigNumber.max(
+            ...b.pools.map((pool) => pool.aprPercent_24h!),
+          );
+
+          return sortState.direction === SortDirection.DESC
+            ? +bMaxAprPercent_24h.minus(aMaxAprPercent_24h)
+            : +aMaxAprPercent_24h.minus(bMaxAprPercent_24h);
         }
 
-        const aTotal = a.pools.reduce(
-          (acc, pool) => acc.plus(pool.tvlUsd),
-          new BigNumber(0),
-        );
-        const bTotal = b.pools.reduce(
-          (acc, pool) => acc.plus(pool.tvlUsd),
-          new BigNumber(0),
-        );
-
-        return sortState.direction === SortDirection.DESC
-          ? +bTotal.minus(aTotal)
-          : +aTotal.minus(bTotal);
+        return 0; // Should never reach here
       });
   }, [poolGroups, sortState]);
 
@@ -177,19 +182,19 @@ export default function PoolsTable({
           Volume (24H)
         </HeaderColumn>
         <HeaderColumn<Column, SortableColumn>
-          id="aprPercent"
+          id="aprPercent_24h"
           sortState={sortState}
           toggleSortByColumn={
             (poolGroups ?? []).every(
               (poolGroup) =>
                 !!poolGroup.pools.every(
-                  (pool) => pool.apr.percent !== undefined,
+                  (pool) => pool.aprPercent_24h !== undefined,
                 ),
             )
               ? toggleSortByColumn
               : undefined
           }
-          style={columnStyleMap.aprPercent}
+          style={columnStyleMap.aprPercent_24h}
         >
           APR (24H)
         </HeaderColumn>

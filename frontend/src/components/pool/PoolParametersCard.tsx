@@ -213,18 +213,6 @@ export default function PoolParametersCard() {
           {formatPercent(pool.feeTierPercent)}
         </p>
       </Parameter>
-
-      <Parameter label="Protocol fee">
-        <p className="text-p2 text-foreground">
-          {formatPercent(pool.protocolFeePercent, {
-            dp:
-              Math.max(
-                0,
-                -Math.floor(Math.log10(+pool.protocolFeePercent)) - 1,
-              ) + 1,
-          })}
-        </p>
-      </Parameter>
     </div>
   );
 }

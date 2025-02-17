@@ -8,15 +8,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PoolPosition } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Column =
-  | "pair"
-  | "type"
-  | "aprPercent"
-  | "balance"
-  | "isStaked"
-  | "claimableRewards"
-  | "pnl";
-type SortableColumn = "aprPercent" | "balance";
+type Column = "pair" | "type" | "aprPercent_24h" | "balance";
+// | "isStaked"
+// | "claimableRewards"
+// | "pnl";
+type SortableColumn = "aprPercent_24h" | "balance";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
@@ -29,7 +25,7 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
     minWidth: 150, // px
     paddingLeft: 4 * 5, // px
   },
-  aprPercent: {
+  aprPercent_24h: {
     flex: 1,
     minWidth: 120, // px
     justifyContent: "end",
@@ -41,24 +37,24 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
-  isStaked: {
-    flex: 1,
-    minWidth: 150, // px
-    justifyContent: "end",
-    paddingRight: 4 * 5, // px
-  },
-  claimableRewards: {
-    flex: 1,
-    minWidth: 150, // px
-    justifyContent: "end",
-    paddingRight: 4 * 5, // px
-  },
-  pnl: {
-    flex: 1,
-    minWidth: 120, // px
-    justifyContent: "end",
-    paddingRight: 4 * 5, // px
-  },
+  // isStaked: {
+  //   flex: 1,
+  //   minWidth: 150, // px
+  //   justifyContent: "end",
+  //   paddingRight: 4 * 5, // px
+  // },
+  // claimableRewards: {
+  //   flex: 1,
+  //   minWidth: 150, // px
+  //   justifyContent: "end",
+  //   paddingRight: 4 * 5, // px
+  // },
+  // pnl: {
+  //   flex: 1,
+  //   minWidth: 120, // px
+  //   justifyContent: "end",
+  //   paddingRight: 4 * 5, // px
+  // },
 };
 
 interface PoolPositionsTableProps {
@@ -89,14 +85,14 @@ export default function PoolPositionsTable({
     if (positions === undefined || sortState === undefined) return positions;
 
     return positions.slice().sort((a, b) => {
-      if (sortState.column === "aprPercent") {
+      if (sortState.column === "aprPercent_24h") {
         return sortState.direction === SortDirection.DESC
-          ? +b.pool.apr.percent.minus(a.pool.apr.percent)
-          : +a.pool.apr.percent.minus(b.pool.apr.percent);
+          ? +b.pool.aprPercent_24h!.minus(a.pool.aprPercent_24h!)
+          : +a.pool.aprPercent_24h!.minus(b.pool.aprPercent_24h!);
       } else if (sortState.column === "balance") {
         return sortState.direction === SortDirection.DESC
-          ? +b.balance.amount.minus(a.balance.amount)
-          : +a.balance.amount.minus(b.balance.amount);
+          ? +b.balance.amountUsd!.minus(a.balance.amountUsd!)
+          : +a.balance.amountUsd!.minus(b.balance.amountUsd!);
       }
 
       return 0; // Should never reach here
@@ -125,22 +121,34 @@ export default function PoolPositionsTable({
           Type
         </HeaderColumn>
         <HeaderColumn<Column, SortableColumn>
-          id="aprPercent"
+          id="aprPercent_24h"
           sortState={sortState}
-          toggleSortByColumn={toggleSortByColumn}
-          style={columnStyleMap.aprPercent}
+          toggleSortByColumn={
+            !!(positions ?? []).every(
+              (position) => position.pool.aprPercent_24h !== undefined,
+            )
+              ? toggleSortByColumn
+              : undefined
+          }
+          style={columnStyleMap.aprPercent_24h}
         >
           APR (24H)
         </HeaderColumn>
         <HeaderColumn<Column, SortableColumn>
           id="balance"
           sortState={sortState}
-          toggleSortByColumn={toggleSortByColumn}
+          toggleSortByColumn={
+            !!(positions ?? []).every(
+              (position) => position.balance.amountUsd !== undefined,
+            )
+              ? toggleSortByColumn
+              : undefined
+          }
           style={columnStyleMap.balance}
         >
           Balance
         </HeaderColumn>
-        <HeaderColumn<Column, SortableColumn>
+        {/* <HeaderColumn<Column, SortableColumn>
           id="isStaked"
           style={columnStyleMap.isStaked}
         >
@@ -151,13 +159,13 @@ export default function PoolPositionsTable({
           style={columnStyleMap.claimableRewards}
         >
           Claimable rewards
-        </HeaderColumn>
-        <HeaderColumn<Column, SortableColumn>
+        </HeaderColumn> */}
+        {/* <HeaderColumn<Column, SortableColumn>
           id="pnl"
           style={columnStyleMap.pnl}
         >
           PnL
-        </HeaderColumn>
+        </HeaderColumn> */}
       </div>
 
       {/* Rows */}

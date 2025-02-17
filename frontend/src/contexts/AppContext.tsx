@@ -22,7 +22,6 @@ import { BETA_CONFIG, MAINNET_CONFIG, SteammSDK } from "@suilend/steamm-sdk";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
 import useFetchOwnedKiosks from "@/fetchers/useFetchOwnedKiosks";
-import { ChartData } from "@/lib/chart";
 import { ParsedPool } from "@/lib/types";
 
 export interface AppData {
@@ -33,10 +32,6 @@ export interface AppData {
   poolCoinTypes: string[];
   poolCoinMetadataMap: Record<string, CoinMetadata>;
   featuredCoinTypePairs: [string, string][];
-
-  historicalTvlUsd_30d: ChartData[];
-  volumeUsd_30d: BigNumber;
-  historicalVolumeUsd_30d: ChartData[];
 }
 
 interface AppContext {

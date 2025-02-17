@@ -78,12 +78,16 @@ export default function PoolPositionRow({
       {/* APR */}
       <div
         className="flex h-full flex-row items-center gap-2"
-        style={columnStyleMap.aprPercent}
+        style={columnStyleMap.aprPercent_24h}
       >
-        <TokenLogos coinTypes={position.pool.apr.coinTypes} size={16} />
-        <p className="text-p1 text-foreground">
-          {formatPercent(position.pool.apr.percent)}
-        </p>
+        {/* <TokenLogos coinTypes={position.pool.apr.coinTypes} size={16} /> */}
+        {position.pool.aprPercent_24h === undefined ? (
+          <Skeleton className="h-[24px] w-16" />
+        ) : (
+          <p className="text-p1 text-foreground">
+            {formatPercent(position.pool.aprPercent_24h)}
+          </p>
+        )}
       </div>
 
       {/* Balance */}
@@ -121,7 +125,7 @@ export default function PoolPositionRow({
       </div>
 
       {/* Staked */}
-      <div
+      {/* <div
         className="flex h-full flex-row items-center gap-3"
         style={columnStyleMap.isStaked}
       >
@@ -149,10 +153,10 @@ export default function PoolPositionRow({
             {position.isStaked ? "Unstake" : "Stake"}
           </p>
         </button>
-      </div>
+      </div> */}
 
       {/* Claimable rewards */}
-      <div
+      {/* <div
         className="flex h-full flex-row items-center gap-3"
         style={columnStyleMap.claimableRewards}
       >
@@ -173,10 +177,10 @@ export default function PoolPositionRow({
         ) : (
           <p className="text-p1 text-foreground">--</p>
         )}
-      </div>
+      </div> */}
 
       {/* PnL */}
-      <div
+      {/* <div
         className="flex h-full flex-row items-center"
         style={columnStyleMap.pnl}
       >
@@ -200,7 +204,7 @@ export default function PoolPositionRow({
             </Tooltip>
           )}
         </div>
-      </div>
+      </div> */}
     </Link>
   );
 }

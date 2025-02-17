@@ -23,14 +23,8 @@ export type ParsedPool = {
   prices: [BigNumber, BigNumber];
 
   tvlUsd: BigNumber;
-  volumeUsd_24h?: BigNumber;
-  volumeUsd_30d?: BigNumber;
-  feesUsd_24h?: BigNumber;
-  feesUsd_30d?: BigNumber;
-  apr: {
-    coinTypes: string[];
-    percent: BigNumber;
-  };
+  volumeUsd_24h?: BigNumber; // Added on Pools page (used in PoolsTable)
+  aprPercent_24h?: BigNumber; // Added on Pools page (used in PoolsTable)
 
   feeTierPercent: BigNumber;
   protocolFeePercent: BigNumber;
@@ -48,11 +42,11 @@ export type PoolPosition = {
     amount: BigNumber;
     amountUsd?: BigNumber;
   };
-  depositedAmountUsd?: BigNumber;
-  isStaked: boolean;
-  claimableRewards: Record<string, BigNumber>;
-  pnl: {
-    percent?: BigNumber;
-    amountUsd?: BigNumber;
-  };
+  // depositedAmountUsd?: BigNumber;
+  // isStaked: boolean;
+  // claimableRewards: Record<string, BigNumber>;
+  // pnl: {
+  //   percent?: BigNumber;
+  //   amountUsd?: BigNumber;
+  // };
 };

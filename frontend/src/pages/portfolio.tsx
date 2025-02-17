@@ -3,21 +3,16 @@ import { useEffect, useMemo, useState } from "react";
 
 import BigNumber from "bignumber.js";
 
-import {
-  NORMALIZED_DEEP_COINTYPE,
-  NORMALIZED_SUI_COINTYPE,
-  formatPercent,
-  formatUsd,
-} from "@suilend/frontend-sui";
+import { formatPercent, formatUsd } from "@suilend/frontend-sui";
 import { showErrorToast } from "@suilend/frontend-sui-next";
 
 import Divider from "@/components/Divider";
 import PoolPositionsTable from "@/components/positions/PoolPositionsTable";
 import Tag from "@/components/Tag";
-import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import { useStatsContext } from "@/contexts/StatsContext";
 import useFetchObligations from "@/fetchers/useFetchObligations";
 import { PoolPosition } from "@/lib/types";
 
@@ -29,6 +24,7 @@ export default function PortfolioPage() {
     balancesCoinMetadataMap,
     getBalance,
   } = useLoadedAppContext();
+  const { statsData } = useStatsContext();
 
   // LP token balances
   const lpTokenBalanceMap = useMemo(
@@ -65,23 +61,26 @@ export default function PortfolioPage() {
           Object.keys(lpTokenBalanceMap).includes(pool.lpTokenType),
         )
         .map((pool) => ({
-          pool,
+          pool: {
+            ...pool,
+            aprPercent_24h: statsData?.poolApr_24h_map?.[pool.id],
+          },
           balance: {
             amount: lpTokenBalanceMap[pool.lpTokenType].balance,
             amountUsd: undefined, // Fetched below
           },
-          depositedAmountUsd: undefined, // TODO
-          isStaked: false, // TODO - FETCH
-          claimableRewards: {
-            [NORMALIZED_SUI_COINTYPE]: new BigNumber(5.1), // TODO
-            [NORMALIZED_DEEP_COINTYPE]: new BigNumber(1.051), // TODO
-          }, // TODO - FETCH
-          pnl: {
-            percent: undefined, // TODO
-            amountUsd: undefined, // TODO
-          },
+          // depositedAmountUsd: undefined, // TODO
+          // isStaked: false, // TODO - FETCH
+          // claimableRewards: {
+          //   [NORMALIZED_SUI_COINTYPE]: new BigNumber(5.1), // TODO
+          //   [NORMALIZED_DEEP_COINTYPE]: new BigNumber(1.051), // TODO
+          // }, // TODO - FETCH
+          // pnl: {
+          //   percent: undefined, // TODO
+          //   amountUsd: undefined, // TODO
+          // },
         })),
-    [appData.pools, lpTokenBalanceMap],
+    [appData.pools, lpTokenBalanceMap, statsData?.poolApr_24h_map],
   );
 
   // Positions - Balances in USD (on-chain)
@@ -167,44 +166,48 @@ export default function PortfolioPage() {
     [positionsWithFetchedData],
   );
 
-  const totalDepositedUsd = useMemo(
-    () =>
-      positionsWithFetchedData.some(
-        (position) => position.depositedAmountUsd === undefined,
-      )
-        ? undefined
-        : positionsWithFetchedData.reduce(
-            (sum, position) =>
-              sum.plus(position.depositedAmountUsd as BigNumber),
-            new BigNumber(0),
-          ),
-    [positionsWithFetchedData],
-  );
+  // const totalDepositedUsd = useMemo(
+  //   () =>
+  //     positionsWithFetchedData.some(
+  //       (position) => position.depositedAmountUsd === undefined,
+  //     )
+  //       ? undefined
+  //       : positionsWithFetchedData.reduce(
+  //           (sum, position) =>
+  //             sum.plus(position.depositedAmountUsd as BigNumber),
+  //           new BigNumber(0),
+  //         ),
+  //   [positionsWithFetchedData],
+  // );
 
-  const totalPnlUsd = useMemo(
-    () =>
-      positionsWithFetchedData.some(
-        (position) => position.pnl.amountUsd === undefined,
-      )
-        ? undefined
-        : positionsWithFetchedData.reduce(
-            (sum, position) => sum.plus(position.pnl.amountUsd as BigNumber),
-            new BigNumber(0),
-          ),
-    [positionsWithFetchedData],
-  );
+  // const totalPnlUsd = useMemo(
+  //   () =>
+  //     positionsWithFetchedData.some(
+  //       (position) => position.pnl.amountUsd === undefined,
+  //     )
+  //       ? undefined
+  //       : positionsWithFetchedData.reduce(
+  //           (sum, position) => sum.plus(position.pnl.amountUsd as BigNumber),
+  //           new BigNumber(0),
+  //         ),
+  //   [positionsWithFetchedData],
+  // );
 
   const averageAprPercent = useMemo(
     () =>
       positionsWithFetchedData.some(
-        (position) => position.balance.amountUsd === undefined,
+        (position) =>
+          position.pool.aprPercent_24h === undefined ||
+          position.balance.amountUsd === undefined,
       )
         ? undefined
         : positionsWithFetchedData
             .reduce(
               (acc, position) =>
                 acc.plus(
-                  position.balance.amountUsd.times(position.pool.apr.percent),
+                  position.balance.amountUsd.times(
+                    position.pool.aprPercent_24h!,
+                  ),
                 ),
               new BigNumber(0),
             )
@@ -219,23 +222,23 @@ export default function PortfolioPage() {
     [positionsWithFetchedData],
   );
 
-  const claimableRewards = useMemo(
-    () =>
-      positionsWithFetchedData.reduce(
-        (acc, position) => {
-          Object.entries(position.claimableRewards).forEach(
-            ([coinType, amount]) => {
-              if (acc[coinType]) acc[coinType] = acc[coinType].plus(amount);
-              else acc[coinType] = amount;
-            },
-          );
+  // const claimableRewards = useMemo(
+  //   () =>
+  //     positionsWithFetchedData.reduce(
+  //       (acc, position) => {
+  //         Object.entries(position.claimableRewards).forEach(
+  //           ([coinType, amount]) => {
+  //             if (acc[coinType]) acc[coinType] = acc[coinType].plus(amount);
+  //             else acc[coinType] = amount;
+  //           },
+  //         );
 
-          return acc;
-        },
-        {} as Record<string, BigNumber>,
-      ),
-    [positionsWithFetchedData],
-  );
+  //         return acc;
+  //       },
+  //       {} as Record<string, BigNumber>,
+  //     ),
+  //   [positionsWithFetchedData],
+  // );
 
   // Summary - claim
   const onClaimRewardsClick = () => {};
@@ -272,7 +275,7 @@ export default function PortfolioPage() {
             <Divider className="h-auto w-px max-md:hidden" />
 
             {/* Deposited */}
-            <div className="max-md:w-full max-md:border-b md:flex-1">
+            {/* <div className="max-md:w-full max-md:border-b md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">
                   Total deposited
@@ -290,12 +293,12 @@ export default function PortfolioPage() {
                   </Tooltip>
                 )}
               </div>
-            </div>
+            </div> */}
 
-            <Divider className="h-auto w-px max-md:hidden" />
+            {/* <Divider className="h-auto w-px max-md:hidden" /> */}
 
             {/* PnL */}
-            <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1">
+            {/* <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">Total PnL</p>
 
@@ -309,14 +312,16 @@ export default function PortfolioPage() {
                   </Tooltip>
                 )}
               </div>
-            </div>
+            </div> */}
 
-            <Divider className="h-auto w-px max-md:hidden" />
+            {/* <Divider className="h-auto w-px max-md:hidden" /> */}
 
             {/* APR */}
             <div className="max-md:w-full max-md:border-b md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
-                <p className="text-p2 text-secondary-foreground">Average APR</p>
+                <p className="text-p2 text-secondary-foreground">
+                  Average APR (24H)
+                </p>
 
                 {averageAprPercent === undefined ? (
                   <Skeleton className="h-[30px] w-20" />
@@ -331,7 +336,7 @@ export default function PortfolioPage() {
             <Divider className="h-auto w-px max-md:hidden" />
 
             {/* Rewards */}
-            <div className="max-md:w-full md:flex-1">
+            {/* <div className="max-md:w-full md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">
                   Claimable rewards
@@ -355,7 +360,7 @@ export default function PortfolioPage() {
                   <p className="text-h3 text-foreground">--</p>
                 )}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 
