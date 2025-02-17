@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 
+import { RotateCw } from "lucide-react";
+
 import ConnectWalletButton from "@/components/ConnectWalletButton";
 import Container from "@/components/Container";
 import Logo from "@/components/Logo";
+import { useAppContext } from "@/contexts/AppContext";
 import {
   ADMIN_URL,
   POOL_URL_PREFIX,
@@ -34,9 +37,16 @@ export const ADMIN_NAV_ITEM: NavItem = {
 export default function Nav() {
   const router = useRouter();
 
+  const { refresh: refreshAppDataAndBalances } = useAppContext();
+
   // Items
   const navItems = [...NAV_ITEMS];
   // if (admin.weightHookAdminCapId) navItems.push(ADMIN_NAV_ITEM);
+
+  // Refresh
+  const refreshAll = () => {
+    refreshAppDataAndBalances();
+  };
 
   return (
     <>
@@ -100,7 +110,13 @@ export default function Nav() {
             </div>
 
             {/* End */}
-            <div className="flex min-w-0 flex-row items-center gap-2">
+            <div className="flex min-w-0 flex-row items-center gap-3">
+              <button
+                className="group flex h-5 w-5 flex-row items-center justify-center"
+                onClick={refreshAll}
+              >
+                <RotateCw className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
+              </button>
               <ConnectWalletButton />
             </div>
           </div>
