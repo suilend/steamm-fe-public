@@ -88,12 +88,12 @@ export default function PoolChartCard() {
       [ChartStat.APR]: {
         title: chartStatNameMap[ChartStat.APR],
         value:
-          statsData?.poolApr_24h_map?.[pool.id] === undefined
+          statsData?.poolAprPercent_24h_map?.[pool.id] === undefined
             ? undefined
-            : formatPercent(statsData.poolApr_24h_map[pool.id]),
+            : formatPercent(statsData.poolAprPercent_24h_map[pool.id]),
         chartType: ChartType.LINE,
         periodChangePercent: null,
-        data: statsData?.poolHistoricalApr_24h_map?.[pool.id],
+        data: statsData?.poolHistoricalAprPercent_24h_map?.[pool.id],
         formatValue: (value) => formatPercent(new BigNumber(value)),
       },
     }),
@@ -105,8 +105,8 @@ export default function PoolChartCard() {
       statsData?.poolHistoricalVolumeUsd_24h_map,
       statsData?.poolFeesUsd_24h_map,
       statsData?.poolHistoricalFeesUsd_24h_map,
-      statsData?.poolApr_24h_map,
-      statsData?.poolHistoricalApr_24h_map,
+      statsData?.poolAprPercent_24h_map,
+      statsData?.poolHistoricalAprPercent_24h_map,
     ],
   );
 

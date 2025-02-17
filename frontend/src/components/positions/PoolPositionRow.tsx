@@ -83,7 +83,7 @@ export default function PoolPositionRow({
         {position.pool.aprPercent_24h === undefined ? (
           <Skeleton className="h-[24px] w-16" />
         ) : (
-          <p className="text-p1 text-foreground">
+          <p className="text-p1 text-success">
             {formatPercent(position.pool.aprPercent_24h)}
           </p>
         )}

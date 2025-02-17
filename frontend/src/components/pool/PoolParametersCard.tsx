@@ -16,7 +16,7 @@ import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
-import { cn } from "@/lib/utils";
+import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 interface ParameterProps extends PropsWithChildren {
   className?: ClassValue;
@@ -44,7 +44,7 @@ export default function PoolParametersCard() {
           {/* Top */}
           <div className="flex w-full flex-row justify-between">
             {/* Left */}
-            <div className="flex flex-row items-center gap-2">
+            <div className="flex h-[21px] flex-row items-center gap-2">
               <TokenLogo
                 className="bg-background"
                 token={getToken(
@@ -57,6 +57,24 @@ export default function PoolParametersCard() {
               <p className="text-p2 text-foreground">
                 {appData.poolCoinMetadataMap[pool.coinTypes[0]].symbol}
               </p>
+              {appData.reserveDepositAprPercentMap[pool.coinTypes[0]] && (
+                <Tooltip
+                  title={`Deposited ${appData.poolCoinMetadataMap[pool.coinTypes[0]].symbol} is earning ${formatPercent(appData.reserveDepositAprPercentMap[pool.coinTypes[0]])} APR in Suilend`}
+                >
+                  <p
+                    className={cn(
+                      "text-p2 text-success decoration-success/50",
+                      hoverUnderlineClassName,
+                    )}
+                  >
+                    {formatPercent(
+                      appData.reserveDepositAprPercentMap[pool.coinTypes[0]],
+                    )}{" "}
+                    APR
+                  </p>
+                </Tooltip>
+              )}
+
               <div className="flex flex-row items-center gap-1">
                 <CopyToClipboardButton value={pool.coinTypes[0]} />
                 <OpenOnExplorerButton
@@ -126,6 +144,24 @@ export default function PoolParametersCard() {
               <p className="text-p2 text-foreground">
                 {appData.poolCoinMetadataMap[pool.coinTypes[1]].symbol}
               </p>
+              {appData.reserveDepositAprPercentMap[pool.coinTypes[1]] && (
+                <Tooltip
+                  title={`Deposited ${appData.poolCoinMetadataMap[pool.coinTypes[1]].symbol} is earning ${formatPercent(appData.reserveDepositAprPercentMap[pool.coinTypes[1]])} APR in Suilend`}
+                >
+                  <p
+                    className={cn(
+                      "text-p2 text-success decoration-success/50",
+                      hoverUnderlineClassName,
+                    )}
+                  >
+                    {formatPercent(
+                      appData.reserveDepositAprPercentMap[pool.coinTypes[1]],
+                    )}{" "}
+                    APR
+                  </p>
+                </Tooltip>
+              )}
+
               <div className="flex flex-row items-center gap-1">
                 <CopyToClipboardButton value={pool.coinTypes[1]} />
                 <OpenOnExplorerButton

@@ -1,5 +1,4 @@
 import { normalizeStructTag } from "@mysten/sui/utils";
-import { SuiPriceServiceConnection } from "@pythnetwork/pyth-sui-js";
 import BigNumber from "bignumber.js";
 import useSWR from "swr";
 
@@ -18,9 +17,8 @@ import {
   LENDING_MARKET_ID,
   LENDING_MARKET_TYPE,
   SuilendClient,
-  WAD,
+  initializeSuilend,
 } from "@suilend/sdk";
-import * as simulate from "@suilend/sdk/utils/simulate";
 import { SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
@@ -32,36 +30,36 @@ export default function useFetchAppData(steammClient: SteammSDK) {
   const dataFetcher = async () => {
     // Suilend
     const suilendClient = await SuilendClient.initialize(
-      LENDING_MARKET_ID,
+      LENDING_MARKET_ID, // Main Market
       LENDING_MARKET_TYPE,
       suiClient,
     ); // Switch to Suilend Beta Main Market by setting NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true (should not need to in practice)
 
-    const nowMs = Date.now();
-    const nowS = Math.floor(nowMs / 1000);
+    const {
+      lendingMarket,
+      coinMetadataMap,
 
-    const rawReserves = suilendClient.lendingMarket.reserves.filter((r) =>
-      [NORMALIZED_SUI_COINTYPE, NORMALIZED_USDC_COINTYPE].includes(
-        normalizeStructTag(r.coinType.name),
-      ),
-    );
-    const refreshedRawReserves = await simulate.refreshReservePrice(
-      rawReserves.map((r) => simulate.compoundReserveInterest(r, nowS)),
-      new SuiPriceServiceConnection("https://hermes.pyth.network"),
-    );
+      refreshedRawReserves,
+      reserveMap,
+      reserveCoinTypes,
+      reserveCoinMetadataMap,
 
-    const priceMap = refreshedRawReserves.reduce(
-      (acc, r) => {
-        const coinType = normalizeStructTag(r.coinType.name);
-        const price = new BigNumber(r.price.value.toString()).div(WAD);
+      rewardCoinTypes,
+      activeRewardCoinTypes,
+      rewardCoinMetadataMap,
+    } = await initializeSuilend(suiClient, suilendClient);
 
-        return { ...acc, [coinType]: price };
-      },
-      {} as Record<string, BigNumber>,
-    );
+    const reserveDepositAprPercentMap: Record<string, BigNumber> =
+      Object.fromEntries(
+        Object.entries(reserveMap).map(([coinType, reserve]) => [
+          coinType,
+          reserve.depositAprPercent,
+        ]),
+      );
 
-    const suiPrice = priceMap[NORMALIZED_SUI_COINTYPE];
-    const usdcPrice = priceMap[NORMALIZED_USDC_COINTYPE];
+    // Prices
+    const suiPrice = reserveMap[NORMALIZED_SUI_COINTYPE].price;
+    const usdcPrice = reserveMap[NORMALIZED_USDC_COINTYPE].price;
 
     // Banks
     const bTokenTypeCoinTypeMap: Record<string, string> = {};
@@ -188,6 +186,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const featuredCoinTypePairs: [[string, string]] = [["", ""]];
 
     return {
+      reserveDepositAprPercentMap,
+
       bTokenTypeCoinTypeMap,
       lendingMarketIdTypeMap,
 

@@ -183,22 +183,22 @@ export default function useFetchStatsData() {
     );
 
     // Pools - APR
-    const poolApr_24h_map: Record<string, BigNumber> = {};
-    const poolHistoricalApr_24h_map: Record<string, ChartData[]> = {};
+    const poolAprPercent_24h_map: Record<string, BigNumber> = {};
+    const poolHistoricalAprPercent_24h_map: Record<string, ChartData[]> = {};
 
     for (const pool of appData.pools) {
       const poolFeesUsd_24h = poolFeesUsd_24h_map[pool.id];
 
-      poolApr_24h_map[pool.id] = !pool.tvlUsd.eq(0)
+      poolAprPercent_24h_map[pool.id] = !pool.tvlUsd.eq(0)
         ? poolFeesUsd_24h.div(pool.tvlUsd).times(365).times(100)
         : new BigNumber(0);
-      // poolHistoricalApr_24h_map[pool.id] = // TODO
+      // poolHistoricalAprPercent_24h_map[pool.id] = // TODO
     }
     console.log(
-      "XXX poolApr_24h_map:",
-      poolApr_24h_map,
-      "poolHistoricalApr_24h_map:",
-      poolHistoricalApr_24h_map,
+      "XXX poolAprPercent_24h_map:",
+      poolAprPercent_24h_map,
+      "poolHistoricalAprPercent_24h_map:",
+      poolHistoricalAprPercent_24h_map,
     );
 
     // Total
@@ -250,8 +250,8 @@ export default function useFetchStatsData() {
       poolFeesUsd_24h_map,
       poolHistoricalFeesUsd_24h_map,
 
-      poolApr_24h_map,
-      poolHistoricalApr_24h_map,
+      poolAprPercent_24h_map,
+      poolHistoricalAprPercent_24h_map,
 
       // Total
       historicalTvlUsd_24h,

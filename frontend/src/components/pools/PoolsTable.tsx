@@ -25,19 +25,19 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   tvlUsd: {
     flex: 1,
-    minWidth: 120, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   volumeUsd_24h: {
     flex: 1,
-    minWidth: 120, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   aprPercent_24h: {
     flex: 1,
-    minWidth: 120, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
