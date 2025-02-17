@@ -247,7 +247,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
     onValueChange(
       (isSui(coinType) ? BigNumber.max(0, balance.minus(SUI_GAS_MIN)) : balance)
-        .div(index === 0 ? 1 : 1 + slippagePercent / 100)
+        .div(index === 0 || pool.tvlUsd.eq(0) ? 1 : 1 + slippagePercent / 100)
         .toFixed(coinMetadata.decimals, BigNumber.ROUND_DOWN),
       index,
       true,
@@ -291,7 +291,8 @@ function DepositTab({ formatValue }: DepositTabProps) {
           )
             .div(10 ** SUI_DECIMALS)
             .times(
-              pool.coinTypes.indexOf(NORMALIZED_SUI_COINTYPE) === 0
+              pool.coinTypes.indexOf(NORMALIZED_SUI_COINTYPE) === 0 ||
+                pool.tvlUsd.eq(0)
                 ? 1
                 : 1 + slippagePercent / 100,
             ),
@@ -312,7 +313,9 @@ function DepositTab({ formatValue }: DepositTabProps) {
               (i === 0 ? quote.depositA : quote.depositB).toString(),
             )
               .div(10 ** coinMetadata.decimals)
-              .times(i === 0 ? 1 : 1 + slippagePercent / 100),
+              .times(
+                i === 0 || pool.tvlUsd.eq(0) ? 1 : 1 + slippagePercent / 100,
+              ),
           )
         )
           return {
@@ -345,7 +348,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
       const submitAmountA = quote.depositA.toString();
       const submitAmountB = new BigNumber(quote.depositB.toString())
-        .times(1 + slippagePercent / 100)
+        .times(pool.tvlUsd.eq(0) ? 1 : 1 + slippagePercent / 100)
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
 
@@ -468,7 +471,11 @@ function DepositTab({ formatValue }: DepositTabProps) {
                               : quote.depositB
                             ).toString(),
                           )
-                            .times(index === 0 ? 1 : 1 + slippagePercent / 100)
+                            .times(
+                              index === 0 || pool.tvlUsd.eq(0)
+                                ? 1
+                                : 1 + slippagePercent / 100,
+                            )
                             .div(10 ** coinMetadata.decimals),
                           { dp: coinMetadata.decimals },
                         )}{" "}
