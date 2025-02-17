@@ -1,4 +1,5 @@
 import Head from "next/head";
+import { useRouter } from "next/router";
 import {
   Fragment,
   useCallback,
@@ -14,8 +15,8 @@ import { clone, debounce } from "lodash";
 import { ArrowRight } from "lucide-react";
 
 import {
-  NORMALIZED_SEND_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
+  NORMALIZED_USDC_COINTYPE,
   SUI_GAS_MIN,
   formatInteger,
   formatToken,
@@ -24,6 +25,8 @@ import {
   isSui,
 } from "@suilend/frontend-sui";
 import {
+  shallowPushQuery,
+  shallowReplaceQuery,
   showErrorToast,
   useSettingsContext,
   useWalletContext,
@@ -43,6 +46,9 @@ import { getQuoteRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 
 export default function SwapPage() {
+  const router = useRouter();
+  const slug = router.query.slug as string[] | undefined;
+
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const {
@@ -56,10 +62,32 @@ export default function SwapPage() {
   } = useLoadedAppContext();
 
   // CoinTypes
-  const [inCoinType, setInCoinType] = useState<string>(NORMALIZED_SUI_COINTYPE);
-  const [outCoinType, setOutCoinType] = useState<string>(
-    NORMALIZED_SEND_COINTYPE,
-  );
+  const [inCoinType, outCoinType] = useMemo(() => {
+    if (
+      !slug ||
+      slug.length !== 1 ||
+      slug[0].split("-").length !== 2 ||
+      slug[0]
+        .split("-")
+        .some(
+          (symbol) =>
+            !Object.values(appData.poolCoinMetadataMap).find(
+              (coinMetadata) => coinMetadata.symbol === symbol,
+            ),
+        )
+    ) {
+      shallowReplaceQuery(router, {
+        slug: "SUI-USDC",
+      });
+      return [NORMALIZED_SUI_COINTYPE, NORMALIZED_USDC_COINTYPE];
+    }
+
+    return slug[0].split("-").map((symbol) => {
+      return Object.entries(appData.poolCoinMetadataMap).find(
+        ([coinType, coinMetadata]) => coinMetadata.symbol === symbol,
+      )![0];
+    });
+  }, [slug, appData.poolCoinMetadataMap, router]);
 
   const [inCoinMetadata, outCoinMetadata] = [
     appData.poolCoinMetadataMap[inCoinType],
@@ -260,8 +288,9 @@ export default function SwapPage() {
     const newOutCoinType = inCoinType;
     const newOutCoinMetadata = inCoinMetadata;
 
-    setInCoinType(newInCoinType);
-    setOutCoinType(newOutCoinType);
+    shallowPushQuery(router, {
+      slug: `${newInCoinMetadata.symbol}-${newOutCoinMetadata.symbol}`,
+    });
 
     setOracleQuote(undefined);
     fetchQuote(
@@ -275,8 +304,9 @@ export default function SwapPage() {
     );
     setQuote(undefined);
 
-    setTimeout(() =>
-      document.getElementById(getCoinInputId(newInCoinType))?.focus(),
+    setTimeout(
+      () => document.getElementById(getCoinInputId(newInCoinType))?.focus(),
+      50,
     );
 
     // value === "" || value <= 0
@@ -438,6 +468,7 @@ export default function SwapPage() {
               value={value}
               onChange={(value) => onValueChange(value)}
               onBalanceClick={() => onCoinBalanceClick()}
+              isReversed
             />
 
             <ReverseAssetsButton onClick={reverseAssets} />
@@ -460,6 +491,7 @@ export default function SwapPage() {
                       )
                     : ""
               }
+              isReversed
             />
           </div>
 

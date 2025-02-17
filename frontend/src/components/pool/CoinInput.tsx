@@ -17,6 +17,7 @@ interface CoinInputProps {
   value?: string;
   onChange?: (value: string) => void;
   onBalanceClick?: () => void;
+  isReversed?: boolean;
 }
 
 export default function CoinInput({
@@ -26,6 +27,7 @@ export default function CoinInput({
   value,
   onChange,
   onBalanceClick,
+  isReversed,
 }: CoinInputProps) {
   const { appData, getBalance } = useLoadedAppContext();
 
@@ -34,11 +36,18 @@ export default function CoinInput({
   return (
     <div
       className={cn(
-        "flex w-full flex-row items-center justify-between gap-4 rounded-md border bg-input p-5 focus-within:border-focus",
+        "flex w-full items-center justify-between gap-4 rounded-md border bg-input p-5",
+        isReversed ? "flex-row-reverse" : "flex-row",
+        !!onChange && "focus-within:border-focus",
         className,
       )}
     >
-      <div className="flex flex-col gap-3">
+      <div
+        className={cn(
+          "flex flex-col gap-3",
+          isReversed ? "items-end" : "items-start",
+        )}
+      >
         <div className="flex h-[28px] flex-row items-center gap-2.5">
           <TokenLogo
             token={getToken(coinType, appData.poolCoinMetadataMap[coinType])}
@@ -79,7 +88,10 @@ export default function CoinInput({
         <div className="flex-1">
           <input
             id={getCoinInputId(coinType)}
-            className="h-[60px] w-full min-w-0 border-0 bg-[transparent] text-right text-h1 text-foreground placeholder:text-tertiary-foreground focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className={cn(
+              "h-[60px] w-full min-w-0 border-0 bg-[transparent] !text-h1 text-foreground placeholder:text-tertiary-foreground focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+              isReversed ? "text-left" : "text-right",
+            )}
             autoFocus={autoFocus}
             type="number"
             placeholder="0"
