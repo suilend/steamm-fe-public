@@ -24,10 +24,21 @@ import { SuiAddressType, patchFixSuiObjectId } from "./utils";
 
 export type SdkOptions = {
   fullRpcUrl: string;
-  suilend_config: Package<SuilendConfigs>;
   steamm_config: Package<SteammConfigs>;
   steamm_script_config: Package;
+  suilend_config: Package<SuilendConfigs>;
+  cache_refresh_ms?: number /* default: 5000 */;
 };
+
+interface PoolCache {
+  pools: PoolInfo[];
+  updatedAt: number;
+}
+
+interface BankCache {
+  banks: BankList;
+  updatedAt: number;
+}
 
 export class SteammSDK {
   protected _rpcModule: RpcModule;
@@ -35,12 +46,17 @@ export class SteammSDK {
   protected _router: RouterModule;
   protected _bank: BankModule;
   protected _sdkOptions: SdkOptions;
+  protected _pools?: PoolCache;
+  protected _banks?: BankCache;
 
   protected _signer: Signer | undefined;
   protected _senderAddress = "";
 
   constructor(options: SdkOptions) {
-    this._sdkOptions = options;
+    this._sdkOptions = {
+      ...options,
+      cache_refresh_ms: options.cache_refresh_ms ?? 5000,
+    };
     this._rpcModule = new RpcModule({
       url: options.fullRpcUrl,
     });
@@ -162,10 +178,59 @@ export class SteammSDK {
   }
 
   async getBanks(): Promise<BankList> {
-    const pkgAddy = this.sdkOptions.steamm_config.package_id;
+    if (!this._banks) {
+      await this.refreshBankCache();
+    } else if (
+      this.sdkOptions.cache_refresh_ms &&
+      Date.now() > this._banks.updatedAt + this.sdkOptions.cache_refresh_ms
+    ) {
+      await this.refreshBankCache();
+    }
+
+    if (!this._banks) {
+      throw new Error("Bank cache not initialized");
+    }
+
+    return this._banks.banks;
+  }
+
+  async getPools(coinTypes?: [string, string]): Promise<PoolInfo[]> {
+    if (!this._pools) {
+      await this.refreshPoolCache();
+    } else if (
+      this.sdkOptions.cache_refresh_ms &&
+      Date.now() > this._pools.updatedAt + this.sdkOptions.cache_refresh_ms
+    ) {
+      await this.refreshPoolCache();
+    }
+
+    if (!this._pools) {
+      throw new Error("Pool cache not initialized");
+    }
+
+    if (!coinTypes) {
+      return this._pools.pools;
+    } else {
+      const banks = await this.getBanks();
+      const bcoinTypes = {
+        coinType1: banks[coinTypes[0]].btokenType,
+        coinType2: banks[coinTypes[1]].btokenType,
+      };
+
+      return this._pools.pools.filter(
+        (pool) =>
+          (pool.coinTypeA === bcoinTypes.coinType1 &&
+            pool.coinTypeB === bcoinTypes.coinType2) ||
+          (pool.coinTypeA === bcoinTypes.coinType2 &&
+            pool.coinTypeB === bcoinTypes.coinType1),
+      );
+    }
+  }
+
+  private async refreshBankCache() {
+    const pkgAddy = this.sourcePkgId();
 
     let eventData: EventData<NewBankEvent>[] = [];
-    let bankList: BankList = {};
 
     const res: DataPage<EventData<NewBankEvent>[]> =
       await this.fullClient.queryEventsByPage({
@@ -174,16 +239,13 @@ export class SteammSDK {
 
     eventData = res.data.reduce((acc, curr) => acc.concat(curr), []);
 
-    bankList = extractBankList(eventData);
-
-    return bankList;
+    this._banks = { banks: extractBankList(eventData), updatedAt: Date.now() };
   }
 
-  async getPools(coinTypes?: [string, string]): Promise<PoolInfo[]> {
-    const pkgAddy = this.sdkOptions.steamm_config.package_id;
+  private async refreshPoolCache() {
+    const pkgAddy = this.sourcePkgId();
 
     let eventData: EventData<NewPoolEvent>[] = [];
-    let pools: PoolInfo[] = [];
 
     const res: DataPage<EventData<NewPoolEvent>[]> =
       await this.fullClient.queryEventsByPage({
@@ -191,38 +253,6 @@ export class SteammSDK {
       });
 
     eventData = res.data.reduce((acc, curr) => acc.concat(curr), []);
-    pools = extractPoolInfo(eventData);
-
-    // get pools by coin types
-    if (coinTypes) {
-      const banks = await this.getBanks();
-      const bcoinTypes = {
-        coinType1: banks[coinTypes[0]].btokenType,
-        coinType2: banks[coinTypes[1]].btokenType,
-      };
-
-      pools = pools.filter(
-        (pool) =>
-          (pool.coinTypeA === bcoinTypes.coinType1 &&
-            pool.coinTypeB === bcoinTypes.coinType2) ||
-          (pool.coinTypeA === bcoinTypes.coinType2 &&
-            pool.coinTypeB === bcoinTypes.coinType1),
-      );
-    }
-
-    return pools;
-  }
-
-  async getPoolsByType(
-    coinType1: string,
-    coinType2: string,
-  ): Promise<PoolInfo[]> {
-    const pools = await this.getPools();
-
-    return pools.filter(
-      (pool) =>
-        (pool.coinTypeA === coinType1 && pool.coinTypeB === coinType2) ||
-        (pool.coinTypeA === coinType2 && pool.coinTypeB === coinType1),
-    );
+    this._pools = { pools: extractPoolInfo(eventData), updatedAt: Date.now() };
   }
 }
