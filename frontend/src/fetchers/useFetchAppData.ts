@@ -199,9 +199,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       });
     }
 
-    const featuredCoinTypePairs: [[string, string]] = [
-      [NORMALIZED_SUI_COINTYPE, NORMALIZED_USDC_COINTYPE],
-    ];
+    const featuredCoinTypePairs: [[string, string]] = [["", ""]];
 
     // TVL
     const historicalTvlUsd_30d: ChartData[] = []; // TODO
