@@ -152,7 +152,13 @@ export class RouterModule implements IModule {
         route,
         amountIn,
       );
-      quotes.push(quote);
+      if (quote) {
+        quotes.push(quote);
+      }
+    }
+
+    if (quotes.length === 0) {
+      throw new Error("No quotes found for the given coin pair");
     }
 
     // Find the best quote (highest amount out)
@@ -176,7 +182,7 @@ export class RouterModule implements IModule {
     coinTypeOut: string,
     route: Route,
     amountIn: bigint,
-  ): Promise<MultiSwapQuote> {
+  ): Promise<MultiSwapQuote | null> {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
 
@@ -185,7 +191,6 @@ export class RouterModule implements IModule {
 
     const bankX = new Bank(this.sdk.packageInfo(), bankInfoX);
     const bankY = new Bank(this.sdk.packageInfo(), bankInfoY);
-    const dummyTx = new Transaction();
 
     const firstBTokenAmountIn = this.getBTokenAmountInForQuote(
       tx,
@@ -227,15 +232,22 @@ export class RouterModule implements IModule {
       amountOut: nextBTokenAmountIn,
     });
 
-    return castMultiSwapQuote(
-      await this.getQuoteResult<MultiSwapQuote>(tx, "MultiRouteSwapQuote"),
+    const result = await this.getQuoteResult<MultiSwapQuote>(
+      tx,
+      "MultiRouteSwapQuote",
     );
+
+    if (result) {
+      return castMultiSwapQuote(result);
+    } else {
+      return null;
+    }
   }
 
   private async getQuoteResult<T>(
     tx: Transaction,
     quoteType: string,
-  ): Promise<T> {
+  ): Promise<T | null> {
     const inspectResults = await this.sdk.fullClient.devInspectTransactionBlock(
       {
         sender: this.sdk.senderAddress,
@@ -245,9 +257,9 @@ export class RouterModule implements IModule {
     );
 
     if (inspectResults.error) {
-      console.log(inspectResults);
+      console.log("Failed to fetch quote");
       // console.log(JSON.stringify(tx.getData()));
-      throw new Error("DevInspect Failed");
+      return null;
     }
 
     const quoteEvent = inspectResults.events.find((event) =>
