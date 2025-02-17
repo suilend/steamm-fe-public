@@ -158,7 +158,7 @@ export default function PoolsPage() {
 
         {/* All pools */}
         <div className="flex w-full flex-col gap-6">
-          <div className="flex flex-row items-center justify-between">
+          <div className="flex h-[30px] flex-row items-center justify-between">
             <div className="flex flex-row items-center gap-3">
               <h2 className="text-h3 text-foreground">All pools</h2>
               <Tag>
