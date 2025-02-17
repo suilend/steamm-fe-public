@@ -16,6 +16,7 @@ import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
+import { formatFeeTier } from "@/lib/format";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 interface ParameterProps extends PropsWithChildren {
@@ -246,7 +247,7 @@ export default function PoolParametersCard() {
 
       <Parameter label="Fee tier">
         <p className="text-p2 text-foreground">
-          {formatPercent(pool.feeTierPercent)}
+          {formatFeeTier(pool.feeTierPercent)}
         </p>
       </Parameter>
     </div>

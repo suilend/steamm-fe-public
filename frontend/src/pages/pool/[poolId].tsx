@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { PoolContextProvider, usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
-import { formatPair } from "@/lib/format";
+import { formatFeeTier, formatPair } from "@/lib/format";
 import { ROOT_URL } from "@/lib/navigation";
 import { poolTypeNameMap } from "@/lib/types";
 
@@ -64,7 +64,7 @@ function PoolPage() {
               <div className="flex flex-row items-center gap-1">
                 <Tag>{pool.type ? poolTypeNameMap[pool.type] : "--"}</Tag>
                 <Tag labelClassName="transition-colors group-hover:text-foreground">
-                  {formatPercent(pool.feeTierPercent)}
+                  {formatFeeTier(pool.feeTierPercent)}
                 </Tag>
               </div>
             </div>

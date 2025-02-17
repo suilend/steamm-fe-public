@@ -9,7 +9,7 @@ import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { formatPair } from "@/lib/format";
+import { formatFeeTier, formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { PoolPosition, poolTypeNameMap } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -56,9 +56,6 @@ export default function PoolPositionRow({
             ),
           )}
         </p>
-        <Tag labelClassName="transition-colors group-hover:text-foreground">
-          {formatPercent(position.pool.feeTierPercent)}
-        </Tag>
       </div>
 
       {/* Type */}
@@ -70,7 +67,7 @@ export default function PoolPositionRow({
           {position.pool.type ? poolTypeNameMap[position.pool.type] : "--"}
         </Tag>
         <Tag labelClassName="transition-colors group-hover:text-foreground">
-          {formatPercent(position.pool.feeTierPercent)}
+          {formatFeeTier(position.pool.feeTierPercent)}
         </Tag>
       </div>
 
