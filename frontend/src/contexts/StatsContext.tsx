@@ -15,8 +15,8 @@ export interface StatsData {
   poolFeesUsd_24h_map: Record<string, BigNumber>;
   poolHistoricalFeesUsd_24h_map: Record<string, ChartData[]>;
 
-  poolApr_24h_map: Record<string, BigNumber>;
-  poolHistoricalApr_24h_map: Record<string, ChartData[]>;
+  poolAprPercent_24h_map: Record<string, BigNumber>;
+  poolHistoricalAprPercent_24h_map: Record<string, ChartData[]>;
 
   // Total
   historicalTvlUsd_24h: ChartData[];

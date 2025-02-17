@@ -138,11 +138,12 @@ function PoolPage() {
                 <p className="text-p2 text-secondary-foreground">APR (24H)</p>
 
                 <div className="flex flex-row items-center gap-1.5">
-                  {statsData?.poolApr_24h_map?.[pool.id] === undefined ? (
+                  {statsData?.poolAprPercent_24h_map?.[pool.id] ===
+                  undefined ? (
                     <Skeleton className="h-[24px] w-16" />
                   ) : (
-                    <p className="text-p1 text-foreground">
-                      {formatPercent(statsData.poolApr_24h_map[pool.id])}
+                    <p className="text-p1 text-success">
+                      {formatPercent(statsData.poolAprPercent_24h_map[pool.id])}
                     </p>
                   )}
 

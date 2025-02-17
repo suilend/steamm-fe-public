@@ -23,8 +23,8 @@ export type ParsedPool = {
   prices: [BigNumber, BigNumber];
 
   tvlUsd: BigNumber;
-  volumeUsd_24h?: BigNumber; // Added on Pools page (used in PoolsTable)
-  aprPercent_24h?: BigNumber; // Added on Pools page (used in PoolsTable)
+  volumeUsd_24h?: BigNumber; // Used on Pools page
+  aprPercent_24h?: BigNumber; // Used on Pools and Portfolio pages
 
   feeTierPercent: BigNumber;
   protocolFeePercent: BigNumber;

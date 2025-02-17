@@ -69,7 +69,8 @@ export default function PoolParametersCard() {
                   >
                     {formatPercent(
                       appData.reserveDepositAprPercentMap[pool.coinTypes[0]],
-                    )}
+                    )}{" "}
+                    APR
                   </p>
                 </Tooltip>
               )}
@@ -155,7 +156,8 @@ export default function PoolParametersCard() {
                   >
                     {formatPercent(
                       appData.reserveDepositAprPercentMap[pool.coinTypes[1]],
-                    )}
+                    )}{" "}
+                    APR
                   </p>
                 </Tooltip>
               )}

@@ -63,7 +63,7 @@ export default function PortfolioPage() {
         .map((pool) => ({
           pool: {
             ...pool,
-            aprPercent_24h: statsData?.poolApr_24h_map?.[pool.id],
+            aprPercent_24h: statsData?.poolAprPercent_24h_map?.[pool.id],
           },
           balance: {
             amount: lpTokenBalanceMap[pool.lpTokenType].balance,
@@ -80,7 +80,7 @@ export default function PortfolioPage() {
           //   amountUsd: undefined, // TODO
           // },
         })),
-    [appData.pools, lpTokenBalanceMap, statsData?.poolApr_24h_map],
+    [appData.pools, lpTokenBalanceMap, statsData?.poolAprPercent_24h_map],
   );
 
   // Positions - Balances in USD (on-chain)
@@ -193,7 +193,7 @@ export default function PortfolioPage() {
   //   [positionsWithFetchedData],
   // );
 
-  const averageAprPercent = useMemo(
+  const weightedAverageAprPercent = useMemo(
     () =>
       positionsWithFetchedData.some(
         (position) =>
@@ -323,11 +323,11 @@ export default function PortfolioPage() {
                   Average APR (24H)
                 </p>
 
-                {averageAprPercent === undefined ? (
+                {weightedAverageAprPercent === undefined ? (
                   <Skeleton className="h-[30px] w-20" />
                 ) : (
-                  <p className="text-h3 text-foreground">
-                    {formatPercent(averageAprPercent)}
+                  <p className="text-h3 text-success">
+                    {formatPercent(weightedAverageAprPercent)}
                   </p>
                 )}
               </div>

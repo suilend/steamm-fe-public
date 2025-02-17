@@ -51,7 +51,7 @@ export default function PoolsPage() {
           pools: pools.map((pool) => ({
             ...pool,
             volumeUsd_24h: statsData?.poolVolumeUsd_24h_map?.[pool.id],
-            aprPercent_24h: statsData?.poolApr_24h_map?.[pool.id],
+            aprPercent_24h: statsData?.poolAprPercent_24h_map?.[pool.id],
           })),
         },
       ],
@@ -60,7 +60,7 @@ export default function PoolsPage() {
   }, [
     appData.pools,
     statsData?.poolVolumeUsd_24h_map,
-    statsData?.poolApr_24h_map,
+    statsData?.poolAprPercent_24h_map,
   ]);
 
   // Featured pairs

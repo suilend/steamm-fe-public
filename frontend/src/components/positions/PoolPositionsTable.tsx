@@ -27,7 +27,7 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   aprPercent_24h: {
     flex: 1,
-    minWidth: 120, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -51,7 +51,7 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   // },
   // pnl: {
   //   flex: 1,
-  //   minWidth: 120, // px
+  //   minWidth: 150, // px
   //   justifyContent: "end",
   //   paddingRight: 4 * 5, // px
   // },
