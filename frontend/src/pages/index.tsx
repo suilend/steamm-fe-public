@@ -10,6 +10,7 @@ import Divider from "@/components/Divider";
 import HistoricalDataChart from "@/components/HistoricalDataChart";
 import PoolsTable from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
+import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { ChartType } from "@/lib/chart";
@@ -157,14 +158,29 @@ export default function PoolsPage() {
 
         {/* All pools */}
         <div className="flex w-full flex-col gap-6">
-          <div className="flex flex-row items-center gap-3">
-            <h2 className="text-h3 text-foreground">All pools</h2>
-            <Tag>
-              {poolGroups.reduce(
-                (acc, poolGroup) => acc + poolGroup.pools.length,
-                0,
-              )}
-            </Tag>
+          <div className="flex flex-row items-center justify-between">
+            <div className="flex flex-row items-center gap-3">
+              <h2 className="text-h3 text-foreground">All pools</h2>
+              <Tag>
+                {poolGroups.reduce(
+                  (acc, poolGroup) => acc + poolGroup.pools.length,
+                  0,
+                )}
+              </Tag>
+            </div>
+
+            <Tooltip title="Coming soon">
+              <div className="w-max">
+                <button
+                  className="flex h-10 flex-row items-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
+                  disabled
+                >
+                  <p className="text-p2 text-button-1-foreground">
+                    Create pool
+                  </p>
+                </button>
+              </div>
+            </Tooltip>
           </div>
 
           <PoolsTable
