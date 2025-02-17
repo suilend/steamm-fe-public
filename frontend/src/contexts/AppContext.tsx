@@ -93,7 +93,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   // STEAMM client
   const steammClient = useMemo(() => {
     const sdk = new SteammSDK({
-      ...(process.env.NEXT_PUBLIC_USE_BETA_MARKET === "true"
+      ...(process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
         ? BETA_CONFIG
         : MAINNET_CONFIG),
       fullRpcUrl: rpc.url,
