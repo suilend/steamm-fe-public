@@ -127,7 +127,10 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       const coinTypeA = bTokenTypeCoinTypeMap[btokenTypeA];
       const coinTypeB = bTokenTypeCoinTypeMap[btokenTypeB];
 
-      const pool = await steammClient.fullClient.fetchPool(poolInfo.poolId);
+      const pool = await steammClient.fullClient.fetchPool(
+        poolInfo.poolId,
+        steammClient.sourcePkgId(),
+      );
 
       const balanceA = new BigNumber(pool.balanceA.value.toString()).div(
         10 ** poolCoinMetadataMap[coinTypeA].decimals,
