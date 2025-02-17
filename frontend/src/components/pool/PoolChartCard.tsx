@@ -143,29 +143,31 @@ export default function PoolChartCard() {
       />
 
       <div className="absolute right-5 top-5 z-[2] flex flex-row gap-1">
-        {Object.values(ChartStat).map((chartStat) => (
-          <button
-            key={chartStat}
-            className={cn(
-              "group flex h-6 flex-row items-center rounded-md border px-2 transition-colors",
-              selectedChartStat === chartStat
-                ? "cursor-default bg-border"
-                : "hover:bg-border/50",
-            )}
-            onClick={() => onSelectedChartStatChange(chartStat)}
-          >
-            <p
+        {Object.values(ChartStat)
+          .filter((chartStat) => chartStat !== ChartStat.APR) // TODO
+          .map((chartStat) => (
+            <button
+              key={chartStat}
               className={cn(
-                "!text-p3 transition-colors",
+                "group flex h-6 flex-row items-center rounded-md border px-2 transition-colors",
                 selectedChartStat === chartStat
-                  ? "text-foreground"
-                  : "text-secondary-foreground group-hover:text-foreground",
+                  ? "cursor-default bg-border"
+                  : "hover:bg-border/50",
               )}
+              onClick={() => onSelectedChartStatChange(chartStat)}
             >
-              {chartStatNameMap[chartStat]}
-            </p>
-          </button>
-        ))}
+              <p
+                className={cn(
+                  "!text-p3 transition-colors",
+                  selectedChartStat === chartStat
+                    ? "text-foreground"
+                    : "text-secondary-foreground group-hover:text-foreground",
+                )}
+              >
+                {chartStatNameMap[chartStat]}
+              </p>
+            </button>
+          ))}
       </div>
     </div>
   );

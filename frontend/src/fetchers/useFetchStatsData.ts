@@ -33,7 +33,7 @@ export default function useFetchStatsData() {
           const res = await fetch(
             `${API_URL}/steamm/historical/tvl?${new URLSearchParams({
               startTimestampS: `${hourStartS - ONE_DAY_S}`,
-              endTimestampS: `${hourStartS - 1}`, // Exclude current unfinished hour (24 hours) - the current TVL is appended later
+              endTimestampS: `${hourStartS - 1}`, // Exclude unfinished hour (24 hours)
               intervalS: `${ONE_HOUR_S}`,
               poolId,
             })}`,
@@ -69,11 +69,6 @@ export default function useFetchStatsData() {
           }, 0),
         });
       }
-
-      poolHistoricalTvlUsd_24h_map[pool.id].push({
-        timestampS: hourStartS,
-        tvl: +pool.tvlUsd,
-      });
     }
     console.log(
       "XXX poolHistoricalTvlUsd_24h_map:",
@@ -90,7 +85,7 @@ export default function useFetchStatsData() {
           const res = await fetch(
             `${API_URL}/steamm/historical/volume?${new URLSearchParams({
               startTimestampS: `${hourStartS - ONE_DAY_S}`,
-              endTimestampS: `${hourStartS}`, // Include current unfinished hour (25 hours)
+              endTimestampS: `${hourStartS - 1}`, // Exclude unfinished hour (24 hours)
               intervalS: `${ONE_HOUR_S}`,
               poolId,
             })}`,
@@ -139,7 +134,7 @@ export default function useFetchStatsData() {
           const res = await fetch(
             `${API_URL}/steamm/historical/fees?${new URLSearchParams({
               startTimestampS: `${hourStartS - ONE_DAY_S}`,
-              endTimestampS: `${hourStartS}`, // Include current unfinished hour (25 hours)
+              endTimestampS: `${hourStartS - 1}`, // Exclude unfinished hour (24 hours)
               intervalS: `${ONE_HOUR_S}`,
               poolId,
             })}`,
@@ -206,7 +201,47 @@ export default function useFetchStatsData() {
       poolHistoricalApr_24h_map,
     );
 
+    // Total
+    const timestampsS = poolHistoricalTvlUsd_24h_map[appData.pools[0].id].map(
+      (d) => d.timestampS,
+    );
+
+    // Total - TVL
+    const historicalTvlUsd_24h: ChartData[] = [];
+    for (let i = 0; i < timestampsS.length; i++) {
+      historicalTvlUsd_24h.push({
+        timestampS: timestampsS[i],
+        tvl: +poolIds.reduce((acc, poolId) => {
+          return acc.plus(poolHistoricalTvlUsd_24h_map[poolId][i].tvl);
+        }, new BigNumber(0)),
+      });
+    }
+    console.log("XXX historicalTvlUsd_24h:", historicalTvlUsd_24h);
+
+    // Total - volume
+    const historicalVolumeUsd_24h: ChartData[] = [];
+    for (let i = 0; i < timestampsS.length; i++) {
+      historicalVolumeUsd_24h.push({
+        timestampS: timestampsS[i],
+        volume: +poolIds.reduce((acc, poolId) => {
+          return acc.plus(poolHistoricalVolumeUsd_24h_map[poolId][i].volume);
+        }, new BigNumber(0)),
+      });
+    }
+
+    const volumeUsd_24h = historicalVolumeUsd_24h.reduce(
+      (acc, d) => acc.plus(d.volume),
+      new BigNumber(0),
+    );
+    console.log(
+      "XXX volumeUsd_24h:",
+      +volumeUsd_24h,
+      "historicalVolumeUsd_24h:",
+      historicalVolumeUsd_24h,
+    );
+
     return {
+      // Pool
       poolHistoricalTvlUsd_24h_map,
 
       poolVolumeUsd_24h_map,
@@ -217,6 +252,12 @@ export default function useFetchStatsData() {
 
       poolApr_24h_map,
       poolHistoricalApr_24h_map,
+
+      // Total
+      historicalTvlUsd_24h,
+
+      volumeUsd_24h,
+      historicalVolumeUsd_24h,
     };
   };
 
@@ -224,7 +265,7 @@ export default function useFetchStatsData() {
     !appData ? null : "statsData",
     dataFetcher,
     {
-      refreshInterval: 30 * 1000,
+      refreshInterval: 5 * 60 * 1000,
       onSuccess: (data) => {
         console.log("Refreshed stats data", data);
       },

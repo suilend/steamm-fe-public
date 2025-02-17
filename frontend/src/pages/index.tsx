@@ -12,7 +12,7 @@ import PoolsTable from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
-import { ChartType, formatCoinTypeCategory } from "@/lib/chart";
+import { ChartType } from "@/lib/chart";
 import { formatPair } from "@/lib/format";
 import { ParsedPool, PoolGroup } from "@/lib/types";
 
@@ -97,15 +97,16 @@ export default function PoolsPage() {
                   hideTitlePeriod
                   value={formatUsd(totalTvlUsd)}
                   chartType={ChartType.LINE}
-                  periodDays={30}
+                  periodDays={1}
                   periodChangePercent={null}
-                  data={undefined}
-                  formatCategory={(category) =>
-                    formatCoinTypeCategory(
-                      category,
-                      appData.poolCoinMetadataMap,
-                    )
-                  }
+                  data={statsData?.historicalTvlUsd_24h}
+                  // formatCategory={(category) =>
+                  //   formatCoinTypeCategory(
+                  //     category,
+                  //     appData.poolCoinMetadataMap,
+                  //   )
+                  // }
+                  formatCategory={(category) => category}
                   formatValue={(value) => formatUsd(new BigNumber(value))}
                 />
               </div>
@@ -118,17 +119,22 @@ export default function PoolsPage() {
               <div className="w-full p-5">
                 <HistoricalDataChart
                   title="Volume"
-                  value={undefined}
-                  chartType={ChartType.BAR}
-                  periodDays={30}
-                  periodChangePercent={null}
-                  data={undefined}
-                  formatCategory={(category) =>
-                    formatCoinTypeCategory(
-                      category,
-                      appData.poolCoinMetadataMap,
-                    )
+                  value={
+                    statsData?.volumeUsd_24h === undefined
+                      ? undefined
+                      : formatUsd(statsData.volumeUsd_24h)
                   }
+                  chartType={ChartType.BAR}
+                  periodDays={1}
+                  periodChangePercent={null}
+                  data={statsData?.historicalVolumeUsd_24h}
+                  // formatCategory={(category) =>
+                  //   formatCoinTypeCategory(
+                  //     category,
+                  //     appData.poolCoinMetadataMap,
+                  //   )
+                  // }
+                  formatCategory={(category) => category}
                   formatValue={(value) => formatUsd(new BigNumber(value))}
                 />
               </div>

@@ -6,6 +6,7 @@ import useFetchStatsData from "@/fetchers/useFetchStatsData";
 import { ChartData } from "@/lib/chart";
 
 export interface StatsData {
+  // Pool
   poolHistoricalTvlUsd_24h_map: Record<string, ChartData[]>;
 
   poolVolumeUsd_24h_map: Record<string, BigNumber>;
@@ -16,6 +17,12 @@ export interface StatsData {
 
   poolApr_24h_map: Record<string, BigNumber>;
   poolHistoricalApr_24h_map: Record<string, ChartData[]>;
+
+  // Total
+  historicalTvlUsd_24h: ChartData[];
+
+  volumeUsd_24h: BigNumber;
+  historicalVolumeUsd_24h: ChartData[];
 }
 
 interface StatsContext {
