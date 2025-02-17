@@ -56,16 +56,15 @@ export default function PoolRow({
 
       {/* Type */}
       <div
-        className="flex h-full flex-row items-center"
+        className="flex h-full flex-row items-center gap-1"
         style={columnStyleMap.type}
       >
-        {pool.type ? (
-          <Tag labelClassName="transition-colors group-hover:text-foreground">
-            {poolTypeNameMap[pool.type]}
-          </Tag>
-        ) : (
-          <p className="text-p1 text-foreground">--</p>
-        )}
+        <Tag labelClassName="transition-colors group-hover:text-foreground">
+          {pool.type ? poolTypeNameMap[pool.type] : "--"}
+        </Tag>
+        <Tag labelClassName="transition-colors group-hover:text-foreground">
+          {formatPercent(pool.feeTierPercent)}
+        </Tag>
       </div>
 
       {/* TVL */}

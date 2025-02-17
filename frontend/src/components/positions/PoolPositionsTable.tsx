@@ -118,7 +118,7 @@ export default function PoolPositionsTable({
           id="type"
           style={columnStyleMap.type}
         >
-          Type
+          Type & Fee tier
         </HeaderColumn>
         <HeaderColumn<Column, SortableColumn>
           id="aprPercent_24h"

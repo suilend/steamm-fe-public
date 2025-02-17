@@ -60,7 +60,13 @@ function PoolPage() {
             <div className="flex flex-row items-center gap-3">
               <TokenLogos coinTypes={pool.coinTypes} size={32} />
               <h1 className="text-h2 text-foreground">{formattedPair}</h1>
-              {pool.type && <Tag>{poolTypeNameMap[pool.type]}</Tag>}
+
+              <div className="flex flex-row items-center gap-1">
+                <Tag>{pool.type ? poolTypeNameMap[pool.type] : "--"}</Tag>
+                <Tag labelClassName="transition-colors group-hover:text-foreground">
+                  {formatPercent(pool.feeTierPercent)}
+                </Tag>
+              </div>
             </div>
 
             {/* Stats */}

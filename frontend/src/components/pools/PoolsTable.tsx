@@ -154,7 +154,7 @@ export default function PoolsTable({
           id="type"
           style={columnStyleMap.type}
         >
-          Type
+          Type & Fee tier
         </HeaderColumn>
         <HeaderColumn<Column, SortableColumn>
           id="tvlUsd"
