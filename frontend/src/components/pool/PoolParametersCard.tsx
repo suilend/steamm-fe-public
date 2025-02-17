@@ -38,7 +38,7 @@ export default function PoolParametersCard() {
   const { pool } = usePoolContext();
 
   return (
-    <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5 lg:grid-cols-2">
+    <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
       <Parameter className="gap-1.5" label="Pool composition">
         <div className="flex w-full flex-col gap-2">
           {/* Top */}
