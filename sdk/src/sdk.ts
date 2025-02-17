@@ -24,9 +24,9 @@ import { SuiAddressType, patchFixSuiObjectId } from "./utils";
 
 export type SdkOptions = {
   fullRpcUrl: string;
+  suilend_config: Package<SuilendConfigs>;
   steamm_config: Package<SteammConfigs>;
   steamm_script_config: Package;
-  suilend_config: Package<SuilendConfigs>;
 };
 
 export class SteammSDK {

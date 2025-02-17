@@ -1,3 +1,5 @@
+import { SdkOptions } from "../sdk";
+
 import {
   LENDING_MARKET_ID,
   LENDING_MARKET_TYPE,
@@ -42,9 +44,9 @@ export const STEAMM_SCRIPT_BETA_CONFIG = {
   published_at: STEAMM_SCRIPT_BETA_PUBLISHED_AT,
 };
 
-export const BETA_CONFIG = {
+export const BETA_CONFIG: SdkOptions = {
   fullRpcUrl: "https://fullnode.mainnet.sui.io:443",
+  suilend_config: SUILEND_BETA_CONFIG, // Same as SUILEND_CONFIG
   steamm_config: STEAMM_BETA_CONFIG,
-  suilend_config: SUILEND_BETA_CONFIG,
   steamm_script_config: STEAMM_SCRIPT_BETA_CONFIG,
 };

@@ -18,12 +18,7 @@ import {
 import useFetchBalances from "@suilend/frontend-sui-next/fetchers/useFetchBalances";
 import useCoinMetadataMap from "@suilend/frontend-sui-next/hooks/useCoinMetadataMap";
 import useRefreshOnBalancesChange from "@suilend/frontend-sui-next/hooks/useRefreshOnBalancesChange";
-import {
-  STEAMM_CONFIG,
-  STEAMM_SCRIPT_CONFIG,
-  SUILEND_CONFIG,
-  SteammSDK,
-} from "@suilend/steamm-sdk";
+import { BETA_CONFIG, MAINNET_CONFIG, SteammSDK } from "@suilend/steamm-sdk";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
 import useFetchOwnedKiosks from "@/fetchers/useFetchOwnedKiosks";
@@ -98,10 +93,10 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   // STEAMM client
   const steammClient = useMemo(() => {
     const sdk = new SteammSDK({
+      ...(process.env.NEXT_PUBLIC_USE_BETA_MARKET === "true"
+        ? BETA_CONFIG
+        : MAINNET_CONFIG),
       fullRpcUrl: rpc.url,
-      steamm_config: STEAMM_CONFIG,
-      steamm_script_config: STEAMM_SCRIPT_CONFIG,
-      suilend_config: SUILEND_CONFIG,
     });
     sdk.senderAddress =
       address ??
