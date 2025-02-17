@@ -375,7 +375,7 @@ export default function HistoricalDataChart({
                                   sortedCategories.length > 1
                                     ? `hsl(var(--a${sortedCategories.length - categoryIndex}))`
                                     : "hsl(var(--jordy-blue))",
-                                height: `calc((100% - ${(sortedCategories.length - 1) * 2}px) * ${d[category] / maxY})`,
+                                height: `calc((100% - ${(sortedCategories.length - 1) * 2}px) * ${maxY === 0 ? 0 : d[category] / maxY})`,
                               }}
                             />
                           ))}
