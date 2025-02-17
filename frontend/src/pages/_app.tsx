@@ -6,6 +6,7 @@ import { PropsWithChildren, useEffect, useRef } from "react";
 // import { registerWallet } from "@mysten/wallet-standard";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { LDProvider } from "launchdarkly-react-client-sdk";
 import mixpanel from "mixpanel-browser";
 
 import {
@@ -66,20 +67,26 @@ export default function App({ Component, pageProps }: AppProps) {
       </Head>
 
       <main id="__app_main" className={cn(fontClassNames)}>
-        <SettingsContextProvider>
-          <WalletContextProviderWrapper>
-            <AppContextProvider>
-              <StatsContextProvider>
-                <TooltipProvider>
-                  <Layout>
-                    <Component {...pageProps} />
-                  </Layout>
-                  <Toaster />
-                </TooltipProvider>
-              </StatsContextProvider>
-            </AppContextProvider>
-          </WalletContextProviderWrapper>
-        </SettingsContextProvider>
+        <LDProvider
+          clientSideID={
+            process.env.NEXT_PUBLIC_LAUNCHDARKLY_CLIENT_SIDE_ID as string
+          }
+        >
+          <SettingsContextProvider>
+            <WalletContextProviderWrapper>
+              <AppContextProvider>
+                <StatsContextProvider>
+                  <TooltipProvider>
+                    <Layout>
+                      <Component {...pageProps} />
+                    </Layout>
+                    <Toaster />
+                  </TooltipProvider>
+                </StatsContextProvider>
+              </AppContextProvider>
+            </WalletContextProviderWrapper>
+          </SettingsContextProvider>
+        </LDProvider>
       </main>
     </>
   );

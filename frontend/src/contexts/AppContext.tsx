@@ -9,6 +9,7 @@ import {
 import { KioskItem } from "@mysten/kiosk";
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
+import { useFlags } from "launchdarkly-react-client-sdk";
 import { useLocalStorage } from "usehooks-ts";
 
 import {
@@ -167,9 +168,10 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     [ownedKiosks],
   );
 
+  const flags = useFlags();
   const isWhitelisted = useMemo(
-    () => !!address && [""].includes(address),
-    [address],
+    () => !!address && (flags?.steammBetaWhitelist ?? []).includes(address),
+    [address, flags?.steammBetaWhitelist],
   );
 
   // Context
