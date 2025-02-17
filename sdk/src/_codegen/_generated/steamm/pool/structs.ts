@@ -511,11 +511,6 @@ export function isPool(type: string): boolean {
   return type.startsWith(`${PKG_V1}::pool::Pool` + "<");
 }
 
-export function isPool2(type: string, pkg: string): boolean {
-  type = compressSuiType(type);
-  return type.startsWith(`${pkg}::pool::Pool` + "<");
-}
-
 export interface PoolFields<
   A extends PhantomTypeArgument,
   B extends PhantomTypeArgument,
@@ -778,14 +773,13 @@ export class Pool<
   >(
     typeArgs: [A, B, Quoter, LpType],
     item: FieldsWithTypes,
-    pkg: string = PKG_V1,
   ): Pool<
     ToPhantomTypeArgument<A>,
     ToPhantomTypeArgument<B>,
     ToTypeArgument<Quoter>,
     ToPhantomTypeArgument<LpType>
   > {
-    if (!isPool2(item.type, pkg)) {
+    if (!isPool(item.type)) {
       throw new Error("not a Pool type");
     }
     assertFieldsWithTypesArgsMatch(item, typeArgs);
@@ -946,7 +940,6 @@ export class Pool<
   >(
     typeArgs: [A, B, Quoter, LpType],
     content: SuiParsedData,
-    pkg: string = PKG_V1,
   ): Pool<
     ToPhantomTypeArgument<A>,
     ToPhantomTypeArgument<B>,
@@ -956,7 +949,7 @@ export class Pool<
     if (content.dataType !== "moveObject") {
       throw new Error("not an object");
     }
-    if (!isPool2(content.type, pkg)) {
+    if (!isPool(content.type)) {
       throw new Error(
         `object at ${(content.fields as any).id} is not a Pool object`,
       );
