@@ -3,12 +3,8 @@ import BigNumber from "bignumber.js";
 import useSWR from "swr";
 
 import {
-  NORMALIZED_AUSD_COINTYPE,
-  NORMALIZED_DEEP_COINTYPE,
-  NORMALIZED_SEND_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
   NORMALIZED_USDC_COINTYPE,
-  NORMALIZED_sSUI_COINTYPE,
   getCoinMetadataMap,
   isSui,
 } from "@suilend/frontend-sui";
@@ -81,15 +77,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     // Pools
     const poolInfos = await steammClient.getPools();
 
-    const poolCoinTypes: string[] = [
-      // TEMP (used for dummy TVL and volume data)
-      NORMALIZED_SUI_COINTYPE,
-      NORMALIZED_DEEP_COINTYPE,
-      NORMALIZED_USDC_COINTYPE,
-      NORMALIZED_SEND_COINTYPE,
-      NORMALIZED_sSUI_COINTYPE,
-      NORMALIZED_AUSD_COINTYPE,
-    ];
+    const poolCoinTypes: string[] = [];
     for (const poolInfo of poolInfos) {
       const coinTypes = [
         poolInfo.lpTokenType,
