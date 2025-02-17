@@ -36,7 +36,6 @@ import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import ExchangeRateParameter from "@/components/swap/ExchangeRateParameter";
 import PriceDifferenceLabel from "@/components/swap/PriceDifferenceLabel";
 import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
-import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { getQuoteRatio } from "@/lib/swap";
@@ -433,6 +432,7 @@ export default function SwapPage() {
           <div className="relative flex w-full min-w-0 flex-col items-center gap-1">
             <CoinInput
               className="relative z-[1]"
+              autoFocus
               coinType={inCoinType}
               value={value}
               onChange={(value) => onValueChange(value)}

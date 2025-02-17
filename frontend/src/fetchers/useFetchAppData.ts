@@ -36,7 +36,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       LENDING_MARKET_ID,
       LENDING_MARKET_TYPE,
       suiClient,
-    );
+    ); // Switch to Suilend Beta Main Market by setting NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true (should not need to in practice)
 
     const nowMs = Date.now();
     const nowS = Math.floor(nowMs / 1000);

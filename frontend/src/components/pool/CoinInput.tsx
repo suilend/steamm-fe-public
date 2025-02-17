@@ -12,6 +12,7 @@ export const getCoinInputId = (coinType: string) => `coin-input-${coinType}`;
 
 interface CoinInputProps {
   className?: ClassValue;
+  autoFocus?: boolean;
   coinType: string;
   value?: string;
   onChange?: (value: string) => void;
@@ -20,6 +21,7 @@ interface CoinInputProps {
 
 export default function CoinInput({
   className,
+  autoFocus,
   coinType,
   value,
   onChange,
@@ -78,6 +80,7 @@ export default function CoinInput({
           <input
             id={getCoinInputId(coinType)}
             className="h-[60px] w-full min-w-0 border-0 bg-[transparent] text-right text-h1 text-foreground placeholder:text-tertiary-foreground focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            autoFocus={autoFocus}
             type="number"
             placeholder="0"
             value={value}
