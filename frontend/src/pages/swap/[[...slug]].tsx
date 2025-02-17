@@ -281,6 +281,42 @@ export default function SwapPage() {
     document.getElementById(getCoinInputId(inCoinType))?.focus();
   };
 
+  // Select
+  const onPopoverCoinClick = (coinType: string, direction: "in" | "out") => {
+    const newInCoinType = direction === "in" ? coinType : inCoinType;
+    const newInCoinMetadata = appData.poolCoinMetadataMap[newInCoinType];
+    const newOutCoinType = direction === "in" ? outCoinType : coinType;
+    const newOutCoinMetadata = appData.poolCoinMetadataMap[newOutCoinType];
+
+    shallowPushQuery(router, {
+      slug: `${newInCoinMetadata.symbol}-${newOutCoinMetadata.symbol}`,
+    });
+
+    setOracleQuote(undefined);
+    fetchQuote(
+      steammClient,
+      new BigNumber(
+        10 ** (-1 * Math.round(newInCoinMetadata.decimals * (1 / 2))), // TODO: 1 / 2 is arbitrary, use a better heuristic
+      ).toFixed(newInCoinMetadata.decimals, BigNumber.ROUND_DOWN),
+      newInCoinType,
+      newOutCoinType,
+      true,
+    );
+    setQuote(undefined);
+
+    setTimeout(
+      () => document.getElementById(getCoinInputId(newInCoinType))?.focus(),
+      50,
+    );
+
+    // value === "" || value <= 0
+    if (new BigNumber(value || 0).lte(0)) return;
+
+    // value > 0
+    setIsFetchingQuote(true);
+    fetchQuote(steammClient, value, newInCoinType, newOutCoinType);
+  };
+
   // Reverse
   const reverseAssets = () => {
     const newInCoinType = outCoinType;
@@ -465,10 +501,13 @@ export default function SwapPage() {
               className="relative z-[1]"
               autoFocus
               coinType={inCoinType}
+              otherCoinType={outCoinType}
               value={value}
               onChange={(value) => onValueChange(value)}
               onBalanceClick={() => onCoinBalanceClick()}
-              isReversed
+              onPopoverCoinClick={(coinType) =>
+                onPopoverCoinClick(coinType, "in")
+              }
             />
 
             <ReverseAssetsButton onClick={reverseAssets} />
@@ -476,6 +515,7 @@ export default function SwapPage() {
             <CoinInput
               className="relative z-[1]"
               coinType={outCoinType}
+              otherCoinType={inCoinType}
               value={
                 isFetchingQuote
                   ? undefined
@@ -491,7 +531,9 @@ export default function SwapPage() {
                       )
                     : ""
               }
-              isReversed
+              onPopoverCoinClick={(coinType) =>
+                onPopoverCoinClick(coinType, "out")
+              }
             />
           </div>
 

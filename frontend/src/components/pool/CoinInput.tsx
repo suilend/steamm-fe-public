@@ -3,6 +3,7 @@ import { Wallet } from "lucide-react";
 
 import { formatToken, getToken } from "@suilend/frontend-sui";
 
+import CoinPopover from "@/components/CoinPopover";
 import TokenLogo from "@/components/TokenLogo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
@@ -14,30 +15,33 @@ interface CoinInputProps {
   className?: ClassValue;
   autoFocus?: boolean;
   coinType: string;
+  otherCoinType?: string;
   value?: string;
   onChange?: (value: string) => void;
   onBalanceClick?: () => void;
-  isReversed?: boolean;
+  onPopoverCoinClick?: (coinType: string) => void;
 }
 
 export default function CoinInput({
   className,
   autoFocus,
   coinType,
+  otherCoinType,
   value,
   onChange,
   onBalanceClick,
-  isReversed,
+  onPopoverCoinClick,
 }: CoinInputProps) {
   const { appData, getBalance } = useLoadedAppContext();
 
   const isBalanceClickable = !!onBalanceClick && value !== undefined;
+  const hasPopover = !!onPopoverCoinClick;
 
   return (
     <div
       className={cn(
         "flex w-full items-center justify-between gap-4 rounded-md border bg-input p-5",
-        isReversed ? "flex-row-reverse" : "flex-row",
+        hasPopover ? "flex-row-reverse" : "flex-row",
         !!onChange && "focus-within:border-focus",
         className,
       )}
@@ -45,18 +49,28 @@ export default function CoinInput({
       <div
         className={cn(
           "flex flex-col gap-3",
-          isReversed ? "items-end" : "items-start",
+          hasPopover ? "items-end" : "items-start",
         )}
       >
-        <div className="flex h-[28px] flex-row items-center gap-2.5">
-          <TokenLogo
-            token={getToken(coinType, appData.poolCoinMetadataMap[coinType])}
-            size={28}
-          />
-          <p className="text-h3 text-foreground">
-            {appData.poolCoinMetadataMap[coinType].symbol}
-          </p>
-        </div>
+        {hasPopover && otherCoinType ? (
+          <div className="flex h-[28px] flex-row items-center">
+            <CoinPopover
+              coinType={coinType}
+              otherCoinType={otherCoinType}
+              onCoinClick={onPopoverCoinClick}
+            />
+          </div>
+        ) : (
+          <div className="flex h-[28px] flex-row items-center gap-2.5">
+            <TokenLogo
+              token={getToken(coinType, appData.poolCoinMetadataMap[coinType])}
+              size={28}
+            />
+            <p className="text-h3 text-foreground">
+              {appData.poolCoinMetadataMap[coinType].symbol}
+            </p>
+          </div>
+        )}
 
         <button
           className="group flex w-max flex-row items-center gap-2"
@@ -90,7 +104,7 @@ export default function CoinInput({
             id={getCoinInputId(coinType)}
             className={cn(
               "h-[60px] w-full min-w-0 border-0 bg-[transparent] !text-h1 text-foreground placeholder:text-tertiary-foreground focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
-              isReversed ? "text-left" : "text-right",
+              hasPopover ? "text-left" : "text-right",
             )}
             autoFocus={autoFocus}
             type="number"
