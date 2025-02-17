@@ -92,26 +92,13 @@ export default function PoolsTable({
         ),
       }))
       .sort((a, b) => {
-        if (sortState.column === "tvlUsd") {
+        if (["tvlUsd", "volumeUsd_24h"].includes(sortState.column)) {
           const aTotal = a.pools.reduce(
-            (acc, pool) => acc.plus(pool.tvlUsd),
+            (acc, pool) => acc.plus(pool[sortState.column]!),
             new BigNumber(0),
           );
           const bTotal = b.pools.reduce(
-            (acc, pool) => acc.plus(pool.tvlUsd),
-            new BigNumber(0),
-          );
-
-          return sortState.direction === SortDirection.DESC
-            ? +bTotal.minus(aTotal)
-            : +aTotal.minus(bTotal);
-        } else if (sortState.column === "volumeUsd_24h") {
-          const aTotal = a.pools.reduce(
-            (acc, pool) => acc.plus(pool.volumeUsd_24h!),
-            new BigNumber(0),
-          );
-          const bTotal = b.pools.reduce(
-            (acc, pool) => acc.plus(pool.volumeUsd_24h!),
+            (acc, pool) => acc.plus(pool[sortState.column]!),
             new BigNumber(0),
           );
 

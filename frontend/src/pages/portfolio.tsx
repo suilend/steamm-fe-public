@@ -65,10 +65,7 @@ export default function PortfolioPage() {
             ...pool,
             aprPercent_24h: statsData?.poolAprPercent_24h_map?.[pool.id],
           },
-          balance: {
-            amount: lpTokenBalanceMap[pool.lpTokenType].balance,
-            amountUsd: undefined, // Fetched below
-          },
+          balanceUsd: undefined, // Fetched below
           // depositedAmountUsd: undefined, // TODO
           // isStaked: false, // TODO - FETCH
           // claimableRewards: {
@@ -140,10 +137,7 @@ export default function PortfolioPage() {
     () =>
       positions.map((position) => ({
         ...position,
-        balance: {
-          ...position.balance,
-          amountUsd: poolBalancesUsd[position.pool.id],
-        },
+        balanceUsd: poolBalancesUsd[position.pool.id],
       })),
     [positions, poolBalancesUsd],
   );
@@ -156,11 +150,11 @@ export default function PortfolioPage() {
   const netWorthUsd: BigNumber | undefined = useMemo(
     () =>
       positionsWithFetchedData.some(
-        (position) => position.balance.amountUsd === undefined,
+        (position) => position.balanceUsd === undefined,
       )
         ? undefined
         : positionsWithFetchedData.reduce(
-            (sum, position) => sum.plus(position.balance.amountUsd),
+            (sum, position) => sum.plus(position.balanceUsd),
             new BigNumber(0),
           ),
     [positionsWithFetchedData],
@@ -198,23 +192,21 @@ export default function PortfolioPage() {
       positionsWithFetchedData.some(
         (position) =>
           position.pool.aprPercent_24h === undefined ||
-          position.balance.amountUsd === undefined,
+          position.balanceUsd === undefined,
       )
         ? undefined
         : positionsWithFetchedData
             .reduce(
               (acc, position) =>
                 acc.plus(
-                  position.balance.amountUsd.times(
-                    position.pool.aprPercent_24h!,
-                  ),
+                  position.balanceUsd.times(position.pool.aprPercent_24h!),
                 ),
               new BigNumber(0),
             )
             .div(
               positionsWithFetchedData.length > 0
                 ? positionsWithFetchedData.reduce(
-                    (sum, position) => sum.plus(position.balance.amountUsd),
+                    (sum, position) => sum.plus(position.balanceUsd),
                     new BigNumber(0),
                   )
                 : 1,

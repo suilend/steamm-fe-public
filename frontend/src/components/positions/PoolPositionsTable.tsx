@@ -8,11 +8,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PoolPosition } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Column = "pair" | "type" | "aprPercent_24h" | "balance";
+type Column = "pair" | "type" | "aprPercent_24h" | "balanceUsd";
 // | "isStaked"
 // | "claimableRewards"
 // | "pnl";
-type SortableColumn = "aprPercent_24h" | "balance";
+type SortableColumn = "aprPercent_24h" | "balanceUsd";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
@@ -31,7 +31,7 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
-  balance: {
+  balanceUsd: {
     flex: 1,
     minWidth: 150, // px
     justifyContent: "end",
@@ -89,10 +89,10 @@ export default function PoolPositionsTable({
         return sortState.direction === SortDirection.DESC
           ? +b.pool.aprPercent_24h!.minus(a.pool.aprPercent_24h!)
           : +a.pool.aprPercent_24h!.minus(b.pool.aprPercent_24h!);
-      } else if (sortState.column === "balance") {
+      } else if (sortState.column === "balanceUsd") {
         return sortState.direction === SortDirection.DESC
-          ? +b.balance.amountUsd!.minus(a.balance.amountUsd!)
-          : +a.balance.amountUsd!.minus(b.balance.amountUsd!);
+          ? +b.balanceUsd!.minus(a.balanceUsd!)
+          : +a.balanceUsd!.minus(b.balanceUsd!);
       }
 
       return 0; // Should never reach here
@@ -135,16 +135,16 @@ export default function PoolPositionsTable({
           APR (24H)
         </HeaderColumn>
         <HeaderColumn<Column, SortableColumn>
-          id="balance"
+          id="balanceUsd"
           sortState={sortState}
           toggleSortByColumn={
             !!(positions ?? []).every(
-              (position) => position.balance.amountUsd !== undefined,
+              (position) => position.balanceUsd !== undefined,
             )
               ? toggleSortByColumn
               : undefined
           }
-          style={columnStyleMap.balance}
+          style={columnStyleMap.balanceUsd}
         >
           Balance
         </HeaderColumn>
@@ -174,13 +174,13 @@ export default function PoolPositionsTable({
           <Skeleton
             key={index}
             className={cn(
-              "relative z-[1] h-[72px] w-full",
-              index !== array.length - 1 && "h-[calc(72px+1px)] border-b",
+              "relative z-[1] h-[56px] w-full",
+              index !== array.length - 1 && "h-[calc(56px+1px)] border-b",
             )}
           />
         ))
       ) : sortedPositions.length === 0 ? (
-        <div className="flex h-[72px] w-full flex-row items-center justify-center">
+        <div className="flex h-[56px] w-full flex-row items-center justify-center">
           <p className="text-p2 text-tertiary-foreground">No positions</p>
         </div>
       ) : (

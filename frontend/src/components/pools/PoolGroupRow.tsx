@@ -143,17 +143,14 @@ export default function PoolGroupRow({
 
         {/* APR */}
         <div
-          className="flex h-full flex-row items-center gap-2"
+          className="flex h-full flex-row items-center"
           style={columnStyleMap.aprPercent_24h}
         >
-          {poolGroup.pools.length > 1 && (
-            <p className="text-p3 text-tertiary-foreground">Up to</p>
-          )}
-
           {maxAprPercent_24h === undefined ? (
             <Skeleton className="h-[24px] w-16" />
           ) : (
             <p className="text-p1 text-foreground">
+              {poolGroup.pools.length > 1 && "<"}
               {formatPercent(maxAprPercent_24h)}
             </p>
           )}

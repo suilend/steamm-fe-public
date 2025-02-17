@@ -149,7 +149,6 @@ export default function PoolsPage() {
             <h2 className="text-h3 text-foreground">Featured pools</h2>
 
             <PoolsTable
-              className="max-h-[480px]"
               tableId="featured-pools"
               poolGroups={featuredPoolGroups}
             />
@@ -183,11 +182,7 @@ export default function PoolsPage() {
             </Tooltip>
           </div>
 
-          <PoolsTable
-            className="max-h-[480px]"
-            tableId="pools"
-            poolGroups={poolGroups}
-          />
+          <PoolsTable tableId="pools" poolGroups={poolGroups} />
         </div>
       </div>
     </>

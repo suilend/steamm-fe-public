@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MouseEvent } from "react";
 
-import { formatPercent, formatToken, formatUsd } from "@suilend/frontend-sui";
+import { formatPercent, formatUsd } from "@suilend/frontend-sui";
 
 import { columnStyleMap } from "@/components/positions/PoolPositionsTable";
 import Tag from "@/components/Tag";
@@ -38,8 +38,8 @@ export default function PoolPositionRow({
   return (
     <Link
       className={cn(
-        "group relative z-[1] flex h-[72px] w-full min-w-max shrink-0 cursor-pointer flex-row transition-colors hover:bg-tertiary",
-        !isLast && "h-[calc(72px+1px)] border-b",
+        "group relative z-[1] flex h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row transition-colors hover:bg-tertiary",
+        !isLast && "h-[calc(56px+1px)] border-b",
       )}
       href={`${POOL_URL_PREFIX}/${position.pool.id}`}
     >
@@ -89,35 +89,17 @@ export default function PoolPositionRow({
       {/* Balance */}
       <div
         className="flex h-full flex-row items-center"
-        style={columnStyleMap.balance}
+        style={columnStyleMap.balanceUsd}
       >
-        <div className="flex flex-col items-end gap-0.5">
-          {position.balance.amountUsd === undefined ? (
-            <Skeleton className="h-[24px] w-16" />
-          ) : (
-            <Tooltip
-              title={formatUsd(position.balance.amountUsd, { exact: true })}
-            >
-              <p className="text-p1 text-foreground">
-                {formatUsd(position.balance.amountUsd)}
-              </p>
-            </Tooltip>
-          )}
-
-          <div className="flex flex-row items-center gap-2">
-            <TokenLogos coinTypes={position.pool.coinTypes} size={16} />
-            <Tooltip
-              title={formatToken(position.balance.amount, {
-                dp: appData.poolCoinMetadataMap[position.pool.lpTokenType]
-                  .decimals,
-              })}
-            >
-              <p className="text-p2 text-secondary-foreground">
-                {formatToken(position.balance.amount, { exact: false })}
-              </p>
-            </Tooltip>
-          </div>
-        </div>
+        {position.balanceUsd === undefined ? (
+          <Skeleton className="h-[24px] w-16" />
+        ) : (
+          <Tooltip title={formatUsd(position.balanceUsd, { exact: true })}>
+            <p className="text-p1 text-foreground">
+              {formatUsd(position.balanceUsd)}
+            </p>
+          </Tooltip>
+        )}
       </div>
 
       {/* Staked */}
