@@ -69,7 +69,7 @@ export default function Dialog({
         >
           <div
             className={cn(
-              "pointer-events-auto flex h-auto max-h-full w-full max-w-4xl flex-col rounded-lg border bg-secondary",
+              "pointer-events-auto flex h-auto max-h-full w-full max-w-4xl flex-col rounded-md border bg-popover",
               dialogContentInnerClassName,
             )}
           >

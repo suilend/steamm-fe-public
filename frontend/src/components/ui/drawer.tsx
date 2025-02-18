@@ -57,14 +57,14 @@ const DrawerContent = forwardRef<
     <DrawerPrimitive.Content
       ref={ref}
       className={cn(
-        "bg-backround-secondary fixed inset-x-0 bottom-0 z-50 flex h-auto flex-col rounded-t-lg border",
+        "fixed inset-x-0 bottom-0 z-50 flex h-auto flex-col rounded-t-md border bg-popover",
         className,
       )}
       {...props}
     >
       <div
         className={cn(
-          "bg-foreground-secondary mx-auto mt-4 h-2 w-[100px] shrink-0 rounded-[4px]",
+          "mx-auto mt-4 h-1 w-[100px] shrink-0 rounded-[2px] bg-border",
           thumbClassName,
         )}
       />

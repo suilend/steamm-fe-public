@@ -6,6 +6,7 @@ import { RotateCw } from "lucide-react";
 import ConnectWalletButton from "@/components/ConnectWalletButton";
 import Container from "@/components/Container";
 import Logo from "@/components/Logo";
+import SettingsDialog from "@/components/SettingsDialog";
 import { useAppContext } from "@/contexts/AppContext";
 import {
   ADMIN_URL,
@@ -95,9 +96,9 @@ export default function Nav() {
                       <p
                         className={cn(
                           isSelected
-                            ? "text-foreground"
+                            ? "text-foreground transition-colors"
                             : !isDisabled
-                              ? "text-secondary-foreground transition-colors group-hover:text-foreground"
+                              ? "text-secondary-foreground group-hover:text-foreground"
                               : "text-tertiary-foreground",
                         )}
                       >
@@ -111,12 +112,17 @@ export default function Nav() {
 
             {/* End */}
             <div className="flex min-w-0 flex-row items-center gap-3">
-              <button
-                className="group flex h-5 w-5 flex-row items-center justify-center"
-                onClick={refreshAll}
-              >
-                <RotateCw className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
-              </button>
+              <div className="flex flex-row items-center gap-2">
+                <button
+                  className="group flex h-5 w-5 flex-row items-center justify-center"
+                  onClick={refreshAll}
+                >
+                  <RotateCw className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
+                </button>
+
+                <SettingsDialog />
+              </div>
+
               <ConnectWalletButton />
             </div>
           </div>

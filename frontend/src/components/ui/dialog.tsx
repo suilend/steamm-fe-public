@@ -83,23 +83,23 @@ const DialogHeader = ({
   const { className: titleClassName, ...restTitleProps } = title;
 
   return (
-    <div className="flex w-full flex-col gap-1.5 border-b p-4">
+    <div className="flex w-full flex-col gap-1 border-b p-4">
       {/* Title */}
       <div
         className={cn(
-          "flex h-4 w-full flex-row items-center justify-between gap-4",
+          "flex h-6 w-full flex-row items-center justify-between gap-4",
           className,
         )}
       >
         <TitleWithIcon className={cn(titleClassName)} {...restTitleProps} />
 
         {(titleEndContent || showCloseButton) && (
-          <div className="-mr-2 flex flex-row items-center">
+          <div className="flex flex-row items-center">
             {titleEndContent}
             {showCloseButton && (
               <DialogPrimitive.Close asChild>
-                <button className="text-secondary-foreground">
-                  <X className="h-5 w-5" />
+                <button className="group">
+                  <X className="h-5 w-5 text-secondary-foreground transition-colors group-hover:text-foreground" />
                 </button>
               </DialogPrimitive.Close>
             )}
@@ -108,7 +108,9 @@ const DialogHeader = ({
       </div>
 
       {/* Description */}
-      {description && <p>{description}</p>}
+      {description && (
+        <p className="text-p2 text-secondary-foreground">{description}</p>
+      )}
     </div>
   );
 };

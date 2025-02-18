@@ -60,8 +60,8 @@ export default function PoolGroupRow({
     <>
       <div
         className={cn(
-          "group relative z-[1] flex h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row",
-          isExpanded ? "bg-tertiary" : "transition-colors hover:bg-tertiary",
+          "group relative z-[1] flex h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row transition-colors",
+          isExpanded ? "bg-tertiary" : "hover:bg-tertiary",
           (isExpanded || !isLast) && "h-[calc(56px+1px)] border-b",
         )}
         onClick={() => setIsExpanded((prev) => !prev)}
@@ -76,18 +76,18 @@ export default function PoolGroupRow({
             <Tag
               className="w-max"
               labelClassName={cn(
-                "flex flex-row  items-center gap-1",
+                "flex flex-row transition-colors items-center gap-1",
                 isExpanded
                   ? "text-foreground"
-                  : "text-secondary-foreground transition-colors group-hover:text-foreground",
+                  : "text-secondary-foreground group-hover:text-foreground",
               )}
             >
               <Chevron
                 className={cn(
-                  "-ml-0.5 h-4 w-4",
+                  "-ml-0.5 h-4 w-4 transition-colors",
                   isExpanded
                     ? "text-foreground"
-                    : "text-secondary-foreground transition-colors group-hover:text-foreground",
+                    : "text-secondary-foreground group-hover:text-foreground",
                 )}
               />
               {poolGroup.pools.length}

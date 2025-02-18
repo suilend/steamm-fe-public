@@ -283,9 +283,19 @@ export default function SwapPage() {
 
   // Select
   const onPopoverCoinClick = (coinType: string, direction: "in" | "out") => {
-    const newInCoinType = direction === "in" ? coinType : inCoinType;
+    const newInCoinType =
+      direction === "in"
+        ? coinType
+        : coinType === inCoinType
+          ? outCoinType
+          : inCoinType;
     const newInCoinMetadata = appData.poolCoinMetadataMap[newInCoinType];
-    const newOutCoinType = direction === "in" ? outCoinType : coinType;
+    const newOutCoinType =
+      direction === "in"
+        ? coinType === outCoinType
+          ? inCoinType
+          : outCoinType
+        : coinType;
     const newOutCoinMetadata = appData.poolCoinMetadataMap[newOutCoinType];
 
     shallowPushQuery(router, {
@@ -501,7 +511,6 @@ export default function SwapPage() {
               className="relative z-[1]"
               autoFocus
               coinType={inCoinType}
-              otherCoinType={outCoinType}
               value={value}
               onChange={(value) => onValueChange(value)}
               onBalanceClick={() => onCoinBalanceClick()}
@@ -515,7 +524,6 @@ export default function SwapPage() {
             <CoinInput
               className="relative z-[1]"
               coinType={outCoinType}
-              otherCoinType={inCoinType}
               value={
                 isFetchingQuote
                   ? undefined

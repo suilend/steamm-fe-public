@@ -97,20 +97,20 @@ export default function ConnectWalletPopover() {
         <button className="group flex h-10 flex-row items-center gap-2 rounded-md border bg-card px-3">
           <p
             className={cn(
-              "!text-p2",
+              "!text-p2 transition-colors",
               isConnectWalletDropdownOpen
                 ? "text-foreground"
-                : "text-secondary-foreground transition-colors group-hover:text-foreground",
+                : "text-secondary-foreground group-hover:text-foreground",
             )}
           >
             Connect<span className="max-md:hidden"> wallet</span>
           </p>
           <Chevron
             className={cn(
-              "-ml-0.5 h-4 w-4",
+              "-ml-0.5 h-4 w-4 transition-colors",
               isConnectWalletDropdownOpen
                 ? "text-foreground"
-                : "text-secondary-foreground transition-colors group-hover:text-foreground",
+                : "text-secondary-foreground group-hover:text-foreground",
             )}
           />
         </button>

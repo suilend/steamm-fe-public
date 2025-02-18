@@ -60,10 +60,10 @@ export default function ConnectedWalletPopover() {
 
           <p
             className={cn(
-              "overflow-hidden text-ellipsis text-nowrap !text-p2",
+              "overflow-hidden text-ellipsis text-nowrap !text-p2 transition-colors",
               isOpen
                 ? "text-foreground"
-                : "text-secondary-foreground transition-colors group-hover:text-foreground",
+                : "text-secondary-foreground group-hover:text-foreground",
             )}
           >
             {(!isImpersonating ? account?.label : undefined) ??
@@ -71,10 +71,10 @@ export default function ConnectedWalletPopover() {
           </p>
           <Chevron
             className={cn(
-              "-ml-0.5 h-4 w-4 shrink-0",
+              "-ml-0.5 h-4 w-4 shrink-0 transition-colors",
               isOpen
                 ? "text-foreground"
-                : "text-secondary-foreground transition-colors group-hover:text-foreground",
+                : "text-secondary-foreground group-hover:text-foreground",
             )}
           />
         </button>
@@ -117,10 +117,10 @@ export default function ConnectedWalletPopover() {
               <button
                 key={a.address}
                 className={cn(
-                  "group flex h-10 w-full flex-row items-center justify-between rounded-md border px-3",
+                  "group flex h-10 w-full flex-row items-center justify-between rounded-md border px-3 transition-colors",
                   a.address === address
-                    ? "cursor-default bg-border"
-                    : "transition-colors hover:bg-border/50",
+                    ? "cursor-default bg-button-1"
+                    : "hover:bg-border/50",
                 )}
                 onClick={
                   a.address === address ? undefined : () => switchAccount(a)
@@ -128,10 +128,10 @@ export default function ConnectedWalletPopover() {
               >
                 <p
                   className={cn(
-                    "shrink-0 !text-p2",
+                    "shrink-0 !text-p2 transition-colors",
                     a.address === address
-                      ? "text-foreground"
-                      : "text-secondary-foreground transition-colors group-hover:text-foreground",
+                      ? "text-button-1-foreground"
+                      : "text-secondary-foreground group-hover:text-foreground",
                   )}
                 >
                   {formatAddress(a.address)}
@@ -140,10 +140,10 @@ export default function ConnectedWalletPopover() {
                 {a.label && (
                   <p
                     className={cn(
-                      "overflow-hidden text-ellipsis text-nowrap !text-p3",
+                      "overflow-hidden text-ellipsis text-nowrap !text-p3 transition-colors",
                       a.address === address
-                        ? "text-foreground"
-                        : "text-tertiary-foreground transition-colors group-hover:text-foreground",
+                        ? "text-button-1-foreground/75"
+                        : "text-tertiary-foreground group-hover:text-foreground/75",
                     )}
                   >
                     {a.label}
