@@ -178,6 +178,12 @@ export class PoolModule implements IModule {
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
+    const bankA = this.sdk.getBank(bankInfoA);
+    const bankB = this.sdk.getBank(bankInfoB);
+
+    bankA.compoundInterestIfAny(tx);
+    bankB.compoundInterestIfAny(tx);
+
     poolScript.quoteRedeem(tx, {
       lpTokens: args.lpTokens,
     });
@@ -256,7 +262,6 @@ export class PoolModule implements IModule {
       },
     );
 
-    // console.log(inspectResults)
     if (inspectResults.error) {
       console.log(inspectResults);
       throw new Error("DevInspect Failed");
