@@ -1097,16 +1097,22 @@ function SwapTab({ formatValue }: SwapTabProps) {
 
       const transaction = new Transaction();
 
-      const coinA = coinWithBalance({
-        balance: BigInt(activeCoinIndex === 0 ? amountIn : minAmountOut),
-        type: coinTypeA,
-        useGasCoin: isSui(coinTypeA),
-      })(transaction);
-      const coinB = coinWithBalance({
-        balance: BigInt(activeCoinIndex === 0 ? minAmountOut : amountIn),
-        type: coinTypeB,
-        useGasCoin: isSui(coinTypeB),
-      })(transaction);
+      const coinA =
+        activeCoinIndex === 0
+          ? coinWithBalance({
+              balance: BigInt(amountIn),
+              type: coinTypeA,
+              useGasCoin: isSui(coinTypeA),
+            })(transaction)
+          : steammClient.fullClient.zeroCoin(transaction, coinTypeA);
+      const coinB =
+        activeCoinIndex === 0
+          ? steammClient.fullClient.zeroCoin(transaction, coinTypeB)
+          : coinWithBalance({
+              balance: BigInt(amountIn),
+              type: coinTypeB,
+              useGasCoin: isSui(coinTypeB),
+            })(transaction);
 
       await steammClient.Pool.swap(transaction, {
         pool: pool.id,
