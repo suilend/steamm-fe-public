@@ -15,7 +15,6 @@ interface CoinInputProps {
   className?: ClassValue;
   autoFocus?: boolean;
   coinType: string;
-  otherCoinType?: string;
   value?: string;
   onChange?: (value: string) => void;
   onBalanceClick?: () => void;
@@ -26,7 +25,6 @@ export default function CoinInput({
   className,
   autoFocus,
   coinType,
-  otherCoinType,
   value,
   onChange,
   onBalanceClick,
@@ -53,13 +51,9 @@ export default function CoinInput({
           hasPopover ? "items-end" : "items-start",
         )}
       >
-        {hasPopover && otherCoinType ? (
+        {hasPopover ? (
           <div className="flex h-[28px] flex-row items-center">
-            <CoinPopover
-              coinType={coinType}
-              otherCoinType={otherCoinType}
-              onCoinClick={onPopoverCoinClick}
-            />
+            <CoinPopover coinType={coinType} onCoinClick={onPopoverCoinClick} />
           </div>
         ) : (
           <div className="flex h-[28px] flex-row items-center gap-2.5">
@@ -100,11 +94,11 @@ export default function CoinInput({
       {value === undefined ? (
         <Skeleton className="h-[42px] w-40" />
       ) : (
-        <div className="flex-1">
+        <div className="h-[60px] flex-1">
           <input
             id={getCoinInputId(coinType)}
             className={cn(
-              "h-[60px] w-full min-w-0 border-0 bg-[transparent] !text-h1 text-foreground placeholder:text-tertiary-foreground focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+              "h-full w-full min-w-0 !border-0 !bg-[transparent] px-0 !text-h1 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
               hasPopover ? "text-left" : "text-right",
             )}
             autoFocus={autoFocus}
