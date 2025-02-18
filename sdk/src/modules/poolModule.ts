@@ -144,7 +144,7 @@ export class PoolModule implements IModule {
       amountIn: args.amountIn,
     });
 
-    return castSwapQuote(await this.getQuoteResult<SwapQuote>(tx));
+    return castSwapQuote(await this.getQuoteResult<SwapQuote>(tx, "SwapQuote"));
   }
 
   public async quoteDeposit(args: QuoteDepositArgs): Promise<DepositQuote> {
@@ -163,7 +163,9 @@ export class PoolModule implements IModule {
       maxB: args.maxB,
     });
 
-    return castDepositQuote(await this.getQuoteResult<DepositQuote>(tx));
+    return castDepositQuote(
+      await this.getQuoteResult<DepositQuote>(tx, "DepositQuote"),
+    );
   }
 
   public async quoteRedeem(args: QuoteRedeemArgs): Promise<RedeemQuote> {
@@ -180,7 +182,9 @@ export class PoolModule implements IModule {
       lpTokens: args.lpTokens,
     });
 
-    return castRedeemQuote(await this.getQuoteResult<RedeemQuote>(tx));
+    return castRedeemQuote(
+      await this.getQuoteResult<RedeemQuote>(tx, "RedeemQuote"),
+    );
   }
 
   public async createLpToken(
@@ -241,7 +245,10 @@ export class PoolModule implements IModule {
     createPool(tx, callArgs, this.sdk.packageInfo());
   }
 
-  private async getQuoteResult<T>(tx: Transaction): Promise<T> {
+  private async getQuoteResult<T>(
+    tx: Transaction,
+    quoteType: string,
+  ): Promise<T> {
     const inspectResults = await this.sdk.fullClient.devInspectTransactionBlock(
       {
         sender: this.sdk.senderAddress,
@@ -255,7 +262,14 @@ export class PoolModule implements IModule {
       throw new Error("DevInspect Failed");
     }
 
-    const quoteResult = (inspectResults.events[0].parsedJson as any).event as T;
+    const quoteEvent = inspectResults.events.find((event) =>
+      event.type.includes(`${this.sdk.sourcePkgId()}::quote::${quoteType}`),
+    );
+    if (!quoteEvent) {
+      throw new Error("Quote event not found");
+    }
+
+    const quoteResult = (quoteEvent.parsedJson as any).event as T;
     return quoteResult;
   }
 
