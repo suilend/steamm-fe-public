@@ -18,6 +18,7 @@ import {
 import { SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
+import { formatPair } from "@/lib/format";
 import { ParsedPool, PoolType } from "@/lib/types";
 
 export default function useFetchAppData(steammClient: SteammSDK) {
@@ -171,6 +172,19 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       });
     }
 
+    const sortedPools = pools.slice().sort((a, b) => {
+      return formatPair([
+        coinMetadataMap[a.coinTypes[0]].symbol,
+        coinMetadataMap[a.coinTypes[1]].symbol,
+      ]) <
+        formatPair([
+          coinMetadataMap[b.coinTypes[0]].symbol,
+          coinMetadataMap[b.coinTypes[1]].symbol,
+        ])
+        ? -1
+        : 1; // Sort by pair (ascending)
+    });
+
     const featuredCoinTypePairs: [[string, string]] = [["", ""]];
 
     return {
@@ -179,7 +193,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       bTokenTypeCoinTypeMap,
       lendingMarketIdTypeMap,
 
-      pools,
+      pools: sortedPools,
       poolCoinTypes,
       poolCoinMetadataMap,
       featuredCoinTypePairs,

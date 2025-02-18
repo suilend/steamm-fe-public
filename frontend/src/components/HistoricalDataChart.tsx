@@ -298,7 +298,7 @@ export default function HistoricalDataChart({
       {/* Bottom */}
       <div className="flex w-full flex-col gap-3">
         {/* Chart */}
-        <div className="h-[150px] transform-gpu md:h-[180px]">
+        <div className="h-[120px] transform-gpu md:h-[180px]">
           {processedData === undefined ? (
             <Skeleton className="h-full w-full" />
           ) : (
@@ -374,8 +374,10 @@ export default function HistoricalDataChart({
                                 backgroundColor:
                                   sortedCategories.length > 1
                                     ? `hsl(var(--a${sortedCategories.length - categoryIndex}))`
-                                    : "hsl(var(--jordy-blue))",
-                                height: `calc((100% - ${(sortedCategories.length - 1) * 2}px) * ${maxY === 0 ? 0 : d[category] / maxY})`,
+                                    : maxY > 0 && d[category] > 0
+                                      ? "hsl(var(--jordy-blue))"
+                                      : "hsla(var(--jordy-blue) / 25%)",
+                                height: `max(2px, calc((100% - ${(sortedCategories.length - 1) * 2}px) * ${maxY === 0 ? 0 : d[category] / maxY}))`,
                               }}
                             />
                           ))}
@@ -392,7 +394,7 @@ export default function HistoricalDataChart({
                     margin={{
                       top: 0,
                       right: 0,
-                      bottom: 0,
+                      bottom: 1,
                       left: 0,
                     }}
                   >

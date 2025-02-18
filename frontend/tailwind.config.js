@@ -42,7 +42,6 @@ module.exports = {
       "hover-border": "hsl(var(--hover-border))",
 
       focus: "hsl(var(--focus))",
-      input: "hsl(var(--input))",
       card: "hsl(var(--card))",
       popover: "hsl(var(--popover))",
       tooltip: "hsl(var(--tooltip))",

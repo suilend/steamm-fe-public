@@ -311,9 +311,7 @@ export default function PortfolioPage() {
             {/* APR */}
             <div className="max-md:w-full max-md:border-b md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
-                <p className="text-p2 text-secondary-foreground">
-                  Average APR (24H)
-                </p>
+                <p className="text-p2 text-secondary-foreground">Average APR</p>
 
                 {weightedAverageAprPercent === undefined ? (
                   <Skeleton className="h-[30px] w-20" />

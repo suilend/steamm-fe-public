@@ -120,19 +120,22 @@ export default function SlippagePopover() {
           <p className="text-p2 text-secondary-foreground">Custom</p>
 
           <div className="relative w-full">
-            <input
-              className="relative z-[1] h-10 w-full min-w-0 rounded-md border bg-input px-3 text-p1 text-foreground placeholder:text-tertiary-foreground focus-visible:border-focus focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-              type="number"
-              placeholder={`${
-                slippagePercent.toFixed(2).at(-1)! === "0"
-                  ? slippagePercent.toFixed(1)
-                  : slippagePercent.toFixed(2)
-              }%`}
-              value={value}
-              onChange={(e) => formatAndSetSlippagePercent(e.target.value)}
-              onWheel={(e) => e.currentTarget.blur()}
-              step="any"
-            />
+            <div className="relative z-[1] w-full rounded-md bg-card/50 transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]">
+              <input
+                className="h-10 w-full min-w-0 border-0 bg-[transparent] px-3 text-p1 text-foreground transition-colors placeholder:text-tertiary-foreground focus-visible:border-focus focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                type="number"
+                placeholder={`${
+                  slippagePercent.toFixed(2).at(-1)! === "0"
+                    ? slippagePercent.toFixed(1)
+                    : slippagePercent.toFixed(2)
+                }%`}
+                value={value}
+                onChange={(e) => formatAndSetSlippagePercent(e.target.value)}
+                onWheel={(e) => e.currentTarget.blur()}
+                step="any"
+              />
+            </div>
+
             <p className="pointer-events-none absolute right-3 top-1/2 z-[2] -translate-y-1/2 text-p2 text-secondary-foreground">
               %
             </p>

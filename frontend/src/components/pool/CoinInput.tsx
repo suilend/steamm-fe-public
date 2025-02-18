@@ -40,9 +40,10 @@ export default function CoinInput({
   return (
     <div
       className={cn(
-        "flex w-full items-center justify-between gap-4 rounded-md border bg-input p-5",
+        "flex w-full items-center justify-between gap-4 rounded-md bg-card/50 p-5 transition-colors",
         hasPopover ? "flex-row-reverse" : "flex-row",
-        !!onChange && "focus-within:border-focus",
+        !!onChange &&
+          "focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]",
         className,
       )}
     >

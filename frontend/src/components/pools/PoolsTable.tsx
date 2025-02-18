@@ -183,7 +183,7 @@ export default function PoolsTable({
           }
           style={columnStyleMap.aprPercent_24h}
         >
-          APR (24H)
+          APR
         </HeaderColumn>
       </div>
 

@@ -135,7 +135,7 @@ function PoolPage() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <p className="text-p2 text-secondary-foreground">APR (24H)</p>
+                <p className="text-p2 text-secondary-foreground">APR</p>
 
                 <div className="flex flex-row items-center gap-1.5">
                   {statsData?.poolAprPercent_24h_map?.[pool.id] ===

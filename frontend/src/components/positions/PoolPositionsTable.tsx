@@ -132,7 +132,7 @@ export default function PoolPositionsTable({
           }
           style={columnStyleMap.aprPercent_24h}
         >
-          APR (24H)
+          APR
         </HeaderColumn>
         <HeaderColumn<Column, SortableColumn>
           id="balanceUsd"

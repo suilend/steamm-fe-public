@@ -1319,9 +1319,9 @@ export default function PoolActionsCard() {
 
   return (
     <div className="flex w-full flex-col gap-4 rounded-md border p-5">
-      <div className="flex w-full flex-row items-center justify-between">
+      <div className="flex w-full flex-row justify-between">
         {/* Tabs */}
-        <div className="flex flex-row gap-1">
+        <div className="flex flex-row">
           {Object.values(Action).map((action) => {
             if (
               pool.tvlUsd.eq(0) &&
@@ -1333,23 +1333,29 @@ export default function PoolActionsCard() {
               <button
                 key={action}
                 className={cn(
-                  "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors",
-                  selectedAction === action
-                    ? "cursor-default bg-border"
-                    : "hover:bg-border/50",
+                  "group relative flex h-8 flex-row px-2 transition-colors",
+                  action === selectedAction ? "cursor-default" : "",
                 )}
                 onClick={() => onSelectedActionChange(action)}
               >
                 <p
                   className={cn(
                     "!text-p2 transition-colors",
-                    selectedAction === action
+                    action === selectedAction
                       ? "text-foreground"
                       : "text-secondary-foreground group-hover:text-foreground",
                   )}
                 >
                   {actionNameMap[action]}
                 </p>
+                <div
+                  className={cn(
+                    "absolute inset-x-0 top-full h-[2px] transition-all",
+                    action === selectedAction
+                      ? "bg-foreground"
+                      : "bg-border group-hover:bg-foreground",
+                  )}
+                />
               </button>
             );
           })}
