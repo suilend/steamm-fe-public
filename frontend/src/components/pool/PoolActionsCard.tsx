@@ -745,7 +745,7 @@ function WithdrawTab() {
       <div className="flex w-full flex-col gap-2">
         <p className="text-p2 text-secondary-foreground">You receive</p>
 
-        <div className="flex w-full flex-col gap-3 rounded-md border p-4">
+        <div className="flex w-full flex-col gap-2 rounded-md border p-4">
           {pool.coinTypes.map((coinType, index) => {
             const coinMetadata = appData.poolCoinMetadataMap[coinType];
 
@@ -757,7 +757,7 @@ function WithdrawTab() {
                 <div className="flex flex-row items-center gap-2">
                   <TokenLogo
                     token={getToken(coinType, coinMetadata)}
-                    size={24}
+                    size={20}
                   />
                   <p className="text-p1 text-foreground">
                     {coinMetadata.symbol}

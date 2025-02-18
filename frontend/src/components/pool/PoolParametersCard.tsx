@@ -40,27 +40,35 @@ export default function PoolParametersCard() {
 
   return (
     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
-      <Parameter className="gap-1.5" label="Pool composition">
-        <div className="flex w-full flex-col gap-2">
-          {/* Top */}
-          <div className="flex w-full flex-row justify-between">
-            {/* Left */}
-            <div className="flex h-[21px] flex-row items-center gap-2">
+      <Parameter className="gap-2" label="Pool composition">
+        {pool.coinTypes.map((coinType, index) => {
+          const coinMetadata = appData.poolCoinMetadataMap[coinType];
+
+          return (
+            <div
+              key={coinType}
+              className="flex w-full flex-row items-center gap-2"
+            >
               <TokenLogo
                 className="bg-background"
-                token={getToken(
-                  pool.coinTypes[0],
-                  appData.poolCoinMetadataMap[pool.coinTypes[0]],
-                )}
+                token={getToken(coinType, coinMetadata)}
                 size={16}
               />
 
-              <p className="text-p2 text-foreground">
-                {appData.poolCoinMetadataMap[pool.coinTypes[0]].symbol}
-              </p>
-              {appData.reserveDepositAprPercentMap[pool.coinTypes[0]] && (
+              <Tooltip
+                title={`${formatToken(pool.balances[index], {
+                  dp: coinMetadata.decimals,
+                })} ${coinMetadata.symbol}`}
+              >
+                <p className="text-p2 text-foreground">
+                  {formatToken(pool.balances[index], { exact: false })}{" "}
+                  {coinMetadata.symbol}
+                </p>
+              </Tooltip>
+
+              {appData.reserveDepositAprPercentMap[coinType] && (
                 <Tooltip
-                  title={`Deposited ${appData.poolCoinMetadataMap[pool.coinTypes[0]].symbol} is earning ${formatPercent(appData.reserveDepositAprPercentMap[pool.coinTypes[0]])} APR in Suilend`}
+                  title={`Deposited ${coinMetadata.symbol} is earning ${formatPercent(appData.reserveDepositAprPercentMap[coinType])} APR in Suilend`}
                 >
                   <p
                     className={cn(
@@ -69,7 +77,7 @@ export default function PoolParametersCard() {
                     )}
                   >
                     {formatPercent(
-                      appData.reserveDepositAprPercentMap[pool.coinTypes[0]],
+                      appData.reserveDepositAprPercentMap[coinType],
                     )}{" "}
                     APR
                   </p>
@@ -77,142 +85,12 @@ export default function PoolParametersCard() {
               )}
 
               <div className="flex flex-row items-center gap-1">
-                <CopyToClipboardButton value={pool.coinTypes[0]} />
-                <OpenOnExplorerButton
-                  url={explorer.buildCoinUrl(pool.coinTypes[0])}
-                />
+                <CopyToClipboardButton value={coinType} />
+                <OpenOnExplorerButton url={explorer.buildCoinUrl(coinType)} />
               </div>
             </div>
-
-            <div className="flex flex-row items-center gap-1.5">
-              <Tooltip
-                title={formatToken(pool.balances[0], {
-                  dp: appData.poolCoinMetadataMap[pool.coinTypes[0]].decimals,
-                })}
-              >
-                <p className="text-p2 text-foreground">
-                  {formatToken(pool.balances[0], { exact: false })}
-                </p>
-              </Tooltip>
-
-              {!pool.tvlUsd.eq(0) && (
-                <p className="text-p3 text-tertiary-foreground">
-                  (
-                  {formatPercent(
-                    pool.balances[0]
-                      .times(pool.prices[0])
-                      .div(pool.tvlUsd)
-                      .times(100),
-                  )}
-                  )
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Bottom */}
-          <div className="flex h-1 w-full flex-row overflow-hidden rounded-[2px]">
-            <div
-              className="h-full bg-jordy-blue"
-              style={{
-                width: !pool.tvlUsd.eq(0)
-                  ? `${pool.balances[0]
-                      .times(pool.prices[0])
-                      .div(pool.tvlUsd)
-                      .times(100)}%`
-                  : "0%",
-              }}
-            />
-            <div className="h-full flex-1 bg-border" />
-          </div>
-        </div>
-      </Parameter>
-      <Parameter className="max-md:-mt-2 md:self-end">
-        <div className="flex w-full flex-col gap-2">
-          {/* Top */}
-          <div className="flex w-full flex-row justify-between">
-            {/* Left */}
-            <div className="flex flex-row items-center gap-2">
-              <TokenLogo
-                className="bg-background"
-                token={getToken(
-                  pool.coinTypes[1],
-                  appData.poolCoinMetadataMap[pool.coinTypes[1]],
-                )}
-                size={16}
-              />
-
-              <p className="text-p2 text-foreground">
-                {appData.poolCoinMetadataMap[pool.coinTypes[1]].symbol}
-              </p>
-              {appData.reserveDepositAprPercentMap[pool.coinTypes[1]] && (
-                <Tooltip
-                  title={`Deposited ${appData.poolCoinMetadataMap[pool.coinTypes[1]].symbol} is earning ${formatPercent(appData.reserveDepositAprPercentMap[pool.coinTypes[1]])} APR in Suilend`}
-                >
-                  <p
-                    className={cn(
-                      "text-p2 text-success decoration-success/50",
-                      hoverUnderlineClassName,
-                    )}
-                  >
-                    {formatPercent(
-                      appData.reserveDepositAprPercentMap[pool.coinTypes[1]],
-                    )}{" "}
-                    APR
-                  </p>
-                </Tooltip>
-              )}
-
-              <div className="flex flex-row items-center gap-1">
-                <CopyToClipboardButton value={pool.coinTypes[1]} />
-                <OpenOnExplorerButton
-                  url={explorer.buildCoinUrl(pool.coinTypes[1])}
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-row items-center gap-1.5">
-              <Tooltip
-                title={formatToken(pool.balances[1], {
-                  dp: appData.poolCoinMetadataMap[pool.coinTypes[1]].decimals,
-                })}
-              >
-                <p className="text-p2 text-foreground">
-                  {formatToken(pool.balances[1], { exact: false })}
-                </p>
-              </Tooltip>
-
-              {!pool.tvlUsd.eq(0) && (
-                <p className="text-p3 text-tertiary-foreground">
-                  (
-                  {formatPercent(
-                    pool.balances[1]
-                      .times(pool.prices[1])
-                      .div(pool.tvlUsd)
-                      .times(100),
-                  )}
-                  )
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Bottom */}
-          <div className="flex h-1 w-full flex-row overflow-hidden rounded-[2px]">
-            <div
-              className="h-full bg-jordy-blue"
-              style={{
-                width: !pool.tvlUsd.eq(0)
-                  ? `${pool.balances[1]
-                      .times(pool.prices[1])
-                      .div(pool.tvlUsd)
-                      .times(100)}%`
-                  : "0%",
-              }}
-            />
-            <div className="h-full flex-1 bg-border" />
-          </div>
-        </div>
+          );
+        })}
       </Parameter>
 
       <Parameter label="Pool address">
