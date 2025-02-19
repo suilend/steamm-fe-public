@@ -33,7 +33,7 @@ export default function CoinPopover({
         maxWidth: 240,
       }}
       trigger={
-        <button className="flex h-10 flex-row items-center gap-2">
+        <button className="group flex h-10 flex-row items-center gap-2">
           <div className="flex flex-row items-center gap-2.5">
             <TokenLogo
               token={getToken(coinType, appData.coinMetadataMap[coinType])}
