@@ -2,25 +2,6 @@ import {PUBLISHED_AT} from "..";
 import {GenericArg, generic, obj, pure} from "../../_framework/util";
 import {Transaction, TransactionArgument, TransactionObjectInput} from "@mysten/sui/transactions";
 
-export interface NewArgs {
-    registry: TransactionObjectInput; swapFeeBps: bigint | TransactionArgument; quoter: GenericArg; metaA: TransactionObjectInput; metaB: TransactionObjectInput; metaLp: TransactionObjectInput; lpTreasury: TransactionObjectInput
-}
-
-export function new_(
-    tx: Transaction,
-    typeArgs: [string, string, string, string],
-    args: NewArgs,
-    publishedAt: string = PUBLISHED_AT
-) {
-    return tx.moveCall({
-        target: `${publishedAt}::pool::new`,
-        typeArguments: typeArgs,
-        arguments: [
-            obj(tx, args.registry), pure(tx, args.swapFeeBps, `u64`), generic(tx, `${typeArgs[2]}`, args.quoter), obj(tx, args.metaA), obj(tx, args.metaB), obj(tx, args.metaLp), obj(tx, args.lpTreasury)
-        ],
-    })
-}
-
 export interface SwapArgs {
     pool: TransactionObjectInput; coinA: TransactionObjectInput; coinB: TransactionObjectInput; quote: TransactionObjectInput; minAmountOut: bigint | TransactionArgument
 }
@@ -36,6 +17,25 @@ export function swap(
         typeArguments: typeArgs,
         arguments: [
             obj(tx, args.pool), obj(tx, args.coinA), obj(tx, args.coinB), obj(tx, args.quote), pure(tx, args.minAmountOut, `u64`)
+        ],
+    })
+}
+
+export interface NewArgs {
+    registry: TransactionObjectInput; swapFeeBps: bigint | TransactionArgument; quoter: GenericArg; metaA: TransactionObjectInput; metaB: TransactionObjectInput; metaLp: TransactionObjectInput; lpTreasury: TransactionObjectInput
+}
+
+export function new_(
+    tx: Transaction,
+    typeArgs: [string, string, string, string],
+    args: NewArgs,
+    publishedAt: string = PUBLISHED_AT
+) {
+    return tx.moveCall({
+        target: `${publishedAt}::pool::new`,
+        typeArguments: typeArgs,
+        arguments: [
+            obj(tx, args.registry), pure(tx, args.swapFeeBps, `u64`), generic(tx, `${typeArgs[2]}`, args.quoter), obj(tx, args.metaA), obj(tx, args.metaB), obj(tx, args.metaLp), obj(tx, args.lpTreasury)
         ],
     })
 }

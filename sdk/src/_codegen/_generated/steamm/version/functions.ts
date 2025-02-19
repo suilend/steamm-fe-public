@@ -2,6 +2,19 @@ import {PUBLISHED_AT} from "..";
 import {obj, pure} from "../../_framework/util";
 import {Transaction, TransactionArgument, TransactionObjectInput} from "@mysten/sui/transactions";
 
+export function new_(
+    tx: Transaction,
+    version: number | TransactionArgument,
+    publishedAt: string = PUBLISHED_AT
+) {
+    return tx.moveCall({
+        target: `${publishedAt}::version::new`,
+        arguments: [
+            pure(tx, version, `u16`)
+        ],
+    })
+}
+
 export interface AssertVersionArgs {
     version: TransactionObjectInput; currentVersion: number | TransactionArgument
 }
@@ -49,19 +62,6 @@ export function migrate_(
         target: `${publishedAt}::version::migrate_`,
         arguments: [
             obj(tx, args.version), pure(tx, args.currentVersion, `u16`)
-        ],
-    })
-}
-
-export function new_(
-    tx: Transaction,
-    version: number | TransactionArgument,
-    publishedAt: string = PUBLISHED_AT
-) {
-    return tx.moveCall({
-        target: `${publishedAt}::version::new`,
-        arguments: [
-            pure(tx, version, `u16`)
         ],
     })
 }
