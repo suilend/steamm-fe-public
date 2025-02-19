@@ -36,11 +36,11 @@ export default function CoinPopover({
         <button className="flex h-10 flex-row items-center gap-2">
           <div className="flex flex-row items-center gap-2.5">
             <TokenLogo
-              token={getToken(coinType, appData.poolCoinMetadataMap[coinType])}
+              token={getToken(coinType, appData.coinMetadataMap[coinType])}
               size={28}
             />
             <p className="text-h3 text-foreground">
-              {appData.poolCoinMetadataMap[coinType].symbol}
+              {appData.coinMetadataMap[coinType].symbol}
             </p>
           </div>
 
@@ -71,10 +71,7 @@ export default function CoinPopover({
             }}
           >
             <TokenLogo
-              token={getToken(
-                _coinType,
-                appData.poolCoinMetadataMap[_coinType],
-              )}
+              token={getToken(_coinType, appData.coinMetadataMap[_coinType])}
               size={20}
             />
             <p
@@ -85,7 +82,7 @@ export default function CoinPopover({
                   : "text-secondary-foreground group-hover:text-foreground",
               )}
             >
-              {appData.poolCoinMetadataMap[_coinType].symbol}
+              {appData.coinMetadataMap[_coinType].symbol}
             </p>
           </button>
         ))}

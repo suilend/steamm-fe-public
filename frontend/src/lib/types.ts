@@ -1,5 +1,13 @@
 import BigNumber from "bignumber.js";
 
+export type ParsedBank = {
+  id: string;
+  coinType: string;
+  bTokenType: string;
+  liquidAmount: BigNumber;
+  depositedAmount: BigNumber;
+};
+
 export enum PoolType {
   CONSTANT = "constant",
   PYTH_ORACLE = "pythOracle",
@@ -17,7 +25,7 @@ export type ParsedPool = {
   type?: PoolType;
 
   lpTokenType: string;
-  btokenTypes: [string, string];
+  bTokenTypes: [string, string];
   coinTypes: [string, string];
   balances: [BigNumber, BigNumber];
   prices: [BigNumber, BigNumber];

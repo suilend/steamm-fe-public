@@ -115,12 +115,12 @@ export default function PortfolioPage() {
           const balanceUsdA = new BigNumber(
             redeemQuotes[i].withdrawA.toString(),
           )
-            .div(10 ** appData.poolCoinMetadataMap[pool.coinTypes[0]].decimals)
+            .div(10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals)
             .times(pool.prices[0]);
           const balanceUsdB = new BigNumber(
             redeemQuotes[i].withdrawB.toString(),
           )
-            .div(10 ** appData.poolCoinMetadataMap[pool.coinTypes[1]].decimals)
+            .div(10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals)
             .times(pool.prices[1]);
 
           result[pool.id] = balanceUsdA.plus(balanceUsdB);
@@ -133,7 +133,7 @@ export default function PortfolioPage() {
         Sentry.captureException(err);
       }
     })();
-  }, [positions, steammClient, lpTokenBalanceMap, appData.poolCoinMetadataMap]);
+  }, [positions, steammClient, lpTokenBalanceMap, appData.coinMetadataMap]);
 
   const positionsWithFetchedData = useMemo(
     () =>

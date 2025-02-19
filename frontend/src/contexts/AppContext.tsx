@@ -23,17 +23,21 @@ import { BETA_CONFIG, MAINNET_CONFIG, SteammSDK } from "@suilend/steamm-sdk";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
 import useFetchOwnedKiosks from "@/fetchers/useFetchOwnedKiosks";
-import { ParsedPool } from "@/lib/types";
+import { ParsedBank, ParsedPool } from "@/lib/types";
 
 export interface AppData {
   reserveDepositAprPercentMap: Record<string, BigNumber>;
 
+  coinMetadataMap: Record<string, CoinMetadata>;
   bTokenTypeCoinTypeMap: Record<string, string>;
   lendingMarketIdTypeMap: Record<string, string>;
 
+  banks: ParsedBank[];
+  bankCoinTypes: string[];
+
   pools: ParsedPool[];
   poolCoinTypes: string[];
-  poolCoinMetadataMap: Record<string, CoinMetadata>;
+
   featuredCoinTypePairs: [string, string][];
 }
 

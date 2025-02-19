@@ -105,8 +105,8 @@ function DepositTab({ formatValue }: DepositTabProps) {
     );
 
     const dps = [
-      appData.poolCoinMetadataMap[pool.coinTypes[0]].decimals,
-      appData.poolCoinMetadataMap[pool.coinTypes[1]].decimals,
+      appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+      appData.coinMetadataMap[pool.coinTypes[1]].decimals,
     ];
 
     if (valuesRef.current[index] !== _value) return;
@@ -162,8 +162,8 @@ function DepositTab({ formatValue }: DepositTabProps) {
     console.log("DepositTab.onValueChange - _value:", _value);
 
     const dps = [
-      appData.poolCoinMetadataMap[pool.coinTypes[0]].decimals,
-      appData.poolCoinMetadataMap[pool.coinTypes[1]].decimals,
+      appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+      appData.coinMetadataMap[pool.coinTypes[1]].decimals,
     ];
 
     const formattedValue = formatValue(_value, dps[index]);
@@ -245,7 +245,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
   // Value - max
   const onCoinBalanceClick = (index: number) => {
     const coinType = pool.coinTypes[index];
-    const coinMetadata = appData.poolCoinMetadataMap[coinType];
+    const coinMetadata = appData.coinMetadataMap[coinType];
     const balance = getBalance(coinType);
 
     onValueChange(
@@ -308,7 +308,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
       for (let i = 0; i < pool.coinTypes.length; i++) {
         const coinType = pool.coinTypes[i];
-        const coinMetadata = appData.poolCoinMetadataMap[coinType];
+        const coinMetadata = appData.coinMetadataMap[coinType];
 
         if (
           getBalance(coinType).lt(
@@ -345,8 +345,8 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
       const [coinTypeA, coinTypeB] = pool.coinTypes;
       const [coinMetadataA, coinMetadataB] = [
-        appData.poolCoinMetadataMap[coinTypeA],
-        appData.poolCoinMetadataMap[coinTypeB],
+        appData.coinMetadataMap[coinTypeA],
+        appData.coinMetadataMap[coinTypeB],
       ];
 
       const submitAmountA = quote.depositA.toString();
@@ -386,13 +386,13 @@ function DepositTab({ formatValue }: DepositTabProps) {
       const balanceChangeA = getBalanceChange(
         res,
         address,
-        getToken(coinTypeA, appData.poolCoinMetadataMap[coinTypeA]),
+        getToken(coinTypeA, appData.coinMetadataMap[coinTypeA]),
         -1,
       );
       const balanceChangeB = getBalanceChange(
         res,
         address,
-        getToken(coinTypeB, appData.poolCoinMetadataMap[coinTypeB]),
+        getToken(coinTypeB, appData.coinMetadataMap[coinTypeB]),
         -1,
       );
 
@@ -457,7 +457,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
           <Parameter label="Maximum outflow" isHorizontal>
             <div className="flex flex-col items-end gap-1">
               {pool.coinTypes.map((coinType, index) => {
-                const coinMetadata = appData.poolCoinMetadataMap[coinType];
+                const coinMetadata = appData.coinMetadataMap[coinType];
 
                 return (
                   <Fragment key={coinType}>
@@ -529,7 +529,7 @@ function WithdrawTab() {
       const submitAmount = new BigNumber(
         new BigNumber(_value).div(100).times(getBalance(pool.lpTokenType)),
       )
-        .times(10 ** appData.poolCoinMetadataMap[pool.lpTokenType].decimals)
+        .times(10 ** appData.coinMetadataMap[pool.lpTokenType].decimals)
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
       const quote = await _steammClient.Pool.quoteRedeem({
@@ -606,9 +606,9 @@ function WithdrawTab() {
         ...pool.coinTypes,
       ];
       const [coinMetadataLpToken, coinMetadataA, coinMetadataB] = [
-        appData.poolCoinMetadataMap[lpTokenType],
-        appData.poolCoinMetadataMap[coinTypeA],
-        appData.poolCoinMetadataMap[coinTypeB],
+        appData.coinMetadataMap[lpTokenType],
+        appData.coinMetadataMap[coinTypeA],
+        appData.coinMetadataMap[coinTypeB],
       ];
 
       const submitAmountLp = new BigNumber(
@@ -647,13 +647,13 @@ function WithdrawTab() {
       const balanceChangeA = getBalanceChange(
         res,
         address,
-        getToken(coinTypeA, appData.poolCoinMetadataMap[coinTypeA]),
+        getToken(coinTypeA, appData.coinMetadataMap[coinTypeA]),
         1,
       );
       const balanceChangeB = getBalanceChange(
         res,
         address,
-        getToken(coinTypeB, appData.poolCoinMetadataMap[coinTypeB]),
+        getToken(coinTypeB, appData.coinMetadataMap[coinTypeB]),
         1,
       );
 
@@ -724,7 +724,7 @@ function WithdrawTab() {
                 new BigNumber(value)
                   .div(100)
                   .times(getBalance(pool.lpTokenType)),
-                { dp: appData.poolCoinMetadataMap[pool.lpTokenType].decimals },
+                { dp: appData.coinMetadataMap[pool.lpTokenType].decimals },
               )}
             </p>
           </div>
@@ -750,7 +750,7 @@ function WithdrawTab() {
 
         <div className="flex w-full flex-col gap-2 rounded-md border p-4">
           {pool.coinTypes.map((coinType, index) => {
-            const coinMetadata = appData.poolCoinMetadataMap[coinType];
+            const coinMetadata = appData.coinMetadataMap[coinType];
 
             return (
               <div
@@ -800,7 +800,7 @@ function WithdrawTab() {
           <Parameter label="Minimum inflow" isHorizontal>
             <div className="flex flex-col items-end gap-1">
               {pool.coinTypes.map((coinType, index) => {
-                const coinMetadata = appData.poolCoinMetadataMap[coinType];
+                const coinMetadata = appData.coinMetadataMap[coinType];
 
                 return (
                   <Fragment key={coinType}>
@@ -854,11 +854,11 @@ function SwapTab({ formatValue }: SwapTabProps) {
   // CoinTypes
   const [activeCoinIndex, setActiveCoinIndex] = useState<0 | 1>(0);
   const activeCoinType = pool.coinTypes[activeCoinIndex];
-  const activeCoinMetadata = appData.poolCoinMetadataMap[activeCoinType];
+  const activeCoinMetadata = appData.coinMetadataMap[activeCoinType];
 
   const inactiveIndex = (1 - activeCoinIndex) as 0 | 1;
   const inactiveCoinType = pool.coinTypes[inactiveIndex];
-  const inactiveCoinMetadata = appData.poolCoinMetadataMap[inactiveCoinType];
+  const inactiveCoinMetadata = appData.coinMetadataMap[inactiveCoinType];
 
   // Value
   const [value, setValue] = useState<string>("");
@@ -894,7 +894,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
         const submitAmount = new BigNumber(_value)
           .times(
             10 **
-              appData.poolCoinMetadataMap[pool.coinTypes[_activeCoinIndex]]
+              appData.coinMetadataMap[pool.coinTypes[_activeCoinIndex]]
                 .decimals,
           )
           .integerValue(BigNumber.ROUND_DOWN)
@@ -923,7 +923,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
         Sentry.captureException(err);
       }
     },
-    [appData.poolCoinMetadataMap, pool.coinTypes, pool.id],
+    [appData.coinMetadataMap, pool.coinTypes, pool.id],
   );
   const debouncedFetchQuote = useRef(debounce(fetchQuote, 100)).current;
 
@@ -993,8 +993,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
   const reverseAssets = () => {
     const newActiveCoinIndex = (1 - activeCoinIndex) as 0 | 1;
     const newActiveCoinType = pool.coinTypes[newActiveCoinIndex];
-    const newActiveCoinMetadata =
-      appData.poolCoinMetadataMap[newActiveCoinType];
+    const newActiveCoinMetadata = appData.coinMetadataMap[newActiveCoinType];
 
     setActiveCoinIndex(newActiveCoinIndex);
 
@@ -1086,8 +1085,8 @@ function SwapTab({ formatValue }: SwapTabProps) {
 
       const [coinTypeA, coinTypeB] = pool.coinTypes;
       const [coinMetadataA, coinMetadataB] = [
-        appData.poolCoinMetadataMap[coinTypeA],
-        appData.poolCoinMetadataMap[coinTypeB],
+        appData.coinMetadataMap[coinTypeA],
+        appData.coinMetadataMap[coinTypeB],
       ];
 
       const amountIn = quote.amountIn.toString();
@@ -1134,13 +1133,13 @@ function SwapTab({ formatValue }: SwapTabProps) {
       const balanceChangeA = getBalanceChange(
         res,
         address,
-        getToken(coinTypeA, appData.poolCoinMetadataMap[coinTypeA]),
+        getToken(coinTypeA, appData.coinMetadataMap[coinTypeA]),
         activeCoinIndex === 0 ? -1 : 1,
       );
       const balanceChangeB = getBalanceChange(
         res,
         address,
-        getToken(coinTypeB, appData.poolCoinMetadataMap[coinTypeB]),
+        getToken(coinTypeB, appData.coinMetadataMap[coinTypeB]),
         activeCoinIndex === 0 ? 1 : -1,
       );
 

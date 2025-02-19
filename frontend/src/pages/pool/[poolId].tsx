@@ -27,9 +27,7 @@ function PoolPage() {
 
   // Pair
   const formattedPair = formatPair(
-    pool.coinTypes.map(
-      (coinType) => appData.poolCoinMetadataMap[coinType].symbol,
-    ),
+    pool.coinTypes.map((coinType) => appData.coinMetadataMap[coinType].symbol),
   );
 
   return (

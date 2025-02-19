@@ -30,8 +30,8 @@ export default function PriceDifferenceLabel({
 }: PriceDifferenceLabelProps) {
   const { appData } = useLoadedAppContext();
 
-  const inCoinMetadata = appData.poolCoinMetadataMap[inCoinType];
-  const outCoinMetadata = appData.poolCoinMetadataMap[outCoinType];
+  const inCoinMetadata = appData.coinMetadataMap[inCoinType];
+  const outCoinMetadata = appData.coinMetadataMap[outCoinType];
 
   const quoteRatio = getQuoteRatio(inCoinMetadata, outCoinMetadata, quote);
 

@@ -58,11 +58,11 @@ export default function CoinInput({
         ) : (
           <div className="flex h-[28px] flex-row items-center gap-2.5">
             <TokenLogo
-              token={getToken(coinType, appData.poolCoinMetadataMap[coinType])}
+              token={getToken(coinType, appData.coinMetadataMap[coinType])}
               size={28}
             />
             <p className="text-h3 text-foreground">
-              {appData.poolCoinMetadataMap[coinType].symbol}
+              {appData.coinMetadataMap[coinType].symbol}
             </p>
           </div>
         )}

@@ -44,7 +44,7 @@ export default function PoolParametersCard() {
     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
       <Parameter className="gap-2" label="Pool composition">
         {pool.coinTypes.map((coinType, index) => {
-          const coinMetadata = appData.poolCoinMetadataMap[coinType];
+          const coinMetadata = appData.coinMetadataMap[coinType];
 
           return (
             <div
@@ -114,17 +114,13 @@ export default function PoolParametersCard() {
         quote={{
           amountIn: BigInt(
             pool.balances[0]
-              .times(
-                10 ** appData.poolCoinMetadataMap[pool.coinTypes[0]].decimals,
-              )
+              .times(10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals)
               .integerValue(BigNumber.ROUND_DOWN)
               .toString(),
           ),
           amountOut: BigInt(
             pool.balances[1]
-              .times(
-                10 ** appData.poolCoinMetadataMap[pool.coinTypes[1]].decimals,
-              )
+              .times(10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals)
               .integerValue(BigNumber.ROUND_DOWN)
               .toString(),
           ),

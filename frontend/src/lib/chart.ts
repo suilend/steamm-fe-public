@@ -50,10 +50,10 @@ export const OTHER_CATEGORY = "Other";
 
 export const formatCoinTypeCategory = (
   category: string,
-  poolCoinMetadataMap: AppData["poolCoinMetadataMap"],
+  coinMetadataMap: AppData["coinMetadataMap"],
 ): string | undefined => {
   if (category === OTHER_CATEGORY) return "Other";
-  return poolCoinMetadataMap[category]?.symbol;
+  return coinMetadataMap[category]?.symbol;
 };
 
 export const formatValueUsd = (valueUsd: number): string =>

@@ -63,7 +63,7 @@ export default function useFetchStatsData() {
             return (
               acc +
               +new BigNumber(tvl)
-                .div(10 ** appData.poolCoinMetadataMap[coinType].decimals)
+                .div(10 ** appData.coinMetadataMap[coinType].decimals)
                 .times(pool.prices[coinIndex])
             );
           }, 0),
@@ -164,7 +164,7 @@ export default function useFetchStatsData() {
             return (
               acc +
               +new BigNumber(fees as string)
-                .div(10 ** appData.poolCoinMetadataMap[coinType].decimals)
+                .div(10 ** appData.coinMetadataMap[coinType].decimals)
                 .times(pool.prices[coinIndex])
             );
           }, 0),

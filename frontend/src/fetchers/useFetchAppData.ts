@@ -19,7 +19,7 @@ import { SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
 import { formatPair } from "@/lib/format";
-import { ParsedPool, PoolType } from "@/lib/types";
+import { ParsedBank, ParsedPool, PoolType } from "@/lib/types";
 
 export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
@@ -32,19 +32,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       suiClient,
     ); // Switch to Suilend Beta Main Market by setting NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true (should not need to in practice)
 
-    const {
-      lendingMarket,
-      coinMetadataMap,
-
-      refreshedRawReserves,
-      reserveMap,
-      reserveCoinTypes,
-      reserveCoinMetadataMap,
-
-      rewardCoinTypes,
-      activeRewardCoinTypes,
-      rewardCoinMetadataMap,
-    } = await initializeSuilend(suiClient, suilendClient);
+    const { reserveMap } = await initializeSuilend(suiClient, suilendClient);
 
     const reserveDepositAprPercentMap: Record<string, BigNumber> =
       Object.fromEntries(
@@ -59,16 +47,22 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const usdcPrice = reserveMap[NORMALIZED_USDC_COINTYPE].price;
 
     // Banks
+    const bankCoinTypes: string[] = [];
     const bTokenTypeCoinTypeMap: Record<string, string> = {};
 
     const bankInfos = await steammClient.getBanks();
     for (const bankInfo of Object.values(bankInfos)) {
-      const { coinType, btokenType } = bankInfo;
-      bTokenTypeCoinTypeMap[btokenType] = normalizeStructTag(coinType);
-
-      // const bank = await steammClient.fullClient.fetchBank(bankInfo.bankId);
-      // console.log("XXX", bank);
+      bankCoinTypes.push(normalizeStructTag(bankInfo.coinType));
+      bTokenTypeCoinTypeMap[bankInfo.btokenType] = normalizeStructTag(
+        bankInfo.coinType,
+      );
     }
+    const uniqueBankCoinTypes = Array.from(new Set(bankCoinTypes));
+
+    const bankCoinMetadataMap = await getCoinMetadataMap(
+      suiClient,
+      uniqueBankCoinTypes,
+    );
 
     const lendingMarketIdTypeMap = Object.values(bankInfos).reduce(
       (acc, bankInfo) => ({
@@ -78,15 +72,45 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       {},
     );
 
-    // Pools
-    const poolInfos = await steammClient.getPools();
+    const banks: ParsedBank[] = await Promise.all(
+      Object.values(bankInfos).map((bankInfo) =>
+        (async () => {
+          const id = bankInfo.bankId;
+          const coinType = bankInfo.coinType;
+          const bTokenType = bankInfo.btokenType;
 
+          const bank = await steammClient.fullClient.fetchBank(id);
+          console.log("XXX", bankInfo, bank);
+
+          const liquidAmount = new BigNumber(
+            bank.fundsAvailable.value.toString(),
+          ).div(10 ** bankCoinMetadataMap[coinType].decimals);
+
+          const ctokensDeposited = new BigNumber(
+            bank.lending ? bank.lending.ctokens.toString() : 0,
+          );
+          const depositedAmount = new BigNumber(0); // TODO
+
+          return {
+            id,
+            coinType,
+            bTokenType,
+            liquidAmount,
+            depositedAmount,
+          };
+        })(),
+      ),
+    );
+
+    // Pools
     const poolCoinTypes: string[] = [];
+
+    const poolInfos = await steammClient.getPools();
     for (const poolInfo of poolInfos) {
       const coinTypes = [
         poolInfo.lpTokenType,
-        bTokenTypeCoinTypeMap[poolInfo.coinTypeA],
-        bTokenTypeCoinTypeMap[poolInfo.coinTypeB],
+        // bTokenTypeCoinTypeMap[poolInfo.coinTypeA], // Already included in bankCoinTypes
+        // bTokenTypeCoinTypeMap[poolInfo.coinTypeB], // Already included in bankCoinTypes
       ];
       poolCoinTypes.push(...coinTypes);
     }
@@ -97,6 +121,11 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       uniquePoolCoinTypes,
     );
 
+    const coinMetadataMap = {
+      ...bankCoinMetadataMap,
+      ...poolCoinMetadataMap,
+    };
+
     const pools: ParsedPool[] = (
       await Promise.all(
         poolInfos.map((poolInfo) =>
@@ -106,26 +135,24 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               ? PoolType.CONSTANT
               : undefined; // TODO: Add support for other pool types
 
-            const btokenTypeA = poolInfo.coinTypeA;
-            const btokenTypeB = poolInfo.coinTypeB;
+            const bTokenTypeA = poolInfo.coinTypeA;
+            const bTokenTypeB = poolInfo.coinTypeB;
             if (
-              btokenTypeA.startsWith("0x10e03a93cf1e3d") ||
-              btokenTypeB.startsWith("0x10e03a93cf1e3d")
+              bTokenTypeA.startsWith("0x10e03a93cf1e3d") ||
+              bTokenTypeB.startsWith("0x10e03a93cf1e3d")
             )
-              return undefined; // Skip pools with test btokens
+              return undefined; // Skip pools with test bTokens
 
-            const coinTypeA = bTokenTypeCoinTypeMap[btokenTypeA];
-            const coinTypeB = bTokenTypeCoinTypeMap[btokenTypeB];
+            const coinTypeA = bTokenTypeCoinTypeMap[bTokenTypeA];
+            const coinTypeB = bTokenTypeCoinTypeMap[bTokenTypeB];
 
-            const pool = await steammClient.fullClient.fetchPool(
-              poolInfo.poolId,
-            );
+            const pool = await steammClient.fullClient.fetchPool(id);
 
             const balanceA = new BigNumber(pool.balanceA.value.toString()).div(
-              10 ** poolCoinMetadataMap[coinTypeA].decimals,
+              10 ** coinMetadataMap[coinTypeA].decimals,
             );
             const balanceB = new BigNumber(pool.balanceB.value.toString()).div(
-              10 ** poolCoinMetadataMap[coinTypeB].decimals,
+              10 ** coinMetadataMap[coinTypeB].decimals,
             );
 
             let priceA, priceB;
@@ -166,7 +193,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               type,
 
               lpTokenType: poolInfo.lpTokenType,
-              btokenTypes: [btokenTypeA, btokenTypeB],
+              bTokenTypes: [bTokenTypeA, bTokenTypeB],
               coinTypes: [coinTypeA, coinTypeB],
               balances: [balanceA, balanceB],
               prices: [priceA, priceB],
@@ -199,12 +226,16 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     return {
       reserveDepositAprPercentMap,
 
+      coinMetadataMap,
       bTokenTypeCoinTypeMap,
       lendingMarketIdTypeMap,
 
+      banks,
+      bankCoinTypes,
+
       pools: sortedPools,
       poolCoinTypes,
-      poolCoinMetadataMap,
+
       featuredCoinTypePairs,
     };
   };

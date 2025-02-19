@@ -73,7 +73,7 @@ export default function SwapPage() {
         .split("-")
         .some(
           (symbol) =>
-            !Object.values(appData.poolCoinMetadataMap).find(
+            !Object.values(appData.coinMetadataMap).find(
               (coinMetadata) => coinMetadata.symbol === symbol,
             ),
         )
@@ -85,15 +85,15 @@ export default function SwapPage() {
     }
 
     return slug[0].split("-").map((symbol) => {
-      return Object.entries(appData.poolCoinMetadataMap).find(
+      return Object.entries(appData.coinMetadataMap).find(
         ([coinType, coinMetadata]) => coinMetadata.symbol === symbol,
       )![0];
     });
-  }, [slug, appData.poolCoinMetadataMap, router]);
+  }, [slug, appData.coinMetadataMap, router]);
 
   const [inCoinMetadata, outCoinMetadata] = [
-    appData.poolCoinMetadataMap[inCoinType],
-    appData.poolCoinMetadataMap[outCoinType],
+    appData.coinMetadataMap[inCoinType],
+    appData.coinMetadataMap[outCoinType],
   ];
 
   // Value
@@ -175,7 +175,7 @@ export default function SwapPage() {
         valueRef.current,
       );
 
-      const _inCoinMetadata = appData.poolCoinMetadataMap[_inCoinType];
+      const _inCoinMetadata = appData.coinMetadataMap[_inCoinType];
 
       if (valueRef.current !== _value && !isOracle) return;
 
@@ -210,7 +210,7 @@ export default function SwapPage() {
         Sentry.captureException(err);
       }
     },
-    [appData.poolCoinMetadataMap],
+    [appData.coinMetadataMap],
   );
   const debouncedFetchQuote = useRef(debounce(fetchQuote, 100)).current;
 
@@ -292,14 +292,14 @@ export default function SwapPage() {
         : coinType === inCoinType
           ? outCoinType
           : inCoinType;
-    const newInCoinMetadata = appData.poolCoinMetadataMap[newInCoinType];
+    const newInCoinMetadata = appData.coinMetadataMap[newInCoinType];
     const newOutCoinType =
       direction === "in"
         ? coinType === outCoinType
           ? inCoinType
           : outCoinType
         : coinType;
-    const newOutCoinMetadata = appData.poolCoinMetadataMap[newOutCoinType];
+    const newOutCoinMetadata = appData.coinMetadataMap[newOutCoinType];
 
     shallowPushQuery(router, {
       slug: `${newInCoinMetadata.symbol}-${newOutCoinMetadata.symbol}`,
@@ -569,7 +569,7 @@ export default function SwapPage() {
                         <Fragment key={r.bTokenType}>
                           <p className="text-p3 text-foreground">
                             {
-                              appData.poolCoinMetadataMap[
+                              appData.coinMetadataMap[
                                 appData.bTokenTypeCoinTypeMap[r.bTokenType]
                               ].symbol
                             }

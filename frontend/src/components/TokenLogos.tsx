@@ -20,7 +20,7 @@ export default function TokenLogos({
   const { appData } = useLoadedAppContext();
 
   const hasCoinMetadata = coinTypes.every(
-    (coinType) => appData.poolCoinMetadataMap[coinType],
+    (coinType) => appData.coinMetadataMap[coinType],
   );
 
   return (
@@ -44,7 +44,7 @@ export default function TokenLogos({
               "-ml-[var(--ml)] outline outline-1 outline-[var(--bg-color)]",
             !hasCoinMetadata ? "animate-none" : "bg-[var(--bg-color)]",
           )}
-          token={getToken(coinType, appData.poolCoinMetadataMap[coinType])}
+          token={getToken(coinType, appData.coinMetadataMap[coinType])}
           size={size}
         />
       ))}

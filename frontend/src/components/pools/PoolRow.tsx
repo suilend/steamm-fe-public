@@ -48,7 +48,7 @@ export default function PoolRow({
         <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
           {formatPair(
             pool.coinTypes.map(
-              (coinType) => appData.poolCoinMetadataMap[coinType].symbol,
+              (coinType) => appData.coinMetadataMap[coinType].symbol,
             ),
           )}
         </p>

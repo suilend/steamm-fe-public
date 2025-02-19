@@ -106,7 +106,7 @@ export default function PoolsPage() {
                   // formatCategory={(category) =>
                   //   formatCoinTypeCategory(
                   //     category,
-                  //     appData.poolCoinMetadataMap,
+                  //     appData.coinMetadataMap,
                   //   )
                   // }
                   formatCategory={(category) => category}
@@ -134,7 +134,7 @@ export default function PoolsPage() {
                   // formatCategory={(category) =>
                   //   formatCoinTypeCategory(
                   //     category,
-                  //     appData.poolCoinMetadataMap,
+                  //     appData.coinMetadataMap,
                   //   )
                   // }
                   formatCategory={(category) => category}
