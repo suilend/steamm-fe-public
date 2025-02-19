@@ -16,6 +16,7 @@ import {
   getBankFromBToken,
   getBankFromUnderlying,
 } from "../types";
+import { zip } from "../utils";
 
 export interface CoinPair {
   coinIn: string;
@@ -439,8 +440,4 @@ export function findAllRoutes(
 
   dfs(start, []);
   return results;
-}
-
-function zip<T, U>(a: T[], b: U[]): [T, U][] {
-  return a.map((k, i) => [k, b[i]]);
 }

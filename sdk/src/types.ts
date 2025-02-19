@@ -144,6 +144,17 @@ export function getBankFromBToken(
   return bankInfo;
 }
 
+export function getBankFromId(bankList: BankList, bankId: string): BankInfo {
+  const bankInfos = Object.values(bankList);
+  const bankInfo = bankInfos.find((bankInfo) => bankInfo.bankId === bankId);
+
+  if (!bankInfo) {
+    throw new Error(`BankInfo not found for the given ID: ${bankId}`);
+  }
+
+  return bankInfo;
+}
+
 export function getBankFromUnderlying(
   bankList: BankList,
   coinType: string,

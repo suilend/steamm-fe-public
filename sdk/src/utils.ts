@@ -107,3 +107,9 @@ export function extractGenerics(typeString: string): string[] {
 
   return generics;
 }
+
+function zip<T, U>(a: T[], b: U[]): [T, U][] {
+  return a.map((k, i) => [k, b[i]]);
+}
+
+export { zip };

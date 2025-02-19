@@ -2,7 +2,7 @@ import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
 import { PoolScriptFunctions } from "../_codegen";
-import { ToMultiSwapRouteArgs } from "../_codegen/_generated/steamm/pool-script/functions";
+// import { ToMultiSwapRouteArgs } from "../_codegen/_generated/steamm/pool-script/functions";
 import { BankInfo, PackageInfo } from "../types";
 
 import { Bank } from "./bank";

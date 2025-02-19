@@ -1,11 +1,19 @@
-import { SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
-import { normalizeSuiAddress } from "@mysten/sui/utils";
+import { SUI_CLOCK_OBJECT_ID, normalizeSuiAddress } from "@mysten/sui/utils";
 
+import { BankScriptFunctions } from "../_codegen";
 import { createBank } from "../base";
+import { castNeedsRebalance } from "../base/bank/bankTypes";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
-import { SuiAddressType } from "../utils";
+import { BankInfo, getBankFromId } from "../types";
+import { SuiAddressType, zip } from "../utils";
+
+// Add chunk helper at the top of the file
+const chunk = <T>(arr: T[], size: number): T[][] =>
+  Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+    arr.slice(i * size, i * size + size),
+  );
 
 /**
  * Helper class to help interact with pools.
@@ -19,6 +27,32 @@ export class BankModule implements IModule {
 
   get sdk() {
     return this._sdk;
+  }
+
+  public async rebalance(
+    bankIds: SuiAddressType[],
+    batchSize: number = 20,
+  ): Promise<Transaction[]> {
+    const batches = chunk(bankIds, batchSize);
+
+    const txs = await Promise.all(
+      batches.map((batch) => this.batchRebalance(batch)),
+    );
+
+    return txs;
+  }
+
+  public async needsRebalance(
+    batchSize: number = 20,
+  ): Promise<SuiAddressType[]> {
+    const banks = Object.values(await this.sdk.getBanks());
+
+    const batches = chunk(banks, batchSize);
+    const batchResults = await Promise.all(
+      batches.map((batch) => this.needsRebalanceBatch(batch)),
+    );
+
+    return batchResults.flat();
   }
 
   public async createBToken(
@@ -76,5 +110,78 @@ export class BankModule implements IModule {
     };
 
     createBank(tx, callArgs, this.sdk.packageInfo());
+  }
+
+  private async batchRebalance(
+    bankIds: SuiAddressType[],
+  ): Promise<Transaction> {
+    const tx = new Transaction();
+    const banks = await this.sdk.getBanks();
+
+    for (const bankId of bankIds) {
+      const bankInfo = getBankFromId(banks, bankId);
+      const bank = this.sdk.getBank(bankInfo);
+
+      bank.rebalance(tx);
+    }
+    return tx;
+  }
+
+  private async needsRebalanceBatch(
+    banks: BankInfo[],
+  ): Promise<SuiAddressType[]> {
+    const tx = new Transaction();
+
+    // Step 2: Check if any bank needs rebalancing
+    for (const bankInfo of banks) {
+      const bank = this.sdk.getBank(bankInfo);
+
+      BankScriptFunctions.needsRebalance(tx, bank.typeArgs(), {
+        bank: bank.bank(tx),
+        lendingMarket: bank.lendingMarket(tx),
+        clock: tx.object(SUI_CLOCK_OBJECT_ID),
+      });
+    }
+
+    const rebalancings = await this.getRebalanceQueryResult(tx);
+    const banksToRebalance: string[] = [];
+
+    for (const [bank, rebalanceOp] of zip(banks, rebalancings)) {
+      if (rebalanceOp) {
+        banksToRebalance.push(bank.bankId);
+      }
+    }
+
+    return banksToRebalance;
+  }
+
+  private async getRebalanceQueryResult(tx: Transaction): Promise<boolean[]> {
+    const quoteType = "NeedsRebalance";
+    const inspectResults = await this.sdk.fullClient.devInspectTransactionBlock(
+      {
+        sender: this.sdk.senderAddress,
+        transactionBlock: tx,
+        additionalArgs: { showRawTxnDataAndEffects: true },
+      },
+    );
+
+    if (inspectResults.error) {
+      console.log("Failed to fetch quote");
+      throw new Error(inspectResults.error);
+    }
+
+    const quoteEvents = inspectResults.events.filter((event) =>
+      event.type.includes(quoteType),
+    );
+
+    if (quoteEvents.length === 0) {
+      throw new Error(`Quote event of type ${quoteType} not found in events`);
+    }
+
+    const quoteResults = quoteEvents.map((quoteEvent) =>
+      castNeedsRebalance((quoteEvent.parsedJson as any).event),
+    );
+
+    return quoteResults;
   }
 }
