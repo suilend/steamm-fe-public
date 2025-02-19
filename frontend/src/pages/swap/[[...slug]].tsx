@@ -34,10 +34,11 @@ import {
 } from "@suilend/frontend-sui-next";
 import { MultiSwapQuote, Route, SteammSDK } from "@suilend/steamm-sdk";
 
+import ExchangeRateParameter from "@/components/ExchangeRateParameter";
+import Parameter from "@/components/Parameter";
 import CoinInput, { getCoinInputId } from "@/components/pool/CoinInput";
 import SlippagePopover from "@/components/SlippagePopover";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
-import ExchangeRateParameter from "@/components/swap/ExchangeRateParameter";
 import PriceDifferenceLabel from "@/components/swap/PriceDifferenceLabel";
 import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
 import Tooltip from "@/components/Tooltip";
@@ -602,16 +603,10 @@ export default function SwapPage() {
                 outCoinType={outCoinType}
                 isFetchingQuote={isFetchingQuote}
                 quote={quote}
+                isHorizontal
               />
 
-              {/* Fees */}
-
-              {/* Minimum inflow */}
-              <div className="flex w-full flex-row items-center justify-between">
-                <p className="text-p2 text-secondary-foreground">
-                  Minimum inflow
-                </p>
-
+              <Parameter label="Minimum inflow" isHorizontal>
                 {isFetchingQuote || !quote ? (
                   <Skeleton className="h-[21px] w-24" />
                 ) : (
@@ -625,7 +620,7 @@ export default function SwapPage() {
                     {outCoinMetadata.symbol}
                   </p>
                 )}
-              </div>
+              </Parameter>
             </div>
           )}
         </div>

@@ -31,10 +31,11 @@ import {
   SwapQuote,
 } from "@suilend/steamm-sdk";
 
+import ExchangeRateParameter from "@/components/ExchangeRateParameter";
+import Parameter from "@/components/Parameter";
 import CoinInput, { getCoinInputId } from "@/components/pool/CoinInput";
 import SlippagePopover from "@/components/SlippagePopover";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
-import ExchangeRateParameter from "@/components/swap/ExchangeRateParameter";
 import PriceDifferenceLabel from "@/components/swap/PriceDifferenceLabel";
 import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
 import TokenLogo from "@/components/TokenLogo";
@@ -453,10 +454,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
       {(fetchingQuoteForIndex !== undefined || quote) && (
         <div className="flex w-full flex-col gap-2">
-          {/* Maximum outflow */}
-          <div className="flex w-full flex-row justify-between">
-            <p className="text-p2 text-secondary-foreground">Maximum outflow</p>
-
+          <Parameter label="Maximum outflow" isHorizontal>
             <div className="flex flex-col items-end gap-1">
               {pool.coinTypes.map((coinType, index) => {
                 const coinMetadata = appData.poolCoinMetadataMap[coinType];
@@ -489,7 +487,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
                 );
               })}
             </div>
-          </div>
+          </Parameter>
         </div>
       )}
     </>
@@ -799,10 +797,7 @@ function WithdrawTab() {
 
       {(isFetchingQuote || quote) && (
         <div className="flex w-full flex-col gap-2">
-          {/* Minimum inflow */}
-          <div className="flex w-full flex-row justify-between">
-            <p className="text-p2 text-secondary-foreground">Minimum inflow</p>
-
+          <Parameter label="Minimum inflow" isHorizontal>
             <div className="flex flex-col items-end gap-1">
               {pool.coinTypes.map((coinType, index) => {
                 const coinMetadata = appData.poolCoinMetadataMap[coinType];
@@ -831,7 +826,7 @@ function WithdrawTab() {
                 );
               })}
             </div>
-          </div>
+          </Parameter>
         </div>
       )}
     </>
@@ -1242,12 +1237,10 @@ function SwapTab({ formatValue }: SwapTabProps) {
             outCoinType={inactiveCoinType}
             isFetchingQuote={isFetchingQuote}
             quote={quote}
+            isHorizontal
           />
 
-          {/* Fees */}
-          <div className="flex w-full flex-row items-center justify-between">
-            <p className="text-p2 text-secondary-foreground">Fees</p>
-
+          <Parameter label="Fees" isHorizontal>
             {isFetchingQuote || !quote ? (
               <Skeleton className="h-[21px] w-24" />
             ) : (
@@ -1263,12 +1256,9 @@ function SwapTab({ formatValue }: SwapTabProps) {
                 {inactiveCoinMetadata.symbol}
               </p>
             )}
-          </div>
+          </Parameter>
 
-          {/* Minimum inflow */}
-          <div className="flex w-full flex-row items-center justify-between">
-            <p className="text-p2 text-secondary-foreground">Minimum inflow</p>
-
+          <Parameter label="Minimum inflow" isHorizontal>
             {isFetchingQuote || !quote ? (
               <Skeleton className="h-[21px] w-24" />
             ) : (
@@ -1282,7 +1272,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
                 {inactiveCoinMetadata.symbol}
               </p>
             )}
-          </div>
+          </Parameter>
         </div>
       )}
     </>

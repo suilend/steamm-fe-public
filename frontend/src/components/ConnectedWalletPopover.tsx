@@ -81,7 +81,7 @@ export default function ConnectedWalletPopover() {
       }
     >
       <div className="flex w-full flex-col gap-3">
-        <div className="flex w-full flex-col">
+        <div className="flex w-full flex-col gap-1">
           <p className="text-p1 text-foreground">
             {(!isImpersonating ? account?.label : "Impersonating") ??
               "Connected"}

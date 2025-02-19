@@ -11,7 +11,9 @@ export const getQuoteRatio = (
   outCoinMetadata: CoinMetadata,
   quote?: SwapQuote | MultiSwapQuote,
 ) =>
-  quote !== undefined
+  quote !== undefined &&
+  !new BigNumber(quote.amountIn.toString()).eq(0) &&
+  !new BigNumber(quote.amountOut.toString()).eq(0)
     ? new BigNumber(
         new BigNumber(quote.amountOut.toString()).div(
           10 ** outCoinMetadata.decimals,

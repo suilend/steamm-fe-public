@@ -1,5 +1,6 @@
 import { PropsWithChildren } from "react";
 
+import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 
 import {
@@ -11,6 +12,7 @@ import {
 import { useSettingsContext } from "@suilend/frontend-sui-next";
 
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
+import ExchangeRateParameter from "@/components/ExchangeRateParameter";
 import OpenOnExplorerButton from "@/components/OpenOnExplorerButton";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
@@ -106,22 +108,29 @@ export default function PoolParametersCard() {
         </div>
       </Parameter>
 
-      <Parameter label="Current price">
-        <p className="text-p2 text-foreground">
-          {pool.balances.every((balance) => !balance.eq(0)) ? (
-            <>
-              1 {appData.poolCoinMetadataMap[pool.coinTypes[0]].symbol}
-              {" ≈ "}
-              {formatToken(pool.balances[1].div(pool.balances[0]), {
-                dp: appData.poolCoinMetadataMap[pool.coinTypes[1]].decimals,
-              })}{" "}
-              {appData.poolCoinMetadataMap[pool.coinTypes[1]].symbol}
-            </>
-          ) : (
-            "N/A"
-          )}
-        </p>
-      </Parameter>
+      <ExchangeRateParameter
+        inCoinType={pool.coinTypes[0]}
+        outCoinType={pool.coinTypes[1]}
+        quote={{
+          amountIn: BigInt(
+            pool.balances[0]
+              .times(
+                10 ** appData.poolCoinMetadataMap[pool.coinTypes[0]].decimals,
+              )
+              .integerValue(BigNumber.ROUND_DOWN)
+              .toString(),
+          ),
+          amountOut: BigInt(
+            pool.balances[1]
+              .times(
+                10 ** appData.poolCoinMetadataMap[pool.coinTypes[1]].decimals,
+              )
+              .integerValue(BigNumber.ROUND_DOWN)
+              .toString(),
+          ),
+        }}
+        label="Current price"
+      />
 
       <Parameter label="Fee tier">
         <p className="text-p2 text-foreground">
