@@ -132,7 +132,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           (async () => {
             const id = poolInfo.poolId;
             const type = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
-              ? PoolType.CONSTANT
+              ? PoolType.CPMM
               : undefined; // TODO: Add support for other pool types
 
             const bTokenTypeA = poolInfo.coinTypeA;

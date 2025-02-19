@@ -9,13 +9,13 @@ export type ParsedBank = {
 };
 
 export enum PoolType {
-  CONSTANT = "constant",
+  CPMM = "cpmm",
   PYTH_ORACLE = "pythOracle",
   STABLE_SWAP = "stableSwap",
 }
 
 export const poolTypeNameMap: Record<PoolType, string> = {
-  [PoolType.CONSTANT]: "Constant",
+  [PoolType.CPMM]: "CPMM",
   [PoolType.PYTH_ORACLE]: "Pyth oracle",
   [PoolType.STABLE_SWAP]: "Stable swap",
 };
