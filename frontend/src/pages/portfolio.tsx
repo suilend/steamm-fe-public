@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { useEffect, useMemo, useState } from "react";
 
+import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 
 import { formatPercent, formatUsd } from "@suilend/frontend-sui";
@@ -129,6 +130,7 @@ export default function PortfolioPage() {
       } catch (err) {
         showErrorToast("Failed to fetch pool balances", err as Error);
         console.error(err);
+        Sentry.captureException(err);
       }
     })();
   }, [positions, steammClient, lpTokenBalanceMap, appData.poolCoinMetadataMap]);

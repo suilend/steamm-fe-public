@@ -3,6 +3,7 @@ import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import { SUI_DECIMALS } from "@mysten/sui/utils";
+import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
 
@@ -147,6 +148,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
     } catch (err) {
       showErrorToast("Failed to fetch quote", err as Error);
       console.error(err);
+      Sentry.captureException(err);
     }
   };
   const debouncedFetchQuote = useRef(debounce(fetchQuote, 100)).current;
@@ -419,6 +421,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
         true,
       );
       console.error(err);
+      Sentry.captureException(err);
     } finally {
       document.getElementById(getCoinInputId(pool.coinTypes[0]))?.focus();
       setIsSubmitting(false);
@@ -544,6 +547,7 @@ function WithdrawTab() {
     } catch (err) {
       showErrorToast("Failed to fetch quote", err as Error);
       console.error(err);
+      Sentry.captureException(err);
     }
   };
   const debouncedFetchQuote = useRef(debounce(fetchQuote, 100)).current;
@@ -685,6 +689,7 @@ function WithdrawTab() {
         true,
       );
       console.error(err);
+      Sentry.captureException(err);
     } finally {
       setIsSubmitting(false);
       refresh();
@@ -920,6 +925,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
       } catch (err) {
         showErrorToast("Failed to fetch quote", err as Error);
         console.error(err);
+        Sentry.captureException(err);
       }
     },
     [appData.poolCoinMetadataMap, pool.coinTypes, pool.id],
@@ -1172,6 +1178,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
     } catch (err) {
       showErrorToast("Failed to swap", err as Error, undefined, true);
       console.error(err);
+      Sentry.captureException(err);
     } finally {
       document.getElementById(getCoinInputId(activeCoinType))?.focus();
       setIsSubmitting(false);

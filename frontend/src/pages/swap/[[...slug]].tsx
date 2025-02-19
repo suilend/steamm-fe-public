@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
+import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 import { clone, debounce } from "lodash";
 import { ArrowRight } from "lucide-react";
@@ -205,6 +206,7 @@ export default function SwapPage() {
       } catch (err) {
         showErrorToast("Failed to fetch quote", err as Error);
         console.error(err);
+        Sentry.captureException(err);
       }
     },
     [appData.poolCoinMetadataMap],
@@ -486,6 +488,7 @@ export default function SwapPage() {
     } catch (err) {
       showErrorToast("Failed to swap", err as Error, undefined, true);
       console.error(err);
+      Sentry.captureException(err);
     } finally {
       document.getElementById(getCoinInputId(inCoinType))?.focus();
       setIsSubmitting(false);
