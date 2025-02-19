@@ -42,14 +42,14 @@ export class BankModule implements IModule {
     return txs;
   }
 
-  public async needsRebalance(
+  public async queryRebalance(
     batchSize: number = 20,
   ): Promise<SuiAddressType[]> {
     const banks = Object.values(await this.sdk.getBanks());
 
     const batches = chunk(banks, batchSize);
     const batchResults = await Promise.all(
-      batches.map((batch) => this.needsRebalanceBatch(batch)),
+      batches.map((batch) => this.batchQueryRebalance(batch)),
     );
 
     return batchResults.flat();
@@ -127,7 +127,7 @@ export class BankModule implements IModule {
     return tx;
   }
 
-  private async needsRebalanceBatch(
+  private async batchQueryRebalance(
     banks: BankInfo[],
   ): Promise<SuiAddressType[]> {
     const tx = new Transaction();
