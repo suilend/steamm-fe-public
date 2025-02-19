@@ -2,6 +2,7 @@ import { CSSProperties, useMemo, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
+import { useLocalStorage } from "usehooks-ts";
 
 import PoolGroupRow from "@/components/pools/PoolGroupRow";
 import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";
@@ -57,7 +58,10 @@ export default function PoolsTable({
   // Sort
   type SortState = { column: SortableColumn; direction: SortDirection };
 
-  const [sortState, setSortState] = useState<SortState | undefined>(undefined);
+  const [sortState, setSortState] = useLocalStorage<SortState | undefined>(
+    `PoolsTable_${tableId}_sortState`,
+    undefined,
+  );
 
   const toggleSortByColumn = (column: SortableColumn) => {
     setSortState((prev) => {

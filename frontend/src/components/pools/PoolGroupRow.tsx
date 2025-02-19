@@ -30,7 +30,7 @@ export default function PoolGroupRow({
 
   // State
   const [isExpanded, setIsExpanded] = useLocalStorage<boolean>(
-    `${tableId}_PoolGroupRow_${formatPair(poolGroup.coinTypes)}_isExpanded`,
+    `PoolGroupRow_${tableId}_${formatPair(poolGroup.coinTypes)}_isExpanded`,
     false,
   );
   const Chevron = isExpanded ? ChevronUp : ChevronDown;

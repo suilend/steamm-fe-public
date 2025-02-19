@@ -61,16 +61,19 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     // Banks
     const bTokenTypeCoinTypeMap: Record<string, string> = {};
 
-    const bankList = await steammClient.getBanks();
-    for (const bank of Object.values(bankList)) {
-      const { coinType, btokenType } = bank;
+    const bankInfos = await steammClient.getBanks();
+    for (const bankInfo of Object.values(bankInfos)) {
+      const { coinType, btokenType } = bankInfo;
       bTokenTypeCoinTypeMap[btokenType] = normalizeStructTag(coinType);
+
+      // const bank = await steammClient.fullClient.fetchBank(bankInfo.bankId);
+      // console.log("XXX", bank);
     }
 
-    const lendingMarketIdTypeMap = Object.values(bankList).reduce(
-      (acc, bank) => ({
+    const lendingMarketIdTypeMap = Object.values(bankInfos).reduce(
+      (acc, bankInfo) => ({
         ...acc,
-        [bank.lendingMarketId]: bank.lendingMarketType,
+        [bankInfo.lendingMarketId]: bankInfo.lendingMarketType,
       }),
       {},
     );
@@ -94,83 +97,89 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       uniquePoolCoinTypes,
     );
 
-    const pools: ParsedPool[] = [];
+    const pools: ParsedPool[] = (
+      await Promise.all(
+        poolInfos.map((poolInfo) =>
+          (async () => {
+            const id = poolInfo.poolId;
+            const type = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
+              ? PoolType.CONSTANT
+              : undefined; // TODO: Add support for other pool types
 
-    for (const poolInfo of poolInfos) {
-      const id = poolInfo.poolId;
-      const type = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
-        ? PoolType.CONSTANT
-        : undefined; // TODO: Add support for other pool types
+            const btokenTypeA = poolInfo.coinTypeA;
+            const btokenTypeB = poolInfo.coinTypeB;
+            if (
+              btokenTypeA.startsWith("0x10e03a93cf1e3d") ||
+              btokenTypeB.startsWith("0x10e03a93cf1e3d")
+            )
+              return undefined; // Skip pools with test btokens
 
-      const btokenTypeA = poolInfo.coinTypeA;
-      const btokenTypeB = poolInfo.coinTypeB;
-      if (
-        btokenTypeA.startsWith("0x10e03a93cf1e3d") ||
-        btokenTypeB.startsWith("0x10e03a93cf1e3d")
+            const coinTypeA = bTokenTypeCoinTypeMap[btokenTypeA];
+            const coinTypeB = bTokenTypeCoinTypeMap[btokenTypeB];
+
+            const pool = await steammClient.fullClient.fetchPool(
+              poolInfo.poolId,
+            );
+
+            const balanceA = new BigNumber(pool.balanceA.value.toString()).div(
+              10 ** poolCoinMetadataMap[coinTypeA].decimals,
+            );
+            const balanceB = new BigNumber(pool.balanceB.value.toString()).div(
+              10 ** poolCoinMetadataMap[coinTypeB].decimals,
+            );
+
+            let priceA, priceB;
+            if (isSui(coinTypeB)) {
+              priceB = suiPrice;
+              priceA =
+                coinTypeA === NORMALIZED_USDC_COINTYPE
+                  ? usdcPrice
+                  : !balanceA.eq(0)
+                    ? balanceB.div(balanceA).times(priceB)
+                    : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
+            } else if (coinTypeB === NORMALIZED_USDC_COINTYPE) {
+              priceB = usdcPrice;
+              priceA = isSui(coinTypeA)
+                ? suiPrice
+                : !balanceA.eq(0)
+                  ? balanceB.div(balanceA).times(priceB)
+                  : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
+            } else {
+              console.error(
+                `Quote asset must be one of SUI, USDC - skipping pool with id: ${id}`,
+              );
+              return undefined;
+            }
+
+            const tvlUsd = balanceA.times(priceA).plus(balanceB.times(priceB));
+
+            const feeTierPercent = new BigNumber(poolInfo.swapFeeBps).div(100);
+            const protocolFeePercent = new BigNumber(
+              pool.protocolFees.config.feeNumerator.toString(),
+            )
+              .div(pool.protocolFees.config.feeDenominator.toString())
+              .times(feeTierPercent.div(100))
+              .times(100);
+
+            return {
+              id,
+              type,
+
+              lpTokenType: poolInfo.lpTokenType,
+              btokenTypes: [btokenTypeA, btokenTypeB],
+              coinTypes: [coinTypeA, coinTypeB],
+              balances: [balanceA, balanceB],
+              prices: [priceA, priceB],
+
+              tvlUsd,
+
+              feeTierPercent,
+              protocolFeePercent,
+            };
+          })(),
+        ),
       )
-        continue; // Skip pools with test btokens
-
-      const coinTypeA = bTokenTypeCoinTypeMap[btokenTypeA];
-      const coinTypeB = bTokenTypeCoinTypeMap[btokenTypeB];
-
-      const pool = await steammClient.fullClient.fetchPool(poolInfo.poolId);
-
-      const balanceA = new BigNumber(pool.balanceA.value.toString()).div(
-        10 ** poolCoinMetadataMap[coinTypeA].decimals,
-      );
-      const balanceB = new BigNumber(pool.balanceB.value.toString()).div(
-        10 ** poolCoinMetadataMap[coinTypeB].decimals,
-      );
-
-      let priceA, priceB;
-      if (isSui(coinTypeB)) {
-        priceB = suiPrice;
-        priceA =
-          coinTypeA === NORMALIZED_USDC_COINTYPE
-            ? usdcPrice
-            : !balanceA.eq(0)
-              ? balanceB.div(balanceA).times(priceB)
-              : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
-      } else if (coinTypeB === NORMALIZED_USDC_COINTYPE) {
-        priceB = usdcPrice;
-        priceA = isSui(coinTypeA)
-          ? suiPrice
-          : !balanceA.eq(0)
-            ? balanceB.div(balanceA).times(priceB)
-            : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
-      } else {
-        console.error(
-          `Quote asset must be one of SUI, USDC - skipping pool with id: ${id}`,
-        );
-        continue;
-      }
-
-      const tvlUsd = balanceA.times(priceA).plus(balanceB.times(priceB));
-
-      const feeTierPercent = new BigNumber(poolInfo.swapFeeBps).div(100);
-      const protocolFeePercent = new BigNumber(
-        pool.protocolFees.config.feeNumerator.toString(),
-      )
-        .div(pool.protocolFees.config.feeDenominator.toString())
-        .times(feeTierPercent.div(100))
-        .times(100);
-
-      pools.push({
-        id,
-        type,
-
-        lpTokenType: poolInfo.lpTokenType,
-        btokenTypes: [btokenTypeA, btokenTypeB],
-        coinTypes: [coinTypeA, coinTypeB],
-        balances: [balanceA, balanceB],
-        prices: [priceA, priceB],
-
-        tvlUsd,
-
-        feeTierPercent,
-        protocolFeePercent,
-      });
-    }
+    ).filter(Boolean) as ParsedPool[];
 
     const sortedPools = pools.slice().sort((a, b) => {
       return formatPair([

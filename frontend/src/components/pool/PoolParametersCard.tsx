@@ -68,6 +68,11 @@ export default function PoolParametersCard() {
                 </p>
               </Tooltip>
 
+              <div className="flex flex-row items-center gap-1">
+                <CopyToClipboardButton value={coinType} />
+                <OpenOnExplorerButton url={explorer.buildCoinUrl(coinType)} />
+              </div>
+
               {appData.reserveDepositAprPercentMap[coinType] && (
                 <Tooltip
                   title={`Deposited ${coinMetadata.symbol} is earning ${formatPercent(appData.reserveDepositAprPercentMap[coinType])} APR in Suilend`}
@@ -85,11 +90,6 @@ export default function PoolParametersCard() {
                   </p>
                 </Tooltip>
               )}
-
-              <div className="flex flex-row items-center gap-1">
-                <CopyToClipboardButton value={coinType} />
-                <OpenOnExplorerButton url={explorer.buildCoinUrl(coinType)} />
-              </div>
             </div>
           );
         })}

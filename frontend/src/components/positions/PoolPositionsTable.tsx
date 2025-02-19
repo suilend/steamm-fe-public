@@ -1,6 +1,7 @@
 import { CSSProperties, useMemo, useState } from "react";
 
 import { ClassValue } from "clsx";
+import { useLocalStorage } from "usehooks-ts";
 
 import PoolPositionRow from "@/components/positions/PoolPositionRow";
 import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";
@@ -68,7 +69,10 @@ export default function PoolPositionsTable({
 }: PoolPositionsTableProps) {
   // Sort
   type SortState = { column: SortableColumn; direction: SortDirection };
-  const [sortState, setSortState] = useState<SortState | undefined>(undefined);
+  const [sortState, setSortState] = useLocalStorage<SortState | undefined>(
+    `PoolPositionsTable_sortState`,
+    undefined,
+  );
 
   const toggleSortByColumn = (column: SortableColumn) => {
     setSortState((prev) => {

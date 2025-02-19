@@ -124,9 +124,7 @@ export type SuilendConfigs = {
   lendingMarketType: string;
 };
 
-export type BankList = {
-  [key: string]: BankInfo;
-};
+export type BankList = Record<string, BankInfo>;
 
 export function getBankFromBToken(
   bankList: BankList,
