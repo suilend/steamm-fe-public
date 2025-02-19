@@ -88,19 +88,6 @@ export default function PoolsPage() {
         <div className="flex w-full flex-col gap-6">
           <div className="flex w-full flex-row items-center justify-between">
             <h1 className="text-h1 text-foreground">Pools</h1>
-
-            <Tooltip title="Coming soon">
-              <div className="w-max">
-                <button
-                  className="flex h-10 flex-row items-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
-                  disabled
-                >
-                  <p className="text-p2 text-button-1-foreground">
-                    Create pool
-                  </p>
-                </button>
-              </div>
-            </Tooltip>
           </div>
 
           {/* Stats */}
@@ -161,7 +148,9 @@ export default function PoolsPage() {
         {/* Featured pools */}
         {featuredPoolGroups.length > 0 && (
           <div className="flex w-full flex-col gap-6">
-            <h2 className="text-h3 text-foreground">Featured pools</h2>
+            <div className="flex h-[30px] w-full flex-row items-center justify-between">
+              <h2 className="text-h3 text-foreground">Featured pools</h2>
+            </div>
 
             <PoolsTable
               tableId="featured-pools"
@@ -172,14 +161,29 @@ export default function PoolsPage() {
 
         {/* All pools */}
         <div className="flex w-full flex-col gap-6">
-          <div className="flex flex-row items-center gap-3">
-            <h2 className="text-h3 text-foreground">All pools</h2>
-            <Tag>
-              {poolGroups.reduce(
-                (acc, poolGroup) => acc + poolGroup.pools.length,
-                0,
-              )}
-            </Tag>
+          <div className="flex h-[30px] w-full flex-row items-center justify-between">
+            <div className="flex flex-row items-center gap-3">
+              <h2 className="text-h3 text-foreground">All pools</h2>
+              <Tag>
+                {poolGroups.reduce(
+                  (acc, poolGroup) => acc + poolGroup.pools.length,
+                  0,
+                )}
+              </Tag>
+            </div>
+
+            <Tooltip title="Coming soon">
+              <div className="w-max">
+                <button
+                  className="flex h-10 flex-row items-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
+                  disabled
+                >
+                  <p className="text-p2 text-button-1-foreground">
+                    Create pool
+                  </p>
+                </button>
+              </div>
+            </Tooltip>
           </div>
 
           <PoolsTable tableId="pools" poolGroups={poolGroups} />
