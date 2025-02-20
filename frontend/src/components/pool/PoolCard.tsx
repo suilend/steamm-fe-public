@@ -18,32 +18,20 @@ export default function PoolCard({ pool }: PoolCardProps) {
   const { statsData } = useStatsContext();
 
   return (
-    <div className="group flex w-full flex-col gap-4 rounded-md border p-4 transition-colors hover:bg-border/50">
+    <div className="group flex w-full flex-col gap-3 rounded-md border p-4 transition-colors hover:bg-border/50">
       {/* Top */}
-      <div className="flex w-full flex-col gap-1">
-        <div className="flex flex-row items-center gap-2">
-          <TokenLogos coinTypes={pool.coinTypes} size={16} />
-          <p className="text-p1 text-foreground">
-            {formatPair([
-              appData.coinMetadataMap[pool.coinTypes[0]].symbol,
-              appData.coinMetadataMap[pool.coinTypes[1]].symbol,
-            ])}
-          </p>
-        </div>
+      <div className="flex w-full flex-row items-center gap-2">
+        <TokenLogos coinTypes={pool.coinTypes} size={16} />
+        <p className="text-p1 text-foreground">
+          {formatPair([
+            appData.coinMetadataMap[pool.coinTypes[0]].symbol,
+            appData.coinMetadataMap[pool.coinTypes[1]].symbol,
+          ])}
+        </p>
 
         <div className="flex flex-row items-center gap-1">
-          <Tag
-            className="transition-colors group-hover:bg-border"
-            labelClassName="transition-colors group-hover:text-foreground"
-          >
-            {pool.type ? poolTypeNameMap[pool.type] : "--"}
-          </Tag>
-          <Tag
-            className="transition-colors group-hover:bg-border"
-            labelClassName="transition-colors group-hover:text-foreground"
-          >
-            {formatFeeTier(pool.feeTierPercent)}
-          </Tag>
+          <Tag>{pool.type ? poolTypeNameMap[pool.type] : "--"}</Tag>
+          <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
         </div>
       </div>
 
