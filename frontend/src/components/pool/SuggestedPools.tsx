@@ -1,23 +1,31 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { ClassValue } from "clsx";
+
 import PoolCard from "@/components/pool/PoolCard";
 import Tag from "@/components/Tag";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { ParsedPool } from "@/lib/types";
-
-const COLLAPSED_POOL_COUNT = 2;
+import { cn } from "@/lib/utils";
 
 interface SuggestedPoolsProps {
+  containerClassName?: ClassValue;
   title: string;
   pools: ParsedPool[];
+  collapsedPoolCount?: number;
 }
 
-export default function SuggestedPools({ title, pools }: SuggestedPoolsProps) {
+export default function SuggestedPools({
+  containerClassName,
+  title,
+  pools,
+  collapsedPoolCount = 2,
+}: SuggestedPoolsProps) {
   // State
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
-  const shownPools = isExpanded ? pools : pools.slice(0, COLLAPSED_POOL_COUNT);
+  const shownPools = isExpanded ? pools : pools.slice(0, collapsedPoolCount);
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -27,7 +35,7 @@ export default function SuggestedPools({ title, pools }: SuggestedPoolsProps) {
           <Tag>{pools.length}</Tag>
         </div>
 
-        {pools.length > COLLAPSED_POOL_COUNT && (
+        {pools.length > collapsedPoolCount && (
           <button
             className="flex h-6 flex-row items-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80"
             onClick={() => setIsExpanded((prev) => !prev)}
@@ -39,7 +47,7 @@ export default function SuggestedPools({ title, pools }: SuggestedPoolsProps) {
         )}
       </div>
 
-      <div className="grid w-full grid-cols-1 gap-1 md:grid-cols-2">
+      <div className={cn("grid w-full grid-cols-2 gap-1", containerClassName)}>
         {shownPools.map((_pool) => (
           <Link
             key={_pool.id}

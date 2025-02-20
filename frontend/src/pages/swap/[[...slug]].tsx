@@ -498,8 +498,8 @@ export default function SwapPage() {
     }
   };
 
-  // Recommended pools
-  const recommendedPools = appData.pools
+  // Suggested pools
+  const suggestedPools = appData.pools
     .filter(
       (_pool) =>
         _pool.coinTypes[0] === inCoinType || _pool.coinTypes[1] === outCoinType,
@@ -636,7 +636,12 @@ export default function SwapPage() {
           </div>
         </div>
 
-        <SuggestedPools title="Recommended pools" pools={recommendedPools} />
+        <SuggestedPools
+          containerClassName="grid-cols-1"
+          title="Suggested pools"
+          pools={suggestedPools}
+          collapsedPoolCount={2}
+        />
       </div>
     </>
   );
