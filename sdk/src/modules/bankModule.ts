@@ -2,7 +2,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID, normalizeSuiAddress } from "@mysten/sui/utils";
 
 import { BankScriptFunctions } from "../_codegen";
-import { createBank } from "../base";
+import { InitLendingArgs, createBank } from "../base";
 import { castNeedsRebalance } from "../base/bank/bankTypes";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
@@ -27,6 +27,21 @@ export class BankModule implements IModule {
 
   get sdk() {
     return this._sdk;
+  }
+
+  public async initLending(
+    tx: Transaction,
+    args: Omit<InitLendingArgs, "globalAdmin"> & { bankId: SuiAddressType },
+  ) {
+    const banks = await this.sdk.getBanks();
+    const bankInfo = getBankFromId(banks, args.bankId);
+    const bank = this.sdk.getBank(bankInfo);
+
+    bank.initLending(tx, {
+      globalAdmin: this.sdk.sdkOptions.steamm_config.config!.globalAdmin,
+      targetUtilisationBps: args.targetUtilisationBps,
+      utilisationBufferBps: args.utilisationBufferBps,
+    });
   }
 
   public async rebalance(
@@ -136,11 +151,18 @@ export class BankModule implements IModule {
     for (const bankInfo of banks) {
       const bank = this.sdk.getBank(bankInfo);
 
-      BankScriptFunctions.needsRebalance(tx, bank.typeArgs(), {
-        bank: bank.bank(tx),
-        lendingMarket: bank.lendingMarket(tx),
-        clock: tx.object(SUI_CLOCK_OBJECT_ID),
-      });
+      bank.compoundInterestIfAny(tx);
+
+      BankScriptFunctions.needsRebalance(
+        tx,
+        bank.typeArgs(),
+        {
+          bank: bank.bank(tx),
+          lendingMarket: bank.lendingMarket(tx),
+          clock: tx.object(SUI_CLOCK_OBJECT_ID),
+        },
+        this.sdk.scriptPackageInfo().publishedAt,
+      );
     }
 
     const rebalancings = await this.getRebalanceQueryResult(tx);
@@ -166,7 +188,7 @@ export class BankModule implements IModule {
     );
 
     if (inspectResults.error) {
-      console.log("Failed to fetch quote");
+      console.log("Failed to fetch rebalancing query");
       throw new Error(inspectResults.error);
     }
 

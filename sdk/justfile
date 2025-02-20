@@ -52,7 +52,5 @@ unset:
     bash -c './bin/unpublocal.sh'
 
 test:
-    bash -c './bin/publocal.sh'
     bun test ./tests/index.test.ts
-    bash -c './bin/unpublocal.sh'
 

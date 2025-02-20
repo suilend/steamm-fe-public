@@ -1,14 +1,16 @@
-import { beforeAll, describe, expect, it } from "bun:test";
+import { describe } from "bun:test";
 
-import { test as errTest } from "./err.test";
-import { test as routerTest } from "./router.test";
-import { test as testonTest } from "./teston.test";
-import { test as unitTest } from "./unit.test";
+import { test as baseTest } from "./tests/base.test";
+import { test as errTest } from "./tests/err.test";
+import { test as lendingTest } from "./tests/lending.test";
+import { test as routerTest } from "./tests/router.test";
+import { test as routerUnitTest } from "./tests/routerUnit.test";
 
-describe("Test Suite", () => {
+describe("Test Suite", async () => {
   // Run all tests from teston.test.ts
-  testonTest();
-  unitTest();
-  routerTest();
-  errTest();
+  await baseTest();
+  await routerUnitTest();
+  await routerTest();
+  await errTest();
+  await lendingTest();
 });

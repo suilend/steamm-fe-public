@@ -1,26 +1,17 @@
 /* eslint-disable */
-import {
-  ParsedKeypair,
-  decodeSuiPrivateKey,
-  encodeSuiPrivateKey,
-} from "@mysten/sui/cryptography";
+import { ParsedKeypair, decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 import {
   beforeAll,
   describe,
   beforeEach,
-  expect,
   it,
   setDefaultTimeout,
 } from "bun:test";
 import dotenv from "dotenv";
-
-import { PoolModule } from "../src/modules/poolModule";
-import { RpcModule } from "../src/modules/rpcModule";
-import { SteammSDK } from "../src/sdk";
-import { BankList, DataPage, PoolInfo } from "../src/types";
-import { BankInfo } from "../src/types";
+import { SteammSDK } from "../../src/sdk";
+import { BankList, DataPage, PoolInfo } from "../../src/types";
 
 import {
   GLOBAL_ADMIN_ID,
@@ -30,26 +21,19 @@ import {
   STEAMM_PKG_ID,
   STEAMM_SCRIPT_PKG_ID,
   SUILEND_PKG_ID,
-} from "./packages";
+} from "./../packages";
+import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
+import { parseErrorCode } from "../../src";
 import {
-  createBTokenHelper,
   createCoinAndBankHelper,
-  createCoinHelper,
-  createCoinTx,
   createPoolHelper,
   mintCoin,
-} from "./utils";
-import {
-  PaginatedObjectsResponse,
-  SuiObjectData,
-  SuiObjectResponse,
-} from "@mysten/sui/client";
-import { parseErrorCode, parseMoveAbortError, Pool } from "../src";
+} from "../utils/utils";
 
 dotenv.config();
 
-export function test() {
-  describe("test depost, swap and redeem", () => {
+export async function test() {
+  describe("test swap router", async () => {
     let keypair: Ed25519Keypair;
     let suiTreasuryCap: string;
     let usdcTreasuryCap: string;
@@ -123,6 +107,8 @@ export function test() {
         (obj) =>
           obj.type === `0x2::coin::TreasuryCap<${STEAMM_PKG_ID}::usdc::USDC>`,
       )!.objectId!;
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
     });
 
     it("Swap router", async () => {

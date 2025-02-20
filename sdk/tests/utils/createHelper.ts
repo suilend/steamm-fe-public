@@ -1,7 +1,7 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
-import { SuiAddressType } from "../src";
+import { SuiAddressType } from "../../src";
 
 import { createCoinBytecode } from "./coinGen";
 

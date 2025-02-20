@@ -1,16 +1,7 @@
-import {
-  SuiObjectChange,
-  SuiTransactionBlockResponse,
-} from "@mysten/sui/client";
-import {
-  Transaction,
-  TransactionArgument,
-  TransactionObjectInput,
-  TransactionResult,
-} from "@mysten/sui/transactions";
+import { Transaction, TransactionResult } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
-import { SteammSDK, SuiAddressType } from "../src";
+import { SteammSDK, SuiAddressType, parseErrorCode } from "../../src";
 
 import { createCoinBytecode, getTreasuryAndCoinMeta } from "./coinGen";
 import { createBToken2, createLpToken2 } from "./createHelper";
@@ -225,4 +216,63 @@ export function mintCoin(
       tx.pure.u64(BigInt("10000000000000000")),
     ],
   });
+}
+
+export async function initLendingNoOp(sdk: SteammSDK, coinType: string) {
+  const banks = await sdk.getBanks();
+  const bankId = banks[coinType].bankId;
+  const bankState = await sdk.fullClient.getObject({
+    id: bankId,
+    options: {
+      showContent: true,
+      showType: true,
+      showOwner: true,
+      showPreviousTransaction: true,
+      showStorageRebate: true,
+    },
+  });
+
+  if ((bankState.data?.content as any).fields.lending === null) {
+    const initLendTx = new Transaction();
+    await sdk.Bank.initLending(initLendTx, {
+      bankId,
+      targetUtilisationBps: 8000,
+      utilisationBufferBps: 1000,
+    });
+
+    const devResult = await sdk.fullClient.devInspectTransactionBlock({
+      transactionBlock: initLendTx,
+      sender: sdk.senderAddress,
+    });
+
+    if (devResult.error) {
+      console.log("bankID: ", bankId);
+      const errCode = parseErrorCode(devResult);
+      console.log(errCode);
+      console.log("DevResult failed.");
+      throw new Error(devResult.error);
+    }
+
+    const txResult = await sdk.fullClient.signAndExecuteTransaction({
+      transaction: initLendTx,
+      signer: sdk.signer!,
+      options: {
+        showEffects: true,
+        showEvents: true,
+      },
+    });
+
+    if (txResult.effects?.status?.status !== "success") {
+      console.log("Transaction failed");
+      throw new Error(
+        `Transaction failed: ${JSON.stringify(txResult.effects)}`,
+      );
+    }
+
+    console.log("Init lending succeeded for", coinType);
+    return txResult;
+  }
+
+  console.log("Lending already initialized for", coinType);
+  return null;
 }

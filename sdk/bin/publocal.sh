@@ -19,7 +19,7 @@ if [ "$CI" = false ]; then
 
     # Create suilend directory if it doesn't exist and cd into it
     mkdir -p temp &&
-    git clone --branch swap-router git@github.com:solendprotocol/steamm.git temp/git
+    git clone --branch develop git@github.com:solendprotocol/steamm.git temp/git
 else
     ./bin/unpublocal.sh --ci
 fi
@@ -300,7 +300,7 @@ echo "b_sui_treasury_cap: $b_sui_treasury_cap"
 PACKAGE_ID=$(echo "$STEAMM_RESPONSE" | grep -A 3 '"type": "published"' | grep "packageId" | cut -d'"' -f4)
 echo "PACKAGE_ID: $PACKAGE_ID"
 
-SETUP_RESPONSE=$(sui client --client.config sui/client.yaml call --package "$PACKAGE_ID" --module setup --function setup --args "$lending_market_registry" "$registry" "$lp_metadata" "$lp_treasury_cap" "$usdc_metadata" "$sui_metadata" "$b_usdc_metadata" "$b_sui_metadata" "$b_usdc_treasury_cap" "$b_sui_treasury_cap" --json)
+SETUP_RESPONSE=$(sui client --client.config sui/client.yaml call --package "$PACKAGE_ID" --module setup --function setup --args "$lending_market_registry" "$registry" "$lp_metadata" "$lp_treasury_cap" "$usdc_metadata" "$sui_metadata" "$b_usdc_metadata" "$b_sui_metadata" "$b_usdc_treasury_cap" "$b_sui_treasury_cap" "0x6" --json)
 
 lending_market=$(find_object_id "$SETUP_RESPONSE" ".*::lending_market::LendingMarket<")
 echo "lending_market: $lending_market"
