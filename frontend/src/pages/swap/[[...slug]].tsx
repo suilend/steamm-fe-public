@@ -1,5 +1,4 @@
 import Head from "next/head";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import {
   Fragment,
@@ -21,9 +20,7 @@ import {
   NORMALIZED_USDC_COINTYPE,
   SUI_GAS_MIN,
   formatInteger,
-  formatPercent,
   formatToken,
-  formatUsd,
   getBalanceChange,
   getToken,
   isSui,
@@ -40,17 +37,14 @@ import { MultiSwapQuote, Route, SteammSDK } from "@suilend/steamm-sdk";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
 import Parameter from "@/components/Parameter";
 import CoinInput, { getCoinInputId } from "@/components/pool/CoinInput";
+import SuggestedPools from "@/components/pool/SuggestedPools";
 import SlippagePopover from "@/components/SlippagePopover";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import PriceDifferenceLabel from "@/components/swap/PriceDifferenceLabel";
 import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
-import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { useStatsContext } from "@/contexts/StatsContext";
-import { formatPair } from "@/lib/format";
-import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { getQuoteRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 
@@ -69,7 +63,6 @@ export default function SwapPage() {
     hasRootlets,
     isWhitelisted,
   } = useLoadedAppContext();
-  const { statsData } = useStatsContext();
 
   // CoinTypes
   const [inCoinType, outCoinType] = useMemo(() => {
@@ -505,14 +498,13 @@ export default function SwapPage() {
     }
   };
 
-  // Relevant pools
-  const relevantPools = appData.pools
+  // Recommended pools
+  const recommendedPools = appData.pools
     .filter(
-      (pool) =>
-        pool.coinTypes[0] === inCoinType || pool.coinTypes[1] === outCoinType,
+      (_pool) =>
+        _pool.coinTypes[0] === inCoinType || _pool.coinTypes[1] === outCoinType,
     )
-    .sort((a, b) => +b.tvlUsd - +a.tvlUsd)
-    .slice(0, 2); // Show only the top 2 pools
+    .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
 
   return (
     <>
@@ -644,59 +636,7 @@ export default function SwapPage() {
           </div>
         </div>
 
-        <div className="flex w-full max-w-md flex-col gap-3">
-          <p className="text-p1 text-foreground">Recommended pools</p>
-
-          <div className="grid w-full grid-cols-1 gap-1 md:grid-cols-2">
-            {relevantPools.map((pool) => (
-              <Link
-                key={pool.id}
-                className="flex w-full flex-col gap-2 rounded-md border p-4 transition-colors hover:bg-border/50"
-                href={`${POOL_URL_PREFIX}/${pool.id}`}
-              >
-                {/* Top */}
-                <div className="flex w-full flex-row justify-between">
-                  {/* Top left */}
-                  <div className="flex flex-row items-center gap-2">
-                    <TokenLogos coinTypes={pool.coinTypes} size={16} />
-                    <p className="text-p1 text-foreground">
-                      {formatPair([
-                        appData.coinMetadataMap[pool.coinTypes[0]].symbol,
-                        appData.coinMetadataMap[pool.coinTypes[1]].symbol,
-                      ])}
-                    </p>
-                  </div>
-
-                  {/* Top right */}
-                </div>
-
-                {/* Bottom */}
-                <div className="flex w-full flex-row items-center gap-6">
-                  <div className="flex flex-row items-center gap-2">
-                    <p className="text-p2 text-secondary-foreground">TVL</p>
-                    <p className="text-p2 text-foreground">
-                      {formatUsd(pool.tvlUsd)}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-row items-center gap-2">
-                    <p className="text-p2 text-secondary-foreground">APR</p>
-                    {statsData?.poolAprPercent_24h_map?.[pool.id] ===
-                    undefined ? (
-                      <Skeleton className="h-[21px] w-12 bg-foreground/25" />
-                    ) : (
-                      <p className="text-p2 text-foreground">
-                        {formatPercent(
-                          statsData.poolAprPercent_24h_map[pool.id],
-                        )}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
+        <SuggestedPools title="Recommended pools" pools={recommendedPools} />
       </div>
     </>
   );

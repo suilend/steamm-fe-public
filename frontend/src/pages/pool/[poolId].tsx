@@ -8,6 +8,7 @@ import { formatPercent, formatUsd } from "@suilend/frontend-sui";
 import PoolActionsCard from "@/components/pool/PoolActionsCard";
 import PoolChartCard from "@/components/pool/PoolChartCard";
 import PoolParametersCard from "@/components/pool/PoolParametersCard";
+import SuggestedPools from "@/components/pool/SuggestedPools";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
@@ -29,6 +30,21 @@ function PoolPage() {
   const formattedPair = formatPair(
     pool.coinTypes.map((coinType) => appData.coinMetadataMap[coinType].symbol),
   );
+
+  // Other pools
+  const sameBaseAssetPools = appData.pools
+    .filter(
+      (_pool) =>
+        _pool.id !== pool.id && _pool.coinTypes[0] === pool.coinTypes[0],
+    )
+    .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
+
+  const sameQuoteAssetPools = appData.pools
+    .filter(
+      (_pool) =>
+        _pool.id !== pool.id && _pool.coinTypes[1] === pool.coinTypes[1],
+    )
+    .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
 
   return (
     <>
@@ -61,9 +77,7 @@ function PoolPage() {
 
               <div className="flex flex-row items-center gap-1">
                 <Tag>{pool.type ? poolTypeNameMap[pool.type] : "--"}</Tag>
-                <Tag labelClassName="transition-colors group-hover:text-foreground">
-                  {formatFeeTier(pool.feeTierPercent)}
-                </Tag>
+                <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
               </div>
             </div>
 
@@ -161,8 +175,19 @@ function PoolPage() {
             </div>
 
             {/* Right */}
-            <div className="max-md:w-full md:flex-1">
+            <div className="flex flex-col gap-8 max-md:w-full md:flex-1">
               <PoolActionsCard />
+
+              <div className="flex flex-col gap-6 pl-5">
+                <SuggestedPools
+                  title={`${appData.coinMetadataMap[pool.coinTypes[0]].symbol} pools`}
+                  pools={sameBaseAssetPools}
+                />
+                <SuggestedPools
+                  title={`${appData.coinMetadataMap[pool.coinTypes[1]].symbol} pools`}
+                  pools={sameQuoteAssetPools}
+                />
+              </div>
             </div>
           </div>
         </div>
