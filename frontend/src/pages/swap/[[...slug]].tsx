@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import {
   Fragment,
@@ -20,7 +21,9 @@ import {
   NORMALIZED_USDC_COINTYPE,
   SUI_GAS_MIN,
   formatInteger,
+  formatPercent,
   formatToken,
+  formatUsd,
   getBalanceChange,
   getToken,
   isSui,
@@ -41,9 +44,13 @@ import SlippagePopover from "@/components/SlippagePopover";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import PriceDifferenceLabel from "@/components/swap/PriceDifferenceLabel";
 import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
+import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import { useStatsContext } from "@/contexts/StatsContext";
+import { formatPair } from "@/lib/format";
+import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { getQuoteRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 
@@ -62,6 +69,7 @@ export default function SwapPage() {
     hasRootlets,
     isWhitelisted,
   } = useLoadedAppContext();
+  const { statsData } = useStatsContext();
 
   // CoinTypes
   const [inCoinType, outCoinType] = useMemo(() => {
@@ -497,132 +505,197 @@ export default function SwapPage() {
     }
   };
 
+  // Relevant pools
+  const relevantPools = appData.pools
+    .filter(
+      (pool) =>
+        pool.coinTypes[0] === inCoinType || pool.coinTypes[1] === outCoinType,
+    )
+    .sort((a, b) => +b.tvlUsd - +a.tvlUsd)
+    .slice(0, 2); // Show only the top 2 pools
+
   return (
     <>
       <Head>
         <title>STEAMM | Swap</title>
       </Head>
 
-      <div className="flex w-full max-w-md flex-col gap-6">
-        <div className="flex w-full flex-row items-center justify-between">
-          <h1 className="text-h1 text-foreground">Swap</h1>
-          <SlippagePopover />
-        </div>
-
-        <div className="flex w-full flex-col gap-4">
-          <div className="relative flex w-full min-w-0 flex-col items-center gap-1">
-            <CoinInput
-              className="relative z-[1]"
-              autoFocus
-              coinType={inCoinType}
-              value={value}
-              onChange={(value) => onValueChange(value)}
-              onBalanceClick={() => onCoinBalanceClick()}
-              onPopoverCoinClick={(coinType) =>
-                onPopoverCoinClick(coinType, "in")
-              }
-            />
-
-            <ReverseAssetsButton onClick={reverseAssets} />
-
-            <CoinInput
-              className="relative z-[1]"
-              coinType={outCoinType}
-              value={
-                isFetchingQuote
-                  ? undefined
-                  : quote
-                    ? formatValue(
-                        new BigNumber(quote.amountOut.toString())
-                          .div(10 ** outCoinMetadata.decimals)
-                          .toFixed(
-                            outCoinMetadata.decimals,
-                            BigNumber.ROUND_DOWN,
-                          ),
-                        outCoinMetadata.decimals,
-                      )
-                    : ""
-              }
-              onPopoverCoinClick={(coinType) =>
-                onPopoverCoinClick(coinType, "out")
-              }
-            />
+      <div className="flex w-full max-w-md flex-col gap-8">
+        <div className="flex w-full flex-col gap-6">
+          <div className="flex w-full flex-row items-center justify-between">
+            <h1 className="text-h1 text-foreground">Swap</h1>
+            <SlippagePopover />
           </div>
 
-          {(isFetchingQuote || quote) && (
-            <div className="flex w-full flex-row items-center justify-between">
-              <PriceDifferenceLabel
-                inCoinType={inCoinType}
-                outCoinType={outCoinType}
-                oracleRatio={oracleRatio}
-                isFetchingQuote={isFetchingQuote}
-                quote={quote}
+          <div className="flex w-full flex-col gap-4">
+            <div className="relative flex w-full min-w-0 flex-col items-center gap-1">
+              <CoinInput
+                className="relative z-[1]"
+                autoFocus
+                coinType={inCoinType}
+                value={value}
+                onChange={(value) => onValueChange(value)}
+                onBalanceClick={() => onCoinBalanceClick()}
+                onPopoverCoinClick={(coinType) =>
+                  onPopoverCoinClick(coinType, "in")
+                }
               />
 
-              {isFetchingQuote || !quote || !route ? (
-                <Skeleton className="h-[21px] w-16" />
-              ) : (
-                <Tooltip
-                  content={
-                    <div className="flex flex-row items-center gap-1">
-                      {flattenedRoute!.map((r, index) => (
-                        <Fragment key={r.bTokenType}>
-                          <p className="text-p3 text-foreground">
-                            {
-                              appData.coinMetadataMap[
-                                appData.bTokenTypeCoinTypeMap[r.bTokenType]
-                              ].symbol
-                            }
-                          </p>
-                          {index !== flattenedRoute!.length - 1 && (
-                            <ArrowRight className="h-3 w-3 text-foreground" />
-                          )}
-                        </Fragment>
-                      ))}
-                    </div>
-                  }
-                >
-                  <p className="text-p2 text-secondary-foreground">
-                    {route.length} hop
-                    {route.length > 1 && "s"}
-                  </p>
-                </Tooltip>
-              )}
+              <ReverseAssetsButton onClick={reverseAssets} />
+
+              <CoinInput
+                className="relative z-[1]"
+                coinType={outCoinType}
+                value={
+                  isFetchingQuote
+                    ? undefined
+                    : quote
+                      ? formatValue(
+                          new BigNumber(quote.amountOut.toString())
+                            .div(10 ** outCoinMetadata.decimals)
+                            .toFixed(
+                              outCoinMetadata.decimals,
+                              BigNumber.ROUND_DOWN,
+                            ),
+                          outCoinMetadata.decimals,
+                        )
+                      : ""
+                }
+                onPopoverCoinClick={(coinType) =>
+                  onPopoverCoinClick(coinType, "out")
+                }
+              />
             </div>
-          )}
 
-          <SubmitButton
-            submitButtonState={submitButtonState}
-            onClick={onSubmitClick}
-          />
+            {(isFetchingQuote || quote) && (
+              <div className="flex w-full flex-row items-center justify-between">
+                <PriceDifferenceLabel
+                  inCoinType={inCoinType}
+                  outCoinType={outCoinType}
+                  oracleRatio={oracleRatio}
+                  isFetchingQuote={isFetchingQuote}
+                  quote={quote}
+                />
 
-          {(isFetchingQuote || quote) && (
-            <div className="flex w-full flex-col gap-2">
-              <ExchangeRateParameter
-                inCoinType={inCoinType}
-                outCoinType={outCoinType}
-                isFetchingQuote={isFetchingQuote}
-                quote={quote}
-                isHorizontal
-              />
-
-              <Parameter label="Minimum inflow" isHorizontal>
-                {isFetchingQuote || !quote ? (
-                  <Skeleton className="h-[21px] w-24" />
+                {isFetchingQuote || !quote || !route ? (
+                  <Skeleton className="h-[21px] w-16" />
                 ) : (
-                  <p className="text-p2 text-foreground">
-                    {formatToken(
-                      new BigNumber(quote.amountOut.toString())
-                        .div(1 + slippagePercent / 100)
-                        .div(10 ** outCoinMetadata.decimals),
-                      { dp: outCoinMetadata.decimals },
-                    )}{" "}
-                    {outCoinMetadata.symbol}
-                  </p>
+                  <Tooltip
+                    content={
+                      <div className="flex flex-row items-center gap-1">
+                        {flattenedRoute!.map((r, index) => (
+                          <Fragment key={r.bTokenType}>
+                            <p className="text-p3 text-foreground">
+                              {
+                                appData.coinMetadataMap[
+                                  appData.bTokenTypeCoinTypeMap[r.bTokenType]
+                                ].symbol
+                              }
+                            </p>
+                            {index !== flattenedRoute!.length - 1 && (
+                              <ArrowRight className="h-3 w-3 text-foreground" />
+                            )}
+                          </Fragment>
+                        ))}
+                      </div>
+                    }
+                  >
+                    <p className="text-p2 text-secondary-foreground">
+                      {route.length} hop
+                      {route.length > 1 && "s"}
+                    </p>
+                  </Tooltip>
                 )}
-              </Parameter>
-            </div>
-          )}
+              </div>
+            )}
+
+            <SubmitButton
+              submitButtonState={submitButtonState}
+              onClick={onSubmitClick}
+            />
+
+            {(isFetchingQuote || quote) && (
+              <div className="flex w-full flex-col gap-2">
+                <ExchangeRateParameter
+                  inCoinType={inCoinType}
+                  outCoinType={outCoinType}
+                  isFetchingQuote={isFetchingQuote}
+                  quote={quote}
+                  isHorizontal
+                />
+
+                <Parameter label="Minimum inflow" isHorizontal>
+                  {isFetchingQuote || !quote ? (
+                    <Skeleton className="h-[21px] w-24" />
+                  ) : (
+                    <p className="text-p2 text-foreground">
+                      {formatToken(
+                        new BigNumber(quote.amountOut.toString())
+                          .div(1 + slippagePercent / 100)
+                          .div(10 ** outCoinMetadata.decimals),
+                        { dp: outCoinMetadata.decimals },
+                      )}{" "}
+                      {outCoinMetadata.symbol}
+                    </p>
+                  )}
+                </Parameter>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex w-full max-w-md flex-col gap-3">
+          <p className="text-p1 text-foreground">Recommended pools</p>
+
+          <div className="grid w-full grid-cols-1 gap-1 md:grid-cols-2">
+            {relevantPools.map((pool) => (
+              <Link
+                key={pool.id}
+                className="flex w-full flex-col gap-2 rounded-md border p-4 transition-colors hover:bg-border/50"
+                href={`${POOL_URL_PREFIX}/${pool.id}`}
+              >
+                {/* Top */}
+                <div className="flex w-full flex-row justify-between">
+                  {/* Top left */}
+                  <div className="flex flex-row items-center gap-2">
+                    <TokenLogos coinTypes={pool.coinTypes} size={16} />
+                    <p className="text-p1 text-foreground">
+                      {formatPair([
+                        appData.coinMetadataMap[pool.coinTypes[0]].symbol,
+                        appData.coinMetadataMap[pool.coinTypes[1]].symbol,
+                      ])}
+                    </p>
+                  </div>
+
+                  {/* Top right */}
+                </div>
+
+                {/* Bottom */}
+                <div className="flex w-full flex-row items-center gap-6">
+                  <div className="flex flex-row items-center gap-2">
+                    <p className="text-p2 text-secondary-foreground">TVL</p>
+                    <p className="text-p2 text-foreground">
+                      {formatUsd(pool.tvlUsd)}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-row items-center gap-2">
+                    <p className="text-p2 text-secondary-foreground">APR</p>
+                    {statsData?.poolAprPercent_24h_map?.[pool.id] ===
+                    undefined ? (
+                      <Skeleton className="h-[21px] w-12 bg-foreground/25" />
+                    ) : (
+                      <p className="text-p2 text-foreground">
+                        {formatPercent(
+                          statsData.poolAprPercent_24h_map[pool.id],
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </>
