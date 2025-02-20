@@ -220,5 +220,14 @@ export async function test() {
         console.log("Transaction succeeded:", txResult.digest);
       }
     });
+
+    it("Gets utilisation", async () => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const bank = Object.values(banks)[0];
+
+      const utilisation = await sdk.Bank.getEffectiveUtilisation(bank.bankId);
+
+      console.log("bank effective utilisation: ", utilisation);
+    });
   });
 }
