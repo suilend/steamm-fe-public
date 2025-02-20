@@ -26,13 +26,12 @@ import useFetchOwnedKiosks from "@/fetchers/useFetchOwnedKiosks";
 import { ParsedBank, ParsedPool } from "@/lib/types";
 
 export interface AppData {
-  reserveDepositAprPercentMap: Record<string, BigNumber>;
-
   coinMetadataMap: Record<string, CoinMetadata>;
   bTokenTypeCoinTypeMap: Record<string, string>;
   lendingMarketIdTypeMap: Record<string, string>;
 
   banks: ParsedBank[];
+  bankMap: Record<string, ParsedBank>;
   bankCoinTypes: string[];
 
   pools: ParsedPool[];
