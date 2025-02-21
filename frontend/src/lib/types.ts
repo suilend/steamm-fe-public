@@ -4,8 +4,13 @@ export type ParsedBank = {
   id: string;
   coinType: string;
   bTokenType: string;
+
   liquidAmount: BigNumber;
   depositedAmount: BigNumber;
+  totalAmount: BigNumber;
+
+  utilizationPercent: BigNumber;
+  aprPercent: BigNumber;
 };
 
 export enum PoolType {

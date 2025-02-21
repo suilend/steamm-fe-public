@@ -47,6 +47,8 @@ import { getQuoteRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
 
+import { quotePoolDeposit } from "@/utils";
+
 enum Action {
   DEPOSIT = "deposit",
   WITHDRAW = "withdraw",
@@ -116,11 +118,21 @@ function DepositTab({ formatValue }: DepositTabProps) {
         .times(10 ** dps[index])
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
-      const quote = await _steammClient.Pool.quoteDeposit({
-        pool: pool.id,
-        maxA: index === 0 ? BigInt(submitAmount) : BigInt(MAX_U64.toString()),
-        maxB: index === 0 ? BigInt(MAX_U64.toString()) : BigInt(submitAmount),
-      });
+
+      const poolState = await steammClient.fullClient.fetchPool(pool.id);
+
+      const quote = quotePoolDeposit(
+        poolState,
+        index === 0 ? BigInt(submitAmount) : BigInt(MAX_U64.toString()),
+        index === 0 ? BigInt(MAX_U64.toString()) : BigInt(submitAmount),
+      );
+
+      // TODO: add back after
+      // const quote = await _steammClient.Pool.quoteDeposit({
+      //   pool: pool.id,
+      //   maxA: index === 0 ? BigInt(submitAmount) : BigInt(MAX_U64.toString()),
+      //   maxB: index === 0 ? BigInt(MAX_U64.toString()) : BigInt(submitAmount),
+      // });
 
       if (valuesRef.current[index] !== _value) return;
       console.log("DepositTab.fetchQuote - quote:", quote);

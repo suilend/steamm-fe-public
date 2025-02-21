@@ -80,26 +80,33 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           const bTokenType = bankInfo.btokenType;
 
           const bank = await steammClient.fullClient.fetchBank(id);
-          console.log("XXX", bankInfo, bank);
 
           const liquidAmount = new BigNumber(
             bank.fundsAvailable.value.toString(),
           ).div(10 ** bankCoinMetadataMap[coinType].decimals);
-
-          const ctokensDeposited = new BigNumber(
+          const depositedAmount = new BigNumber(
             bank.lending ? bank.lending.ctokens.toString() : 0,
-          );
-          const depositedAmount = new BigNumber(0); // TODO
+          ).times(reserveMap[coinType].cTokenExchangeRate);
+          const totalAmount = liquidAmount.plus(depositedAmount);
 
           return {
             id,
             coinType,
             bTokenType,
+
             liquidAmount,
             depositedAmount,
+            totalAmount,
+
+            utilizationPercent: depositedAmount.div(liquidAmount).times(100),
+            aprPercent:
+              reserveDepositAprPercentMap[coinType] ?? new BigNumber(0),
           };
         })(),
       ),
+    );
+    const bankMap = Object.fromEntries(
+      banks.map((bank) => [bank.coinType, bank]),
     );
 
     // Pools
@@ -224,13 +231,12 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const featuredCoinTypePairs: [[string, string]] = [["", ""]];
 
     return {
-      reserveDepositAprPercentMap,
-
       coinMetadataMap,
       bTokenTypeCoinTypeMap,
       lendingMarketIdTypeMap,
 
       banks,
+      bankMap,
       bankCoinTypes,
 
       pools: sortedPools,

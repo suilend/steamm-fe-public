@@ -73,9 +73,9 @@ export default function PoolParametersCard() {
                 <OpenOnExplorerButton url={explorer.buildCoinUrl(coinType)} />
               </div>
 
-              {appData.reserveDepositAprPercentMap[coinType] && (
+              {appData.bankMap[coinType] && (
                 <Tooltip
-                  title={`Deposited ${coinMetadata.symbol} is earning ${formatPercent(appData.reserveDepositAprPercentMap[coinType])} APR in Suilend`}
+                  title={`${formatPercent(appData.bankMap[coinType].utilizationPercent)} of deposited ${coinMetadata.symbol} is earning ${formatPercent(appData.bankMap[coinType].aprPercent)} APR on Suilend`}
                 >
                   <p
                     className={cn(
@@ -84,7 +84,9 @@ export default function PoolParametersCard() {
                     )}
                   >
                     {formatPercent(
-                      appData.reserveDepositAprPercentMap[coinType],
+                      appData.bankMap[coinType].aprPercent
+                        .times(appData.bankMap[coinType].utilizationPercent)
+                        .div(100),
                     )}{" "}
                     APR
                   </p>

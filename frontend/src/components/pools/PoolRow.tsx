@@ -59,12 +59,8 @@ export default function PoolRow({
         className="flex h-full flex-row items-center gap-1"
         style={columnStyleMap.type}
       >
-        <Tag labelClassName="transition-colors group-hover:text-foreground">
-          {pool.type ? poolTypeNameMap[pool.type] : "--"}
-        </Tag>
-        <Tag labelClassName="transition-colors group-hover:text-foreground">
-          {formatFeeTier(pool.feeTierPercent)}
-        </Tag>
+        <Tag>{pool.type ? poolTypeNameMap[pool.type] : "--"}</Tag>
+        <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
       </div>
 
       {/* TVL */}
