@@ -3,11 +3,9 @@ import * as cpmm from "./cpmm/structs";
 import * as events from "./events/structs";
 import * as fees from "./fees/structs";
 import * as globalAdmin from "./global-admin/structs";
-import * as poolScript from "./pool-script/structs";
 import * as pool from "./pool/structs";
 import * as quote from "./quote/structs";
 import * as registry from "./registry/structs";
-import * as scriptEvents from "./script-events/structs";
 import * as version from "./version/structs";
 import {StructClassLoader} from "../_framework/loader";
 
@@ -41,6 +39,4 @@ export function registerClasses(loader: StructClassLoader) {
     loader.register(pool.SwapResult);
     loader.register(pool.TradingData);
     loader.register(cpmm.CpQuoter);
-    loader.register(scriptEvents.Event);
-    loader.register(poolScript.MultiRouteSwapQuote);
 }

@@ -1,4 +1,4 @@
-import {SCRIPT_PUBLISHED_AT} from "..";
+import {PUBLISHED_AT} from "..";
 import {obj, pure} from "../../_framework/util";
 import {Transaction, TransactionArgument, TransactionObjectInput} from "@mysten/sui/transactions";
 
@@ -10,7 +10,7 @@ export function quoteDeposit(
     tx: Transaction,
     typeArgs: [string, string, string, string, string, string, string],
     args: QuoteDepositArgs,
-    publishedAt: string = SCRIPT_PUBLISHED_AT
+    publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
         target: `${publishedAt}::pool_script::quote_deposit`,
@@ -29,7 +29,7 @@ export function quoteRedeem(
     tx: Transaction,
     typeArgs: [string, string, string, string, string, string, string],
     args: QuoteRedeemArgs,
-    publishedAt: string = SCRIPT_PUBLISHED_AT
+    publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
         target: `${publishedAt}::pool_script::quote_redeem`,
@@ -48,7 +48,7 @@ export function depositLiquidity(
     tx: Transaction,
     typeArgs: [string, string, string, string, string, string, string],
     args: DepositLiquidityArgs,
-    publishedAt: string = SCRIPT_PUBLISHED_AT
+    publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
         target: `${publishedAt}::pool_script::deposit_liquidity`,
@@ -67,7 +67,7 @@ export function redeemLiquidity(
     tx: Transaction,
     typeArgs: [string, string, string, string, string, string, string],
     args: RedeemLiquidityArgs,
-    publishedAt: string = SCRIPT_PUBLISHED_AT
+    publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
         target: `${publishedAt}::pool_script::redeem_liquidity`,
@@ -86,7 +86,7 @@ export function cpmmSwap(
     tx: Transaction,
     typeArgs: [string, string, string, string, string, string],
     args: CpmmSwapArgs,
-    publishedAt: string = SCRIPT_PUBLISHED_AT
+    publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
         target: `${publishedAt}::pool_script::cpmm_swap`,
@@ -101,7 +101,7 @@ export function destroyOrTransfer(
     tx: Transaction,
     typeArg: string,
     token: TransactionObjectInput,
-    publishedAt: string = SCRIPT_PUBLISHED_AT
+    publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
         target: `${publishedAt}::pool_script::destroy_or_transfer`,
@@ -120,7 +120,7 @@ export function quoteCpmmSwap(
     tx: Transaction,
     typeArgs: [string, string, string, string, string, string],
     args: QuoteCpmmSwapArgs,
-    publishedAt: string = SCRIPT_PUBLISHED_AT
+    publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
         target: `${publishedAt}::pool_script::quote_cpmm_swap`,
@@ -139,7 +139,7 @@ export function toMultiSwapRoute(
     tx: Transaction,
     typeArgs: [string, string, string, string, string],
     args: ToMultiSwapRouteArgs,
-    publishedAt: string = SCRIPT_PUBLISHED_AT
+    publishedAt: string = PUBLISHED_AT
 ) {
     return tx.moveCall({
         target: `${publishedAt}::pool_script::to_multi_swap_route`,

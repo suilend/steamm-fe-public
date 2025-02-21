@@ -1,6 +1,6 @@
 import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFields, decodeFromFieldsWithTypes, decodeFromJSONField, phantom} from "../../_framework/reified";
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../_framework/util";
-import {SCRIPT_PKG_V1} from "../index";
+import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
 import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
 import {fromB64} from "@mysten/sui/utils";
@@ -9,7 +9,7 @@ import {fromB64} from "@mysten/sui/utils";
 
 export function isMultiRouteSwapQuote(type: string): boolean {
     type = compressSuiType(type);
-    return type === `${SCRIPT_PKG_V1}::pool_script::MultiRouteSwapQuote`;
+    return type === `${PKG_V1}::pool_script::MultiRouteSwapQuote`;
 }
 
 export interface MultiRouteSwapQuoteFields {
@@ -24,12 +24,12 @@ export type MultiRouteSwapQuoteReified = Reified<
 export class MultiRouteSwapQuote implements StructClass {
     __StructClass = true as const;
 
-    static readonly $typeName = `${SCRIPT_PKG_V1}::pool_script::MultiRouteSwapQuote`;
+    static readonly $typeName = `${PKG_V1}::pool_script::MultiRouteSwapQuote`;
     static readonly $numTypeParams = 0;
     static readonly $isPhantom = [] as const;
 
     readonly $typeName = MultiRouteSwapQuote.$typeName;
-    readonly $fullTypeName: `${typeof SCRIPT_PKG_V1}::pool_script::MultiRouteSwapQuote`;
+    readonly $fullTypeName: `${typeof PKG_V1}::pool_script::MultiRouteSwapQuote`;
     readonly $typeArgs: [];
     readonly $isPhantom = MultiRouteSwapQuote.$isPhantom;
 
@@ -43,7 +43,7 @@ export class MultiRouteSwapQuote implements StructClass {
         this.$fullTypeName = composeSuiType(
             MultiRouteSwapQuote.$typeName,
             ...typeArgs
-        ) as `${typeof SCRIPT_PKG_V1}::pool_script::MultiRouteSwapQuote`;
+        ) as `${typeof PKG_V1}::pool_script::MultiRouteSwapQuote`;
         this.$typeArgs = typeArgs;
 
         this.amountIn = fields.amountIn;; this.amountOut = fields.amountOut;
@@ -55,7 +55,7 @@ export class MultiRouteSwapQuote implements StructClass {
             fullTypeName: composeSuiType(
                 MultiRouteSwapQuote.$typeName,
                 ...[]
-            ) as `${typeof SCRIPT_PKG_V1}::pool_script::MultiRouteSwapQuote`,
+            ) as `${typeof PKG_V1}::pool_script::MultiRouteSwapQuote`,
             typeArgs: [] as [],
             isPhantom: MultiRouteSwapQuote.$isPhantom,
             reifiedTypeArgs: [],
