@@ -82,6 +82,7 @@ export class BankModule implements IModule {
       throw new Error("btokenAmount is undefined or null");
     }
 
+    bank.compoundInterestIfAny(tx);
     const totalFunds = bank.fromBtokens(tx, { btokenAmount });
 
     EmitDryRun.emitEvent(
