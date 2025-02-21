@@ -1,12 +1,12 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID, normalizeSuiAddress } from "@mysten/sui/utils";
 
-import { BankScriptFunctions } from "../_codegen";
+import { BankScriptFunctions, EmitDryRun } from "../_codegen";
 import { InitLendingArgs, createBank } from "../base";
 import { castNeedsRebalance } from "../base/bank/bankTypes";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
-import { BankInfo, getBankFromId } from "../types";
+import { BankInfo, SuiObjectIdType, getBankFromId } from "../types";
 import { SuiAddressType, zip } from "../utils";
 
 // Add chunk helper at the top of the file
@@ -45,7 +45,7 @@ export class BankModule implements IModule {
   }
 
   public async rebalance(
-    bankIds: SuiAddressType[],
+    bankIds: SuiObjectIdType[],
     batchSize: number = 20,
   ): Promise<Transaction[]> {
     const batches = chunk(bankIds, batchSize);
@@ -55,6 +55,66 @@ export class BankModule implements IModule {
     );
 
     return txs;
+  }
+
+  public async getTotalFunds(bankId: SuiObjectIdType): Promise<bigint> {
+    const tx = new Transaction();
+    const banks = await this.sdk.getBanks();
+    const bankInfo = getBankFromId(banks, bankId);
+    const bank = this.sdk.getBank(bankInfo);
+
+    const bankObj = await this.sdk.fullClient.getObject({
+      id: bankId,
+      options: {
+        showContent: true,
+        showType: true,
+      },
+    });
+
+    // TODO: use fetchBank instead
+    // const bankState = await this.sdk.fullClient.fetchBank(bankId);
+    // const btokenAmount = bankState.btokenSupply.value;
+    const btokenAmount = BigInt(
+      (bankObj.data?.content as any).fields.btoken_supply.fields.value,
+    );
+
+    if (btokenAmount === undefined || btokenAmount === null) {
+      throw new Error("btokenAmount is undefined or null");
+    }
+
+    const totalFunds = bank.fromBtokens(tx, { btokenAmount });
+
+    EmitDryRun.emitEvent(
+      tx,
+      "u64",
+      totalFunds,
+      this.sdk.scriptPackageInfo().publishedAt,
+    );
+
+    return BigInt(await this.getDryResult<bigint>(tx, "u64"));
+  }
+
+  public async getEffectiveUtilisation(
+    bankId: SuiObjectIdType,
+  ): Promise<number> {
+    const totalFunds = await this.getTotalFunds(bankId);
+
+    const bankObj = await this.sdk.fullClient.getObject({
+      id: bankId,
+      options: {
+        showContent: true,
+        showType: true,
+      },
+    });
+
+    const fundsAvailable = BigInt(
+      (bankObj.data?.content as any).fields.funds_available,
+    );
+
+    const fundsDeployed = totalFunds - fundsAvailable;
+
+    // (funds_deployed * 10_000) / (funds_available + funds_deployed)
+    return Number(fundsDeployed) / Number(totalFunds);
   }
 
   public async queryRebalance(
@@ -128,7 +188,7 @@ export class BankModule implements IModule {
   }
 
   private async batchRebalance(
-    bankIds: SuiAddressType[],
+    bankIds: SuiObjectIdType[],
   ): Promise<Transaction> {
     const tx = new Transaction();
     const banks = await this.sdk.getBanks();
@@ -205,5 +265,33 @@ export class BankModule implements IModule {
     );
 
     return quoteResults;
+  }
+
+  private async getDryResult<T>(
+    tx: Transaction,
+    eventType: string,
+  ): Promise<T> {
+    const inspectResults = await this.sdk.fullClient.devInspectTransactionBlock(
+      {
+        sender: this.sdk.senderAddress,
+        transactionBlock: tx,
+      },
+    );
+
+    if (inspectResults.error) {
+      console.log(inspectResults);
+      throw new Error("DevInspect Failed");
+    }
+
+    const event = inspectResults.events.find((event) =>
+      event.type.includes(eventType),
+    );
+
+    if (!event) {
+      throw new Error("Quote event not found");
+    }
+
+    const quoteResult = (event.parsedJson as any).event as T;
+    return quoteResult;
   }
 }

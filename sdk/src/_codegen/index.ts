@@ -4,3 +4,4 @@ export * as PoolScriptFunctions from "./poolScriptFunctions";
 export * as BankScriptFunctions from "./bankScriptFunctions";
 export * as ConstantProductFunctions from "./constantProductFunctions";
 export * as QuoteFunctions from "./quoteFunctions";
+export * as EmitDryRun from "./emitDryRun";

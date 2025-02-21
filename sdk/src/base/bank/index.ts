@@ -131,6 +131,25 @@ export class Bank {
     );
   }
 
+  public fromBtokens(
+    tx: Transaction,
+    args: { btokenAmount: bigint | TransactionArgument },
+  ): TransactionResult {
+    const callArgs = {
+      bank: tx.object(this.bankInfo.bankId),
+      lendingMarket: tx.object(this.bankInfo.lendingMarketId),
+      btokenAmount: args.btokenAmount,
+      clock: tx.object(SUI_CLOCK_OBJECT_ID),
+    };
+
+    return BankFunctions.fromBtokens(
+      tx,
+      this.typeArgs(),
+      callArgs,
+      this.publishedAt,
+    );
+  }
+
   public cTokenAmount(
     tx: Transaction,
     args: CTokenAmountArgs,
