@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { beforeAll, describe, expect, it } from "bun:test";
-import { findAllRoutes, PoolData } from "../src";
+import { describe, expect, it } from "bun:test";
+import { findAllRoutes, PoolData } from "../../src";
 
-export function test() {
-  describe("test swap route finder", () => {
+export async function test() {
+  describe("test swap route finder", async () => {
     it("get swap routes (1)", async () => {
       const pools: PoolData[] = [
         { poolId: "0x1", coinTypeA: "A", coinTypeB: "B" },

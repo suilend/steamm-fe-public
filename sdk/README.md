@@ -2,14 +2,6 @@
 
 A TypeScript SDK for interacting with the STEAMM program published on npm as [`@suilend/steamm-sdk`](https://www.npmjs.com/package/@suilend/steamm-sdk).
 
-### Run localnet tests
-
-`just start`
-
-`just setup`
-
-`bun test ./tests/index.test.ts`
-
 ### Testnet & Mainnet Beta actions
 
 Currently the protocol is only available on testnet and on mainnet beta. In order to bypass SUI faucet restrictions we deployed TEST coins with a dedicated faucet. To get coins for the purpose of interacting with the protocol:
@@ -56,7 +48,7 @@ await sdk.Pool.depositLiquidityEntry(
     maxA: BigInt("1000000000000000000"),
     maxB: BigInt("1000000000000000000"),
   },
-  tx
+  tx,
 );
 ```
 
@@ -74,7 +66,7 @@ await sdk.Pool.swapEntry(
     amountIn: BigInt("10000000000000"),
     minAmountOut: BigInt("0"),
   },
-  tx
+  tx,
 );
 ```
 
@@ -90,7 +82,7 @@ await sdk.Pool.redeemLiquidityEntry(
     minA: BigInt("0"),
     minB: BigInt("0"),
   },
-  tx
+  tx,
 );
 ```
 

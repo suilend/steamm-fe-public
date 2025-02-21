@@ -1,6 +1,7 @@
 import {
   Transaction,
   TransactionArgument,
+  TransactionObjectInput,
   TransactionResult,
 } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
@@ -162,6 +163,14 @@ export class Bank {
       callArgs,
       this.publishedAt,
     );
+  }
+
+  public bank(tx: Transaction): TransactionObjectInput {
+    return tx.object(this.bankInfo.bankId);
+  }
+
+  public lendingMarket(tx: Transaction): TransactionObjectInput {
+    return tx.object(this.bankInfo.lendingMarketId);
   }
 
   public migrate(tx: Transaction, args: MigrateBankArgs) {

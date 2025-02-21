@@ -1,19 +1,13 @@
 /* eslint-disable */
-import {
-  ParsedKeypair,
-  decodeSuiPrivateKey,
-  encodeSuiPrivateKey,
-} from "@mysten/sui/cryptography";
+import { ParsedKeypair, decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 import { beforeAll, describe, expect, it } from "bun:test";
 import dotenv from "dotenv";
 
-import { PoolModule } from "../src/modules/poolModule";
-import { RpcModule } from "../src/modules/rpcModule";
-import { SteammSDK } from "../src/sdk";
-import { BankList, DataPage, PoolInfo } from "../src/types";
-import { BankInfo } from "../src/types";
+import { PoolModule } from "../../src/modules/poolModule";
+import { SteammSDK } from "../../src/sdk";
+import { BankList, DataPage, PoolInfo } from "../../src/types";
 
 import {
   GLOBAL_ADMIN_ID,
@@ -23,13 +17,13 @@ import {
   STEAMM_PKG_ID,
   STEAMM_SCRIPT_PKG_ID,
   SUILEND_PKG_ID,
-} from "./packages";
+} from "./../packages";
 import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
 
 dotenv.config();
 
-export function test() {
-  describe("test depost, swap and redeem", () => {
+export async function test() {
+  describe("test depost, swap and redeem", async () => {
     let keypair: Ed25519Keypair;
     let suiTreasuryCap: string;
     let usdcTreasuryCap: string;
@@ -119,6 +113,7 @@ export function test() {
     });
 
     it("Deposits liquidity", async () => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
       const poolModule = new PoolModule(sdk);
       const tx = new Transaction();
 
@@ -127,7 +122,7 @@ export function test() {
         typeArguments: [`${STEAMM_PKG_ID}::sui::SUI`],
         arguments: [
           tx.object(suiTreasuryCap),
-          tx.pure.u64(BigInt("1000000000000000000")),
+          tx.pure.u64(BigInt("1000000000")),
         ],
       });
 
@@ -136,7 +131,7 @@ export function test() {
         typeArguments: [`${STEAMM_PKG_ID}::usdc::USDC`],
         arguments: [
           tx.object(usdcTreasuryCap),
-          tx.pure.u64(BigInt("1000000000000000000")),
+          tx.pure.u64(BigInt("1000000000")),
         ],
       });
 
@@ -148,8 +143,8 @@ export function test() {
         coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
         coinA: usdcCoin,
         coinB: suiCoin,
-        maxA: BigInt("1000000000000000000"),
-        maxB: BigInt("1000000000000000000"),
+        maxA: BigInt("1000000000"),
+        maxB: BigInt("1000000000"),
       });
 
       tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
@@ -166,21 +161,21 @@ export function test() {
 
       // Execute transaction
 
-      // const txResult = await sdk._rpcModule.signAndExecuteTransaction({
-      //   transaction: tx,
-      //   signer: keypair,
-      //   options: {
-      //     showEffects: true,
-      //     showEvents: true,
-      //   },
-      // });
+      const txResult = await sdk.fullClient.signAndExecuteTransaction({
+        transaction: tx,
+        signer: keypair,
+        options: {
+          showEffects: true,
+          showEvents: true,
+        },
+      });
 
-      // if (txResult.effects?.status?.status !== "success") {
-      //   console.log("Transaction failed");
-      //   throw new Error(
-      //     `Transaction failed: ${JSON.stringify(txResult.effects)}`
-      //   );
-      // }
+      if (txResult.effects?.status?.status !== "success") {
+        console.log("Transaction failed");
+        throw new Error(
+          `Transaction failed: ${JSON.stringify(txResult.effects)}`,
+        );
+      }
     });
 
     it("Swaps", async () => {
@@ -192,7 +187,7 @@ export function test() {
         typeArguments: [`${STEAMM_PKG_ID}::sui::SUI`],
         arguments: [
           tx.object(suiTreasuryCap),
-          tx.pure.u64(BigInt("1000000000000000000")),
+          tx.pure.u64(BigInt("1000000000")),
         ],
       });
 
@@ -201,7 +196,7 @@ export function test() {
         typeArguments: [`${STEAMM_PKG_ID}::usdc::USDC`],
         arguments: [
           tx.object(usdcTreasuryCap),
-          tx.pure.u64(BigInt("1000000000000000000")),
+          tx.pure.u64(BigInt("1000000000")),
         ],
       });
 
@@ -213,8 +208,8 @@ export function test() {
         coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
         coinA: usdcCoin,
         coinB: suiCoin,
-        maxA: BigInt("1000000000000000000"),
-        maxB: BigInt("1000000000000000000"),
+        maxA: BigInt("1000000000"),
+        maxB: BigInt("1000000000"),
       });
 
       //////////////////////////////////////////////////////////////
@@ -222,10 +217,7 @@ export function test() {
       const suiSwapCoin = tx.moveCall({
         target: "0x2::coin::mint",
         typeArguments: [`${STEAMM_PKG_ID}::sui::SUI`],
-        arguments: [
-          tx.object(suiTreasuryCap),
-          tx.pure.u64(BigInt("1000000000000000000")),
-        ],
+        arguments: [tx.object(suiTreasuryCap), tx.pure.u64(BigInt("10000"))],
       });
 
       const usdSwapCoin = tx.moveCall({
@@ -241,7 +233,7 @@ export function test() {
         coinA: usdSwapCoin,
         coinB: suiSwapCoin,
         a2b: false,
-        amountIn: BigInt("10000000000000"),
+        amountIn: BigInt("10000"),
         minAmountOut: BigInt("0"),
       });
 
@@ -288,19 +280,13 @@ export function test() {
       const suiCoin = tx.moveCall({
         target: "0x2::coin::mint",
         typeArguments: [`${STEAMM_PKG_ID}::sui::SUI`],
-        arguments: [
-          tx.object(suiTreasuryCap),
-          tx.pure.u64(BigInt("1000000000000000000")),
-        ],
+        arguments: [tx.object(suiTreasuryCap), tx.pure.u64(BigInt("1000000"))],
       });
 
       const usdcCoin = tx.moveCall({
         target: "0x2::coin::mint",
         typeArguments: [`${STEAMM_PKG_ID}::usdc::USDC`],
-        arguments: [
-          tx.object(usdcTreasuryCap),
-          tx.pure.u64(BigInt("1000000000000000000")),
-        ],
+        arguments: [tx.object(usdcTreasuryCap), tx.pure.u64(BigInt("1000000"))],
       });
 
       //////////////////////////////////////////////////////////////
@@ -311,8 +297,8 @@ export function test() {
         coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
         coinA: usdcCoin,
         coinB: suiCoin,
-        maxA: BigInt("1000000000000000000"),
-        maxB: BigInt("1000000000000000000"),
+        maxA: BigInt("1000000"),
+        maxB: BigInt("1000000"),
       });
 
       tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);

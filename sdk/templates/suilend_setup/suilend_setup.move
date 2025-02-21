@@ -10,65 +10,65 @@ module suilend::setup {
     use pyth::price_identifier;
     use pyth::i64;
 
-    public fun setup_reserve<P, T>(
-        lending_market: &mut LendingMarket<P>,
-        owner_cap: &mut LendingMarketOwnerCap<P>,
-        type_to_index: u64,
-        meta: &CoinMetadata<T>,
-        config: ReserveConfig,
-        depo: Coin<T>,
-        price: &PriceInfoObject,
-        clock: &Clock,
-        ctx: &mut TxContext
-    ) {
-        lending_market::add_reserve<P, T>(
-            owner_cap,
-            lending_market,
-            price,
-            default_reserve_config(ctx),
-            meta,
-            clock,
-            ctx
-        );
+    // public fun setup_reserve<P, T>(
+    //     lending_market: &mut LendingMarket<P>,
+    //     owner_cap: &mut LendingMarketOwnerCap<P>,
+    //     type_to_index: u64,
+    //     meta: &CoinMetadata<T>,
+    //     config: ReserveConfig,
+    //     depo: Coin<T>,
+    //     price: &PriceInfoObject,
+    //     clock: &Clock,
+    //     ctx: &mut TxContext
+    // ) {
+    //     lending_market::add_reserve<P, T>(
+    //         owner_cap,
+    //         lending_market,
+    //         price,
+    //         default_reserve_config(ctx),
+    //         meta,
+    //         clock,
+    //         ctx
+    //     );
 
 
-        let ctokens = lending_market::deposit_liquidity_and_mint_ctokens<P, T>(
-            lending_market,
-            type_to_index,
-            clock,
-            depo,
-            ctx
-        );
+    //     let ctokens = lending_market::deposit_liquidity_and_mint_ctokens<P, T>(
+    //         lending_market,
+    //         type_to_index,
+    //         clock,
+    //         depo,
+    //         ctx
+    //     );
 
-        lending_market::update_reserve_config<P, T>(
-            owner_cap,
-            lending_market,
-            type_to_index,
-            config
-        );
+    //     lending_market::update_reserve_config<P, T>(
+    //         owner_cap,
+    //         lending_market,
+    //         type_to_index,
+    //         config
+    //     );
 
-        transfer::public_transfer(ctokens, ctx.sender());
-    }
+    //     transfer::public_transfer(ctokens, ctx.sender());
+    // }
 
-    public fun reserve_args(
-        open_ltv_pct: u8,
-        close_ltv_pct: u8,
-        max_close_ltv_pct: u8,
-        set_interest_rate_apr_0: u64,
-        set_interest_rate_apr_1: u64,
-        ctx: &mut TxContext
-    ): ReserveConfig {
-        let config = default_reserve_config(ctx);
-        let mut builder = reserve_config::from(&config, ctx);
-        reserve_config::set_open_ltv_pct(&mut builder, open_ltv_pct);
-        reserve_config::set_close_ltv_pct(&mut builder, close_ltv_pct);
-        reserve_config::set_max_close_ltv_pct(&mut builder, max_close_ltv_pct);
-        reserve_config::set_interest_rate_aprs(&mut builder, vector[set_interest_rate_apr_0, set_interest_rate_apr_1]);
+    // public fun reserve_args(
+    //     open_ltv_pct: u8,
+    //     close_ltv_pct: u8,
+    //     max_close_ltv_pct: u8,
+    //     set_interest_rate_apr_0: u64,
+    //     set_interest_rate_apr_1: u64,
+    //     ctx: &mut TxContext
+    // ): ReserveConfig {
+    //     let config = default_reserve_config(ctx);
+    //     let mut builder = reserve_config::from(&config, ctx);
+    //     reserve_config::set_open_ltv_pct(&mut builder, open_ltv_pct);
+    //     reserve_config::set_close_ltv_pct(&mut builder, close_ltv_pct);
+    //     reserve_config::set_max_close_ltv_pct(&mut builder, max_close_ltv_pct);
+    //     reserve_config::set_interest_rate_aprs(&mut builder, vector[set_interest_rate_apr_0, set_interest_rate_apr_1]);
         
-        reserve_config::destroy(config);
+    //     reserve_config::destroy(config);
 
-        reserve_config::build(builder, ctx)
-    }
+    //     reserve_config::build(builder, ctx)
+    // }
 
     public fun default_price_info_obj(
         idx: u8,
@@ -118,14 +118,18 @@ module suilend::setup {
         )
     }
 
-    public fun default_reserve_config(ctx: &mut TxContext): ReserveConfig {
+    public fun default_reserve_config(
+        open_ltv: u8,
+        close_ltv: u8,
+        ctx: &mut TxContext
+    ): ReserveConfig {
         let config = reserve_config::create_reserve_config(
             // open ltv pct
-            0,
+            open_ltv,
             // close ltv pct
-            0,
+            close_ltv,
             // max close ltv pct
-            0,
+            close_ltv,
             // borrow weight bps
             10_000,
             // deposit_limit
@@ -157,7 +161,7 @@ module suilend::setup {
             {
                 let mut v = vector::empty();
                 vector::push_back(&mut v, 0);
-                vector::push_back(&mut v, 0);
+                vector::push_back(&mut v, 500);
                 v
             },
             false,
