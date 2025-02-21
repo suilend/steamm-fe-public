@@ -86,8 +86,16 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           ).div(10 ** bankCoinMetadataMap[coinType].decimals);
           const depositedAmount = new BigNumber(
             bank.lending ? bank.lending.ctokens.toString() : 0,
-          ).times(reserveMap[coinType].cTokenExchangeRate);
+          )
+            .times(reserveMap[coinType].cTokenExchangeRate)
+            .div(10 ** bankCoinMetadataMap[coinType].decimals);
           const totalAmount = liquidAmount.plus(depositedAmount);
+
+          const utilizationPercent = depositedAmount
+            .div(totalAmount)
+            .times(100);
+          const aprPercent =
+            reserveDepositAprPercentMap[coinType] ?? new BigNumber(0);
 
           return {
             id,
@@ -98,9 +106,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             depositedAmount,
             totalAmount,
 
-            utilizationPercent: depositedAmount.div(liquidAmount).times(100),
-            aprPercent:
-              reserveDepositAprPercentMap[coinType] ?? new BigNumber(0),
+            utilizationPercent,
+            aprPercent,
           };
         })(),
       ),
