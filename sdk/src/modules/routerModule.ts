@@ -81,19 +81,34 @@ export class RouterModule implements IModule {
         (bankInfo) => bankInfo.btokenType === poolInfo.coinTypeB,
       );
 
+      const bankA = new Bank(this.sdk.packageInfo(), bankInfos[coinAIndex]);
+      const bankB = new Bank(this.sdk.packageInfo(), bankInfos[coinBIndex]);
       const coinA = btokens[coinAIndex];
       const coinB = btokens[coinBIndex];
 
       const amountIn =
         i === 0
-          ? args.quote.amountIn
+          ? hop.a2b
+            ? this.sdk.fullClient.coinValue(tx, coinA, poolInfo.coinTypeA)
+            : this.sdk.fullClient.coinValue(tx, coinB, poolInfo.coinTypeB)
           : PoolFunctions.swapResultAmountOut(
               tx,
               swapResults[i - 1],
               this.sdk.sdkOptions.steamm_config.published_at,
             );
+      // const minAmountOut = BigInt(0);
       const minAmountOut =
-        i === args.route.length - 1 ? args.quote.amountOut : BigInt(0); // TODO: add some slippage param for the last swap
+        i === args.route.length - 1
+          ? (() => {
+              if (hop.a2b) {
+                bankB.compoundInterestIfAny(tx);
+                return bankB.toBTokens(tx, { amount: args.quote.amountOut });
+              } else {
+                bankA.compoundInterestIfAny(tx);
+                return bankA.toBTokens(tx, { amount: args.quote.amountOut });
+              }
+            })()
+          : BigInt(0);
 
       const swapResult = pool.swap(tx, {
         coinA,
