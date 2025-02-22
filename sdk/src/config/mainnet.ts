@@ -21,9 +21,9 @@ export const GLOBAL_ADMIN_OBJECT_ID =
   "0xdd3d22dba6c38117615a51698136e9867191328a8ef1b065c342d0a887b9be4a";
 
 export const STEAMM_SCRIPT_PKG_ID =
-  "0x7e69a01e9d856fdbfa315a3b0835d828ce632d3dd2fdc3d80de256895fca9e0a";
+  "0x13bfc09cfc1bd922d3aa53fcf7b2cd510727ee65068ce136e2ebd5f3b213fdd2";
 export const STEAMM_SCRIPT_PUBLISHED_AT =
-  "0x7e69a01e9d856fdbfa315a3b0835d828ce632d3dd2fdc3d80de256895fca9e0a";
+  "0x13bfc09cfc1bd922d3aa53fcf7b2cd510727ee65068ce136e2ebd5f3b213fdd2";
 
 export const STEAMM_CONFIG = {
   package_id: STEAMM_PKG_ID,
