@@ -23,7 +23,7 @@ export const GLOBAL_ADMIN_OBJECT_ID =
 export const STEAMM_SCRIPT_PKG_ID =
   "0x13bfc09cfc1bd922d3aa53fcf7b2cd510727ee65068ce136e2ebd5f3b213fdd2";
 export const STEAMM_SCRIPT_PUBLISHED_AT =
-  "0x13bfc09cfc1bd922d3aa53fcf7b2cd510727ee65068ce136e2ebd5f3b213fdd2";
+  "0x043ca0fb6dd5a60f20513d76aa49cb007b4554083ef8a5765b15e01ce1642036";
 
 export const STEAMM_CONFIG = {
   package_id: STEAMM_PKG_ID,
