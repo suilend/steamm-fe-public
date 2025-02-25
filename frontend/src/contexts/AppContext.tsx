@@ -6,10 +6,8 @@ import {
   useMemo,
 } from "react";
 
-import { KioskItem } from "@mysten/kiosk";
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
-import { useFlags } from "launchdarkly-react-client-sdk";
 import { useLocalStorage } from "usehooks-ts";
 
 import {
@@ -22,7 +20,6 @@ import useRefreshOnBalancesChange from "@suilend/frontend-sui-next/hooks/useRefr
 import { BETA_CONFIG, MAINNET_CONFIG, SteammSDK } from "@suilend/steamm-sdk";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
-import useFetchOwnedKiosks from "@/fetchers/useFetchOwnedKiosks";
 import { ParsedBank, ParsedPool } from "@/lib/types";
 
 export interface AppData {
@@ -52,9 +49,6 @@ interface AppContext {
 
   slippagePercent: number;
   setSlippagePercent: (slippagePercent: number) => void;
-
-  hasRootlets: boolean;
-  isWhitelisted: boolean;
 }
 type LoadedAppContext = AppContext & {
   steammClient: SteammSDK;
@@ -79,9 +73,6 @@ const AppContext = createContext<AppContext>({
   setSlippagePercent: () => {
     throw Error("AppContextProvider not initialized");
   },
-
-  hasRootlets: false,
-  isWhitelisted: false,
 });
 
 export const useAppContext = () => useContext(AppContext);
@@ -152,31 +143,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     1,
   );
 
-  // Rootlets
-  const ROOTLETS_TYPE =
-    "0x8f74a7d632191e29956df3843404f22d27bd84d92cca1b1abde621d033098769::rootlet::Rootlet";
-
-  const { data: ownedKiosks, mutateData: mutateOwnedKiosks } =
-    useFetchOwnedKiosks();
-
-  const hasRootlets = useMemo(
-    () =>
-      (ownedKiosks ?? []).reduce(
-        (acc, { kiosk }) => [
-          ...acc,
-          ...kiosk.items.filter((item) => item.type === ROOTLETS_TYPE),
-        ],
-        [] as KioskItem[],
-      ).length > 0,
-    [ownedKiosks],
-  );
-
-  const flags = useFlags();
-  const isWhitelisted = useMemo(
-    () => !!address && (flags?.steammBetaWhitelist ?? []).includes(address),
-    [address, flags?.steammBetaWhitelist],
-  );
-
   // Context
   const contextValue: AppContext = useMemo(
     () => ({
@@ -191,9 +157,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
 
       slippagePercent,
       setSlippagePercent,
-
-      hasRootlets,
-      isWhitelisted,
     }),
     [
       steammClient,
@@ -204,8 +167,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       refresh,
       slippagePercent,
       setSlippagePercent,
-      hasRootlets,
-      isWhitelisted,
     ],
   );
 

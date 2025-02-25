@@ -54,15 +54,8 @@ export default function SwapPage() {
 
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const {
-    steammClient,
-    appData,
-    getBalance,
-    refresh,
-    slippagePercent,
-    hasRootlets,
-    isWhitelisted,
-  } = useLoadedAppContext();
+  const { steammClient, appData, getBalance, refresh, slippagePercent } =
+    useLoadedAppContext();
 
   // CoinTypes
   const [inCoinType, outCoinType] = useMemo(() => {
@@ -372,8 +365,6 @@ export default function SwapPage() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    if (!hasRootlets && !isWhitelisted)
-      return { isDisabled: true, title: "Beta for Rootlets only" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
 
     if (value === "") return { isDisabled: true, title: "Enter an amount" };
