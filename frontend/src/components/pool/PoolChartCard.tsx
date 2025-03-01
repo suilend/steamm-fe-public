@@ -48,7 +48,7 @@ export default function PoolChartCard() {
       | undefined,
   };
 
-  const { statsData } = useStatsContext();
+  const { poolHistoricalStats, poolStats } = useStatsContext();
 
   const { pool } = usePoolContext();
 
@@ -60,53 +60,53 @@ export default function PoolChartCard() {
         value: formatUsd(pool.tvlUsd),
         chartType: ChartType.LINE,
         periodChangePercent: null,
-        data: statsData?.poolHistoricalTvlUsd_24h_map?.[pool.id],
+        data: poolHistoricalStats.tvlUsd_24h[pool.id],
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.VOLUME]: {
         title: chartStatNameMap[ChartStat.VOLUME],
         value:
-          statsData?.poolVolumeUsd_24h_map?.[pool.id] === undefined
+          poolStats.volumeUsd_24h[pool.id] === undefined
             ? undefined
-            : formatUsd(statsData.poolVolumeUsd_24h_map[pool.id]),
+            : formatUsd(poolStats.volumeUsd_24h[pool.id]),
         chartType: ChartType.BAR,
         periodChangePercent: null,
-        data: statsData?.poolHistoricalVolumeUsd_24h_map?.[pool.id],
+        data: poolHistoricalStats.volumeUsd_24h[pool.id],
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.FEES]: {
         title: chartStatNameMap[ChartStat.FEES],
         value:
-          statsData?.poolFeesUsd_24h_map?.[pool.id] === undefined
+          poolStats.feesUsd_24h[pool.id] === undefined
             ? undefined
-            : formatUsd(statsData.poolFeesUsd_24h_map[pool.id]),
+            : formatUsd(poolStats.feesUsd_24h[pool.id]),
         chartType: ChartType.BAR,
         periodChangePercent: null,
-        data: statsData?.poolHistoricalFeesUsd_24h_map?.[pool.id],
+        data: poolHistoricalStats.feesUsd_24h[pool.id],
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.APR]: {
         title: chartStatNameMap[ChartStat.APR],
         value:
-          statsData?.poolAprPercent_24h_map?.[pool.id] === undefined
+          poolStats.aprPercent_24h[pool.id] === undefined
             ? undefined
-            : formatPercent(statsData.poolAprPercent_24h_map[pool.id]),
+            : formatPercent(poolStats.aprPercent_24h[pool.id]),
         chartType: ChartType.LINE,
         periodChangePercent: null,
-        data: statsData?.poolHistoricalAprPercent_24h_map?.[pool.id],
+        data: poolHistoricalStats.aprPercent_24h[pool.id],
         formatValue: (value) => formatPercent(new BigNumber(value)),
       },
     }),
     [
       pool.tvlUsd,
-      statsData?.poolHistoricalTvlUsd_24h_map,
+      poolHistoricalStats.tvlUsd_24h,
       pool.id,
-      statsData?.poolVolumeUsd_24h_map,
-      statsData?.poolHistoricalVolumeUsd_24h_map,
-      statsData?.poolFeesUsd_24h_map,
-      statsData?.poolHistoricalFeesUsd_24h_map,
-      statsData?.poolAprPercent_24h_map,
-      statsData?.poolHistoricalAprPercent_24h_map,
+      poolStats.volumeUsd_24h,
+      poolHistoricalStats.volumeUsd_24h,
+      poolStats.feesUsd_24h,
+      poolHistoricalStats.feesUsd_24h,
+      poolStats.aprPercent_24h,
+      poolHistoricalStats.aprPercent_24h,
     ],
   );
 

@@ -19,7 +19,7 @@ import { ParsedPool, PoolGroup } from "@/lib/types";
 
 export default function PoolsPage() {
   const { appData } = useLoadedAppContext();
-  const { statsData } = useStatsContext();
+  const { poolStats, totalHistoricalStats, totalStats } = useStatsContext();
 
   // TVL
   const totalTvlUsd = useMemo(
@@ -51,18 +51,14 @@ export default function PoolsPage() {
           coinTypes: pools[0].coinTypes,
           pools: pools.map((pool) => ({
             ...pool,
-            volumeUsd_24h: statsData?.poolVolumeUsd_24h_map?.[pool.id],
-            aprPercent_24h: statsData?.poolAprPercent_24h_map?.[pool.id],
+            volumeUsd_24h: poolStats.volumeUsd_24h[pool.id],
+            aprPercent_24h: poolStats.aprPercent_24h[pool.id],
           })),
         },
       ],
       [] as PoolGroup[],
     );
-  }, [
-    appData.pools,
-    statsData?.poolVolumeUsd_24h_map,
-    statsData?.poolAprPercent_24h_map,
-  ]);
+  }, [appData.pools, poolStats.volumeUsd_24h, poolStats.aprPercent_24h]);
 
   // Featured pairs
   const featuredPoolGroups = useMemo(
@@ -102,7 +98,7 @@ export default function PoolsPage() {
                   chartType={ChartType.LINE}
                   periodDays={1}
                   periodChangePercent={null}
-                  data={statsData?.historicalTvlUsd_24h}
+                  data={totalHistoricalStats.tvlUsd_24h}
                   // formatCategory={(category) =>
                   //   formatCoinTypeCategory(
                   //     category,
@@ -123,14 +119,14 @@ export default function PoolsPage() {
                 <HistoricalDataChart
                   title="Volume"
                   value={
-                    statsData?.volumeUsd_24h === undefined
+                    totalStats.volumeUsd_24h === undefined
                       ? undefined
-                      : formatUsd(statsData.volumeUsd_24h)
+                      : formatUsd(totalStats.volumeUsd_24h)
                   }
                   chartType={ChartType.BAR}
                   periodDays={1}
                   periodChangePercent={null}
-                  data={statsData?.historicalVolumeUsd_24h}
+                  data={totalHistoricalStats.volumeUsd_24h}
                   // formatCategory={(category) =>
                   //   formatCoinTypeCategory(
                   //     category,

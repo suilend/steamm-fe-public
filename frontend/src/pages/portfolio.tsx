@@ -25,7 +25,7 @@ export default function PortfolioPage() {
     balancesCoinMetadataMap,
     getBalance,
   } = useLoadedAppContext();
-  const { statsData } = useStatsContext();
+  const { poolStats } = useStatsContext();
 
   // LP token balances
   const lpTokenBalanceMap = useMemo(
@@ -64,7 +64,7 @@ export default function PortfolioPage() {
         .map((pool) => ({
           pool: {
             ...pool,
-            aprPercent_24h: statsData?.poolAprPercent_24h_map?.[pool.id],
+            aprPercent_24h: poolStats.aprPercent_24h[pool.id],
           },
           balanceUsd: undefined, // Fetched below
           // depositedAmountUsd: undefined, // TODO
@@ -78,7 +78,7 @@ export default function PortfolioPage() {
           //   amountUsd: undefined, // TODO
           // },
         })),
-    [appData.pools, lpTokenBalanceMap, statsData?.poolAprPercent_24h_map],
+    [appData.pools, lpTokenBalanceMap, poolStats.aprPercent_24h],
   );
 
   // Positions - Balances in USD (on-chain)

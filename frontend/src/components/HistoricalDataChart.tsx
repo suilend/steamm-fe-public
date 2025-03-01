@@ -243,7 +243,9 @@ export default function HistoricalDataChart({
           <div className="flex flex-row items-baseline gap-1.5">
             <p className="text-p2 text-secondary-foreground">{title}</p>
             {!hideTitlePeriod && (
-              <p className="text-p3 text-tertiary-foreground">{periodDays}D</p>
+              <p className="text-p3 text-tertiary-foreground">
+                {periodDays === 1 ? "24H" : `${periodDays}D`}
+              </p>
             )}
           </div>
 

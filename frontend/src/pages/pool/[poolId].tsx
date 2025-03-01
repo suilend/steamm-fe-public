@@ -23,7 +23,7 @@ import { poolTypeNameMap } from "@/lib/types";
 
 function PoolPage() {
   const { appData } = useLoadedAppContext();
-  const { statsData } = useStatsContext();
+  const { poolStats } = useStatsContext();
 
   const { pool } = usePoolContext();
 
@@ -100,18 +100,16 @@ function PoolPage() {
                   </p>
 
                   <div className="flex flex-row items-center gap-1.5">
-                    {statsData?.poolVolumeUsd_24h_map?.[pool.id] ===
-                    undefined ? (
+                    {poolStats.volumeUsd_24h[pool.id] === undefined ? (
                       <Skeleton className="h-[24px] w-16" />
                     ) : (
                       <Tooltip
-                        title={formatUsd(
-                          statsData.poolVolumeUsd_24h_map[pool.id],
-                          { exact: true },
-                        )}
+                        title={formatUsd(poolStats.volumeUsd_24h[pool.id], {
+                          exact: true,
+                        })}
                       >
                         <p className="text-p1 text-foreground">
-                          {formatUsd(statsData.poolVolumeUsd_24h_map[pool.id])}
+                          {formatUsd(poolStats.volumeUsd_24h[pool.id])}
                         </p>
                       </Tooltip>
                     )}
@@ -128,19 +126,16 @@ function PoolPage() {
                   </p>
 
                   <div className="flex flex-row items-center gap-1.5">
-                    {statsData?.poolFeesUsd_24h_map?.[pool.id] === undefined ? (
+                    {poolStats.feesUsd_24h[pool.id] === undefined ? (
                       <Skeleton className="h-[24px] w-16" />
                     ) : (
                       <Tooltip
-                        title={formatUsd(
-                          statsData.poolFeesUsd_24h_map[pool.id],
-                          {
-                            exact: true,
-                          },
-                        )}
+                        title={formatUsd(poolStats.feesUsd_24h[pool.id], {
+                          exact: true,
+                        })}
                       >
                         <p className="text-p1 text-foreground">
-                          {formatUsd(statsData.poolFeesUsd_24h_map[pool.id])}
+                          {formatUsd(poolStats.feesUsd_24h[pool.id])}
                         </p>
                       </Tooltip>
                     )}
@@ -155,14 +150,11 @@ function PoolPage() {
                   <p className="text-p2 text-secondary-foreground">APR</p>
 
                   <div className="flex flex-row items-center gap-1.5">
-                    {statsData?.poolAprPercent_24h_map?.[pool.id] ===
-                    undefined ? (
+                    {poolStats.aprPercent_24h[pool.id] === undefined ? (
                       <Skeleton className="h-[24px] w-16" />
                     ) : (
                       <p className="text-p1 text-success">
-                        {formatPercent(
-                          statsData.poolAprPercent_24h_map[pool.id],
-                        )}
+                        {formatPercent(poolStats.aprPercent_24h[pool.id])}
                       </p>
                     )}
 
