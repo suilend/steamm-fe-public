@@ -1112,7 +1112,9 @@ function SwapTab({ formatValue }: SwapTabProps) {
 
       transaction.transferObjects([coinA, coinB], address);
 
-      const res = await signExecuteAndWaitForTransaction(transaction);
+      const res = await signExecuteAndWaitForTransaction(transaction, {
+        auction: true,
+      });
       const txUrl = explorer.buildTxUrl(res.digest);
 
       const balanceChangeA = getBalanceChange(

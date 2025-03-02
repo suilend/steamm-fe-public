@@ -444,7 +444,9 @@ export default function SwapPage() {
 
       transaction.transferObjects([coinIn], address);
 
-      const res = await signExecuteAndWaitForTransaction(transaction);
+      const res = await signExecuteAndWaitForTransaction(transaction, {
+        auction: true,
+      });
       const txUrl = explorer.buildTxUrl(res.digest);
 
       const balanceChangeIn = getBalanceChange(
