@@ -24,3 +24,11 @@ export const getQuoteRatio = (
         ),
       )
     : undefined;
+
+export const getBirdeyeRatio = (
+  inUsdPrice: BigNumber | undefined,
+  outUsdPrice: BigNumber | undefined,
+) =>
+  inUsdPrice !== undefined && outUsdPrice !== undefined && !outUsdPrice.eq(0)
+    ? inUsdPrice.div(outUsdPrice)
+    : undefined;

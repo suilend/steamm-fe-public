@@ -1,7 +1,8 @@
+import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { Wallet } from "lucide-react";
 
-import { formatToken, getToken } from "@suilend/frontend-sui";
+import { formatToken, formatUsd, getToken } from "@suilend/frontend-sui";
 
 import CoinPopover from "@/components/CoinPopover";
 import TokenLogo from "@/components/TokenLogo";
@@ -16,6 +17,7 @@ interface CoinInputProps {
   autoFocus?: boolean;
   coinType: string;
   value?: string;
+  usdValue?: BigNumber;
   onChange?: (value: string) => void;
   onBalanceClick?: () => void;
   onPopoverCoinClick?: (coinType: string) => void;
@@ -26,6 +28,7 @@ export default function CoinInput({
   autoFocus,
   coinType,
   value,
+  usdValue,
   onChange,
   onBalanceClick,
   onPopoverCoinClick,
@@ -94,11 +97,16 @@ export default function CoinInput({
       {value === undefined ? (
         <Skeleton className="h-[42px] w-40" />
       ) : (
-        <div className="h-[60px] flex-1">
+        <div
+          className={cn(
+            "flex h-[60px] flex-1 flex-col",
+            hasPopover ? "items-start" : "items-end",
+          )}
+        >
           <input
             id={getCoinInputId(coinType)}
             className={cn(
-              "h-full w-full min-w-0 !border-0 !bg-[transparent] px-0 !text-h1 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+              "w-full min-w-0 flex-1 !border-0 !bg-[transparent] px-0 !text-h1 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
               hasPopover ? "text-left" : "text-right",
             )}
             autoFocus={autoFocus}
@@ -110,6 +118,17 @@ export default function CoinInput({
             onWheel={(e) => e.currentTarget.blur()}
             step="any"
           />
+
+          {usdValue !== undefined && !usdValue.eq(0) && (
+            <p
+              className={cn(
+                "!text-p3 text-tertiary-foreground",
+                hasPopover ? "text-left" : "text-right",
+              )}
+            >
+              {formatUsd(usdValue)}
+            </p>
+          )}
         </div>
       )}
     </div>

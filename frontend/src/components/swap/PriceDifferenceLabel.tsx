@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 interface PriceDifferenceLabelProps {
   inCoinType: string;
   outCoinType: string;
-  oracleRatio?: BigNumber;
+  birdeyeRatio?: BigNumber;
   isFetchingQuote: boolean;
   quote?: SwapQuote | MultiSwapQuote;
 }
@@ -24,7 +24,7 @@ interface PriceDifferenceLabelProps {
 export default function PriceDifferenceLabel({
   inCoinType,
   outCoinType,
-  oracleRatio,
+  birdeyeRatio,
   isFetchingQuote,
   quote,
 }: PriceDifferenceLabelProps) {
@@ -35,14 +35,14 @@ export default function PriceDifferenceLabel({
 
   const quoteRatio = getQuoteRatio(inCoinMetadata, outCoinMetadata, quote);
 
-  // Price difference
+  // Price difference (Birdeye)
   const priceDifferencePercent =
-    oracleRatio !== undefined && quoteRatio !== undefined
+    birdeyeRatio !== undefined && quoteRatio !== undefined
       ? BigNumber.max(
           0,
-          !oracleRatio.eq(0)
-            ? new BigNumber(oracleRatio.minus(quoteRatio))
-                .div(oracleRatio)
+          !birdeyeRatio.eq(0)
+            ? new BigNumber(birdeyeRatio.minus(quoteRatio))
+                .div(birdeyeRatio)
                 .times(100)
             : new BigNumber(0),
         )
@@ -73,7 +73,7 @@ export default function PriceDifferenceLabel({
     >
       <PriceDifferenceIcon className="mb-0.5 mr-1.5 inline h-3.5 w-3.5" />
       {formatPercent(BigNumber.max(0, priceDifferencePercent!))} Price
-      difference
+      difference (Birdeye)
     </p>
   );
 }

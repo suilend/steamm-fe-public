@@ -22,6 +22,7 @@ import {
   formatInteger,
   formatToken,
   getBalanceChange,
+  getPrice,
   getToken,
   isSui,
 } from "@suilend/frontend-sui";
@@ -45,8 +46,9 @@ import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { getQuoteRatio } from "@/lib/swap";
+import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
+import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 export default function SwapPage() {
   const router = useRouter();
@@ -114,9 +116,6 @@ export default function SwapPage() {
     return formattedValue;
   }, []);
 
-  const [oracleQuote, setOracleQuote] = useState<MultiSwapQuote | undefined>(
-    undefined,
-  );
   const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false);
   const [quote, setQuote] = useState<MultiSwapQuote | undefined>(undefined);
   const [route, setRoute] = useState<Route | undefined>(undefined);
@@ -154,7 +153,6 @@ export default function SwapPage() {
       _value: string,
       _inCoinType: string,
       _outCoinType: string,
-      isOracle?: boolean,
     ) => {
       console.log(
         "SwapPage.fetchQuote - _value(=formattedValue):",
@@ -163,15 +161,13 @@ export default function SwapPage() {
         _inCoinType,
         "_outCoinType:",
         _outCoinType,
-        "isOracle:",
-        isOracle,
         "valueRef.current:",
         valueRef.current,
       );
 
       const _inCoinMetadata = appData.coinMetadataMap[_inCoinType];
 
-      if (valueRef.current !== _value && !isOracle) return;
+      if (valueRef.current !== _value) return;
 
       try {
         const submitAmount = new BigNumber(_value)
@@ -183,21 +179,12 @@ export default function SwapPage() {
           BigInt(submitAmount),
         );
 
-        if (valueRef.current !== _value && !isOracle) return;
-        console.log(
-          "SwapPage.fetchQuote - isOracle:",
-          isOracle,
-          "quote:",
-          quote,
-          "route:",
-          route,
-        );
+        if (valueRef.current !== _value) return;
+        console.log("SwapPage.fetchQuote - quote:", quote, "route:", route);
 
-        if (!isOracle) {
-          setIsFetchingQuote(false);
-          setQuote(quote);
-          setRoute(route);
-        } else setOracleQuote(quote);
+        setIsFetchingQuote(false);
+        setQuote(quote);
+        setRoute(route);
       } catch (err) {
         showErrorToast("Failed to fetch quote", err as Error);
         console.error(err);
@@ -207,28 +194,6 @@ export default function SwapPage() {
     [appData.coinMetadataMap],
   );
   const debouncedFetchQuote = useRef(debounce(fetchQuote, 100)).current;
-
-  const fetchedInitialOracleQuoteRef = useRef<boolean>(false);
-  useEffect(() => {
-    if (fetchedInitialOracleQuoteRef.current) return;
-    fetchedInitialOracleQuoteRef.current = true;
-
-    fetchQuote(
-      steammClient,
-      new BigNumber(
-        10 ** (-1 * Math.round(inCoinMetadata.decimals * (1 / 2))), // TODO: 1 / 2 is arbitrary, use a better heuristic
-      ).toFixed(inCoinMetadata.decimals, BigNumber.ROUND_DOWN),
-      inCoinType,
-      outCoinType,
-      true,
-    );
-  }, [
-    fetchQuote,
-    steammClient,
-    inCoinMetadata.decimals,
-    inCoinType,
-    outCoinType,
-  ]);
 
   const onValueChange = (_value: string, isImmediate?: boolean) => {
     console.log("SwapPage.onValueChange - _value:", _value);
@@ -256,13 +221,67 @@ export default function SwapPage() {
     );
   };
 
-  // Ratios
-  const oracleRatio = getQuoteRatio(
-    inCoinMetadata,
-    outCoinMetadata,
-    oracleQuote,
+  // USD prices - current
+  const [tokenUsdPricesMap, setTokenUsdPriceMap] = useState<
+    Record<string, BigNumber>
+  >({});
+
+  const fetchTokenUsdPrice = useCallback(async (coinType: string) => {
+    console.log("fetchTokenUsdPrice - coinType:", coinType);
+
+    try {
+      const result = await getPrice(coinType);
+      if (result === undefined || isNaN(result)) return;
+
+      setTokenUsdPriceMap((o) => ({
+        ...o,
+        [coinType]: BigNumber(result),
+      }));
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  const fetchedInitialTokenUsdPricesRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (fetchedInitialTokenUsdPricesRef.current) return;
+
+    fetchTokenUsdPrice(inCoinType);
+    fetchTokenUsdPrice(outCoinType);
+    fetchedInitialTokenUsdPricesRef.current = true;
+  }, [fetchTokenUsdPrice, inCoinType, outCoinType]);
+
+  const inUsdPrice = useMemo(
+    () => tokenUsdPricesMap[inCoinType],
+    [tokenUsdPricesMap, inCoinType],
   );
-  console.log("SwapPage - oracleRatio:", oracleRatio?.toString());
+  const outUsdPrice = useMemo(
+    () => tokenUsdPricesMap[outCoinType],
+    [tokenUsdPricesMap, outCoinType],
+  );
+
+  const inUsdValue = useMemo(
+    () =>
+      quote !== undefined && inUsdPrice !== undefined
+        ? new BigNumber(quote.amountIn.toString())
+            .div(10 ** inCoinMetadata.decimals)
+            .times(inUsdPrice)
+        : undefined,
+    [quote, inUsdPrice, inCoinMetadata],
+  );
+  const outUsdValue = useMemo(
+    () =>
+      quote !== undefined && outUsdPrice !== undefined
+        ? new BigNumber(quote.amountOut.toString())
+            .div(10 ** outCoinMetadata.decimals)
+            .times(outUsdPrice)
+        : undefined,
+    [quote, outUsdPrice, outCoinMetadata],
+  );
+
+  // Ratios
+  const birdeyeRatio = getBirdeyeRatio(inUsdPrice, outUsdPrice);
+  console.log("SwapPage - birdeyeRatio:", birdeyeRatio?.toString());
 
   // Value - max
   const onCoinBalanceClick = () => {
@@ -295,20 +314,15 @@ export default function SwapPage() {
         : coinType;
     const newOutCoinMetadata = appData.coinMetadataMap[newOutCoinType];
 
+    if (tokenUsdPricesMap[newInCoinType] === undefined)
+      fetchTokenUsdPrice(newInCoinType);
+    if (tokenUsdPricesMap[newOutCoinType] === undefined)
+      fetchTokenUsdPrice(newOutCoinType);
+
     shallowPushQuery(router, {
       slug: `${newInCoinMetadata.symbol}-${newOutCoinMetadata.symbol}`,
     });
 
-    setOracleQuote(undefined);
-    fetchQuote(
-      steammClient,
-      new BigNumber(
-        10 ** (-1 * Math.round(newInCoinMetadata.decimals * (1 / 2))), // TODO: 1 / 2 is arbitrary, use a better heuristic
-      ).toFixed(newInCoinMetadata.decimals, BigNumber.ROUND_DOWN),
-      newInCoinType,
-      newOutCoinType,
-      true,
-    );
     setQuote(undefined);
 
     setTimeout(
@@ -331,20 +345,15 @@ export default function SwapPage() {
     const newOutCoinType = inCoinType;
     const newOutCoinMetadata = inCoinMetadata;
 
+    if (tokenUsdPricesMap[newInCoinType] === undefined)
+      fetchTokenUsdPrice(newInCoinType);
+    if (tokenUsdPricesMap[newOutCoinType] === undefined)
+      fetchTokenUsdPrice(newOutCoinType);
+
     shallowPushQuery(router, {
       slug: `${newInCoinMetadata.symbol}-${newOutCoinMetadata.symbol}`,
     });
 
-    setOracleQuote(undefined);
-    fetchQuote(
-      steammClient,
-      new BigNumber(
-        10 ** (-1 * Math.round(newInCoinMetadata.decimals * (1 / 2))), // TODO: 1 / 2 is arbitrary, use a better heuristic
-      ).toFixed(newInCoinMetadata.decimals, BigNumber.ROUND_DOWN),
-      newInCoinType,
-      newOutCoinType,
-      true,
-    );
     setQuote(undefined);
 
     setTimeout(
@@ -519,6 +528,7 @@ export default function SwapPage() {
                 autoFocus
                 coinType={inCoinType}
                 value={value}
+                usdValue={inUsdValue}
                 onChange={(value) => onValueChange(value)}
                 onBalanceClick={() => onCoinBalanceClick()}
                 onPopoverCoinClick={(coinType) =>
@@ -546,6 +556,7 @@ export default function SwapPage() {
                         )
                       : ""
                 }
+                usdValue={outUsdValue}
                 onPopoverCoinClick={(coinType) =>
                   onPopoverCoinClick(coinType, "out")
                 }
@@ -557,7 +568,7 @@ export default function SwapPage() {
                 <PriceDifferenceLabel
                   inCoinType={inCoinType}
                   outCoinType={outCoinType}
-                  oracleRatio={oracleRatio}
+                  birdeyeRatio={birdeyeRatio}
                   isFetchingQuote={isFetchingQuote}
                   quote={quote}
                 />
@@ -585,7 +596,12 @@ export default function SwapPage() {
                       </div>
                     }
                   >
-                    <p className="text-p2 text-secondary-foreground">
+                    <p
+                      className={cn(
+                        "text-p2 text-secondary-foreground decoration-secondary-foreground/50",
+                        hoverUnderlineClassName,
+                      )}
+                    >
                       {route.length} hop
                       {route.length > 1 && "s"}
                     </p>

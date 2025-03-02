@@ -1,5 +1,12 @@
 import { useRouter } from "next/router";
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import { SUI_DECIMALS } from "@mysten/sui/utils";
@@ -15,6 +22,7 @@ import {
   formatPercent,
   formatToken,
   getBalanceChange,
+  getPrice,
   getToken,
   isSui,
 } from "@suilend/frontend-sui";
@@ -43,7 +51,7 @@ import TokenLogos from "@/components/TokenLogos";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
-import { getQuoteRatio } from "@/lib/swap";
+import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
 
@@ -851,9 +859,6 @@ function SwapTab({ formatValue }: SwapTabProps) {
   const [value, setValue] = useState<string>("");
   const valueRef = useRef<string>(value);
 
-  const [oracleQuote, setOracleQuote] = useState<SwapQuote | undefined>(
-    undefined,
-  );
   const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false);
   const [quote, setQuote] = useState<SwapQuote | undefined>(undefined);
 
@@ -862,20 +867,17 @@ function SwapTab({ formatValue }: SwapTabProps) {
       _steammClient: SteammSDK,
       _value: string,
       _activeCoinIndex: number,
-      isOracle?: boolean,
     ) => {
       console.log(
         "SwapTab.fetchQuote - _value(=formattedValue):",
         _value,
         "_activeCoinIndex:",
         _activeCoinIndex,
-        "isOracle:",
-        isOracle,
         "valueRef.current:",
         valueRef.current,
       );
 
-      if (valueRef.current !== _value && !isOracle) return;
+      if (valueRef.current !== _value) return;
 
       try {
         const submitAmount = new BigNumber(_value)
@@ -892,18 +894,11 @@ function SwapTab({ formatValue }: SwapTabProps) {
           amountIn: BigInt(submitAmount),
         });
 
-        if (valueRef.current !== _value && !isOracle) return;
-        console.log(
-          "SwapTab.fetchQuote - isOracle:",
-          isOracle,
-          "quote:",
-          quote,
-        );
+        if (valueRef.current !== _value) return;
+        console.log("SwapTab.fetchQuote - quote:", quote);
 
-        if (!isOracle) {
-          setIsFetchingQuote(false);
-          setQuote(quote);
-        } else setOracleQuote(quote);
+        setIsFetchingQuote(false);
+        setQuote(quote);
       } catch (err) {
         showErrorToast("Failed to fetch quote", err as Error);
         console.error(err);
@@ -913,21 +908,6 @@ function SwapTab({ formatValue }: SwapTabProps) {
     [appData.coinMetadataMap, pool.coinTypes, pool.id],
   );
   const debouncedFetchQuote = useRef(debounce(fetchQuote, 100)).current;
-
-  const fetchedInitialOracleQuoteRef = useRef<boolean>(false);
-  useEffect(() => {
-    if (fetchedInitialOracleQuoteRef.current) return;
-    fetchedInitialOracleQuoteRef.current = true;
-
-    fetchQuote(
-      steammClient,
-      new BigNumber(
-        10 ** (-1 * Math.round(activeCoinMetadata.decimals * (1 / 2))), // TODO: 1 / 2 is arbitrary, use a better heuristic
-      ).toFixed(activeCoinMetadata.decimals, BigNumber.ROUND_DOWN),
-      activeCoinIndex,
-      true,
-    );
-  }, [fetchQuote, steammClient, activeCoinMetadata.decimals, activeCoinIndex]);
 
   const onValueChange = (_value: string, isImmediate?: boolean) => {
     console.log("SwapTab.onValueChange - _value:", _value);
@@ -954,13 +934,67 @@ function SwapTab({ formatValue }: SwapTabProps) {
     );
   };
 
-  // Ratios
-  const oracleRatio = getQuoteRatio(
-    activeCoinMetadata,
-    inactiveCoinMetadata,
-    oracleQuote,
+  // USD prices - current
+  const [tokenUsdPricesMap, setTokenUsdPriceMap] = useState<
+    Record<string, BigNumber>
+  >({});
+
+  const fetchTokenUsdPrice = useCallback(async (coinType: string) => {
+    console.log("fetchTokenUsdPrice - coinType:", coinType);
+
+    try {
+      const result = await getPrice(coinType);
+      if (result === undefined || isNaN(result)) return;
+
+      setTokenUsdPriceMap((o) => ({
+        ...o,
+        [coinType]: BigNumber(result),
+      }));
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  const fetchedInitialTokenUsdPricesRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (fetchedInitialTokenUsdPricesRef.current) return;
+
+    fetchTokenUsdPrice(activeCoinType);
+    fetchTokenUsdPrice(inactiveCoinType);
+    fetchedInitialTokenUsdPricesRef.current = true;
+  }, [fetchTokenUsdPrice, activeCoinType, inactiveCoinType]);
+
+  const activeUsdPrice = useMemo(
+    () => tokenUsdPricesMap[activeCoinType],
+    [tokenUsdPricesMap, activeCoinType],
   );
-  console.log("SwapTab - oracleRatio:", oracleRatio?.toString());
+  const inactiveUsdPrice = useMemo(
+    () => tokenUsdPricesMap[inactiveCoinType],
+    [tokenUsdPricesMap, inactiveCoinType],
+  );
+
+  const activeUsdValue = useMemo(
+    () =>
+      quote !== undefined && activeUsdPrice !== undefined
+        ? new BigNumber(quote.amountIn.toString())
+            .div(10 ** activeCoinMetadata.decimals)
+            .times(activeUsdPrice)
+        : undefined,
+    [quote, activeUsdPrice, activeCoinMetadata],
+  );
+  const inactiveUsdValue = useMemo(
+    () =>
+      quote !== undefined && inactiveUsdPrice !== undefined
+        ? new BigNumber(quote.amountOut.toString())
+            .div(10 ** inactiveCoinMetadata.decimals)
+            .times(inactiveUsdPrice)
+        : undefined,
+    [quote, inactiveUsdPrice, inactiveCoinMetadata],
+  );
+
+  // Ratios
+  const birdeyeRatio = getBirdeyeRatio(activeUsdPrice, inactiveUsdPrice);
+  console.log("SwapTab - birdeyeRatio:", birdeyeRatio?.toString());
 
   // Value - max
   const onCoinBalanceClick = () => {
@@ -980,23 +1014,20 @@ function SwapTab({ formatValue }: SwapTabProps) {
   const reverseAssets = () => {
     const newActiveCoinIndex = (1 - activeCoinIndex) as 0 | 1;
     const newActiveCoinType = pool.coinTypes[newActiveCoinIndex];
-    const newActiveCoinMetadata = appData.coinMetadataMap[newActiveCoinType];
+    const newInactiveCoinType = pool.coinTypes[1 - newActiveCoinIndex];
+
+    if (tokenUsdPricesMap[newActiveCoinType] === undefined)
+      fetchTokenUsdPrice(newActiveCoinType);
+    if (tokenUsdPricesMap[newInactiveCoinType] === undefined)
+      fetchTokenUsdPrice(newInactiveCoinType);
 
     setActiveCoinIndex(newActiveCoinIndex);
 
-    setOracleQuote(undefined);
-    fetchQuote(
-      steammClient,
-      new BigNumber(
-        10 ** (-1 * Math.round(newActiveCoinMetadata.decimals * (1 / 2))), // TODO: 1 / 2 is arbitrary, use a better heuristic
-      ).toFixed(newActiveCoinMetadata.decimals, BigNumber.ROUND_DOWN),
-      newActiveCoinIndex,
-      true,
-    );
     setQuote(undefined);
 
-    setTimeout(() =>
-      document.getElementById(getCoinInputId(newActiveCoinType))?.focus(),
+    setTimeout(
+      () => document.getElementById(getCoinInputId(newActiveCoinType))?.focus(),
+      50,
     );
 
     // value === "" || value <= 0
@@ -1174,6 +1205,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
           className="relative z-[1]"
           coinType={pool.coinTypes[activeCoinIndex]}
           value={value}
+          usdValue={activeUsdValue}
           onChange={(value) => onValueChange(value)}
           onBalanceClick={() => onCoinBalanceClick()}
         />
@@ -1198,6 +1230,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
                   )
                 : ""
           }
+          usdValue={inactiveUsdValue}
         />
       </div>
 
@@ -1205,7 +1238,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
         <PriceDifferenceLabel
           inCoinType={activeCoinType}
           outCoinType={inactiveCoinType}
-          oracleRatio={oracleRatio}
+          birdeyeRatio={birdeyeRatio}
           isFetchingQuote={isFetchingQuote}
           quote={quote}
         />
