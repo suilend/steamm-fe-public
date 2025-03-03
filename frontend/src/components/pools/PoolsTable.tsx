@@ -60,7 +60,7 @@ export default function PoolsTable({
 
   const [sortState, setSortState] = useLocalStorage<SortState | undefined>(
     `PoolsTable_${tableId}_sortState`,
-    undefined,
+    { column: "tvlUsd", direction: SortDirection.DESC },
   );
 
   const toggleSortByColumn = (column: SortableColumn) => {
