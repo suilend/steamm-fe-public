@@ -122,7 +122,7 @@ export default function CoinInput({
           {usdValue !== undefined && !usdValue.eq(0) && (
             <p
               className={cn(
-                "!text-p3 text-tertiary-foreground",
+                "!text-p2 text-tertiary-foreground",
                 hasPopover ? "text-left" : "text-right",
               )}
             >
