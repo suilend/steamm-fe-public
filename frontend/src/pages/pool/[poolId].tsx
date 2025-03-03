@@ -95,9 +95,10 @@ function PoolPage() {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <p className="text-p2 text-secondary-foreground">
-                    Volume (24H)
-                  </p>
+                  <div className="flex flex-row items-baseline gap-1.5">
+                    <p className="text-p2 text-secondary-foreground">Volume</p>
+                    <p className="text-p3 text-tertiary-foreground">24H</p>
+                  </div>
 
                   <div className="flex flex-row items-center gap-1.5">
                     {poolStats.volumeUsd_24h[pool.id] === undefined ? (
@@ -121,9 +122,10 @@ function PoolPage() {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <p className="text-p2 text-secondary-foreground">
-                    Fees (24H)
-                  </p>
+                  <div className="flex flex-row items-baseline gap-1.5">
+                    <p className="text-p2 text-secondary-foreground">Fees</p>
+                    <p className="text-p3 text-tertiary-foreground">24H</p>
+                  </div>
 
                   <div className="flex flex-row items-center gap-1.5">
                     {poolStats.feesUsd_24h[pool.id] === undefined ? (

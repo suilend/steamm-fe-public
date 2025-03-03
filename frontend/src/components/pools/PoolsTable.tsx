@@ -168,9 +168,10 @@ export default function PoolsTable({
               ? toggleSortByColumn
               : undefined
           }
+          titleEndDecorator="24H"
           style={columnStyleMap.volumeUsd_24h}
         >
-          Volume (24H)
+          Volume
         </HeaderColumn>
         <HeaderColumn<Column, SortableColumn>
           id="aprPercent_24h"
