@@ -158,24 +158,26 @@ export class RouterModule implements IModule {
     const tx = new Transaction();
     const routes = await this.findSwapRoutes(coinPair);
 
-    // TODO: programmable tx is better
-    const quotes = [];
     for (const route of routes) {
-      const quote = await this.quoteSwapRoute(
+      await this.quoteSwapRoute(
         tx,
         coinPair.coinIn,
         coinPair.coinOut,
         route,
         amountIn,
       );
-      if (quote) {
-        quotes.push(quote);
-      }
     }
 
-    if (quotes.length === 0) {
+    const quotesRaw = await this.getQuoteResults<MultiSwapQuote>(
+      tx,
+      "MultiRouteSwapQuote",
+    );
+
+    if (quotesRaw.length === 0) {
       throw new Error("No quotes found for the given coin pair");
     }
+
+    const quotes = quotesRaw.map((quote) => castMultiSwapQuote(quote));
 
     // Find the best quote (highest amount out)
     let bestQuoteIndex = 0;
@@ -198,7 +200,7 @@ export class RouterModule implements IModule {
     coinTypeOut: string,
     route: Route,
     amountIn: bigint,
-  ): Promise<MultiSwapQuote | null> {
+  ) {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
 
@@ -247,17 +249,34 @@ export class RouterModule implements IModule {
       amountIn: firstBTokenAmountIn,
       amountOut: nextBTokenAmountIn,
     });
+  }
 
-    const result = await this.getQuoteResult<MultiSwapQuote>(
-      tx,
-      "MultiRouteSwapQuote",
+  private async getQuoteResults<T>(
+    tx: Transaction,
+    quoteType: string,
+  ): Promise<T[]> {
+    const inspectResults = await this.sdk.fullClient.devInspectTransactionBlock(
+      {
+        sender: this.sdk.senderAddress,
+        transactionBlock: tx,
+        additionalArgs: { showRawTxnDataAndEffects: true },
+      },
     );
 
-    if (result) {
-      return castMultiSwapQuote(result);
-    } else {
-      return null;
+    if (inspectResults.error) {
+      console.log("Failed to fetch quotes");
+      return [];
     }
+
+    const quoteEvents = inspectResults.events.filter((event) =>
+      event.type.includes(quoteType),
+    );
+
+    if (quoteEvents.length === 0) {
+      throw new Error(`No quote events of type ${quoteType} found in events`);
+    }
+
+    return quoteEvents.map((event) => (event.parsedJson as any).event as T);
   }
 
   private async getQuoteResult<T>(
