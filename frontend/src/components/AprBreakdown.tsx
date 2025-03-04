@@ -25,8 +25,9 @@ export default function AprBreakdown({
   const { poolStats } = useStatsContext();
 
   const hasSuilendDepositAprPercent =
-    poolStats.aprPercent_24h[pool.id]
-      ?.suilendWeightedAverageDepositAprPercent !== undefined;
+    poolStats.aprPercent_24h[
+      pool.id
+    ]?.suilendWeightedAverageDepositAprPercent?.gt(0);
 
   if (poolStats.aprPercent_24h[pool.id] === undefined)
     return <Skeleton className={cn("h-[24px] w-16", skeletonClassName)} />;
