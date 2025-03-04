@@ -14,6 +14,7 @@ import {
   LENDING_MARKET_TYPE,
   SuilendClient,
   initializeSuilend,
+  initializeSuilendRewards,
 } from "@suilend/sdk";
 import { SteammSDK } from "@suilend/steamm-sdk";
 
@@ -26,25 +27,56 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
   const dataFetcher = async () => {
     // Suilend
-    const suilendClient = await SuilendClient.initialize(
-      LENDING_MARKET_ID, // Main Market
+    // Suilend - Main market
+    const mainMarket_suilendClient = await SuilendClient.initialize(
+      LENDING_MARKET_ID, // Main market / Main market (beta) when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
       LENDING_MARKET_TYPE,
       suiClient,
-    ); // Switch to Suilend Beta Main Market by setting NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true (should not need to in practice)
+    );
 
-    const { reserveMap } = await initializeSuilend(suiClient, suilendClient);
+    const { reserveMap: mainMarket_reserveMap } = await initializeSuilend(
+      suiClient,
+      mainMarket_suilendClient,
+    );
 
-    const reserveDepositAprPercentMap: Record<string, BigNumber> =
+    const mainMarket_reserveDepositAprPercentMap: Record<string, BigNumber> =
       Object.fromEntries(
-        Object.entries(reserveMap).map(([coinType, reserve]) => [
+        Object.entries(mainMarket_reserveMap).map(([coinType, reserve]) => [
           coinType,
           reserve.depositAprPercent,
         ]),
       );
 
+    // Suilend - LM market
+    const lmMarket_suilendClient = await SuilendClient.initialize(
+      process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+        ? "0xb1d89cf9082cedce09d3647f0ebda4a8b5db125aff5d312a8bfd7eefa715bd35"
+        : "0xc1888ec1b81a414e427a44829310508352aec38252ee0daa9f8b181b6947de9f",
+      process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+        ? "0xdeeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP"
+        : "0x0a071f4976abae1a7f722199cf0bfcbe695ef9408a878e7d12a7ca87b7e582a6::lp_rewards::LP_REWARDS",
+      suiClient,
+    );
+
+    const {
+      lendingMarket: lmMarket_lendingMarket,
+
+      refreshedRawReserves: lmMarket_refreshedRawReserves,
+      reserveMap: lmMarket_reserveMap,
+
+      activeRewardCoinTypes: lmMarket_activeRewardCoinTypes,
+      rewardCoinMetadataMap: lmMarket_rewardCoinMetadataMap,
+    } = await initializeSuilend(suiClient, lmMarket_suilendClient);
+
+    const { rewardPriceMap: lmMarket_rewardPriceMap } =
+      await initializeSuilendRewards(
+        lmMarket_reserveMap,
+        lmMarket_activeRewardCoinTypes,
+      );
+
     // Prices
-    const suiPrice = reserveMap[NORMALIZED_SUI_COINTYPE].price;
-    const usdcPrice = reserveMap[NORMALIZED_USDC_COINTYPE].price;
+    const suiPrice = mainMarket_reserveMap[NORMALIZED_SUI_COINTYPE].price;
+    const usdcPrice = mainMarket_reserveMap[NORMALIZED_USDC_COINTYPE].price;
 
     // Banks
     const bankCoinTypes: string[] = [];
@@ -64,14 +96,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       uniqueBankCoinTypes,
     );
 
-    const lendingMarketIdTypeMap = Object.values(bankInfos).reduce(
-      (acc, bankInfo) => ({
-        ...acc,
-        [bankInfo.lendingMarketId]: bankInfo.lendingMarketType,
-      }),
-      {},
-    );
-
     const banks: ParsedBank[] = await Promise.all(
       Object.values(bankInfos).map((bankInfo) =>
         (async () => {
@@ -87,7 +111,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           const depositedAmount = new BigNumber(
             bank.lending ? bank.lending.ctokens.toString() : 0,
           )
-            .times(reserveMap[coinType].cTokenExchangeRate)
+            .times(mainMarket_reserveMap[coinType]?.cTokenExchangeRate ?? 0) // Fallback for when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true and Main market (beta) does not have the reserve
             .div(10 ** bankCoinMetadataMap[coinType].decimals);
           const totalAmount = liquidAmount.plus(depositedAmount);
 
@@ -95,7 +119,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             .div(totalAmount)
             .times(100);
           const suilendDepositAprPercent =
-            reserveDepositAprPercentMap[coinType] ?? new BigNumber(0);
+            mainMarket_reserveDepositAprPercentMap[coinType] ??
+            new BigNumber(0);
 
           return {
             id,
@@ -136,6 +161,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     );
 
     const coinMetadataMap = {
+      ...lmMarket_rewardCoinMetadataMap,
       ...bankCoinMetadataMap,
       ...poolCoinMetadataMap,
     };
@@ -202,6 +228,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               .times(feeTierPercent.div(100))
               .times(100);
 
+            // const rewards = lmMarket_reserveMap[coinTypeA]
+
             return {
               id,
               type,
@@ -238,9 +266,20 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const featuredCoinTypePairs: [[string, string]] = [["", ""]];
 
     return {
+      lm: {
+        suilendClient: lmMarket_suilendClient,
+
+        lendingMarket: lmMarket_lendingMarket,
+
+        refreshedRawReserves: lmMarket_refreshedRawReserves,
+        reserveMap: lmMarket_reserveMap,
+
+        rewardPriceMap: lmMarket_rewardPriceMap,
+        rewardCoinMetadataMap: lmMarket_rewardCoinMetadataMap,
+      },
+
       coinMetadataMap,
       bTokenTypeCoinTypeMap,
-      lendingMarketIdTypeMap,
 
       banks,
       bankMap,

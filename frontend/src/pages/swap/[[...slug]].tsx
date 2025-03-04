@@ -46,6 +46,7 @@ import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import { useLoadedUserContext } from "@/contexts/UserContext";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
@@ -56,8 +57,8 @@ export default function SwapPage() {
 
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, getBalance, refresh, slippagePercent } =
-    useLoadedAppContext();
+  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
+  const { getBalance, refresh } = useLoadedUserContext();
 
   // CoinTypes
   const [inCoinType, outCoinType] = useMemo(() => {

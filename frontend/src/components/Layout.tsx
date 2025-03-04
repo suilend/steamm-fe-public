@@ -8,10 +8,12 @@ import Countdown from "@/components/Countdown";
 import Footer from "@/components/Footer";
 import Nav from "@/components/Nav";
 import { useAppContext } from "@/contexts/AppContext";
+import { useUserContext } from "@/contexts/UserContext";
 import { ASSETS_URL, LAUNCH_TIMESTAMP_MS } from "@/lib/constants";
 
 export default function Layout({ children }: PropsWithChildren) {
   const { appData } = useAppContext();
+  const { userData } = useUserContext();
 
   return (
     <div
@@ -20,7 +22,7 @@ export default function Layout({ children }: PropsWithChildren) {
         background: `url('${ASSETS_URL}/background.png') bottom no-repeat`,
       }}
     >
-      {!appData ? (
+      {!appData || !userData ? (
         <div className="fixed inset-0 flex flex-col items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>

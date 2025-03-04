@@ -95,7 +95,6 @@ export default function PoolRow({
         className="flex h-full flex-row items-center gap-2"
         style={columnStyleMap.aprPercent_24h}
       >
-        <TokenLogos coinTypes={[]} size={16} />
         <AprBreakdown pool={pool} />
       </div>
     </Link>

@@ -76,7 +76,7 @@ export default function AprBreakdown({
         <div className="flex w-full flex-row items-center gap-2">
           <TokenLogos
             suilend={hasSuilendDepositAprPercent}
-            coinTypes={[]}
+            coinTypes={[]} // TODO
             size={16}
           />
           <p

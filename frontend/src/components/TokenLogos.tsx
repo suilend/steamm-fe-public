@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 interface TokenLogosProps {
   suilend?: boolean;
-  coinTypes: string[];
+  coinTypes?: string[];
   size: number;
   backgroundColor?: string;
 }
@@ -22,11 +22,11 @@ export default function TokenLogos({
 }: TokenLogosProps) {
   const { appData } = useLoadedAppContext();
 
-  const hasCoinMetadata = coinTypes.every(
+  const hasCoinMetadata = (coinTypes ?? []).every(
     (coinType) => appData.coinMetadataMap[coinType],
   );
 
-  if (!suilend && coinTypes.length === 0) return null;
+  if (!suilend && (coinTypes ?? []).length === 0) return null;
   return (
     <div
       className={cn(
@@ -41,7 +41,7 @@ export default function TokenLogos({
       }
     >
       {suilend && <SuilendLogo size={size} />}
-      {coinTypes.map((coinType, index) => (
+      {(coinTypes ?? []).map((coinType, index) => (
         <TokenLogo
           key={coinType}
           className={cn(

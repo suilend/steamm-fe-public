@@ -7,7 +7,7 @@ import ConnectWalletButton from "@/components/ConnectWalletButton";
 import Container from "@/components/Container";
 import Logo from "@/components/Logo";
 import SettingsDialog from "@/components/SettingsDialog";
-import { useAppContext } from "@/contexts/AppContext";
+import { useUserContext } from "@/contexts/UserContext";
 import {
   ADMIN_URL,
   POOL_URL_PREFIX,
@@ -38,7 +38,7 @@ export const ADMIN_NAV_ITEM: NavItem = {
 export default function Nav() {
   const router = useRouter();
 
-  const { refresh: refreshAppDataAndBalances } = useAppContext();
+  const { refresh } = useUserContext();
 
   // Items
   const navItems = [...NAV_ITEMS];
@@ -46,7 +46,7 @@ export default function Nav() {
 
   // Refresh
   const refreshAll = () => {
-    refreshAppDataAndBalances();
+    refresh();
   };
 
   return (

@@ -10,10 +10,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PoolPosition } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Column = "pair" | "type" | "aprPercent_24h" | "balanceUsd";
-// | "isStaked"
-// | "claimableRewards"
-// | "pnl";
+type Column =
+  | "pair"
+  | "type"
+  | "aprPercent_24h"
+  | "balanceUsd"
+  | "stakedPercent"
+  | "claimableRewards";
 type SortableColumn = "aprPercent_24h" | "balanceUsd";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
@@ -39,24 +42,18 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
-  // isStaked: {
-  //   flex: 1,
-  //   minWidth: 150, // px
-  //   justifyContent: "end",
-  //   paddingRight: 4 * 5, // px
-  // },
-  // claimableRewards: {
-  //   flex: 1,
-  //   minWidth: 150, // px
-  //   justifyContent: "end",
-  //   paddingRight: 4 * 5, // px
-  // },
-  // pnl: {
-  //   flex: 1,
-  //   minWidth: 150, // px
-  //   justifyContent: "end",
-  //   paddingRight: 4 * 5, // px
-  // },
+  stakedPercent: {
+    flex: 1,
+    minWidth: 150, // px
+    justifyContent: "end",
+    paddingRight: 4 * 5, // px
+  },
+  claimableRewards: {
+    flex: 1,
+    minWidth: 150, // px
+    justifyContent: "end",
+    paddingRight: 4 * 5, // px
+  },
 };
 
 interface PoolPositionsTableProps {
@@ -119,12 +116,14 @@ export default function PoolPositionsTable({
         >
           Pair
         </HeaderColumn>
+
         <HeaderColumn<Column, SortableColumn>
           id="type"
           style={columnStyleMap.type}
         >
           Type & Fee tier
         </HeaderColumn>
+
         <HeaderColumn<Column, SortableColumn>
           id="aprPercent_24h"
           sortState={sortState}
@@ -139,6 +138,7 @@ export default function PoolPositionsTable({
         >
           APR
         </HeaderColumn>
+
         <HeaderColumn<Column, SortableColumn>
           id="balanceUsd"
           sortState={sortState}
@@ -153,24 +153,20 @@ export default function PoolPositionsTable({
         >
           Balance
         </HeaderColumn>
-        {/* <HeaderColumn<Column, SortableColumn>
-          id="isStaked"
-          style={columnStyleMap.isStaked}
+
+        <HeaderColumn<Column, SortableColumn>
+          id="stakedPercent"
+          style={columnStyleMap.stakedPercent}
         >
           Staked
         </HeaderColumn>
+
         <HeaderColumn<Column, SortableColumn>
           id="claimableRewards"
           style={columnStyleMap.claimableRewards}
         >
           Claimable rewards
-        </HeaderColumn> */}
-        {/* <HeaderColumn<Column, SortableColumn>
-          id="pnl"
-          style={columnStyleMap.pnl}
-        >
-          PnL
-        </HeaderColumn> */}
+        </HeaderColumn>
       </div>
 
       {/* Rows */}
@@ -179,13 +175,13 @@ export default function PoolPositionsTable({
           <Skeleton
             key={index}
             className={cn(
-              "relative z-[1] h-[56px] w-full",
-              index !== array.length - 1 && "h-[calc(56px+1px)] border-b",
+              "relative z-[1] h-[72px] w-full",
+              index !== array.length - 1 && "h-[calc(72px+1px)] border-b",
             )}
           />
         ))
       ) : sortedPositions.length === 0 ? (
-        <div className="flex h-[56px] w-full flex-row items-center justify-center">
+        <div className="flex h-[72px] w-full flex-row items-center justify-center">
           <p className="text-p2 text-tertiary-foreground">No positions</p>
         </div>
       ) : (

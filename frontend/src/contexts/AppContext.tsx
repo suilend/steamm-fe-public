@@ -14,18 +14,32 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import useFetchBalances from "@suilend/frontend-sui-next/fetchers/useFetchBalances";
-import useCoinMetadataMap from "@suilend/frontend-sui-next/hooks/useCoinMetadataMap";
-import useRefreshOnBalancesChange from "@suilend/frontend-sui-next/hooks/useRefreshOnBalancesChange";
+import {
+  ParsedLendingMarket,
+  ParsedReserve,
+  SuilendClient,
+} from "@suilend/sdk";
+import { Reserve } from "@suilend/sdk/_generated/suilend/reserve/structs";
 import { BETA_CONFIG, MAINNET_CONFIG, SteammSDK } from "@suilend/steamm-sdk";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
 import { ParsedBank, ParsedPool } from "@/lib/types";
 
 export interface AppData {
+  lm: {
+    suilendClient: SuilendClient;
+
+    lendingMarket: ParsedLendingMarket;
+
+    refreshedRawReserves: Reserve<string>[];
+    reserveMap: Record<string, ParsedReserve>;
+
+    rewardPriceMap: Record<string, BigNumber | undefined>;
+    rewardCoinMetadataMap: Record<string, CoinMetadata>;
+  };
+
   coinMetadataMap: Record<string, CoinMetadata>;
   bTokenTypeCoinTypeMap: Record<string, string>;
-  lendingMarketIdTypeMap: Record<string, string>;
 
   banks: ParsedBank[];
   bankMap: Record<string, ParsedBank>;
@@ -40,12 +54,7 @@ export interface AppData {
 interface AppContext {
   steammClient: SteammSDK | undefined;
   appData: AppData | undefined;
-
-  rawBalancesMap: Record<string, BigNumber> | undefined;
-  balancesCoinMetadataMap: Record<string, CoinMetadata> | undefined;
-  getBalance: (coinType: string) => BigNumber;
-
-  refresh: () => Promise<void>; // Refreshes appData, and balances
+  refreshAppData: () => Promise<void>;
 
   slippagePercent: number;
   setSlippagePercent: (slippagePercent: number) => void;
@@ -58,14 +67,7 @@ type LoadedAppContext = AppContext & {
 const AppContext = createContext<AppContext>({
   steammClient: undefined,
   appData: undefined,
-
-  rawBalancesMap: undefined,
-  balancesCoinMetadataMap: undefined,
-  getBalance: () => {
-    throw Error("AppContextProvider not initialized");
-  },
-
-  refresh: async () => {
+  refreshAppData: async () => {
     throw Error("AppContextProvider not initialized");
   },
 
@@ -101,41 +103,9 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   const { data: appData, mutateData: mutateAppData } =
     useFetchAppData(steammClient);
 
-  // Balances
-  const { data: rawBalancesMap, mutateData: mutateRawBalancesMap } =
-    useFetchBalances();
-
-  const refreshRawBalancesMap = useCallback(async () => {
-    await mutateRawBalancesMap();
-  }, [mutateRawBalancesMap]);
-
-  const balancesCoinTypes = useMemo(
-    () => Object.keys(rawBalancesMap ?? {}),
-    [rawBalancesMap],
-  );
-  const balancesCoinMetadataMap = useCoinMetadataMap(balancesCoinTypes);
-
-  const getBalance = useCallback(
-    (coinType: string) => {
-      if (rawBalancesMap?.[coinType] === undefined) return new BigNumber(0);
-
-      const coinMetadata = balancesCoinMetadataMap?.[coinType];
-      if (!coinMetadata) return new BigNumber(0);
-
-      return new BigNumber(rawBalancesMap[coinType]).div(
-        10 ** coinMetadata.decimals,
-      );
-    },
-    [rawBalancesMap, balancesCoinMetadataMap],
-  );
-
-  // Refresh
-  const refresh = useCallback(async () => {
+  const refreshAppData = useCallback(async () => {
     await mutateAppData();
-    await refreshRawBalancesMap();
-  }, [mutateAppData, refreshRawBalancesMap]);
-
-  useRefreshOnBalancesChange(refresh);
+  }, [mutateAppData]);
 
   // Slippage
   const [slippagePercent, setSlippagePercent] = useLocalStorage<number>(
@@ -148,12 +118,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     () => ({
       steammClient,
       appData,
-
-      rawBalancesMap,
-      balancesCoinMetadataMap,
-      getBalance,
-
-      refresh,
+      refreshAppData,
 
       slippagePercent,
       setSlippagePercent,
@@ -161,10 +126,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     [
       steammClient,
       appData,
-      rawBalancesMap,
-      balancesCoinMetadataMap,
-      getBalance,
-      refresh,
+      refreshAppData,
       slippagePercent,
       setSlippagePercent,
     ],

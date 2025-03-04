@@ -141,12 +141,14 @@ export default function PoolsTable({
         >
           Pair
         </HeaderColumn>
+
         <HeaderColumn<Column, SortableColumn>
           id="type"
           style={columnStyleMap.type}
         >
           Type & Fee tier
         </HeaderColumn>
+
         <HeaderColumn<Column, SortableColumn>
           id="tvlUsd"
           sortState={sortState}
@@ -155,6 +157,7 @@ export default function PoolsTable({
         >
           TVL
         </HeaderColumn>
+
         <HeaderColumn<Column, SortableColumn>
           id="volumeUsd_24h"
           sortState={sortState}
@@ -173,6 +176,7 @@ export default function PoolsTable({
         >
           Volume
         </HeaderColumn>
+
         <HeaderColumn<Column, SortableColumn>
           id="aprPercent_24h"
           sortState={sortState}

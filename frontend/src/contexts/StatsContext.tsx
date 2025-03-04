@@ -120,6 +120,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             end: number;
             tvl: Record<string, string>;
           }[] = await res.json();
+          if ((json as any)?.statusCode === 500) return;
 
           setPoolHistoricalStats((prev) => ({
             ...prev,

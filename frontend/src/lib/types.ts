@@ -52,11 +52,6 @@ export type PoolGroup = {
 export type PoolPosition = {
   pool: ParsedPool;
   balanceUsd?: BigNumber;
-  // depositedAmountUsd?: BigNumber;
-  // isStaked: boolean;
-  // claimableRewards: Record<string, BigNumber>;
-  // pnl: {
-  //   percent?: BigNumber;
-  //   amountUsd?: BigNumber;
-  // };
+  stakedPercent: BigNumber;
+  claimableRewards: Record<string, BigNumber>;
 };

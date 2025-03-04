@@ -51,6 +51,7 @@ import TokenLogos from "@/components/TokenLogos";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
+import { useLoadedUserContext } from "@/contexts/UserContext";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
@@ -80,8 +81,8 @@ interface DepositTabProps {
 function DepositTab({ formatValue }: DepositTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, getBalance, refresh, slippagePercent } =
-    useLoadedAppContext();
+  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
+  const { getBalance, refresh } = useLoadedUserContext();
   const { pool } = usePoolContext();
 
   // Value
@@ -508,8 +509,8 @@ function DepositTab({ formatValue }: DepositTabProps) {
 function WithdrawTab() {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, getBalance, refresh, slippagePercent } =
-    useLoadedAppContext();
+  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
+  const { getBalance, refresh } = useLoadedUserContext();
   const { pool } = usePoolContext();
 
   // Value
@@ -842,8 +843,8 @@ interface SwapTabProps {
 function SwapTab({ formatValue }: SwapTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, getBalance, refresh, slippagePercent } =
-    useLoadedAppContext();
+  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
+  const { getBalance, refresh } = useLoadedUserContext();
   const { pool } = usePoolContext();
 
   // CoinTypes

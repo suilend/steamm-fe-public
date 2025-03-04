@@ -8,6 +8,7 @@ import CoinPopover from "@/components/CoinPopover";
 import TokenLogo from "@/components/TokenLogo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import { useLoadedUserContext } from "@/contexts/UserContext";
 import { cn } from "@/lib/utils";
 
 export const getCoinInputId = (coinType: string) => `coin-input-${coinType}`;
@@ -33,7 +34,8 @@ export default function CoinInput({
   onBalanceClick,
   onPopoverCoinClick,
 }: CoinInputProps) {
-  const { appData, getBalance } = useLoadedAppContext();
+  const { appData } = useLoadedAppContext();
+  const { getBalance } = useLoadedUserContext();
 
   const isBalanceClickable = !!onBalanceClick && value !== undefined;
   const hasPopover = !!onPopoverCoinClick;
