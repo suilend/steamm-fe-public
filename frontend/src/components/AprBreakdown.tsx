@@ -34,10 +34,8 @@ export default function AprBreakdown({
     <div>
       <Tooltip
         content={
-          <div className="flex flex-col gap-3">
-            {Object.keys(poolStats.aprPercent_24h[pool.id]).filter(
-              (key) => key !== "total",
-            ).length > 0 ? (
+          hasSuilendDepositAprPercent ? (
+            <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-2">
                 {/* Total APR */}
                 <div className="flex flex-row items-center justify-between gap-4">
@@ -71,16 +69,21 @@ export default function AprBreakdown({
                   </AprBreakdownRow>
                 )}
               </div>
-            ) : undefined}
-          </div>
+            </div>
+          ) : undefined
         }
       >
         <div className="flex w-full flex-row items-center gap-2">
-          <TokenLogos coinTypes={[]} size={16} />
+          <TokenLogos
+            suilend={hasSuilendDepositAprPercent}
+            coinTypes={[]}
+            size={16}
+          />
           <p
             className={cn(
-              "!text-p1 text-foreground decoration-foreground/50",
-              hoverUnderlineClassName,
+              "!text-p1 text-foreground",
+              hasSuilendDepositAprPercent &&
+                cn("decoration-foreground/50", hoverUnderlineClassName),
               valueClassName,
             )}
           >

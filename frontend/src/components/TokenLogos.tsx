@@ -2,17 +2,20 @@ import { CSSProperties } from "react";
 
 import { getToken } from "@suilend/frontend-sui";
 
+import SuilendLogo from "@/components/SuilendLogo";
 import TokenLogo from "@/components/TokenLogo";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
 
 interface TokenLogosProps {
+  suilend?: boolean;
   coinTypes: string[];
   size: number;
   backgroundColor?: string;
 }
 
 export default function TokenLogos({
+  suilend,
   coinTypes,
   size,
   backgroundColor,
@@ -23,7 +26,7 @@ export default function TokenLogos({
     (coinType) => appData.coinMetadataMap[coinType],
   );
 
-  if (coinTypes.length === 0) return null;
+  if (!suilend && coinTypes.length === 0) return null;
   return (
     <div
       className={cn(
@@ -37,11 +40,12 @@ export default function TokenLogos({
         } as CSSProperties
       }
     >
+      {suilend && <SuilendLogo size={size} />}
       {coinTypes.map((coinType, index) => (
         <TokenLogo
           key={coinType}
           className={cn(
-            index !== 0 &&
+            (suilend ? true : index !== 0) &&
               "-ml-[var(--ml)] outline outline-1 outline-[var(--bg-color)]",
             !hasCoinMetadata ? "animate-none" : "bg-[var(--bg-color)]",
           )}

@@ -1,10 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import Container from "@/components/Container";
 import DiscordIcon from "@/components/icons/DiscordIcon";
 import XIcon from "@/components/icons/XIcon";
-import { SUILEND_ASSETS_URL } from "@/lib/constants";
+import SuilendLogo from "@/components/SuilendLogo";
 import {
   DISCORD_URL,
   DOCS_URL,
@@ -24,14 +23,7 @@ export default function Footer() {
         >
           {/* Powered by Suilend */}
           <div className="flex flex-row items-center gap-2">
-            <Image
-              className="h-4 w-4"
-              src={`${SUILEND_ASSETS_URL}/Suilend.svg`}
-              alt="Suilend logo"
-              width={16}
-              height={16}
-              quality={100}
-            />
+            <SuilendLogo size={16} />
             <Link
               className="text-p2 text-secondary-foreground transition-colors hover:text-foreground"
               href={SUILEND_URL}

@@ -14,6 +14,8 @@ import { useSettingsContext } from "@suilend/frontend-sui-next";
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
 import OpenOnExplorerButton from "@/components/OpenOnExplorerButton";
+import SuilendLogo from "@/components/SuilendLogo";
+import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
@@ -74,23 +76,21 @@ export default function PoolParametersCard() {
               </div>
 
               {appData.bankMap[coinType] && (
-                <Tooltip
-                  title={`${formatPercent(appData.bankMap[coinType].utilizationPercent)} of deposited ${coinMetadata.symbol} is earning ${formatPercent(appData.bankMap[coinType].suilendDepositAprPercent)} APR on Suilend`}
+                <Tag
+                  labelClassName={cn(
+                    "flex flex-row items-center gap-1.5 text-success decoration-success/50",
+                    hoverUnderlineClassName,
+                  )}
+                  tooltip={`${formatPercent(appData.bankMap[coinType].utilizationPercent)} of deposited ${coinMetadata.symbol} is earning ${formatPercent(appData.bankMap[coinType].suilendDepositAprPercent)} APR on Suilend`}
                 >
-                  <p
-                    className={cn(
-                      "text-p2 text-success decoration-success/50",
-                      hoverUnderlineClassName,
-                    )}
-                  >
-                    {formatPercent(
-                      appData.bankMap[coinType].suilendDepositAprPercent
-                        .times(appData.bankMap[coinType].utilizationPercent)
-                        .div(100),
-                    )}{" "}
-                    APR
-                  </p>
-                </Tooltip>
+                  <SuilendLogo size={12} />
+                  {formatPercent(
+                    appData.bankMap[coinType].suilendDepositAprPercent
+                      .times(appData.bankMap[coinType].utilizationPercent)
+                      .div(100),
+                  )}{" "}
+                  APR
+                </Tag>
               )}
             </div>
           );
