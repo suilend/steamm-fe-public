@@ -175,13 +175,13 @@ export default function PoolPositionsTable({
           <Skeleton
             key={index}
             className={cn(
-              "relative z-[1] h-[72px] w-full",
-              index !== array.length - 1 && "h-[calc(72px+1px)] border-b",
+              "relative z-[1] h-[56px] w-full",
+              index !== array.length - 1 && "h-[calc(56px+1px)] border-b",
             )}
           />
         ))
       ) : sortedPositions.length === 0 ? (
-        <div className="flex h-[72px] w-full flex-row items-center justify-center">
+        <div className="flex h-[56px] w-full flex-row items-center justify-center">
           <p className="text-p2 text-tertiary-foreground">No positions</p>
         </div>
       ) : (

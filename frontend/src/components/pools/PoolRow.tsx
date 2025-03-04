@@ -92,7 +92,7 @@ export default function PoolRow({
 
       {/* APR */}
       <div
-        className="flex h-full flex-row items-center gap-2"
+        className="flex h-full flex-row items-center"
         style={columnStyleMap.aprPercent_24h}
       >
         <AprBreakdown pool={pool} />
