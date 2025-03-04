@@ -78,7 +78,7 @@ export default function PoolParametersCard() {
               {appData.bankMap[coinType] && (
                 <Tag
                   labelClassName={cn(
-                    "flex flex-row items-center gap-1.5 text-success decoration-success/50",
+                    "flex flex-row items-center gap-1.5 text-foreground decoration-foreground/50",
                     hoverUnderlineClassName,
                   )}
                   tooltip={`${formatPercent(appData.bankMap[coinType].utilizationPercent)} of deposited ${coinMetadata.symbol} is earning ${formatPercent(appData.bankMap[coinType].suilendDepositAprPercent)} APR on Suilend`}
