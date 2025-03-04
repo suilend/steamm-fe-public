@@ -3,8 +3,9 @@ import Link from "next/link";
 
 import { ChevronRight } from "lucide-react";
 
-import { formatPercent, formatUsd } from "@suilend/frontend-sui";
+import { formatUsd } from "@suilend/frontend-sui";
 
+import AprBreakdown from "@/components/AprBreakdown";
 import PoolActionsCard from "@/components/pool/PoolActionsCard";
 import PoolChartCard from "@/components/pool/PoolChartCard";
 import PoolParametersCard from "@/components/pool/PoolParametersCard";
@@ -152,13 +153,10 @@ function PoolPage() {
                   <p className="text-p2 text-secondary-foreground">APR</p>
 
                   <div className="flex flex-row items-center gap-1.5">
-                    {poolStats.aprPercent_24h[pool.id] === undefined ? (
-                      <Skeleton className="h-[24px] w-16" />
-                    ) : (
-                      <p className="text-p1 text-success">
-                        {formatPercent(poolStats.aprPercent_24h[pool.id])}
-                      </p>
-                    )}
+                    <AprBreakdown
+                      valueClassName="text-success decoration-success/50"
+                      pool={pool}
+                    />
 
                     {/* <PercentChange
                     value={new BigNumber(-5 + Math.random() * 10)}

@@ -10,7 +10,7 @@ export type ParsedBank = {
   totalAmount: BigNumber;
 
   utilizationPercent: BigNumber;
-  aprPercent: BigNumber;
+  suilendDepositAprPercent: BigNumber;
 };
 
 export enum PoolType {
@@ -37,7 +37,7 @@ export type ParsedPool = {
 
   tvlUsd: BigNumber;
   volumeUsd_24h?: BigNumber; // Used on Pools page
-  aprPercent_24h?: BigNumber; // Used on Pools and Portfolio pages
+  aprPercent_24h?: { total: BigNumber; [label: string]: BigNumber }; // Used on Pools and Portfolio pages
 
   feeTierPercent: BigNumber;
   protocolFeePercent: BigNumber;

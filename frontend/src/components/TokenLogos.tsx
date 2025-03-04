@@ -23,6 +23,7 @@ export default function TokenLogos({
     (coinType) => appData.coinMetadataMap[coinType],
   );
 
+  if (coinTypes.length === 0) return null;
   return (
     <div
       className={cn(

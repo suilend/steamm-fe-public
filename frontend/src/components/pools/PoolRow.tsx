@@ -1,7 +1,8 @@
 import Link from "next/link";
 
-import { formatPercent, formatUsd } from "@suilend/frontend-sui";
+import { formatUsd } from "@suilend/frontend-sui";
 
+import AprBreakdown from "@/components/AprBreakdown";
 import { columnStyleMap } from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
@@ -94,14 +95,8 @@ export default function PoolRow({
         className="flex h-full flex-row items-center gap-2"
         style={columnStyleMap.aprPercent_24h}
       >
-        {/* <TokenLogos coinTypes={pool.apr.coinTypes} size={16} /> */}
-        {pool.aprPercent_24h === undefined ? (
-          <Skeleton className="h-[24px] w-16" />
-        ) : (
-          <p className="text-p1 text-foreground">
-            {formatPercent(pool.aprPercent_24h)}
-          </p>
-        )}
+        <TokenLogos coinTypes={[]} size={16} />
+        <AprBreakdown pool={pool} />
       </div>
     </Link>
   );

@@ -46,7 +46,7 @@ export default function PoolGroupRow({
   )
     ? undefined
     : poolGroup.pools.reduce(
-        (acc, pool) => acc.plus(pool.volumeUsd_24h!),
+        (acc, pool) => acc.plus(pool.volumeUsd_24h as BigNumber),
         new BigNumber(0),
       );
 
@@ -54,7 +54,9 @@ export default function PoolGroupRow({
     (pool) => pool.aprPercent_24h === undefined,
   )
     ? undefined
-    : BigNumber.max(...poolGroup.pools.map((pool) => pool.aprPercent_24h!));
+    : BigNumber.max(
+        ...poolGroup.pools.map((pool) => pool.aprPercent_24h!.total),
+      );
 
   return (
     <>
@@ -74,12 +76,10 @@ export default function PoolGroupRow({
           <div className="-mr-3 flex h-full w-16 shrink-0 flex-col">
             <div className="w-full flex-1" />
             <Tag
-              className="w-max"
+              className={cn("w-max", isExpanded && "bg-border")}
               labelClassName={cn(
-                "flex flex-row transition-colors items-center gap-1",
-                isExpanded
-                  ? "text-foreground"
-                  : "text-secondary-foreground group-hover:text-foreground",
+                "flex flex-row items-center gap-1",
+                isExpanded && "text-foreground",
               )}
             >
               <Chevron

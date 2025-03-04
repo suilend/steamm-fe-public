@@ -1,10 +1,9 @@
-import { formatPercent, formatUsd } from "@suilend/frontend-sui";
+import { formatUsd } from "@suilend/frontend-sui";
 
+import AprBreakdown from "@/components/AprBreakdown";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { useStatsContext } from "@/contexts/StatsContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { ParsedPool, poolTypeNameMap } from "@/lib/types";
 
@@ -14,7 +13,6 @@ interface PoolCardProps {
 
 export default function PoolCard({ pool }: PoolCardProps) {
   const { appData } = useLoadedAppContext();
-  const { poolStats } = useStatsContext();
 
   return (
     <div className="group flex w-full flex-col gap-3 rounded-md border p-4 transition-colors hover:bg-border/50">
@@ -43,13 +41,11 @@ export default function PoolCard({ pool }: PoolCardProps) {
 
         <div className="flex flex-row items-center gap-2">
           <p className="text-p2 text-secondary-foreground">APR</p>
-          {poolStats.aprPercent_24h[pool.id] === undefined ? (
-            <Skeleton className="h-[21px] w-12" />
-          ) : (
-            <p className="text-p2 text-foreground">
-              {formatPercent(poolStats.aprPercent_24h[pool.id])}
-            </p>
-          )}
+          <AprBreakdown
+            skeletonClassName="h-[21px] w-12"
+            valueClassName="!text-p2"
+            pool={pool}
+          />
         </div>
       </div>
     </div>

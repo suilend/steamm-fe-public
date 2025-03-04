@@ -142,7 +142,7 @@ export default function Tooltip({
           onClick={(e) => e.stopPropagation()}
           {...restContentProps}
         >
-          {content || <p className="text-p3 text-foreground">{title}</p>}
+          {content || <p className="text-p2 text-foreground">{title}</p>}
         </TooltipContent>
       </TooltipPortal>
     </CustomTooltipRoot>

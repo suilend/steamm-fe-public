@@ -1,5 +1,6 @@
 import { CSSProperties, useMemo } from "react";
 
+import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { useLocalStorage } from "usehooks-ts";
 
@@ -91,12 +92,12 @@ export default function PoolPositionsTable({
     return positions.slice().sort((a, b) => {
       if (sortState.column === "aprPercent_24h") {
         return sortState.direction === SortDirection.DESC
-          ? +b.pool.aprPercent_24h!.minus(a.pool.aprPercent_24h!)
-          : +a.pool.aprPercent_24h!.minus(b.pool.aprPercent_24h!);
+          ? +b.pool.aprPercent_24h!.total.minus(a.pool.aprPercent_24h!.total)
+          : +a.pool.aprPercent_24h!.total.minus(b.pool.aprPercent_24h!.total);
       } else if (sortState.column === "balanceUsd") {
         return sortState.direction === SortDirection.DESC
-          ? +b.balanceUsd!.minus(a.balanceUsd!)
-          : +a.balanceUsd!.minus(b.balanceUsd!);
+          ? +(b.balanceUsd as BigNumber).minus(a.balanceUsd as BigNumber)
+          : +(a.balanceUsd as BigNumber).minus(b.balanceUsd as BigNumber);
       }
 
       return 0; // Should never reach here

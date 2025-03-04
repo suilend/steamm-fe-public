@@ -70,7 +70,7 @@ export default function Nav() {
             style={{ height: `${NAV_HEIGHT}px` }}
           >
             {/* Start */}
-            <div className="flex shrink-0 flex-row items-center gap-8">
+            <div className="flex shrink-0 flex-row items-center gap-4 md:gap-8">
               {/* Logo */}
               <Link className="w-max" href={ROOT_URL}>
                 <Logo />

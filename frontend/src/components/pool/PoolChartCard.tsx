@@ -90,7 +90,7 @@ export default function PoolChartCard() {
         value:
           poolStats.aprPercent_24h[pool.id] === undefined
             ? undefined
-            : formatPercent(poolStats.aprPercent_24h[pool.id]),
+            : formatPercent(poolStats.aprPercent_24h[pool.id].total),
         chartType: ChartType.LINE,
         periodChangePercent: null,
         data: poolHistoricalStats.aprPercent_24h[pool.id],

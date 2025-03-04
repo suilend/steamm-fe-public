@@ -201,7 +201,9 @@ export default function PortfolioPage() {
             .reduce(
               (acc, position) =>
                 acc.plus(
-                  position.balanceUsd.times(position.pool.aprPercent_24h!),
+                  position.balanceUsd.times(
+                    position.pool.aprPercent_24h!.total,
+                  ),
                 ),
               new BigNumber(0),
             )

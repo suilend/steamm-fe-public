@@ -29,7 +29,14 @@ interface StatsContext {
   poolStats: {
     volumeUsd_24h: Record<string, BigNumber>;
     feesUsd_24h: Record<string, BigNumber>;
-    aprPercent_24h: Record<string, BigNumber>;
+    aprPercent_24h: Record<
+      string,
+      {
+        feesAprPercent: BigNumber;
+        suilendWeightedAverageDepositAprPercent?: BigNumber;
+        total: BigNumber;
+      }
+    >;
   };
 
   totalHistoricalStats: {
@@ -240,7 +247,14 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   const poolStats: {
     volumeUsd_24h: Record<string, BigNumber>;
     feesUsd_24h: Record<string, BigNumber>;
-    aprPercent_24h: Record<string, BigNumber>;
+    aprPercent_24h: Record<
+      string,
+      {
+        feesAprPercent: BigNumber;
+        suilendWeightedAverageDepositAprPercent?: BigNumber;
+        total: BigNumber;
+      }
+    >;
   } = useMemo(
     () => ({
       volumeUsd_24h: Object.entries(poolHistoricalStats.volumeUsd_24h).reduce(
@@ -269,21 +283,59 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
               const pool = appData.pools.find((_pool) => _pool.id === poolId);
               if (!pool) return acc; // `pool` should always be defined
 
-              return {
-                ...acc,
-                [poolId]: !pool.tvlUsd.eq(0)
+              const feesAprPercent = (
+                !pool.tvlUsd.eq(0)
                   ? data
                       .reduce(
                         (acc2, d) => acc2.plus(d.feesUsd_24h),
                         new BigNumber(0),
                       )
                       .div(pool.tvlUsd)
-                      .times(365)
-                      .times(100)
-                  : new BigNumber(0),
+                  : new BigNumber(0)
+              )
+                .times(365)
+                .times(100);
+              const suilendWeightedAverageDepositAprPercent =
+                pool.coinTypes.every(
+                  (coinType) => !appData.bankMap[coinType],
+                ) || pool.tvlUsd.eq(0)
+                  ? undefined
+                  : pool.coinTypes
+                      .reduce((acc, coinType, index) => {
+                        const bank = appData.bankMap[coinType];
+                        if (!bank) return acc;
+
+                        return acc.plus(
+                          new BigNumber(
+                            bank.suilendDepositAprPercent
+                              .times(bank.utilizationPercent)
+                              .div(100),
+                          ).times(
+                            pool.prices[index].times(pool.balances[index]),
+                          ),
+                        );
+                      }, new BigNumber(0))
+                      .div(pool.tvlUsd);
+
+              return {
+                ...acc,
+                [poolId]: {
+                  feesAprPercent,
+                  suilendWeightedAverageDepositAprPercent,
+                  total: feesAprPercent.plus(
+                    suilendWeightedAverageDepositAprPercent ?? 0,
+                  ),
+                },
               };
             },
-            {} as Record<string, BigNumber>,
+            {} as Record<
+              string,
+              {
+                feesAprPercent: BigNumber;
+                suilendWeightedAverageDepositAprPercent?: BigNumber;
+                total: BigNumber;
+              }
+            >,
           )
         : {},
     }),

@@ -94,7 +94,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           const utilizationPercent = depositedAmount
             .div(totalAmount)
             .times(100);
-          const aprPercent =
+          const suilendDepositAprPercent =
             reserveDepositAprPercentMap[coinType] ?? new BigNumber(0);
 
           return {
@@ -107,7 +107,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             totalAmount,
 
             utilizationPercent,
-            aprPercent,
+            suilendDepositAprPercent,
           };
         })(),
       ),

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { MouseEvent } from "react";
 
-import { formatPercent, formatUsd } from "@suilend/frontend-sui";
+import { formatUsd } from "@suilend/frontend-sui";
 
+import AprBreakdown from "@/components/AprBreakdown";
 import { columnStyleMap } from "@/components/positions/PoolPositionsTable";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
@@ -74,14 +75,11 @@ export default function PoolPositionRow({
         className="flex h-full flex-row items-center gap-2"
         style={columnStyleMap.aprPercent_24h}
       >
-        {/* <TokenLogos coinTypes={position.pool.apr.coinTypes} size={16} /> */}
-        {position.pool.aprPercent_24h === undefined ? (
-          <Skeleton className="h-[24px] w-16" />
-        ) : (
-          <p className="text-p1 text-success">
-            {formatPercent(position.pool.aprPercent_24h)}
-          </p>
-        )}
+        <TokenLogos coinTypes={[]} size={16} />
+        <AprBreakdown
+          valueClassName="text-success decoration-success/50"
+          pool={position.pool}
+        />
       </div>
 
       {/* Balance */}

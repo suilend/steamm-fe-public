@@ -60,7 +60,7 @@ function TooltipContent({
       style={getTooltipStyle(160, viewBox, x)}
     >
       <div className="flex flex-col gap-1">
-        <p className="text-p3 text-secondary-foreground">
+        <p className="text-p2 text-secondary-foreground">
           {format(
             new Date(d.timestampS * 1000),
             periodDays === 1 ? "h:mm a" : "d MMM h:mm a",
@@ -83,14 +83,14 @@ function TooltipContent({
                   {formattedCategory === undefined ? (
                     <Skeleton className="h-[18px] w-10" />
                   ) : (
-                    <p className="text-p3 text-secondary-foreground">
+                    <p className="text-p2 text-secondary-foreground">
                       {formattedCategory}
                     </p>
                   )}
                 </>
               )}
 
-              <p className="text-p3 text-foreground">
+              <p className="text-p2 text-foreground">
                 {formatValue(d[category])}
               </p>
             </div>

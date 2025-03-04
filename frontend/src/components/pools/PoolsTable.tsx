@@ -98,11 +98,11 @@ export default function PoolsTable({
       .sort((a, b) => {
         if (["tvlUsd", "volumeUsd_24h"].includes(sortState.column)) {
           const aTotal = a.pools.reduce(
-            (acc, pool) => acc.plus(pool[sortState.column]!),
+            (acc, pool) => acc.plus(pool[sortState.column] as BigNumber),
             new BigNumber(0),
           );
           const bTotal = b.pools.reduce(
-            (acc, pool) => acc.plus(pool[sortState.column]!),
+            (acc, pool) => acc.plus(pool[sortState.column] as BigNumber),
             new BigNumber(0),
           );
 
@@ -111,10 +111,10 @@ export default function PoolsTable({
             : +aTotal.minus(bTotal);
         } else if (sortState.column === "aprPercent_24h") {
           const aMaxAprPercent_24h = BigNumber.max(
-            ...a.pools.map((pool) => pool.aprPercent_24h!),
+            ...a.pools.map((pool) => pool.aprPercent_24h!.total),
           );
           const bMaxAprPercent_24h = BigNumber.max(
-            ...b.pools.map((pool) => pool.aprPercent_24h!),
+            ...b.pools.map((pool) => pool.aprPercent_24h!.total),
           );
 
           return sortState.direction === SortDirection.DESC

@@ -75,7 +75,7 @@ export default function PoolParametersCard() {
 
               {appData.bankMap[coinType] && (
                 <Tooltip
-                  title={`${formatPercent(appData.bankMap[coinType].utilizationPercent)} of deposited ${coinMetadata.symbol} is earning ${formatPercent(appData.bankMap[coinType].aprPercent)} APR on Suilend`}
+                  title={`${formatPercent(appData.bankMap[coinType].utilizationPercent)} of deposited ${coinMetadata.symbol} is earning ${formatPercent(appData.bankMap[coinType].suilendDepositAprPercent)} APR on Suilend`}
                 >
                   <p
                     className={cn(
@@ -84,7 +84,7 @@ export default function PoolParametersCard() {
                     )}
                   >
                     {formatPercent(
-                      appData.bankMap[coinType].aprPercent
+                      appData.bankMap[coinType].suilendDepositAprPercent
                         .times(appData.bankMap[coinType].utilizationPercent)
                         .div(100),
                     )}{" "}
