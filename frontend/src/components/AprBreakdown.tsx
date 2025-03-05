@@ -114,7 +114,7 @@ export default function AprBreakdown({
                                 exact: false,
                               })}
                           <span className="text-p2 text-secondary-foreground">
-                            Per $1 per day
+                            Per $ per day
                           </span>
                         </>
                       }
