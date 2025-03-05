@@ -33,6 +33,10 @@ import {
   useWalletContext,
 } from "@suilend/frontend-sui-next";
 import {
+  createObligationIfNoneExists,
+  sendObligationToUser,
+} from "@suilend/sdk";
+import {
   DepositQuote,
   RedeemQuote,
   SteammSDK,
@@ -82,7 +86,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
-  const { getBalance, refresh } = useLoadedUserContext();
+  const { getBalance, userData, refresh } = useLoadedUserContext();
   const { pool } = usePoolContext();
 
   // Value
@@ -369,6 +373,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
       const transaction = new Transaction();
 
+      // Deposit into pool
       const coinA = coinWithBalance({
         balance: BigInt(submitAmountA),
         type: coinTypeA,
@@ -380,7 +385,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
         useGasCoin: isSui(coinTypeB),
       })(transaction);
 
-      await steammClient.Pool.depositLiquidityEntry(transaction, {
+      const [lpCoin] = await steammClient.Pool.depositLiquidity(transaction, {
         pool: pool.id,
         coinTypeA,
         coinTypeB,
@@ -391,6 +396,26 @@ function DepositTab({ formatValue }: DepositTabProps) {
       });
 
       transaction.transferObjects([coinA, coinB], address);
+
+      // Stake LP tokens (if reserve exists)
+      if (appData.lm.reserveMap[pool.lpTokenType]) {
+        const { obligationOwnerCapId, didCreate } =
+          createObligationIfNoneExists(
+            appData.lm.suilendClient,
+            transaction,
+            userData.obligationOwnerCaps?.[0], // Use the first (and assumed to be the only) obligation owner cap
+          );
+        appData.lm.suilendClient.deposit(
+          lpCoin,
+          pool.lpTokenType,
+          obligationOwnerCapId,
+          transaction,
+        );
+        if (didCreate)
+          sendObligationToUser(obligationOwnerCapId, address, transaction);
+      } else {
+        transaction.transferObjects([lpCoin], address);
+      }
 
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
