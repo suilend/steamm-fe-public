@@ -71,7 +71,7 @@ export default function useFetchUserData() {
                 reserve.depositsPoolRewardManager.totalShares.toString(),
               ),
             ),
-          );
+          ); // Will be NaN if totalShares is 0
 
           // Divide by pool TVL
           if (pool.tvlUsd.gt(0))

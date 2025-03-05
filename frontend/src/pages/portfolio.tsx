@@ -4,7 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 
-import { formatPercent, formatUsd } from "@suilend/frontend-sui";
+import {
+  formatPercent,
+  formatToken,
+  formatUsd,
+  getToken,
+} from "@suilend/frontend-sui";
 import { showErrorToast } from "@suilend/frontend-sui-next";
 import {
   Side,
@@ -15,6 +20,7 @@ import {
 import Divider from "@/components/Divider";
 import PoolPositionsTable from "@/components/positions/PoolPositionsTable";
 import Tag from "@/components/Tag";
+import TokenLogo from "@/components/TokenLogo";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,30 +35,16 @@ export default function PortfolioPage() {
   const { getBalance, userData } = useLoadedUserContext();
   const { poolStats } = useStatsContext();
 
-  // Pool LP token balances
-  const poolLpTokenBalanceMap = useMemo(
-    () =>
-      appData.pools.reduce(
-        (acc, pool) => ({ ...acc, [pool.id]: getBalance(pool.lpTokenType) }),
-        {} as Record<string, BigNumber>,
-      ),
-    [appData.pools, getBalance],
-  );
-
   // Positions
   const positions: PoolPosition[] | undefined = useMemo(
     () =>
       appData.pools
         .map((pool) => {
-          const balance = poolLpTokenBalanceMap[pool.id] ?? new BigNumber(0);
-          const depositedAmount = userData.obligations.reduce(
-            (acc, o) =>
-              acc.plus(
-                o.deposits.find((d) => d.coinType === pool.lpTokenType)
-                  ?.depositedAmount ?? 0,
-              ),
-            new BigNumber(0),
-          ); // Handles multiple obligations (there should be only one)
+          const balance = getBalance(pool.lpTokenType);
+          const depositedAmount =
+            userData.obligations[0]?.deposits.find(
+              (d) => d.coinType === pool.lpTokenType,
+            )?.depositedAmount ?? new BigNumber(0); // Assumes only one obligation
           const totalAmount = balance.plus(depositedAmount);
 
           // Same code as in frontend/src/components/AprBreakdown.tsx
@@ -102,13 +94,42 @@ export default function PortfolioPage() {
             },
             balanceUsd: undefined, // Fetched below
             stakedPercent: depositedAmount.div(totalAmount).times(100),
-            claimableRewards: {}, // TODO
+            claimableRewards:
+              userData.obligations.length > 0
+                ? (
+                    userData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []
+                  ).reduce(
+                    (acc, reward) => {
+                      const obligation = userData.obligations[0]; // Assumes only one obligation
+
+                      const minAmount = 10 ** (-1 * reward.stats.mintDecimals);
+                      if (
+                        !reward.obligationClaims[obligation.id] ||
+                        reward.obligationClaims[
+                          obligation.id
+                        ].claimableAmount.lt(minAmount) // This also covers the 0 case
+                      )
+                        return acc;
+
+                      return {
+                        ...acc,
+                        [reward.stats.rewardCoinType]: new BigNumber(
+                          acc[reward.stats.rewardCoinType] ?? 0,
+                        ).plus(
+                          reward.obligationClaims[obligation.id]
+                            .claimableAmount,
+                        ),
+                      };
+                    },
+                    {} as Record<string, BigNumber>,
+                  )
+                : {},
           };
         })
         .filter(Boolean) as PoolPosition[],
     [
       appData.pools,
-      poolLpTokenBalanceMap,
+      getBalance,
       userData.obligations,
       userData.rewardMap,
       lstData,
@@ -130,17 +151,11 @@ export default function PortfolioPage() {
 
         const redeemQuotes = await Promise.all(
           positions.map((position) => {
-            const balance =
-              poolLpTokenBalanceMap[position.pool.id] ?? new BigNumber(0);
-            const depositedAmount = userData.obligations.reduce(
-              (acc, o) =>
-                acc.plus(
-                  o.deposits.find(
-                    (d) => d.coinType === position.pool.lpTokenType,
-                  )?.depositedAmount ?? 0,
-                ),
-              new BigNumber(0),
-            ); // Handles multiple obligations (there should be only one)
+            const balance = getBalance(position.pool.lpTokenType);
+            const depositedAmount =
+              userData.obligations[0]?.deposits.find(
+                (d) => d.coinType === position.pool.lpTokenType,
+              )?.depositedAmount ?? new BigNumber(0); // Assumes only one obligation
             const totalAmount = balance.plus(depositedAmount);
 
             return steammClient.Pool.quoteRedeem({
@@ -185,7 +200,7 @@ export default function PortfolioPage() {
     })();
   }, [
     positions,
-    poolLpTokenBalanceMap,
+    getBalance,
     userData.obligations,
     steammClient,
     appData.coinMetadataMap,
@@ -201,10 +216,6 @@ export default function PortfolioPage() {
           })),
     [positions, poolBalancesUsd],
   );
-
-  // Positions - depositedAmountUsd (backend)
-
-  // Positions - PnL (backend)
 
   // Summary
   // Summary - Net worth
@@ -263,8 +274,9 @@ export default function PortfolioPage() {
             (acc, position) => {
               Object.entries(position.claimableRewards).forEach(
                 ([coinType, amount]) => {
-                  if (acc[coinType]) acc[coinType] = acc[coinType].plus(amount);
-                  else acc[coinType] = amount;
+                  acc[coinType] = new BigNumber(acc[coinType] ?? 0).plus(
+                    amount,
+                  );
                 },
               );
 
@@ -338,10 +350,44 @@ export default function PortfolioPage() {
                   <>
                     {Object.keys(claimableRewards).length > 0 ? (
                       <div className="flex h-[30px] flex-row items-center gap-3">
-                        <TokenLogos
-                          coinTypes={Object.keys(claimableRewards)}
-                          size={16}
-                        />
+                        <Tooltip
+                          content={
+                            <div className="flex flex-col gap-1">
+                              {Object.entries(claimableRewards).map(
+                                ([coinType, amount]) => {
+                                  const coinMetadata =
+                                    appData.coinMetadataMap[coinType];
+
+                                  return (
+                                    <div
+                                      key={coinType}
+                                      className="flex flex-row items-center gap-2"
+                                    >
+                                      <TokenLogo
+                                        token={getToken(coinType, coinMetadata)}
+                                        size={16}
+                                      />
+                                      <p className="text-p2 text-foreground">
+                                        {formatToken(amount, {
+                                          dp: coinMetadata.decimals,
+                                        })}{" "}
+                                        {coinMetadata.symbol}
+                                      </p>
+                                    </div>
+                                  );
+                                },
+                              )}
+                            </div>
+                          }
+                        >
+                          <div className="w-max">
+                            <TokenLogos
+                              coinTypes={Object.keys(claimableRewards)}
+                              size={20}
+                            />
+                          </div>
+                        </Tooltip>
+
                         <button
                           className="flex h-6 flex-row items-center rounded-md bg-button-1 px-2 transition-colors hover:bg-button-1/80"
                           onClick={onClaimRewardsClick}

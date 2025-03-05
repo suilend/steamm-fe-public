@@ -6,7 +6,13 @@ import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 import { Loader2 } from "lucide-react";
 
-import { MAX_U64, formatPercent, formatUsd } from "@suilend/frontend-sui";
+import {
+  MAX_U64,
+  formatPercent,
+  formatToken,
+  formatUsd,
+  getToken,
+} from "@suilend/frontend-sui";
 import {
   showErrorToast,
   useSettingsContext,
@@ -20,6 +26,7 @@ import {
 import AprBreakdown from "@/components/AprBreakdown";
 import { columnStyleMap } from "@/components/positions/PoolPositionsTable";
 import Tag from "@/components/Tag";
+import TokenLogo from "@/components/TokenLogo";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -96,7 +103,7 @@ export default function PoolPositionRow({
       setStakedPercentOverride(new BigNumber(100)); // Override to prevent double-counting while refreshing
       setTimeout(() => {
         setStakedPercentOverride(undefined);
-      }, 3000);
+      }, 5000);
     } catch (err) {
       showErrorToast(
         "Failed to stake LP tokens",
@@ -154,7 +161,7 @@ export default function PoolPositionRow({
       setStakedPercentOverride(new BigNumber(0)); // Override to prevent double-counting while refreshing
       setTimeout(() => {
         setStakedPercentOverride(undefined);
-      }, 3000);
+      }, 5000);
     } catch (err) {
       showErrorToast(
         "Failed to unstake LP tokens",
@@ -173,16 +180,11 @@ export default function PoolPositionRow({
     }
   };
 
-  // Claim
-  const onClaimRewardsClick = (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-  };
-
   return (
     <Link
       className={cn(
-        "group relative z-[1] flex h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row transition-colors hover:bg-tertiary",
-        !isLast && "h-[calc(56px+1px)] border-b",
+        "group relative z-[1] flex min-h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row items-center py-[16px] transition-colors hover:bg-tertiary",
+        !isLast && "min-h-[calc(56px+1px)] border-b",
       )}
       href={`${POOL_URL_PREFIX}/${position.pool.id}`}
     >
@@ -282,6 +284,44 @@ export default function PoolPositionRow({
               )}
             </div>
           </>
+        ) : (
+          <p className="text-p1 text-foreground">--</p>
+        )}
+      </div>
+
+      {/* Claimable rewards */}
+      <div
+        className="flex h-full flex-row items-center"
+        style={columnStyleMap.claimableRewards}
+      >
+        {Object.keys(position.claimableRewards).length > 0 ? (
+          <div className="flex flex-col items-end gap-1">
+            {Object.entries(position.claimableRewards).map(
+              ([coinType, amount]) => {
+                const coinMetadata = appData.coinMetadataMap[coinType];
+
+                return (
+                  <div
+                    key={coinType}
+                    className="flex flex-row items-center gap-2"
+                  >
+                    <TokenLogo
+                      token={getToken(coinType, coinMetadata)}
+                      size={16}
+                    />
+                    <Tooltip
+                      title={`${formatToken(amount, { dp: coinMetadata.decimals })} ${coinMetadata.symbol}`}
+                    >
+                      <p className="text-p2 text-foreground">
+                        {formatToken(amount, { exact: false })}{" "}
+                        {coinMetadata.symbol}
+                      </p>
+                    </Tooltip>
+                  </div>
+                );
+              },
+            )}
+          </div>
         ) : (
           <p className="text-p1 text-foreground">--</p>
         )}
