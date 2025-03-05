@@ -86,44 +86,53 @@ export default function PoolsTable({
           : +a[sortState.column]! - +b[sortState.column]!,
       );
 
-    return poolGroups
-      .map((poolGroup) => ({
-        ...poolGroup,
-        pools: sortedPools.filter(
-          (pool) =>
-            pool.coinTypes[0] === poolGroup.coinTypes[0] &&
-            pool.coinTypes[1] === poolGroup.coinTypes[1],
-        ),
-      }))
-      .sort((a, b) => {
-        if (["tvlUsd", "volumeUsd_24h"].includes(sortState.column)) {
-          const aTotal = a.pools.reduce(
-            (acc, pool) => acc.plus(pool[sortState.column] as BigNumber),
-            new BigNumber(0),
-          );
-          const bTotal = b.pools.reduce(
-            (acc, pool) => acc.plus(pool[sortState.column] as BigNumber),
-            new BigNumber(0),
-          );
+    const sortedPoolGroups = poolGroups.map((poolGroup) => ({
+      ...poolGroup,
+      pools: sortedPools.filter(
+        (pool) =>
+          pool.coinTypes[0] === poolGroup.coinTypes[0] &&
+          pool.coinTypes[1] === poolGroup.coinTypes[1],
+      ),
+    }));
+    if (
+      !sortedPoolGroups.every(
+        (poolGroup) =>
+          !!poolGroup.pools.every(
+            (pool) => pool[sortState.column] !== undefined,
+          ),
+      )
+    )
+      return sortedPoolGroups;
 
-          return sortState.direction === SortDirection.DESC
-            ? +bTotal.minus(aTotal)
-            : +aTotal.minus(bTotal);
-        } else if (sortState.column === "aprPercent_24h") {
-          const aMaxAprPercent_24h = BigNumber.max(
-            ...a.pools.map((pool) => pool.aprPercent_24h!.total),
-          );
-          const bMaxAprPercent_24h = BigNumber.max(
-            ...b.pools.map((pool) => pool.aprPercent_24h!.total),
-          );
+    return sortedPoolGroups.slice().sort((a, b) => {
+      if (["tvlUsd", "volumeUsd_24h"].includes(sortState.column)) {
+        const aTotal = a.pools.reduce(
+          (acc, pool) => acc.plus(pool[sortState.column] as BigNumber),
+          new BigNumber(0),
+        );
+        const bTotal = b.pools.reduce(
+          (acc, pool) => acc.plus(pool[sortState.column] as BigNumber),
+          new BigNumber(0),
+        );
 
-          return sortState.direction === SortDirection.DESC
-            ? +bMaxAprPercent_24h.minus(aMaxAprPercent_24h)
-            : +aMaxAprPercent_24h.minus(bMaxAprPercent_24h);
-        }
+        return sortState.direction === SortDirection.DESC
+          ? +bTotal.minus(aTotal)
+          : +aTotal.minus(bTotal);
+      } else if (sortState.column === "aprPercent_24h") {
+        const aMaxAprPercent_24h = BigNumber.max(
+          ...a.pools.map((pool) => pool.aprPercent_24h as BigNumber),
+        );
+        const bMaxAprPercent_24h = BigNumber.max(
+          ...b.pools.map((pool) => pool.aprPercent_24h as BigNumber),
+        );
 
-        return 0; // Should never reach here
-      });
+        return sortState.direction === SortDirection.DESC
+          ? +bMaxAprPercent_24h.minus(aMaxAprPercent_24h)
+          : +aMaxAprPercent_24h.minus(bMaxAprPercent_24h);
+      }
+
+      return 0; // Should never reach here
+    });
   }, [poolGroups, sortState]);
 
   return (

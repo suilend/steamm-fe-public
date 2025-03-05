@@ -13,23 +13,30 @@ export default function AprBreakdownRow({
   children,
 }: AprBreakdownRowProps) {
   return (
-    <div className="relative flex flex-row items-stretch gap-2">
-      <div className="relative -my-1 w-4">
-        {!isLast && <div className="h-full w-px bg-tertiary-foreground" />}
-        <div className="absolute left-0 top-0 h-1/2 w-full rounded-bl-md border-b border-l border-tertiary-foreground" />
-      </div>
+    <div className="flex flex-row items-start justify-between gap-4">
+      <div className="flex flex-row items-stretch gap-2">
+        <div className="relative -my-1 w-4">
+          {!isLast && <div className="h-full w-px bg-tertiary-foreground" />}
+          <div className="absolute left-0 top-0 h-1/2 w-full rounded-bl-md border-b border-l border-tertiary-foreground" />
+        </div>
 
-      <div className="flex flex-1 flex-row items-start justify-between gap-4">
         <div className="flex shrink-0 flex-row items-baseline gap-1.5">
-          <p className="text-p2 text-secondary-foreground">{children}</p>
+          <p className="flex flex-row items-center gap-2 text-p2 text-secondary-foreground">
+            {children}
+          </p>
           {labelEndDecorator && (
             <p className="text-p3 text-tertiary-foreground">
               {labelEndDecorator}
             </p>
           )}
         </div>
-        {value && <p className="text-right text-p2 text-foreground">{value}</p>}
       </div>
+
+      {value && (
+        <p className="flex flex-col items-end text-right text-p2 text-foreground">
+          {value}
+        </p>
+      )}
     </div>
   );
 }

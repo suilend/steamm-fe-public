@@ -25,6 +25,7 @@ import { ParsedBank, ParsedPool, PoolType } from "@/lib/types";
 export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
 
+  // Data
   const dataFetcher = async () => {
     // Suilend
     // Suilend - Main market
@@ -177,6 +178,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
             const bTokenTypeA = poolInfo.coinTypeA;
             const bTokenTypeB = poolInfo.coinTypeB;
+            const bTokenTypes = [bTokenTypeA, bTokenTypeB];
             if (
               bTokenTypeA.startsWith("0x10e03a93cf1e3d") ||
               bTokenTypeB.startsWith("0x10e03a93cf1e3d")
@@ -185,6 +187,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
             const coinTypeA = bTokenTypeCoinTypeMap[bTokenTypeA];
             const coinTypeB = bTokenTypeCoinTypeMap[bTokenTypeB];
+            const coinTypes = [coinTypeA, coinTypeB];
 
             const pool = await steammClient.fullClient.fetchPool(id);
 
@@ -194,6 +197,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             const balanceB = new BigNumber(pool.balanceB.value.toString()).div(
               10 ** coinMetadataMap[coinTypeB].decimals,
             );
+            const balances = [balanceA, balanceB];
 
             let priceA, priceB;
             if (isSui(coinTypeB)) {
@@ -217,6 +221,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               );
               return undefined;
             }
+            const prices = [priceA, priceB];
 
             const tvlUsd = balanceA.times(priceA).plus(balanceB.times(priceB));
 
@@ -228,22 +233,40 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               .times(feeTierPercent.div(100))
               .times(100);
 
-            // const rewards = lmMarket_reserveMap[coinTypeA]
+            const suilendWeightedAverageDepositAprPercent =
+              coinTypes.every((coinType) => !bankMap[coinType]) || tvlUsd.eq(0)
+                ? new BigNumber(0)
+                : coinTypes
+                    .reduce((acc, coinType, index) => {
+                      const bank = bankMap[coinType];
+                      if (!bank) return acc;
+
+                      return acc.plus(
+                        new BigNumber(
+                          bank.suilendDepositAprPercent
+                            .times(bank.utilizationPercent)
+                            .div(100),
+                        ).times(prices[index].times(balances[index])),
+                      );
+                    }, new BigNumber(0))
+                    .div(tvlUsd);
 
             return {
               id,
               type,
 
               lpTokenType: poolInfo.lpTokenType,
-              bTokenTypes: [bTokenTypeA, bTokenTypeB],
-              coinTypes: [coinTypeA, coinTypeB],
-              balances: [balanceA, balanceB],
-              prices: [priceA, priceB],
+              bTokenTypes,
+              coinTypes,
+              balances,
+              prices,
 
               tvlUsd,
 
               feeTierPercent,
               protocolFeePercent,
+
+              suilendWeightedAverageDepositAprPercent,
             };
           })(),
         ),

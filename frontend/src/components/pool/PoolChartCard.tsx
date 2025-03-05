@@ -3,7 +3,7 @@ import { useMemo } from "react";
 
 import BigNumber from "bignumber.js";
 
-import { formatPercent, formatUsd } from "@suilend/frontend-sui";
+import { formatUsd } from "@suilend/frontend-sui";
 import { shallowPushQuery } from "@suilend/frontend-sui-next";
 
 import HistoricalDataChart from "@/components/HistoricalDataChart";
@@ -16,14 +16,12 @@ enum ChartStat {
   TVL = "tvl",
   VOLUME = "volume",
   FEES = "fees",
-  APR = "apr",
 }
 
 const chartStatNameMap: Record<ChartStat, string> = {
   [ChartStat.TVL]: "TVL",
   [ChartStat.VOLUME]: "Volume",
   [ChartStat.FEES]: "Fees",
-  [ChartStat.APR]: "APR",
 };
 
 type ChartConfig = {
@@ -85,17 +83,6 @@ export default function PoolChartCard() {
         data: poolHistoricalStats.feesUsd_24h[pool.id],
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
-      [ChartStat.APR]: {
-        title: chartStatNameMap[ChartStat.APR],
-        value:
-          poolStats.aprPercent_24h[pool.id] === undefined
-            ? undefined
-            : formatPercent(poolStats.aprPercent_24h[pool.id].total),
-        chartType: ChartType.LINE,
-        periodChangePercent: null,
-        data: poolHistoricalStats.aprPercent_24h[pool.id],
-        formatValue: (value) => formatPercent(new BigNumber(value)),
-      },
     }),
     [
       pool.tvlUsd,
@@ -105,8 +92,6 @@ export default function PoolChartCard() {
       poolHistoricalStats.volumeUsd_24h,
       poolStats.feesUsd_24h,
       poolHistoricalStats.feesUsd_24h,
-      poolStats.aprPercent_24h,
-      poolHistoricalStats.aprPercent_24h,
     ],
   );
 
@@ -143,31 +128,29 @@ export default function PoolChartCard() {
       />
 
       <div className="absolute right-5 top-5 z-[2] flex flex-row gap-1">
-        {Object.values(ChartStat)
-          .filter((chartStat) => chartStat !== ChartStat.APR) // TODO
-          .map((chartStat) => (
-            <button
-              key={chartStat}
+        {Object.values(ChartStat).map((chartStat) => (
+          <button
+            key={chartStat}
+            className={cn(
+              "group flex h-6 flex-row items-center rounded-md border px-2 transition-colors",
+              selectedChartStat === chartStat
+                ? "cursor-default bg-border"
+                : "hover:bg-border/50",
+            )}
+            onClick={() => onSelectedChartStatChange(chartStat)}
+          >
+            <p
               className={cn(
-                "group flex h-6 flex-row items-center rounded-md border px-2 transition-colors",
+                "!text-p3 transition-colors",
                 selectedChartStat === chartStat
-                  ? "cursor-default bg-border"
-                  : "hover:bg-border/50",
+                  ? "text-foreground"
+                  : "text-secondary-foreground group-hover:text-foreground",
               )}
-              onClick={() => onSelectedChartStatChange(chartStat)}
             >
-              <p
-                className={cn(
-                  "!text-p3 transition-colors",
-                  selectedChartStat === chartStat
-                    ? "text-foreground"
-                    : "text-secondary-foreground group-hover:text-foreground",
-                )}
-              >
-                {chartStatNameMap[chartStat]}
-              </p>
-            </button>
-          ))}
+              {chartStatNameMap[chartStat]}
+            </p>
+          </button>
+        ))}
       </div>
     </div>
   );

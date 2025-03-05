@@ -55,7 +55,7 @@ export default function PoolGroupRow({
   )
     ? undefined
     : BigNumber.max(
-        ...poolGroup.pools.map((pool) => pool.aprPercent_24h!.total),
+        ...poolGroup.pools.map((pool) => pool.aprPercent_24h as BigNumber),
       );
 
   return (

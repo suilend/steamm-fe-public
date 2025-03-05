@@ -5,6 +5,11 @@ import BigNumber from "bignumber.js";
 import { v4 as uuidv4 } from "uuid";
 
 import { formatUsd } from "@suilend/frontend-sui";
+import {
+  Side,
+  getFilteredRewards,
+  getStakingYieldAprPercent,
+} from "@suilend/sdk";
 
 import Divider from "@/components/Divider";
 import HistoricalDataChart from "@/components/HistoricalDataChart";
@@ -13,12 +18,15 @@ import Tag from "@/components/Tag";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
+import { useLoadedUserContext } from "@/contexts/UserContext";
 import { ChartType } from "@/lib/chart";
 import { formatPair } from "@/lib/format";
+import { getTotalAprPercent } from "@/lib/liquidityMining";
 import { ParsedPool, PoolGroup } from "@/lib/types";
 
 export default function PoolsPage() {
-  const { appData } = useLoadedAppContext();
+  const { appData, lstData } = useLoadedAppContext();
+  const { userData } = useLoadedUserContext();
   const { poolStats, totalHistoricalStats, totalStats } = useStatsContext();
 
   // TVL
@@ -49,16 +57,52 @@ export default function PoolsPage() {
         {
           id: uuidv4(),
           coinTypes: pools[0].coinTypes,
-          pools: pools.map((pool) => ({
-            ...pool,
-            volumeUsd_24h: poolStats.volumeUsd_24h[pool.id],
-            aprPercent_24h: poolStats.aprPercent_24h[pool.id],
-          })),
+          pools: pools.map((pool) => {
+            // Same code as in frontend/src/components/AprBreakdown.tsx
+            const rewards =
+              userData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
+            const filteredRewards = getFilteredRewards(rewards);
+
+            const stakingYieldAprPercent: BigNumber | undefined =
+              lstData !== undefined
+                ? appData.lm.reserveMap[pool.lpTokenType] !== undefined
+                  ? (getStakingYieldAprPercent(
+                      Side.DEPOSIT,
+                      appData.lm.reserveMap[pool.lpTokenType],
+                      lstData.aprPercentMap,
+                    ) ?? new BigNumber(0))
+                  : new BigNumber(0)
+                : undefined;
+
+            const totalAprPercent: BigNumber | undefined =
+              poolStats.aprPercent_24h[pool.id] !== undefined &&
+              stakingYieldAprPercent !== undefined
+                ? getTotalAprPercent(
+                    poolStats.aprPercent_24h[pool.id].feesAprPercent,
+                    pool.suilendWeightedAverageDepositAprPercent,
+                    filteredRewards,
+                    stakingYieldAprPercent,
+                  )
+                : undefined;
+
+            return {
+              ...pool,
+              volumeUsd_24h: poolStats.volumeUsd_24h[pool.id],
+              aprPercent_24h: totalAprPercent,
+            };
+          }),
         },
       ],
       [] as PoolGroup[],
     );
-  }, [appData.pools, poolStats.volumeUsd_24h, poolStats.aprPercent_24h]);
+  }, [
+    appData.pools,
+    userData.rewardMap,
+    lstData,
+    appData.lm.reserveMap,
+    poolStats.aprPercent_24h,
+    poolStats.volumeUsd_24h,
+  ]);
 
   // Featured pairs
   const featuredPoolGroups = useMemo(

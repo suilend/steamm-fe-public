@@ -24,19 +24,11 @@ interface StatsContext {
     tvlUsd_24h: Record<string, ChartData[]>;
     volumeUsd_24h: Record<string, ChartData[]>;
     feesUsd_24h: Record<string, ChartData[]>;
-    aprPercent_24h: Record<string, ChartData[]>; // TODO
   };
   poolStats: {
     volumeUsd_24h: Record<string, BigNumber>;
     feesUsd_24h: Record<string, BigNumber>;
-    aprPercent_24h: Record<
-      string,
-      {
-        feesAprPercent: BigNumber;
-        suilendWeightedAverageDepositAprPercent?: BigNumber;
-        total: BigNumber;
-      }
-    >;
+    aprPercent_24h: Record<string, { feesAprPercent: BigNumber }>;
   };
 
   totalHistoricalStats: {
@@ -53,7 +45,6 @@ const StatsContext = createContext<StatsContext>({
     tvlUsd_24h: {},
     volumeUsd_24h: {},
     feesUsd_24h: {},
-    aprPercent_24h: {},
   },
   poolStats: {
     volumeUsd_24h: {},
@@ -88,12 +79,10 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
     tvlUsd_24h: Record<string, ChartData[]>;
     volumeUsd_24h: Record<string, ChartData[]>;
     feesUsd_24h: Record<string, ChartData[]>;
-    aprPercent_24h: Record<string, ChartData[]>; // TODO
   }>({
     tvlUsd_24h: {},
     volumeUsd_24h: {},
     feesUsd_24h: {},
-    aprPercent_24h: {},
   });
 
   const fetchPoolHistoricalStats = useCallback(async () => {
@@ -248,14 +237,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   const poolStats: {
     volumeUsd_24h: Record<string, BigNumber>;
     feesUsd_24h: Record<string, BigNumber>;
-    aprPercent_24h: Record<
-      string,
-      {
-        feesAprPercent: BigNumber;
-        suilendWeightedAverageDepositAprPercent?: BigNumber;
-        total: BigNumber;
-      }
-    >;
+    aprPercent_24h: Record<string, { feesAprPercent: BigNumber }>;
   } = useMemo(
     () => ({
       volumeUsd_24h: Object.entries(poolHistoricalStats.volumeUsd_24h).reduce(
@@ -296,47 +278,10 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
               )
                 .times(365)
                 .times(100);
-              const suilendWeightedAverageDepositAprPercent =
-                pool.coinTypes.every(
-                  (coinType) => !appData.bankMap[coinType],
-                ) || pool.tvlUsd.eq(0)
-                  ? undefined
-                  : pool.coinTypes
-                      .reduce((acc, coinType, index) => {
-                        const bank = appData.bankMap[coinType];
-                        if (!bank) return acc;
 
-                        return acc.plus(
-                          new BigNumber(
-                            bank.suilendDepositAprPercent
-                              .times(bank.utilizationPercent)
-                              .div(100),
-                          ).times(
-                            pool.prices[index].times(pool.balances[index]),
-                          ),
-                        );
-                      }, new BigNumber(0))
-                      .div(pool.tvlUsd);
-
-              return {
-                ...acc,
-                [poolId]: {
-                  feesAprPercent,
-                  suilendWeightedAverageDepositAprPercent,
-                  total: feesAprPercent.plus(
-                    suilendWeightedAverageDepositAprPercent ?? 0,
-                  ),
-                },
-              };
+              return { ...acc, [poolId]: { feesAprPercent } };
             },
-            {} as Record<
-              string,
-              {
-                feesAprPercent: BigNumber;
-                suilendWeightedAverageDepositAprPercent?: BigNumber;
-                total: BigNumber;
-              }
-            >,
+            {} as Record<string, { feesAprPercent: BigNumber }>,
           )
         : {},
     }),

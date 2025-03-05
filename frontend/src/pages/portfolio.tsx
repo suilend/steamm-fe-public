@@ -6,6 +6,11 @@ import BigNumber from "bignumber.js";
 
 import { formatPercent, formatUsd } from "@suilend/frontend-sui";
 import { showErrorToast } from "@suilend/frontend-sui-next";
+import {
+  Side,
+  getFilteredRewards,
+  getStakingYieldAprPercent,
+} from "@suilend/sdk";
 
 import Divider from "@/components/Divider";
 import PoolPositionsTable from "@/components/positions/PoolPositionsTable";
@@ -16,10 +21,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
+import { getTotalAprPercent } from "@/lib/liquidityMining";
 import { PoolPosition } from "@/lib/types";
 
 export default function PortfolioPage() {
-  const { steammClient, appData } = useLoadedAppContext();
+  const { steammClient, appData, lstData } = useLoadedAppContext();
   const { getBalance, userData } = useLoadedUserContext();
   const { poolStats } = useStatsContext();
 
@@ -49,11 +55,38 @@ export default function PortfolioPage() {
           ); // Handles multiple obligations (there should be only one)
           const totalAmount = balance.plus(depositedAmount);
 
+          // Same code as in frontend/src/components/AprBreakdown.tsx
+          const rewards =
+            userData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
+          const filteredRewards = getFilteredRewards(rewards);
+
+          const stakingYieldAprPercent: BigNumber | undefined =
+            lstData !== undefined
+              ? appData.lm.reserveMap[pool.lpTokenType] !== undefined
+                ? (getStakingYieldAprPercent(
+                    Side.DEPOSIT,
+                    appData.lm.reserveMap[pool.lpTokenType],
+                    lstData.aprPercentMap,
+                  ) ?? new BigNumber(0))
+                : new BigNumber(0)
+              : undefined;
+
+          const totalAprPercent: BigNumber | undefined =
+            poolStats.aprPercent_24h[pool.id] !== undefined &&
+            stakingYieldAprPercent !== undefined
+              ? getTotalAprPercent(
+                  poolStats.aprPercent_24h[pool.id].feesAprPercent,
+                  pool.suilendWeightedAverageDepositAprPercent,
+                  filteredRewards,
+                  stakingYieldAprPercent,
+                )
+              : undefined;
+
           if (balance.eq(0) && depositedAmount.eq(0)) return undefined;
           return {
             pool: {
               ...pool,
-              aprPercent_24h: poolStats.aprPercent_24h[pool.id],
+              aprPercent_24h: totalAprPercent,
             },
             balanceUsd: undefined, // Fetched below
             stakedPercent: depositedAmount.div(totalAmount).times(100),
@@ -65,6 +98,9 @@ export default function PortfolioPage() {
       appData.pools,
       poolLpTokenBalanceMap,
       userData.obligations,
+      userData.rewardMap,
+      lstData,
+      appData.lm.reserveMap,
       poolStats.aprPercent_24h,
     ],
   );
@@ -190,7 +226,7 @@ export default function PortfolioPage() {
               (acc, position) =>
                 acc.plus(
                   (position.balanceUsd as BigNumber).times(
-                    position.pool.aprPercent_24h!.total,
+                    position.pool.aprPercent_24h as BigNumber,
                   ),
                 ),
               new BigNumber(0),

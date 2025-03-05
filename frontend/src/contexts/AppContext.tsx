@@ -23,6 +23,7 @@ import { Reserve } from "@suilend/sdk/_generated/suilend/reserve/structs";
 import { BETA_CONFIG, MAINNET_CONFIG, SteammSDK } from "@suilend/steamm-sdk";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
+import useFetchLstData from "@/fetchers/useFetchLstData";
 import { ParsedBank, ParsedPool } from "@/lib/types";
 
 export interface AppData {
@@ -50,11 +51,17 @@ export interface AppData {
 
   featuredCoinTypePairs: [string, string][];
 }
+export interface LstData {
+  lstCoinTypes: string[];
+  aprPercentMap: Record<string, BigNumber>;
+}
 
 interface AppContext {
   steammClient: SteammSDK | undefined;
   appData: AppData | undefined;
   refreshAppData: () => Promise<void>;
+
+  lstData: LstData | undefined;
 
   slippagePercent: number;
   setSlippagePercent: (slippagePercent: number) => void;
@@ -70,6 +77,8 @@ const AppContext = createContext<AppContext>({
   refreshAppData: async () => {
     throw Error("AppContextProvider not initialized");
   },
+
+  lstData: undefined,
 
   slippagePercent: 1,
   setSlippagePercent: () => {
@@ -99,13 +108,16 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     return sdk;
   }, [rpc.url, address]);
 
-  // App data
+  // App data (blocking)
   const { data: appData, mutateData: mutateAppData } =
     useFetchAppData(steammClient);
 
   const refreshAppData = useCallback(async () => {
     await mutateAppData();
   }, [mutateAppData]);
+
+  // LST (non-blocking)
+  const { data: lstData } = useFetchLstData();
 
   // Slippage
   const [slippagePercent, setSlippagePercent] = useLocalStorage<number>(
@@ -120,6 +132,8 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       appData,
       refreshAppData,
 
+      lstData,
+
       slippagePercent,
       setSlippagePercent,
     }),
@@ -127,6 +141,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       steammClient,
       appData,
       refreshAppData,
+      lstData,
       slippagePercent,
       setSlippagePercent,
     ],

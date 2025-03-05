@@ -1,13 +1,30 @@
 import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 
-import { formatPercent } from "@suilend/frontend-sui";
+import {
+  formatPercent,
+  formatPoints,
+  formatToken,
+  getToken,
+  isSendPoints,
+} from "@suilend/frontend-sui";
+import {
+  Side,
+  getDedupedAprRewards,
+  getDedupedPerDayRewards,
+  getFilteredRewards,
+  getStakingYieldAprPercent,
+} from "@suilend/sdk";
 
 import AprBreakdownRow from "@/components/AprBreakdownRow";
+import TokenLogo from "@/components/TokenLogo";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
+import { useLoadedUserContext } from "@/contexts/UserContext";
+import { getTotalAprPercent } from "@/lib/liquidityMining";
 import { ParsedPool } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
@@ -22,53 +39,162 @@ export default function AprBreakdown({
   valueClassName,
   pool,
 }: AprBreakdownProps) {
+  const { appData, lstData } = useLoadedAppContext();
+  const { userData } = useLoadedUserContext();
   const { poolStats } = useStatsContext();
 
-  const hasSuilendDepositAprPercent =
-    poolStats.aprPercent_24h[
-      pool.id
-    ]?.suilendWeightedAverageDepositAprPercent?.gt(0);
+  const rewards = userData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
+  const filteredRewards = getFilteredRewards(rewards);
 
-  if (poolStats.aprPercent_24h[pool.id] === undefined)
+  // Rewards - per day
+  const perDayRewards = getDedupedPerDayRewards(filteredRewards);
+
+  // LST staking yield APR
+  const stakingYieldAprPercent: BigNumber | undefined =
+    lstData !== undefined
+      ? appData.lm.reserveMap[pool.lpTokenType] !== undefined
+        ? (getStakingYieldAprPercent(
+            Side.DEPOSIT,
+            appData.lm.reserveMap[pool.lpTokenType],
+            lstData.aprPercentMap,
+          ) ?? new BigNumber(0))
+        : new BigNumber(0)
+      : undefined;
+
+  // Rewards - APR
+  const aprRewards = getDedupedAprRewards(filteredRewards);
+
+  // Total APR
+  const totalAprPercent: BigNumber | undefined =
+    poolStats.aprPercent_24h[pool.id] !== undefined &&
+    stakingYieldAprPercent !== undefined
+      ? getTotalAprPercent(
+          poolStats.aprPercent_24h[pool.id].feesAprPercent,
+          pool.suilendWeightedAverageDepositAprPercent,
+          filteredRewards,
+          stakingYieldAprPercent,
+        )
+      : undefined;
+
+  if (stakingYieldAprPercent === undefined || totalAprPercent === undefined)
     return <Skeleton className={cn("h-[24px] w-16", skeletonClassName)} />;
   return (
     <div>
       <Tooltip
         content={
-          hasSuilendDepositAprPercent ? (
+          perDayRewards.length > 0 ||
+          pool.suilendWeightedAverageDepositAprPercent.gt(0) ||
+          stakingYieldAprPercent.gt(0) ||
+          aprRewards.length > 0 ? (
             <div className="flex flex-col gap-3">
+              {/* Rewards - per day */}
+              {perDayRewards.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-p2 text-foreground">Points</p>
+
+                  {perDayRewards.map((reward, index) => (
+                    <AprBreakdownRow
+                      key={index}
+                      isLast={index === perDayRewards.length - 1}
+                      value={
+                        <>
+                          {isSendPoints(reward.stats.rewardCoinType)
+                            ? formatPoints(reward.stats.perDay, { dp: 3 })
+                            : formatToken(reward.stats.perDay, {
+                                exact: false,
+                              })}
+                          <span className="text-p2 text-secondary-foreground">
+                            Per $1 of TVL per day
+                          </span>
+                        </>
+                      }
+                    >
+                      <div className="flex flex-row items-center gap-1.5">
+                        <TokenLogo
+                          token={getToken(
+                            reward.stats.rewardCoinType,
+                            appData.coinMetadataMap[
+                              reward.stats.rewardCoinType
+                            ],
+                          )}
+                          size={16}
+                        />
+                        {reward.stats.symbol}
+                      </div>
+                    </AprBreakdownRow>
+                  ))}
+                </div>
+              )}
+
+              {/* APR */}
               <div className="flex flex-col gap-2">
                 {/* Total APR */}
                 <div className="flex flex-row items-center justify-between gap-4">
                   <p className="text-p2 text-foreground">Total APR</p>
                   <p className="text-p2 text-foreground">
-                    {formatPercent(poolStats.aprPercent_24h[pool.id].total)}
+                    {formatPercent(totalAprPercent)}
                   </p>
                 </div>
 
                 {/* feesAprPercent */}
                 <AprBreakdownRow
-                  isLast={!hasSuilendDepositAprPercent}
+                  isLast={
+                    !pool.suilendWeightedAverageDepositAprPercent.gt(0) &&
+                    !stakingYieldAprPercent.gt(0) &&
+                    aprRewards.length === 0
+                  }
                   labelEndDecorator="24H"
                   value={formatPercent(
                     poolStats.aprPercent_24h[pool.id].feesAprPercent,
                   )}
                 >
-                  Fees
+                  LP fees
                 </AprBreakdownRow>
 
                 {/* suilendWeightedAverageDepositAprPercent */}
-                {hasSuilendDepositAprPercent && (
+                {pool.suilendWeightedAverageDepositAprPercent.gt(0) && (
                   <AprBreakdownRow
-                    isLast
+                    isLast={
+                      !stakingYieldAprPercent.gt(0) && aprRewards.length === 0
+                    }
                     value={formatPercent(
-                      poolStats.aprPercent_24h[pool.id]
-                        .suilendWeightedAverageDepositAprPercent as BigNumber,
+                      pool.suilendWeightedAverageDepositAprPercent,
                     )}
                   >
                     Suilend deposit APR
                   </AprBreakdownRow>
                 )}
+
+                {/* LST staking yield */}
+                {stakingYieldAprPercent.gt(0) && (
+                  <AprBreakdownRow
+                    isLast={aprRewards.length === 0}
+                    value={formatPercent(stakingYieldAprPercent)}
+                  >
+                    Staking yield*
+                  </AprBreakdownRow>
+                )}
+
+                {/* Rewards - APR */}
+                {aprRewards.map((reward, index) => (
+                  <AprBreakdownRow
+                    key={index}
+                    isLast={index === aprRewards.length - 1}
+                    value={formatPercent(reward.stats.aprPercent)}
+                  >
+                    Rewards in
+                    <div className="flex flex-row items-center gap-1.5">
+                      <TokenLogo
+                        token={getToken(
+                          reward.stats.rewardCoinType,
+                          appData.coinMetadataMap[reward.stats.rewardCoinType],
+                        )}
+                        size={16}
+                      />
+                      {reward.stats.symbol}
+                    </div>
+                  </AprBreakdownRow>
+                ))}
               </div>
             </div>
           ) : undefined
@@ -76,19 +202,28 @@ export default function AprBreakdown({
       >
         <div className="flex w-full flex-row items-center gap-2">
           <TokenLogos
-            suilend={hasSuilendDepositAprPercent}
-            coinTypes={[]} // TODO
+            coinTypes={Array.from(
+              new Set(
+                [...perDayRewards, ...aprRewards].map(
+                  (reward) => reward.stats.rewardCoinType,
+                ),
+              ),
+            )}
             size={16}
           />
           <p
             className={cn(
               "!text-p1 text-foreground",
-              hasSuilendDepositAprPercent &&
+              (perDayRewards.length > 0 ||
+                pool.suilendWeightedAverageDepositAprPercent.gt(0) ||
+                stakingYieldAprPercent.gt(0) ||
+                aprRewards.length > 0) &&
                 cn("decoration-foreground/50", hoverUnderlineClassName),
               valueClassName,
             )}
           >
-            {formatPercent(poolStats.aprPercent_24h[pool.id].total)}
+            {formatPercent(totalAprPercent)}
+            {stakingYieldAprPercent.gt(0) && "*"}
           </p>
         </div>
       </Tooltip>

@@ -1,3 +1,4 @@
+import BigNumber from "bignumber.js";
 import useSWR from "swr";
 
 import {
@@ -5,7 +6,12 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { formatRewards, initializeObligations } from "@suilend/sdk";
+import {
+  Side,
+  formatRewards,
+  getDepositShare,
+  initializeObligations,
+} from "@suilend/sdk";
 
 import { useAppContext } from "@/contexts/AppContext";
 import { UserData } from "@/contexts/UserContext";
@@ -15,6 +21,7 @@ export default function useFetchUserData() {
   const { address } = useWalletContext();
   const { appData } = useAppContext();
 
+  // Data
   const dataFetcher = async () => {
     if (!appData) return undefined as unknown as UserData; // In practice `dataFetcher` won't be called if `appData` is falsy
 
@@ -32,6 +39,46 @@ export default function useFetchUserData() {
       appData.lm.rewardPriceMap,
       obligations,
     );
+    for (const coinType of Object.keys(rewardMap)) {
+      const pool = appData.pools.find(
+        (_pool) => _pool.lpTokenType === coinType,
+      );
+      if (!pool) continue; // Skip rewards for reserves that don't have a pool
+
+      const reserve = appData.lm.reserveMap[coinType];
+      const rewards = rewardMap[coinType][Side.DEPOSIT];
+      for (const reward of rewards) {
+        if (reward.stats.aprPercent !== undefined) {
+          // Undo division in @suilend/sdk/src/lib/liquidityMining.ts:formatRewards
+          reward.stats.aprPercent = reward.stats.aprPercent.times(
+            getDepositShare(
+              reserve,
+              new BigNumber(
+                reserve.depositsPoolRewardManager.totalShares.toString(),
+              ),
+            ).times(reserve.price),
+          );
+
+          // Divide by pool TVL
+          if (pool.tvlUsd.gt(0))
+            reward.stats.aprPercent = reward.stats.aprPercent.div(pool.tvlUsd);
+        } else if (reward.stats.perDay !== undefined) {
+          // Undo division in @suilend/sdk/src/lib/liquidityMining.ts:formatRewards
+          reward.stats.perDay = reward.stats.perDay.times(
+            getDepositShare(
+              reserve,
+              new BigNumber(
+                reserve.depositsPoolRewardManager.totalShares.toString(),
+              ),
+            ),
+          );
+
+          // Divide by pool TVL
+          if (pool.tvlUsd.gt(0))
+            reward.stats.perDay = reward.stats.perDay.div(pool.tvlUsd);
+        }
+      }
+    }
 
     return { obligationOwnerCaps, obligations, rewardMap };
   };

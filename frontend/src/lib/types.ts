@@ -36,11 +36,15 @@ export type ParsedPool = {
   prices: [BigNumber, BigNumber];
 
   tvlUsd: BigNumber;
-  volumeUsd_24h?: BigNumber; // Used on Pools page
-  aprPercent_24h?: { total: BigNumber; [label: string]: BigNumber }; // Used on Pools and Portfolio pages
 
   feeTierPercent: BigNumber;
   protocolFeePercent: BigNumber;
+
+  suilendWeightedAverageDepositAprPercent: BigNumber;
+
+  //
+  volumeUsd_24h?: BigNumber; // Used on Pools page
+  aprPercent_24h?: BigNumber; // Used on Pools and Portfolio pages
 };
 
 export type PoolGroup = {

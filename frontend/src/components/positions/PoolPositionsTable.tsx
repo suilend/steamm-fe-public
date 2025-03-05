@@ -15,8 +15,7 @@ type Column =
   | "type"
   | "aprPercent_24h"
   | "balanceUsd"
-  | "stakedPercent"
-  | "claimableRewards";
+  | "stakedPercent";
 type SortableColumn = "aprPercent_24h" | "balanceUsd";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
@@ -43,12 +42,6 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
     paddingRight: 4 * 5, // px
   },
   stakedPercent: {
-    flex: 1,
-    minWidth: 150, // px
-    justifyContent: "end",
-    paddingRight: 4 * 5, // px
-  },
-  claimableRewards: {
     flex: 1,
     minWidth: 150, // px
     justifyContent: "end",
@@ -86,11 +79,25 @@ export default function PoolPositionsTable({
   const sortedPositions = useMemo(() => {
     if (positions === undefined || sortState === undefined) return positions;
 
+    if (
+      (sortState.column === "aprPercent_24h" &&
+        !positions.every(
+          (position) => position.pool.aprPercent_24h !== undefined,
+        )) ||
+      (sortState.column === "balanceUsd" &&
+        !positions.every((position) => position.balanceUsd !== undefined))
+    )
+      return positions;
+
     return positions.slice().sort((a, b) => {
       if (sortState.column === "aprPercent_24h") {
         return sortState.direction === SortDirection.DESC
-          ? +b.pool.aprPercent_24h!.total.minus(a.pool.aprPercent_24h!.total)
-          : +a.pool.aprPercent_24h!.total.minus(b.pool.aprPercent_24h!.total);
+          ? +(b.pool.aprPercent_24h as BigNumber).minus(
+              a.pool.aprPercent_24h as BigNumber,
+            )
+          : +(a.pool.aprPercent_24h as BigNumber).minus(
+              b.pool.aprPercent_24h as BigNumber,
+            );
       } else if (sortState.column === "balanceUsd") {
         return sortState.direction === SortDirection.DESC
           ? +(b.balanceUsd as BigNumber).minus(a.balanceUsd as BigNumber)
@@ -159,13 +166,6 @@ export default function PoolPositionsTable({
           style={columnStyleMap.stakedPercent}
         >
           Staked
-        </HeaderColumn>
-
-        <HeaderColumn<Column, SortableColumn>
-          id="claimableRewards"
-          style={columnStyleMap.claimableRewards}
-        >
-          Claimable rewards
         </HeaderColumn>
       </div>
 

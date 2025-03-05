@@ -93,7 +93,7 @@ export function UserContextProvider({ children }: PropsWithChildren) {
     [rawBalancesMap, balancesCoinMetadataMap],
   );
 
-  // User data
+  // User data (blocking)
   const { data: userData, mutateData: mutateUserData } = useFetchUserData();
 
   // Refresh

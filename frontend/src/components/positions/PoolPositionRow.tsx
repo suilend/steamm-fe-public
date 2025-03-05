@@ -286,30 +286,6 @@ export default function PoolPositionRow({
           <p className="text-p1 text-foreground">--</p>
         )}
       </div>
-
-      {/* Claimable rewards */}
-      <div
-        className="flex h-full flex-row items-center gap-3"
-        style={columnStyleMap.claimableRewards}
-      >
-        {Object.keys(position.claimableRewards).length > 0 ? (
-          <>
-            <TokenLogos
-              coinTypes={Object.keys(position.claimableRewards)}
-              size={20}
-            />
-
-            <button
-              className="flex h-6 flex-row items-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80"
-              onClick={onClaimRewardsClick}
-            >
-              <p className="text-p3 text-button-2-foreground">Claim</p>
-            </button>
-          </>
-        ) : (
-          <p className="text-p1 text-foreground">--</p>
-        )}
-      </div>
     </Link>
   );
 }
