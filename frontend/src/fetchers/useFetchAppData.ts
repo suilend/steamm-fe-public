@@ -233,23 +233,22 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               .times(feeTierPercent.div(100))
               .times(100);
 
-            const suilendWeightedAverageDepositAprPercent =
-              coinTypes.every((coinType) => !bankMap[coinType]) || tvlUsd.eq(0)
-                ? new BigNumber(0)
-                : coinTypes
-                    .reduce((acc, coinType, index) => {
-                      const bank = bankMap[coinType];
-                      if (!bank) return acc;
+            const suilendWeightedAverageDepositAprPercent = tvlUsd.gt(0)
+              ? coinTypes
+                  .reduce((acc, coinType, index) => {
+                    const bank = bankMap[coinType];
+                    if (!bank) return acc;
 
-                      return acc.plus(
-                        new BigNumber(
-                          bank.suilendDepositAprPercent
-                            .times(bank.utilizationPercent)
-                            .div(100),
-                        ).times(prices[index].times(balances[index])),
-                      );
-                    }, new BigNumber(0))
-                    .div(tvlUsd);
+                    return acc.plus(
+                      new BigNumber(
+                        bank.suilendDepositAprPercent
+                          .times(bank.utilizationPercent)
+                          .div(100),
+                      ).times(prices[index].times(balances[index])),
+                    );
+                  }, new BigNumber(0))
+                  .div(tvlUsd)
+              : new BigNumber(0);
 
             return {
               id,

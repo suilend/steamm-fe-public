@@ -62,12 +62,24 @@ export default function PortfolioPage() {
 
           const stakingYieldAprPercent: BigNumber | undefined =
             lstData !== undefined
-              ? appData.lm.reserveMap[pool.lpTokenType] !== undefined
-                ? (getStakingYieldAprPercent(
-                    Side.DEPOSIT,
-                    appData.lm.reserveMap[pool.lpTokenType],
-                    lstData.aprPercentMap,
-                  ) ?? new BigNumber(0))
+              ? pool.tvlUsd.gt(0)
+                ? pool.coinTypes
+                    .reduce(
+                      (acc, coinType, index) =>
+                        acc.plus(
+                          new BigNumber(
+                            getStakingYieldAprPercent(
+                              Side.DEPOSIT,
+                              coinType,
+                              lstData.aprPercentMap,
+                            ) ?? 0,
+                          ).times(
+                            pool.prices[index].times(pool.balances[index]),
+                          ),
+                        ),
+                      new BigNumber(0),
+                    )
+                    .div(pool.tvlUsd)
                 : new BigNumber(0)
               : undefined;
 
@@ -100,7 +112,6 @@ export default function PortfolioPage() {
       userData.obligations,
       userData.rewardMap,
       lstData,
-      appData.lm.reserveMap,
       poolStats.aprPercent_24h,
     ],
   );
