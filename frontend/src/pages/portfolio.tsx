@@ -35,6 +35,49 @@ export default function PortfolioPage() {
   const { getBalance, userData } = useLoadedUserContext();
   const { poolStats } = useStatsContext();
 
+  // Pools - claimable rewards
+  const poolClaimableRewardsMap: Record<
+    string,
+    Record<string, BigNumber>
+  > = useMemo(
+    () =>
+      userData.obligations.length > 0
+        ? appData.pools.reduce(
+            (acc, pool) => ({
+              ...acc,
+              [pool.lpTokenType]: (
+                userData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []
+              ).reduce(
+                (acc2, reward) => {
+                  const obligation = userData.obligations[0]; // Assumes only one obligation
+
+                  const minAmount = 10 ** (-1 * reward.stats.mintDecimals);
+                  if (
+                    !reward.obligationClaims[obligation.id] ||
+                    reward.obligationClaims[obligation.id].claimableAmount.lt(
+                      minAmount,
+                    ) // This also covers the 0 case
+                  )
+                    return acc2;
+
+                  return {
+                    ...acc2,
+                    [reward.stats.rewardCoinType]: new BigNumber(
+                      acc2[reward.stats.rewardCoinType] ?? 0,
+                    ).plus(
+                      reward.obligationClaims[obligation.id].claimableAmount,
+                    ),
+                  };
+                },
+                {} as Record<string, BigNumber>,
+              ),
+            }),
+            {} as Record<string, Record<string, BigNumber>>,
+          )
+        : {},
+    [appData.pools, userData.obligations, userData.rewardMap],
+  );
+
   // Positions
   const positions: PoolPosition[] | undefined = useMemo(
     () =>
@@ -94,36 +137,7 @@ export default function PortfolioPage() {
             },
             balanceUsd: undefined, // Fetched below
             stakedPercent: depositedAmount.div(totalAmount).times(100),
-            claimableRewards:
-              userData.obligations.length > 0
-                ? (
-                    userData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []
-                  ).reduce(
-                    (acc, reward) => {
-                      const obligation = userData.obligations[0]; // Assumes only one obligation
-
-                      const minAmount = 10 ** (-1 * reward.stats.mintDecimals);
-                      if (
-                        !reward.obligationClaims[obligation.id] ||
-                        reward.obligationClaims[
-                          obligation.id
-                        ].claimableAmount.lt(minAmount) // This also covers the 0 case
-                      )
-                        return acc;
-
-                      return {
-                        ...acc,
-                        [reward.stats.rewardCoinType]: new BigNumber(
-                          acc[reward.stats.rewardCoinType] ?? 0,
-                        ).plus(
-                          reward.obligationClaims[obligation.id]
-                            .claimableAmount,
-                        ),
-                      };
-                    },
-                    {} as Record<string, BigNumber>,
-                  )
-                : {},
+            claimableRewards: poolClaimableRewardsMap[pool.lpTokenType] ?? {},
           };
         })
         .filter(Boolean) as PoolPosition[],
@@ -134,6 +148,7 @@ export default function PortfolioPage() {
       userData.rewardMap,
       lstData,
       poolStats.aprPercent_24h,
+      poolClaimableRewardsMap,
     ],
   );
 
@@ -268,23 +283,17 @@ export default function PortfolioPage() {
   // Summary - Rewards
   const claimableRewards: Record<string, BigNumber> | undefined = useMemo(
     () =>
-      positionsWithExtraData === undefined
-        ? undefined
-        : positionsWithExtraData.reduce(
-            (acc, position) => {
-              Object.entries(position.claimableRewards).forEach(
-                ([coinType, amount]) => {
-                  acc[coinType] = new BigNumber(acc[coinType] ?? 0).plus(
-                    amount,
-                  );
-                },
-              );
+      Object.values(poolClaimableRewardsMap).reduce(
+        (acc, rewards) => {
+          Object.entries(rewards).forEach(([coinType, amount]) => {
+            acc[coinType] = new BigNumber(acc[coinType] ?? 0).plus(amount);
+          });
 
-              return acc;
-            },
-            {} as Record<string, BigNumber>,
-          ),
-    [positionsWithExtraData],
+          return acc;
+        },
+        {} as Record<string, BigNumber>,
+      ),
+    [poolClaimableRewardsMap],
   );
 
   const onClaimRewardsClick = () => {};
