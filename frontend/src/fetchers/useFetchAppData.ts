@@ -3,6 +3,7 @@ import BigNumber from "bignumber.js";
 import useSWR from "swr";
 
 import {
+  NORMALIZED_SEND_POINTS_S2_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
   NORMALIZED_USDC_COINTYPE,
   getCoinMetadataMap,
@@ -74,6 +75,10 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         lmMarket_reserveMap,
         lmMarket_activeRewardCoinTypes,
       );
+
+    const pointsCoinMetadataMap = await getCoinMetadataMap(suiClient, [
+      NORMALIZED_SEND_POINTS_S2_COINTYPE,
+    ]);
 
     // Prices
     const suiPrice = mainMarket_reserveMap[NORMALIZED_SUI_COINTYPE].price;
@@ -163,6 +168,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
     const coinMetadataMap = {
       ...lmMarket_rewardCoinMetadataMap,
+      ...pointsCoinMetadataMap,
       ...bankCoinMetadataMap,
       ...poolCoinMetadataMap,
     };

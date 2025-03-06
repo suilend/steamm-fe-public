@@ -5,10 +5,14 @@ import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 
 import {
+  NORMALIZED_SEND_POINTS_S2_COINTYPE,
   formatPercent,
+  formatPoints,
   formatToken,
   formatUsd,
   getToken,
+  isSendPoints,
+  isSendPointsS2,
 } from "@suilend/frontend-sui";
 import { showErrorToast } from "@suilend/frontend-sui-next";
 import {
@@ -35,11 +39,8 @@ export default function PortfolioPage() {
   const { getBalance, userData } = useLoadedUserContext();
   const { poolStats } = useStatsContext();
 
-  // Pools - claimable rewards
-  const poolClaimableRewardsMap: Record<
-    string,
-    Record<string, BigNumber>
-  > = useMemo(
+  // Pools - rewards
+  const poolRewardsMap: Record<string, Record<string, BigNumber>> = useMemo(
     () =>
       userData.obligations.length > 0
         ? appData.pools.reduce(
@@ -137,7 +138,15 @@ export default function PortfolioPage() {
             },
             balanceUsd: undefined, // Fetched below
             stakedPercent: depositedAmount.div(totalAmount).times(100),
-            claimableRewards: poolClaimableRewardsMap[pool.lpTokenType] ?? {},
+            claimableRewards: Object.fromEntries(
+              Object.entries(poolRewardsMap[pool.lpTokenType] ?? {}).filter(
+                ([coinType]) => !isSendPoints(coinType),
+              ),
+            ),
+            points:
+              poolRewardsMap[pool.lpTokenType]?.[
+                NORMALIZED_SEND_POINTS_S2_COINTYPE
+              ] ?? new BigNumber(0),
           };
         })
         .filter(Boolean) as PoolPosition[],
@@ -148,7 +157,7 @@ export default function PortfolioPage() {
       userData.rewardMap,
       lstData,
       poolStats.aprPercent_24h,
-      poolClaimableRewardsMap,
+      poolRewardsMap,
     ],
   );
 
@@ -283,20 +292,37 @@ export default function PortfolioPage() {
   // Summary - Rewards
   const claimableRewards: Record<string, BigNumber> | undefined = useMemo(
     () =>
-      Object.values(poolClaimableRewardsMap).reduce(
-        (acc, rewards) => {
-          Object.entries(rewards).forEach(([coinType, amount]) => {
-            acc[coinType] = new BigNumber(acc[coinType] ?? 0).plus(amount);
-          });
+      Object.entries(poolRewardsMap)
+        .filter(([coinType]) => !isSendPoints(coinType))
+        .reduce(
+          (acc, [, rewards]) => {
+            Object.entries(rewards).forEach(([coinType, amount]) => {
+              acc[coinType] = new BigNumber(acc[coinType] ?? 0).plus(amount);
+            });
 
-          return acc;
-        },
-        {} as Record<string, BigNumber>,
-      ),
-    [poolClaimableRewardsMap],
+            return acc;
+          },
+          {} as Record<string, BigNumber>,
+        ),
+    [poolRewardsMap],
   );
 
   const onClaimRewardsClick = () => {};
+
+  // Summary - Points (S2 only)
+  const points: BigNumber | undefined = useMemo(
+    () =>
+      Object.entries(poolRewardsMap)
+        .filter(([coinType]) => coinType === NORMALIZED_SEND_POINTS_S2_COINTYPE)
+        .reduce((acc, [, rewards]) => {
+          Object.entries(rewards).forEach(([coinType, amount]) => {
+            acc = acc.plus(amount);
+          });
+
+          return acc;
+        }, new BigNumber(0)),
+    [poolRewardsMap],
+  );
 
   return (
     <>
@@ -346,8 +372,8 @@ export default function PortfolioPage() {
 
             <Divider className="h-auto w-px max-md:hidden" />
 
-            {/* Rewards */}
-            <div className="max-md:w-full md:flex-1">
+            {/* Claimable rewards */}
+            <div className="max-md:w-full max-md:border-r md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">
                   Claimable rewards
@@ -358,7 +384,7 @@ export default function PortfolioPage() {
                 ) : (
                   <>
                     {Object.keys(claimableRewards).length > 0 ? (
-                      <div className="flex h-[30px] flex-row items-center gap-3">
+                      <div className="flex min-h-[30px] flex-row flex-wrap items-center gap-3">
                         <Tooltip
                           content={
                             <div className="flex flex-col gap-1">
@@ -389,7 +415,7 @@ export default function PortfolioPage() {
                             </div>
                           }
                         >
-                          <div className="w-max">
+                          <div className="flex h-[24px] w-max flex-row items-center">
                             <TokenLogos
                               coinTypes={Object.keys(claimableRewards)}
                               size={20}
@@ -410,6 +436,38 @@ export default function PortfolioPage() {
                       <p className="text-h3 text-foreground">--</p>
                     )}
                   </>
+                )}
+              </div>
+            </div>
+
+            <Divider className="h-auto w-px max-md:hidden" />
+
+            {/* Points */}
+            <div className="max-md:w-full md:flex-1">
+              <div className="flex w-full flex-col gap-1 p-5">
+                <p className="text-p2 text-secondary-foreground">Points</p>
+
+                {points === undefined ? (
+                  <Skeleton className="h-[30px] w-20" />
+                ) : (
+                  <Tooltip
+                    title={`${formatPoints(points, { dp: appData.coinMetadataMap[NORMALIZED_SEND_POINTS_S2_COINTYPE].decimals })} ${appData.coinMetadataMap[NORMALIZED_SEND_POINTS_S2_COINTYPE].symbol}`}
+                  >
+                    <div className="flex w-max flex-row items-center gap-2">
+                      <TokenLogo
+                        token={getToken(
+                          NORMALIZED_SEND_POINTS_S2_COINTYPE,
+                          appData.coinMetadataMap[
+                            NORMALIZED_SEND_POINTS_S2_COINTYPE
+                          ],
+                        )}
+                        size={20}
+                      />
+                      <p className="text-h3 text-foreground">
+                        {formatPoints(points)}
+                      </p>
+                    </div>
+                  </Tooltip>
                 )}
               </div>
             </div>

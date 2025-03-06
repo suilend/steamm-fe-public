@@ -16,7 +16,8 @@ type Column =
   | "aprPercent_24h"
   | "balanceUsd"
   | "stakedPercent"
-  | "claimableRewards";
+  | "claimableRewards"
+  | "points";
 type SortableColumn = "aprPercent_24h" | "balanceUsd";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
@@ -49,6 +50,12 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
     paddingRight: 4 * 5, // px
   },
   claimableRewards: {
+    flex: 1,
+    minWidth: 150, // px
+    justifyContent: "end",
+    paddingRight: 4 * 5, // px
+  },
+  points: {
     flex: 1,
     minWidth: 150, // px
     justifyContent: "end",
@@ -180,6 +187,13 @@ export default function PoolPositionsTable({
           style={columnStyleMap.claimableRewards}
         >
           Claimable rewards
+        </HeaderColumn>
+
+        <HeaderColumn<Column, SortableColumn>
+          id="points"
+          style={columnStyleMap.points}
+        >
+          Points
         </HeaderColumn>
       </div>
 
