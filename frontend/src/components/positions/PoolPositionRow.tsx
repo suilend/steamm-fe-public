@@ -364,7 +364,7 @@ export default function PoolPositionRow({
       </div>
 
       {/* Points */}
-      <div
+      {/* <div
         className="flex h-full flex-row items-center"
         style={columnStyleMap.points}
       >
@@ -385,7 +385,7 @@ export default function PoolPositionRow({
             </p>
           </Tooltip>
         </div>
-      </div>
+      </div> */}
     </Link>
   );
 }
