@@ -25,13 +25,21 @@ export default function useFetchUserData() {
   const dataFetcher = async () => {
     if (!appData) return undefined as unknown as UserData; // In practice `dataFetcher` won't be called if `appData` is falsy
 
-    const { obligationOwnerCaps, obligations } = await initializeObligations(
-      suiClient,
-      appData.lm.suilendClient,
-      appData.lm.refreshedRawReserves,
-      appData.lm.reserveMap,
-      address,
-    );
+    const { obligationOwnerCaps: _obligationOwnerCaps, obligations } =
+      await initializeObligations(
+        suiClient,
+        appData.lm.suilendClient,
+        appData.lm.refreshedRawReserves,
+        appData.lm.reserveMap,
+        address,
+      );
+    const obligationOwnerCaps = _obligationOwnerCaps
+      .slice()
+      .sort(
+        (a, b) =>
+          obligations.findIndex((o) => o.id === a.obligationId) -
+          obligations.findIndex((o) => o.id === b.obligationId),
+      ); // Same order as `obligations`
 
     const rewardMap = formatRewards(
       appData.lm.reserveMap,

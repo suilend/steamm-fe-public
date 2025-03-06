@@ -56,6 +56,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
+import {
+  getIndexOfObligationWithDeposit,
+  getObligationDepositPosition,
+  getObligationDepositedAmount,
+} from "@/lib/obligation";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
@@ -399,11 +404,23 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
       // Stake LP tokens (if reserve exists)
       if (appData.lm.reserveMap[pool.lpTokenType]) {
+        let obligationIndex = getIndexOfObligationWithDeposit(
+          userData.obligations,
+          pool.lpTokenType,
+        ); // Assumes up to one obligation has deposits of the LP token type
+        if (obligationIndex === -1)
+          obligationIndex = userData.obligations.findIndex(
+            (obligation) => obligation.depositPositionCount < 5,
+          ); // Get obligation with less than 5 deposits (if any)
+        console.log("XXX obligationIndex:", obligationIndex);
+
         const { obligationOwnerCapId, didCreate } =
           createObligationIfNoneExists(
             appData.lm.suilendClient,
             transaction,
-            userData.obligationOwnerCaps?.[0], // Use the first (and assumed to be the only) obligation owner cap
+            obligationIndex !== -1
+              ? userData.obligationOwnerCaps[obligationIndex]
+              : undefined, // Create new obligation
           );
         appData.lm.suilendClient.deposit(
           lpCoin,
@@ -538,11 +555,16 @@ function WithdrawTab() {
   const { getBalance, userData, refresh } = useLoadedUserContext();
   const { pool } = usePoolContext();
 
+  const lpTokenObligationIndex = getIndexOfObligationWithDeposit(
+    userData.obligations,
+    pool.lpTokenType,
+  ); // Assumes up to one obligation has deposits of the LP token type
+
   const lpTokenBalance = getBalance(pool.lpTokenType);
-  const lpTokenDepositedAmount =
-    userData.obligations[0]?.deposits.find(
-      (d) => d.coinType === pool.lpTokenType,
-    )?.depositedAmount ?? new BigNumber(0); // Assumes only one obligation
+  const lpTokenDepositedAmount = getObligationDepositedAmount(
+    userData.obligations[lpTokenObligationIndex],
+    pool.lpTokenType,
+  );
   const lpTokenTotalAmount = lpTokenBalance.plus(lpTokenDepositedAmount);
 
   // Value
@@ -667,10 +689,12 @@ function WithdrawTab() {
           useGasCoin: false,
         })(transaction);
       } else {
-        const lpTokenDepositPosition = userData.obligations[0]?.deposits.find(
-          (d) => d.coinType === pool.lpTokenType,
-        ); // Assumes only one obligation
-        if (!lpTokenDepositPosition) return;
+        const obligationIndex = getIndexOfObligationWithDeposit(
+          userData.obligations,
+          pool.lpTokenType,
+        ); // Assumes up to one obligation has deposits of the LP token type
+        if (obligationIndex === -1) throw Error("Obligation not found"); // Should never happen as the amount can't be greater than the balance if there are no deposits
+        console.log("XXX obligationIndex:", obligationIndex);
 
         const lpCoins = [];
         if (lpTokenBalance.gt(0)) {
@@ -696,8 +720,8 @@ function WithdrawTab() {
           const submitAmount = MAX_U64.toString();
 
           const [_lpCoin] = await appData.lm.suilendClient.withdraw(
-            userData.obligationOwnerCaps[0].id, // Assumes only one obligation owner cap
-            userData.obligations[0].id, // Assumes only one obligation
+            userData.obligationOwnerCaps[obligationIndex].id,
+            userData.obligations[obligationIndex].id,
             pool.lpTokenType,
             submitAmount,
             transaction,
@@ -706,6 +730,14 @@ function WithdrawTab() {
         } else {
           // Withdraw from Suilend
           console.log("XXX suilend");
+
+          const lpTokenDepositPosition = getObligationDepositPosition(
+            userData.obligations[obligationIndex],
+            pool.lpTokenType,
+          );
+          if (!lpTokenDepositPosition) return; // Should never happen as obligationIndex !== -1
+          console.log("XXX lpTokenDepositPosition:", lpTokenDepositPosition);
+
           const submitAmount = BigNumber.min(
             new BigNumber(
               new BigNumber(lpTokenValue.minus(lpTokenBalance))
@@ -719,8 +751,8 @@ function WithdrawTab() {
           ).toString();
 
           const [_lpCoin] = await appData.lm.suilendClient.withdraw(
-            userData.obligationOwnerCaps[0].id, // Assumes only one obligation owner cap
-            userData.obligations[0].id, // Assumes only one obligation
+            userData.obligationOwnerCaps[obligationIndex].id,
+            userData.obligations[obligationIndex].id,
             pool.lpTokenType,
             submitAmount,
             transaction,
@@ -728,7 +760,6 @@ function WithdrawTab() {
           lpCoins.push(_lpCoin);
         }
 
-        console.log("XXXX", lpCoins);
         // Merge coins (if multiple)
         if (lpCoins.length === 1) lpCoin = lpCoins[0];
         else {

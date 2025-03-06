@@ -36,6 +36,7 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
+import { getIndexOfObligationWithDeposit } from "@/lib/obligation";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { PoolPosition, poolTypeNameMap } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -82,10 +83,22 @@ export default function PoolPositionRow({
 
       const transaction = new Transaction();
 
+      let obligationIndex = getIndexOfObligationWithDeposit(
+        userData.obligations,
+        position.pool.lpTokenType,
+      ); // Assumes up to one obligation has deposits of the LP token type
+      if (obligationIndex === -1)
+        obligationIndex = userData.obligations.findIndex(
+          (obligation) => obligation.depositPositionCount < 5,
+        ); // Get obligation with less than 5 deposits (if any)
+      console.log("XXX obligationIndex:", obligationIndex);
+
       const { obligationOwnerCapId, didCreate } = createObligationIfNoneExists(
         appData.lm.suilendClient,
         transaction,
-        userData.obligationOwnerCaps?.[0], // Use the first (and assumed to be the only) obligation owner cap
+        obligationIndex !== -1
+          ? userData.obligationOwnerCaps[obligationIndex]
+          : undefined, // Create new obligation
       );
       await appData.lm.suilendClient.depositIntoObligation(
         address,
@@ -141,10 +154,17 @@ export default function PoolPositionRow({
       const transaction = new Transaction();
 
       try {
+        const obligationIndex = getIndexOfObligationWithDeposit(
+          userData.obligations,
+          position.pool.lpTokenType,
+        ); // Assumes up to one obligation has deposits of the LP token type
+        if (obligationIndex === -1) throw Error("Obligation not found"); // Should never happen as you can't unstake if you don't have any staked
+        console.log("XXX obligationIndex:", obligationIndex);
+
         await appData.lm.suilendClient.withdrawAndSendToUser(
           address,
-          userData.obligationOwnerCaps[0].id, // Assumes only one obligation owner cap
-          userData.obligations[0].id, // Assumes only one obligation
+          userData.obligationOwnerCaps[obligationIndex].id,
+          userData.obligations[obligationIndex].id,
           position.pool.lpTokenType,
           submitAmount,
           transaction,

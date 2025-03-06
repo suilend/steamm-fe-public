@@ -32,6 +32,10 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
 import { getTotalAprPercent } from "@/lib/liquidityMining";
+import {
+  getIndexOfObligationWithDeposit,
+  getObligationDepositedAmount,
+} from "@/lib/obligation";
 import { PoolPosition } from "@/lib/types";
 
 export default function PortfolioPage() {
@@ -39,7 +43,7 @@ export default function PortfolioPage() {
   const { getBalance, userData } = useLoadedUserContext();
   const { poolStats } = useStatsContext();
 
-  // Pools - rewards
+  // Pools - rewards (across all obligations)
   const poolRewardsMap: Record<string, Record<string, BigNumber>> = useMemo(
     () =>
       userData.obligations.length > 0
@@ -50,25 +54,26 @@ export default function PortfolioPage() {
                 userData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []
               ).reduce(
                 (acc2, reward) => {
-                  const obligation = userData.obligations[0]; // Assumes only one obligation
+                  for (let i = 0; i < userData.obligations.length; i++) {
+                    const obligation = userData.obligations[i];
 
-                  const minAmount = 10 ** (-1 * reward.stats.mintDecimals);
-                  if (
-                    !reward.obligationClaims[obligation.id] ||
-                    reward.obligationClaims[obligation.id].claimableAmount.lt(
-                      minAmount,
-                    ) // This also covers the 0 case
-                  )
-                    return acc2;
+                    const minAmount = 10 ** (-1 * reward.stats.mintDecimals);
+                    if (
+                      !reward.obligationClaims[obligation.id] ||
+                      reward.obligationClaims[obligation.id].claimableAmount.lt(
+                        minAmount,
+                      ) // This also covers the 0 case
+                    )
+                      continue;
 
-                  return {
-                    ...acc2,
-                    [reward.stats.rewardCoinType]: new BigNumber(
+                    acc2[reward.stats.rewardCoinType] = new BigNumber(
                       acc2[reward.stats.rewardCoinType] ?? 0,
                     ).plus(
                       reward.obligationClaims[obligation.id].claimableAmount,
-                    ),
-                  };
+                    );
+                  }
+
+                  return acc2;
                 },
                 {} as Record<string, BigNumber>,
               ),
@@ -84,11 +89,16 @@ export default function PortfolioPage() {
     () =>
       appData.pools
         .map((pool) => {
+          const obligationIndex = getIndexOfObligationWithDeposit(
+            userData.obligations,
+            pool.lpTokenType,
+          ); // Assumes up to one obligation has deposits of the LP token type
+
           const balance = getBalance(pool.lpTokenType);
-          const depositedAmount =
-            userData.obligations[0]?.deposits.find(
-              (d) => d.coinType === pool.lpTokenType,
-            )?.depositedAmount ?? new BigNumber(0); // Assumes only one obligation
+          const depositedAmount = getObligationDepositedAmount(
+            userData.obligations[obligationIndex],
+            pool.lpTokenType,
+          );
           const totalAmount = balance.plus(depositedAmount);
 
           // Same code as in frontend/src/components/AprBreakdown.tsx
@@ -175,11 +185,16 @@ export default function PortfolioPage() {
 
         const redeemQuotes = await Promise.all(
           positions.map((position) => {
+            const obligationIndex = getIndexOfObligationWithDeposit(
+              userData.obligations,
+              position.pool.lpTokenType,
+            ); // Assumes up to one obligation has deposits of the LP token type
+
             const balance = getBalance(position.pool.lpTokenType);
-            const depositedAmount =
-              userData.obligations[0]?.deposits.find(
-                (d) => d.coinType === position.pool.lpTokenType,
-              )?.depositedAmount ?? new BigNumber(0); // Assumes only one obligation
+            const depositedAmount = getObligationDepositedAmount(
+              userData.obligations[obligationIndex],
+              position.pool.lpTokenType,
+            );
             const totalAmount = balance.plus(depositedAmount);
 
             return steammClient.Pool.quoteRedeem({
