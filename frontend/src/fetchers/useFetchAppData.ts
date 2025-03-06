@@ -1,3 +1,4 @@
+import { CoinMetadata } from "@mysten/sui/client";
 import { normalizeStructTag } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 import useSWR from "swr";
@@ -28,6 +29,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
   // Data
   const dataFetcher = async () => {
+    let coinMetadataMap: Record<string, CoinMetadata> = {};
+
     // Suilend
     // Suilend - Main market
     const mainMarket_suilendClient = await SuilendClient.initialize(
@@ -69,6 +72,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       activeRewardCoinTypes: lmMarket_activeRewardCoinTypes,
       rewardCoinMetadataMap: lmMarket_rewardCoinMetadataMap,
     } = await initializeSuilend(suiClient, lmMarket_suilendClient);
+    coinMetadataMap = { ...coinMetadataMap, ...lmMarket_rewardCoinMetadataMap };
 
     const { rewardPriceMap: lmMarket_rewardPriceMap } =
       await initializeSuilendRewards(
@@ -76,9 +80,13 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         lmMarket_activeRewardCoinTypes,
       );
 
-    const pointsCoinMetadataMap = await getCoinMetadataMap(suiClient, [
-      NORMALIZED_SEND_POINTS_S2_COINTYPE,
-    ]);
+    const pointsCoinMetadataMap = await getCoinMetadataMap(
+      suiClient,
+      [NORMALIZED_SEND_POINTS_S2_COINTYPE].filter(
+        (coinType) => !Object.keys(coinMetadataMap).includes(coinType),
+      ),
+    );
+    coinMetadataMap = { ...coinMetadataMap, ...pointsCoinMetadataMap };
 
     // Prices
     const suiPrice = mainMarket_reserveMap[NORMALIZED_SUI_COINTYPE].price;
@@ -99,8 +107,11 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
     const bankCoinMetadataMap = await getCoinMetadataMap(
       suiClient,
-      uniqueBankCoinTypes,
+      uniqueBankCoinTypes.filter(
+        (coinType) => !Object.keys(coinMetadataMap).includes(coinType),
+      ),
     );
+    coinMetadataMap = { ...coinMetadataMap, ...bankCoinMetadataMap };
 
     const banks: ParsedBank[] = await Promise.all(
       Object.values(bankInfos).map((bankInfo) =>
@@ -113,12 +124,12 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
           const liquidAmount = new BigNumber(
             bank.fundsAvailable.value.toString(),
-          ).div(10 ** bankCoinMetadataMap[coinType].decimals);
+          ).div(10 ** coinMetadataMap[coinType].decimals);
           const depositedAmount = new BigNumber(
             bank.lending ? bank.lending.ctokens.toString() : 0,
           )
             .times(mainMarket_reserveMap[coinType]?.cTokenExchangeRate ?? 0) // Fallback for when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true and Main market (beta) does not have the reserve
-            .div(10 ** bankCoinMetadataMap[coinType].decimals);
+            .div(10 ** coinMetadataMap[coinType].decimals);
           const totalAmount = liquidAmount.plus(depositedAmount);
 
           const utilizationPercent = totalAmount.gt(0)
@@ -163,15 +174,11 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
     const poolCoinMetadataMap = await getCoinMetadataMap(
       suiClient,
-      uniquePoolCoinTypes,
+      uniquePoolCoinTypes.filter(
+        (coinType) => !Object.keys(coinMetadataMap).includes(coinType),
+      ),
     );
-
-    const coinMetadataMap = {
-      ...lmMarket_rewardCoinMetadataMap,
-      ...pointsCoinMetadataMap,
-      ...bankCoinMetadataMap,
-      ...poolCoinMetadataMap,
-    };
+    coinMetadataMap = { ...coinMetadataMap, ...poolCoinMetadataMap };
 
     const pools: ParsedPool[] = (
       await Promise.all(

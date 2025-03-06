@@ -39,9 +39,7 @@ function PoolPage() {
   const suggestedPools = appData.pools
     .filter(
       (_pool) =>
-        _pool.id !== pool.id &&
-        (_pool.coinTypes[0] === pool.coinTypes[0] ||
-          _pool.coinTypes[1] === pool.coinTypes[1]),
+        _pool.id !== pool.id && _pool.coinTypes[0] === pool.coinTypes[0],
     )
     .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
 
