@@ -52,12 +52,22 @@ export default function AprBreakdown({
   // LST staking yield APR
   const stakingYieldAprPercent: BigNumber | undefined =
     lstData !== undefined
-      ? appData.lm.reserveMap[pool.lpTokenType] !== undefined
-        ? (getStakingYieldAprPercent(
-            Side.DEPOSIT,
-            appData.lm.reserveMap[pool.lpTokenType],
-            lstData.aprPercentMap,
-          ) ?? new BigNumber(0))
+      ? pool.tvlUsd.gt(0)
+        ? pool.coinTypes
+            .reduce(
+              (acc, coinType, index) =>
+                acc.plus(
+                  new BigNumber(
+                    getStakingYieldAprPercent(
+                      Side.DEPOSIT,
+                      coinType,
+                      lstData.aprPercentMap,
+                    ) ?? 0,
+                  ).times(pool.prices[index].times(pool.balances[index])),
+                ),
+              new BigNumber(0),
+            )
+            .div(pool.tvlUsd)
         : new BigNumber(0)
       : undefined;
 
@@ -92,19 +102,19 @@ export default function AprBreakdown({
                 <div className="flex flex-col gap-2">
                   <p className="text-p2 text-foreground">Points</p>
 
-                  {perDayRewards.map((reward, index) => (
+                  {perDayRewards.map((r, index) => (
                     <AprBreakdownRow
                       key={index}
                       isLast={index === perDayRewards.length - 1}
                       value={
                         <>
-                          {isSendPoints(reward.stats.rewardCoinType)
-                            ? formatPoints(reward.stats.perDay, { dp: 3 })
-                            : formatToken(reward.stats.perDay, {
+                          {isSendPoints(r.stats.rewardCoinType)
+                            ? formatPoints(r.stats.perDay, { dp: 3 })
+                            : formatToken(r.stats.perDay, {
                                 exact: false,
                               })}
                           <span className="text-p2 text-secondary-foreground">
-                            Per $1 of TVL per day
+                            Per $ per day
                           </span>
                         </>
                       }
@@ -112,14 +122,12 @@ export default function AprBreakdown({
                       <div className="flex flex-row items-center gap-1.5">
                         <TokenLogo
                           token={getToken(
-                            reward.stats.rewardCoinType,
-                            appData.coinMetadataMap[
-                              reward.stats.rewardCoinType
-                            ],
+                            r.stats.rewardCoinType,
+                            appData.coinMetadataMap[r.stats.rewardCoinType],
                           )}
                           size={16}
                         />
-                        {reward.stats.symbol}
+                        {r.stats.symbol}
                       </div>
                     </AprBreakdownRow>
                   ))}
@@ -176,22 +184,22 @@ export default function AprBreakdown({
                 )}
 
                 {/* Rewards - APR */}
-                {aprRewards.map((reward, index) => (
+                {aprRewards.map((r, index) => (
                   <AprBreakdownRow
                     key={index}
                     isLast={index === aprRewards.length - 1}
-                    value={formatPercent(reward.stats.aprPercent)}
+                    value={formatPercent(r.stats.aprPercent)}
                   >
                     Rewards in
                     <div className="flex flex-row items-center gap-1.5">
                       <TokenLogo
                         token={getToken(
-                          reward.stats.rewardCoinType,
-                          appData.coinMetadataMap[reward.stats.rewardCoinType],
+                          r.stats.rewardCoinType,
+                          appData.coinMetadataMap[r.stats.rewardCoinType],
                         )}
                         size={16}
                       />
-                      {reward.stats.symbol}
+                      {r.stats.symbol}
                     </div>
                   </AprBreakdownRow>
                 ))}
@@ -205,7 +213,7 @@ export default function AprBreakdown({
             coinTypes={Array.from(
               new Set(
                 [...perDayRewards, ...aprRewards].map(
-                  (reward) => reward.stats.rewardCoinType,
+                  (r) => r.stats.rewardCoinType,
                 ),
               ),
             )}

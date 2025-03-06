@@ -32,7 +32,7 @@
         "@sentry/nextjs": "^8.38.0",
         "@suilend/frontend-sui": "^0.2.47",
         "@suilend/frontend-sui-next": "^0.1.19",
-        "@suilend/sdk": "^1.1.40",
+        "@suilend/sdk": "^1.1.41",
         "@suilend/springsui-sdk": "^1.0.20",
         "@tanstack/react-table": "^8.20.5",
         "@vercel/analytics": "^1.4.0",
@@ -598,7 +598,7 @@
 
     "@suilend/frontend-sui-next": ["@suilend/frontend-sui-next@0.1.19", "", { "dependencies": { "@sentry/nextjs": "^8.38.0", "@tanstack/react-query": "^5.60.2", "bignumber.js": "^9.1.2", "launchdarkly-react-client-sdk": "^3.6.0", "lodash": "^4.17.21", "mixpanel-browser": "^2.56.0", "next": "^15.0.3", "react": "18.3.1", "react-dom": "18.3.1", "react-responsive": "^10.0.0", "shio-sdk": "^1.0.8", "sonner": "1.4.41", "swr": "^2.2.5", "tailwind-merge": "^2.5.4", "usehooks-ts": "^3.1.0" }, "peerDependencies": { "@mysten/dapp-kit": "0.14.47", "@mysten/sui": "1.20.0", "@mysten/wallet-standard": "0.13.23", "@suilend/frontend-sui": "^0.2.43" } }, "sha512-3h9l0EdGjgKxrFRkMt+vbNgVP1ZXQEx5KMuih0POFAR0UQ5Rjn6ZuJGGBVCw5JyGjqz9tqBUaL3QyNuJ6pdOOA=="],
 
-    "@suilend/sdk": ["@suilend/sdk@1.1.40", "", { "dependencies": { "@pythnetwork/pyth-sui-js": "^2.1.0", "bignumber.js": "^9.1.2", "p-limit": "3.1.0", "uuid": "^11.0.3" }, "peerDependencies": { "@mysten/bcs": "1.2.1", "@mysten/sui": "1.20.0", "@suilend/frontend-sui": "^0.2.38" } }, "sha512-ishpt8fLucG8yqWRR26OJpKKd0WuInjIYsNjIP9AEIKJbPivjMz3GNvcKt6664wcnumdywRG7KHQJkjb6RjXHQ=="],
+    "@suilend/sdk": ["@suilend/sdk@1.1.41", "", { "dependencies": { "@pythnetwork/pyth-sui-js": "^2.1.0", "bignumber.js": "^9.1.2", "p-limit": "3.1.0", "uuid": "^11.0.3" }, "peerDependencies": { "@mysten/bcs": "1.2.1", "@mysten/sui": "1.20.0", "@suilend/frontend-sui": "^0.2.38" } }, "sha512-I3hUsXXKqFV+5Q+UgsBb3AjSIVLmuDbo4zXJ6b5Kdo981nEQ9wUaLZ+CXplaxCj/eEeqL1zt8PUO+sXuZ64pLw=="],
 
     "@suilend/springsui-sdk": ["@suilend/springsui-sdk@1.0.20", "", { "dependencies": { "bignumber.js": "^9.1.2" }, "peerDependencies": { "@mysten/bcs": "1.2.1", "@mysten/sui": "1.20.0" } }, "sha512-ozo7Pz+A1aJg5ihgpFZu90iTD34EGju5usVFM4PDK2uzRp1g3aHCnmU7M5meOc/Vj/9HZWdIbi88iGpB8b08HA=="],
 
@@ -790,7 +790,7 @@
 
     "@xtuc/long": ["@xtuc/long@4.2.2", "", {}, "sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ=="],
 
-    "acorn": ["acorn@8.14.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-cl669nCJTZBsL97OF4kUQm5g5hC2uihk0NxY3WENAC0TYdILVkAyHymAntgxGkl7K+t0cXIrH5siy5S4XkFycA=="],
+    "acorn": ["acorn@8.14.1", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-OvQ/2pUDKmgfCg++xsTX1wGxfTaszcHVcTctW4UJB4hibJx2HXxxO5UmVgyjMa+ZDsiaf5wWLXYpRWMmBI0QHg=="],
 
     "acorn-import-attributes": ["acorn-import-attributes@1.9.5", "", { "peerDependencies": { "acorn": "^8" } }, "sha512-n02Vykv5uA3eHGM/Z2dQrcD56kL8TyDb2p1+0P83PClMnC/nc+anbQRhIOWnSq4Ke/KvDPrY3C9hDtC/A3eHnQ=="],
 

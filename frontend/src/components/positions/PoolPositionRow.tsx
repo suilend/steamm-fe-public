@@ -6,7 +6,15 @@ import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 import { Loader2 } from "lucide-react";
 
-import { MAX_U64, formatPercent, formatUsd } from "@suilend/frontend-sui";
+import {
+  MAX_U64,
+  NORMALIZED_SEND_POINTS_S2_COINTYPE,
+  formatPercent,
+  formatPoints,
+  formatToken,
+  formatUsd,
+  getToken,
+} from "@suilend/frontend-sui";
 import {
   showErrorToast,
   useSettingsContext,
@@ -20,6 +28,7 @@ import {
 import AprBreakdown from "@/components/AprBreakdown";
 import { columnStyleMap } from "@/components/positions/PoolPositionsTable";
 import Tag from "@/components/Tag";
+import TokenLogo from "@/components/TokenLogo";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,6 +36,7 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
+import { getIndexOfObligationWithDeposit } from "@/lib/obligation";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { PoolPosition, poolTypeNameMap } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -58,10 +68,10 @@ export default function PoolPositionRow({
   const onStakeClick = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
-    if (isStaking) return;
-    if (!address) throw Error("Wallet not connected");
-
     try {
+      if (isStaking) return;
+      if (!address) throw Error("Wallet not connected");
+
       setIsStaking(true);
 
       const submitAmount = new BigNumber(getBalance(position.pool.lpTokenType))
@@ -73,10 +83,22 @@ export default function PoolPositionRow({
 
       const transaction = new Transaction();
 
+      let obligationIndex = getIndexOfObligationWithDeposit(
+        userData.obligations,
+        position.pool.lpTokenType,
+      ); // Assumes up to one obligation has deposits of the LP token type
+      if (obligationIndex === -1)
+        obligationIndex = userData.obligations.findIndex(
+          (obligation) => obligation.depositPositionCount < 5,
+        ); // Get obligation with less than 5 deposits (if any)
+      console.log("XXX obligationIndex:", obligationIndex);
+
       const { obligationOwnerCapId, didCreate } = createObligationIfNoneExists(
         appData.lm.suilendClient,
         transaction,
-        userData.obligationOwnerCaps?.[0], // Use the first (and assumed to be the only) obligation owner cap
+        obligationIndex !== -1
+          ? userData.obligationOwnerCaps[obligationIndex]
+          : undefined, // Create new obligation
       );
       await appData.lm.suilendClient.depositIntoObligation(
         address,
@@ -91,12 +113,19 @@ export default function PoolPositionRow({
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
 
-      showSuccessTxnToast("Staked LP tokens", txUrl);
+      showSuccessTxnToast(
+        `Staked ${formatPair(
+          position.pool.coinTypes.map(
+            (coinType) => appData.coinMetadataMap[coinType].symbol,
+          ),
+        )} LP tokens`,
+        txUrl,
+      );
 
       setStakedPercentOverride(new BigNumber(100)); // Override to prevent double-counting while refreshing
       setTimeout(() => {
         setStakedPercentOverride(undefined);
-      }, 3000);
+      }, 5000);
     } catch (err) {
       showErrorToast(
         "Failed to stake LP tokens",
@@ -132,10 +161,17 @@ export default function PoolPositionRow({
       const transaction = new Transaction();
 
       try {
+        const obligationIndex = getIndexOfObligationWithDeposit(
+          userData.obligations,
+          position.pool.lpTokenType,
+        ); // Assumes up to one obligation has deposits of the LP token type
+        if (obligationIndex === -1) throw Error("Obligation not found"); // Should never happen as you can't unstake if you don't have any staked
+        console.log("XXX obligationIndex:", obligationIndex);
+
         await appData.lm.suilendClient.withdrawAndSendToUser(
           address,
-          userData.obligationOwnerCaps[0].id, // Assumes only one obligation owner cap
-          userData.obligations[0].id, // Assumes only one obligation
+          userData.obligationOwnerCaps[obligationIndex].id,
+          userData.obligations[obligationIndex].id,
           position.pool.lpTokenType,
           submitAmount,
           transaction,
@@ -149,12 +185,19 @@ export default function PoolPositionRow({
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
 
-      showSuccessTxnToast("Unstaked LP tokens", txUrl);
+      showSuccessTxnToast(
+        `Unstaked ${formatPair(
+          position.pool.coinTypes.map(
+            (coinType) => appData.coinMetadataMap[coinType].symbol,
+          ),
+        )} LP tokens`,
+        txUrl,
+      );
 
       setStakedPercentOverride(new BigNumber(0)); // Override to prevent double-counting while refreshing
       setTimeout(() => {
         setStakedPercentOverride(undefined);
-      }, 3000);
+      }, 5000);
     } catch (err) {
       showErrorToast(
         "Failed to unstake LP tokens",
@@ -173,16 +216,11 @@ export default function PoolPositionRow({
     }
   };
 
-  // Claim
-  const onClaimRewardsClick = (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-  };
-
   return (
     <Link
       className={cn(
-        "group relative z-[1] flex h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row transition-colors hover:bg-tertiary",
-        !isLast && "h-[calc(56px+1px)] border-b",
+        "group relative z-[1] flex min-h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row items-center py-[16px] transition-colors hover:bg-tertiary",
+        !isLast && "min-h-[calc(56px+1px)] border-b",
       )}
       href={`${POOL_URL_PREFIX}/${position.pool.id}`}
     >
@@ -286,6 +324,68 @@ export default function PoolPositionRow({
           <p className="text-p1 text-foreground">--</p>
         )}
       </div>
+
+      {/* Claimable rewards */}
+      <div
+        className="flex h-full flex-row items-center"
+        style={columnStyleMap.claimableRewards}
+      >
+        {Object.keys(position.claimableRewards).length > 0 ? (
+          <div className="flex flex-col items-end gap-1">
+            {Object.entries(position.claimableRewards).map(
+              ([coinType, amount]) => {
+                const coinMetadata = appData.coinMetadataMap[coinType];
+
+                return (
+                  <div
+                    key={coinType}
+                    className="flex flex-row items-center gap-2"
+                  >
+                    <TokenLogo
+                      token={getToken(coinType, coinMetadata)}
+                      size={16}
+                    />
+                    <Tooltip
+                      title={`${formatToken(amount, { dp: coinMetadata.decimals })} ${coinMetadata.symbol}`}
+                    >
+                      <p className="text-p2 text-foreground">
+                        {formatToken(amount, { exact: false })}{" "}
+                        {coinMetadata.symbol}
+                      </p>
+                    </Tooltip>
+                  </div>
+                );
+              },
+            )}
+          </div>
+        ) : (
+          <p className="text-p1 text-foreground">--</p>
+        )}
+      </div>
+
+      {/* Points */}
+      {/* <div
+        className="flex h-full flex-row items-center"
+        style={columnStyleMap.points}
+      >
+        <div className="flex flex-row items-center gap-2">
+          <TokenLogo
+            token={getToken(
+              NORMALIZED_SEND_POINTS_S2_COINTYPE,
+              appData.coinMetadataMap[NORMALIZED_SEND_POINTS_S2_COINTYPE],
+            )}
+            size={16}
+          />
+
+          <Tooltip
+            title={`${formatPoints(position.points, { dp: appData.coinMetadataMap[NORMALIZED_SEND_POINTS_S2_COINTYPE].decimals })} ${appData.coinMetadataMap[NORMALIZED_SEND_POINTS_S2_COINTYPE].symbol}`}
+          >
+            <p className="text-p2 text-foreground">
+              {formatPoints(position.points)}
+            </p>
+          </Tooltip>
+        </div>
+      </div> */}
     </Link>
   );
 }

@@ -33,6 +33,10 @@ import {
   useWalletContext,
 } from "@suilend/frontend-sui-next";
 import {
+  createObligationIfNoneExists,
+  sendObligationToUser,
+} from "@suilend/sdk";
+import {
   DepositQuote,
   RedeemQuote,
   SteammSDK,
@@ -52,6 +56,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
+import {
+  getIndexOfObligationWithDeposit,
+  getObligationDepositPosition,
+  getObligationDepositedAmount,
+} from "@/lib/obligation";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
@@ -82,7 +91,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
-  const { getBalance, refresh } = useLoadedUserContext();
+  const { getBalance, userData, refresh } = useLoadedUserContext();
   const { pool } = usePoolContext();
 
   // Value
@@ -369,6 +378,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
       const transaction = new Transaction();
 
+      // Deposit into pool
       const coinA = coinWithBalance({
         balance: BigInt(submitAmountA),
         type: coinTypeA,
@@ -380,7 +390,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
         useGasCoin: isSui(coinTypeB),
       })(transaction);
 
-      await steammClient.Pool.depositLiquidityEntry(transaction, {
+      const [lpCoin] = await steammClient.Pool.depositLiquidity(transaction, {
         pool: pool.id,
         coinTypeA,
         coinTypeB,
@@ -391,6 +401,38 @@ function DepositTab({ formatValue }: DepositTabProps) {
       });
 
       transaction.transferObjects([coinA, coinB], address);
+
+      // Stake LP tokens (if reserve exists)
+      if (appData.lm.reserveMap[pool.lpTokenType]) {
+        let obligationIndex = getIndexOfObligationWithDeposit(
+          userData.obligations,
+          pool.lpTokenType,
+        ); // Assumes up to one obligation has deposits of the LP token type
+        if (obligationIndex === -1)
+          obligationIndex = userData.obligations.findIndex(
+            (obligation) => obligation.depositPositionCount < 5,
+          ); // Get obligation with less than 5 deposits (if any)
+        console.log("XXX obligationIndex:", obligationIndex);
+
+        const { obligationOwnerCapId, didCreate } =
+          createObligationIfNoneExists(
+            appData.lm.suilendClient,
+            transaction,
+            obligationIndex !== -1
+              ? userData.obligationOwnerCaps[obligationIndex]
+              : undefined, // Create new obligation
+          );
+        appData.lm.suilendClient.deposit(
+          lpCoin,
+          pool.lpTokenType,
+          obligationOwnerCapId,
+          transaction,
+        );
+        if (didCreate)
+          sendObligationToUser(obligationOwnerCapId, address, transaction);
+      } else {
+        transaction.transferObjects([lpCoin], address);
+      }
 
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
@@ -510,8 +552,20 @@ function WithdrawTab() {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
-  const { getBalance, refresh } = useLoadedUserContext();
+  const { getBalance, userData, refresh } = useLoadedUserContext();
   const { pool } = usePoolContext();
+
+  const lpTokenObligationIndex = getIndexOfObligationWithDeposit(
+    userData.obligations,
+    pool.lpTokenType,
+  ); // Assumes up to one obligation has deposits of the LP token type
+
+  const lpTokenBalance = getBalance(pool.lpTokenType);
+  const lpTokenDepositedAmount = getObligationDepositedAmount(
+    userData.obligations[lpTokenObligationIndex],
+    pool.lpTokenType,
+  );
+  const lpTokenTotalAmount = lpTokenBalance.plus(lpTokenDepositedAmount);
 
   // Value
   const [value, setValue] = useState<string>("0");
@@ -532,7 +586,7 @@ function WithdrawTab() {
 
     try {
       const submitAmount = new BigNumber(
-        new BigNumber(_value).div(100).times(getBalance(pool.lpTokenType)),
+        new BigNumber(_value).div(100).times(lpTokenTotalAmount),
       )
         .times(10 ** appData.coinMetadataMap[pool.lpTokenType].decimals)
         .integerValue(BigNumber.ROUND_DOWN)
@@ -577,9 +631,9 @@ function WithdrawTab() {
     if (new BigNumber(value).lt(0))
       return { isDisabled: true, title: "Enter a +ve amount" };
     if (
-      new BigNumber(
-        new BigNumber(value).div(100).times(getBalance(pool.lpTokenType)),
-      ).eq(0)
+      new BigNumber(new BigNumber(value).div(100).times(lpTokenTotalAmount)).eq(
+        0,
+      )
     )
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
@@ -614,26 +668,115 @@ function WithdrawTab() {
         appData.coinMetadataMap[coinTypeB],
       ];
 
-      const submitAmountLp = new BigNumber(
-        new BigNumber(value).div(100).times(getBalance(pool.lpTokenType)),
-      )
-        .times(10 ** coinMetadataLpToken.decimals)
-        .integerValue(BigNumber.ROUND_DOWN)
-        .toString();
+      const lpTokenValue = new BigNumber(value)
+        .div(100)
+        .times(lpTokenTotalAmount);
 
+      const transaction = new Transaction();
+
+      let lpCoin;
+      if (lpTokenBalance.gte(lpTokenValue)) {
+        console.log("XXX wallet");
+        // Withdraw from wallet only
+        lpCoin = coinWithBalance({
+          balance: BigInt(
+            new BigNumber(lpTokenValue)
+              .times(10 ** coinMetadataLpToken.decimals)
+              .integerValue(BigNumber.ROUND_DOWN)
+              .toString(),
+          ),
+          type: lpTokenType,
+          useGasCoin: false,
+        })(transaction);
+      } else {
+        const obligationIndex = getIndexOfObligationWithDeposit(
+          userData.obligations,
+          pool.lpTokenType,
+        ); // Assumes up to one obligation has deposits of the LP token type
+        if (obligationIndex === -1) throw Error("Obligation not found"); // Should never happen as the amount can't be greater than the balance if there are no deposits
+        console.log("XXX obligationIndex:", obligationIndex);
+
+        const lpCoins = [];
+        if (lpTokenBalance.gt(0)) {
+          // Withdraw MAX from wallet
+          console.log("XXX max wallet, and");
+          lpCoins.push(
+            coinWithBalance({
+              balance: BigInt(
+                new BigNumber(lpTokenBalance)
+                  .times(10 ** coinMetadataLpToken.decimals)
+                  .integerValue(BigNumber.ROUND_DOWN)
+                  .toString(),
+              ),
+              type: lpTokenType,
+              useGasCoin: false,
+            })(transaction),
+          );
+        }
+
+        if (lpTokenValue.eq(lpTokenTotalAmount)) {
+          // Withdraw MAX from Suilend
+          console.log("XXX max suilend");
+          const submitAmount = MAX_U64.toString();
+
+          const [_lpCoin] = await appData.lm.suilendClient.withdraw(
+            userData.obligationOwnerCaps[obligationIndex].id,
+            userData.obligations[obligationIndex].id,
+            pool.lpTokenType,
+            submitAmount,
+            transaction,
+          );
+          lpCoins.push(_lpCoin);
+        } else {
+          // Withdraw from Suilend
+          console.log("XXX suilend");
+
+          const lpTokenDepositPosition = getObligationDepositPosition(
+            userData.obligations[obligationIndex],
+            pool.lpTokenType,
+          );
+          if (!lpTokenDepositPosition) return; // Should never happen as obligationIndex !== -1
+          console.log("XXX lpTokenDepositPosition:", lpTokenDepositPosition);
+
+          const submitAmount = BigNumber.min(
+            new BigNumber(
+              new BigNumber(lpTokenValue.minus(lpTokenBalance))
+                .times(10 ** coinMetadataLpToken.decimals)
+                .integerValue(BigNumber.ROUND_DOWN)
+                .toString(),
+            )
+              .div(appData.lm.reserveMap[pool.lpTokenType].cTokenExchangeRate)
+              .integerValue(BigNumber.ROUND_UP),
+            lpTokenDepositPosition.depositedCtokenAmount,
+          ).toString();
+
+          const [_lpCoin] = await appData.lm.suilendClient.withdraw(
+            userData.obligationOwnerCaps[obligationIndex].id,
+            userData.obligations[obligationIndex].id,
+            pool.lpTokenType,
+            submitAmount,
+            transaction,
+          );
+          lpCoins.push(_lpCoin);
+        }
+
+        // Merge coins (if multiple)
+        if (lpCoins.length === 1) lpCoin = lpCoins[0];
+        else {
+          lpCoin = lpCoins[0];
+          transaction.mergeCoins(
+            transaction.object(lpCoins[0]),
+            lpCoins.map((c) => transaction.object(c)).slice(1),
+          );
+        }
+      }
+
+      // Withdraw from pool
       const submitAmountA = quote.withdrawA.toString();
       const submitAmountB = new BigNumber(quote.withdrawB.toString())
         .div(1 + slippagePercent / 100)
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
-
-      const transaction = new Transaction();
-
-      const lpCoin = coinWithBalance({
-        balance: BigInt(submitAmountLp),
-        type: lpTokenType,
-        useGasCoin: false,
-      })(transaction);
 
       await steammClient.Pool.redeemLiquidityEntry(transaction, {
         pool: pool.id,
@@ -724,9 +867,7 @@ function WithdrawTab() {
             <TokenLogos coinTypes={pool.coinTypes} size={16} />
             <p className="text-p2 text-foreground">
               {formatToken(
-                new BigNumber(value)
-                  .div(100)
-                  .times(getBalance(pool.lpTokenType)),
+                new BigNumber(value).div(100).times(lpTokenTotalAmount),
                 { dp: appData.coinMetadataMap[pool.lpTokenType].decimals },
               )}
             </p>

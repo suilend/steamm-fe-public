@@ -58,4 +58,5 @@ export type PoolPosition = {
   balanceUsd?: BigNumber;
   stakedPercent: BigNumber;
   claimableRewards: Record<string, BigNumber>;
+  points: BigNumber;
 };
