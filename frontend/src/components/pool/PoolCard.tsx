@@ -20,10 +20,11 @@ export default function PoolCard({ pool }: PoolCardProps) {
       <div className="flex w-full flex-row items-center gap-2">
         <TokenLogos coinTypes={pool.coinTypes} size={16} />
         <p className="text-p1 text-foreground">
-          {formatPair([
-            appData.coinMetadataMap[pool.coinTypes[0]].symbol,
-            appData.coinMetadataMap[pool.coinTypes[1]].symbol,
-          ])}
+          {formatPair(
+            pool.coinTypes.map(
+              (coinType) => appData.coinMetadataMap[coinType].symbol,
+            ),
+          )}
         </p>
 
         <div className="flex flex-row items-center gap-1">

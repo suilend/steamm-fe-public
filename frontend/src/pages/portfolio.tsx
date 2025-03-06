@@ -1,8 +1,10 @@
 import Head from "next/head";
 import { useEffect, useMemo, useState } from "react";
 
+import { Transaction } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
+import { Loader2 } from "lucide-react";
 
 import {
   NORMALIZED_SEND_POINTS_S2_COINTYPE,
@@ -12,10 +14,15 @@ import {
   formatUsd,
   getToken,
   isSendPoints,
-  isSendPointsS2,
 } from "@suilend/frontend-sui";
-import { showErrorToast } from "@suilend/frontend-sui-next";
 import {
+  showErrorToast,
+  useSettingsContext,
+  useWalletContext,
+} from "@suilend/frontend-sui-next";
+import {
+  ClaimRewardsReward,
+  RewardSummary,
   Side,
   getFilteredRewards,
   getStakingYieldAprPercent,
@@ -36,51 +43,50 @@ import {
   getIndexOfObligationWithDeposit,
   getObligationDepositedAmount,
 } from "@/lib/obligation";
+import { showSuccessTxnToast } from "@/lib/toasts";
 import { PoolPosition } from "@/lib/types";
 
 export default function PortfolioPage() {
+  const { explorer } = useSettingsContext();
+  const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, lstData } = useLoadedAppContext();
-  const { getBalance, userData } = useLoadedUserContext();
+  const { getBalance, userData, refresh } = useLoadedUserContext();
   const { poolStats } = useStatsContext();
 
   // Pools - rewards (across all obligations)
   const poolRewardsMap: Record<string, Record<string, BigNumber>> = useMemo(
     () =>
-      userData.obligations.length > 0
-        ? appData.pools.reduce(
-            (acc, pool) => ({
-              ...acc,
-              [pool.lpTokenType]: (
-                userData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []
-              ).reduce(
-                (acc2, reward) => {
-                  for (let i = 0; i < userData.obligations.length; i++) {
-                    const obligation = userData.obligations[i];
+      appData.pools.reduce(
+        (acc, pool) => ({
+          ...acc,
+          [pool.lpTokenType]: (
+            userData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []
+          ).reduce(
+            (acc2, r) => {
+              for (let i = 0; i < userData.obligations.length; i++) {
+                const obligation = userData.obligations[i];
 
-                    const minAmount = 10 ** (-1 * reward.stats.mintDecimals);
-                    if (
-                      !reward.obligationClaims[obligation.id] ||
-                      reward.obligationClaims[obligation.id].claimableAmount.lt(
-                        minAmount,
-                      ) // This also covers the 0 case
-                    )
-                      continue;
+                const minAmount = 10 ** (-1 * r.stats.mintDecimals);
+                if (
+                  !r.obligationClaims[obligation.id] ||
+                  r.obligationClaims[obligation.id].claimableAmount.lt(
+                    minAmount,
+                  ) // This also covers the 0 case
+                )
+                  continue;
 
-                    acc2[reward.stats.rewardCoinType] = new BigNumber(
-                      acc2[reward.stats.rewardCoinType] ?? 0,
-                    ).plus(
-                      reward.obligationClaims[obligation.id].claimableAmount,
-                    );
-                  }
+                acc2[r.stats.rewardCoinType] = new BigNumber(
+                  acc2[r.stats.rewardCoinType] ?? 0,
+                ).plus(r.obligationClaims[obligation.id].claimableAmount);
+              }
 
-                  return acc2;
-                },
-                {} as Record<string, BigNumber>,
-              ),
-            }),
-            {} as Record<string, Record<string, BigNumber>>,
-          )
-        : {},
+              return acc2;
+            },
+            {} as Record<string, BigNumber>,
+          ),
+        }),
+        {} as Record<string, Record<string, BigNumber>>,
+      ),
     [appData.pools, userData.obligations, userData.rewardMap],
   );
 
@@ -322,7 +328,72 @@ export default function PortfolioPage() {
     [poolRewardsMap],
   );
 
-  const onClaimRewardsClick = () => {};
+  const [isClaiming, setIsClaiming] = useState<boolean>(false);
+
+  const onClaimRewardsClick = async () => {
+    try {
+      if (isClaiming) return;
+      if (!address) throw Error("Wallet not connected");
+
+      setIsClaiming(true);
+
+      const transaction = new Transaction();
+
+      for (let i = 0; i < userData.obligations.length; i++) {
+        const obligationOwnerCap = userData.obligationOwnerCaps[i];
+        const obligation = userData.obligations[i];
+        if (!obligationOwnerCap || !obligation)
+          throw Error("Obligation not found");
+
+        const rewardsMap: Record<string, RewardSummary[]> = {};
+        Object.values(userData.rewardMap).flatMap((rewards) =>
+          rewards.deposit.forEach((r) => {
+            if (isSendPoints(r.stats.rewardCoinType)) return;
+
+            const minAmount = 10 ** (-1 * r.stats.mintDecimals);
+            if (
+              !r.obligationClaims[obligation.id] ||
+              r.obligationClaims[obligation.id].claimableAmount.lt(minAmount) // This also covers the 0 case
+            )
+              return;
+
+            if (!rewardsMap[r.stats.rewardCoinType])
+              rewardsMap[r.stats.rewardCoinType] = [];
+            rewardsMap[r.stats.rewardCoinType].push(r);
+          }),
+        );
+
+        const rewards: ClaimRewardsReward[] = Object.values(rewardsMap)
+          .flat()
+          .map((r) => ({
+            reserveArrayIndex:
+              r.obligationClaims[obligation.id].reserveArrayIndex,
+            rewardIndex: BigInt(r.stats.rewardIndex),
+            rewardCoinType: r.stats.rewardCoinType,
+            side: Side.DEPOSIT,
+          }));
+
+        appData.lm.suilendClient.claimRewardsAndSendToUser(
+          address,
+          obligationOwnerCap.id,
+          rewards,
+          transaction,
+        );
+      }
+
+      const res = await signExecuteAndWaitForTransaction(transaction);
+      const txUrl = explorer.buildTxUrl(res.digest);
+
+      showSuccessTxnToast("Claimed rewards", txUrl);
+    } catch (err) {
+      showErrorToast("Failed to claim rewards", err as Error, undefined, true);
+      console.error(err);
+      Sentry.captureException(err);
+    } finally {
+      setIsClaiming(false);
+      refresh();
+    }
+  };
 
   // Summary - Points (S2 only)
   const points: BigNumber | undefined = useMemo(
@@ -439,12 +510,17 @@ export default function PortfolioPage() {
                         </Tooltip>
 
                         <button
-                          className="flex h-6 flex-row items-center rounded-md bg-button-1 px-2 transition-colors hover:bg-button-1/80"
+                          className="flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-1 px-2 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
+                          disabled={isClaiming}
                           onClick={onClaimRewardsClick}
                         >
-                          <p className="text-p3 text-button-1-foreground">
-                            Claim
-                          </p>
+                          {isClaiming ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-button-1-foreground" />
+                          ) : (
+                            <p className="text-p3 text-button-1-foreground">
+                              Claim
+                            </p>
+                          )}
                         </button>
                       </div>
                     ) : (

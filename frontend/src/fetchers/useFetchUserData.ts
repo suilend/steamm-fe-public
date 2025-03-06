@@ -55,10 +55,10 @@ export default function useFetchUserData() {
 
       const reserve = appData.lm.reserveMap[coinType];
       const rewards = rewardMap[coinType][Side.DEPOSIT];
-      for (const reward of rewards) {
-        if (reward.stats.aprPercent !== undefined) {
+      for (const r of rewards) {
+        if (r.stats.aprPercent !== undefined) {
           // Undo division in @suilend/sdk/src/lib/liquidityMining.ts:formatRewards
-          reward.stats.aprPercent = reward.stats.aprPercent.times(
+          r.stats.aprPercent = r.stats.aprPercent.times(
             getDepositShare(
               reserve,
               new BigNumber(
@@ -69,10 +69,10 @@ export default function useFetchUserData() {
 
           // Divide by pool TVL
           if (pool.tvlUsd.gt(0))
-            reward.stats.aprPercent = reward.stats.aprPercent.div(pool.tvlUsd);
-        } else if (reward.stats.perDay !== undefined) {
+            r.stats.aprPercent = r.stats.aprPercent.div(pool.tvlUsd);
+        } else if (r.stats.perDay !== undefined) {
           // Undo division in @suilend/sdk/src/lib/liquidityMining.ts:formatRewards
-          reward.stats.perDay = reward.stats.perDay.times(
+          r.stats.perDay = r.stats.perDay.times(
             getDepositShare(
               reserve,
               new BigNumber(
@@ -83,7 +83,7 @@ export default function useFetchUserData() {
 
           // Divide by pool TVL
           if (pool.tvlUsd.gt(0))
-            reward.stats.perDay = reward.stats.perDay.div(pool.tvlUsd);
+            r.stats.perDay = r.stats.perDay.div(pool.tvlUsd);
         }
       }
     }

@@ -68,10 +68,10 @@ export default function PoolPositionRow({
   const onStakeClick = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
-    if (isStaking) return;
-    if (!address) throw Error("Wallet not connected");
-
     try {
+      if (isStaking) return;
+      if (!address) throw Error("Wallet not connected");
+
       setIsStaking(true);
 
       const submitAmount = new BigNumber(getBalance(position.pool.lpTokenType))
@@ -113,7 +113,14 @@ export default function PoolPositionRow({
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
 
-      showSuccessTxnToast("Staked LP tokens", txUrl);
+      showSuccessTxnToast(
+        `Staked ${formatPair(
+          position.pool.coinTypes.map(
+            (coinType) => appData.coinMetadataMap[coinType].symbol,
+          ),
+        )} LP tokens`,
+        txUrl,
+      );
 
       setStakedPercentOverride(new BigNumber(100)); // Override to prevent double-counting while refreshing
       setTimeout(() => {
@@ -178,7 +185,14 @@ export default function PoolPositionRow({
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
 
-      showSuccessTxnToast("Unstaked LP tokens", txUrl);
+      showSuccessTxnToast(
+        `Unstaked ${formatPair(
+          position.pool.coinTypes.map(
+            (coinType) => appData.coinMetadataMap[coinType].symbol,
+          ),
+        )} LP tokens`,
+        txUrl,
+      );
 
       setStakedPercentOverride(new BigNumber(0)); // Override to prevent double-counting while refreshing
       setTimeout(() => {
