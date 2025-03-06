@@ -101,10 +101,8 @@ export class RouterModule implements IModule {
         i === args.route.length - 1
           ? (() => {
               if (hop.a2b) {
-                bankB.compoundInterestIfAny(tx);
                 return bankB.toBTokens(tx, { amount: args.quote.amountOut });
               } else {
-                bankA.compoundInterestIfAny(tx);
                 return bankA.toBTokens(tx, { amount: args.quote.amountOut });
               }
             })()
@@ -419,9 +417,6 @@ export class RouterModule implements IModule {
     x2y: boolean,
     amountIn: bigint | TransactionArgument,
   ): TransactionResult {
-    bankX.compoundInterestIfAny(tx);
-    bankY.compoundInterestIfAny(tx);
-
     const bTokensIn = x2y
       ? bankX.toBTokens(tx, { amount: amountIn })
       : bankY.toBTokens(tx, { amount: amountIn });

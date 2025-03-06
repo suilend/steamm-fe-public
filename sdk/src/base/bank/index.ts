@@ -45,7 +45,7 @@ export class Bank {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const bToken = BankFunctions.mintBtokens(
+    const bToken = BankFunctions.mintBtoken(
       tx,
       this.typeArgs(),
       callArgs,
@@ -66,7 +66,7 @@ export class Bank {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const coin = BankFunctions.burnBtokens(
+    const coin = BankFunctions.burnBtoken(
       tx,
       this.typeArgs(),
       callArgs,
