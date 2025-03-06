@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { v4 as uuidv4 } from "uuid";
@@ -19,6 +19,7 @@ import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
+import useBreakpoint from "@/hooks/useBreakpoint";
 import { ChartType } from "@/lib/chart";
 import { formatPair } from "@/lib/format";
 import { getTotalAprPercent } from "@/lib/liquidityMining";
@@ -28,6 +29,8 @@ export default function PoolsPage() {
   const { appData, lstData } = useLoadedAppContext();
   const { userData } = useLoadedUserContext();
   const { poolStats, totalHistoricalStats, totalStats } = useStatsContext();
+
+  const { sm } = useBreakpoint();
 
   // TVL
   const totalTvlUsd = useMemo(
@@ -129,6 +132,32 @@ export default function PoolsPage() {
     [poolGroups, appData.featuredCoinTypePairs],
   );
 
+  // Search
+  const [searchString, setSearchString] = useState<string>("");
+
+  const filteredPoolGroups = useMemo(() => {
+    if (searchString === "") return poolGroups;
+
+    return poolGroups
+      .filter((poolGroup) =>
+        poolGroup.coinTypes.some((coinType) =>
+          `${coinType}${appData.coinMetadataMap[coinType].symbol}`
+            .toLowerCase()
+            .includes(searchString.toLowerCase()),
+        ),
+      )
+      .map((poolGroup) => ({
+        ...poolGroup,
+        pools: poolGroup.pools.filter((pool) =>
+          pool.coinTypes.some((coinType) =>
+            `${coinType}${appData.coinMetadataMap[coinType].symbol}`
+              .toLowerCase()
+              .includes(searchString.toLowerCase()),
+          ),
+        ),
+      }));
+  }, [searchString, poolGroups, appData.coinMetadataMap]);
+
   return (
     <>
       <Head>
@@ -212,32 +241,51 @@ export default function PoolsPage() {
 
         {/* All pools */}
         <div className="flex w-full flex-col gap-6">
-          <div className="flex h-[30px] w-full flex-row items-center justify-between">
+          <div className="flex h-[30px] w-full flex-row items-center justify-between gap-4">
             <div className="flex flex-row items-center gap-3">
               <h2 className="text-h3 text-foreground">All pools</h2>
               <Tag>
-                {poolGroups.reduce(
+                {filteredPoolGroups.reduce(
                   (acc, poolGroup) => acc + poolGroup.pools.length,
                   0,
                 )}
               </Tag>
             </div>
 
-            <Tooltip title="Coming soon">
-              <div className="w-max">
-                <button
-                  className="flex h-10 flex-row items-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
-                  disabled
-                >
-                  <p className="text-p2 text-button-1-foreground">
-                    Create pool
-                  </p>
-                </button>
+            <div className="flex flex-row items-center justify-end gap-2 max-md:flex-1">
+              {/* Filter */}
+              <div className="relative z-[1] h-10 max-w-[180px] rounded-md bg-card transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))] max-md:flex-1 md:w-[180px]">
+                <input
+                  className="h-full w-full min-w-0 !border-0 !bg-[transparent] px-3 text-p1 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  autoFocus
+                  type="text"
+                  placeholder={sm ? "Search pools..." : "Search..."}
+                  value={searchString}
+                  onChange={(e) => setSearchString(e.target.value)}
+                />
               </div>
-            </Tooltip>
+
+              {/* Create pool */}
+              <Tooltip title="Coming soon">
+                <div className="w-max">
+                  <button
+                    className="flex h-10 flex-row items-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
+                    disabled
+                  >
+                    <p className="text-p2 text-button-1-foreground">
+                      Create pool
+                    </p>
+                  </button>
+                </div>
+              </Tooltip>
+            </div>
           </div>
 
-          <PoolsTable tableId="pools" poolGroups={poolGroups} />
+          <PoolsTable
+            tableId="pools"
+            poolGroups={filteredPoolGroups}
+            searchString={searchString}
+          />
         </div>
       </div>
     </>

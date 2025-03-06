@@ -48,12 +48,14 @@ interface PoolsTableProps {
   className?: ClassValue;
   tableId: string;
   poolGroups?: PoolGroup[];
+  searchString?: string;
 }
 
 export default function PoolsTable({
   className,
   tableId,
   poolGroups,
+  searchString,
 }: PoolsTableProps) {
   // Sort
   type SortState = { column: SortableColumn; direction: SortDirection };
@@ -218,7 +220,9 @@ export default function PoolsTable({
         ))
       ) : sortedPoolGroups.length === 0 ? (
         <div className="flex h-[56px] w-full flex-row items-center justify-center">
-          <p className="text-p2 text-tertiary-foreground">No pools</p>
+          <p className="text-p2 text-tertiary-foreground">
+            {searchString ? `No matches for "${searchString}"` : "No pools"}
+          </p>
         </div>
       ) : (
         sortedPoolGroups.map((poolGroup, index, array) => (
