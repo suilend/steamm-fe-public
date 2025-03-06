@@ -121,9 +121,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             .div(10 ** bankCoinMetadataMap[coinType].decimals);
           const totalAmount = liquidAmount.plus(depositedAmount);
 
-          const utilizationPercent = depositedAmount
-            .div(totalAmount)
-            .times(100);
+          const utilizationPercent = totalAmount.gt(0)
+            ? depositedAmount.div(totalAmount).times(100)
+            : new BigNumber(0);
           const suilendDepositAprPercent =
             mainMarket_reserveDepositAprPercentMap[coinType] ??
             new BigNumber(0);
