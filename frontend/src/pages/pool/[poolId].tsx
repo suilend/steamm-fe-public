@@ -178,12 +178,14 @@ function PoolPage() {
             </div>
           </div>
 
-          <SuggestedPools
-            containerClassName="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-            title="Suggested pools"
-            pools={suggestedPools}
-            collapsedPoolCount={lg ? 3 : md ? 2 : 1}
-          />
+          {suggestedPools.length > 0 && (
+            <SuggestedPools
+              containerClassName="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+              title={`Other ${appData.coinMetadataMap[pool.coinTypes[0]].symbol} pools`}
+              pools={suggestedPools}
+              collapsedPoolCount={lg ? 3 : md ? 2 : 1}
+            />
+          )}
         </div>
       </div>
     </>
