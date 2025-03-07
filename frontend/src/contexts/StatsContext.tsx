@@ -155,6 +155,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             end: number;
             usdValue: string;
           }[] = await res.json();
+          if ((json as any)?.statusCode === 500) return;
 
           setPoolHistoricalStats((prev) => ({
             ...prev,
@@ -193,6 +194,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             end: number;
             fees: Record<string, string>;
           }[] = await res.json();
+          if ((json as any)?.statusCode === 500) return;
 
           setPoolHistoricalStats((prev) => ({
             ...prev,
