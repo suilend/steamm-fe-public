@@ -9,6 +9,7 @@ import {
   NORMALIZED_USDC_COINTYPE,
   getCoinMetadataMap,
   isSui,
+  issSui,
 } from "@suilend/frontend-sui";
 import { showErrorToast, useSettingsContext } from "@suilend/frontend-sui-next";
 import {
@@ -213,7 +214,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             const balances = [balanceA, balanceB];
 
             let priceA, priceB;
-            if (isSui(coinTypeB)) {
+            if (isSui(coinTypeB) || issSui(coinTypeB)) {
               priceB = suiPrice;
               priceA =
                 coinTypeA === NORMALIZED_USDC_COINTYPE
@@ -223,14 +224,15 @@ export default function useFetchAppData(steammClient: SteammSDK) {
                     : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
             } else if (coinTypeB === NORMALIZED_USDC_COINTYPE) {
               priceB = usdcPrice;
-              priceA = isSui(coinTypeA)
-                ? suiPrice
-                : !balanceA.eq(0)
-                  ? balanceB.div(balanceA).times(priceB)
-                  : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
+              priceA =
+                isSui(coinTypeA) || issSui(coinTypeA)
+                  ? suiPrice
+                  : !balanceA.eq(0)
+                    ? balanceB.div(balanceA).times(priceB)
+                    : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
             } else {
               console.error(
-                `Quote asset must be one of SUI, USDC - skipping pool with id: ${id}`,
+                `Quote asset must be one of SUI, sSUI, USDC - skipping pool with id: ${id}`,
               );
               return undefined;
             }
