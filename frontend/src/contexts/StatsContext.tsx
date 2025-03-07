@@ -16,8 +16,9 @@ import { useAppContext } from "@/contexts/AppContext";
 import { ChartData } from "@/lib/chart";
 import { API_URL } from "@/lib/navigation";
 
-const ONE_HOUR_S = 60 * 60;
-const ONE_DAY_S = 24 * ONE_HOUR_S;
+const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
+const ONE_HOUR_MS = FIFTEEN_MINUTES_MS * 4;
+const ONE_DAY_MS = 24 * ONE_HOUR_MS;
 
 interface StatsContext {
   poolHistoricalStats: {
@@ -88,9 +89,18 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   const fetchPoolHistoricalStats = useCallback(async () => {
     if (!appData) return;
 
-    const now = Date.now();
-    const hourStart = startOfHour(now);
-    const hourStartS = Math.floor(hourStart.getTime() / 1000);
+    const nowMs = Date.now();
+    const hourStartMs = startOfHour(nowMs);
+
+    const startTimestampMs =
+      hourStartMs.getTime() +
+      Math.floor((nowMs - hourStartMs.getTime()) / FIFTEEN_MINUTES_MS) *
+        FIFTEEN_MINUTES_MS -
+      ONE_DAY_MS;
+    const endTimestampMs = startTimestampMs + ONE_DAY_MS - 1; // Exclude unfinished interval
+
+    const startTimestampS = Math.floor(startTimestampMs / 1000);
+    const endTimestampS = Math.floor(endTimestampMs / 1000);
 
     for (const pool of appData.pools) {
       // TVL
@@ -98,9 +108,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         try {
           const res = await fetch(
             `${API_URL}/steamm/historical/tvl?${new URLSearchParams({
-              startTimestampS: `${hourStartS - ONE_DAY_S}`,
-              endTimestampS: `${hourStartS - 1}`, // Exclude unfinished hour (24 hours)
-              intervalS: `${ONE_HOUR_S}`,
+              startTimestampS: `${startTimestampS}`,
+              endTimestampS: `${endTimestampS}`,
+              intervalS: `${FIFTEEN_MINUTES_MS / 1000}`,
               poolId: pool.id,
             })}`,
           );
@@ -144,9 +154,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         try {
           const res = await fetch(
             `${API_URL}/steamm/historical/volume?${new URLSearchParams({
-              startTimestampS: `${hourStartS - ONE_DAY_S}`,
-              endTimestampS: `${hourStartS - 1}`, // Exclude unfinished hour (24 hours)
-              intervalS: `${ONE_HOUR_S}`,
+              startTimestampS: `${startTimestampS}`,
+              endTimestampS: `${endTimestampS}`,
+              intervalS: `${ONE_HOUR_MS / 1000}`,
               poolId: pool.id,
             })}`,
           );
@@ -183,9 +193,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         try {
           const res = await fetch(
             `${API_URL}/steamm/historical/fees?${new URLSearchParams({
-              startTimestampS: `${hourStartS - ONE_DAY_S}`,
-              endTimestampS: `${hourStartS - 1}`, // Exclude unfinished hour (24 hours)
-              intervalS: `${ONE_HOUR_S}`,
+              startTimestampS: `${startTimestampS}`,
+              endTimestampS: `${endTimestampS}`,
+              intervalS: `${ONE_HOUR_MS / 1000}`,
               poolId: pool.id,
             })}`,
           );
