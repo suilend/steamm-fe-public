@@ -88,17 +88,49 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
   const { getBalance, userData, refresh } = useLoadedUserContext();
   const { pool } = usePoolContext();
 
+  const currentRatio = new BigNumber(
+    pool.balances[0].times(
+      10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+    ),
+  ).div(
+    pool.balances[1].times(
+      10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals,
+    ),
+  ); // NaN if pool.balances[1] === 0 (i.e. tvlUsd === 0)
+
   // Value
   const maxValues = pool.coinTypes.map((coinType, index) =>
     (isSui(coinType)
       ? BigNumber.max(0, getBalance(coinType).minus(SUI_GAS_MIN))
       : getBalance(coinType)
-    ).div(index === 0 || pool.tvlUsd.eq(0) ? 1 : 1 + slippagePercent / 100),
+    )
+      .div(index === 0 || pool.tvlUsd.eq(0) ? 1 : 1 + slippagePercent / 100)
+      .decimalPlaces(
+        appData.coinMetadataMap[pool.coinTypes[index]].decimals,
+        BigNumber.ROUND_DOWN,
+      ),
   ) as [BigNumber, BigNumber];
+  const smartMaxValues = pool.tvlUsd.gt(0)
+    ? [
+        BigNumber.min(
+          maxValues[0],
+          new BigNumber(maxValues[1].times(currentRatio)).decimalPlaces(
+            appData.coinMetadataMap[pool.coinTypes[1]].decimals,
+            BigNumber.ROUND_DOWN,
+          ),
+        ),
+        BigNumber.min(
+          maxValues[1],
+          new BigNumber(maxValues[0].div(currentRatio)).decimalPlaces(
+            appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+            BigNumber.ROUND_DOWN,
+          ),
+        ),
+      ]
+    : maxValues;
 
   const [values, setValues] = useState<[string, string]>(["", ""]);
   const valuesRef = useRef<[string, string]>(values);
-  const [sliderValues, setSliderValues] = useState<[number, number]>([0, 0]);
 
   const [fetchingQuoteForIndex, setFetchingQuoteForIndex] = useState<
     number | undefined
@@ -168,26 +200,6 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
             )
           : prev[1],
       ]);
-      setSliderValues((prev) => [
-        index === 0
-          ? prev[0]
-          : maxValues[0].gt(0)
-            ? +new BigNumber(
-                new BigNumber(quote.depositA.toString()).div(10 ** dps[0]),
-              )
-                .div(maxValues[0])
-                .times(100)
-            : 100,
-        index === 0
-          ? maxValues[1].gt(0)
-            ? +new BigNumber(
-                new BigNumber(quote.depositB.toString()).div(10 ** dps[1]),
-              )
-                .div(maxValues[1])
-                .times(100)
-            : 100
-          : prev[1],
-      ]);
 
       setFetchingQuoteForIndex(undefined);
       setQuote(quote);
@@ -221,7 +233,6 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
       ];
       valuesRef.current = newValues;
       setValues(newValues);
-      setSliderValues([0, 0]);
 
       setFetchingQuoteForIndex(undefined);
       setQuote(undefined);
@@ -236,22 +247,6 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
       ];
       valuesRef.current = newValues;
       setValues(newValues);
-      setSliderValues([
-        index === 0
-          ? new BigNumber(newValues[0]).gt(0)
-            ? maxValues[0].gt(0)
-              ? +new BigNumber(newValues[0]).div(maxValues[0]).times(100)
-              : 100
-            : 0
-          : sliderValues[0],
-        index === 0
-          ? sliderValues[1]
-          : new BigNumber(newValues[1]).gt(0)
-            ? maxValues[1].gt(0)
-              ? +new BigNumber(newValues[1]).div(maxValues[1]).times(100)
-              : 100
-            : 0,
-      ]);
 
       // Initial deposit (set fake quote) (one of the values may be "")
       setFetchingQuoteForIndex(undefined);
@@ -282,7 +277,6 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
       ];
       valuesRef.current = newValues;
       setValues(newValues);
-      setSliderValues([0, 0]);
 
       setFetchingQuoteForIndex(undefined);
       setQuote(undefined);
@@ -296,15 +290,6 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
     ];
     valuesRef.current = newValues;
     setValues(newValues);
-    setSliderValues(
-      newValues.map((newValue, i) =>
-        new BigNumber(newValue).gt(0)
-          ? maxValues[i].gt(0)
-            ? +new BigNumber(newValue).div(maxValues[i]).times(100)
-            : 100
-          : 0,
-      ) as [number, number],
-    );
 
     setFetchingQuoteForIndex(1 - index);
     (isImmediate ? fetchQuote : debouncedFetchQuote)(
@@ -320,29 +305,14 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
     const coinMetadata = appData.coinMetadataMap[coinType];
 
     onValueChange(
-      maxValues[index].toFixed(coinMetadata.decimals, BigNumber.ROUND_DOWN),
+      smartMaxValues[index].toFixed(
+        coinMetadata.decimals,
+        BigNumber.ROUND_DOWN,
+      ),
       index,
       true,
     );
     document.getElementById(getCoinInputId(coinType))?.focus();
-  };
-
-  // Value - slider
-  const onSliderValueChange = (percent: number, index: number) => {
-    const coinType = pool.coinTypes[index];
-    const coinMetadata = appData.coinMetadataMap[coinType];
-
-    onValueChange(
-      maxValues[index]
-        .times(percent / 100)
-        .toFixed(coinMetadata.decimals, BigNumber.ROUND_DOWN),
-      index,
-    );
-
-    setSliderValues((prev) => [
-      index === 0 ? percent : prev[0],
-      index === 0 ? prev[1] : percent,
-    ]);
   };
 
   // USD prices - current
@@ -556,10 +526,7 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
       showSuccessTxnToast("Deposited liquidity", txUrl, {
         description: `${balanceChangeAFormatted} ${coinMetadataA.symbol} and ${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
       });
-
       setValues(["", ""]);
-      setSliderValues([0, 0]);
-
       setQuote(undefined);
     } catch (err) {
       showErrorToast(

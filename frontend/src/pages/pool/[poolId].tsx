@@ -173,7 +173,7 @@ function PoolPage() {
 
               {/* Right */}
               <div className="max-md:w-full md:flex-1">
-                <PoolActionsCard />
+                <PoolActionsCard key={pool.id} />
               </div>
             </div>
           </div>
