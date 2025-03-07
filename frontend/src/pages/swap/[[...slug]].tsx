@@ -94,6 +94,10 @@ export default function SwapPage() {
   ];
 
   // Value
+  const inMaxValue = isSui(inCoinType)
+    ? BigNumber.max(0, getBalance(inCoinType).minus(SUI_GAS_MIN))
+    : getBalance(inCoinType);
+
   const [value, setValue] = useState<string>("");
   const valueRef = useRef<string>(value);
 
@@ -285,14 +289,9 @@ export default function SwapPage() {
   console.log("SwapPage - birdeyeRatio:", birdeyeRatio?.toString());
 
   // Value - max
-  const onCoinBalanceClick = () => {
-    const balance = getBalance(inCoinType);
-
+  const onBalanceClick = () => {
     onValueChange(
-      (isSui(inCoinType)
-        ? BigNumber.max(0, balance.minus(SUI_GAS_MIN))
-        : balance
-      ).toFixed(inCoinMetadata.decimals, BigNumber.ROUND_DOWN),
+      inMaxValue.toFixed(inCoinMetadata.decimals, BigNumber.ROUND_DOWN),
       true,
     );
     document.getElementById(getCoinInputId(inCoinType))?.focus();
@@ -531,7 +530,7 @@ export default function SwapPage() {
                 value={value}
                 usdValue={inUsdValue}
                 onChange={(value) => onValueChange(value)}
-                onBalanceClick={() => onCoinBalanceClick()}
+                onBalanceClick={() => onBalanceClick()}
                 onPopoverCoinClick={(coinType) =>
                   onPopoverCoinClick(coinType, "in")
                 }

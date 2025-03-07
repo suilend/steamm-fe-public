@@ -95,8 +95,16 @@ function DepositTab({ formatValue }: DepositTabProps) {
   const { pool } = usePoolContext();
 
   // Value
+  const maxValues = pool.coinTypes.map((coinType, index) =>
+    (isSui(coinType)
+      ? BigNumber.max(0, getBalance(coinType).minus(SUI_GAS_MIN))
+      : getBalance(coinType)
+    ).div(index === 0 || pool.tvlUsd.eq(0) ? 1 : 1 + slippagePercent / 100),
+  ) as [BigNumber, BigNumber];
+
   const [values, setValues] = useState<[string, string]>(["", ""]);
   const valuesRef = useRef<[string, string]>(values);
+  const [sliderValues, setSliderValues] = useState<[number, number]>([0, 0]);
 
   const [fetchingQuoteForIndex, setFetchingQuoteForIndex] = useState<
     number | undefined
@@ -166,6 +174,26 @@ function DepositTab({ formatValue }: DepositTabProps) {
             )
           : prev[1],
       ]);
+      setSliderValues((prev) => [
+        index === 0
+          ? prev[0]
+          : maxValues[0].gt(0)
+            ? +new BigNumber(
+                new BigNumber(quote.depositA.toString()).div(10 ** dps[0]),
+              )
+                .div(maxValues[0])
+                .times(100)
+            : 100,
+        index === 0
+          ? maxValues[1].gt(0)
+            ? +new BigNumber(
+                new BigNumber(quote.depositB.toString()).div(10 ** dps[1]),
+              )
+                .div(maxValues[1])
+                .times(100)
+            : 100
+          : prev[1],
+      ]);
 
       setFetchingQuoteForIndex(undefined);
       setQuote(quote);
@@ -199,6 +227,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
       ];
       valuesRef.current = newValues;
       setValues(newValues);
+      setSliderValues([0, 0]);
 
       setFetchingQuoteForIndex(undefined);
       setQuote(undefined);
@@ -213,6 +242,22 @@ function DepositTab({ formatValue }: DepositTabProps) {
       ];
       valuesRef.current = newValues;
       setValues(newValues);
+      setSliderValues([
+        index === 0
+          ? new BigNumber(newValues[0]).gt(0)
+            ? maxValues[0].gt(0)
+              ? +new BigNumber(newValues[0]).div(maxValues[0]).times(100)
+              : 100
+            : 0
+          : sliderValues[0],
+        index === 0
+          ? sliderValues[1]
+          : new BigNumber(newValues[1]).gt(0)
+            ? maxValues[1].gt(0)
+              ? +new BigNumber(newValues[1]).div(maxValues[1]).times(100)
+              : 100
+            : 0,
+      ]);
 
       // Initial deposit (set fake quote) (one of the values may be "")
       setFetchingQuoteForIndex(undefined);
@@ -243,6 +288,7 @@ function DepositTab({ formatValue }: DepositTabProps) {
       ];
       valuesRef.current = newValues;
       setValues(newValues);
+      setSliderValues([0, 0]);
 
       setFetchingQuoteForIndex(undefined);
       setQuote(undefined);
@@ -256,6 +302,15 @@ function DepositTab({ formatValue }: DepositTabProps) {
     ];
     valuesRef.current = newValues;
     setValues(newValues);
+    setSliderValues(
+      newValues.map((newValue, i) =>
+        new BigNumber(newValue).gt(0)
+          ? maxValues[i].gt(0)
+            ? +new BigNumber(newValue).div(maxValues[i]).times(100)
+            : 100
+          : 0,
+      ) as [number, number],
+    );
 
     setFetchingQuoteForIndex(1 - index);
     (isImmediate ? fetchQuote : debouncedFetchQuote)(
@@ -266,19 +321,34 @@ function DepositTab({ formatValue }: DepositTabProps) {
   };
 
   // Value - max
-  const onCoinBalanceClick = (index: number) => {
+  const onBalanceClick = (index: number) => {
     const coinType = pool.coinTypes[index];
     const coinMetadata = appData.coinMetadataMap[coinType];
-    const balance = getBalance(coinType);
 
     onValueChange(
-      (isSui(coinType) ? BigNumber.max(0, balance.minus(SUI_GAS_MIN)) : balance)
-        .div(index === 0 || pool.tvlUsd.eq(0) ? 1 : 1 + slippagePercent / 100)
-        .toFixed(coinMetadata.decimals, BigNumber.ROUND_DOWN),
+      maxValues[index].toFixed(coinMetadata.decimals, BigNumber.ROUND_DOWN),
       index,
       true,
     );
     document.getElementById(getCoinInputId(coinType))?.focus();
+  };
+
+  // Value - slider
+  const onSliderValueChange = (percent: number, index: number) => {
+    const coinType = pool.coinTypes[index];
+    const coinMetadata = appData.coinMetadataMap[coinType];
+
+    onValueChange(
+      maxValues[index]
+        .times(percent / 100)
+        .toFixed(coinMetadata.decimals, BigNumber.ROUND_DOWN),
+      index,
+    );
+
+    setSliderValues((prev) => [
+      index === 0 ? percent : prev[0],
+      index === 0 ? prev[1] : percent,
+    ]);
   };
 
   // Submit
@@ -466,7 +536,10 @@ function DepositTab({ formatValue }: DepositTabProps) {
       showSuccessTxnToast("Deposited liquidity", txUrl, {
         description: `${balanceChangeAFormatted} ${coinMetadataA.symbol} and ${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
       });
+
       setValues(["", ""]);
+      setSliderValues([0, 0]);
+
       setQuote(undefined);
     } catch (err) {
       showErrorToast(
@@ -486,20 +559,67 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
   return (
     <>
-      <div className="flex w-full min-w-0 flex-col gap-1">
-        <CoinInput
-          coinType={pool.coinTypes[0]}
-          value={fetchingQuoteForIndex === 0 ? undefined : values[0]}
-          onChange={(value) => onValueChange(value, 0)}
-          onBalanceClick={() => onCoinBalanceClick(0)}
-        />
-        <CoinInput
-          coinType={pool.coinTypes[1]}
-          value={fetchingQuoteForIndex === 1 ? undefined : values[1]}
-          onChange={(value) => onValueChange(value, 1)}
-          onBalanceClick={() => onCoinBalanceClick(1)}
-        />
-      </div>
+      {[0, 1].map((index) => (
+        <div key={index} className="flex w-full flex-col gap-1">
+          <CoinInput
+            coinType={pool.coinTypes[index]}
+            value={fetchingQuoteForIndex === index ? undefined : values[index]}
+            onChange={(value) => onValueChange(value, index)}
+            onBalanceClick={() => onBalanceClick(index)}
+          />
+
+          {/* Slider */}
+          <div
+            className={cn(
+              "relative flex h-4 w-full flex-row items-center",
+              fetchingQuoteForIndex === index && "animate-pulse",
+            )}
+          >
+            <div className="absolute inset-0 z-[1] rounded-[calc(16px/2)] bg-card/50" />
+
+            <div className="absolute inset-x-[calc(16px/2)] inset-y-0 z-[2]">
+              {Array.from({ length: 5 }).map((_, detentIndex, array) => (
+                <div
+                  key={detentIndex}
+                  className={cn(
+                    "absolute inset-y-1/2 h-[4px] w-[4px] -translate-x-1/2 -translate-y-1/2",
+                    detentIndex !== 0 &&
+                      detentIndex !== array.length - 1 &&
+                      "rounded-[calc(4px/2)] bg-tertiary-foreground",
+                  )}
+                  style={{
+                    left: `${detentIndex * (100 / (array.length - 1))}%`,
+                  }}
+                />
+              ))}
+            </div>
+
+            <input
+              className={cn(
+                "relative z-[3] h-6 w-full min-w-0 appearance-none bg-[transparent] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground",
+                sliderValues[index] > 100 &&
+                  "[&::-webkit-slider-thumb]:bg-tertiary-foreground",
+              )}
+              type="range"
+              min={0}
+              max={100}
+              step={0.1}
+              value={sliderValues[index]}
+              onChange={(e) => onSliderValueChange(+e.target.value, index)}
+              list={`detents-deposit-${index}`}
+              disabled={fetchingQuoteForIndex === index}
+            />
+            <datalist id={`detents-deposit-${index}`}>
+              {Array.from({ length: 5 }).map((_, detentIndex, array) => (
+                <option
+                  key={detentIndex}
+                  value={detentIndex * (100 / (array.length - 1))}
+                />
+              ))}
+            </datalist>
+          </div>
+        </div>
+      ))}
 
       <SubmitButton
         submitButtonState={submitButtonState}
@@ -848,44 +968,60 @@ function WithdrawTab() {
         </p>
 
         <div className="flex w-full flex-row items-center gap-2">
-          <input
-            className="h-6 min-w-0 flex-1 appearance-none bg-[transparent] [&::-webkit-slider-runnable-track]:rounded-[10px] [&::-webkit-slider-runnable-track]:bg-border/50 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[10px] [&::-webkit-slider-thumb]:bg-foreground"
-            type="range"
-            min={0}
-            max={100}
-            step={0.1}
-            value={value}
-            onChange={(e) => onValueChange(e.target.value)}
-          />
+          {/* Slider */}
+          <div className="relative flex h-4 flex-1 flex-row items-center">
+            <div className="absolute inset-0 z-[1] rounded-[calc(16px/2)] bg-card/50" />
+
+            <div className="absolute inset-x-[calc(16px/2)] inset-y-0 z-[2]">
+              {Array.from({ length: 5 }).map((_, detentIndex, array) => (
+                <div
+                  key={detentIndex}
+                  className={cn(
+                    "absolute inset-y-1/2 h-[4px] w-[4px] -translate-x-1/2 -translate-y-1/2",
+                    detentIndex !== 0 &&
+                      detentIndex !== array.length - 1 &&
+                      "rounded-[calc(4px/2)] bg-tertiary-foreground",
+                  )}
+                  style={{
+                    left: `${detentIndex * (100 / (array.length - 1))}%`,
+                  }}
+                />
+              ))}
+            </div>
+
+            <input
+              className="relative z-[3] h-6 w-full min-w-0 appearance-none bg-[transparent] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground"
+              type="range"
+              min={0}
+              max={100}
+              step={0.1}
+              value={value}
+              onChange={(e) => onValueChange(e.target.value)}
+              list="detents-withdraw"
+            />
+            <datalist id="detents-withdraw">
+              {Array.from({ length: 5 }).map((_, detentIndex, array) => (
+                <option
+                  key={detentIndex}
+                  value={detentIndex * (100 / (array.length - 1))}
+                />
+              ))}
+            </datalist>
+          </div>
+
           <p className="w-16 text-right text-p1 text-foreground">
             {formatPercent(new BigNumber(value))}
           </p>
         </div>
 
-        <div className="flex w-full flex-row justify-between">
-          <div className="flex w-full flex-row items-center gap-2">
-            <TokenLogos coinTypes={pool.coinTypes} size={16} />
-            <p className="text-p2 text-foreground">
-              {formatToken(
-                new BigNumber(value).div(100).times(lpTokenTotalAmount),
-                { dp: appData.coinMetadataMap[pool.lpTokenType].decimals },
-              )}
-            </p>
-          </div>
-
-          <div className="flex flex-row items-center gap-1">
-            {[50, 100].map((percent) => (
-              <button
-                key={percent}
-                className="group flex h-6 flex-row items-center rounded-md border px-2 transition-colors hover:bg-border/50"
-                onClick={() => onValueChange(percent.toString(), true)}
-              >
-                <p className="text-p3 text-secondary-foreground transition-colors group-hover:text-foreground">
-                  {formatPercent(new BigNumber(percent), { dp: 0 })}
-                </p>
-              </button>
-            ))}
-          </div>
+        <div className="flex w-full flex-row items-center gap-2">
+          <TokenLogos coinTypes={pool.coinTypes} size={16} />
+          <p className="text-p2 text-foreground">
+            {formatToken(
+              new BigNumber(value).div(100).times(lpTokenTotalAmount),
+              { dp: appData.coinMetadataMap[pool.lpTokenType].decimals },
+            )}
+          </p>
         </div>
       </div>
 
@@ -998,6 +1134,10 @@ function SwapTab({ formatValue }: SwapTabProps) {
   const inactiveCoinMetadata = appData.coinMetadataMap[inactiveCoinType];
 
   // Value
+  const activeMaxValue = isSui(activeCoinType)
+    ? BigNumber.max(0, getBalance(activeCoinType).minus(SUI_GAS_MIN))
+    : getBalance(activeCoinType);
+
   const [value, setValue] = useState<string>("");
   const valueRef = useRef<string>(value);
 
@@ -1139,14 +1279,9 @@ function SwapTab({ formatValue }: SwapTabProps) {
   console.log("SwapTab - birdeyeRatio:", birdeyeRatio?.toString());
 
   // Value - max
-  const onCoinBalanceClick = () => {
-    const balance = getBalance(activeCoinType);
-
+  const onBalanceClick = () => {
     onValueChange(
-      (isSui(activeCoinType)
-        ? BigNumber.max(0, balance.minus(SUI_GAS_MIN))
-        : balance
-      ).toFixed(activeCoinMetadata.decimals, BigNumber.ROUND_DOWN),
+      activeMaxValue.toFixed(activeCoinMetadata.decimals, BigNumber.ROUND_DOWN),
       true,
     );
     document.getElementById(getCoinInputId(activeCoinType))?.focus();
@@ -1349,7 +1484,7 @@ function SwapTab({ formatValue }: SwapTabProps) {
           value={value}
           usdValue={activeUsdValue}
           onChange={(value) => onValueChange(value)}
-          onBalanceClick={() => onCoinBalanceClick()}
+          onBalanceClick={() => onBalanceClick()}
         />
 
         <ReverseAssetsButton onClick={reverseAssets} />
