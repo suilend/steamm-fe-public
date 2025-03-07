@@ -1,13 +1,6 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Fragment, useCallback, useMemo, useRef, useState } from "react";
 
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
@@ -22,7 +15,6 @@ import {
   formatInteger,
   formatToken,
   getBalanceChange,
-  getPrice,
   getToken,
   isSui,
 } from "@suilend/frontend-sui";
@@ -47,6 +39,7 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
+import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
@@ -227,34 +220,10 @@ export default function SwapPage() {
   };
 
   // USD prices - current
-  const [tokenUsdPricesMap, setTokenUsdPriceMap] = useState<
-    Record<string, BigNumber>
-  >({});
-
-  const fetchTokenUsdPrice = useCallback(async (coinType: string) => {
-    console.log("fetchTokenUsdPrice - coinType:", coinType);
-
-    try {
-      const result = await getPrice(coinType);
-      if (result === undefined || isNaN(result)) return;
-
-      setTokenUsdPriceMap((o) => ({
-        ...o,
-        [coinType]: BigNumber(result),
-      }));
-    } catch (err) {
-      console.error(err);
-    }
-  }, []);
-
-  const fetchedInitialTokenUsdPricesRef = useRef<boolean>(false);
-  useEffect(() => {
-    if (fetchedInitialTokenUsdPricesRef.current) return;
-
-    fetchTokenUsdPrice(inCoinType);
-    fetchTokenUsdPrice(outCoinType);
-    fetchedInitialTokenUsdPricesRef.current = true;
-  }, [fetchTokenUsdPrice, inCoinType, outCoinType]);
+  const { tokenUsdPricesMap, fetchTokenUsdPrice } = useTokenUsdPrices([
+    inCoinType,
+    outCoinType,
+  ]);
 
   const inUsdPrice = useMemo(
     () => tokenUsdPricesMap[inCoinType],
@@ -267,21 +236,25 @@ export default function SwapPage() {
 
   const inUsdValue = useMemo(
     () =>
-      quote !== undefined && inUsdPrice !== undefined
-        ? new BigNumber(quote.amountIn.toString())
-            .div(10 ** inCoinMetadata.decimals)
-            .times(inUsdPrice)
-        : undefined,
-    [quote, inUsdPrice, inCoinMetadata],
+      isFetchingQuote || inUsdPrice === undefined
+        ? undefined
+        : quote
+          ? new BigNumber(quote.amountIn.toString())
+              .div(10 ** inCoinMetadata.decimals)
+              .times(inUsdPrice)
+          : "",
+    [isFetchingQuote, inUsdPrice, quote, inCoinMetadata],
   );
   const outUsdValue = useMemo(
     () =>
-      quote !== undefined && outUsdPrice !== undefined
-        ? new BigNumber(quote.amountOut.toString())
-            .div(10 ** outCoinMetadata.decimals)
-            .times(outUsdPrice)
-        : undefined,
-    [quote, outUsdPrice, outCoinMetadata],
+      isFetchingQuote || outUsdPrice === undefined
+        ? undefined
+        : quote
+          ? new BigNumber(quote.amountOut.toString())
+              .div(10 ** outCoinMetadata.decimals)
+              .times(outUsdPrice)
+          : "",
+    [isFetchingQuote, outUsdPrice, quote, outCoinMetadata],
   );
 
   // Ratios
@@ -344,11 +317,6 @@ export default function SwapPage() {
     const newInCoinMetadata = outCoinMetadata;
     const newOutCoinType = inCoinType;
     const newOutCoinMetadata = inCoinMetadata;
-
-    if (tokenUsdPricesMap[newInCoinType] === undefined)
-      fetchTokenUsdPrice(newInCoinType);
-    if (tokenUsdPricesMap[newOutCoinType] === undefined)
-      fetchTokenUsdPrice(newOutCoinType);
 
     shallowPushQuery(router, {
       slug: `${newInCoinMetadata.symbol}-${newOutCoinMetadata.symbol}`,

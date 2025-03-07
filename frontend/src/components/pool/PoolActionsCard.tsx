@@ -1,12 +1,5 @@
 import { useRouter } from "next/router";
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Fragment, useCallback, useMemo, useRef, useState } from "react";
 
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import { SUI_DECIMALS } from "@mysten/sui/utils";
@@ -22,7 +15,6 @@ import {
   formatPercent,
   formatToken,
   getBalanceChange,
-  getPrice,
   getToken,
   isSui,
 } from "@suilend/frontend-sui";
@@ -56,6 +48,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
+import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
 import {
   getIndexOfObligationWithDeposit,
   getObligationDepositPosition,
@@ -85,9 +78,10 @@ enum QueryParams {
 
 interface DepositTabProps {
   formatValue: (_value: string, dp: number) => string;
+  tokenUsdPricesMap: Record<string, BigNumber>;
 }
 
-function DepositTab({ formatValue }: DepositTabProps) {
+function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
@@ -351,6 +345,32 @@ function DepositTab({ formatValue }: DepositTabProps) {
     ]);
   };
 
+  // USD prices - current
+  const usdValues: (BigNumber | "" | undefined)[] = useMemo(
+    () =>
+      [0, 1].map((index) =>
+        fetchingQuoteForIndex !== undefined ||
+        tokenUsdPricesMap[pool.coinTypes[index]] === undefined
+          ? undefined
+          : quote
+            ? new BigNumber(
+                (index === 0 ? quote.depositA : quote.depositB).toString(),
+              )
+                .div(
+                  10 ** appData.coinMetadataMap[pool.coinTypes[index]].decimals,
+                )
+                .times(tokenUsdPricesMap[pool.coinTypes[index]])
+            : "",
+      ),
+    [
+      fetchingQuoteForIndex,
+      tokenUsdPricesMap,
+      pool.coinTypes,
+      quote,
+      appData.coinMetadataMap,
+    ],
+  );
+
   // Submit
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -559,67 +579,18 @@ function DepositTab({ formatValue }: DepositTabProps) {
 
   return (
     <>
-      {[0, 1].map((index) => (
-        <div key={index} className="flex w-full flex-col gap-1">
+      <div className="flex w-full flex-col gap-1">
+        {[0, 1].map((index) => (
           <CoinInput
+            key={index}
             coinType={pool.coinTypes[index]}
             value={fetchingQuoteForIndex === index ? undefined : values[index]}
+            usdValue={usdValues[index]}
             onChange={(value) => onValueChange(value, index)}
             onBalanceClick={() => onBalanceClick(index)}
           />
-
-          {/* Slider */}
-          <div
-            className={cn(
-              "relative flex h-4 w-full flex-row items-center",
-              fetchingQuoteForIndex === index && "animate-pulse",
-            )}
-          >
-            <div className="absolute inset-0 z-[1] rounded-[calc(16px/2)] bg-card/50" />
-
-            <div className="absolute inset-x-[calc(16px/2)] inset-y-0 z-[2]">
-              {Array.from({ length: 5 }).map((_, detentIndex, array) => (
-                <div
-                  key={detentIndex}
-                  className={cn(
-                    "absolute inset-y-1/2 h-[4px] w-[4px] -translate-x-1/2 -translate-y-1/2",
-                    detentIndex !== 0 &&
-                      detentIndex !== array.length - 1 &&
-                      "rounded-[calc(4px/2)] bg-tertiary-foreground",
-                  )}
-                  style={{
-                    left: `${detentIndex * (100 / (array.length - 1))}%`,
-                  }}
-                />
-              ))}
-            </div>
-
-            <input
-              className={cn(
-                "relative z-[3] h-6 w-full min-w-0 appearance-none bg-[transparent] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground",
-                sliderValues[index] > 100 &&
-                  "[&::-webkit-slider-thumb]:bg-tertiary-foreground",
-              )}
-              type="range"
-              min={0}
-              max={100}
-              step={0.1}
-              value={sliderValues[index]}
-              onChange={(e) => onSliderValueChange(+e.target.value, index)}
-              list={`detents-deposit-${index}`}
-              disabled={fetchingQuoteForIndex === index}
-            />
-            <datalist id={`detents-deposit-${index}`}>
-              {Array.from({ length: 5 }).map((_, detentIndex, array) => (
-                <option
-                  key={detentIndex}
-                  value={detentIndex * (100 / (array.length - 1))}
-                />
-              ))}
-            </datalist>
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
       <SubmitButton
         submitButtonState={submitButtonState}
@@ -1000,7 +971,7 @@ function WithdrawTab() {
               list="detents-withdraw"
             />
             <datalist id="detents-withdraw">
-              {Array.from({ length: 5 }).map((_, detentIndex, array) => (
+              {Array.from({ length: 100 + 1 }).map((_, detentIndex, array) => (
                 <option
                   key={detentIndex}
                   value={detentIndex * (100 / (array.length - 1))}
@@ -1115,9 +1086,10 @@ function WithdrawTab() {
 
 interface SwapTabProps {
   formatValue: (_value: string, dp: number) => string;
+  tokenUsdPricesMap: Record<string, BigNumber>;
 }
 
-function SwapTab({ formatValue }: SwapTabProps) {
+function SwapTab({ formatValue, tokenUsdPricesMap }: SwapTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
@@ -1217,35 +1189,6 @@ function SwapTab({ formatValue }: SwapTabProps) {
   };
 
   // USD prices - current
-  const [tokenUsdPricesMap, setTokenUsdPriceMap] = useState<
-    Record<string, BigNumber>
-  >({});
-
-  const fetchTokenUsdPrice = useCallback(async (coinType: string) => {
-    console.log("fetchTokenUsdPrice - coinType:", coinType);
-
-    try {
-      const result = await getPrice(coinType);
-      if (result === undefined || isNaN(result)) return;
-
-      setTokenUsdPriceMap((o) => ({
-        ...o,
-        [coinType]: BigNumber(result),
-      }));
-    } catch (err) {
-      console.error(err);
-    }
-  }, []);
-
-  const fetchedInitialTokenUsdPricesRef = useRef<boolean>(false);
-  useEffect(() => {
-    if (fetchedInitialTokenUsdPricesRef.current) return;
-
-    fetchTokenUsdPrice(activeCoinType);
-    fetchTokenUsdPrice(inactiveCoinType);
-    fetchedInitialTokenUsdPricesRef.current = true;
-  }, [fetchTokenUsdPrice, activeCoinType, inactiveCoinType]);
-
   const activeUsdPrice = useMemo(
     () => tokenUsdPricesMap[activeCoinType],
     [tokenUsdPricesMap, activeCoinType],
@@ -1257,21 +1200,25 @@ function SwapTab({ formatValue }: SwapTabProps) {
 
   const activeUsdValue = useMemo(
     () =>
-      quote !== undefined && activeUsdPrice !== undefined
-        ? new BigNumber(quote.amountIn.toString())
-            .div(10 ** activeCoinMetadata.decimals)
-            .times(activeUsdPrice)
-        : undefined,
-    [quote, activeUsdPrice, activeCoinMetadata],
+      isFetchingQuote || activeUsdPrice === undefined
+        ? undefined
+        : quote
+          ? new BigNumber(quote.amountIn.toString())
+              .div(10 ** activeCoinMetadata.decimals)
+              .times(activeUsdPrice)
+          : "",
+    [isFetchingQuote, activeUsdPrice, quote, activeCoinMetadata],
   );
   const inactiveUsdValue = useMemo(
     () =>
-      quote !== undefined && inactiveUsdPrice !== undefined
-        ? new BigNumber(quote.amountOut.toString())
-            .div(10 ** inactiveCoinMetadata.decimals)
-            .times(inactiveUsdPrice)
-        : undefined,
-    [quote, inactiveUsdPrice, inactiveCoinMetadata],
+      isFetchingQuote || inactiveUsdPrice === undefined
+        ? undefined
+        : quote
+          ? new BigNumber(quote.amountOut.toString())
+              .div(10 ** inactiveCoinMetadata.decimals)
+              .times(inactiveUsdPrice)
+          : "",
+    [isFetchingQuote, inactiveUsdPrice, quote, inactiveCoinMetadata],
   );
 
   // Ratios
@@ -1292,11 +1239,6 @@ function SwapTab({ formatValue }: SwapTabProps) {
     const newActiveCoinIndex = (1 - activeCoinIndex) as 0 | 1;
     const newActiveCoinType = pool.coinTypes[newActiveCoinIndex];
     const newInactiveCoinType = pool.coinTypes[1 - newActiveCoinIndex];
-
-    if (tokenUsdPricesMap[newActiveCoinType] === undefined)
-      fetchTokenUsdPrice(newActiveCoinType);
-    if (tokenUsdPricesMap[newInactiveCoinType] === undefined)
-      fetchTokenUsdPrice(newInactiveCoinType);
 
     setActiveCoinIndex(newActiveCoinIndex);
 
@@ -1616,6 +1558,9 @@ export default function PoolActionsCard() {
     return formattedValue;
   }, []);
 
+  // USD prices - current
+  const { tokenUsdPricesMap } = useTokenUsdPrices(pool.coinTypes);
+
   return (
     <div className="flex w-full flex-col gap-4 rounded-md border p-5">
       <div className="flex w-full flex-row justify-between">
@@ -1664,10 +1609,18 @@ export default function PoolActionsCard() {
       </div>
 
       {selectedAction === Action.DEPOSIT && (
-        <DepositTab formatValue={formatValue} />
+        <DepositTab
+          formatValue={formatValue}
+          tokenUsdPricesMap={tokenUsdPricesMap}
+        />
       )}
       {selectedAction === Action.WITHDRAW && <WithdrawTab />}
-      {selectedAction === Action.SWAP && <SwapTab formatValue={formatValue} />}
+      {selectedAction === Action.SWAP && (
+        <SwapTab
+          formatValue={formatValue}
+          tokenUsdPricesMap={tokenUsdPricesMap}
+        />
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import resolveConfig from "tailwindcss/resolveConfig";
 
 import tailwindConfig from "../../tailwind.config";
 
-export default function useBreakpoint() {
+const useBreakpoint = () => {
   const fullConfig = resolveConfig(tailwindConfig);
 
   return {
@@ -23,4 +23,6 @@ export default function useBreakpoint() {
       query: `(min-width: ${fullConfig.theme.screens["2xl"]})`,
     }),
   };
-}
+};
+
+export default useBreakpoint;

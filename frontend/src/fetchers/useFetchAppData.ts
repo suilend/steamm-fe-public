@@ -290,10 +290,10 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const sortedPools = pools.slice().sort((a, b) => {
       return formatPair(
         a.coinTypes.map((coinType) => coinMetadataMap[coinType].symbol),
-      ) <
+      ).toLowerCase() <
         formatPair(
           b.coinTypes.map((coinType) => coinMetadataMap[coinType].symbol),
-        )
+        ).toLowerCase()
         ? -1
         : 1; // Sort by pair (ascending)
     });
