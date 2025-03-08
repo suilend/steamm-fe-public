@@ -256,7 +256,7 @@ export default function PoolsPage() {
               {/* Filter */}
               <div className="relative z-[1] h-10 max-w-[180px] rounded-md bg-card transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))] max-md:flex-1 md:w-[180px]">
                 <input
-                  className="h-full w-full min-w-0 !border-0 !bg-[transparent] px-3 text-p1 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  className="h-full w-full min-w-0 !border-0 !bg-[transparent] px-3 text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   type="text"
                   placeholder={sm ? "Search pools..." : "Search..."}
                   value={searchString}
