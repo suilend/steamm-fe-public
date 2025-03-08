@@ -166,13 +166,13 @@ function PoolPage() {
 
             <div className="flex w-full flex-col gap-1 md:flex-row">
               {/* Left */}
-              <div className="flex flex-col gap-1 max-md:w-full md:flex-1">
+              <div className="flex flex-col gap-1 max-md:w-full md:flex-1 lg:flex-[3]">
                 <PoolChartCard />
                 <PoolParametersCard />
               </div>
 
               {/* Right */}
-              <div className="max-md:w-full md:flex-1">
+              <div className="max-md:w-full md:flex-1 lg:flex-[2]">
                 <PoolActionsCard key={pool.id} />
               </div>
             </div>
