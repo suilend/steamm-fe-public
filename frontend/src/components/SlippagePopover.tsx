@@ -94,7 +94,7 @@ export default function SlippagePopover() {
               className={cn(
                 "group flex h-10 flex-1 flex-row items-center justify-center rounded-md border px-3 transition-colors",
                 slippagePercent === sp
-                  ? "cursor-default bg-border"
+                  ? "cursor-default bg-button-1"
                   : "hover:bg-border/50",
               )}
               onClick={() => {
@@ -106,7 +106,7 @@ export default function SlippagePopover() {
                 className={cn(
                   "!text-p2 transition-colors",
                   slippagePercent === sp
-                    ? "text-foreground"
+                    ? "text-button-1-foreground"
                     : "text-secondary-foreground group-hover:text-foreground",
                 )}
               >
@@ -122,7 +122,7 @@ export default function SlippagePopover() {
           <div className="relative w-full">
             <div className="relative z-[1] h-10 w-full rounded-md bg-card/50 transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]">
               <input
-                className="h-full w-full min-w-0 !border-0 !bg-[transparent] px-3 text-p1 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                className="h-full w-full min-w-0 !border-0 !bg-[transparent] px-3 text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 type="number"
                 placeholder={
                   slippagePercent.toFixed(2).at(-1)! === "0"

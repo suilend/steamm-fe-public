@@ -1,18 +1,21 @@
 import { useState } from "react";
 
+import { ClassValue } from "clsx";
 import { ArrowRightLeft } from "lucide-react";
 
-import { formatToken } from "@suilend/frontend-sui";
+import { Token, formatToken } from "@suilend/frontend-sui";
 import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 
 import Parameter from "@/components/Parameter";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLoadedAppContext } from "@/contexts/AppContext";
 import { getQuoteRatio } from "@/lib/swap";
+import { cn } from "@/lib/utils";
 
 interface ExchangeRateParameterProps {
-  inCoinType: string;
-  outCoinType: string;
+  className?: ClassValue;
+  labelClassName?: ClassValue;
+  inToken: Token;
+  outToken: Token;
   isFetchingQuote?: boolean;
   quote?: SwapQuote | MultiSwapQuote;
   label?: string;
@@ -20,20 +23,17 @@ interface ExchangeRateParameterProps {
 }
 
 export default function ExchangeRateParameter({
-  inCoinType,
-  outCoinType,
+  className,
+  labelClassName,
+  inToken,
+  outToken,
   isFetchingQuote,
   quote,
   label,
   isHorizontal,
 }: ExchangeRateParameterProps) {
-  const { appData } = useLoadedAppContext();
-
-  const inCoinMetadata = appData.coinMetadataMap[inCoinType];
-  const outCoinMetadata = appData.coinMetadataMap[outCoinType];
-
   // Ratios
-  const quoteRatio = getQuoteRatio(inCoinMetadata, outCoinMetadata, quote);
+  const quoteRatio = getQuoteRatio(inToken, outToken, quote);
   const reversedQuoteRatio =
     quoteRatio !== undefined ? quoteRatio.pow(-1) : undefined;
 
@@ -45,7 +45,11 @@ export default function ExchangeRateParameter({
     useState<boolean>(false);
 
   return (
-    <Parameter label={label ?? "Exchange rate"} isHorizontal={isHorizontal}>
+    <Parameter
+      className={className}
+      label={label ?? "Exchange rate"}
+      isHorizontal={isHorizontal}
+    >
       {isFetchingQuote || !quote ? (
         <Skeleton className="h-[21px] w-48" />
       ) : (
@@ -54,25 +58,25 @@ export default function ExchangeRateParameter({
           onClick={() => setIsShowingReversedQuoteRatio((prev) => !prev)}
           disabled={!isDefined}
         >
-          <p className="text-p2 text-foreground">
+          <p className={cn("!text-p2 text-foreground", labelClassName)}>
             {isDefined ? (
               !isShowingReversedQuoteRatio ? (
                 <>
-                  1 {inCoinMetadata.symbol}
+                  1 {inToken.symbol}
                   {" ≈ "}
                   {formatToken(quoteRatio!, {
-                    dp: outCoinMetadata.decimals,
+                    dp: outToken.decimals,
                   })}{" "}
-                  {outCoinMetadata.symbol}
+                  {outToken.symbol}
                 </>
               ) : (
                 <>
-                  1 {outCoinMetadata.symbol}
+                  1 {outToken.symbol}
                   {" ≈ "}
                   {formatToken(reversedQuoteRatio!, {
-                    dp: inCoinMetadata.decimals,
+                    dp: inToken.decimals,
                   })}{" "}
-                  {inCoinMetadata.symbol}
+                  {inToken.symbol}
                 </>
               )
             ) : (

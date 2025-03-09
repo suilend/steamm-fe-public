@@ -13,21 +13,28 @@ export type ParsedBank = {
   suilendDepositAprPercent: BigNumber;
 };
 
-export enum PoolType {
+export enum QuoterId {
   CPMM = "cpmm",
-  PYTH_ORACLE = "pythOracle",
-  STABLE_SWAP = "stableSwap",
+  ORACLE_AMM = "oracle-amm",
 }
-
-export const poolTypeNameMap: Record<PoolType, string> = {
-  [PoolType.CPMM]: "CPMM",
-  [PoolType.PYTH_ORACLE]: "Pyth oracle",
-  [PoolType.STABLE_SWAP]: "Stable swap",
+export type Quoter = {
+  id: QuoterId;
+  name: string;
 };
+export const QUOTERS: Quoter[] = [
+  {
+    id: QuoterId.CPMM,
+    name: "CPMM",
+  },
+  {
+    id: QuoterId.ORACLE_AMM,
+    name: "Oracle AMM",
+  },
+];
 
 export type ParsedPool = {
   id: string;
-  type?: PoolType;
+  quoter: Quoter;
 
   lpTokenType: string;
   bTokenTypes: [string, string];

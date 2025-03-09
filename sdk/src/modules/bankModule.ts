@@ -150,11 +150,11 @@ export class BankModule implements IModule {
   public async createBank(
     tx: Transaction,
     args: {
-      bTokenTreasuryId: string;
-      bTokenMetadataId: string;
-      bTokenTokenType: string;
       coinType: string;
       coinMetaT: string;
+      bTokenTreasuryId: string;
+      bTokenTokenType: string;
+      bTokenMetadataId: string;
     },
   ) {
     // // Step 2: Get the treasury Cap id from the transaction

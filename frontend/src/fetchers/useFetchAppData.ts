@@ -23,7 +23,7 @@ import { SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
 import { formatPair } from "@/lib/format";
-import { ParsedBank, ParsedPool, PoolType } from "@/lib/types";
+import { ParsedBank, ParsedPool, QUOTERS, QuoterId } from "@/lib/types";
 
 export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
@@ -186,9 +186,10 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         poolInfos.map((poolInfo) =>
           (async () => {
             const id = poolInfo.poolId;
-            const type = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
-              ? PoolType.CPMM
-              : undefined; // TODO: Add support for other pool types
+            // TODO: Add support for other pool types
+            const quoter = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
+              ? QUOTERS.find((_quoter) => _quoter.id === QuoterId.CPMM)!
+              : QUOTERS.find((_quoter) => _quoter.id === QuoterId.CPMM)!; // Should never need to use the fallback
 
             const bTokenTypeA = poolInfo.coinTypeA;
             const bTokenTypeB = poolInfo.coinTypeB;
@@ -267,7 +268,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
             return {
               id,
-              type,
+              quoter,
 
               lpTokenType: poolInfo.lpTokenType,
               bTokenTypes,

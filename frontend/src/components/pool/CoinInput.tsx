@@ -2,12 +2,11 @@ import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { Wallet } from "lucide-react";
 
-import { formatToken, formatUsd, getToken } from "@suilend/frontend-sui";
+import { Token, formatToken, formatUsd } from "@suilend/frontend-sui";
 
 import CoinPopover from "@/components/CoinPopover";
 import TokenLogo from "@/components/TokenLogo";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
 import { cn } from "@/lib/utils";
 
@@ -16,52 +15,58 @@ export const getCoinInputId = (coinType: string) => `coin-input-${coinType}`;
 interface CoinInputProps {
   className?: ClassValue;
   autoFocus?: boolean;
-  coinType: string;
+  token?: Token;
   value?: string;
   usdValue?: BigNumber | "";
   onChange?: (value: string) => void;
   onBalanceClick?: () => void;
-  onPopoverCoinClick?: (coinType: string) => void;
+  popoverTokens?: Token[];
+  onPopoverTokenClick?: (token: Token) => void;
 }
 
 export default function CoinInput({
   className,
   autoFocus,
-  coinType,
+  token,
   value,
   usdValue,
   onChange,
   onBalanceClick,
-  onPopoverCoinClick,
+  popoverTokens,
+  onPopoverTokenClick,
 }: CoinInputProps) {
-  const { appData } = useLoadedAppContext();
   const { getBalance } = useLoadedUserContext();
 
-  const isBalanceClickable = !!onBalanceClick && value !== undefined;
-  const hasPopover = !!onPopoverCoinClick;
+  const isReadOnly = onChange === undefined;
+
+  const isBalanceClickable =
+    token !== undefined && value !== undefined && onBalanceClick !== undefined;
+  const hasPopover =
+    popoverTokens !== undefined && onPopoverTokenClick !== undefined;
 
   return (
     <div
       className={cn(
-        "flex w-full flex-row items-center justify-between gap-4 rounded-md bg-card/50 p-5 transition-colors",
-        !!onChange &&
-          "focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]",
+        "flex w-full flex-row items-center justify-between gap-4 rounded-md px-5 py-4 transition-colors",
+        !isReadOnly
+          ? "bg-card/50 focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]"
+          : "shadow-[inset_0_0_0_1px_hsl(var(--border))]",
         className,
       )}
     >
-      <div className="flex h-[61px] flex-1 flex-col items-start gap-1">
+      <div className="flex flex-1 flex-col items-start gap-1">
         {value === undefined ? (
-          <Skeleton className="w-40 flex-1 bg-border/50" />
+          <Skeleton className="h-[36px] w-40 bg-border/50" />
         ) : (
           <input
-            id={getCoinInputId(coinType)}
-            className="min-h-0 w-full min-w-0 flex-1 !border-0 !bg-[transparent] px-0 text-left !text-h1 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            id={token ? getCoinInputId(token.coinType) : undefined}
+            className="w-full min-w-0 !border-0 !bg-[transparent] px-0 text-left !text-h2 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             autoFocus={autoFocus}
             type="number"
             placeholder="0"
             value={value}
-            onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-            readOnly={!onChange}
+            onChange={!isReadOnly ? (e) => onChange(e.target.value) : undefined}
+            readOnly={isReadOnly}
             onWheel={(e) => e.currentTarget.blur()}
             step="any"
           />
@@ -76,20 +81,19 @@ export default function CoinInput({
         )}
       </div>
 
-      <div className="flex flex-col items-end gap-3">
+      <div className="flex flex-col items-end gap-2">
         {hasPopover ? (
-          <div className="flex h-[28px] flex-row items-center">
-            <CoinPopover coinType={coinType} onCoinClick={onPopoverCoinClick} />
+          <div className="flex h-[24px] flex-row items-center">
+            <CoinPopover
+              token={token}
+              tokens={popoverTokens}
+              onTokenClick={onPopoverTokenClick}
+            />
           </div>
         ) : (
-          <div className="flex h-[28px] flex-row items-center gap-2.5">
-            <TokenLogo
-              token={getToken(coinType, appData.coinMetadataMap[coinType])}
-              size={28}
-            />
-            <p className="text-h3 text-foreground">
-              {appData.coinMetadataMap[coinType].symbol}
-            </p>
+          <div className="flex h-[24px] flex-row items-center gap-2">
+            <TokenLogo token={token!} size={24} />
+            <p className="text-h3 text-foreground">{token!.symbol}</p>
           </div>
         )}
 
@@ -112,7 +116,9 @@ export default function CoinInput({
                 "transition-colors group-hover:text-foreground",
             )}
           >
-            {formatToken(getBalance(coinType), { exact: false })}
+            {token
+              ? formatToken(getBalance(token.coinType), { exact: false })
+              : "--"}
           </p>
         </button>
       </div>

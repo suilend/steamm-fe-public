@@ -20,7 +20,6 @@ import { useStatsContext } from "@/contexts/StatsContext";
 import useBreakpoint from "@/hooks/useBreakpoint";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { ROOT_URL } from "@/lib/navigation";
-import { poolTypeNameMap } from "@/lib/types";
 
 function PoolPage() {
   const { appData } = useLoadedAppContext();
@@ -74,7 +73,7 @@ function PoolPage() {
                 <h1 className="text-h2 text-foreground">{formattedPair}</h1>
 
                 <div className="flex flex-row items-center gap-1">
-                  <Tag>{pool.type ? poolTypeNameMap[pool.type] : "--"}</Tag>
+                  <Tag>{pool.quoter.name}</Tag>
                   <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
                 </div>
               </div>

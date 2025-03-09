@@ -3,6 +3,9 @@ import { useRouter } from "next/router";
 
 import { RotateCw } from "lucide-react";
 
+import { useWalletContext } from "@suilend/frontend-sui-next";
+import { ADMIN_ADDRESS } from "@suilend/sdk";
+
 import ConnectWalletButton from "@/components/ConnectWalletButton";
 import Container from "@/components/Container";
 import Logo from "@/components/Logo";
@@ -25,24 +28,25 @@ type NavItem = {
   title: string;
 };
 
-export const NAV_ITEMS: NavItem[] = [
-  { url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX },
-  { url: PORTFOLIO_URL, title: "Portfolio" },
-  { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
-];
-export const ADMIN_NAV_ITEM: NavItem = {
-  url: ADMIN_URL,
-  title: "Admin",
-};
-
 export default function Nav() {
   const router = useRouter();
 
+  const { address } = useWalletContext();
   const { refresh } = useUserContext();
 
   // Items
+  const NAV_ITEMS: NavItem[] = [
+    { url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX },
+    { url: PORTFOLIO_URL, title: "Portfolio" },
+    { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
+  ];
+  const ADMIN_NAV_ITEM: NavItem = {
+    url: ADMIN_URL,
+    title: "Admin",
+  };
+
   const navItems = [...NAV_ITEMS];
-  // if (admin.weightHookAdminCapId) navItems.push(ADMIN_NAV_ITEM);
+  if (address === ADMIN_ADDRESS) navItems.push(ADMIN_NAV_ITEM);
 
   // Refresh
   const refreshAll = () => {
