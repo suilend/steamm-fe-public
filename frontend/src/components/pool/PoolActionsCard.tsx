@@ -88,15 +88,7 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
   const { getBalance, userData, refresh } = useLoadedUserContext();
   const { pool } = usePoolContext();
 
-  const currentRatio = new BigNumber(
-    pool.balances[0].times(
-      10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals,
-    ),
-  ).div(
-    pool.balances[1].times(
-      10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals,
-    ),
-  ); // NaN if pool.balances[1] === 0 (i.e. tvlUsd === 0)
+  const currentRatio = pool.balances[0].div(pool.balances[1]); // NaN if pool.balances[1] === 0 (i.e. tvlUsd === 0)
 
   // Value
   const maxValues = pool.coinTypes.map((coinType, index) =>
@@ -110,8 +102,9 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
         BigNumber.ROUND_DOWN,
       ),
   ) as [BigNumber, BigNumber];
-  const smartMaxValues = pool.tvlUsd.gt(0)
-    ? [
+  const smartMaxValues = pool.tvlUsd.eq(0)
+    ? maxValues
+    : [
         BigNumber.min(
           maxValues[0],
           new BigNumber(maxValues[1].times(currentRatio)).decimalPlaces(
@@ -126,11 +119,11 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
             BigNumber.ROUND_DOWN,
           ),
         ),
-      ]
-    : maxValues;
+      ];
 
   const [values, setValues] = useState<[string, string]>(["", ""]);
   const valuesRef = useRef<[string, string]>(values);
+  const [sliderValue, setSliderValue] = useState<string>("0");
 
   const [fetchingQuoteForIndex, setFetchingQuoteForIndex] = useState<
     number | undefined
@@ -200,6 +193,7 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
             )
           : prev[1],
       ]);
+      // setSliderValue (no need, should match the existing value)
 
       setFetchingQuoteForIndex(undefined);
       setQuote(quote);
@@ -233,6 +227,7 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
       ];
       valuesRef.current = newValues;
       setValues(newValues);
+      setSliderValue("0");
 
       setFetchingQuoteForIndex(undefined);
       setQuote(undefined);
@@ -247,6 +242,7 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
       ];
       valuesRef.current = newValues;
       setValues(newValues);
+      setSliderValue("0"); // Slider is hidden if TVL is 0
 
       // Initial deposit (set fake quote) (one of the values may be "")
       setFetchingQuoteForIndex(undefined);
@@ -277,6 +273,7 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
       ];
       valuesRef.current = newValues;
       setValues(newValues);
+      setSliderValue("0");
 
       setFetchingQuoteForIndex(undefined);
       setQuote(undefined);
@@ -290,6 +287,12 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
     ];
     valuesRef.current = newValues;
     setValues(newValues);
+    setSliderValue(
+      new BigNumber(newValues[index])
+        .div(smartMaxValues[index])
+        .times(100)
+        .toFixed(1),
+    );
 
     setFetchingQuoteForIndex(1 - index);
     (isImmediate ? fetchQuote : debouncedFetchQuote)(
@@ -313,6 +316,22 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
       true,
     );
     document.getElementById(getCoinInputId(coinType))?.focus();
+  };
+
+  // Value - slider
+  const onSliderValueChange = (percent: string) => {
+    onValueChange(
+      smartMaxValues[0]
+        .times(percent)
+        .div(100)
+        .toFixed(
+          appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+          BigNumber.ROUND_DOWN,
+        ),
+      0,
+    );
+
+    setSliderValue(percent);
   };
 
   // USD prices - current
@@ -558,6 +577,58 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
           />
         ))}
       </div>
+
+      {/* Slider */}
+      {!pool.tvlUsd.eq(0) && (
+        <div className="flex w-full flex-row items-center gap-2">
+          <div className="relative flex h-4 flex-1 flex-row items-center">
+            <div className="absolute inset-0 z-[1] rounded-[calc(16px/2)] bg-card/50" />
+
+            <div className="absolute inset-x-[calc(16px/2)] inset-y-0 z-[2]">
+              {Array.from({ length: 5 }).map((_, detentIndex, array) => (
+                <div
+                  key={detentIndex}
+                  className={cn(
+                    "absolute inset-y-1/2 h-[4px] w-[4px] -translate-x-1/2 -translate-y-1/2",
+                    detentIndex !== 0 &&
+                      detentIndex !== array.length - 1 &&
+                      "rounded-[calc(4px/2)] bg-tertiary-foreground",
+                  )}
+                  style={{
+                    left: `${detentIndex * (100 / (array.length - 1))}%`,
+                  }}
+                />
+              ))}
+            </div>
+
+            <input
+              className={cn(
+                "relative z-[3] h-6 w-full min-w-0 appearance-none bg-[transparent] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground",
+                +sliderValue === Infinity && "opacity-0",
+              )}
+              type="range"
+              min={0}
+              max={100}
+              step={0.1}
+              value={sliderValue}
+              onChange={(e) => onSliderValueChange(e.target.value)}
+              list="detents-deposit"
+            />
+            <datalist id="detents-deposit">
+              {Array.from({ length: 100 + 1 }).map((_, detentIndex, array) => (
+                <option
+                  key={detentIndex}
+                  value={detentIndex * (100 / (array.length - 1))}
+                />
+              ))}
+            </datalist>
+          </div>
+
+          <p className="w-16 text-right text-p1 text-foreground">
+            {formatPercent(new BigNumber(sliderValue))}
+          </p>
+        </div>
+      )}
 
       <SubmitButton
         submitButtonState={submitButtonState}
@@ -905,8 +976,8 @@ function WithdrawTab() {
           % of LP tokens to withdraw
         </p>
 
+        {/* Slider */}
         <div className="flex w-full flex-row items-center gap-2">
-          {/* Slider */}
           <div className="relative flex h-4 flex-1 flex-row items-center">
             <div className="absolute inset-0 z-[1] rounded-[calc(16px/2)] bg-card/50" />
 
