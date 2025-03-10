@@ -12,7 +12,6 @@ import {
   NORMALIZED_SUI_COINTYPE,
   NORMALIZED_USDC_COINTYPE,
   SUI_GAS_MIN,
-  formatInteger,
   formatToken,
   getBalanceChange,
   getToken,
@@ -40,6 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
+import { formatTextInputValue } from "@/lib/format";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
@@ -93,26 +93,6 @@ export default function SwapPage() {
 
   const [value, setValue] = useState<string>("");
   const valueRef = useRef<string>(value);
-
-  const formatValue = useCallback((_value: string, dp: number) => {
-    let formattedValue;
-    if (new BigNumber(_value || 0).lt(0)) formattedValue = _value;
-    else if (!_value.includes(".")) formattedValue = _value;
-    else {
-      const [integers, decimals] = _value.split(".");
-      const integersFormatted = formatInteger(
-        integers !== "" ? parseInt(integers) : 0,
-        false,
-      );
-      const decimalsFormatted = decimals.slice(
-        0,
-        Math.min(decimals.length, dp),
-      );
-      formattedValue = `${integersFormatted}.${decimalsFormatted}`;
-    }
-
-    return formattedValue;
-  }, []);
 
   const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false);
   const [quote, setQuote] = useState<MultiSwapQuote | undefined>(undefined);
@@ -196,7 +176,10 @@ export default function SwapPage() {
   const onValueChange = (_value: string, isImmediate?: boolean) => {
     console.log("SwapPage.onValueChange - _value:", _value);
 
-    const formattedValue = formatValue(_value, inCoinMetadata.decimals);
+    const formattedValue = formatTextInputValue(
+      _value,
+      inCoinMetadata.decimals,
+    );
 
     const newValue = formattedValue;
     valueRef.current = newValue;
@@ -513,7 +496,7 @@ export default function SwapPage() {
                   isFetchingQuote
                     ? undefined
                     : quote
-                      ? formatValue(
+                      ? formatTextInputValue(
                           new BigNumber(quote.amountOut.toString())
                             .div(10 ** outCoinMetadata.decimals)
                             .toFixed(

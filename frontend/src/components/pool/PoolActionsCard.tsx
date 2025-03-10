@@ -11,8 +11,6 @@ import {
   MAX_U64,
   NORMALIZED_SUI_COINTYPE,
   SUI_GAS_MIN,
-  formatInteger,
-  formatPercent,
   formatToken,
   getBalanceChange,
   getToken,
@@ -37,18 +35,19 @@ import {
 
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
 import Parameter from "@/components/Parameter";
+import PercentInput from "@/components/PercentInput";
 import CoinInput, { getCoinInputId } from "@/components/pool/CoinInput";
 import SlippagePopover from "@/components/SlippagePopover";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import PriceDifferenceLabel from "@/components/swap/PriceDifferenceLabel";
 import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
 import TokenLogo from "@/components/TokenLogo";
-import TokenLogos from "@/components/TokenLogos";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
+import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
 import {
   getIndexOfObligationWithDeposit,
   getObligationDepositPosition,
@@ -77,11 +76,10 @@ enum QueryParams {
 }
 
 interface DepositTabProps {
-  formatValue: (_value: string, dp: number) => string;
   tokenUsdPricesMap: Record<string, BigNumber>;
 }
 
-function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
+function DepositTab({ tokenUsdPricesMap }: DepositTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
@@ -178,14 +176,14 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
       setValues((prev) => [
         index === 0
           ? prev[0]
-          : formatValue(
+          : formatTextInputValue(
               new BigNumber(quote.depositA.toString())
                 .div(10 ** dps[0])
                 .toFixed(dps[0], BigNumber.ROUND_DOWN),
               dps[0],
             ),
         index === 0
-          ? formatValue(
+          ? formatTextInputValue(
               new BigNumber(quote.depositB.toString())
                 .div(10 ** dps[1])
                 .toFixed(dps[1], BigNumber.ROUND_DOWN),
@@ -217,7 +215,7 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
       appData.coinMetadataMap[pool.coinTypes[1]].decimals,
     ];
 
-    const formattedValue = formatValue(_value, dps[index]);
+    const formattedValue = formatTextInputValue(_value, dps[index]);
 
     // formattedValue === "" || formattedValue < 0
     if (formattedValue === "" || new BigNumber(formattedValue).lt(0)) {
@@ -320,9 +318,11 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
 
   // Value - slider
   const onSliderValueChange = (percent: string) => {
+    const formattedValue = formatPercentInputValue(percent, 1);
+
     onValueChange(
       smartMaxValues[0]
-        .times(percent)
+        .times(formattedValue || "0")
         .div(100)
         .toFixed(
           appData.coinMetadataMap[pool.coinTypes[0]].decimals,
@@ -331,7 +331,7 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
       0,
     );
 
-    setSliderValue(percent);
+    setSliderValue(formattedValue);
   };
 
   // USD prices - current
@@ -565,18 +565,16 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
 
   return (
     <>
-      <div className="flex w-full flex-col gap-1">
-        {[0, 1].map((index) => (
-          <CoinInput
-            key={index}
-            coinType={pool.coinTypes[index]}
-            value={fetchingQuoteForIndex === index ? undefined : values[index]}
-            usdValue={usdValues[index]}
-            onChange={(value) => onValueChange(value, index)}
-            onBalanceClick={() => onBalanceClick(index)}
-          />
-        ))}
-      </div>
+      {[0, 1].map((index) => (
+        <CoinInput
+          key={index}
+          coinType={pool.coinTypes[index]}
+          value={fetchingQuoteForIndex === index ? undefined : values[index]}
+          usdValue={usdValues[index]}
+          onChange={(value) => onValueChange(value, index)}
+          onBalanceClick={() => onBalanceClick(index)}
+        />
+      ))}
 
       {/* Slider */}
       {!pool.tvlUsd.eq(0) && (
@@ -610,7 +608,7 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
               min={0}
               max={100}
               step={0.1}
-              value={sliderValue}
+              value={sliderValue || "0"}
               onChange={(e) => onSliderValueChange(e.target.value)}
               list="detents-deposit"
             />
@@ -624,9 +622,13 @@ function DepositTab({ formatValue, tokenUsdPricesMap }: DepositTabProps) {
             </datalist>
           </div>
 
-          <p className="w-16 text-right text-p1 text-foreground">
-            {formatPercent(new BigNumber(sliderValue))}
-          </p>
+          <div className="w-20">
+            <PercentInput
+              inputClassName="!text-p1 text-right pl-0"
+              value={sliderValue}
+              onChange={onSliderValueChange}
+            />
+          </div>
         </div>
       )}
 
@@ -715,7 +717,7 @@ function WithdrawTab() {
 
     try {
       const submitAmount = new BigNumber(
-        new BigNumber(_value).div(100).times(lpTokenTotalAmount),
+        new BigNumber(_value || "0").div(100).times(lpTokenTotalAmount),
       )
         .times(10 ** appData.coinMetadataMap[pool.lpTokenType].decimals)
         .integerValue(BigNumber.ROUND_DOWN)
@@ -741,12 +743,17 @@ function WithdrawTab() {
   const onValueChange = async (_value: string, isImmediate?: boolean) => {
     console.log("WithdrawTab.onValueChange - _value:", _value);
 
-    const newValue = _value;
-    valueRef.current = _value;
+    const formattedValue = formatPercentInputValue(_value, 1);
+
+    const newValue = formattedValue;
+    valueRef.current = newValue;
     setValue(newValue);
 
     setIsFetchingQuote(true);
-    (isImmediate ? fetchQuote : debouncedFetchQuote)(steammClient, _value);
+    (isImmediate ? fetchQuote : debouncedFetchQuote)(
+      steammClient,
+      formattedValue,
+    );
   };
 
   // Submit
@@ -977,7 +984,7 @@ function WithdrawTab() {
         </p>
 
         {/* Slider */}
-        <div className="flex w-full flex-row items-center gap-2">
+        <div className="flex h-6 w-full flex-row items-center gap-2">
           <div className="relative flex h-4 flex-1 flex-row items-center">
             <div className="absolute inset-0 z-[1] rounded-[calc(16px/2)] bg-card/50" />
 
@@ -1004,7 +1011,7 @@ function WithdrawTab() {
               min={0}
               max={100}
               step={0.1}
-              value={value}
+              value={value || "0"}
               onChange={(e) => onValueChange(e.target.value)}
               list="detents-withdraw"
             />
@@ -1018,19 +1025,13 @@ function WithdrawTab() {
             </datalist>
           </div>
 
-          <p className="w-16 text-right text-p1 text-foreground">
-            {formatPercent(new BigNumber(value))}
-          </p>
-        </div>
-
-        <div className="flex w-full flex-row items-center gap-2">
-          <TokenLogos coinTypes={pool.coinTypes} size={16} />
-          <p className="text-p2 text-foreground">
-            {formatToken(
-              new BigNumber(value).div(100).times(lpTokenTotalAmount),
-              { dp: appData.coinMetadataMap[pool.lpTokenType].decimals },
-            )}
-          </p>
+          <div className="w-20">
+            <PercentInput
+              inputClassName="!text-p1 text-right pl-0"
+              value={value}
+              onChange={onValueChange}
+            />
+          </div>
         </div>
       </div>
 
@@ -1123,11 +1124,10 @@ function WithdrawTab() {
 }
 
 interface SwapTabProps {
-  formatValue: (_value: string, dp: number) => string;
   tokenUsdPricesMap: Record<string, BigNumber>;
 }
 
-function SwapTab({ formatValue, tokenUsdPricesMap }: SwapTabProps) {
+function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
@@ -1204,7 +1204,10 @@ function SwapTab({ formatValue, tokenUsdPricesMap }: SwapTabProps) {
   const onValueChange = (_value: string, isImmediate?: boolean) => {
     console.log("SwapTab.onValueChange - _value:", _value);
 
-    const formattedValue = formatValue(_value, activeCoinMetadata.decimals);
+    const formattedValue = formatTextInputValue(
+      _value,
+      activeCoinMetadata.decimals,
+    );
 
     const newValue = formattedValue;
     valueRef.current = newValue;
@@ -1476,7 +1479,7 @@ function SwapTab({ formatValue, tokenUsdPricesMap }: SwapTabProps) {
             isFetchingQuote
               ? undefined
               : quote
-                ? formatValue(
+                ? formatTextInputValue(
                     new BigNumber(quote.amountOut.toString())
                       .div(10 ** inactiveCoinMetadata.decimals)
                       .toFixed(
@@ -1575,27 +1578,6 @@ export default function PoolActionsCard() {
     shallowPushQuery(router, { ...router.query, [QueryParams.ACTION]: action });
   };
 
-  // Value
-  const formatValue = useCallback((_value: string, dp: number) => {
-    let formattedValue;
-    if (new BigNumber(_value || 0).lt(0)) formattedValue = _value;
-    else if (!_value.includes(".")) formattedValue = _value;
-    else {
-      const [integers, decimals] = _value.split(".");
-      const integersFormatted = formatInteger(
-        integers !== "" ? parseInt(integers) : 0,
-        false,
-      );
-      const decimalsFormatted = decimals.slice(
-        0,
-        Math.min(decimals.length, dp),
-      );
-      formattedValue = `${integersFormatted}.${decimalsFormatted}`;
-    }
-
-    return formattedValue;
-  }, []);
-
   // USD prices - current
   const { tokenUsdPricesMap } = useTokenUsdPrices(pool.coinTypes);
 
@@ -1647,17 +1629,11 @@ export default function PoolActionsCard() {
       </div>
 
       {selectedAction === Action.DEPOSIT && (
-        <DepositTab
-          formatValue={formatValue}
-          tokenUsdPricesMap={tokenUsdPricesMap}
-        />
+        <DepositTab tokenUsdPricesMap={tokenUsdPricesMap} />
       )}
       {selectedAction === Action.WITHDRAW && <WithdrawTab />}
       {selectedAction === Action.SWAP && (
-        <SwapTab
-          formatValue={formatValue}
-          tokenUsdPricesMap={tokenUsdPricesMap}
-        />
+        <SwapTab tokenUsdPricesMap={tokenUsdPricesMap} />
       )}
     </div>
   );
