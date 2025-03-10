@@ -610,19 +610,10 @@ function DepositTab({ tokenUsdPricesMap }: DepositTabProps) {
               type="range"
               min={0}
               max={100}
-              step={0.1}
+              step={1}
               value={sliderValue || "0"}
               onChange={(e) => onSliderValueChange(e.target.value)}
-              list="detents-deposit"
             />
-            <datalist id="detents-deposit">
-              {Array.from({ length: 100 + 1 }).map((_, detentIndex, array) => (
-                <option
-                  key={detentIndex}
-                  value={detentIndex * (100 / (array.length - 1))}
-                />
-              ))}
-            </datalist>
           </div>
 
           <div className="w-20">
@@ -1013,19 +1004,10 @@ function WithdrawTab() {
               type="range"
               min={0}
               max={100}
-              step={0.1}
+              step={1}
               value={value || "0"}
               onChange={(e) => onValueChange(e.target.value)}
-              list="detents-withdraw"
             />
-            <datalist id="detents-withdraw">
-              {Array.from({ length: 100 + 1 }).map((_, detentIndex, array) => (
-                <option
-                  key={detentIndex}
-                  value={detentIndex * (100 / (array.length - 1))}
-                />
-              ))}
-            </datalist>
           </div>
 
           <div className="w-20">
