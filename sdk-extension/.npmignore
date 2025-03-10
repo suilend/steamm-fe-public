@@ -1,0 +1,5 @@
+tests/
+justfile
+.env.example
+.env
+.prettierrc
