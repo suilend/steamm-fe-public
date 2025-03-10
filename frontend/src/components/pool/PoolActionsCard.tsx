@@ -969,97 +969,82 @@ function WithdrawTab() {
 
   return (
     <>
-      <div className="flex w-full flex-col gap-2">
-        <p className="text-p2 text-secondary-foreground">
-          % of LP tokens to withdraw
-        </p>
+      {/* Slider */}
+      <div className="flex w-full flex-row items-center gap-2">
+        <div className="relative flex h-4 flex-1 flex-row items-center">
+          <div className="absolute inset-0 z-[1] rounded-[calc(16px/2)] bg-card/50" />
 
-        {/* Slider */}
-        <div className="flex h-6 w-full flex-row items-center gap-2">
-          <div className="relative flex h-4 flex-1 flex-row items-center">
-            <div className="absolute inset-0 z-[1] rounded-[calc(16px/2)] bg-card/50" />
-
-            <div className="absolute inset-x-[calc(16px/2)] inset-y-0 z-[2]">
-              {Array.from({ length: 5 }).map((_, detentIndex, array) => (
-                <div
-                  key={detentIndex}
-                  className={cn(
-                    "absolute inset-y-1/2 h-[4px] w-[4px] -translate-x-1/2 -translate-y-1/2",
-                    detentIndex !== 0 &&
-                      detentIndex !== array.length - 1 &&
-                      "rounded-[calc(4px/2)] bg-tertiary-foreground",
-                  )}
-                  style={{
-                    left: `${detentIndex * (100 / (array.length - 1))}%`,
-                  }}
-                />
-              ))}
-            </div>
-
-            <input
-              className="relative z-[3] h-6 w-full min-w-0 appearance-none bg-[transparent] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground"
-              type="range"
-              min={0}
-              max={100}
-              step={1}
-              value={value || "0"}
-              onChange={(e) => onValueChange(e.target.value)}
-            />
+          <div className="absolute inset-x-[calc(16px/2)] inset-y-0 z-[2]">
+            {Array.from({ length: 5 }).map((_, detentIndex, array) => (
+              <div
+                key={detentIndex}
+                className={cn(
+                  "absolute inset-y-1/2 h-[4px] w-[4px] -translate-x-1/2 -translate-y-1/2",
+                  detentIndex !== 0 &&
+                    detentIndex !== array.length - 1 &&
+                    "rounded-[calc(4px/2)] bg-tertiary-foreground",
+                )}
+                style={{
+                  left: `${detentIndex * (100 / (array.length - 1))}%`,
+                }}
+              />
+            ))}
           </div>
 
-          <div className="w-20">
-            <PercentInput
-              inputClassName="!text-p1 text-right pl-0"
-              value={value}
-              onChange={onValueChange}
-            />
-          </div>
+          <input
+            className="relative z-[3] h-6 w-full min-w-0 appearance-none bg-[transparent] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground"
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={value || "0"}
+            onChange={(e) => onValueChange(e.target.value)}
+          />
+        </div>
+
+        <div className="w-20">
+          <PercentInput
+            inputClassName="!text-p1 text-right pl-0"
+            value={value}
+            onChange={onValueChange}
+          />
         </div>
       </div>
 
       <div className="flex w-full flex-col gap-2">
-        <p className="text-p2 text-secondary-foreground">You receive</p>
+        {pool.coinTypes.map((coinType, index) => {
+          const coinMetadata = appData.coinMetadataMap[coinType];
 
-        <div className="flex w-full flex-col gap-2 rounded-md border p-4">
-          {pool.coinTypes.map((coinType, index) => {
-            const coinMetadata = appData.coinMetadataMap[coinType];
-
-            return (
-              <div
-                key={coinType}
-                className="flex w-full flex-row items-center justify-between"
-              >
-                <div className="flex flex-row items-center gap-2">
-                  <TokenLogo
-                    token={getToken(coinType, coinMetadata)}
-                    size={20}
-                  />
-                  <p className="text-p1 text-foreground">
-                    {coinMetadata.symbol}
-                  </p>
-                </div>
-
-                {isFetchingQuote ? (
-                  <Skeleton className="h-[24px] w-24" />
-                ) : (
-                  <p className="text-p1 text-foreground">
-                    {quote
-                      ? formatToken(
-                          new BigNumber(
-                            (index === 0
-                              ? quote.withdrawA
-                              : quote.withdrawB
-                            ).toString(),
-                          ).div(10 ** coinMetadata.decimals),
-                          { dp: coinMetadata.decimals },
-                        )
-                      : "--"}
-                  </p>
-                )}
+          return (
+            <div
+              key={coinType}
+              className="flex w-full flex-row items-center justify-between"
+            >
+              <div className="flex flex-row items-center gap-2">
+                <TokenLogo token={getToken(coinType, coinMetadata)} size={20} />
+                <p className="text-p1 text-foreground">{coinMetadata.symbol}</p>
               </div>
-            );
-          })}
-        </div>
+
+              {isFetchingQuote ? (
+                <Skeleton className="h-[24px] w-24" />
+              ) : (
+                <p className="text-p1 text-foreground">
+                  {quote
+                    ? formatToken(
+                        new BigNumber(
+                          (index === 0
+                            ? quote.withdrawA
+                            : quote.withdrawB
+                          ).toString(),
+                        ).div(10 ** coinMetadata.decimals),
+                        { dp: coinMetadata.decimals },
+                      )
+                    : "--"}
+                </p>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <SubmitButton
