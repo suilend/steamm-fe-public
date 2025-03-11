@@ -15,7 +15,8 @@ export type ParsedBank = {
 
 export enum QuoterId {
   CPMM = "cpmm",
-  ORACLE_AMM = "oracle-amm",
+  ORACLE = "oracle",
+  STABLE = "stable",
 }
 export type Quoter = {
   id: QuoterId;
@@ -27,8 +28,12 @@ export const QUOTERS: Quoter[] = [
     name: "CPMM",
   },
   {
-    id: QuoterId.ORACLE_AMM,
-    name: "Oracle AMM",
+    id: QuoterId.ORACLE,
+    name: "Oracle",
+  },
+  {
+    id: QuoterId.STABLE,
+    name: "Stable",
   },
 ];
 

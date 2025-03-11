@@ -6,20 +6,20 @@ import init, {
   update_identifiers,
 } from "@mysten/move-bytecode-template";
 import { bcs } from "@mysten/sui/bcs";
-import { SuiObjectChange } from "@mysten/sui/client";
-import { Transaction } from "@mysten/sui/transactions";
+import { CoinMetadata, SuiObjectChange } from "@mysten/sui/client";
+import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 
 import {
-  NORMALIZED_STABLECOIN_COINTYPES,
   NORMALIZED_SUI_COINTYPE,
-  NORMALIZED_sSUI_COINTYPE,
   SUI_GAS_MIN,
   Token,
   getCoinMetadataMap,
   getToken,
+  isStablecoin,
   isSui,
+  issSui,
 } from "@suilend/frontend-sui";
 import {
   showErrorToast,
@@ -50,7 +50,7 @@ const generate_bytecode = (
   name: string,
   symbol: string,
   description: string,
-  imageUrl: string,
+  iconUrl: string,
 ) => {
   const bytecode = Buffer.from(
     "oRzrCwYAAAAKAQAMAgweAyonBFEIBVlMB6UBywEI8AJgBtADXQqtBAUMsgQoABABCwIGAhECEgITAAICAAEBBwEAAAIADAEAAQIDDAEAAQQEAgAFBQcAAAkAAQABDwUGAQACBwgJAQIDDAUBAQwDDQ0BAQwEDgoLAAUKAwQAAQQCBwQMAwICCAAHCAQAAQsCAQgAAQoCAQgFAQkAAQsBAQkAAQgABwkAAgoCCgIKAgsBAQgFBwgEAgsDAQkACwIBCQABBggEAQUBCwMBCAACCQAFDENvaW5NZXRhZGF0YQZPcHRpb24IVEVNUExBVEULVHJlYXN1cnlDYXAJVHhDb250ZXh0A1VybARjb2luD2NyZWF0ZV9jdXJyZW5jeQtkdW1teV9maWVsZARpbml0FW5ld191bnNhZmVfZnJvbV9ieXRlcwZvcHRpb24TcHVibGljX3NoYXJlX29iamVjdA9wdWJsaWNfdHJhbnNmZXIGc2VuZGVyBHNvbWUIdGVtcGxhdGUIdHJhbnNmZXIKdHhfY29udGV4dAN1cmwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAQkKAgUEVE1QTAoCDg1UZW1wbGF0ZSBDb2luCgIaGVRlbXBsYXRlIENvaW4gRGVzY3JpcHRpb24KAiEgaHR0cHM6Ly9leGFtcGxlLmNvbS90ZW1wbGF0ZS5wbmcAAgEIAQAAAAACEgsABwAHAQcCBwMHBBEGOAAKATgBDAILAS4RBTgCCwI4AwIA=",
@@ -85,7 +85,7 @@ const generate_bytecode = (
 
   updated = update_constants(
     updated,
-    bcs.string().serialize(imageUrl).toBytes(), // new value
+    bcs.string().serialize(iconUrl).toBytes(), // new value
     bcs.string().serialize("https://example.com/template.png").toBytes(), // current value
     "Vector(U8)", // type of the constant
   );
@@ -94,31 +94,27 @@ const generate_bytecode = (
 };
 
 const getBTokenModule = (token: Token) =>
-  `steamm_b_${token.coinType.replaceAll("::", "__")}`.toLowerCase(); // E.g. steamm_b_PACKAGE__MODULE__TYPE
+  `b_${token.coinType.split("::")[1]}`.toLowerCase(); // E.g. b_<module>
 const getBTokenType = (token: Token) =>
-  `STEAMM_B_${token.coinType.replaceAll("::", "__")}`.toUpperCase(); // E.g. STEAMM_B_PACKAGE__MODULE__TYPE
-const getBTokenName = (token: Token) =>
-  `STEAMM b${token.symbol}`.replace(/\s+/g, "_"); // E.g. STEAMM bSUI
-const getBTokenSymbol = (token: Token) =>
-  `STEAMM b${token.symbol}`.replace(/\s+/g, "_"); // E.g. STEAMM bSUI (same as name)
+  `B_${token.coinType.split("::")[2]}`.toUpperCase(); // E.g. B_<TYPE>
+const getBTokenName = (token: Token) => `bToken ${token.symbol}`; // E.g. bToken SUI
+const getBTokenSymbol = (token: Token) => `b${token.symbol}`; // E.g. bSUI // Cannot be same as name
 const B_TOKEN_DESCRIPTION = "STEAMM bToken";
 const B_TOKEN_IMAGE_URL =
   "https://suilend-assets.s3.us-east-2.amazonaws.com/steamm/STEAMM+bToken.svg";
 
-const getLpTokenModule = (
-  bTokenA: Pick<Token, "coinType">,
-  bTokenB: Pick<Token, "coinType">,
-) =>
-  `steamm_lp_${bTokenA.coinType.replaceAll("::", "__")},${bTokenB.coinType.replaceAll("::", "__")}`.toLowerCase(); // E.g. steamm_lp_PACKAGE__MODULE__TYPE,PACKAGE__MODULE__TYPE>
-const getLpTokenType = (
-  bTokenA: Pick<Token, "coinType">,
-  bTokenB: Pick<Token, "coinType">,
-) =>
-  `STEAMM_LP_${bTokenA.coinType.replaceAll("::", "__")},${bTokenB.coinType.replaceAll("::", "__")}`.toUpperCase(); // E.g. steamm_lp_PACKAGE__MODULE__TYPE,PACKAGE__MODULE__TYPE>
-const getLpTokenName = (tokenA: Token, tokenB: Token) =>
-  `STEAMM LP b${tokenA.symbol}-b${tokenB.symbol}`.replace(/\s+/g, "_"); // E.g. STEAMM LP bSUI-bUSDC
-const getLpTokenSymbol = (tokenA: Token, tokenB: Token) =>
-  `STEAMM LP b${tokenA.symbol}-b${tokenB.symbol}`.replace(/\s+/g, "_"); // E.g. STEAMM LP bSUI-bUSDC (same as name)
+const getLpTokenModule = (bTokenA: Token, bTokenB: Token) =>
+  `steamm_lp_${bTokenA.symbol}_${bTokenB.symbol}`
+    .toLowerCase()
+    .replace(/\s+/g, "_"); // E.g. steamm_lp_bsui_busdc
+const getLpTokenType = (bTokenA: Token, bTokenB: Token) =>
+  `STEAMM_LP_${bTokenA.symbol}_${bTokenB.symbol}`
+    .toUpperCase()
+    .replace(/\s+/g, "_"); // E.g. STEAMM_LP_BSUI_BUSDC
+const getLpTokenName = (bTokenA: Token, bTokenB: Token) =>
+  `STEAMM LP Token ${bTokenA.symbol}-${bTokenB.symbol}`; // E.g. STEAMM LP Token bSUI-bUSDC
+const getLpTokenSymbol = (bTokenA: Token, bTokenB: Token) =>
+  `STEAMM LP ${bTokenA.symbol}-${bTokenB.symbol}`; // E.g. STEAMM LP bSUI-bUSDC // Cannot be same as name
 const LP_TOKEN_DESCRIPTION = "STEAMM LP Token";
 const LP_TOKEN_IMAGE_URL =
   "https://suilend-assets.s3.us-east-2.amazonaws.com/steamm/STEAMM+LP+Token.svg";
@@ -209,12 +205,11 @@ export default function AdminPage() {
 
   const quotePopoverTokens = useMemo(
     () =>
-      basePopoverTokens.filter((token) =>
-        [
-          NORMALIZED_SUI_COINTYPE,
-          NORMALIZED_sSUI_COINTYPE,
-          ...NORMALIZED_STABLECOIN_COINTYPES,
-        ].includes(token.coinType),
+      basePopoverTokens.filter(
+        (token) =>
+          isSui(token.coinType) ||
+          issSui(token.coinType) ||
+          isStablecoin(token.coinType),
       ),
     [basePopoverTokens],
   );
@@ -338,7 +333,6 @@ export default function AdminPage() {
   })();
 
   const createCoin = async (bytecode: Uint8Array<ArrayBufferLike>) => {
-    // Create coin
     const transaction = new Transaction();
 
     const [upgradeCap] = transaction.publish({
@@ -423,14 +417,27 @@ export default function AdminPage() {
       for (const index of [0, 1]) {
         if (
           !!Object.keys(existingBTokenTypeCoinMetadataMap).find(
-            (coinType) =>
-              coinType.split("::")[2] === getBTokenType(tokens[index]),
+            (_coinType) =>
+              [
+                _coinType.split("::")[1],
+                // `steamm_${_coinType.split("::")[1]}`,
+              ].includes(getBTokenModule(tokens[index])) &&
+              [
+                _coinType.split("::")[2],
+                // `STEAMM_${_coinType.split("::")[2]}`,
+              ].includes(getBTokenType(tokens[index])),
           )
         ) {
           createBTokenResults.push(undefined);
           continue;
         }
 
+        console.log(
+          "xxx create bToken coin - index:",
+          index,
+          "symbol:",
+          tokens[index].symbol,
+        );
         const createBTokenResult = await createCoin(
           generate_bytecode(
             getBTokenModule(tokens[index]),
@@ -448,41 +455,57 @@ export default function AdminPage() {
         if (result === undefined) {
           const coinType = Object.keys(existingBTokenTypeCoinMetadataMap).find(
             (_coinType) =>
-              _coinType.split("::")[2] === getBTokenType(tokens[index]),
+              [
+                _coinType.split("::")[1],
+                // `steamm_${_coinType.split("::")[1]}`,
+              ].includes(getBTokenModule(tokens[index])) &&
+              [
+                _coinType.split("::")[2],
+                // `STEAMM_${_coinType.split("::")[2]}`,
+              ].includes(getBTokenType(tokens[index])),
           )!; // Checked above
           const coinMetadata = existingBTokenTypeCoinMetadataMap[coinType];
           if (!coinMetadata.id)
             throw new Error("bToken coinMetadata id not found");
 
-          return {
-            coinType,
-            id: coinMetadata.id,
-          };
+          return getToken(coinType, coinMetadata);
         }
-        return {
-          coinType: result.coinType,
+
+        return getToken(result.coinType, {
+          decimals: 9,
+          description: B_TOKEN_DESCRIPTION,
+          iconUrl: B_TOKEN_IMAGE_URL,
           id: result.coinMetadataId,
-        };
-      });
+          name: getBTokenName(tokens[index]),
+          symbol: getBTokenSymbol(tokens[index]),
+        } as CoinMetadata);
+      }) as [Token, Token];
 
       // Step 2: Create LP token - one transaction
+      console.log("xxx create lpToken coin - bTokens:", bTokens);
       const createLpTokenResult = await createCoin(
         generate_bytecode(
           getLpTokenModule(bTokens[0], bTokens[1]),
           getLpTokenType(bTokens[0], bTokens[1]),
-          getLpTokenName(tokens[0], tokens[1]),
-          getLpTokenSymbol(tokens[0], tokens[1]),
+          getLpTokenName(bTokens[0], bTokens[1]),
+          getLpTokenSymbol(bTokens[0], bTokens[1]),
           LP_TOKEN_DESCRIPTION,
           LP_TOKEN_IMAGE_URL,
         ),
       );
 
-      // Step 3: Create banks (if needed) and pool - one transaction
+      // Step 3: Create banks (if needed) & pool and deposit into pool - one transaction
       const transaction = new Transaction();
 
       for (const index of [0, 1]) {
         if (createBTokenResults[index] === undefined) continue; // bToken and bank already exist
 
+        console.log(
+          "xxx create bank - index:",
+          index,
+          "symbol:",
+          tokens[index].symbol,
+        );
         await steammClient.Bank.createBank(transaction, {
           coinType: tokens[index].coinType,
           coinMetaT: tokens[index].id!, // Checked above
@@ -492,6 +515,12 @@ export default function AdminPage() {
         });
       }
 
+      console.log(
+        "xxx create pool - bTokens:",
+        bTokens,
+        "lp token:",
+        createLpTokenResult,
+      );
       await steammClient.Pool.createPool(transaction, {
         lpTreasuryId: createLpTokenResult.treasuryCapId,
         lpTokenType: createLpTokenResult.coinType,
@@ -501,9 +530,43 @@ export default function AdminPage() {
         btokenTypeB: bTokens[1].coinType,
         coinMetaB: bTokens[1].id!,
         swapFeeBps: BigInt(feeTierPercent * 100),
-        offset: BigInt(0), // TODO: Set offset
+        offset: BigInt(0), // TODO
         // TODO: Set quoter
       });
+
+      // Step 4: Deposit into pool
+      // const submitAmountA = new BigNumber(values[0])
+      //   .times(10 ** tokens[0].decimals)
+      //   .integerValue(BigNumber.ROUND_DOWN)
+      //   .toString();
+      // const submitAmountB = new BigNumber(values[1])
+      //   .times(10 ** tokens[1].decimals)
+      //   .integerValue(BigNumber.ROUND_DOWN)
+      //   .toString();
+
+      // const coinA = coinWithBalance({
+      //   balance: BigInt(submitAmountA),
+      //   type: tokens[0].coinType,
+      //   useGasCoin: isSui(tokens[0].coinType),
+      // })(transaction);
+      // const coinB = coinWithBalance({
+      //   balance: BigInt(submitAmountB),
+      //   type: tokens[1].coinType,
+      //   useGasCoin: isSui(tokens[1].coinType),
+      // })(transaction);
+
+      // const [lpCoin] = await steammClient.Pool.depositLiquidity(transaction, {
+      //   pool: pool.id,
+      //   coinTypeA: tokens[0].coinType,
+      //   coinTypeB: tokens[1].coinType,
+      //   coinA,
+      //   coinB,
+      //   maxA: BigInt(submitAmountA),
+      //   maxB: BigInt(submitAmountB),
+      // });
+
+      // transaction.transferObjects([coinA, coinB], address);
+      // transaction.transferObjects([lpCoin], address);
 
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
@@ -651,7 +714,9 @@ export default function AdminPage() {
                     <div key={_quoter.id} className="w-max">
                       <Tooltip
                         title={
-                          _quoter.id === QuoterId.ORACLE_AMM
+                          [QuoterId.ORACLE, QuoterId.STABLE].includes(
+                            _quoter.id,
+                          )
                             ? "Coming soon"
                             : hasExistingPool
                               ? existingPoolTooltip
@@ -669,8 +734,9 @@ export default function AdminPage() {
                             )}
                             onClick={() => setQuoterId(_quoter.id)}
                             disabled={
-                              _quoter.id === QuoterId.ORACLE_AMM ||
-                              hasExistingPool
+                              [QuoterId.ORACLE, QuoterId.STABLE].includes(
+                                _quoter.id,
+                              ) || hasExistingPool
                             }
                           >
                             <p

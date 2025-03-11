@@ -8,6 +8,7 @@ import {
   NORMALIZED_SUI_COINTYPE,
   NORMALIZED_USDC_COINTYPE,
   getCoinMetadataMap,
+  isStablecoin,
   isSui,
   issSui,
 } from "@suilend/frontend-sui";
@@ -129,7 +130,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           const depositedAmount = new BigNumber(
             bank.lending ? bank.lending.ctokens.toString() : 0,
           )
-            .times(mainMarket_reserveMap[coinType]?.cTokenExchangeRate ?? 0) // Fallback for when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true and Main market (beta) does not have the reserve
+            .times(mainMarket_reserveMap[coinType]?.cTokenExchangeRate ?? 0) // Fallback for when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true and Main market  stablecoin
             .div(10 ** coinMetadataMap[coinType].decimals);
           const totalAmount = liquidAmount.plus(depositedAmount);
 
@@ -217,14 +218,13 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             let priceA, priceB;
             if (isSui(coinTypeB) || issSui(coinTypeB)) {
               priceB = suiPrice;
-              priceA =
-                coinTypeA === NORMALIZED_USDC_COINTYPE
-                  ? usdcPrice
-                  : !balanceA.eq(0)
-                    ? balanceB.div(balanceA).times(priceB)
-                    : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
-            } else if (coinTypeB === NORMALIZED_USDC_COINTYPE) {
-              priceB = usdcPrice;
+              priceA = isStablecoin(coinTypeA)
+                ? (mainMarket_reserveMap[coinTypeA]?.price ?? usdcPrice) // Fallback for when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true and Main market (beta) does not have the stablecoin reserve
+                : !balanceA.eq(0)
+                  ? balanceB.div(balanceA).times(priceB)
+                  : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
+            } else if (isStablecoin(coinTypeB)) {
+              priceB = mainMarket_reserveMap[coinTypeB]?.price ?? usdcPrice; // Fallback for when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true and Main market (beta) does not have the stablecoin reserve
               priceA =
                 isSui(coinTypeA) || issSui(coinTypeA)
                   ? suiPrice
@@ -233,7 +233,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
                     : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
             } else {
               console.error(
-                `Quote asset must be one of SUI, sSUI, USDC - skipping pool with id: ${id}`,
+                `Quote asset must be one of SUI, sSUI, STABLECOIN_COINTYPES - skipping pool with id: ${id}`,
               );
               return undefined;
             }
