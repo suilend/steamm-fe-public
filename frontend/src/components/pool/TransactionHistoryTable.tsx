@@ -117,7 +117,7 @@ export default function TransactionHistoryTable({
           id="digest"
           style={columnStyleMap.digest}
         >
-          Digest
+          Txn
         </HeaderColumn>
       </div>
 
