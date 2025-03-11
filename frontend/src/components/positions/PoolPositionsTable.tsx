@@ -189,12 +189,12 @@ export default function PoolPositionsTable({
           Claimable rewards
         </HeaderColumn>
 
-        {/* <HeaderColumn<Column, SortableColumn>
+        <HeaderColumn<Column, SortableColumn>
           id="points"
           style={columnStyleMap.points}
         >
           Points
-        </HeaderColumn> */}
+        </HeaderColumn>
       </div>
 
       {/* Rows */}
