@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 import useSWR from "swr";
 
 import {
-  NORMALIZED_SEND_POINTS_S2_COINTYPE,
+  NORMALIZED_STEAMM_POINTS_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
   NORMALIZED_USDC_COINTYPE,
   getCoinMetadataMap,
@@ -83,7 +83,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
     const pointsCoinMetadataMap = await getCoinMetadataMap(
       suiClient,
-      [NORMALIZED_SEND_POINTS_S2_COINTYPE].filter(
+      [NORMALIZED_STEAMM_POINTS_COINTYPE].filter(
         (coinType) => !Object.keys(coinMetadataMap).includes(coinType),
       ),
     );
