@@ -67,3 +67,44 @@ export type PoolPosition = {
   claimableRewards: Record<string, BigNumber>;
   points: BigNumber;
 };
+
+export enum HistoryTransactionType {
+  DEPOSIT = "DEPOSIT",
+  REDEEM = "REDEEM",
+}
+
+export type HistoryDeposit = {
+  id: number;
+  timestamp: string;
+  digest: string;
+  eventIndex: number;
+  user: string;
+  pool_id: string;
+  deposit_a: string;
+  deposit_b: string;
+  mint_lp: string;
+  balance_a: string;
+  balance_b: string;
+
+  // Custom
+  type: HistoryTransactionType.DEPOSIT;
+};
+
+export type HistoryRedeem = {
+  id: number;
+  timestamp: string;
+  digest: string;
+  eventIndex: number;
+  user: string;
+  pool_id: string;
+  withdraw_a: string;
+  withdraw_b: string;
+  fees_a: string;
+  fees_b: string;
+  burn_lp: string;
+  balance_a: string;
+  balance_b: string;
+
+  // Custom
+  type: HistoryTransactionType.REDEEM;
+};

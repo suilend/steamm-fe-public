@@ -1,15 +1,18 @@
 import Head from "next/head";
 import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ChevronRight } from "lucide-react";
 
 import { formatUsd } from "@suilend/frontend-sui";
+import { showErrorToast, useWalletContext } from "@suilend/frontend-sui-next";
 
 import AprBreakdown from "@/components/AprBreakdown";
 import PoolActionsCard from "@/components/pool/PoolActionsCard";
 import PoolChartCard from "@/components/pool/PoolChartCard";
 import PoolParametersCard from "@/components/pool/PoolParametersCard";
 import SuggestedPools from "@/components/pool/SuggestedPools";
+import TransactionHistoryTable from "@/components/pool/TransactionHistoryTable";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
@@ -19,9 +22,15 @@ import { PoolContextProvider, usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import useBreakpoint from "@/hooks/useBreakpoint";
 import { formatFeeTier, formatPair } from "@/lib/format";
-import { ROOT_URL } from "@/lib/navigation";
+import { API_URL, ROOT_URL } from "@/lib/navigation";
+import {
+  HistoryDeposit,
+  HistoryRedeem,
+  HistoryTransactionType,
+} from "@/lib/types";
 
 function PoolPage() {
+  const { address } = useWalletContext();
   const { appData } = useLoadedAppContext();
   const { poolStats } = useStatsContext();
 
@@ -33,6 +42,67 @@ function PoolPage() {
   const formattedPair = formatPair(
     pool.coinTypes.map((coinType) => appData.coinMetadataMap[coinType].symbol),
   );
+
+  const [transactionHistoryMapMap, setTransactionHistoryMapMap] = useState<
+    Record<string, Record<string, (HistoryDeposit | HistoryRedeem)[]>>
+  >({});
+  const poolTransactionHistory = !address
+    ? []
+    : transactionHistoryMapMap[address]?.[pool.id];
+
+  const fetchPoolTransactionHistory = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `${API_URL}/steamm/historical/lp?${new URLSearchParams({
+          user: address!, // Checked in useEffect below
+          poolId: pool.id,
+        })}`,
+      );
+      const json: {
+        deposits: Omit<HistoryDeposit, "type">[];
+        redeems: Omit<HistoryRedeem, "type">[];
+      } = await res.json();
+      if ((json as any)?.statusCode === 500) return;
+
+      setTransactionHistoryMapMap((prev) => ({
+        ...prev,
+        [address!]: {
+          ...prev[address!],
+          [pool.id]: [
+            ...(json.deposits.map((entry) => ({
+              ...entry,
+              type: HistoryTransactionType.DEPOSIT,
+            })) as HistoryDeposit[]),
+            ...(json.redeems.map((entry) => ({
+              ...entry,
+              type: HistoryTransactionType.REDEEM,
+            })) as HistoryRedeem[]),
+          ].sort((a, b) => +b.timestamp - +a.timestamp),
+        },
+      }));
+    } catch (err) {
+      showErrorToast("Failed to fetch transaction history", err as Error);
+      console.error(err);
+    }
+  }, [address, pool.id]);
+
+  const hasFetchedTransactionHistoryMapMapRef = useRef<
+    Record<string, Record<string, boolean>>
+  >({});
+  useEffect(() => {
+    if (!address) return;
+
+    if (
+      hasFetchedTransactionHistoryMapMapRef.current[address] !== undefined &&
+      hasFetchedTransactionHistoryMapMapRef.current[address][pool.id]
+    )
+      return;
+    if (!hasFetchedTransactionHistoryMapMapRef.current[address])
+      hasFetchedTransactionHistoryMapMapRef.current[address] = {};
+    hasFetchedTransactionHistoryMapMapRef.current[address][pool.id] = true;
+
+    fetchPoolTransactionHistory();
+  }, [address, pool.id, fetchPoolTransactionHistory]);
 
   // Suggested pools
   const suggestedPools = appData.pools
@@ -177,6 +247,19 @@ function PoolPage() {
             </div>
           </div>
 
+          {/* Transaction history */}
+          <div className="flex w-full flex-col gap-4">
+            <div className="flex flex-row items-center gap-3">
+              <p className="text-h3 text-foreground">Transaction history</p>
+              <Tag>{poolTransactionHistory?.length ?? 0}</Tag>
+            </div>
+
+            <TransactionHistoryTable
+              transactionHistory={poolTransactionHistory}
+            />
+          </div>
+
+          {/* Suggested pools */}
           {suggestedPools.length > 0 && (
             <SuggestedPools
               containerClassName="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
