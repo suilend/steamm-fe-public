@@ -9,13 +9,7 @@ import { PackageInfo, PoolInfo } from "../../../types";
 import { MigrateArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
 
-import {
-  CpQuoteSwapArgs,
-  CpSwapArgs,
-  CreateCpPoolArgs,
-} from "./constantProductArgs";
-
-export * from "./constantProductArgs";
+import { CpQuoteSwapArgs, CpSwapArgs, CreateCpPoolArgs } from "./args";
 
 export class ConstantProductQuoter implements Quoter {
   public sourcePkgId: string;

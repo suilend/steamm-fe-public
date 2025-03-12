@@ -1,30 +1,33 @@
-import {
-  TransactionArgument,
-  TransactionObjectInput,
-} from "@mysten/sui/transactions";
+import { TransactionObjectInput } from "@mysten/sui/dist/cjs/transactions";
 
+import { SuiAddressType } from "../../../utils";
 import {
-  // PoolNewArgs,
+  CreatePoolArgs,
   PoolQuoteSwapArgs,
   PoolSwapArgs,
 } from "../../pool/poolArgs";
 
-// export type OracleNewArgs = PoolNewArgs & {
-//   oracle_index_a: bigint;
-//   oracle_index_b: bigint;
-// };
-export type OracleSwapArgs = PoolSwapArgs & {};
-export type OracleQuoteSwapArgs = PoolQuoteSwapArgs & {};
+export type OracleSwapArgs = PoolSwapArgs & {
+  lendingMarket: SuiAddressType;
+  bankA: SuiAddressType;
+  bankB: SuiAddressType;
+  oraclePriceUpdateA: SuiAddressType;
+  oraclePriceUpdateB: SuiAddressType;
+};
 
-export interface CreateCpPoolArgs {
-  coinTypeA: string;
-  coinTypeB: string;
-  lpTokenType: string;
-  registry: string | TransactionObjectInput;
-  swapFeeBps: bigint | TransactionArgument;
-  offset: bigint | TransactionArgument;
-  coinMetaA: string | TransactionObjectInput;
-  coinMetaB: string | TransactionObjectInput;
-  lpTokenMeta: string | TransactionObjectInput;
-  lpTreasury: string | TransactionObjectInput;
-}
+export type OracleQuoteSwapArgs = PoolQuoteSwapArgs & {
+  lendingMarket: SuiAddressType;
+  bankA: SuiAddressType;
+  bankB: SuiAddressType;
+  oraclePriceUpdateA: SuiAddressType;
+  oraclePriceUpdateB: SuiAddressType;
+};
+
+export type CreateOraclePoolArgs = CreatePoolArgs & {
+  lendingMarket: SuiAddressType;
+  oracleRegistry: SuiAddressType;
+  oracleIndexA: bigint;
+  oracleIndexB: bigint;
+  coinMetaBA: string | TransactionObjectInput;
+  coinMetaBB: string | TransactionObjectInput;
+};

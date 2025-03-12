@@ -4,14 +4,11 @@ import {
   TransactionResult,
 } from "@mysten/sui/transactions";
 
-import {
-  CpQuoteSwapArgs,
-  CpSwapArgs,
-} from "./constantQuoter/constantProductArgs";
+import { quoteSwapArgs, swapArgs } from ".";
 
 export interface Quoter {
-  swap(tx: Transaction, args: CpSwapArgs): TransactionResult;
-  quoteSwap(tx: Transaction, args: CpQuoteSwapArgs): TransactionArgument;
+  swap(tx: Transaction, args: swapArgs): TransactionResult;
+  quoteSwap(tx: Transaction, args: quoteSwapArgs): TransactionArgument;
   poolType(): [string];
   quoterTypes(): [string, string, string];
   poolTypes(): [string, string, string, string];

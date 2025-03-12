@@ -12,6 +12,7 @@ import {
   EventData,
   NewBankEvent,
   NewPoolEvent,
+  OracleConfigs,
   Package,
   PackageInfo,
   PoolInfo,
@@ -25,6 +26,7 @@ import { SuiAddressType, patchFixSuiObjectId } from "./utils";
 export type SdkOptions = {
   fullRpcUrl: string;
   steamm_config: Package<SteammConfigs>;
+  oracle_config: Package<OracleConfigs>;
   steamm_script_config: Package;
   suilend_config: Package<SuilendConfigs>;
   cache_refresh_ms?: number /* default: 5000 */;

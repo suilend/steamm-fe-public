@@ -1,23 +1,20 @@
+import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/dist/cjs/utils";
 import {
   Transaction,
   TransactionArgument,
   TransactionResult,
 } from "@mysten/sui/transactions";
 
-import { ConstantProductFunctions } from "../../..";
+import { OracleFunctions } from "../../..";
 import { PackageInfo, PoolInfo } from "../../../types";
 import { MigrateArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
 
-import { OracleSwapArgs } from "./args";
-
-// import {
-//   CpQuoteSwapArgs,
-//   CpSwapArgs,
-//   CreateCpPoolArgs,
-// } from "./constantProductArgs";
-
-// export * from "./constantProductArgs";
+import {
+  CreateOraclePoolArgs,
+  OracleQuoteSwapArgs,
+  OracleSwapArgs,
+} from "./args";
 
 export class OracleQuoter implements Quoter {
   public sourcePkgId: string;
@@ -33,14 +30,20 @@ export class OracleQuoter implements Quoter {
   public swap(tx: Transaction, args: OracleSwapArgs): TransactionResult {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
+      bankA: tx.object(args.bankA),
+      bankB: tx.object(args.bankB),
+      lendingMarket: tx.object(args.lendingMarket),
+      oraclePriceUpdateA: tx.object(args.oraclePriceUpdateA),
+      oraclePriceUpdateB: tx.object(args.oraclePriceUpdateB),
       coinA: args.coinA,
       coinB: args.coinB,
       amountIn: args.amountIn,
       a2B: args.a2b,
       minAmountOut: args.minAmountOut,
+      clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const swapResult = ConstantProductFunctions.swap(
+    const swapResult = OracleFunctions.swap(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -52,15 +55,21 @@ export class OracleQuoter implements Quoter {
 
   public quoteSwap(
     tx: Transaction,
-    args: CpQuoteSwapArgs,
+    args: OracleQuoteSwapArgs,
   ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
+      bankA: tx.object(args.bankA),
+      bankB: tx.object(args.bankB),
+      lendingMarket: tx.object(args.lendingMarket),
+      oraclePriceUpdateA: tx.object(args.oraclePriceUpdateA),
+      oraclePriceUpdateB: tx.object(args.oraclePriceUpdateB),
       amountIn: args.amountIn,
       a2B: args.a2b,
+      clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const quote = ConstantProductFunctions.quoteSwap(
+    const quote = OracleFunctions.quoteSwap(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -95,26 +104,6 @@ export class OracleQuoter implements Quoter {
     ];
   }
 
-  // Getter functions
-
-  public viewOffset(tx: Transaction = new Transaction()): TransactionArgument {
-    return ConstantProductFunctions.offset(
-      tx,
-      this.quoterTypes(),
-      tx.object(this.poolInfo.poolId),
-      this.publishedAt,
-    );
-  }
-
-  public viewK(tx: Transaction = new Transaction()): TransactionArgument {
-    return ConstantProductFunctions.k(
-      tx,
-      this.quoterTypes(),
-      tx.object(this.poolInfo.poolId),
-      this.publishedAt,
-    );
-  }
-
   public migrateHook(
     args: MigrateArgs,
     tx: Transaction = new Transaction(),
@@ -124,7 +113,7 @@ export class OracleQuoter implements Quoter {
       admin: args.adminCap,
     };
 
-    const [coinA, coinB] = ConstantProductFunctions.migrate(
+    const [coinA, coinB] = OracleFunctions.migrate(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -137,7 +126,7 @@ export class OracleQuoter implements Quoter {
 
 export function createPool(
   tx: Transaction,
-  args: CreateCpPoolArgs,
+  args: CreateOraclePoolArgs,
   pkgInfo: PackageInfo,
 ) {
   const {
@@ -146,29 +135,40 @@ export function createPool(
     lpTokenType,
     registry,
     swapFeeBps,
-    offset,
+    lendingMarket,
+    oracleRegistry,
+    oracleIndexA,
+    oracleIndexB,
+    coinMetaBA,
+    coinMetaBB,
     coinMetaA,
     coinMetaB,
     lpTokenMeta,
     lpTreasury,
   } = args;
 
-  const pool = ConstantProductFunctions.new_(
+  const pool = OracleFunctions.new_(
     tx,
     [coinTypeA, coinTypeB, lpTokenType],
     {
-      registry,
-      swapFeeBps,
-      offset,
-      metaA: coinMetaA,
-      metaB: coinMetaB,
-      metaLp: lpTokenMeta,
-      lpTreasury,
+      registry: tx.object(registry),
+      lendingMarket: tx.object(lendingMarket),
+      oracleIndexA: oracleIndexA,
+      oracleIndexB: oracleIndexB,
+      oracleRegistry: tx.object(oracleRegistry),
+      swapFeeBps: swapFeeBps,
+      metaA: tx.object(coinMetaA),
+      metaB: tx.object(coinMetaB),
+      metaBA: tx.object(coinMetaBA),
+      metaBB: tx.object(coinMetaBB),
+      metaLp: tx.object(lpTokenMeta),
+      lpTreasury: tx.object(lpTreasury),
     },
     pkgInfo.publishedAt,
   );
 
-  const quoterType = `${pkgInfo.sourcePkgId}::cpmm::CpQuoter`;
+  // TODO: has to be the package ID in which the quoter was introduced
+  const quoterType = `${pkgInfo.sourcePkgId}::omm::OracleQuoter`;
 
   return tx.moveCall({
     target: `0x2::transfer::public_share_object`,

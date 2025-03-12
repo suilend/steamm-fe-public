@@ -117,6 +117,11 @@ export function extractPoolInfo(events: EventData<NewPoolEvent>[]): PoolInfo[] {
 export type SteammConfigs = {
   registryId: SuiObjectIdType;
   globalAdmin: SuiObjectIdType;
+  oracleQuoterPkgId: SuiObjectIdType;
+};
+
+export type OracleConfigs = {
+  oracleRegistryId: SuiObjectIdType;
 };
 
 export type SuilendConfigs = {

@@ -5,6 +5,10 @@ export const SUILEND_PKG_ID =
 export const SUILEND_PUBLISHED_AT =
   "0x5bb8cb3894945f523736f4f5059b1621056e8093b165ea56b20805d0ef2461a9";
 
+export const ORACLE_PKG_ID = "TODO";
+export const ORACLE_PUBLISHED_AT = "TODO";
+export const ORACLE_REGISTRY_ID = "TODO";
+
 export const LENDING_MARKET_ID =
   "0x84030d26d85eaa7035084a057f2f11f701b7e2e4eda87551becbc7c97505ece1";
 export const LENDING_MARKET_TYPE =
@@ -14,6 +18,8 @@ export const STEAMM_PKG_ID =
   "0x4fb1cf45dffd6230305f1d269dd1816678cc8e3ba0b747a813a556921219f261";
 export const STEAMM_PUBLISHED_AT =
   "0x80e6e13fa97030984f871dcadbec36bcfe02a51225fca97ba60d32ea24c6f0fc";
+
+export const STEAMM_ORACLE_QUOTER_PKG_ID = "TODO";
 
 export const REGISTRY_OBJECT_ID =
   "0x8584948e8c0a2809ec192ede7e030b0a32bd602e5ca6c91bde8dc35fb8b0068d";
@@ -31,6 +37,7 @@ export const STEAMM_CONFIG = {
   config: {
     registryId: REGISTRY_OBJECT_ID,
     globalAdmin: GLOBAL_ADMIN_OBJECT_ID,
+    oracleQuoterPkgId: STEAMM_ORACLE_QUOTER_PKG_ID,
   },
 };
 export const SUILEND_CONFIG = {
@@ -46,9 +53,18 @@ export const STEAMM_SCRIPT_CONFIG = {
   published_at: STEAMM_SCRIPT_PUBLISHED_AT,
 };
 
+export const ORACLE_CONFIG = {
+  package_id: ORACLE_PKG_ID,
+  published_at: ORACLE_PUBLISHED_AT,
+  config: {
+    oracleRegistryId: ORACLE_REGISTRY_ID,
+  },
+};
+
 export const MAINNET_CONFIG: SdkOptions = {
   fullRpcUrl: "https://fullnode.mainnet.sui.io:443",
   suilend_config: SUILEND_CONFIG,
   steamm_config: STEAMM_CONFIG,
   steamm_script_config: STEAMM_SCRIPT_CONFIG,
+  oracle_config: ORACLE_CONFIG,
 };
