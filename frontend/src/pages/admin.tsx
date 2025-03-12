@@ -7,7 +7,7 @@ import init, {
 } from "@mysten/move-bytecode-template";
 import { bcs } from "@mysten/sui/bcs";
 import { CoinMetadata, SuiObjectChange } from "@mysten/sui/client";
-import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
+import { Transaction } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 
@@ -26,6 +26,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
+import { ADMIN_ADDRESS } from "@suilend/sdk";
 
 import Divider from "@/components/Divider";
 import Parameter from "@/components/Parameter";
@@ -42,7 +43,7 @@ import { showSuccessTxnToast } from "@/lib/toasts";
 import { QUOTERS, QuoterId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const FEE_TIER_PERCENTS: number[] = [0.3, 1, 2];
+const FEE_TIER_PERCENTS: number[] = [0.01, 0.05, 0.3, 1, 2];
 
 const generate_bytecode = (
   module: string,
@@ -125,6 +126,8 @@ export default function AdminPage() {
   const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } =
     useLoadedUserContext();
+
+  const isEditable = address === ADMIN_ADDRESS;
 
   // CoinTypes
   const [coinTypes, setCoinTypes] = useState<[string, string]>(["", ""]);
@@ -275,6 +278,7 @@ export default function AdminPage() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
+    // if (!isEditable) return { isDisabled: true, title: "Create pool and deposit" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
 
     if (coinTypes.some((coinType) => coinType === ""))
@@ -413,21 +417,19 @@ export default function AdminPage() {
         existingBTokenTypeCoinMetadataMap,
       );
 
+      const getExistingBTokenForToken = (token: Token) => {
+        const bank = appData.bankMap[token.coinType];
+        return bank
+          ? getToken(
+              bank.bTokenType,
+              existingBTokenTypeCoinMetadataMap[bank.bTokenType],
+            )
+          : undefined;
+      };
+
       const createBTokenResults = [];
       for (const index of [0, 1]) {
-        if (
-          !!Object.keys(existingBTokenTypeCoinMetadataMap).find(
-            (_coinType) =>
-              [
-                _coinType.split("::")[1],
-                // `steamm_${_coinType.split("::")[1]}`,
-              ].includes(getBTokenModule(tokens[index])) &&
-              [
-                _coinType.split("::")[2],
-                // `STEAMM_${_coinType.split("::")[2]}`,
-              ].includes(getBTokenType(tokens[index])),
-          )
-        ) {
+        if (!!getExistingBTokenForToken(tokens[index])) {
           createBTokenResults.push(undefined);
           continue;
         }
@@ -451,35 +453,18 @@ export default function AdminPage() {
         createBTokenResults.push(createBTokenResult);
       }
 
-      const bTokens = createBTokenResults.map((result, index) => {
-        if (result === undefined) {
-          const coinType = Object.keys(existingBTokenTypeCoinMetadataMap).find(
-            (_coinType) =>
-              [
-                _coinType.split("::")[1],
-                // `steamm_${_coinType.split("::")[1]}`,
-              ].includes(getBTokenModule(tokens[index])) &&
-              [
-                _coinType.split("::")[2],
-                // `STEAMM_${_coinType.split("::")[2]}`,
-              ].includes(getBTokenType(tokens[index])),
-          )!; // Checked above
-          const coinMetadata = existingBTokenTypeCoinMetadataMap[coinType];
-          if (!coinMetadata.id)
-            throw new Error("bToken coinMetadata id not found");
-
-          return getToken(coinType, coinMetadata);
-        }
-
-        return getToken(result.coinType, {
-          decimals: 9,
-          description: B_TOKEN_DESCRIPTION,
-          iconUrl: B_TOKEN_IMAGE_URL,
-          id: result.coinMetadataId,
-          name: getBTokenName(tokens[index]),
-          symbol: getBTokenSymbol(tokens[index]),
-        } as CoinMetadata);
-      }) as [Token, Token];
+      const bTokens = createBTokenResults.map((result, index) =>
+        result === undefined
+          ? getExistingBTokenForToken(tokens[index])!
+          : getToken(result.coinType, {
+              decimals: 9,
+              description: B_TOKEN_DESCRIPTION,
+              iconUrl: B_TOKEN_IMAGE_URL,
+              id: result.coinMetadataId,
+              name: getBTokenName(tokens[index]),
+              symbol: getBTokenSymbol(tokens[index]),
+            } as CoinMetadata),
+      ) as [Token, Token];
 
       // Step 2: Create LP token - one transaction
       console.log("xxx create lpToken coin - bTokens:", bTokens);
