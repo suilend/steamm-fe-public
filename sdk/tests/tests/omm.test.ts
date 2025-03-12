@@ -23,7 +23,7 @@ import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
 dotenv.config();
 
 export async function test() {
-  describe("test depost, swap and redeem", async () => {
+  describe("test oracle quoter swap", async () => {
     let keypair: Ed25519Keypair;
     let suiTreasuryCap: string;
     let usdcTreasuryCap: string;
@@ -56,7 +56,6 @@ export async function test() {
           config: {
             registryId: REGISTRY_ID,
             globalAdmin: GLOBAL_ADMIN_ID,
-            oracleQuoterPkgId: STEAMM_PKG_ID,
           },
         },
         suilend_config: {

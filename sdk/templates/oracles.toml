@@ -1,11 +1,11 @@
 [package]
-name = "steamm"
+name = "oracles"
 edition = "2024.beta"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet-v1.40.1" }
-suilend = { local = "../suilend" }
-oracles = { local = "../oracles" }
+Pyth = { local = "../pyth" }
+Switchboard = { local = "../switchboard" }
 
 [addresses]
-steamm = "0x0"
+oracles = "0x0"

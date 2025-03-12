@@ -19,7 +19,7 @@ if [ "$CI" = false ]; then
 
     # Create suilend directory if it doesn't exist and cd into it
     mkdir -p temp &&
-    git clone --branch pool-script-v2 git@github.com:solendprotocol/steamm.git temp/git
+    git clone --branch oracle-pool-script git@github.com:solendprotocol/steamm.git temp/git
 else
     ./bin/unpublocal.sh --ci
 fi
@@ -35,7 +35,7 @@ fi
 
 # Create source directories
 printf "[INFO] Building Steamm package"  >&2
-mkdir -p temp/liquid_staking/sources temp/pyth/sources temp/sprungsui/sources temp/suilend/sources temp/wormhole/sources temp/steamm/sources temp/steamm_scripts/sources
+mkdir -p temp/liquid_staking/sources temp/pyth/sources temp/sprungsui/sources temp/suilend/sources temp/wormhole/sources temp/steamm/sources temp/steamm_scripts/sources temp/oracles/sources temp/switchboard/sources
 sui move build --path temp/git/contracts/steamm --silence-warnings --no-lint
 
 # Copy dependencies from build to local directories
@@ -45,6 +45,9 @@ cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/Pyth/* temp/py
 cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/sprungsui/* temp/sprungsui/sources/
 cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/suilend/* temp/suilend/sources/
 cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/Wormhole/* temp/wormhole/sources/
+cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/oracles/* temp/oracles/sources/
+cp -r temp/git/contracts/steamm/build/steamm/sources/dependencies/Switchboard/* temp/switchboard/sources/
+
 cp -r temp/git/contracts/steamm/sources/* temp/steamm/sources/
 cp -r temp/git/contracts/steamm_scripts/sources/* temp/steamm_scripts/sources/
 
@@ -57,6 +60,8 @@ cp templates/pyth.toml temp/pyth/Move.toml
 cp templates/sprungsui.toml temp/sprungsui/Move.toml
 cp templates/suilend.toml temp/suilend/Move.toml
 cp templates/wormhole.toml temp/wormhole/Move.toml
+cp templates/oracles.toml temp/oracles/Move.toml
+cp templates/switchboard.toml temp/switchboard/Move.toml
 cp templates/steamm.toml temp/steamm/Move.toml
 cp templates/steamm_scripts.toml temp/steamm_scripts/Move.toml
 
@@ -247,6 +252,8 @@ LIQUID_STAKING_RESPONSE=$(publish_package "temp/liquid_staking" "LIQUID_STAKING_
 WORMHOLE_RESPONSE=$(publish_package "temp/wormhole" "WORMHOLE_PKG_ID")
 SPRUNGSUI_RESPONSE=$(publish_package "temp/sprungsui" "SPRUNGSUI_PKG_ID") 
 PYTH_RESPONSE=$(publish_package "temp/pyth" "PYTH_PKG_ID")
+SWITCHBOARD_RESPONSE=$(publish_package "temp/switchboard" "SWITCHBOARD_PKG_ID");
+ORACLES_RESPONSE=$(publish_package "temp/oracles" "ORACLES_PKG_ID");
 SUILEND_RESPONSE=$(publish_package "temp/suilend" "SUILEND_PKG_ID")
 STEAMM_RESPONSE=$(publish_package "temp/steamm" "STEAMM_PKG_ID")
 STEAMM_SCRIPT_RESPONSE=$(publish_package "temp/steamm_scripts" "STEAMM_SCRIPT_PKG_ID")
@@ -260,6 +267,9 @@ echo "lending_market_registry: $lending_market_registry"
 
 registry=$(find_object_id "$STEAMM_RESPONSE" ".*::registry::Registry")
 echo "registry: $registry"
+
+oracle_registry=$(find_object_id "$ORACLES_RESPONSE" ".*::oracles::OracleRegistry")
+echo "oracle_registry: $oracle_registry"
 
 global_admin=$(find_object_id "$STEAMM_RESPONSE" ".*::global_admin::GlobalAdmin")
 echo "global_admin: $global_admin"
@@ -309,6 +319,7 @@ echo "lending_market_type: $lending_market_type"
 
 
 populate_ts "$registry" "REGISTRY_ID"
+populate_ts "$oracle_registry" "ORACLE_REGISTRY_ID"
 populate_ts "$global_admin" "GLOBAL_ADMIN_ID"
 populate_ts "$lending_market" "LENDING_MARKET_ID"
 populate_ts "$lending_market_type" "LENDING_MARKET_TYPE"
