@@ -1,11 +1,10 @@
 import BigNumber from "bignumber.js";
 import { AlertTriangle, Info } from "lucide-react";
 
-import { formatPercent } from "@suilend/frontend-sui";
+import { Token, formatPercent } from "@suilend/frontend-sui";
 import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLoadedAppContext } from "@/contexts/AppContext";
 import {
   PRICE_DIFFERENCE_PERCENT_DESTRUCTIVE_THRESHOLD,
   PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD,
@@ -14,26 +13,21 @@ import {
 import { cn } from "@/lib/utils";
 
 interface PriceDifferenceLabelProps {
-  inCoinType: string;
-  outCoinType: string;
+  inToken: Token;
+  outToken: Token;
   birdeyeRatio?: BigNumber;
   isFetchingQuote: boolean;
   quote?: SwapQuote | MultiSwapQuote;
 }
 
 export default function PriceDifferenceLabel({
-  inCoinType,
-  outCoinType,
+  inToken,
+  outToken,
   birdeyeRatio,
   isFetchingQuote,
   quote,
 }: PriceDifferenceLabelProps) {
-  const { appData } = useLoadedAppContext();
-
-  const inCoinMetadata = appData.coinMetadataMap[inCoinType];
-  const outCoinMetadata = appData.coinMetadataMap[outCoinType];
-
-  const quoteRatio = getQuoteRatio(inCoinMetadata, outCoinMetadata, quote);
+  const quoteRatio = getQuoteRatio(inToken, outToken, quote);
 
   // Price difference (Birdeye)
   const priceDifferencePercent =

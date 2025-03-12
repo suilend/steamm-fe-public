@@ -335,7 +335,7 @@ function DepositTab({ tokenUsdPricesMap }: DepositTabProps) {
   };
 
   // USD prices - current
-  const usdValues: (BigNumber | "" | undefined)[] = useMemo(
+  const usdValues = useMemo(
     () =>
       [0, 1].map((index) =>
         fetchingQuoteForIndex !== undefined ||
@@ -429,8 +429,8 @@ function DepositTab({ tokenUsdPricesMap }: DepositTabProps) {
     }
 
     return {
-      title: "Deposit",
       isDisabled: fetchingQuoteForIndex !== undefined || !quote,
+      title: "Deposit",
     };
   })();
 
@@ -568,7 +568,10 @@ function DepositTab({ tokenUsdPricesMap }: DepositTabProps) {
       {[0, 1].map((index) => (
         <CoinInput
           key={index}
-          coinType={pool.coinTypes[index]}
+          token={getToken(
+            pool.coinTypes[index],
+            appData.coinMetadataMap[pool.coinTypes[index]],
+          )}
           value={fetchingQuoteForIndex === index ? undefined : values[index]}
           usdValue={usdValues[index]}
           onChange={(value) => onValueChange(value, index)}
@@ -771,8 +774,8 @@ function WithdrawTab() {
       };
 
     return {
-      title: "Withdraw",
       isDisabled: isFetchingQuote || !quote,
+      title: "Withdraw",
     };
   })();
 
@@ -1312,8 +1315,8 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
     }
 
     return {
-      title: "Swap",
       isDisabled: isFetchingQuote || !quote,
+      title: "Swap",
     };
   })();
 
@@ -1430,7 +1433,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
       <div className="relative flex w-full min-w-0 flex-col items-center gap-1">
         <CoinInput
           className="relative z-[1]"
-          coinType={pool.coinTypes[activeCoinIndex]}
+          token={getToken(activeCoinType, activeCoinMetadata)}
           value={value}
           usdValue={activeUsdValue}
           onChange={(value) => onValueChange(value)}
@@ -1441,7 +1444,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
 
         <CoinInput
           className="relative z-[1]"
-          coinType={inactiveCoinType}
+          token={getToken(inactiveCoinType, inactiveCoinMetadata)}
           value={
             isFetchingQuote
               ? undefined
@@ -1462,13 +1465,24 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
       </div>
 
       {(isFetchingQuote || quote) && (
-        <PriceDifferenceLabel
-          inCoinType={activeCoinType}
-          outCoinType={inactiveCoinType}
-          birdeyeRatio={birdeyeRatio}
-          isFetchingQuote={isFetchingQuote}
-          quote={quote}
-        />
+        <div className="flex w-full flex-col gap-2">
+          <ExchangeRateParameter
+            labelClassName="text-secondary-foreground"
+            inToken={getToken(activeCoinType, activeCoinMetadata)}
+            outToken={getToken(inactiveCoinType, inactiveCoinMetadata)}
+            isFetchingQuote={isFetchingQuote}
+            quote={quote}
+            label=""
+          />
+
+          <PriceDifferenceLabel
+            inToken={getToken(activeCoinType, activeCoinMetadata)}
+            outToken={getToken(inactiveCoinType, inactiveCoinMetadata)}
+            birdeyeRatio={birdeyeRatio}
+            isFetchingQuote={isFetchingQuote}
+            quote={quote}
+          />
+        </div>
       )}
 
       <SubmitButton
@@ -1478,14 +1492,6 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
 
       {(isFetchingQuote || quote) && (
         <div className="flex w-full flex-col gap-2">
-          <ExchangeRateParameter
-            inCoinType={activeCoinType}
-            outCoinType={inactiveCoinType}
-            isFetchingQuote={isFetchingQuote}
-            quote={quote}
-            isHorizontal
-          />
-
           <Parameter label="Fees" isHorizontal>
             {isFetchingQuote || !quote ? (
               <Skeleton className="h-[21px] w-24" />

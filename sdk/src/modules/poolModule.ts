@@ -1,4 +1,3 @@
-import { SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
@@ -213,14 +212,14 @@ export class PoolModule implements IModule {
     tx: Transaction,
     args: {
       lpTreasuryId: string;
-      lpMetadataId: string;
       lpTokenType: string;
+      lpMetadataId: string;
       btokenTypeA: string;
+      coinMetaA: string;
       btokenTypeB: string;
+      coinMetaB: string;
       swapFeeBps: bigint;
       offset: bigint;
-      coinMetaA: string;
-      coinMetaB: string;
     },
   ) {
     // wait until the sui rpc recognizes the treasuryCapId

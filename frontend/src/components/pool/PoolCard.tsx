@@ -5,7 +5,7 @@ import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
-import { ParsedPool, poolTypeNameMap } from "@/lib/types";
+import { ParsedPool } from "@/lib/types";
 
 interface PoolCardProps {
   pool: ParsedPool;
@@ -15,7 +15,7 @@ export default function PoolCard({ pool }: PoolCardProps) {
   const { appData } = useLoadedAppContext();
 
   return (
-    <div className="group flex w-full flex-col gap-3 rounded-md border p-4 transition-colors hover:bg-border/50">
+    <div className="group flex w-full flex-col gap-2 rounded-md border p-4 transition-colors hover:bg-border/50">
       {/* Top */}
       <div className="flex w-full flex-row items-center gap-2">
         <TokenLogos coinTypes={pool.coinTypes} size={16} />
@@ -28,7 +28,7 @@ export default function PoolCard({ pool }: PoolCardProps) {
         </p>
 
         <div className="flex flex-row items-center gap-1">
-          <Tag>{pool.type ? poolTypeNameMap[pool.type] : "--"}</Tag>
+          <Tag>{pool.quoter.name}</Tag>
           <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
         </div>
       </div>

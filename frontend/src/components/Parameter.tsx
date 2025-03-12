@@ -7,12 +7,14 @@ import { cn } from "@/lib/utils";
 interface ParameterProps extends PropsWithChildren {
   className?: ClassValue;
   label?: string;
+  labelEndDecorator?: string;
   isHorizontal?: boolean;
 }
 
 export default function Parameter({
   className,
   label,
+  labelEndDecorator,
   isHorizontal,
   children,
 }: ParameterProps) {
@@ -24,7 +26,17 @@ export default function Parameter({
         className,
       )}
     >
-      {label && <p className="text-p2 text-secondary-foreground">{label}</p>}
+      {label && (
+        <div className="flex shrink-0 flex-row items-baseline gap-1.5">
+          <p className="text-p2 text-secondary-foreground">{label}</p>
+          {labelEndDecorator && (
+            <p className="text-p3 text-tertiary-foreground">
+              {labelEndDecorator}
+            </p>
+          )}
+        </div>
+      )}
+
       {children}
     </div>
   );

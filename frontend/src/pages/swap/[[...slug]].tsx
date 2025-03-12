@@ -12,6 +12,7 @@ import {
   NORMALIZED_SUI_COINTYPE,
   NORMALIZED_USDC_COINTYPE,
   SUI_GAS_MIN,
+  Token,
   formatToken,
   getBalanceChange,
   getToken,
@@ -254,20 +255,36 @@ export default function SwapPage() {
   };
 
   // Select
-  const onPopoverCoinClick = (coinType: string, direction: "in" | "out") => {
+  const popoverTokens: Token[] = useMemo(
+    () =>
+      Object.values(appData.bTokenTypeCoinTypeMap)
+        .sort(
+          (a, b) =>
+            appData.coinMetadataMap[a].symbol.toLowerCase() <
+            appData.coinMetadataMap[b].symbol.toLowerCase()
+              ? -1
+              : 1, // Sort by symbol (ascending)
+        )
+        .map((coinType) =>
+          getToken(coinType, appData.coinMetadataMap[coinType]),
+        ),
+    [appData.bTokenTypeCoinTypeMap, appData.coinMetadataMap],
+  );
+
+  const onPopoverTokenClick = (token: Token, direction: "in" | "out") => {
     const newInCoinType =
       direction === "in"
-        ? coinType
-        : coinType === inCoinType
+        ? token.coinType
+        : token.coinType === inCoinType
           ? outCoinType
           : inCoinType;
     const newInCoinMetadata = appData.coinMetadataMap[newInCoinType];
     const newOutCoinType =
       direction === "in"
-        ? coinType === outCoinType
+        ? token.coinType === outCoinType
           ? inCoinType
           : outCoinType
-        : coinType;
+        : token.coinType;
     const newOutCoinMetadata = appData.coinMetadataMap[newOutCoinType];
 
     if (tokenUsdPricesMap[newInCoinType] === undefined)
@@ -367,8 +384,8 @@ export default function SwapPage() {
     }
 
     return {
-      title: "Swap",
       isDisabled: isFetchingQuote || !quote || !route,
+      title: "Swap",
     };
   })();
 
@@ -477,13 +494,14 @@ export default function SwapPage() {
               <CoinInput
                 className="relative z-[1]"
                 autoFocus
-                coinType={inCoinType}
+                token={getToken(inCoinType, inCoinMetadata)}
                 value={value}
                 usdValue={inUsdValue}
                 onChange={(value) => onValueChange(value)}
                 onBalanceClick={() => onBalanceClick()}
-                onPopoverCoinClick={(coinType) =>
-                  onPopoverCoinClick(coinType, "in")
+                popoverTokens={popoverTokens}
+                onPopoverTokenClick={(token) =>
+                  onPopoverTokenClick(token, "in")
                 }
               />
 
@@ -491,7 +509,7 @@ export default function SwapPage() {
 
               <CoinInput
                 className="relative z-[1]"
-                coinType={outCoinType}
+                token={getToken(outCoinType, outCoinMetadata)}
                 value={
                   isFetchingQuote
                     ? undefined
@@ -508,56 +526,69 @@ export default function SwapPage() {
                       : ""
                 }
                 usdValue={outUsdValue}
-                onPopoverCoinClick={(coinType) =>
-                  onPopoverCoinClick(coinType, "out")
+                popoverTokens={popoverTokens}
+                onPopoverTokenClick={(token) =>
+                  onPopoverTokenClick(token, "out")
                 }
               />
             </div>
 
             {(isFetchingQuote || quote) && (
-              <div className="flex w-full flex-row items-center justify-between">
+              <div className="flex w-full flex-col gap-2">
+                <div className="flex w-full flex-row items-center justify-between">
+                  <ExchangeRateParameter
+                    className="w-max"
+                    labelClassName="text-secondary-foreground"
+                    inToken={getToken(inCoinType, inCoinMetadata)}
+                    outToken={getToken(outCoinType, outCoinMetadata)}
+                    isFetchingQuote={isFetchingQuote}
+                    quote={quote}
+                    label=""
+                  />
+
+                  {isFetchingQuote || !quote || !route ? (
+                    <Skeleton className="h-[21px] w-16" />
+                  ) : (
+                    <Tooltip
+                      content={
+                        <div className="flex flex-row items-center gap-1">
+                          {flattenedRoute!.map((r, index) => (
+                            <Fragment key={r.bTokenType}>
+                              <p className="text-p3 text-foreground">
+                                {
+                                  appData.coinMetadataMap[
+                                    appData.bTokenTypeCoinTypeMap[r.bTokenType]
+                                  ].symbol
+                                }
+                              </p>
+                              {index !== flattenedRoute!.length - 1 && (
+                                <ArrowRight className="h-3 w-3 text-foreground" />
+                              )}
+                            </Fragment>
+                          ))}
+                        </div>
+                      }
+                    >
+                      <p
+                        className={cn(
+                          "text-p2 text-secondary-foreground decoration-secondary-foreground/50",
+                          hoverUnderlineClassName,
+                        )}
+                      >
+                        {route.length} hop
+                        {route.length > 1 && "s"}
+                      </p>
+                    </Tooltip>
+                  )}
+                </div>
+
                 <PriceDifferenceLabel
-                  inCoinType={inCoinType}
-                  outCoinType={outCoinType}
+                  inToken={getToken(inCoinType, inCoinMetadata)}
+                  outToken={getToken(outCoinType, outCoinMetadata)}
                   birdeyeRatio={birdeyeRatio}
                   isFetchingQuote={isFetchingQuote}
                   quote={quote}
                 />
-
-                {isFetchingQuote || !quote || !route ? (
-                  <Skeleton className="h-[21px] w-16" />
-                ) : (
-                  <Tooltip
-                    content={
-                      <div className="flex flex-row items-center gap-1">
-                        {flattenedRoute!.map((r, index) => (
-                          <Fragment key={r.bTokenType}>
-                            <p className="text-p3 text-foreground">
-                              {
-                                appData.coinMetadataMap[
-                                  appData.bTokenTypeCoinTypeMap[r.bTokenType]
-                                ].symbol
-                              }
-                            </p>
-                            {index !== flattenedRoute!.length - 1 && (
-                              <ArrowRight className="h-3 w-3 text-foreground" />
-                            )}
-                          </Fragment>
-                        ))}
-                      </div>
-                    }
-                  >
-                    <p
-                      className={cn(
-                        "text-p2 text-secondary-foreground decoration-secondary-foreground/50",
-                        hoverUnderlineClassName,
-                      )}
-                    >
-                      {route.length} hop
-                      {route.length > 1 && "s"}
-                    </p>
-                  </Tooltip>
-                )}
               </div>
             )}
 
@@ -568,14 +599,6 @@ export default function SwapPage() {
 
             {(isFetchingQuote || quote) && (
               <div className="flex w-full flex-col gap-2">
-                <ExchangeRateParameter
-                  inCoinType={inCoinType}
-                  outCoinType={outCoinType}
-                  isFetchingQuote={isFetchingQuote}
-                  quote={quote}
-                  isHorizontal
-                />
-
                 <Parameter label="Minimum inflow" isHorizontal>
                   {isFetchingQuote || !quote ? (
                     <Skeleton className="h-[21px] w-24" />

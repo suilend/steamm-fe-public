@@ -21,7 +21,7 @@ import { SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
 import { formatPair } from "@/lib/format";
-import { ParsedBank, ParsedPool, PoolType } from "@/lib/types";
+import { ParsedBank, ParsedPool, QUOTERS, QuoterId } from "@/lib/types";
 
 export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
@@ -128,7 +128,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           const depositedAmount = new BigNumber(
             bank.lending ? bank.lending.ctokens.toString() : 0,
           )
-            .times(mainMarket_reserveMap[coinType]?.cTokenExchangeRate ?? 0) // Fallback for when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true and Main market (beta) does not have the reserve
+            .times(mainMarket_reserveMap[coinType]?.cTokenExchangeRate ?? 0) // Fallback for when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true and Main market  stablecoin
             .div(10 ** coinMetadataMap[coinType].decimals);
           const totalAmount = liquidAmount.plus(depositedAmount);
 
@@ -247,9 +247,10 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         poolInfos.map((poolInfo) =>
           (async () => {
             const id = poolInfo.poolId;
-            const type = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
-              ? PoolType.CPMM
-              : undefined; // TODO: Add support for other pool types
+            // TODO: Add support for other pool types
+            const quoter = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
+              ? QUOTERS.find((_quoter) => _quoter.id === QuoterId.CPMM)!
+              : QUOTERS.find((_quoter) => _quoter.id === QuoterId.CPMM)!; // Should never need to use the fallback
 
             const bTokenTypeA = poolInfo.coinTypeA;
             const bTokenTypeB = poolInfo.coinTypeB;
@@ -331,7 +332,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
             return {
               id,
-              type,
+              quoter,
 
               lpTokenType: poolInfo.lpTokenType,
               bTokenTypes,
