@@ -1,16 +1,13 @@
 import { CoinMetadata } from "@mysten/sui/client";
 import { normalizeStructTag } from "@mysten/sui/utils";
+import { PriceFeed, SuiPriceServiceConnection } from "@pythnetwork/pyth-sui-js";
 import BigNumber from "bignumber.js";
 import useSWR from "swr";
 
 import {
-  NORMALIZED_SEND_POINTS_S2_COINTYPE,
-  NORMALIZED_SUI_COINTYPE,
-  NORMALIZED_USDC_COINTYPE,
+  NORMALIZED_STEAMM_POINTS_COINTYPE,
+  COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP as SUILEND_COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP,
   getCoinMetadataMap,
-  isStablecoin,
-  isSui,
-  issSui,
 } from "@suilend/frontend-sui";
 import { showErrorToast, useSettingsContext } from "@suilend/frontend-sui-next";
 import {
@@ -84,15 +81,16 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
     const pointsCoinMetadataMap = await getCoinMetadataMap(
       suiClient,
-      [NORMALIZED_SEND_POINTS_S2_COINTYPE].filter(
+      [NORMALIZED_STEAMM_POINTS_COINTYPE].filter(
         (coinType) => !Object.keys(coinMetadataMap).includes(coinType),
       ),
     );
     coinMetadataMap = { ...coinMetadataMap, ...pointsCoinMetadataMap };
 
     // Prices
-    const suiPrice = mainMarket_reserveMap[NORMALIZED_SUI_COINTYPE].price;
-    const usdcPrice = mainMarket_reserveMap[NORMALIZED_USDC_COINTYPE].price;
+    const pythConnection = new SuiPriceServiceConnection(
+      "https://hermes.pyth.network",
+    );
 
     // Banks
     const bankCoinTypes: string[] = [];
@@ -182,6 +180,68 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     );
     coinMetadataMap = { ...coinMetadataMap, ...poolCoinMetadataMap };
 
+    const uniqueReservelessPoolCoinTypes = Array.from(
+      new Set(
+        poolInfos
+          .map((poolInfo) => [
+            bTokenTypeCoinTypeMap[poolInfo.coinTypeA],
+            bTokenTypeCoinTypeMap[poolInfo.coinTypeB],
+          ])
+          .flat()
+          .filter((coinType) => !mainMarket_reserveMap[coinType]),
+      ),
+    );
+
+    // coinType -> price feed symbol
+    const COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP: Record<string, string> = {
+      ...SUILEND_COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP,
+      // TODO: Add on-chain price feed symbol mappings (for Oracle quoter pools)
+    };
+
+    // Price feed symbol -> price feed id
+    const PYTH_PRICE_FEED_SYMBOL_PRICE_ID_MAP = Object.fromEntries(
+      (
+        await (
+          await fetch(
+            "https://hermes.pyth.network/v2/price_feeds?asset_type=crypto",
+          )
+        ).json()
+      ).map((priceFeed: any) => [
+        priceFeed.attributes.symbol,
+        `0x${priceFeed.id}`,
+      ]),
+    );
+
+    const pythPriceFeeds: PriceFeed[] =
+      (await pythConnection.getLatestPriceFeeds(
+        uniqueReservelessPoolCoinTypes
+          .map(
+            (coinType) =>
+              PYTH_PRICE_FEED_SYMBOL_PRICE_ID_MAP[
+                COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP[coinType]
+              ],
+          )
+          .filter(Boolean),
+      )) ?? [];
+    console.log("XXX pythPriceFeeds:", pythPriceFeeds);
+
+    const PYTH_PRICE_FEED_SYMBOL_PRICE_MAP: Record<string, BigNumber> =
+      Object.fromEntries(
+        pythPriceFeeds.map((pythPriceFeed) => [
+          Object.entries(PYTH_PRICE_FEED_SYMBOL_PRICE_ID_MAP).find(
+            ([, priceId]) => priceId === `0x${pythPriceFeed.id}`,
+          )![0],
+          new BigNumber(
+            pythPriceFeed.getPriceUnchecked().getPriceAsNumberUnchecked(),
+          ),
+        ]),
+      );
+
+    console.log(
+      "XXX PYTH_PRICE_FEED_SYMBOL_PRICE_MAP:",
+      PYTH_PRICE_FEED_SYMBOL_PRICE_MAP,
+    );
+
     const pools: ParsedPool[] = (
       await Promise.all(
         poolInfos.map((poolInfo) =>
@@ -215,29 +275,33 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             );
             const balances = [balanceA, balanceB];
 
-            let priceA, priceB;
-            if (isSui(coinTypeB) || issSui(coinTypeB)) {
-              priceB = suiPrice;
-              priceA = isStablecoin(coinTypeA)
-                ? (mainMarket_reserveMap[coinTypeA]?.price ?? usdcPrice) // Fallback for when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true and Main market (beta) does not have the stablecoin reserve
-                : !balanceA.eq(0)
-                  ? balanceB.div(balanceA).times(priceB)
-                  : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
-            } else if (isStablecoin(coinTypeB)) {
-              priceB = mainMarket_reserveMap[coinTypeB]?.price ?? usdcPrice; // Fallback for when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true and Main market (beta) does not have the stablecoin reserve
-              priceA =
-                isSui(coinTypeA) || issSui(coinTypeA)
-                  ? suiPrice
-                  : !balanceA.eq(0)
-                    ? balanceB.div(balanceA).times(priceB)
-                    : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
-            } else {
+            const priceA =
+              mainMarket_reserveMap[coinTypeA]?.price ??
+              PYTH_PRICE_FEED_SYMBOL_PRICE_MAP[
+                COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP[coinTypeA]
+              ] ??
+              undefined;
+            const priceB =
+              mainMarket_reserveMap[coinTypeB]?.price ??
+              PYTH_PRICE_FEED_SYMBOL_PRICE_MAP[
+                COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP[coinTypeB]
+              ] ??
+              undefined;
+            const prices = [priceA, priceB];
+
+            if (prices.some((price) => price === undefined)) {
               console.error(
-                `Quote asset must be one of SUI, sSUI, STABLECOIN_COINTYPES - skipping pool with id: ${id}`,
+                "Price(s) missing for pool",
+                id,
+                "coinType(s):",
+                coinTypes
+                  .map((_, index) =>
+                    prices[index] === undefined ? coinTypes[index] : undefined,
+                  )
+                  .filter(Boolean),
               );
               return undefined;
             }
-            const prices = [priceA, priceB];
 
             const tvlUsd = balanceA.times(priceA).plus(balanceB.times(priceB));
 

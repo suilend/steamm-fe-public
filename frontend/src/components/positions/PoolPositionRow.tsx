@@ -8,7 +8,9 @@ import { Loader2 } from "lucide-react";
 
 import {
   MAX_U64,
+  NORMALIZED_STEAMM_POINTS_COINTYPE,
   formatPercent,
+  formatPoints,
   formatToken,
   formatUsd,
   getToken,
@@ -360,28 +362,28 @@ export default function PoolPositionRow({
       </div>
 
       {/* Points */}
-      {/* <div
+      <div
         className="flex h-full flex-row items-center"
         style={columnStyleMap.points}
       >
         <div className="flex flex-row items-center gap-2">
           <TokenLogo
             token={getToken(
-              NORMALIZED_SEND_POINTS_S2_COINTYPE,
-              appData.coinMetadataMap[NORMALIZED_SEND_POINTS_S2_COINTYPE],
+              NORMALIZED_STEAMM_POINTS_COINTYPE,
+              appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
             )}
             size={16}
           />
 
           <Tooltip
-            title={`${formatPoints(position.points, { dp: appData.coinMetadataMap[NORMALIZED_SEND_POINTS_S2_COINTYPE].decimals })} ${appData.coinMetadataMap[NORMALIZED_SEND_POINTS_S2_COINTYPE].symbol}`}
+            title={`${formatPoints(position.points, { dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].decimals })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
           >
             <p className="text-p2 text-foreground">
               {formatPoints(position.points)}
             </p>
           </Tooltip>
         </div>
-      </div> */}
+      </div>
     </Link>
   );
 }

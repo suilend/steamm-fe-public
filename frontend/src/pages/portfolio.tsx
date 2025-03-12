@@ -7,13 +7,13 @@ import BigNumber from "bignumber.js";
 import { Loader2 } from "lucide-react";
 
 import {
-  NORMALIZED_SEND_POINTS_S2_COINTYPE,
+  NORMALIZED_STEAMM_POINTS_COINTYPE,
   formatPercent,
   formatPoints,
   formatToken,
   formatUsd,
   getToken,
-  isSendPoints,
+  isSteammPoints,
 } from "@suilend/frontend-sui";
 import {
   showErrorToast,
@@ -156,12 +156,12 @@ export default function PortfolioPage() {
             stakedPercent: depositedAmount.div(totalAmount).times(100),
             claimableRewards: Object.fromEntries(
               Object.entries(poolRewardsMap[pool.lpTokenType] ?? {}).filter(
-                ([coinType]) => !isSendPoints(coinType),
+                ([coinType, amount]) => !isSteammPoints(coinType),
               ),
             ),
             points:
               poolRewardsMap[pool.lpTokenType]?.[
-                NORMALIZED_SEND_POINTS_S2_COINTYPE
+                NORMALIZED_STEAMM_POINTS_COINTYPE
               ] ?? new BigNumber(0),
           };
         })
@@ -313,18 +313,17 @@ export default function PortfolioPage() {
   // Summary - Rewards
   const claimableRewards: Record<string, BigNumber> | undefined = useMemo(
     () =>
-      Object.entries(poolRewardsMap)
-        .filter(([coinType]) => !isSendPoints(coinType))
-        .reduce(
-          (acc, [, rewards]) => {
-            Object.entries(rewards).forEach(([coinType, amount]) => {
-              acc[coinType] = new BigNumber(acc[coinType] ?? 0).plus(amount);
-            });
+      Object.entries(poolRewardsMap).reduce(
+        (acc, [, rewards]) => {
+          Object.entries(rewards).forEach(([coinType, amount]) => {
+            if (isSteammPoints(coinType)) return;
+            acc[coinType] = new BigNumber(acc[coinType] ?? 0).plus(amount);
+          });
 
-            return acc;
-          },
-          {} as Record<string, BigNumber>,
-        ),
+          return acc;
+        },
+        {} as Record<string, BigNumber>,
+      ),
     [poolRewardsMap],
   );
 
@@ -348,7 +347,7 @@ export default function PortfolioPage() {
         const rewardsMap: Record<string, RewardSummary[]> = {};
         Object.values(userData.rewardMap).flatMap((rewards) =>
           rewards.deposit.forEach((r) => {
-            if (isSendPoints(r.stats.rewardCoinType)) return;
+            if (isSteammPoints(r.stats.rewardCoinType)) return;
 
             const minAmount = 10 ** (-1 * r.stats.mintDecimals);
             if (
@@ -395,18 +394,17 @@ export default function PortfolioPage() {
     }
   };
 
-  // Summary - Points (S2 only)
+  // Summary - Points
   const points: BigNumber | undefined = useMemo(
     () =>
-      Object.entries(poolRewardsMap)
-        .filter(([coinType]) => coinType === NORMALIZED_SEND_POINTS_S2_COINTYPE)
-        .reduce((acc, [, rewards]) => {
-          Object.entries(rewards).forEach(([coinType, amount]) => {
-            acc = acc.plus(amount);
-          });
+      Object.entries(poolRewardsMap).reduce((acc, [, rewards]) => {
+        Object.entries(rewards).forEach(([coinType, amount]) => {
+          if (!isSteammPoints(coinType)) return;
+          acc = acc.plus(amount);
+        });
 
-          return acc;
-        }, new BigNumber(0)),
+        return acc;
+      }, new BigNumber(0)),
     [poolRewardsMap],
   );
 
@@ -459,8 +457,7 @@ export default function PortfolioPage() {
             <Divider className="h-auto w-px max-md:hidden" />
 
             {/* Claimable rewards */}
-            {/* <div className="max-md:w-full max-md:border-r md:flex-1"> */}
-            <div className="max-md:w-full md:flex-1">
+            <div className="max-md:w-full max-md:border-r md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">
                   Claimable rewards
@@ -532,10 +529,10 @@ export default function PortfolioPage() {
               </div>
             </div>
 
-            {/* <Divider className="h-auto w-px max-md:hidden" /> */}
+            <Divider className="h-auto w-px max-md:hidden" />
 
             {/* Points */}
-            {/* <div className="max-md:w-full md:flex-1">
+            <div className="max-md:w-full md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">Points</p>
 
@@ -543,14 +540,14 @@ export default function PortfolioPage() {
                   <Skeleton className="h-[30px] w-20" />
                 ) : (
                   <Tooltip
-                    title={`${formatPoints(points, { dp: appData.coinMetadataMap[NORMALIZED_SEND_POINTS_S2_COINTYPE].decimals })} ${appData.coinMetadataMap[NORMALIZED_SEND_POINTS_S2_COINTYPE].symbol}`}
+                    title={`${formatPoints(points, { dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].decimals })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
                   >
                     <div className="flex w-max flex-row items-center gap-2">
                       <TokenLogo
                         token={getToken(
-                          NORMALIZED_SEND_POINTS_S2_COINTYPE,
+                          NORMALIZED_STEAMM_POINTS_COINTYPE,
                           appData.coinMetadataMap[
-                            NORMALIZED_SEND_POINTS_S2_COINTYPE
+                            NORMALIZED_STEAMM_POINTS_COINTYPE
                           ],
                         )}
                         size={20}
@@ -562,7 +559,7 @@ export default function PortfolioPage() {
                   </Tooltip>
                 )}
               </div>
-            </div> */}
+            </div>
           </div>
         </div>
 
