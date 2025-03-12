@@ -278,7 +278,8 @@ export default function AdminPage() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    // if (!isEditable) return { isDisabled: true, title: "Create pool and deposit" };
+    if (!isEditable)
+      return { isDisabled: true, title: "Create pool and deposit" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
 
     if (coinTypes.some((coinType) => coinType === ""))
