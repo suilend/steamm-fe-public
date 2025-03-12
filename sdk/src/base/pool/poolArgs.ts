@@ -5,14 +5,18 @@ import {
 
 // TODO: change TransactionObjectInput to TransactionArgument
 
-export interface PoolNewArgs {
-  coinMetadataA: TransactionObjectInput;
-  coinMetadataB: TransactionObjectInput;
-  coinMetadataLp: TransactionObjectInput;
-  LpTreasury: TransactionObjectInput;
-  registry: TransactionObjectInput;
+export interface CreatePoolArgs {
+  coinTypeA: string;
+  coinTypeB: string;
+  lpTokenType: string;
+  registry: string | TransactionObjectInput;
   swapFeeBps: bigint | TransactionArgument;
+  coinMetaA: string | TransactionObjectInput;
+  coinMetaB: string | TransactionObjectInput;
+  lpTokenMeta: string | TransactionObjectInput;
+  lpTreasury: string | TransactionObjectInput;
 }
+
 export interface PoolSwapArgs {
   coinA: TransactionObjectInput;
   coinB: TransactionObjectInput;

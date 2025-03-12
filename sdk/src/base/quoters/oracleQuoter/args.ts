@@ -4,16 +4,17 @@ import {
 } from "@mysten/sui/transactions";
 
 import {
-  PoolNewArgs,
+  // PoolNewArgs,
   PoolQuoteSwapArgs,
   PoolSwapArgs,
 } from "../../pool/poolArgs";
 
-export type CpNewArgs = PoolNewArgs & {
-  offset: bigint | TransactionArgument;
-};
-export type CpSwapArgs = PoolSwapArgs & {};
-export type CpQuoteSwapArgs = PoolQuoteSwapArgs & {};
+// export type OracleNewArgs = PoolNewArgs & {
+//   oracle_index_a: bigint;
+//   oracle_index_b: bigint;
+// };
+export type OracleSwapArgs = PoolSwapArgs & {};
+export type OracleQuoteSwapArgs = PoolQuoteSwapArgs & {};
 
 export interface CreateCpPoolArgs {
   coinTypeA: string;
