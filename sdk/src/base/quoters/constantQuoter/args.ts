@@ -1,13 +1,16 @@
 import { TransactionArgument } from "@mysten/sui/transactions";
 
 import {
-  CreatePoolArgs,
-  PoolQuoteSwapArgs,
-  PoolSwapArgs,
+  BaseQuoteSwapArgs,
+  BaseSwapArgs,
+  CreatePoolBaseArgs,
 } from "../../pool/poolArgs";
 
-export type CreateCpPoolArgs = CreatePoolArgs & {
+export type CreateCpPoolArgs = CreatePoolBaseArgs & {
+  type: "ConstantProduct";
   offset: bigint | TransactionArgument;
 };
-export type CpSwapArgs = PoolSwapArgs & {};
-export type CpQuoteSwapArgs = PoolQuoteSwapArgs & {};
+
+export type CreateCpPooltTopArgs = Omit<CreateCpPoolArgs, "registry">;
+export type CpSwapArgs = BaseSwapArgs & { type: "ConstantProduct" };
+export type CpQuoteSwapArgs = BaseQuoteSwapArgs & { type: "ConstantProduct" };

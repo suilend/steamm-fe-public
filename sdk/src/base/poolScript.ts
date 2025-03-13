@@ -14,9 +14,9 @@ import {
   PoolDepositLiquidityArgs,
   PoolQuoteDepositArgs,
   PoolQuoteRedeemArgs,
-  PoolQuoteSwapArgs,
   PoolRedeemLiquidityArgs,
-  PoolSwapArgs,
+  QuoteSwapArgs,
+  SwapArgs,
 } from "./pool";
 
 export class PoolScript {
@@ -66,52 +66,89 @@ export class PoolScript {
     }
   }
 
-  public swap(tx: Transaction, args: PoolSwapArgs): TransactionResult {
-    const callArgs = {
-      pool: tx.object(this.pool.poolInfo.poolId),
-      bankA: tx.object(this.bankA.bankInfo.bankId),
-      bankB: tx.object(this.bankB.bankInfo.bankId),
-      lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
-      coinA: args.coinA,
-      coinB: args.coinB,
-      amountIn: args.amountIn,
-      a2B: args.a2b,
-      minAmountOut: args.minAmountOut,
-      clock: tx.object(SUI_CLOCK_OBJECT_ID),
-    };
-
-    const swapResult = PoolScriptFunctions.cpmmSwap(
-      tx,
-      this.poolScriptTypesNoQuoter(),
-      callArgs,
-      this.publishedAt,
-    );
-
-    return swapResult;
+  public swap(tx: Transaction, args: SwapArgs): TransactionResult {
+    switch (args.type) {
+      case "ConstantProduct":
+        return PoolScriptFunctions.cpmmSwap(
+          tx,
+          this.poolScriptTypesNoQuoter(),
+          {
+            pool: tx.object(this.pool.poolInfo.poolId),
+            bankA: tx.object(this.bankA.bankInfo.bankId),
+            bankB: tx.object(this.bankB.bankInfo.bankId),
+            lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
+            coinA: args.coinA,
+            coinB: args.coinB,
+            amountIn: args.amountIn,
+            a2B: args.a2b,
+            minAmountOut: args.minAmountOut,
+            clock: tx.object(SUI_CLOCK_OBJECT_ID),
+          },
+          this.publishedAt,
+        );
+      case "Oracle":
+        return PoolScriptFunctions.ommSwap(
+          tx,
+          this.poolScriptTypesNoQuoter(),
+          {
+            pool: tx.object(this.pool.poolInfo.poolId),
+            bankA: tx.object(this.bankA.bankInfo.bankId),
+            bankB: tx.object(this.bankB.bankInfo.bankId),
+            lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
+            oraclePriceUpdateA: tx.object(args.oraclePriceUpdateA),
+            oraclePriceUpdateB: tx.object(args.oraclePriceUpdateB),
+            coinA: args.coinA,
+            coinB: args.coinB,
+            amountIn: args.amountIn,
+            a2B: args.a2b,
+            minAmountOut: args.minAmountOut,
+            clock: tx.object(SUI_CLOCK_OBJECT_ID),
+          },
+          this.publishedAt,
+        );
+      default:
+        throw new Error("Unknown pool type");
+    }
   }
 
-  public quoteSwap(
-    tx: Transaction,
-    args: PoolQuoteSwapArgs,
-  ): TransactionResult {
-    const callArgs = {
-      pool: tx.object(this.pool.poolInfo.poolId),
-      bankA: tx.object(this.bankA.bankInfo.bankId),
-      bankB: tx.object(this.bankB.bankInfo.bankId),
-      lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
-      amountIn: args.amountIn,
-      a2B: args.a2b,
-      clock: tx.object(SUI_CLOCK_OBJECT_ID),
-    };
+  public quoteSwap(tx: Transaction, args: QuoteSwapArgs): TransactionResult {
+    switch (args.type) {
+      case "ConstantProduct":
+        return PoolScriptFunctions.quoteCpmmSwap(
+          tx,
+          this.poolScriptTypesNoQuoter(),
+          {
+            pool: tx.object(this.pool.poolInfo.poolId),
+            bankA: tx.object(this.bankA.bankInfo.bankId),
+            bankB: tx.object(this.bankB.bankInfo.bankId),
+            lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
+            amountIn: args.amountIn,
+            a2B: args.a2b,
+            clock: tx.object(SUI_CLOCK_OBJECT_ID),
+          },
+          this.publishedAt,
+        );
 
-    const quote = PoolScriptFunctions.quoteCpmmSwap(
-      tx,
-      this.poolScriptTypesNoQuoter(),
-      callArgs,
-      this.publishedAt,
-    );
-
-    return quote;
+      case "Oracle":
+        return PoolScriptFunctions.quoteOmmSwap(
+          tx,
+          this.poolScriptTypesNoQuoter(),
+          {
+            pool: tx.object(this.pool.poolInfo.poolId),
+            bankA: tx.object(this.bankA.bankInfo.bankId),
+            bankB: tx.object(this.bankB.bankInfo.bankId),
+            lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
+            oraclePriceUpdateA: tx.object(args.oraclePriceUpdateA),
+            oraclePriceUpdateB: tx.object(args.oraclePriceUpdateB),
+            amountIn: args.amountIn,
+            a2B: args.a2b,
+            clock: tx.object(SUI_CLOCK_OBJECT_ID),
+          },
+          this.publishedAt,
+        );
+      default:
+        throw new Error("Unknown pool type");
+    }
   }
 
   public depositLiquidity(

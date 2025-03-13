@@ -389,6 +389,7 @@ export function mintCoin(
   tx: Transaction,
   coinType: string,
   treasuryCap: string,
+  amount: string = "10000000000000000",
 ): TransactionResult {
   return tx.moveCall({
     target: "0x2::coin::mint",

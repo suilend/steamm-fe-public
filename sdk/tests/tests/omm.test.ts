@@ -23,7 +23,7 @@ import {
   SUILEND_PKG_ID,
 } from "./../packages";
 import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
-import { parseErrorCode } from "../../src";
+import { parseErrorCode, PoolModule } from "../../src";
 import {
   createCoinAndBankHelper,
   createOraclePoolHelper,
@@ -103,54 +103,80 @@ export async function test() {
       const lpAB = await createOraclePoolHelper(sdk, coinAData, coinBData);
 
       // Seed the pools with liquidity
-      // const pools = await sdk.getPools();
+      const pools = await sdk.getPools();
 
-      // const poolAB = (
-      //   await sdk.getPools([coinAData.coinType, coinBData.coinType])
-      // )[0];
+      const poolAB = (
+        await sdk.getPools([coinAData.coinType, coinBData.coinType])
+      )[0];
 
-      // const poolBC = (
-      //   await sdk.getPools([coinBData.coinType, coinCData.coinType])
-      // )[0];
+      const depositTx = new Transaction();
 
-      // const depositTx = new Transaction();
+      const coinA = mintCoin(depositTx, coinAData.coinType, coinAData.treasury);
+      const coinB = mintCoin(depositTx, coinBData.coinType, coinBData.treasury);
 
-      // const coinA = mintCoin(depositTx, coinAData.coinType, coinAData.treasury);
-      // const coinB = mintCoin(depositTx, coinBData.coinType, coinBData.treasury);
-      // const coinC = mintCoin(depositTx, coinCData.coinType, coinCData.treasury);
+      await sdk.Pool.depositLiquidityEntry(depositTx, {
+        pool: poolAB.poolId,
+        coinA: coinA,
+        coinB: coinB,
+        coinTypeA: coinAData.coinType,
+        coinTypeB: coinBData.coinType,
+        maxA: BigInt("10000000"),
+        maxB: BigInt("10000000"),
+      });
 
-      // await sdk.Pool.depositLiquidityEntry(depositTx, {
-      //   pool: poolAB.poolId,
-      //   coinA: coinA,
-      //   coinB: coinB,
-      //   coinTypeA: coinAData.coinType,
-      //   coinTypeB: coinBData.coinType,
-      //   maxA: BigInt("10000000"),
-      //   maxB: BigInt("10000000"),
-      // });
+      depositTx.transferObjects([coinA, coinB], sdk.senderAddress);
 
-      // await sdk.Pool.depositLiquidityEntry(depositTx, {
-      //   pool: poolBC.poolId,
-      //   coinA: coinB,
-      //   coinB: coinC,
-      //   coinTypeA: coinBData.coinType,
-      //   coinTypeB: coinCData.coinType,
-      //   maxA: BigInt("10000000"),
-      //   maxB: BigInt("10000000"),
-      // });
+      const txResult = await sdk.fullClient.signAndExecuteTransaction({
+        transaction: depositTx,
+        signer: keypair,
+        options: {
+          showEffects: true,
+          showEvents: true,
+        },
+      });
 
-      // depositTx.transferObjects([coinA, coinB, coinC], sdk.senderAddress);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // const txResult = await sdk.fullClient.signAndExecuteTransaction({
-      //   transaction: depositTx,
-      //   signer: keypair,
-      //   options: {
-      //     showEffects: true,
-      //     showEvents: true,
-      //   },
-      // });
+      const swapTx = new Transaction();
 
-      // await new Promise((resolve) => setTimeout(resolve, 1000));
+      const coinIn = mintCoin(
+        depositTx,
+        coinAData.coinType,
+        coinAData.treasury,
+        "10000",
+      );
+      const coinOut = mintCoin(
+        depositTx,
+        coinBData.coinType,
+        coinBData.treasury,
+        "0",
+      );
+
+      const poolModule = new PoolModule(sdk);
+
+      await poolModule.swap(swapTx, {
+        pool: poolAB.poolId,
+        coinTypeA: coinAData.coinType,
+        coinTypeB: coinBData.coinType,
+        coinA: coinIn,
+        coinB: coinOut,
+        a2b: false,
+        amountIn: BigInt("10000"),
+        minAmountOut: BigInt("0"),
+      });
+
+      depositTx.transferObjects([coinA, coinB], sdk.senderAddress);
+
+      const swapTxResult = await sdk.fullClient.signAndExecuteTransaction({
+        transaction: swapTx,
+        signer: keypair,
+        options: {
+          showEffects: true,
+          showEvents: true,
+        },
+      });
+
+      console.log(swapTxResult);
 
       // const { route, quote } = await sdk.Router.getBestSwapRoute(
       //   {

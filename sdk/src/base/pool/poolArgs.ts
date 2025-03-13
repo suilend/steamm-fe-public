@@ -3,8 +3,33 @@ import {
   TransactionObjectInput,
 } from "@mysten/sui/transactions";
 
-// TODO: change TransactionObjectInput to TransactionArgument
-export interface CreatePoolArgs {
+import { SuiAddressType, SuiTypeName } from "../../utils";
+import {
+  CpQuoteSwapArgs,
+  CpSwapArgs,
+  CreateCpPoolArgs,
+  CreateCpPooltTopArgs,
+} from "../quoters/constantQuoter/args";
+import {
+  CreateOraclePoolArgs,
+  CreateOraclePoolTopArgs,
+  OracleQuoteSwapArgs,
+  OracleSwapArgs,
+} from "../quoters/oracleQuoter/args";
+
+export type PoolArgs = {
+  pool: SuiAddressType;
+  coinTypeA: SuiTypeName;
+  coinTypeB: SuiTypeName;
+};
+
+export type SwapArgs = CpSwapArgs | OracleSwapArgs;
+export type QuoteSwapArgs = CpQuoteSwapArgs | OracleQuoteSwapArgs;
+
+export type CreatePoolArgs = CreateCpPoolArgs | CreateOraclePoolArgs;
+export type CreatePoolTopArgs = CreateCpPooltTopArgs | CreateOraclePoolTopArgs;
+
+export interface CreatePoolBaseArgs {
   coinTypeA: string;
   coinTypeB: string;
   lpTokenType: string;
@@ -16,7 +41,7 @@ export interface CreatePoolArgs {
   lpTreasuryId: string | TransactionObjectInput;
 }
 
-export interface PoolSwapArgs {
+export interface BaseSwapArgs {
   coinA: TransactionObjectInput;
   coinB: TransactionObjectInput;
   a2b: boolean | TransactionArgument;
@@ -24,7 +49,7 @@ export interface PoolSwapArgs {
   minAmountOut: bigint | TransactionArgument;
 }
 
-export interface PoolQuoteSwapArgs {
+export interface BaseQuoteSwapArgs {
   amountIn: bigint | TransactionArgument;
   a2b: boolean | TransactionArgument;
 }

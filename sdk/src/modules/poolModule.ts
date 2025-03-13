@@ -7,12 +7,16 @@ import {
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
 import {
+  CreatePoolArgs,
+  CreatePoolTopArgs,
+  PoolArgs,
   PoolDepositLiquidityArgs,
   PoolQuoteDepositArgs,
   PoolQuoteRedeemArgs,
-  PoolQuoteSwapArgs,
   PoolRedeemLiquidityArgs,
-  PoolSwapArgs,
+  QuoteSwapArgs,
+  SwapArgs,
+  // SwapArgs,
   SwapQuote,
   createConstantProductPool,
   createOraclePool,
@@ -26,7 +30,7 @@ import {
 } from "../base/pool/poolTypes";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
-import { BankList } from "../types";
+import { BankList, PoolInfo } from "../types";
 import { SuiTypeName } from "../utils";
 import { SuiAddressType } from "../utils";
 
@@ -46,7 +50,7 @@ export class PoolModule implements IModule {
 
   public async depositLiquidityEntry(
     tx: Transaction,
-    args: DepositLiquidityArgs,
+    args: PoolDepositLiquidityArgs & PoolArgs,
   ) {
     const [lpToken, _depositResult] = await this.depositLiquidity(tx, args);
 
@@ -55,7 +59,7 @@ export class PoolModule implements IModule {
 
   public async depositLiquidity(
     tx: Transaction,
-    args: DepositLiquidityArgs,
+    args: PoolDepositLiquidityArgs & PoolArgs,
   ): Promise<[TransactionArgument, TransactionArgument]> {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
@@ -78,7 +82,7 @@ export class PoolModule implements IModule {
 
   public async redeemLiquidityEntry(
     tx: Transaction,
-    args: RedeemLiquidityArgs,
+    args: PoolRedeemLiquidityArgs & PoolArgs,
   ) {
     const [coinA, coinB, _redeemResult] = await this.redeemLiquidity(tx, args);
 
@@ -87,7 +91,7 @@ export class PoolModule implements IModule {
 
   public async redeemLiquidity(
     tx: Transaction,
-    args: RedeemLiquidityArgs,
+    args: PoolRedeemLiquidityArgs & PoolArgs,
   ): Promise<[TransactionArgument, TransactionArgument, TransactionArgument]> {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
@@ -109,7 +113,7 @@ export class PoolModule implements IModule {
 
   public async swap(
     tx: Transaction,
-    args: SwapArgs,
+    args: SwapArgs & PoolArgs,
   ): Promise<TransactionArgument> {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
@@ -120,39 +124,32 @@ export class PoolModule implements IModule {
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
-    const swapResult = poolScript.swap(tx, {
-      coinA: tx.object(args.coinA),
-      coinB: tx.object(args.coinB),
-      a2b: args.a2b,
-      amountIn: args.amountIn,
-      minAmountOut: args.minAmountOut,
-    });
+    const swapResult = poolScript.swap(tx, args);
 
     return swapResult;
   }
 
   public async quoteSwap(
-    args: QuoteSwapArgs,
+    args: QuoteSwapArgs & { pool: SuiAddressType },
     tx: Transaction = new Transaction(),
   ): Promise<SwapQuote> {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
 
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
+    const poolInfo: PoolInfo = pools.find((pool) => pool.poolId === args.pool)!;
     const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
     const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
-    poolScript.quoteSwap(tx, {
-      a2b: args.a2b,
-      amountIn: args.amountIn,
-    });
+    poolScript.quoteSwap(tx, args);
 
     return castSwapQuote(await this.getQuoteResult<SwapQuote>(tx, "SwapQuote"));
   }
 
-  public async quoteDeposit(args: QuoteDepositArgs): Promise<DepositQuote> {
+  public async quoteDeposit(
+    args: PoolQuoteDepositArgs & { pool: SuiAddressType },
+  ): Promise<DepositQuote> {
     const tx = new Transaction();
     const pools = await this.sdk.getPools();
     const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
@@ -173,7 +170,9 @@ export class PoolModule implements IModule {
     );
   }
 
-  public async quoteRedeem(args: QuoteRedeemArgs): Promise<RedeemQuote> {
+  public async quoteRedeem(
+    args: PoolQuoteRedeemArgs & { pool: SuiAddressType },
+  ): Promise<RedeemQuote> {
     const tx = new Transaction();
     const pools = await this.sdk.getPools();
     const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
@@ -214,7 +213,7 @@ export class PoolModule implements IModule {
     return tx;
   }
 
-  public async createPool(tx: Transaction, args: CreatePoolArgs) {
+  public async createPool(tx: Transaction, args: CreatePoolTopArgs) {
     // wait until the sui rpc recognizes the treasuryCapId
     while (true) {
       const object = await this.sdk.fullClient.getObject({
@@ -332,69 +331,3 @@ export class PoolModule implements IModule {
   //   return [coinA, coinB];
   // }
 }
-
-export type DepositLiquidityArgs = PoolDepositLiquidityArgs & {
-  pool: SuiAddressType;
-  coinTypeA: SuiTypeName;
-  coinTypeB: SuiTypeName;
-};
-
-export type RedeemLiquidityArgs = PoolRedeemLiquidityArgs & {
-  pool: SuiAddressType;
-  coinTypeA: SuiTypeName;
-  coinTypeB: SuiTypeName;
-};
-
-export type SwapArgs = PoolSwapArgs & {
-  pool: SuiAddressType;
-  coinTypeA: SuiTypeName;
-  coinTypeB: SuiTypeName;
-};
-
-export type QuoteSwapArgs = PoolQuoteSwapArgs & {
-  pool: SuiAddressType;
-};
-
-export type QuoteDepositArgs = PoolQuoteDepositArgs & {
-  pool: SuiAddressType;
-};
-
-export type QuoteRedeemArgs = PoolQuoteRedeemArgs & {
-  pool: SuiAddressType;
-};
-
-export type CreateCpmmPoolArgs = {
-  type: "ConstantProduct";
-  lpTreasuryId: string;
-  lpMetadataId: string;
-  lpTokenType: string;
-  coinTypeA: string; // btoken type
-  coinTypeB: string; // btoken type
-  swapFeeBps: bigint;
-  offset: bigint;
-  coinMetaA: string;
-  coinMetaB: string;
-};
-
-export type CreateOraclePoolArgs = {
-  type: "Oracle";
-
-  oracleIndexA: bigint;
-  oracleIndexB: bigint;
-  bTokenMetaA: string | TransactionObjectInput;
-  bTokenMetaB: string | TransactionObjectInput;
-
-  coinTypeA: string;
-  coinTypeB: string;
-
-  bTokenTypeA: string;
-  bTokenTypeB: string;
-  lpTreasuryId: string;
-  lpMetadataId: string;
-  lpTokenType: string;
-  swapFeeBps: bigint;
-  coinMetaA: string;
-  coinMetaB: string;
-};
-
-export type CreatePoolArgs = CreateCpmmPoolArgs | CreateOraclePoolArgs;

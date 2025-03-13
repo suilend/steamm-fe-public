@@ -5,12 +5,24 @@ import {
 
 import { SuiAddressType } from "../../../utils";
 import {
-  CreatePoolArgs,
-  PoolQuoteSwapArgs,
-  PoolSwapArgs,
+  BaseQuoteSwapArgs,
+  BaseSwapArgs,
+  CreatePoolBaseArgs,
 } from "../../pool/poolArgs";
 
-export type OracleSwapArgs = PoolSwapArgs & {
+// {
+//   pool: poolAB.poolId,
+//   coinTypeA: coinAData.coinType,
+//   coinTypeB: coinBData.coinType,
+//   coinA: coinIn,
+//   coinB: coinOut,
+//   a2b: false,
+//   amountIn: BigInt("10000"),
+//   minAmountOut: BigInt("0"),
+// }
+
+export type OracleSwapArgs = BaseSwapArgs & {
+  type: "Oracle";
   lendingMarket: SuiAddressType;
   bankA: SuiAddressType;
   bankB: SuiAddressType;
@@ -18,7 +30,8 @@ export type OracleSwapArgs = PoolSwapArgs & {
   oraclePriceUpdateB: SuiAddressType;
 };
 
-export type OracleQuoteSwapArgs = PoolQuoteSwapArgs & {
+export type OracleQuoteSwapArgs = BaseQuoteSwapArgs & {
+  type: "Oracle";
   lendingMarket: SuiAddressType;
   bankA: SuiAddressType;
   bankB: SuiAddressType;
@@ -26,7 +39,8 @@ export type OracleQuoteSwapArgs = PoolQuoteSwapArgs & {
   oraclePriceUpdateB: SuiAddressType;
 };
 
-export type CreateOraclePoolArgs = CreatePoolArgs & {
+export type CreateOraclePoolArgs = CreatePoolBaseArgs & {
+  type: "Oracle";
   lendingMarket: SuiAddressType;
   oracleRegistry: SuiAddressType;
   oracleIndexA: bigint | TransactionArgument;
@@ -37,3 +51,8 @@ export type CreateOraclePoolArgs = CreatePoolArgs & {
   bTokenMetaA: string | TransactionObjectInput;
   bTokenMetaB: string | TransactionObjectInput;
 };
+
+export type CreateOraclePoolTopArgs = Omit<
+  CreateOraclePoolArgs,
+  "registry" | "oracleRegistry" | "lendingMarket" | "lendingMarketType"
+>;

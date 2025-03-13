@@ -4,19 +4,21 @@ import {
   TransactionResult,
 } from "@mysten/sui/transactions";
 
-import { PoolFunctions } from "../..";
+import { OracleQuoter, PoolFunctions } from "../..";
 import { PackageInfo, PoolInfo } from "../../types";
 import { ConstantProductQuoter } from "../quoters/constantQuoter";
 import { Quoter } from "../quoters/quoter";
 
 import {
+  BaseSwapArgs,
   CollectProtocolFeesArgs,
   MigrateArgs,
   PoolDepositLiquidityArgs,
   PoolQuoteDepositArgs,
   PoolQuoteRedeemArgs,
   PoolRedeemLiquidityArgs,
-  PoolSwapArgs,
+  QuoteSwapArgs,
+  SwapArgs,
 } from "./poolArgs";
 
 export * from "./poolArgs";
@@ -41,16 +43,16 @@ export class Pool {
       case `${pkgInfo.sourcePkgId}::cpmm::CpQuoter`:
         return new ConstantProductQuoter(pkgInfo, poolInfo);
       default:
-        throw new Error(`Unsupported quoter type: ${poolInfo.quoterType}`);
+        return new OracleQuoter(pkgInfo, poolInfo);
     }
   }
 
-  public swap(tx: Transaction, args: PoolSwapArgs): TransactionResult {
+  public swap(tx: Transaction, args: SwapArgs): TransactionResult {
     return this.quoter.swap(tx, args);
   }
 
-  public quoteSwap(tx: Transaction, args: PoolSwapArgs): TransactionArgument {
-    return this.quoter.swap(tx, args);
+  public quoteSwap(tx: Transaction, args: QuoteSwapArgs): TransactionArgument {
+    return this.quoter.quoteSwap(tx, args);
   }
 
   public depositLiquidity(
