@@ -1,10 +1,58 @@
 import { Transaction, TransactionResult } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
+import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
 import { SteammSDK, SuiAddressType, parseErrorCode } from "../../src";
+import {
+  GLOBAL_ADMIN_ID,
+  LENDING_MARKET_ID,
+  LENDING_MARKET_TYPE,
+  ORACLES_PKG_ID,
+  ORACLE_ADMIN_CAP_ID,
+  ORACLE_REGISTRY_ID,
+  PYTH_PKG_ID,
+  REGISTRY_ID,
+  STEAMM_PKG_ID,
+  STEAMM_SCRIPT_PKG_ID,
+  SUILEND_PKG_ID,
+} from "../packages";
 
 import { createCoinBytecode, getTreasuryAndCoinMeta } from "./coinGen";
 import { createBToken2, createLpToken2 } from "./createHelper";
+
+export function testConfig() {
+  return {
+    fullRpcUrl: "http://127.0.0.1:9000",
+    steamm_config: {
+      package_id: STEAMM_PKG_ID,
+      published_at: STEAMM_PKG_ID,
+      config: {
+        registryId: REGISTRY_ID,
+        globalAdmin: GLOBAL_ADMIN_ID,
+        oracleQuoterPkgId: STEAMM_PKG_ID,
+      },
+    },
+    suilend_config: {
+      package_id: SUILEND_PKG_ID,
+      published_at: SUILEND_PKG_ID,
+      config: {
+        lendingMarketId: LENDING_MARKET_ID,
+        lendingMarketType: LENDING_MARKET_TYPE,
+      },
+    },
+    steamm_script_config: {
+      package_id: STEAMM_SCRIPT_PKG_ID,
+      published_at: STEAMM_SCRIPT_PKG_ID,
+    },
+    oracle_config: {
+      package_id: ORACLES_PKG_ID,
+      published_at: ORACLES_PKG_ID,
+      config: {
+        oracleRegistryId: ORACLE_REGISTRY_ID,
+      },
+    },
+  };
+}
 
 export interface CoinData {
   treasury: string;
@@ -173,16 +221,150 @@ export async function createPoolHelper(
   const newPoolTx = new Transaction();
 
   await sdk.Pool.createPool(newPoolTx, {
+    type: "ConstantProduct",
     lpTreasuryId,
     lpMetadataId,
     lpTokenType,
-    btokenTypeA: coinAData.btokenType,
-    btokenTypeB: coinBData.btokenType,
+    coinTypeA: coinAData.btokenType,
+    coinTypeB: coinBData.btokenType,
     swapFeeBps: BigInt(100),
     offset: BigInt(0),
     coinMetaA: coinAData.bTokenmeta,
     coinMetaB: coinBData.bTokenmeta,
   });
+
+  const newPoolTxResponse = await sdk.fullClient.signAndExecuteTransaction({
+    transaction: newPoolTx,
+    signer: sdk.signer!,
+    options: {
+      showEvents: true,
+      showEffects: true,
+      showObjectChanges: true,
+    },
+  });
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  return {
+    lpTreasuryId,
+    lpMetadataId,
+    lpTokenType,
+  };
+}
+
+export function createPythPrice(
+  sdk: SteammSDK,
+  tx: Transaction,
+  args: {
+    price: bigint;
+    expo: number;
+    idx: number;
+  },
+) {
+  return tx.moveCall({
+    target: `${sdk.sdkOptions.suilend_config.published_at}::setup::new_price_info_obj`,
+    arguments: [
+      tx.pure.u64(args.price),
+      tx.pure.u8(args.expo),
+      tx.pure.u8(args.idx),
+      tx.object(SUI_CLOCK_OBJECT_ID),
+    ],
+  });
+}
+
+export async function createOraclePoolHelper(
+  sdk: SteammSDK,
+  coinAData: CoinData,
+  coinBData: CoinData,
+): Promise<LpData> {
+  const tx = await createLpToken2(
+    coinAData.bTokenSymbol,
+    coinBData.bTokenSymbol,
+    sdk.senderAddress,
+  );
+
+  const coinTxResponse = await sdk.fullClient.signAndExecuteTransaction({
+    transaction: tx,
+    signer: sdk.signer!,
+    options: {
+      showEvents: true,
+      showEffects: true,
+      showObjectChanges: true,
+    },
+  });
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const [lpTreasuryId, lpMetadataId, lpTokenType] =
+    getTreasuryAndCoinMeta(coinTxResponse);
+
+  const newPoolTx = new Transaction();
+  console.log("A");
+
+  const priceObjA = createPythPrice(sdk, newPoolTx, {
+    price: BigInt("1"),
+    expo: 1,
+    idx: 0,
+  });
+
+  console.log("b");
+
+  const priceObjB = createPythPrice(sdk, newPoolTx, {
+    price: BigInt("1"),
+    expo: 1,
+    idx: 1,
+  });
+
+  newPoolTx.moveCall({
+    target: `${sdk.sdkOptions.oracle_config.published_at}::oracles::add_pyth_oracle`,
+    arguments: [
+      newPoolTx.object(ORACLE_REGISTRY_ID),
+      newPoolTx.object(ORACLE_ADMIN_CAP_ID),
+      priceObjA,
+    ],
+  });
+
+  newPoolTx.moveCall({
+    target: `${sdk.sdkOptions.oracle_config.published_at}::oracles::add_pyth_oracle`,
+    arguments: [
+      newPoolTx.object(ORACLE_REGISTRY_ID),
+      newPoolTx.object(ORACLE_ADMIN_CAP_ID),
+      priceObjB,
+    ],
+  });
+
+  newPoolTx.moveCall({
+    target: `0x2::transfer::public_share_object`,
+    typeArguments: [`${PYTH_PKG_ID}::price_info::PriceInfoObject`],
+    arguments: [priceObjA],
+  });
+  newPoolTx.moveCall({
+    target: `0x2::transfer::public_share_object`,
+    typeArguments: [`${PYTH_PKG_ID}::price_info::PriceInfoObject`],
+    arguments: [priceObjB],
+  });
+
+  console.log("c");
+
+  await sdk.Pool.createPool(newPoolTx, {
+    type: "Oracle",
+    oracleIndexA: BigInt("0"),
+    oracleIndexB: BigInt("1"),
+    bTokenMetaA: coinAData.bTokenmeta,
+    bTokenMetaB: coinBData.bTokenmeta,
+    bTokenTypeA: coinAData.btokenType,
+    bTokenTypeB: coinBData.btokenType,
+    lpTreasuryId,
+    lpMetadataId,
+    lpTokenType,
+    coinTypeA: coinAData.coinType,
+    coinTypeB: coinBData.coinType,
+    swapFeeBps: BigInt("100"),
+    coinMetaA: coinAData.coinMeta,
+    coinMetaB: coinBData.coinMeta,
+  });
+
+  console.log("call data: ", JSON.stringify(newPoolTx.getData()));
 
   const newPoolTxResponse = await sdk.fullClient.signAndExecuteTransaction({
     transaction: newPoolTx,

@@ -1,9 +1,9 @@
-import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/dist/cjs/utils";
 import {
   Transaction,
   TransactionArgument,
   TransactionResult,
 } from "@mysten/sui/transactions";
+import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
 import { OracleFunctions } from "../../..";
 import { PackageInfo, PoolInfo } from "../../../types";
@@ -150,6 +150,8 @@ export function createOraclePool(
     bTokenTypeB,
   } = args;
 
+  console.log("OINK");
+
   const pool = OracleFunctions.new_(
     tx,
     [
@@ -163,8 +165,8 @@ export function createOraclePool(
     {
       registry: tx.object(registry),
       lendingMarket: tx.object(lendingMarket),
-      oracleIndexA: oracleIndexA,
-      oracleIndexB: oracleIndexB,
+      oracleIndexA: oracleIndexA, // oracleIndexA,
+      oracleIndexB: oracleIndexB, // oracleIndexB,
       oracleRegistry: tx.object(oracleRegistry),
       swapFeeBps: swapFeeBps,
       metaA: tx.object(coinMetaA),
@@ -183,7 +185,7 @@ export function createOraclePool(
   return tx.moveCall({
     target: `0x2::transfer::public_share_object`,
     typeArguments: [
-      `${pkgInfo.sourcePkgId}::pool::Pool<${coinTypeA}, ${coinTypeB}, ${quoterType}, ${lpTokenType}>`,
+      `${pkgInfo.sourcePkgId}::pool::Pool<${bTokenTypeA}, ${bTokenTypeB}, ${quoterType}, ${lpTokenType}>`,
     ],
     arguments: [pool],
   });

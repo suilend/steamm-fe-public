@@ -80,10 +80,10 @@ export function new_(
       obj(tx, args.metaBB),
       obj(tx, args.metaLp),
       obj(tx, args.lpTreasury),
-      pure(tx, args.swapFeeBps, `u64`),
       obj(tx, args.oracleRegistry),
       pure(tx, args.oracleIndexA, `u64`),
       pure(tx, args.oracleIndexB, `u64`),
+      pure(tx, args.swapFeeBps, `u64`),
     ],
   });
 }

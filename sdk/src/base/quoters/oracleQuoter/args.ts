@@ -1,4 +1,7 @@
-import { TransactionObjectInput } from "@mysten/sui/dist/cjs/transactions";
+import {
+  TransactionArgument,
+  TransactionObjectInput,
+} from "@mysten/sui/transactions";
 
 import { SuiAddressType } from "../../../utils";
 import {
@@ -26,8 +29,8 @@ export type OracleQuoteSwapArgs = PoolQuoteSwapArgs & {
 export type CreateOraclePoolArgs = CreatePoolArgs & {
   lendingMarket: SuiAddressType;
   oracleRegistry: SuiAddressType;
-  oracleIndexA: bigint;
-  oracleIndexB: bigint;
+  oracleIndexA: bigint | TransactionArgument;
+  oracleIndexB: bigint | TransactionArgument;
   lendingMarketType: string;
   bTokenTypeA: string;
   bTokenTypeB: string;

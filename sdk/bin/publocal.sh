@@ -271,6 +271,9 @@ echo "registry: $registry"
 oracle_registry=$(find_object_id "$ORACLES_RESPONSE" ".*::oracles::OracleRegistry")
 echo "oracle_registry: $oracle_registry"
 
+oracle_cap=$(find_object_id "$ORACLES_RESPONSE" ".*::oracles::AdminCap")
+echo "oracle_cap: $oracle_cap"
+
 global_admin=$(find_object_id "$STEAMM_RESPONSE" ".*::global_admin::GlobalAdmin")
 echo "global_admin: $global_admin"
 
@@ -320,6 +323,7 @@ echo "lending_market_type: $lending_market_type"
 
 populate_ts "$registry" "REGISTRY_ID"
 populate_ts "$oracle_registry" "ORACLE_REGISTRY_ID"
+populate_ts "$oracle_cap" "ORACLE_ADMIN_CAP_ID"
 populate_ts "$global_admin" "GLOBAL_ADMIN_ID"
 populate_ts "$lending_market" "LENDING_MARKET_ID"
 populate_ts "$lending_market_type" "LENDING_MARKET_TYPE"

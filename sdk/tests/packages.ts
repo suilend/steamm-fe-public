@@ -1,15 +1,18 @@
 // These addresses are filled automatically by the test pipeline
-export const LIQUID_STAKING_PKG_ID = "";
-export const WORMHOLE_PKG_ID = "";
-export const SPRUNGSUI_PKG_ID = "";
-export const PYTH_PKG_ID = "";
-export const SWITCHBOARD_PKG_ID = "";
-export const ORACLES_PKG_ID = "";
-export const SUILEND_PKG_ID = "";
-export const STEAMM_PKG_ID = "";
-export const STEAMM_SCRIPT_PKG_ID = "";
-export const REGISTRY_ID = "";
-export const GLOBAL_ADMIN_ID = "";
-export const LENDING_MARKET_ID = "";
-export const LENDING_MARKET_TYPE = "";
-export const ORACLE_REGISTRY_ID = "";
+// These addresses are filled automatically by the test pipeline
+export const LIQUID_STAKING_PKG_ID = "0x3c282e10694dc8a4f85b84ade43ef539fa4e8b8a131dccefdc106b712a436c82";
+export const WORMHOLE_PKG_ID = "0xafb6f74475ec9f30e16738cde95462f3009f14ad4727a8fc19f65d6784da17c4";
+export const SPRUNGSUI_PKG_ID = "0xdc585f66317b7215e087f717a15cc192c364b5dd991de1b9cc2262327f260809";
+export const PYTH_PKG_ID = "0x8d3b01fcaf7e20a46afc37dd0078ebedd5003c9145b5bd1665c77ff6a4fe89cb";
+export const SWITCHBOARD_PKG_ID = "0xdd483930e465c8b8e47c63f65cdc256ccf43cad49c763a8adcc8326d05510cda";
+export const ORACLES_PKG_ID = "0xf7bb1c583c0e2edb1ded05b0a01b9e3de90da5c4df72398006cf1b4505df8db7";
+export const SUILEND_PKG_ID = "0x44959db6d9a6c24f31f2ce5b7e47fdb83ffe32b7a267790861a4f94205461a47";
+export const STEAMM_PKG_ID = "0xfd9949e4afe2fc1e3d6d24f47d667b70a04d7c6ac95e40d66943d5985141731c";
+export const STEAMM_SCRIPT_PKG_ID = "0x7112c6b25b6635947245fac32fd18d708075fe032ee9700d9f52381cc5ef9e17";
+export const REGISTRY_ID = "0xe7e1eef7c38af72f2b0839b4b61d9e8e2aa9a2214e355868c5f81aa947a2413c";
+export const GLOBAL_ADMIN_ID = "0x08e07188d088ede460841ceb995a69642967951d7643d442585b7590c94b21d6";
+export const LENDING_MARKET_ID = "0x69b0d959297dcda9737b579cc24f10eceb93815fff30971c6deef8dda1a4bce4";
+export const LENDING_MARKET_TYPE = "0xfd9949e4afe2fc1e3d6d24f47d667b70a04d7c6ac95e40d66943d5985141731c::setup::LENDING_MARKET";
+export const ORACLE_REGISTRY_ID = "0x69b67b2b6b03f6940e2b6ce1b48b3d06109fd65e42bcfb60f461541defd38732";
+export const ORACLE_ADMIN_CAP_ID = "0xb6c0f1a9b25a41e04fd5fd010d597b944ed764b2ca48ef93f37e02b452340077";
+

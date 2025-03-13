@@ -33,5 +33,6 @@ export const GLOBAL_ADMIN_ID = "";
 export const LENDING_MARKET_ID = "";
 export const LENDING_MARKET_TYPE = "";
 export const ORACLE_REGISTRY_ID = "";
+export const ORACLE_ADMIN_CAP_ID = "";
 
 EOL

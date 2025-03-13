@@ -244,6 +244,12 @@ export class PoolModule implements IModule {
           {
             ...args,
             registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
+            lendingMarket:
+              this.sdk.sdkOptions.suilend_config.config!.lendingMarketId,
+            oracleRegistry:
+              this.sdk.sdkOptions.oracle_config.config!.oracleRegistryId,
+            lendingMarketType:
+              this.sdk.sdkOptions.suilend_config.config!.lendingMarketType,
           },
           this.sdk.packageInfo(),
         );
@@ -373,13 +379,10 @@ export type CreateCpmmPoolArgs = {
 export type CreateOraclePoolArgs = {
   type: "Oracle";
 
-  lendingMarket: SuiAddressType;
-  oracleRegistry: SuiAddressType;
   oracleIndexA: bigint;
   oracleIndexB: bigint;
   bTokenMetaA: string | TransactionObjectInput;
   bTokenMetaB: string | TransactionObjectInput;
-  lendingMarketType: string;
 
   coinTypeA: string;
   coinTypeB: string;
@@ -389,10 +392,9 @@ export type CreateOraclePoolArgs = {
   lpTreasuryId: string;
   lpMetadataId: string;
   lpTokenType: string;
-  btokenTypeA: string;
-  btokenTypeB: string;
   swapFeeBps: bigint;
   coinMetaA: string;
   coinMetaB: string;
 };
+
 export type CreatePoolArgs = CreateCpmmPoolArgs | CreateOraclePoolArgs;
