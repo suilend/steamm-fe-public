@@ -10,3 +10,5 @@ export {
   destroyOrTransfer,
   toMultiSwapRoute,
 } from "./_generated/steamm_scripts/pool-script/functions";
+
+export { redeemLiquidity as redeemLiquidityWithProvision } from "./_generated/steamm_scripts/pool-script/functions";
