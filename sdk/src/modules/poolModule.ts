@@ -1,4 +1,8 @@
-import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
+import {
+  Transaction,
+  TransactionArgument,
+  TransactionResult,
+} from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
 import {
@@ -10,6 +14,8 @@ import {
   PoolSwapArgs,
   SwapQuote,
   createPool,
+  createPoolAndShare,
+  sharePool,
 } from "../base";
 import {
   DepositQuote,
@@ -221,6 +227,48 @@ export class PoolModule implements IModule {
       swapFeeBps: bigint;
       offset: bigint;
     },
+  ): Promise<TransactionResult> {
+    // wait until the sui rpc recognizes the treasuryCapId
+    while (true) {
+      const object = await this.sdk.fullClient.getObject({
+        id: args.lpTreasuryId,
+      });
+      if (object.error) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } else {
+        break;
+      }
+    }
+
+    const callArgs = {
+      coinTypeA: args.btokenTypeA,
+      coinTypeB: args.btokenTypeB,
+      lpTokenType: args.lpTokenType,
+      registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
+      swapFeeBps: args.swapFeeBps,
+      offset: args.offset,
+      coinMetaA: args.coinMetaA,
+      coinMetaB: args.coinMetaB,
+      lpTokenMeta: args.lpMetadataId,
+      lpTreasury: args.lpTreasuryId,
+    };
+
+    return createPool(tx, callArgs, this.sdk.packageInfo());
+  }
+
+  public async createPoolAndShare(
+    tx: Transaction,
+    args: {
+      lpTreasuryId: string;
+      lpTokenType: string;
+      lpMetadataId: string;
+      btokenTypeA: string;
+      coinMetaA: string;
+      btokenTypeB: string;
+      coinMetaB: string;
+      swapFeeBps: bigint;
+      offset: bigint;
+    },
   ) {
     // wait until the sui rpc recognizes the treasuryCapId
     while (true) {
@@ -247,7 +295,7 @@ export class PoolModule implements IModule {
       lpTreasury: args.lpTreasuryId,
     };
 
-    createPool(tx, callArgs, this.sdk.packageInfo());
+    createPoolAndShare(tx, callArgs, this.sdk.packageInfo());
   }
 
   private async getQuoteResult<T>(

@@ -137,6 +137,59 @@ export function createPool(
   tx: Transaction,
   args: CreateCpPoolArgs,
   pkgInfo: PackageInfo,
+): TransactionResult {
+  const {
+    coinTypeA,
+    coinTypeB,
+    lpTokenType,
+    registry,
+    swapFeeBps,
+    offset,
+    coinMetaA,
+    coinMetaB,
+    lpTokenMeta,
+    lpTreasury,
+  } = args;
+
+  const pool = ConstantProductFunctions.new_(
+    tx,
+    [coinTypeA, coinTypeB, lpTokenType],
+    {
+      registry,
+      swapFeeBps,
+      offset,
+      metaA: coinMetaA,
+      metaB: coinMetaB,
+      metaLp: lpTokenMeta,
+      lpTreasury,
+    },
+    pkgInfo.publishedAt,
+  );
+
+  return pool;
+}
+
+export function sharePool(
+  tx: Transaction,
+  args: CreateCpPoolArgs,
+  pool: TransactionResult,
+  pkgInfo: PackageInfo,
+): TransactionResult {
+  const quoterType = `${pkgInfo.sourcePkgId}::cpmm::CpQuoter`;
+
+  return tx.moveCall({
+    target: `0x2::transfer::public_share_object`,
+    typeArguments: [
+      `${pkgInfo.sourcePkgId}::pool::Pool<${args.coinTypeA}, ${args.coinTypeB}, ${quoterType}, ${args.lpTokenType}>`,
+    ],
+    arguments: [pool],
+  });
+}
+
+export function createPoolAndShare(
+  tx: Transaction,
+  args: CreateCpPoolArgs,
+  pkgInfo: PackageInfo,
 ) {
   const {
     coinTypeA,
