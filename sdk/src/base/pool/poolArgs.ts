@@ -4,7 +4,6 @@ import {
 } from "@mysten/sui/transactions";
 
 // TODO: change TransactionObjectInput to TransactionArgument
-
 export interface CreatePoolArgs {
   coinTypeA: string;
   coinTypeB: string;
@@ -13,8 +12,8 @@ export interface CreatePoolArgs {
   swapFeeBps: bigint | TransactionArgument;
   coinMetaA: string | TransactionObjectInput;
   coinMetaB: string | TransactionObjectInput;
-  lpTokenMeta: string | TransactionObjectInput;
-  lpTreasury: string | TransactionObjectInput;
+  lpMetadataId: string | TransactionObjectInput;
+  lpTreasuryId: string | TransactionObjectInput;
 }
 
 export interface PoolSwapArgs {

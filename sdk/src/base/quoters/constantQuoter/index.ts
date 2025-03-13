@@ -127,7 +127,7 @@ export class ConstantProductQuoter implements Quoter {
   }
 }
 
-export function createPool(
+export function createConstantProductPool(
   tx: Transaction,
   args: CreateCpPoolArgs,
   pkgInfo: PackageInfo,
@@ -141,8 +141,8 @@ export function createPool(
     offset,
     coinMetaA,
     coinMetaB,
-    lpTokenMeta,
-    lpTreasury,
+    lpMetadataId,
+    lpTreasuryId,
   } = args;
 
   const pool = ConstantProductFunctions.new_(
@@ -154,8 +154,8 @@ export function createPool(
       offset,
       metaA: coinMetaA,
       metaB: coinMetaB,
-      metaLp: lpTokenMeta,
-      lpTreasury,
+      metaLp: lpMetadataId,
+      lpTreasury: lpTreasuryId,
     },
     pkgInfo.publishedAt,
   );

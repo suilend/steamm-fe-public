@@ -124,7 +124,7 @@ export class OracleQuoter implements Quoter {
   }
 }
 
-export function createPool(
+export function createOraclePool(
   tx: Transaction,
   args: CreateOraclePoolArgs,
   pkgInfo: PackageInfo,
@@ -139,17 +139,27 @@ export function createPool(
     oracleRegistry,
     oracleIndexA,
     oracleIndexB,
-    coinMetaBA,
-    coinMetaBB,
+    bTokenMetaA,
+    bTokenMetaB,
     coinMetaA,
     coinMetaB,
-    lpTokenMeta,
-    lpTreasury,
+    lpMetadataId,
+    lpTreasuryId,
+    lendingMarketType,
+    bTokenTypeA,
+    bTokenTypeB,
   } = args;
 
   const pool = OracleFunctions.new_(
     tx,
-    [coinTypeA, coinTypeB, lpTokenType],
+    [
+      lendingMarketType,
+      coinTypeA,
+      coinTypeB,
+      bTokenTypeA,
+      bTokenTypeB,
+      lpTokenType,
+    ],
     {
       registry: tx.object(registry),
       lendingMarket: tx.object(lendingMarket),
@@ -159,10 +169,10 @@ export function createPool(
       swapFeeBps: swapFeeBps,
       metaA: tx.object(coinMetaA),
       metaB: tx.object(coinMetaB),
-      metaBA: tx.object(coinMetaBA),
-      metaBB: tx.object(coinMetaBB),
-      metaLp: tx.object(lpTokenMeta),
-      lpTreasury: tx.object(lpTreasury),
+      metaBA: tx.object(bTokenMetaA),
+      metaBB: tx.object(bTokenMetaB),
+      metaLp: tx.object(lpMetadataId),
+      lpTreasury: tx.object(lpTreasuryId),
     },
     pkgInfo.publishedAt,
   );

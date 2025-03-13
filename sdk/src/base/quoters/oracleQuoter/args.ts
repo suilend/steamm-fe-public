@@ -28,6 +28,9 @@ export type CreateOraclePoolArgs = CreatePoolArgs & {
   oracleRegistry: SuiAddressType;
   oracleIndexA: bigint;
   oracleIndexB: bigint;
-  coinMetaBA: string | TransactionObjectInput;
-  coinMetaBB: string | TransactionObjectInput;
+  lendingMarketType: string;
+  bTokenTypeA: string;
+  bTokenTypeB: string;
+  bTokenMetaA: string | TransactionObjectInput;
+  bTokenMetaB: string | TransactionObjectInput;
 };

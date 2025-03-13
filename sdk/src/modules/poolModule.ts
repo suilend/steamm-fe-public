@@ -1,5 +1,9 @@
 import { SuiTransactionBlockResponse } from "@mysten/sui/client";
-import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
+import {
+  Transaction,
+  TransactionArgument,
+  TransactionObjectInput,
+} from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
 import {
@@ -10,7 +14,8 @@ import {
   PoolRedeemLiquidityArgs,
   PoolSwapArgs,
   SwapQuote,
-  createPool,
+  createConstantProductPool,
+  createOraclePool,
 } from "../base";
 import {
   DepositQuote,
@@ -209,20 +214,7 @@ export class PoolModule implements IModule {
     return tx;
   }
 
-  public async createPool(
-    tx: Transaction,
-    args: {
-      lpTreasuryId: string;
-      lpMetadataId: string;
-      lpTokenType: string;
-      btokenTypeA: string;
-      btokenTypeB: string;
-      swapFeeBps: bigint;
-      offset: bigint;
-      coinMetaA: string;
-      coinMetaB: string;
-    },
-  ) {
+  public async createPool(tx: Transaction, args: CreatePoolArgs) {
     // wait until the sui rpc recognizes the treasuryCapId
     while (true) {
       const object = await this.sdk.fullClient.getObject({
@@ -235,20 +227,30 @@ export class PoolModule implements IModule {
       }
     }
 
-    const callArgs = {
-      coinTypeA: args.btokenTypeA,
-      coinTypeB: args.btokenTypeB,
-      lpTokenType: args.lpTokenType,
-      registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
-      swapFeeBps: args.swapFeeBps,
-      offset: args.offset,
-      coinMetaA: args.coinMetaA,
-      coinMetaB: args.coinMetaB,
-      lpTokenMeta: args.lpMetadataId,
-      lpTreasury: args.lpTreasuryId,
-    };
-
-    createPool(tx, callArgs, this.sdk.packageInfo());
+    switch (args.type) {
+      case "ConstantProduct":
+        createConstantProductPool(
+          tx,
+          {
+            ...args,
+            registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
+          },
+          this.sdk.packageInfo(),
+        );
+        break;
+      case "Oracle":
+        createOraclePool(
+          tx,
+          {
+            ...args,
+            registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
+          },
+          this.sdk.packageInfo(),
+        );
+        break;
+      default:
+        throw new Error("Unknown pool type");
+    }
   }
 
   private async getQuoteResult<T>(
@@ -354,3 +356,43 @@ export type QuoteDepositArgs = PoolQuoteDepositArgs & {
 export type QuoteRedeemArgs = PoolQuoteRedeemArgs & {
   pool: SuiAddressType;
 };
+
+export type CreateCpmmPoolArgs = {
+  type: "ConstantProduct";
+  lpTreasuryId: string;
+  lpMetadataId: string;
+  lpTokenType: string;
+  coinTypeA: string; // btoken type
+  coinTypeB: string; // btoken type
+  swapFeeBps: bigint;
+  offset: bigint;
+  coinMetaA: string;
+  coinMetaB: string;
+};
+
+export type CreateOraclePoolArgs = {
+  type: "Oracle";
+
+  lendingMarket: SuiAddressType;
+  oracleRegistry: SuiAddressType;
+  oracleIndexA: bigint;
+  oracleIndexB: bigint;
+  bTokenMetaA: string | TransactionObjectInput;
+  bTokenMetaB: string | TransactionObjectInput;
+  lendingMarketType: string;
+
+  coinTypeA: string;
+  coinTypeB: string;
+
+  bTokenTypeA: string;
+  bTokenTypeB: string;
+  lpTreasuryId: string;
+  lpMetadataId: string;
+  lpTokenType: string;
+  btokenTypeA: string;
+  btokenTypeB: string;
+  swapFeeBps: bigint;
+  coinMetaA: string;
+  coinMetaB: string;
+};
+export type CreatePoolArgs = CreateCpmmPoolArgs | CreateOraclePoolArgs;

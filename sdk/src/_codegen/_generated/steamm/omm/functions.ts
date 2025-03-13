@@ -64,7 +64,7 @@ export interface NewArgs {
 
 export function new_(
   tx: Transaction,
-  typeArgs: [string, string, string],
+  typeArgs: [string, string, string, string, string, string],
   args: NewArgs,
   publishedAt: string = PUBLISHED_AT,
 ) {
