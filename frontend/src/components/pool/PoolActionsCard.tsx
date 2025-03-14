@@ -77,9 +77,10 @@ enum QueryParams {
 
 interface DepositTabProps {
   tokenUsdPricesMap: Record<string, BigNumber>;
+  onDeposit: () => void;
 }
 
-function DepositTab({ tokenUsdPricesMap }: DepositTabProps) {
+function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
@@ -541,6 +542,7 @@ function DepositTab({ tokenUsdPricesMap }: DepositTabProps) {
         { dp: coinMetadataB.decimals, trimTrailingZeros: true },
       );
 
+      onDeposit();
       showSuccessTxnToast("Deposited liquidity", txUrl, {
         description: `${balanceChangeAFormatted} ${coinMetadataA.symbol} and ${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
       });
@@ -672,7 +674,11 @@ function DepositTab({ tokenUsdPricesMap }: DepositTabProps) {
   );
 }
 
-function WithdrawTab() {
+interface WithdrawTabProps {
+  onWithdraw: () => void;
+}
+
+function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
   const { explorer } = useSettingsContext();
   const { address, dryRunTransaction, signExecuteAndWaitForTransaction } =
     useWalletContext();
@@ -990,6 +996,7 @@ function WithdrawTab() {
         { dp: coinMetadataB.decimals, trimTrailingZeros: true },
       );
 
+      onWithdraw();
       showSuccessTxnToast("Withdrew liquidity", txUrl, {
         description: `${balanceChangeAFormatted} ${coinMetadataA.symbol} and ${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
       });
@@ -1573,7 +1580,15 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
   );
 }
 
-export default function PoolActionsCard() {
+interface PoolActionsCardProps {
+  onDeposit: () => void;
+  onWithdraw: () => void;
+}
+
+export default function PoolActionsCard({
+  onDeposit,
+  onWithdraw,
+}: PoolActionsCardProps) {
   const router = useRouter();
   const queryParams = {
     [QueryParams.ACTION]: router.query[QueryParams.ACTION] as
@@ -1644,9 +1659,14 @@ export default function PoolActionsCard() {
       </div>
 
       {selectedAction === Action.DEPOSIT && (
-        <DepositTab tokenUsdPricesMap={tokenUsdPricesMap} />
+        <DepositTab
+          tokenUsdPricesMap={tokenUsdPricesMap}
+          onDeposit={onDeposit}
+        />
       )}
-      {selectedAction === Action.WITHDRAW && <WithdrawTab />}
+      {selectedAction === Action.WITHDRAW && (
+        <WithdrawTab onWithdraw={onWithdraw} />
+      )}
       {selectedAction === Action.SWAP && (
         <SwapTab tokenUsdPricesMap={tokenUsdPricesMap} />
       )}

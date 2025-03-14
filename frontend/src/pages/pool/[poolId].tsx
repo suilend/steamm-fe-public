@@ -43,6 +43,7 @@ function PoolPage() {
     pool.coinTypes.map((coinType) => appData.coinMetadataMap[coinType].symbol),
   );
 
+  // Transaction history
   const [transactionHistoryMapMap, setTransactionHistoryMapMap] = useState<
     Record<string, Record<string, (HistoryDeposit | HistoryRedeem)[]>>
   >({});
@@ -111,6 +112,15 @@ function PoolPage() {
         _pool.id !== pool.id && _pool.coinTypes[0] === pool.coinTypes[0],
     )
     .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
+
+  // Actions
+  const onDeposit = () => {
+    setTimeout(() => fetchPoolTransactionHistory(), 1000);
+  };
+
+  const onWithdraw = () => {
+    setTimeout(() => fetchPoolTransactionHistory(), 1000);
+  };
 
   return (
     <>
@@ -242,7 +252,11 @@ function PoolPage() {
 
               {/* Right */}
               <div className="max-md:w-full md:flex-1 lg:flex-[2]">
-                <PoolActionsCard key={pool.id} />
+                <PoolActionsCard
+                  key={pool.id}
+                  onDeposit={onDeposit}
+                  onWithdraw={onWithdraw}
+                />
               </div>
             </div>
           </div>
