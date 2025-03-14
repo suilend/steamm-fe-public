@@ -172,7 +172,7 @@ export async function createPoolHelper(
 
   const newPoolTx = new Transaction();
 
-  await sdk.Pool.createPool(newPoolTx, {
+  await sdk.Pool.createPoolAndShare(newPoolTx, {
     lpTreasuryId,
     lpMetadataId,
     lpTokenType,
