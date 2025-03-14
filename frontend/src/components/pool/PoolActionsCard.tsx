@@ -1419,7 +1419,6 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
         bankInfoA: appData.bankMap[coinTypeA].bankInfo,
         bankInfoB: appData.bankMap[coinTypeB].bankInfo,
       });
-
       transaction.transferObjects([coinA, coinB], address);
 
       const res = await signExecuteAndWaitForTransaction(transaction, {

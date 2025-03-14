@@ -316,18 +316,8 @@ export class PoolModule implements IModule {
   }
 
   public async createPool(
+    args: CreatePoolArgs,
     tx: Transaction,
-    args: {
-      lpTreasuryId: string;
-      lpTokenType: string;
-      lpMetadataId: string;
-      btokenTypeA: string;
-      coinMetaA: string;
-      btokenTypeB: string;
-      coinMetaB: string;
-      swapFeeBps: bigint;
-      offset: bigint;
-    },
   ): Promise<TransactionResult> {
     // wait until the sui rpc recognizes the treasuryCapId
     while (true) {
@@ -343,34 +333,32 @@ export class PoolModule implements IModule {
 
     const callArgs = {
       coinTypeA: args.btokenTypeA,
+      coinMetaA: args.coinMetaA,
       coinTypeB: args.btokenTypeB,
+      coinMetaB: args.coinMetaB,
+      lpTreasury: args.lpTreasuryId,
       lpTokenType: args.lpTokenType,
-      registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
+      lpTokenMeta: args.lpMetadataId,
       swapFeeBps: args.swapFeeBps,
       offset: args.offset,
-      coinMetaA: args.coinMetaA,
-      coinMetaB: args.coinMetaB,
-      lpTokenMeta: args.lpMetadataId,
-      lpTreasury: args.lpTreasuryId,
+      registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
     };
 
     return createPool(tx, callArgs, this.sdk.packageInfo());
   }
 
-  public async createPoolAndShare(
-    tx: Transaction,
-    args: {
-      lpTreasuryId: string;
-      lpTokenType: string;
-      lpMetadataId: string;
-      btokenTypeA: string;
-      coinMetaA: string;
-      btokenTypeB: string;
-      coinMetaB: string;
-      swapFeeBps: bigint;
-      offset: bigint;
-    },
-  ) {
+  public async sharePool(args: SharePoolArgs, tx: Transaction) {
+    const callArgs = {
+      pool: args.pool,
+      lpTokenType: args.lpTokenType,
+      coinTypeA: args.btokenTypeA,
+      coinTypeB: args.btokenTypeB,
+    };
+
+    sharePool(tx, callArgs, this.sdk.packageInfo());
+  }
+
+  public async createPoolAndShare(args: CreatePoolArgs, tx: Transaction) {
     // wait until the sui rpc recognizes the treasuryCapId
     while (true) {
       const object = await this.sdk.fullClient.getObject({
@@ -385,15 +373,15 @@ export class PoolModule implements IModule {
 
     const callArgs = {
       coinTypeA: args.btokenTypeA,
+      coinMetaA: args.coinMetaA,
       coinTypeB: args.btokenTypeB,
+      coinMetaB: args.coinMetaB,
+      lpTreasury: args.lpTreasuryId,
       lpTokenType: args.lpTokenType,
-      registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
+      lpTokenMeta: args.lpMetadataId,
       swapFeeBps: args.swapFeeBps,
       offset: args.offset,
-      coinMetaA: args.coinMetaA,
-      coinMetaB: args.coinMetaB,
-      lpTokenMeta: args.lpMetadataId,
-      lpTreasury: args.lpTreasuryId,
+      registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
     };
 
     createPoolAndShare(tx, callArgs, this.sdk.packageInfo());
@@ -519,4 +507,23 @@ export type QuoteRedeemArgs = PoolQuoteRedeemArgs & {
   poolInfo?: PoolInfo;
   bankInfoA?: BankInfo;
   bankInfoB?: BankInfo;
+};
+
+export type CreatePoolArgs = {
+  btokenTypeA: string;
+  coinMetaA: string;
+  btokenTypeB: string;
+  coinMetaB: string;
+  lpTreasuryId: string;
+  lpTokenType: string;
+  lpMetadataId: string;
+  swapFeeBps: bigint;
+  offset: bigint;
+};
+
+export type SharePoolArgs = {
+  pool: TransactionResult;
+  btokenTypeA: string;
+  btokenTypeB: string;
+  lpTokenType: string;
 };

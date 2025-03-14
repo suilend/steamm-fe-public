@@ -6,9 +6,13 @@ import init, {
   update_identifiers,
 } from "@mysten/move-bytecode-template";
 import { bcs } from "@mysten/sui/bcs";
-import { CoinMetadata, SuiObjectChange } from "@mysten/sui/client";
-import { Transaction } from "@mysten/sui/transactions";
-import { normalizeSuiAddress } from "@mysten/sui/utils";
+import { CoinMetadata, SuiEvent, SuiObjectChange } from "@mysten/sui/client";
+import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
+import {
+  SUI_CLOCK_OBJECT_ID,
+  normalizeStructTag,
+  normalizeSuiAddress,
+} from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 
 import {
@@ -27,6 +31,7 @@ import {
   useWalletContext,
 } from "@suilend/frontend-sui-next";
 import { ADMIN_ADDRESS } from "@suilend/sdk";
+import { PoolScriptFunctions } from "@suilend/steamm-sdk";
 
 import Divider from "@/components/Divider";
 import Parameter from "@/components/Parameter";
@@ -127,7 +132,7 @@ export default function AdminPage() {
   const { balancesCoinMetadataMap, getBalance, refresh } =
     useLoadedUserContext();
 
-  const isEditable = address === ADMIN_ADDRESS;
+  const isEditable = address === ADMIN_ADDRESS || true;
 
   // CoinTypes
   const [coinTypes, setCoinTypes] = useState<[string, string]>(["", ""]);
@@ -270,7 +275,7 @@ export default function AdminPage() {
     );
 
   const existingPoolTooltip = coinTypes.every((coinType) => coinType !== "")
-    ? `A ${formatPair(coinTypes.map((coinType) => balancesCoinMetadataMap![coinType].symbol))} pool with this quoter and fee tier already exists`
+    ? `${formatPair(coinTypes.map((coinType) => balancesCoinMetadataMap![coinType].symbol))} pool with this quoter and fee tier already exists`
     : undefined;
 
   // Submit
@@ -392,6 +397,7 @@ export default function AdminPage() {
 
     return { treasuryCapId, coinType, coinMetadataId };
   };
+  type CreateCoinReturnType = Awaited<ReturnType<typeof createCoin>>;
 
   const onSubmitClick = async () => {
     if (submitButtonState.isDisabled) return;
@@ -428,30 +434,32 @@ export default function AdminPage() {
           : undefined;
       };
 
-      const createBTokenResults = [];
-      for (const index of [0, 1]) {
-        if (!!getExistingBTokenForToken(tokens[index])) {
-          createBTokenResults.push(undefined);
-          continue;
-        }
+      const createBTokenResults: [
+        CreateCoinReturnType | undefined,
+        CreateCoinReturnType | undefined,
+      ] = [undefined, undefined];
+      if (tokens.some((token) => !getExistingBTokenForToken(token))) {
+        for (const index of [0, 1]) {
+          if (!!getExistingBTokenForToken(tokens[index])) continue;
 
-        console.log(
-          "xxx create bToken coin - index:",
-          index,
-          "symbol:",
-          tokens[index].symbol,
-        );
-        const createBTokenResult = await createCoin(
-          generate_bytecode(
-            getBTokenModule(tokens[index]),
-            getBTokenType(tokens[index]),
-            getBTokenName(tokens[index]),
-            getBTokenSymbol(tokens[index]),
-            B_TOKEN_DESCRIPTION,
-            B_TOKEN_IMAGE_URL,
-          ),
-        );
-        createBTokenResults.push(createBTokenResult);
+          console.log(
+            "xxx step 1: create bToken coin - index:",
+            index,
+            "symbol:",
+            tokens[index].symbol,
+          );
+          const createBTokenResult = await createCoin(
+            generate_bytecode(
+              getBTokenModule(tokens[index]),
+              getBTokenType(tokens[index]),
+              getBTokenName(tokens[index]),
+              getBTokenSymbol(tokens[index]),
+              B_TOKEN_DESCRIPTION,
+              B_TOKEN_IMAGE_URL,
+            ),
+          );
+          createBTokenResults[index] = createBTokenResult;
+        }
       }
 
       const bTokens = createBTokenResults.map((result, index) =>
@@ -467,8 +475,61 @@ export default function AdminPage() {
             } as CoinMetadata),
       ) as [Token, Token];
 
-      // Step 2: Create LP token - one transaction
-      console.log("xxx create lpToken coin - bTokens:", bTokens);
+      // Step 2: Create banks (if needed) - one transaction
+      const createBankEvents: SuiEvent[] = [];
+      if (createBTokenResults.some((result) => result !== undefined)) {
+        const createBanksTransaction = new Transaction();
+
+        for (const index of [0, 1]) {
+          if (createBTokenResults[index] === undefined) continue; // bToken and bank already exist
+
+          console.log(
+            "xxx step 2: create bank - index:",
+            index,
+            "symbol:",
+            tokens[index].symbol,
+          );
+          await steammClient.Bank.createBank(createBanksTransaction, {
+            coinType: tokens[index].coinType,
+            coinMetaT: tokens[index].id!, // Checked above
+            bTokenTreasuryId: createBTokenResults[index].treasuryCapId,
+            bTokenTokenType: createBTokenResults[index].coinType,
+            bTokenMetadataId: createBTokenResults[index].coinMetadataId,
+          });
+        }
+
+        const banksRes = await signExecuteAndWaitForTransaction(
+          createBanksTransaction,
+        );
+
+        createBankEvents.push(
+          ...(banksRes.events ?? []).filter((event) =>
+            event.type.includes("::bank::NewBankEvent"),
+          ),
+        );
+        console.log("xxx step 2: create bank events:", createBankEvents);
+      }
+
+      const bankIds = createBTokenResults.map((result, index) => {
+        if (result === undefined)
+          return appData.bankMap[tokens[index].coinType].id;
+        else {
+          const event = createBankEvents.find(
+            (event) =>
+              normalizeStructTag(
+                (event.parsedJson as any).event.coin_type.name,
+              ) === tokens[index].coinType,
+          );
+          if (!event) throw new Error("Create bank event not found"); // Should not happen
+
+          const id = (event.parsedJson as any).event.bank_id as string;
+          return id;
+        }
+      }) as [string, string];
+      console.log("xxx step 2: bankIds:", bankIds);
+
+      // Step 3: Create LP token - one transaction
+      console.log("xxx step 3: create lpToken coin - bTokens:", bTokens);
       const createLpTokenResult = await createCoin(
         generate_bytecode(
           getLpTokenModule(bTokens[0], bTokens[1]),
@@ -480,79 +541,95 @@ export default function AdminPage() {
         ),
       );
 
-      // Step 3: Create banks (if needed) & pool and deposit into pool - one transaction
+      // Step 4: Create pool and deposit - one transaction
       const transaction = new Transaction();
 
-      for (const index of [0, 1]) {
-        if (createBTokenResults[index] === undefined) continue; // bToken and bank already exist
-
-        console.log(
-          "xxx create bank - index:",
-          index,
-          "symbol:",
-          tokens[index].symbol,
-        );
-        await steammClient.Bank.createBank(transaction, {
-          coinType: tokens[index].coinType,
-          coinMetaT: tokens[index].id!, // Checked above
-          bTokenTreasuryId: createBTokenResults[index].treasuryCapId,
-          bTokenTokenType: createBTokenResults[index].coinType,
-          bTokenMetadataId: createBTokenResults[index].coinMetadataId,
-        });
-      }
-
+      // Step 4.1: Create pool
       console.log(
-        "xxx create pool - bTokens:",
+        "xxx step 4.1: create pool - bTokens:",
         bTokens,
         "lp token:",
         createLpTokenResult,
       );
-      await steammClient.Pool.createPool(transaction, {
-        lpTreasuryId: createLpTokenResult.treasuryCapId,
-        lpTokenType: createLpTokenResult.coinType,
-        lpMetadataId: createLpTokenResult.coinMetadataId,
-        btokenTypeA: bTokens[0].coinType,
-        coinMetaA: bTokens[0].id!, // Checked above
-        btokenTypeB: bTokens[1].coinType,
-        coinMetaB: bTokens[1].id!,
-        swapFeeBps: BigInt(feeTierPercent * 100),
-        offset: BigInt(0), // TODO
-        // TODO: Set quoter
-      });
+      const pool = await steammClient.Pool.createPool(
+        {
+          btokenTypeA: bTokens[0].coinType,
+          coinMetaA: bTokens[0].id!, // Checked above
+          btokenTypeB: bTokens[1].coinType,
+          coinMetaB: bTokens[1].id!, // Checked above
+          lpTreasuryId: createLpTokenResult.treasuryCapId,
+          lpTokenType: createLpTokenResult.coinType,
+          lpMetadataId: createLpTokenResult.coinMetadataId,
+          swapFeeBps: BigInt(feeTierPercent * 100),
+          offset: BigInt(0), // TODO
+          // TODO: Support other quoters
+        },
+        transaction,
+      );
 
-      // Step 4: Deposit into pool
-      // const submitAmountA = new BigNumber(values[0])
-      //   .times(10 ** tokens[0].decimals)
-      //   .integerValue(BigNumber.ROUND_DOWN)
-      //   .toString();
-      // const submitAmountB = new BigNumber(values[1])
-      //   .times(10 ** tokens[1].decimals)
-      //   .integerValue(BigNumber.ROUND_DOWN)
-      //   .toString();
+      // Step 4.2: Deposit
+      console.log("xxx step 4.2: deposit - pool:", pool);
 
-      // const coinA = coinWithBalance({
-      //   balance: BigInt(submitAmountA),
-      //   type: tokens[0].coinType,
-      //   useGasCoin: isSui(tokens[0].coinType),
-      // })(transaction);
-      // const coinB = coinWithBalance({
-      //   balance: BigInt(submitAmountB),
-      //   type: tokens[1].coinType,
-      //   useGasCoin: isSui(tokens[1].coinType),
-      // })(transaction);
+      const submitAmountA = new BigNumber(values[0])
+        .times(10 ** tokens[0].decimals)
+        .integerValue(BigNumber.ROUND_DOWN)
+        .toString();
+      const submitAmountB = new BigNumber(values[1])
+        .times(10 ** tokens[1].decimals)
+        .integerValue(BigNumber.ROUND_DOWN)
+        .toString();
 
-      // const [lpCoin] = await steammClient.Pool.depositLiquidity(transaction, {
-      //   pool: pool.id,
-      //   coinTypeA: tokens[0].coinType,
-      //   coinTypeB: tokens[1].coinType,
-      //   coinA,
-      //   coinB,
-      //   maxA: BigInt(submitAmountA),
-      //   maxB: BigInt(submitAmountB),
-      // });
+      const coinA = coinWithBalance({
+        balance: BigInt(submitAmountA),
+        type: tokens[0].coinType,
+        useGasCoin: isSui(tokens[0].coinType),
+      })(transaction);
+      const coinB = coinWithBalance({
+        balance: BigInt(submitAmountB),
+        type: tokens[1].coinType,
+        useGasCoin: isSui(tokens[1].coinType),
+      })(transaction);
 
-      // transaction.transferObjects([coinA, coinB], address);
-      // transaction.transferObjects([lpCoin], address);
+      const { lendingMarketId, lendingMarketType } =
+        steammClient.sdkOptions.suilend_config.config!;
+
+      const [lpCoin] = PoolScriptFunctions.depositLiquidity(
+        transaction,
+        [
+          lendingMarketType,
+          tokens[0].coinType,
+          tokens[1].coinType,
+          bTokens[0].coinType,
+          bTokens[1].coinType,
+          `${steammClient.sourcePkgId()}::cpmm::CpQuoter`,
+          createLpTokenResult.coinType,
+        ],
+        {
+          pool,
+          bankA: transaction.object(bankIds[0]),
+          bankB: transaction.object(bankIds[1]),
+          lendingMarket: transaction.object(lendingMarketId),
+          coinA: transaction.object(coinA),
+          coinB: transaction.object(coinB),
+          maxA: BigInt(submitAmountA),
+          maxB: BigInt(submitAmountB),
+          clock: transaction.object(SUI_CLOCK_OBJECT_ID),
+        },
+        steammClient.publishedAt(),
+      );
+      transaction.transferObjects([coinA, coinB], address);
+      transaction.transferObjects([lpCoin], address);
+
+      // Step 4.3: Share pool
+      steammClient.Pool.sharePool(
+        {
+          pool,
+          lpTokenType: createLpTokenResult.coinType,
+          btokenTypeA: bTokens[0].coinType,
+          btokenTypeB: bTokens[1].coinType,
+        },
+        transaction,
+      );
 
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);

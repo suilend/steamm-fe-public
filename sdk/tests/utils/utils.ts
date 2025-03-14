@@ -18,8 +18,8 @@ export interface CoinData {
 
 export interface LpData {
   lpTreasuryId: string;
-  lpMetadataId: string;
   lpTokenType: string;
+  lpMetadataId: string;
 }
 
 export async function createCoinTx(
@@ -172,17 +172,20 @@ export async function createPoolHelper(
 
   const newPoolTx = new Transaction();
 
-  await sdk.Pool.createPoolAndShare(newPoolTx, {
-    lpTreasuryId,
-    lpMetadataId,
-    lpTokenType,
-    btokenTypeA: coinAData.btokenType,
-    btokenTypeB: coinBData.btokenType,
-    swapFeeBps: BigInt(100),
-    offset: BigInt(0),
-    coinMetaA: coinAData.bTokenmeta,
-    coinMetaB: coinBData.bTokenmeta,
-  });
+  await sdk.Pool.createPoolAndShare(
+    {
+      btokenTypeA: coinAData.btokenType,
+      coinMetaA: coinAData.bTokenmeta,
+      btokenTypeB: coinBData.btokenType,
+      coinMetaB: coinBData.bTokenmeta,
+      lpTreasuryId,
+      lpTokenType,
+      lpMetadataId,
+      swapFeeBps: BigInt(100),
+      offset: BigInt(0),
+    },
+    newPoolTx,
+  );
 
   const newPoolTxResponse = await sdk.fullClient.signAndExecuteTransaction({
     transaction: newPoolTx,
@@ -198,8 +201,8 @@ export async function createPoolHelper(
 
   return {
     lpTreasuryId,
-    lpMetadataId,
     lpTokenType,
+    lpMetadataId,
   };
 }
 

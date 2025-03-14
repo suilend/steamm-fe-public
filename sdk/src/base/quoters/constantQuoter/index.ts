@@ -13,6 +13,7 @@ import {
   CpQuoteSwapArgs,
   CpSwapArgs,
   CreateCpPoolArgs,
+  ShareCpPoolArgs,
 } from "./constantProductArgs";
 
 export * from "./constantProductArgs";
@@ -140,15 +141,15 @@ export function createPool(
 ): TransactionResult {
   const {
     coinTypeA,
+    coinMetaA,
     coinTypeB,
+    coinMetaB,
+    lpTreasury,
     lpTokenType,
-    registry,
+    lpTokenMeta,
     swapFeeBps,
     offset,
-    coinMetaA,
-    coinMetaB,
-    lpTokenMeta,
-    lpTreasury,
+    registry,
   } = args;
 
   const pool = ConstantProductFunctions.new_(
@@ -171,8 +172,7 @@ export function createPool(
 
 export function sharePool(
   tx: Transaction,
-  args: CreateCpPoolArgs,
-  pool: TransactionResult,
+  args: ShareCpPoolArgs,
   pkgInfo: PackageInfo,
 ): TransactionResult {
   const quoterType = `${pkgInfo.sourcePkgId}::cpmm::CpQuoter`;
@@ -182,7 +182,7 @@ export function sharePool(
     typeArguments: [
       `${pkgInfo.sourcePkgId}::pool::Pool<${args.coinTypeA}, ${args.coinTypeB}, ${quoterType}, ${args.lpTokenType}>`,
     ],
-    arguments: [pool],
+    arguments: [args.pool],
   });
 }
 
@@ -191,41 +191,16 @@ export function createPoolAndShare(
   args: CreateCpPoolArgs,
   pkgInfo: PackageInfo,
 ) {
-  const {
-    coinTypeA,
-    coinTypeB,
-    lpTokenType,
-    registry,
-    swapFeeBps,
-    offset,
-    coinMetaA,
-    coinMetaB,
-    lpTokenMeta,
-    lpTreasury,
-  } = args;
+  const pool = createPool(tx, args, pkgInfo);
 
-  const pool = ConstantProductFunctions.new_(
+  return sharePool(
     tx,
-    [coinTypeA, coinTypeB, lpTokenType],
     {
-      registry,
-      swapFeeBps,
-      offset,
-      metaA: coinMetaA,
-      metaB: coinMetaB,
-      metaLp: lpTokenMeta,
-      lpTreasury,
+      pool,
+      coinTypeA: args.coinTypeA,
+      coinTypeB: args.coinTypeB,
+      lpTokenType: args.lpTokenType,
     },
-    pkgInfo.publishedAt,
+    pkgInfo,
   );
-
-  const quoterType = `${pkgInfo.sourcePkgId}::cpmm::CpQuoter`;
-
-  return tx.moveCall({
-    target: `0x2::transfer::public_share_object`,
-    typeArguments: [
-      `${pkgInfo.sourcePkgId}::pool::Pool<${coinTypeA}, ${coinTypeB}, ${quoterType}, ${lpTokenType}>`,
-    ],
-    arguments: [pool],
-  });
 }
