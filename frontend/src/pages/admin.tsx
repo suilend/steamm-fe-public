@@ -132,7 +132,7 @@ export default function AdminPage() {
   const { balancesCoinMetadataMap, getBalance, refresh } =
     useLoadedUserContext();
 
-  const isEditable = address === ADMIN_ADDRESS || true;
+  const isEditable = address === ADMIN_ADDRESS;
 
   // CoinTypes
   const [coinTypes, setCoinTypes] = useState<[string, string]>(["", ""]);
