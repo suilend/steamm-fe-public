@@ -204,7 +204,6 @@ export default function PortfolioPage() {
             const totalAmount = balance.plus(depositedAmount);
 
             return steammClient.Pool.quoteRedeem({
-              pool: position.pool.id,
               lpTokens: BigInt(
                 totalAmount
                   .times(
@@ -215,6 +214,9 @@ export default function PortfolioPage() {
                   .integerValue(BigNumber.ROUND_DOWN)
                   .toString(),
               ),
+              poolInfo: position.pool.poolInfo,
+              bankInfoA: appData.bankMap[position.pool.coinTypes[0]].bankInfo,
+              bankInfoB: appData.bankMap[position.pool.coinTypes[1]].bankInfo,
             });
           }),
         );
@@ -249,6 +251,7 @@ export default function PortfolioPage() {
     userData.obligations,
     steammClient,
     appData.coinMetadataMap,
+    appData.bankMap,
   ]);
 
   const positionsWithExtraData: PoolPosition[] | undefined = useMemo(

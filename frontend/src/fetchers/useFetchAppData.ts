@@ -141,6 +141,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
           return {
             id,
+            bank,
+            bankInfo,
             coinType,
             bTokenType,
 
@@ -332,6 +334,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
             return {
               id,
+              pool,
+              poolInfo,
               quoter,
 
               lpTokenType: poolInfo.lpTokenType,

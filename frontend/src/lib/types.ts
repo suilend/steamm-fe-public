@@ -1,7 +1,14 @@
 import BigNumber from "bignumber.js";
 
+import { BankInfo, PoolInfo } from "@suilend/steamm-sdk";
+import { Bank } from "@suilend/steamm-sdk/_codegen/_generated/steamm/bank/structs";
+import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
+import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
+
 export type ParsedBank = {
   id: string;
+  bank: Bank<string, string, string>;
+  bankInfo: BankInfo;
   coinType: string;
   bTokenType: string;
 
@@ -39,6 +46,8 @@ export const QUOTERS: Quoter[] = [
 
 export type ParsedPool = {
   id: string;
+  pool: Pool<string, string, CpQuoter, string>;
+  poolInfo: PoolInfo;
   quoter: Quoter;
 
   lpTokenType: string;

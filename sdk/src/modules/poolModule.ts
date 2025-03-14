@@ -20,7 +20,7 @@ import {
 } from "../base/pool/poolTypes";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
-import { BankList } from "../types";
+import { BankInfo, BankList, PoolInfo } from "../types";
 import { SuiTypeName } from "../utils";
 import { SuiAddressType } from "../utils";
 
@@ -51,12 +51,21 @@ export class PoolModule implements IModule {
     tx: Transaction,
     args: DepositLiquidityArgs,
   ): Promise<[TransactionArgument, TransactionArgument]> {
-    const pools = await this.sdk.getPools();
-    const bankList = await this.sdk.getBanks();
+    let poolInfo: PoolInfo;
+    let bankInfoA: BankInfo;
+    let bankInfoB: BankInfo;
+    if (args.poolInfo && args.bankInfoA && args.bankInfoB) {
+      poolInfo = args.poolInfo;
+      bankInfoA = args.bankInfoA;
+      bankInfoB = args.bankInfoB;
+    } else {
+      const pools = await this.sdk.getPools();
+      const bankList = await this.sdk.getBanks();
 
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankInfoA = bankList[args.coinTypeA];
-    const bankInfoB = bankList[args.coinTypeB];
+      poolInfo = pools.find((pool) => pool.poolId === args.pool!)!;
+      bankInfoA = bankList[args.coinTypeA!];
+      bankInfoB = bankList[args.coinTypeB!];
+    }
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -83,12 +92,21 @@ export class PoolModule implements IModule {
     tx: Transaction,
     args: RedeemLiquidityArgs,
   ): Promise<[TransactionArgument, TransactionArgument, TransactionArgument]> {
-    const pools = await this.sdk.getPools();
-    const bankList = await this.sdk.getBanks();
+    let poolInfo: PoolInfo;
+    let bankInfoA: BankInfo;
+    let bankInfoB: BankInfo;
+    if (args.poolInfo && args.bankInfoA && args.bankInfoB) {
+      poolInfo = args.poolInfo;
+      bankInfoA = args.bankInfoA;
+      bankInfoB = args.bankInfoB;
+    } else {
+      const pools = await this.sdk.getPools();
+      const bankList = await this.sdk.getBanks();
 
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankInfoA = bankList[args.coinTypeA];
-    const bankInfoB = bankList[args.coinTypeB];
+      poolInfo = pools.find((pool) => pool.poolId === args.pool!)!;
+      bankInfoA = bankList[args.coinTypeA!];
+      bankInfoB = bankList[args.coinTypeB!];
+    }
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -101,16 +119,67 @@ export class PoolModule implements IModule {
     return [coinA, coinB, redeemResult];
   }
 
+  public async redeemLiquidityWithProvisionEntry(
+    tx: Transaction,
+    args: RedeemLiquidityArgs,
+  ) {
+    const [coinA, coinB, _redeemResult] =
+      await this.redeemLiquidityWithProvision(tx, args);
+
+    tx.transferObjects([coinA, coinB], this.sdk.senderAddress);
+  }
+
+  public async redeemLiquidityWithProvision(
+    tx: Transaction,
+    args: RedeemLiquidityArgs,
+  ): Promise<[TransactionArgument, TransactionArgument, TransactionArgument]> {
+    let poolInfo: PoolInfo;
+    let bankInfoA: BankInfo;
+    let bankInfoB: BankInfo;
+    if (args.poolInfo && args.bankInfoA && args.bankInfoB) {
+      poolInfo = args.poolInfo;
+      bankInfoA = args.bankInfoA;
+      bankInfoB = args.bankInfoB;
+    } else {
+      const pools = await this.sdk.getPools();
+      const bankList = await this.sdk.getBanks();
+
+      poolInfo = pools.find((pool) => pool.poolId === args.pool!)!;
+      bankInfoA = bankList[args.coinTypeA!];
+      bankInfoB = bankList[args.coinTypeB!];
+    }
+
+    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+
+    const [coinA, coinB, redeemResult] =
+      poolScript.redeemLiquidityWithProvision(tx, {
+        lpCoin: tx.object(args.lpCoin),
+        minA: args.minA,
+        minB: args.minB,
+      });
+
+    return [coinA, coinB, redeemResult];
+  }
+
   public async swap(
     tx: Transaction,
     args: SwapArgs,
   ): Promise<TransactionArgument> {
-    const pools = await this.sdk.getPools();
-    const bankList = await this.sdk.getBanks();
+    let poolInfo: PoolInfo;
+    let bankInfoA: BankInfo;
+    let bankInfoB: BankInfo;
+    if (args.poolInfo && args.bankInfoA && args.bankInfoB) {
+      poolInfo = args.poolInfo;
+      bankInfoA = args.bankInfoA;
+      bankInfoB = args.bankInfoB;
+    } else {
+      const pools = await this.sdk.getPools();
+      const bankList = await this.sdk.getBanks();
 
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankInfoA = bankList[args.coinTypeA];
-    const bankInfoB = bankList[args.coinTypeB];
+      poolInfo = pools.find((pool) => pool.poolId === args.pool!)!;
+      bankInfoA = bankList[args.coinTypeA!];
+      bankInfoB = bankList[args.coinTypeB!];
+    }
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -129,12 +198,21 @@ export class PoolModule implements IModule {
     args: QuoteSwapArgs,
     tx: Transaction = new Transaction(),
   ): Promise<SwapQuote> {
-    const pools = await this.sdk.getPools();
-    const bankList = await this.sdk.getBanks();
+    let poolInfo: PoolInfo;
+    let bankInfoA: BankInfo;
+    let bankInfoB: BankInfo;
+    if (args.poolInfo && args.bankInfoA && args.bankInfoB) {
+      poolInfo = args.poolInfo;
+      bankInfoA = args.bankInfoA;
+      bankInfoB = args.bankInfoB;
+    } else {
+      const pools = await this.sdk.getPools();
+      const bankList = await this.sdk.getBanks();
 
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
-    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
+      poolInfo = pools.find((pool) => pool.poolId === args.pool!)!;
+      bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
+      bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
+    }
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -146,14 +224,25 @@ export class PoolModule implements IModule {
     return castSwapQuote(await this.getQuoteResult<SwapQuote>(tx, "SwapQuote"));
   }
 
-  public async quoteDeposit(args: QuoteDepositArgs): Promise<DepositQuote> {
-    const tx = new Transaction();
-    const pools = await this.sdk.getPools();
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
+  public async quoteDeposit(
+    args: QuoteDepositArgs,
+    tx: Transaction = new Transaction(),
+  ): Promise<DepositQuote> {
+    let poolInfo: PoolInfo;
+    let bankInfoA: BankInfo;
+    let bankInfoB: BankInfo;
+    if (args.poolInfo && args.bankInfoA && args.bankInfoB) {
+      poolInfo = args.poolInfo;
+      bankInfoA = args.bankInfoA;
+      bankInfoB = args.bankInfoB;
+    } else {
+      const pools = await this.sdk.getPools();
+      const bankList = await this.sdk.getBanks();
 
-    const bankList = await this.sdk.getBanks();
-    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
-    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
+      poolInfo = pools.find((pool) => pool.poolId === args.pool!)!;
+      bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
+      bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
+    }
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -167,13 +256,25 @@ export class PoolModule implements IModule {
     );
   }
 
-  public async quoteRedeem(args: QuoteRedeemArgs): Promise<RedeemQuote> {
-    const tx = new Transaction();
-    const pools = await this.sdk.getPools();
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankList = await this.sdk.getBanks();
-    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
-    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
+  public async quoteRedeem(
+    args: QuoteRedeemArgs,
+    tx: Transaction = new Transaction(),
+  ): Promise<RedeemQuote> {
+    let poolInfo: PoolInfo;
+    let bankInfoA: BankInfo;
+    let bankInfoB: BankInfo;
+    if (args.poolInfo && args.bankInfoA && args.bankInfoB) {
+      poolInfo = args.poolInfo;
+      bankInfoA = args.bankInfoA;
+      bankInfoB = args.bankInfoB;
+    } else {
+      const pools = await this.sdk.getPools();
+      const bankList = await this.sdk.getBanks();
+
+      poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
+      bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
+      bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
+    }
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -325,31 +426,49 @@ export class PoolModule implements IModule {
 }
 
 export type DepositLiquidityArgs = PoolDepositLiquidityArgs & {
-  pool: SuiAddressType;
-  coinTypeA: SuiTypeName;
-  coinTypeB: SuiTypeName;
+  pool?: SuiAddressType;
+  coinTypeA?: SuiTypeName;
+  coinTypeB?: SuiTypeName;
+  poolInfo?: PoolInfo;
+  bankInfoA?: BankInfo;
+  bankInfoB?: BankInfo;
 };
 
 export type RedeemLiquidityArgs = PoolRedeemLiquidityArgs & {
-  pool: SuiAddressType;
-  coinTypeA: SuiTypeName;
-  coinTypeB: SuiTypeName;
+  pool?: SuiAddressType;
+  coinTypeA?: SuiTypeName;
+  coinTypeB?: SuiTypeName;
+  poolInfo?: PoolInfo;
+  bankInfoA?: BankInfo;
+  bankInfoB?: BankInfo;
 };
 
 export type SwapArgs = PoolSwapArgs & {
-  pool: SuiAddressType;
-  coinTypeA: SuiTypeName;
-  coinTypeB: SuiTypeName;
+  pool?: SuiAddressType;
+  coinTypeA?: SuiTypeName;
+  coinTypeB?: SuiTypeName;
+  poolInfo?: PoolInfo;
+  bankInfoA?: BankInfo;
+  bankInfoB?: BankInfo;
 };
 
 export type QuoteSwapArgs = PoolQuoteSwapArgs & {
-  pool: SuiAddressType;
+  pool?: SuiAddressType;
+  poolInfo?: PoolInfo;
+  bankInfoA?: BankInfo;
+  bankInfoB?: BankInfo;
 };
 
 export type QuoteDepositArgs = PoolQuoteDepositArgs & {
-  pool: SuiAddressType;
+  pool?: SuiAddressType;
+  poolInfo?: PoolInfo;
+  bankInfoA?: BankInfo;
+  bankInfoB?: BankInfo;
 };
 
 export type QuoteRedeemArgs = PoolQuoteRedeemArgs & {
-  pool: SuiAddressType;
+  pool?: SuiAddressType;
+  poolInfo?: PoolInfo;
+  bankInfoA?: BankInfo;
+  bankInfoB?: BankInfo;
 };

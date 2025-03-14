@@ -89,7 +89,7 @@ export default function SwapPage() {
 
   // Value
   const inMaxValue = isSui(inCoinType)
-    ? BigNumber.max(0, getBalance(inCoinType).minus(SUI_GAS_MIN))
+    ? BigNumber.max(0, getBalance(inCoinType).minus(1))
     : getBalance(inCoinType);
 
   const [value, setValue] = useState<string>("");

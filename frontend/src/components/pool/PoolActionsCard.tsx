@@ -91,7 +91,7 @@ function DepositTab({ tokenUsdPricesMap }: DepositTabProps) {
   // Value
   const maxValues = pool.coinTypes.map((coinType, index) =>
     (isSui(coinType)
-      ? BigNumber.max(0, getBalance(coinType).minus(SUI_GAS_MIN))
+      ? BigNumber.max(0, getBalance(coinType).minus(1))
       : getBalance(coinType)
     )
       .div(index === 0 || pool.tvlUsd.eq(0) ? 1 : 1 + slippagePercent / 100)
@@ -155,19 +155,19 @@ function DepositTab({ tokenUsdPricesMap }: DepositTabProps) {
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
 
-      const poolState = await steammClient.fullClient.fetchPool(pool.id);
-
       const quote = quotePoolDeposit(
-        poolState,
+        pool.pool,
         index === 0 ? BigInt(submitAmount) : BigInt(MAX_U64.toString()),
         index === 0 ? BigInt(MAX_U64.toString()) : BigInt(submitAmount),
       );
 
       // TODO: add back after
       // const quote = await _steammClient.Pool.quoteDeposit({
-      //   pool: pool.id,
       //   maxA: index === 0 ? BigInt(submitAmount) : BigInt(MAX_U64.toString()),
       //   maxB: index === 0 ? BigInt(MAX_U64.toString()) : BigInt(submitAmount),
+      //   poolInfo: pool.poolInfo,
+      //   bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
+      //   bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
       // });
 
       if (valuesRef.current[index] !== _value) return;
@@ -470,15 +470,14 @@ function DepositTab({ tokenUsdPricesMap }: DepositTabProps) {
       })(transaction);
 
       const [lpCoin] = await steammClient.Pool.depositLiquidity(transaction, {
-        pool: pool.id,
-        coinTypeA,
-        coinTypeB,
         coinA,
         coinB,
         maxA: BigInt(submitAmountA),
         maxB: BigInt(submitAmountB),
+        poolInfo: pool.poolInfo,
+        bankInfoA: appData.bankMap[coinTypeA].bankInfo,
+        bankInfoB: appData.bankMap[coinTypeB].bankInfo,
       });
-
       transaction.transferObjects([coinA, coinB], address);
 
       // Stake LP tokens (if reserve exists)
@@ -675,7 +674,8 @@ function DepositTab({ tokenUsdPricesMap }: DepositTabProps) {
 
 function WithdrawTab() {
   const { explorer } = useSettingsContext();
-  const { address, signExecuteAndWaitForTransaction } = useWalletContext();
+  const { address, dryRunTransaction, signExecuteAndWaitForTransaction } =
+    useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
   const { getBalance, userData, refresh } = useLoadedUserContext();
   const { pool } = usePoolContext();
@@ -717,8 +717,10 @@ function WithdrawTab() {
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
       const quote = await _steammClient.Pool.quoteRedeem({
-        pool: pool.id,
         lpTokens: BigInt(submitAmount),
+        poolInfo: pool.poolInfo,
+        bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
+        bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
       });
 
       if (valueRef.current !== _value) return;
@@ -779,6 +781,148 @@ function WithdrawTab() {
     };
   })();
 
+  const buildTransaction = async (withoutProvision: boolean) => {
+    if (!address || !quote) return;
+
+    const [lpTokenType, coinTypeA, coinTypeB] = [
+      pool.lpTokenType,
+      ...pool.coinTypes,
+    ];
+    const [coinMetadataLpToken, coinMetadataA, coinMetadataB] = [
+      appData.coinMetadataMap[lpTokenType],
+      appData.coinMetadataMap[coinTypeA],
+      appData.coinMetadataMap[coinTypeB],
+    ];
+
+    const lpTokenValue = new BigNumber(value)
+      .div(100)
+      .times(lpTokenTotalAmount);
+
+    const transaction = new Transaction();
+
+    let lpCoin;
+    if (lpTokenBalance.gte(lpTokenValue)) {
+      console.log("XXX wallet");
+      // Withdraw from wallet only
+      lpCoin = coinWithBalance({
+        balance: BigInt(
+          new BigNumber(lpTokenValue)
+            .times(10 ** coinMetadataLpToken.decimals)
+            .integerValue(BigNumber.ROUND_DOWN)
+            .toString(),
+        ),
+        type: lpTokenType,
+        useGasCoin: false,
+      })(transaction);
+    } else {
+      const obligationIndex = getIndexOfObligationWithDeposit(
+        userData.obligations,
+        pool.lpTokenType,
+      ); // Assumes up to one obligation has deposits of the LP token type
+      if (obligationIndex === -1) throw Error("Obligation not found"); // Should never happen as the amount can't be greater than the balance if there are no deposits
+      console.log("XXX obligationIndex:", obligationIndex);
+
+      const lpCoins = [];
+      if (lpTokenBalance.gt(0)) {
+        // Withdraw MAX from wallet
+        console.log("XXX max wallet, and");
+        lpCoins.push(
+          coinWithBalance({
+            balance: BigInt(
+              new BigNumber(lpTokenBalance)
+                .times(10 ** coinMetadataLpToken.decimals)
+                .integerValue(BigNumber.ROUND_DOWN)
+                .toString(),
+            ),
+            type: lpTokenType,
+            useGasCoin: false,
+          })(transaction),
+        );
+      }
+
+      if (lpTokenValue.eq(lpTokenTotalAmount)) {
+        // Withdraw MAX from Suilend
+        console.log("XXX max suilend");
+        const submitAmount = MAX_U64.toString();
+
+        const [_lpCoin] = await appData.lm.suilendClient.withdraw(
+          userData.obligationOwnerCaps[obligationIndex].id,
+          userData.obligations[obligationIndex].id,
+          pool.lpTokenType,
+          submitAmount,
+          transaction,
+        );
+        lpCoins.push(_lpCoin);
+      } else {
+        // Withdraw from Suilend
+        console.log("XXX suilend");
+
+        const lpTokenDepositPosition = getObligationDepositPosition(
+          userData.obligations[obligationIndex],
+          pool.lpTokenType,
+        );
+        if (!lpTokenDepositPosition) return; // Should never happen as obligationIndex !== -1
+        console.log("XXX lpTokenDepositPosition:", lpTokenDepositPosition);
+
+        const submitAmount = BigNumber.min(
+          new BigNumber(
+            new BigNumber(lpTokenValue.minus(lpTokenBalance))
+              .times(10 ** coinMetadataLpToken.decimals)
+              .integerValue(BigNumber.ROUND_DOWN)
+              .toString(),
+          )
+            .div(appData.lm.reserveMap[pool.lpTokenType].cTokenExchangeRate)
+            .integerValue(BigNumber.ROUND_UP),
+          lpTokenDepositPosition.depositedCtokenAmount,
+        ).toString();
+
+        const [_lpCoin] = await appData.lm.suilendClient.withdraw(
+          userData.obligationOwnerCaps[obligationIndex].id,
+          userData.obligations[obligationIndex].id,
+          pool.lpTokenType,
+          submitAmount,
+          transaction,
+        );
+        lpCoins.push(_lpCoin);
+      }
+
+      // Merge coins (if multiple)
+      if (lpCoins.length === 1) lpCoin = lpCoins[0];
+      else {
+        lpCoin = lpCoins[0];
+        transaction.mergeCoins(
+          transaction.object(lpCoins[0]),
+          lpCoins.map((c) => transaction.object(c)).slice(1),
+        );
+      }
+    }
+
+    // Withdraw from pool
+    const submitAmountA = quote.withdrawA.toString();
+    const submitAmountB = new BigNumber(quote.withdrawB.toString())
+      .div(1 + slippagePercent / 100)
+      .integerValue(BigNumber.ROUND_DOWN)
+      .toString();
+
+    const redeemFunc = (
+      withoutProvision
+        ? steammClient.Pool.redeemLiquidity
+        : steammClient.Pool.redeemLiquidityWithProvision
+    ).bind(steammClient.Pool);
+
+    const [coinA, coinB] = await redeemFunc(transaction, {
+      lpCoin: transaction.object(lpCoin),
+      minA: BigInt(submitAmountA),
+      minB: BigInt(submitAmountB),
+      poolInfo: pool.poolInfo,
+      bankInfoA: appData.bankMap[coinTypeA].bankInfo,
+      bankInfoB: appData.bankMap[coinTypeB].bankInfo,
+    });
+    transaction.transferObjects([coinA, coinB], address);
+
+    return transaction;
+  };
+
   const onSubmitClick = async () => {
     console.log("WithdrawTab.onSubmitClick");
 
@@ -798,124 +942,20 @@ function WithdrawTab() {
         appData.coinMetadataMap[coinTypeB],
       ];
 
-      const lpTokenValue = new BigNumber(value)
-        .div(100)
-        .times(lpTokenTotalAmount);
+      let transaction = await buildTransaction(true); // Try without provision first
+      if (!transaction) return;
 
-      const transaction = new Transaction();
-
-      let lpCoin;
-      if (lpTokenBalance.gte(lpTokenValue)) {
-        console.log("XXX wallet");
-        // Withdraw from wallet only
-        lpCoin = coinWithBalance({
-          balance: BigInt(
-            new BigNumber(lpTokenValue)
-              .times(10 ** coinMetadataLpToken.decimals)
-              .integerValue(BigNumber.ROUND_DOWN)
-              .toString(),
-          ),
-          type: lpTokenType,
-          useGasCoin: false,
-        })(transaction);
-      } else {
-        const obligationIndex = getIndexOfObligationWithDeposit(
-          userData.obligations,
-          pool.lpTokenType,
-        ); // Assumes up to one obligation has deposits of the LP token type
-        if (obligationIndex === -1) throw Error("Obligation not found"); // Should never happen as the amount can't be greater than the balance if there are no deposits
-        console.log("XXX obligationIndex:", obligationIndex);
-
-        const lpCoins = [];
-        if (lpTokenBalance.gt(0)) {
-          // Withdraw MAX from wallet
-          console.log("XXX max wallet, and");
-          lpCoins.push(
-            coinWithBalance({
-              balance: BigInt(
-                new BigNumber(lpTokenBalance)
-                  .times(10 ** coinMetadataLpToken.decimals)
-                  .integerValue(BigNumber.ROUND_DOWN)
-                  .toString(),
-              ),
-              type: lpTokenType,
-              useGasCoin: false,
-            })(transaction),
-          );
-        }
-
-        if (lpTokenValue.eq(lpTokenTotalAmount)) {
-          // Withdraw MAX from Suilend
-          console.log("XXX max suilend");
-          const submitAmount = MAX_U64.toString();
-
-          const [_lpCoin] = await appData.lm.suilendClient.withdraw(
-            userData.obligationOwnerCaps[obligationIndex].id,
-            userData.obligations[obligationIndex].id,
-            pool.lpTokenType,
-            submitAmount,
-            transaction,
-          );
-          lpCoins.push(_lpCoin);
-        } else {
-          // Withdraw from Suilend
-          console.log("XXX suilend");
-
-          const lpTokenDepositPosition = getObligationDepositPosition(
-            userData.obligations[obligationIndex],
-            pool.lpTokenType,
-          );
-          if (!lpTokenDepositPosition) return; // Should never happen as obligationIndex !== -1
-          console.log("XXX lpTokenDepositPosition:", lpTokenDepositPosition);
-
-          const submitAmount = BigNumber.min(
-            new BigNumber(
-              new BigNumber(lpTokenValue.minus(lpTokenBalance))
-                .times(10 ** coinMetadataLpToken.decimals)
-                .integerValue(BigNumber.ROUND_DOWN)
-                .toString(),
-            )
-              .div(appData.lm.reserveMap[pool.lpTokenType].cTokenExchangeRate)
-              .integerValue(BigNumber.ROUND_UP),
-            lpTokenDepositPosition.depositedCtokenAmount,
-          ).toString();
-
-          const [_lpCoin] = await appData.lm.suilendClient.withdraw(
-            userData.obligationOwnerCaps[obligationIndex].id,
-            userData.obligations[obligationIndex].id,
-            pool.lpTokenType,
-            submitAmount,
-            transaction,
-          );
-          lpCoins.push(_lpCoin);
-        }
-
-        // Merge coins (if multiple)
-        if (lpCoins.length === 1) lpCoin = lpCoins[0];
-        else {
-          lpCoin = lpCoins[0];
-          transaction.mergeCoins(
-            transaction.object(lpCoins[0]),
-            lpCoins.map((c) => transaction.object(c)).slice(1),
-          );
-        }
+      let didFailWithoutProvision = false;
+      try {
+        await dryRunTransaction(transaction);
+      } catch (err) {
+        didFailWithoutProvision = true;
       }
 
-      // Withdraw from pool
-      const submitAmountA = quote.withdrawA.toString();
-      const submitAmountB = new BigNumber(quote.withdrawB.toString())
-        .div(1 + slippagePercent / 100)
-        .integerValue(BigNumber.ROUND_DOWN)
-        .toString();
-
-      await steammClient.Pool.redeemLiquidityEntry(transaction, {
-        pool: pool.id,
-        coinTypeA,
-        coinTypeB,
-        lpCoin,
-        minA: BigInt(submitAmountA),
-        minB: BigInt(submitAmountB),
-      });
+      if (didFailWithoutProvision) {
+        transaction = await buildTransaction(false); // With provision if failed
+        if (!transaction) return;
+      }
 
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
@@ -1115,7 +1155,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
 
   // Value
   const activeMaxValue = isSui(activeCoinType)
-    ? BigNumber.max(0, getBalance(activeCoinType).minus(SUI_GAS_MIN))
+    ? BigNumber.max(0, getBalance(activeCoinType).minus(1))
     : getBalance(activeCoinType);
 
   const [value, setValue] = useState<string>("");
@@ -1151,9 +1191,11 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
           .integerValue(BigNumber.ROUND_DOWN)
           .toString();
         const quote = await _steammClient.Pool.quoteSwap({
-          pool: pool.id,
           a2b: _activeCoinIndex === 0,
           amountIn: BigInt(submitAmount),
+          poolInfo: pool.poolInfo,
+          bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
+          bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
         });
 
         if (valueRef.current !== _value) return;
@@ -1167,7 +1209,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
         Sentry.captureException(err);
       }
     },
-    [appData.coinMetadataMap, pool.coinTypes, pool.id],
+    [appData.coinMetadataMap, pool.coinTypes, pool.poolInfo, appData.bankMap],
   );
   const debouncedFetchQuote = useRef(debounce(fetchQuote, 100)).current;
 
@@ -1361,14 +1403,14 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
             })(transaction);
 
       await steammClient.Pool.swap(transaction, {
-        pool: pool.id,
-        coinTypeA,
-        coinTypeB,
         coinA,
         coinB,
         a2b: activeCoinIndex === 0,
         amountIn: BigInt(amountIn),
         minAmountOut: BigInt(minAmountOut),
+        poolInfo: pool.poolInfo,
+        bankInfoA: appData.bankMap[coinTypeA].bankInfo,
+        bankInfoB: appData.bankMap[coinTypeB].bankInfo,
       });
 
       transaction.transferObjects([coinA, coinB], address);

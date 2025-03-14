@@ -136,7 +136,7 @@ export default function AdminPage() {
   const maxValues = coinTypes.map((coinType) =>
     coinType !== ""
       ? isSui(coinType)
-        ? BigNumber.max(0, getBalance(coinType).minus(SUI_GAS_MIN))
+        ? BigNumber.max(0, getBalance(coinType).minus(1))
         : getBalance(coinType)
       : new BigNumber(0),
   ) as [BigNumber, BigNumber];
