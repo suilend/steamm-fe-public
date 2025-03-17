@@ -278,7 +278,7 @@ export default function PoolPositionRow({
           {position.pool.coinTypes.map((coinType, index) => (
             <Fragment key={index}>
               {position.balances === undefined ? (
-                <Skeleton className="h-[24px] w-16" />
+                <Skeleton className="h-[21px] w-16" />
               ) : (
                 <div className="flex flex-row items-center gap-2">
                   <TokenLogo
@@ -291,7 +291,7 @@ export default function PoolPositionRow({
                   <Tooltip
                     title={`${formatToken(position.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
                   >
-                    <p className="text-p1 text-foreground">
+                    <p className="text-p2 text-foreground">
                       {formatToken(position.balances[index], {
                         exact: false,
                       })}{" "}
