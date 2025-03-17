@@ -26,7 +26,6 @@ import {
 } from "@suilend/sdk";
 
 import AprBreakdown from "@/components/AprBreakdown";
-import PercentChange from "@/components/PercentChange";
 import { columnStyleMap } from "@/components/positions/PoolPositionsTable";
 import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
@@ -324,8 +323,8 @@ export default function PoolPositionRow({
         className="flex h-full flex-row items-center"
         style={columnStyleMap.balance}
       >
-        <div className="flex flex-col items-end gap-1">
-          <div className="flex flex-row items-center gap-2">
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-end">
             {position.balanceUsd === undefined ? (
               <Skeleton className="h-[24px] w-16" />
             ) : (
@@ -338,18 +337,17 @@ export default function PoolPositionRow({
 
             {balanceUsdChange === undefined ||
             balanceUsdChangePercent === undefined ? (
-              <Skeleton className="h-[21px] w-20" />
+              <Skeleton className="h-[15px] w-16" />
             ) : (
               <p
                 className={cn(
-                  "!text-p2",
-                  balanceUsdChange.gte(0) ? "text-success" : "text-error",
+                  "!text-[10px]",
+                  balanceUsdChange.gte(0) ? "text-success/75" : "text-error/75",
                 )}
               >
-                {"("}
                 {balanceUsdChange.gte(0) ? "+" : "-"}
                 {formatUsd(balanceUsdChange)}
-                {", "}
+                {" ("}
                 {balanceUsdChangePercent.gte(0) ? "+" : "-"}
                 {formatPercent(new BigNumber(balanceUsdChangePercent.abs()))}
                 {")"}
@@ -378,47 +376,48 @@ export default function PoolPositionRow({
                     .times(100);
 
             return (
-              <div key={coinType} className="flex flex-row items-center gap-2">
-                {position.balances === undefined ? (
-                  <Skeleton className="h-[21px] w-16" />
-                ) : (
-                  <>
-                    <TokenLogo
-                      token={getToken(coinType, coinMetadata)}
-                      size={16}
-                    />
-                    <Tooltip
-                      title={`${formatToken(position.balances[index], { dp: coinMetadata.decimals })} ${coinMetadata.symbol}`}
-                    >
-                      <p className="text-p2 text-foreground">
-                        {formatToken(position.balances[index], {
-                          exact: false,
-                        })}{" "}
-                        {coinMetadata.symbol}
-                      </p>
-                    </Tooltip>
-                  </>
-                )}
+              <Fragment key={coinType}>
+                <div className="flex flex-col items-end">
+                  {position.balances === undefined ? (
+                    <Skeleton className="h-[21px] w-16" />
+                  ) : (
+                    <div className="flex flex-row items-center gap-2">
+                      <TokenLogo
+                        token={getToken(coinType, coinMetadata)}
+                        size={16}
+                      />
+                      <Tooltip
+                        title={`${formatToken(position.balances[index], { dp: coinMetadata.decimals })} ${coinMetadata.symbol}`}
+                      >
+                        <p className="text-p2 text-foreground">
+                          {formatToken(position.balances[index], {
+                            exact: false,
+                          })}{" "}
+                          {coinMetadata.symbol}
+                        </p>
+                      </Tooltip>
+                    </div>
+                  )}
 
-                {change === undefined || changePercent === undefined ? (
-                  <Skeleton className="h-[18px] w-20" />
-                ) : (
-                  <p
-                    className={cn(
-                      "!text-p3",
-                      change.gte(0) ? "text-success" : "text-error",
-                    )}
-                  >
-                    {"("}
-                    {change.gte(0) ? "+" : "-"}
-                    {formatToken(change, { exact: false })}
-                    {", "}
-                    {changePercent.gte(0) ? "+" : "-"}
-                    {formatPercent(new BigNumber(changePercent.abs()))}
-                    {")"}
-                  </p>
-                )}
-              </div>
+                  {change === undefined || changePercent === undefined ? (
+                    <Skeleton className="h-[15px] w-16" />
+                  ) : (
+                    <p
+                      className={cn(
+                        "!text-[10px]",
+                        change.gte(0) ? "text-success/75" : "text-error/75",
+                      )}
+                    >
+                      {change.gte(0) ? "+" : "-"}
+                      {formatToken(change, { exact: false })}
+                      {" ("}
+                      {changePercent.gte(0) ? "+" : "-"}
+                      {formatPercent(new BigNumber(changePercent.abs()))}
+                      {")"}
+                    </p>
+                  )}
+                </div>
+              </Fragment>
             );
           })}
         </div>

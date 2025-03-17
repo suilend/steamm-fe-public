@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
@@ -187,178 +187,199 @@ export default function PortfolioPage() {
   );
 
   // Positions - Deposited (BE)
-  const [poolDepositedMap, setPoolDepositedMap] = useState<
-    Record<string, { a: BigNumber; b: BigNumber; usd: BigNumber }>
+  const [poolDepositedMapMap, setPoolDepositedMapMap] = useState<
+    Record<
+      string,
+      Record<string, { a: BigNumber; b: BigNumber; usd: BigNumber }>
+    >
   >({});
+  const poolDepositedMap = useMemo(
+    () => (!address ? {} : poolDepositedMapMap[address]),
+    [address, poolDepositedMapMap],
+  );
 
+  const fetchPoolDepositedMap = useCallback(async () => {
+    try {
+      const result: Record<
+        string,
+        { a: BigNumber; b: BigNumber; usd: BigNumber }
+      > = {};
+
+      const transactionHistories = await Promise.all(
+        positions!.map((position) =>
+          (async () => {
+            const res = await fetch(
+              `${API_URL}/steamm/historical/lp?${new URLSearchParams({
+                user: address!, // Checked in useEffect below
+                poolId: position.pool.id,
+              })}`,
+            );
+            const json: {
+              deposits: Omit<HistoryDeposit, "type">[];
+              redeems: Omit<HistoryRedeem, "type">[];
+            } = await res.json();
+            if ((json as any)?.statusCode === 500) return;
+
+            return [
+              ...(json.deposits.map((entry) => ({
+                ...entry,
+                type: HistoryTransactionType.DEPOSIT,
+              })) as HistoryDeposit[]),
+              ...(json.redeems.map((entry) => ({
+                ...entry,
+                type: HistoryTransactionType.REDEEM,
+              })) as HistoryRedeem[]),
+            ].sort((a, b) => +b.timestamp - +a.timestamp);
+          })(),
+        ),
+      );
+
+      for (let i = 0; i < positions!.length; i++) {
+        const pool = positions![i].pool;
+
+        const transactionHistory = transactionHistories[i];
+        if (!transactionHistory) continue;
+
+        const depositedA = transactionHistory.reduce(
+          (acc, entry) =>
+            entry.type === HistoryTransactionType.DEPOSIT
+              ? acc.plus(
+                  new BigNumber(entry.deposit_a).div(
+                    10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+                  ),
+                )
+              : acc.minus(
+                  new BigNumber(entry.withdraw_a).div(
+                    10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+                  ),
+                ),
+          new BigNumber(0),
+        );
+        const depositedB = transactionHistory.reduce(
+          (acc, entry) =>
+            entry.type === HistoryTransactionType.DEPOSIT
+              ? acc.plus(
+                  new BigNumber(entry.deposit_b).div(
+                    10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals,
+                  ),
+                )
+              : acc.minus(
+                  new BigNumber(entry.withdraw_b).div(
+                    10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals,
+                  ),
+                ),
+          new BigNumber(0),
+        );
+
+        result[pool.id] = {
+          a: depositedA,
+          b: depositedB,
+          usd: new BigNumber(depositedA.times(pool.prices[0])).plus(
+            depositedB.times(pool.prices[1]),
+          ),
+        };
+      }
+
+      setPoolDepositedMapMap((prev) => ({
+        ...prev,
+        [address!]: result,
+      }));
+    } catch (err) {
+      showErrorToast("Failed to fetch pool deposits", err as Error);
+      console.error(err);
+      Sentry.captureException(err);
+    }
+  }, [positions, appData.coinMetadataMap, address]);
+
+  const hasFetchedPoolDepositedMapMapRef = useRef<Record<string, boolean>>({});
   useEffect(() => {
     if (!address) return;
     if (positions === undefined) return;
 
-    (async () => {
-      try {
-        const result: Record<
-          string,
-          { a: BigNumber; b: BigNumber; usd: BigNumber }
-        > = {};
+    if (!hasFetchedPoolDepositedMapMapRef.current[address])
+      hasFetchedPoolDepositedMapMapRef.current[address] = true;
 
-        const transactionHistories = await Promise.all(
-          positions.map((position) =>
-            (async () => {
-              const res = await fetch(
-                `${API_URL}/steamm/historical/lp?${new URLSearchParams({
-                  user: address,
-                  poolId: position.pool.id,
-                })}`,
-              );
-              const json: {
-                deposits: Omit<HistoryDeposit, "type">[];
-                redeems: Omit<HistoryRedeem, "type">[];
-              } = await res.json();
-              if ((json as any)?.statusCode === 500) return;
-
-              return [
-                ...(json.deposits.map((entry) => ({
-                  ...entry,
-                  type: HistoryTransactionType.DEPOSIT,
-                })) as HistoryDeposit[]),
-                ...(json.redeems.map((entry) => ({
-                  ...entry,
-                  type: HistoryTransactionType.REDEEM,
-                })) as HistoryRedeem[]),
-              ].sort((a, b) => +b.timestamp - +a.timestamp);
-            })(),
-          ),
-        );
-
-        for (let i = 0; i < positions.length; i++) {
-          const pool = positions[i].pool;
-
-          const transactionHistory = transactionHistories[i];
-          if (!transactionHistory) continue;
-
-          const depositedA = transactionHistory.reduce(
-            (acc, entry) =>
-              entry.type === HistoryTransactionType.DEPOSIT
-                ? acc.plus(
-                    new BigNumber(entry.deposit_a).div(
-                      10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals,
-                    ),
-                  )
-                : acc.minus(
-                    new BigNumber(entry.withdraw_a).div(
-                      10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals,
-                    ),
-                  ),
-            new BigNumber(0),
-          );
-          const depositedB = transactionHistory.reduce(
-            (acc, entry) =>
-              entry.type === HistoryTransactionType.DEPOSIT
-                ? acc.plus(
-                    new BigNumber(entry.deposit_b).div(
-                      10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals,
-                    ),
-                  )
-                : acc.minus(
-                    new BigNumber(entry.withdraw_b).div(
-                      10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals,
-                    ),
-                  ),
-            new BigNumber(0),
-          );
-
-          result[pool.id] = {
-            a: depositedA,
-            b: depositedB,
-            usd: new BigNumber(depositedA.times(pool.prices[0])).plus(
-              depositedB.times(pool.prices[1]),
-            ),
-          };
-        }
-
-        setPoolDepositedMap(result);
-      } catch (err) {
-        showErrorToast("Failed to fetch pool deposits", err as Error);
-        console.error(err);
-        Sentry.captureException(err);
-      }
-    })();
-  }, [address, positions, appData.coinMetadataMap]);
+    fetchPoolDepositedMap();
+  }, [address, positions, fetchPoolDepositedMap]);
 
   // Positions - Balances (on-chain)
-  const [poolBalancesMap, setPoolBalancesMap] = useState<
-    Record<string, { a: BigNumber; b: BigNumber; usd: BigNumber }>
+  const [poolBalancesMapMap, setPoolBalancesMap] = useState<
+    Record<
+      string,
+      Record<string, { a: BigNumber; b: BigNumber; usd: BigNumber }>
+    >
   >({});
+  const poolBalancesMap = useMemo(
+    () => (!address ? {} : poolBalancesMapMap[address]),
+    [address, poolBalancesMapMap],
+  );
 
-  useEffect(() => {
-    if (positions === undefined) return;
+  const fetchPoolBalancesMap = useCallback(async () => {
+    try {
+      const result: Record<
+        string,
+        { a: BigNumber; b: BigNumber; usd: BigNumber }
+      > = {};
 
-    (async () => {
-      try {
-        const result: Record<
-          string,
-          { a: BigNumber; b: BigNumber; usd: BigNumber }
-        > = {};
+      const redeemQuotes = await Promise.all(
+        positions.map((position) => {
+          const obligationIndex = getIndexOfObligationWithDeposit(
+            userData.obligations,
+            position.pool.lpTokenType,
+          ); // Assumes up to one obligation has deposits of the LP token type
 
-        const redeemQuotes = await Promise.all(
-          positions.map((position) => {
-            const obligationIndex = getIndexOfObligationWithDeposit(
-              userData.obligations,
-              position.pool.lpTokenType,
-            ); // Assumes up to one obligation has deposits of the LP token type
+          const balance = getBalance(position.pool.lpTokenType);
+          const depositedAmount = getObligationDepositedAmount(
+            userData.obligations[obligationIndex],
+            position.pool.lpTokenType,
+          );
+          const totalAmount = balance.plus(depositedAmount);
 
-            const balance = getBalance(position.pool.lpTokenType);
-            const depositedAmount = getObligationDepositedAmount(
-              userData.obligations[obligationIndex],
-              position.pool.lpTokenType,
-            );
-            const totalAmount = balance.plus(depositedAmount);
-
-            return steammClient.Pool.quoteRedeem({
-              lpTokens: BigInt(
-                totalAmount
-                  .times(
-                    10 **
-                      appData.coinMetadataMap[position.pool.lpTokenType]
-                        .decimals,
-                  )
-                  .integerValue(BigNumber.ROUND_DOWN)
-                  .toString(),
-              ),
-              poolInfo: position.pool.poolInfo,
-              bankInfoA: appData.bankMap[position.pool.coinTypes[0]].bankInfo,
-              bankInfoB: appData.bankMap[position.pool.coinTypes[1]].bankInfo,
-            });
-          }),
-        );
-
-        for (let i = 0; i < positions.length; i++) {
-          const pool = positions[i].pool;
-
-          const balanceA = new BigNumber(
-            redeemQuotes[i].withdrawA.toString(),
-          ).div(10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals);
-          const balanceB = new BigNumber(
-            redeemQuotes[i].withdrawB.toString(),
-          ).div(10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals);
-
-          result[pool.id] = {
-            a: balanceA,
-            b: balanceB,
-            usd: new BigNumber(balanceA.times(pool.prices[0])).plus(
-              balanceB.times(pool.prices[1]),
+          return steammClient.Pool.quoteRedeem({
+            lpTokens: BigInt(
+              totalAmount
+                .times(
+                  10 **
+                    appData.coinMetadataMap[position.pool.lpTokenType].decimals,
+                )
+                .integerValue(BigNumber.ROUND_DOWN)
+                .toString(),
             ),
-          };
-        }
+            poolInfo: position.pool.poolInfo,
+            bankInfoA: appData.bankMap[position.pool.coinTypes[0]].bankInfo,
+            bankInfoB: appData.bankMap[position.pool.coinTypes[1]].bankInfo,
+          });
+        }),
+      );
 
-        setPoolBalancesMap(result);
-      } catch (err) {
-        showErrorToast("Failed to fetch pool balances", err as Error);
-        console.error(err);
-        Sentry.captureException(err);
+      for (let i = 0; i < positions.length; i++) {
+        const pool = positions[i].pool;
+
+        const balanceA = new BigNumber(
+          redeemQuotes[i].withdrawA.toString(),
+        ).div(10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals);
+        const balanceB = new BigNumber(
+          redeemQuotes[i].withdrawB.toString(),
+        ).div(10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals);
+
+        result[pool.id] = {
+          a: balanceA,
+          b: balanceB,
+          usd: new BigNumber(balanceA.times(pool.prices[0])).plus(
+            balanceB.times(pool.prices[1]),
+          ),
+        };
       }
-    })();
+
+      setPoolBalancesMap((prev) => ({
+        ...prev,
+        [address!]: result,
+      }));
+    } catch (err) {
+      showErrorToast("Failed to fetch pool balances", err as Error);
+      console.error(err);
+      Sentry.captureException(err);
+    }
   }, [
     positions,
     getBalance,
@@ -366,7 +387,18 @@ export default function PortfolioPage() {
     steammClient,
     appData.coinMetadataMap,
     appData.bankMap,
+    address,
   ]);
+
+  const hasFetchedPoolBalancesMapMapRef = useRef<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!address) return;
+
+    if (!hasFetchedPoolBalancesMapMapRef.current[address])
+      hasFetchedPoolBalancesMapMapRef.current[address] = true;
+
+    fetchPoolBalancesMap();
+  }, [address, fetchPoolBalancesMap]);
 
   // Positions - Extra data
   const positionsWithExtraData: PoolPosition[] | undefined = useMemo(
@@ -376,25 +408,25 @@ export default function PortfolioPage() {
         : positions.map((position) => ({
             ...position,
             deposited:
-              poolDepositedMap[position.pool.id] !== undefined
+              poolDepositedMap?.[position.pool.id] !== undefined
                 ? [
                     poolDepositedMap[position.pool.id].a,
                     poolDepositedMap[position.pool.id].b,
                   ]
                 : undefined,
             depositedUsd:
-              poolDepositedMap[position.pool.id] !== undefined
+              poolDepositedMap?.[position.pool.id] !== undefined
                 ? poolDepositedMap[position.pool.id].usd
                 : undefined,
             balances:
-              poolBalancesMap[position.pool.id] !== undefined
+              poolBalancesMap?.[position.pool.id] !== undefined
                 ? [
                     poolBalancesMap[position.pool.id].a,
                     poolBalancesMap[position.pool.id].b,
                   ]
                 : undefined,
             balanceUsd:
-              poolBalancesMap[position.pool.id] !== undefined
+              poolBalancesMap?.[position.pool.id] !== undefined
                 ? poolBalancesMap[position.pool.id].usd
                 : undefined,
           })),

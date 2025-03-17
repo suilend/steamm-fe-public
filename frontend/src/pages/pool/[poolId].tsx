@@ -1,7 +1,8 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import * as Sentry from "@sentry/nextjs";
 import { ChevronRight } from "lucide-react";
 
 import { formatUsd } from "@suilend/frontend-sui";
@@ -47,9 +48,10 @@ function PoolPage() {
   const [transactionHistoryMapMap, setTransactionHistoryMapMap] = useState<
     Record<string, Record<string, (HistoryDeposit | HistoryRedeem)[]>>
   >({});
-  const poolTransactionHistory = !address
-    ? []
-    : transactionHistoryMapMap[address]?.[pool.id];
+  const poolTransactionHistory = useMemo(
+    () => (!address ? [] : transactionHistoryMapMap[address]?.[pool.id]),
+    [address, transactionHistoryMapMap, pool.id],
+  );
 
   const fetchPoolTransactionHistory = useCallback(async () => {
     try {
@@ -82,8 +84,9 @@ function PoolPage() {
         },
       }));
     } catch (err) {
-      showErrorToast("Failed to fetch transaction history", err as Error);
+      showErrorToast("Failed to fetch pool transaction history", err as Error);
       console.error(err);
+      Sentry.captureException(err);
     }
   }, [address, pool.id]);
 
