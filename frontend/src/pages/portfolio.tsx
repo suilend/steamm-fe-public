@@ -387,7 +387,8 @@ export default function PortfolioPage() {
           {/* Stats */}
           <div className="grid w-full grid-cols-2 rounded-md border md:flex md:flex-row md:items-stretch">
             {/* Net worth */}
-            <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1">
+            {/* <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1"> */}
+            <div className="max-md:w-full max-md:border-r md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">Net worth</p>
 
@@ -406,7 +407,8 @@ export default function PortfolioPage() {
             <Divider className="h-auto w-px max-md:hidden" />
 
             {/* APR */}
-            <div className="max-md:w-full max-md:border-b md:flex-1">
+            {/* <div className="max-md:w-full max-md:border-b md:flex-1"> */}
+            <div className="max-md:w-full md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">Average APR</p>
 
@@ -420,10 +422,10 @@ export default function PortfolioPage() {
               </div>
             </div>
 
-            <Divider className="h-auto w-px max-md:hidden" />
+            {/* <Divider className="h-auto w-px max-md:hidden" /> */}
 
             {/* Claimable rewards */}
-            <div className="max-md:w-full max-md:border-r md:flex-1">
+            {/* <div className="max-md:w-full max-md:border-r md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">
                   Claimable rewards
@@ -493,12 +495,12 @@ export default function PortfolioPage() {
                   </>
                 )}
               </div>
-            </div>
+            </div> */}
 
-            <Divider className="h-auto w-px max-md:hidden" />
+            {/* <Divider className="h-auto w-px max-md:hidden" /> */}
 
             {/* Points */}
-            <div className="max-md:w-full md:flex-1">
+            {/* <div className="max-md:w-full md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">Points</p>
 
@@ -525,7 +527,7 @@ export default function PortfolioPage() {
                   </Tooltip>
                 )}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 

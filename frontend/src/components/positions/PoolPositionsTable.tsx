@@ -203,26 +203,26 @@ export default function PoolPositionsTable({
           PnL
         </HeaderColumn>
 
-        <HeaderColumn<Column, SortableColumn>
+        {/* <HeaderColumn<Column, SortableColumn>
           id="stakedPercent"
           style={columnStyleMap.stakedPercent}
         >
           Staked
-        </HeaderColumn>
+        </HeaderColumn> */}
 
-        <HeaderColumn<Column, SortableColumn>
+        {/* <HeaderColumn<Column, SortableColumn>
           id="claimableRewards"
           style={columnStyleMap.claimableRewards}
         >
           Claimable rewards
-        </HeaderColumn>
+        </HeaderColumn> */}
 
-        <HeaderColumn<Column, SortableColumn>
+        {/* <HeaderColumn<Column, SortableColumn>
           id="points"
           style={columnStyleMap.points}
         >
           Points
-        </HeaderColumn>
+        </HeaderColumn> */}
       </div>
 
       {/* Rows */}

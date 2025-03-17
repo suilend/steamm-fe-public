@@ -326,7 +326,7 @@ export default function PoolPositionRow({
       </div>
 
       {/* Staked */}
-      <div
+      {/* <div
         className="flex h-full flex-row items-center gap-3"
         style={columnStyleMap.stakedPercent}
       >
@@ -337,7 +337,6 @@ export default function PoolPositionRow({
             </p>
 
             <div className="flex flex-col items-end gap-1">
-              {/* Stake */}
               {!stakedPercent.eq(100) && (
                 <button
                   className="flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-1 px-2 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
@@ -352,7 +351,6 @@ export default function PoolPositionRow({
                 </button>
               )}
 
-              {/* Unstake */}
               {!stakedPercent.eq(0) && (
                 <button
                   className="flex h-6 w-[60px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
@@ -371,10 +369,10 @@ export default function PoolPositionRow({
         ) : (
           <p className="text-p1 text-foreground">--</p>
         )}
-      </div>
+      </div> */}
 
       {/* Claimable rewards */}
-      <div
+      {/* <div
         className="flex h-full flex-row items-center"
         style={columnStyleMap.claimableRewards}
       >
@@ -409,10 +407,10 @@ export default function PoolPositionRow({
         ) : (
           <p className="text-p1 text-foreground">--</p>
         )}
-      </div>
+      </div> */}
 
       {/* Points */}
-      <div
+      {/* <div
         className="flex h-full flex-row items-center"
         style={columnStyleMap.points}
       >
@@ -433,7 +431,7 @@ export default function PoolPositionRow({
             </p>
           </Tooltip>
         </div>
-      </div>
+      </div> */}
     </Link>
   );
 }
