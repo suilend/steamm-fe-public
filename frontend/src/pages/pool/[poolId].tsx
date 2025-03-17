@@ -192,10 +192,6 @@ function PoolPage() {
                         </p>
                       </Tooltip>
                     )}
-
-                    {/* <PercentChange
-                    value={new BigNumber(-5 + Math.random() * 10)}
-                  /> */}
                   </div>
                 </div>
 
@@ -219,10 +215,6 @@ function PoolPage() {
                         </p>
                       </Tooltip>
                     )}
-
-                    {/* <PercentChange
-                    value={new BigNumber(-5 + Math.random() * 10)}
-                  /> */}
                   </div>
                 </div>
 
@@ -234,10 +226,6 @@ function PoolPage() {
                       valueClassName="text-success decoration-success/50"
                       pool={pool}
                     />
-
-                    {/* <PercentChange
-                    value={new BigNumber(-5 + Math.random() * 10)}
-                  /> */}
                   </div>
                 </div>
               </div>

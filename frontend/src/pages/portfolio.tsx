@@ -39,12 +39,18 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
 import { getTotalAprPercent } from "@/lib/liquidityMining";
+import { API_URL } from "@/lib/navigation";
 import {
   getIndexOfObligationWithDeposit,
   getObligationDepositedAmount,
 } from "@/lib/obligation";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { PoolPosition } from "@/lib/types";
+import {
+  HistoryDeposit,
+  HistoryRedeem,
+  HistoryTransactionType,
+  PoolPosition,
+} from "@/lib/types";
 
 export default function PortfolioPage() {
   const { explorer } = useSettingsContext();
@@ -152,7 +158,10 @@ export default function PortfolioPage() {
               ...pool,
               aprPercent_24h: totalAprPercent,
             },
-            balanceUsd: undefined, // Fetched below
+            deposited: undefined, // Fetched below (BE)
+            depositedUsd: undefined, // Fetched below (BE)
+            balances: undefined, // Fetched below (on-chain)
+            balanceUsd: undefined, // Fetched below (on-chain)
             stakedPercent: depositedAmount.div(totalAmount).times(100),
             claimableRewards: Object.fromEntries(
               Object.entries(poolRewardsMap[pool.lpTokenType] ?? {}).filter(
@@ -177,9 +186,109 @@ export default function PortfolioPage() {
     ],
   );
 
-  // Positions - Balances in USD (on-chain)
-  const [poolBalancesUsd, setPoolBalancesUsd] = useState<
-    Record<string, BigNumber>
+  // Positions - Deposited (BE)
+  const [poolDepositedMap, setPoolDepositedMap] = useState<
+    Record<string, { a: BigNumber; b: BigNumber; usd: BigNumber }>
+  >({});
+
+  useEffect(() => {
+    if (!address) return;
+    if (positions === undefined) return;
+
+    (async () => {
+      try {
+        const result: Record<
+          string,
+          { a: BigNumber; b: BigNumber; usd: BigNumber }
+        > = {};
+
+        const transactionHistories = await Promise.all(
+          positions.map((position) =>
+            (async () => {
+              const res = await fetch(
+                `${API_URL}/steamm/historical/lp?${new URLSearchParams({
+                  user: address,
+                  poolId: position.pool.id,
+                })}`,
+              );
+              const json: {
+                deposits: Omit<HistoryDeposit, "type">[];
+                redeems: Omit<HistoryRedeem, "type">[];
+              } = await res.json();
+              if ((json as any)?.statusCode === 500) return;
+
+              return [
+                ...(json.deposits.map((entry) => ({
+                  ...entry,
+                  type: HistoryTransactionType.DEPOSIT,
+                })) as HistoryDeposit[]),
+                ...(json.redeems.map((entry) => ({
+                  ...entry,
+                  type: HistoryTransactionType.REDEEM,
+                })) as HistoryRedeem[]),
+              ].sort((a, b) => +b.timestamp - +a.timestamp);
+            })(),
+          ),
+        );
+
+        for (let i = 0; i < positions.length; i++) {
+          const pool = positions[i].pool;
+
+          const transactionHistory = transactionHistories[i];
+          if (!transactionHistory) continue;
+
+          const depositedA = transactionHistory.reduce(
+            (acc, entry) =>
+              entry.type === HistoryTransactionType.DEPOSIT
+                ? acc.plus(
+                    new BigNumber(entry.deposit_a).div(
+                      10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+                    ),
+                  )
+                : acc.minus(
+                    new BigNumber(entry.withdraw_a).div(
+                      10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+                    ),
+                  ),
+            new BigNumber(0),
+          );
+          const depositedB = transactionHistory.reduce(
+            (acc, entry) =>
+              entry.type === HistoryTransactionType.DEPOSIT
+                ? acc.plus(
+                    new BigNumber(entry.deposit_b).div(
+                      10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals,
+                    ),
+                  )
+                : acc.minus(
+                    new BigNumber(entry.withdraw_b).div(
+                      10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals,
+                    ),
+                  ),
+            new BigNumber(0),
+          );
+
+          result[pool.id] = {
+            a: depositedA,
+            b: depositedB,
+            usd: new BigNumber(depositedA.times(pool.prices[0])).plus(
+              depositedB.times(pool.prices[1]),
+            ),
+          };
+        }
+
+        setPoolDepositedMap(result);
+      } catch (err) {
+        showErrorToast("Failed to fetch pool deposits", err as Error);
+        console.error(err);
+        Sentry.captureException(err);
+      }
+    })();
+  }, [address, positions, appData.coinMetadataMap]);
+
+  // Positions - Balances (on-chain)
+  const [poolBalancesMap, setPoolBalancesMap] = useState<
+    Record<string, { a: BigNumber; b: BigNumber; usd: BigNumber }>
   >({});
 
   useEffect(() => {
@@ -187,7 +296,10 @@ export default function PortfolioPage() {
 
     (async () => {
       try {
-        const result: Record<string, BigNumber> = {};
+        const result: Record<
+          string,
+          { a: BigNumber; b: BigNumber; usd: BigNumber }
+        > = {};
 
         const redeemQuotes = await Promise.all(
           positions.map((position) => {
@@ -224,21 +336,23 @@ export default function PortfolioPage() {
         for (let i = 0; i < positions.length; i++) {
           const pool = positions[i].pool;
 
-          const balanceUsdA = new BigNumber(
+          const balanceA = new BigNumber(
             redeemQuotes[i].withdrawA.toString(),
-          )
-            .div(10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals)
-            .times(pool.prices[0]);
-          const balanceUsdB = new BigNumber(
+          ).div(10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals);
+          const balanceB = new BigNumber(
             redeemQuotes[i].withdrawB.toString(),
-          )
-            .div(10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals)
-            .times(pool.prices[1]);
+          ).div(10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals);
 
-          result[pool.id] = balanceUsdA.plus(balanceUsdB);
+          result[pool.id] = {
+            a: balanceA,
+            b: balanceB,
+            usd: new BigNumber(balanceA.times(pool.prices[0])).plus(
+              balanceB.times(pool.prices[1]),
+            ),
+          };
         }
 
-        setPoolBalancesUsd(result);
+        setPoolBalancesMap(result);
       } catch (err) {
         showErrorToast("Failed to fetch pool balances", err as Error);
         console.error(err);
@@ -254,15 +368,37 @@ export default function PortfolioPage() {
     appData.bankMap,
   ]);
 
+  // Positions - Extra data
   const positionsWithExtraData: PoolPosition[] | undefined = useMemo(
     () =>
       positions === undefined
         ? undefined
         : positions.map((position) => ({
             ...position,
-            balanceUsd: poolBalancesUsd[position.pool.id],
+            deposited:
+              poolDepositedMap[position.pool.id] !== undefined
+                ? [
+                    poolDepositedMap[position.pool.id].a,
+                    poolDepositedMap[position.pool.id].b,
+                  ]
+                : undefined,
+            depositedUsd:
+              poolDepositedMap[position.pool.id] !== undefined
+                ? poolDepositedMap[position.pool.id].usd
+                : undefined,
+            balances:
+              poolBalancesMap[position.pool.id] !== undefined
+                ? [
+                    poolBalancesMap[position.pool.id].a,
+                    poolBalancesMap[position.pool.id].b,
+                  ]
+                : undefined,
+            balanceUsd:
+              poolBalancesMap[position.pool.id] !== undefined
+                ? poolBalancesMap[position.pool.id].usd
+                : undefined,
           })),
-    [positions, poolBalancesUsd],
+    [positions, poolDepositedMap, poolBalancesMap],
   );
 
   // Summary

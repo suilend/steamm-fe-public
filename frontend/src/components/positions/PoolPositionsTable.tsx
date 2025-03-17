@@ -14,11 +14,12 @@ type Column =
   | "pair"
   | "type"
   | "aprPercent_24h"
-  | "balanceUsd"
+  | "deposited"
+  | "balance"
   | "stakedPercent"
   | "claimableRewards"
   | "points";
-type SortableColumn = "aprPercent_24h" | "balanceUsd";
+type SortableColumn = "aprPercent_24h" | "deposited" | "balance";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
@@ -37,21 +38,27 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
-  balanceUsd: {
+  deposited: {
     flex: 1,
     minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
+  balance: {
+    flex: 1,
+    minWidth: 250, // px
+    justifyContent: "end",
+    paddingRight: 4 * 5, // px
+  },
   stakedPercent: {
     flex: 1,
-    minWidth: 175, // px
+    minWidth: 200, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   claimableRewards: {
     flex: 1,
-    minWidth: 175, // px
+    minWidth: 200, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -98,7 +105,9 @@ export default function PoolPositionsTable({
         !positions.every(
           (position) => position.pool.aprPercent_24h !== undefined,
         )) ||
-      (sortState.column === "balanceUsd" &&
+      (sortState.column === "deposited" &&
+        !positions.every((position) => position.depositedUsd !== undefined)) ||
+      (sortState.column === "balance" &&
         !positions.every((position) => position.balanceUsd !== undefined))
     )
       return positions;
@@ -112,7 +121,11 @@ export default function PoolPositionsTable({
           : +(a.pool.aprPercent_24h as BigNumber).minus(
               b.pool.aprPercent_24h as BigNumber,
             );
-      } else if (sortState.column === "balanceUsd") {
+      } else if (sortState.column === "deposited") {
+        return sortState.direction === SortDirection.DESC
+          ? +(b.depositedUsd as BigNumber).minus(a.depositedUsd as BigNumber)
+          : +(a.depositedUsd as BigNumber).minus(b.depositedUsd as BigNumber);
+      } else if (sortState.column === "balance") {
         return sortState.direction === SortDirection.DESC
           ? +(b.balanceUsd as BigNumber).minus(a.balanceUsd as BigNumber)
           : +(a.balanceUsd as BigNumber).minus(b.balanceUsd as BigNumber);
@@ -161,7 +174,22 @@ export default function PoolPositionsTable({
         </HeaderColumn>
 
         <HeaderColumn<Column, SortableColumn>
-          id="balanceUsd"
+          id="deposited"
+          sortState={sortState}
+          toggleSortByColumn={
+            !!(positions ?? []).every(
+              (position) => position.depositedUsd !== undefined,
+            )
+              ? toggleSortByColumn
+              : undefined
+          }
+          style={columnStyleMap.deposited}
+        >
+          Deposited
+        </HeaderColumn>
+
+        <HeaderColumn<Column, SortableColumn>
+          id="balance"
           sortState={sortState}
           toggleSortByColumn={
             !!(positions ?? []).every(
@@ -170,7 +198,7 @@ export default function PoolPositionsTable({
               ? toggleSortByColumn
               : undefined
           }
-          style={columnStyleMap.balanceUsd}
+          style={columnStyleMap.balance}
         >
           Balance
         </HeaderColumn>
@@ -203,13 +231,13 @@ export default function PoolPositionsTable({
           <Skeleton
             key={index}
             className={cn(
-              "relative z-[1] h-[56px] w-full",
-              index !== array.length - 1 && "h-[calc(56px+1px)] border-b",
+              "relative z-[1] h-[106px] w-full",
+              index !== array.length - 1 && "h-[calc(106px+1px)] border-b",
             )}
           />
         ))
       ) : sortedPositions.length === 0 ? (
-        <div className="flex h-[56px] w-full flex-row items-center justify-center">
+        <div className="flex h-[106px] w-full flex-row items-center justify-center">
           <p className="text-p2 text-tertiary-foreground">No positions</p>
         </div>
       ) : (

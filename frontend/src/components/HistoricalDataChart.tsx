@@ -258,7 +258,7 @@ export default function HistoricalDataChart({
 
             {periodChangePercent !== null &&
               (periodChangePercent === undefined ? (
-                <Skeleton className="h-[18px] w-10" />
+                <Skeleton className="h-[21px] w-12" />
               ) : (
                 <PercentChange value={periodChangePercent} />
               ))}

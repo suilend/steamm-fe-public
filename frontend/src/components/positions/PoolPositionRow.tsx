@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MouseEvent, useState } from "react";
+import { Fragment, MouseEvent, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
@@ -26,6 +26,7 @@ import {
 } from "@suilend/sdk";
 
 import AprBreakdown from "@/components/AprBreakdown";
+import PercentChange from "@/components/PercentChange";
 import { columnStyleMap } from "@/components/positions/PoolPositionsTable";
 import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
@@ -55,6 +56,18 @@ export default function PoolPositionRow({
   const { appData } = useLoadedAppContext();
   const { refreshRawBalancesMap, getBalance, userData, refreshUserData } =
     useLoadedUserContext();
+
+  // Balance
+  const balanceUsdChange =
+    position.depositedUsd === undefined || position.balanceUsd === undefined
+      ? undefined
+      : position.balanceUsd.minus(position.depositedUsd);
+  const balanceUsdChangePercent =
+    position.depositedUsd === undefined || position.balanceUsd === undefined
+      ? undefined
+      : new BigNumber(position.balanceUsd.minus(position.depositedUsd))
+          .div(position.depositedUsd)
+          .times(100);
 
   // Stake/unstake
   const [stakedPercentOverride, setStakedPercentOverride] = useState<
@@ -219,8 +232,8 @@ export default function PoolPositionRow({
   return (
     <Link
       className={cn(
-        "group relative z-[1] flex min-h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row items-center py-[16px] transition-colors hover:bg-tertiary",
-        !isLast && "min-h-[calc(56px+1px)] border-b",
+        "group relative z-[1] flex min-h-[106px] w-full min-w-max shrink-0 cursor-pointer flex-row items-center py-[16px] transition-colors hover:bg-tertiary",
+        !isLast && "min-h-[calc(106px+1px)] border-b",
       )}
       href={`${POOL_URL_PREFIX}/${position.pool.id}`}
     >
@@ -259,20 +272,156 @@ export default function PoolPositionRow({
         />
       </div>
 
+      {/* Deposited */}
+      <div
+        className="flex h-full flex-row items-center"
+        style={columnStyleMap.deposited}
+      >
+        <div className="flex flex-col items-end gap-1">
+          {position.depositedUsd === undefined ? (
+            <Skeleton className="h-[24px] w-16" />
+          ) : (
+            <Tooltip title={formatUsd(position.depositedUsd, { exact: true })}>
+              <p className="text-p1 text-foreground">
+                {formatUsd(position.depositedUsd)}
+              </p>
+            </Tooltip>
+          )}
+
+          {position.pool.coinTypes.map((coinType, index) => {
+            const coinMetadata = appData.coinMetadataMap[coinType];
+
+            return (
+              <Fragment key={coinType}>
+                {position.deposited === undefined ? (
+                  <Skeleton className="h-[21px] w-16" />
+                ) : (
+                  <div className="flex flex-row items-center gap-2">
+                    <TokenLogo
+                      token={getToken(coinType, coinMetadata)}
+                      size={16}
+                    />
+                    <Tooltip
+                      title={`${formatToken(position.deposited![index], { dp: coinMetadata.decimals })} ${coinMetadata.symbol}`}
+                    >
+                      <p className="text-p2 text-foreground">
+                        {formatToken(position.deposited![index], {
+                          exact: false,
+                        })}{" "}
+                        {coinMetadata.symbol}
+                      </p>
+                    </Tooltip>
+                  </div>
+                )}
+              </Fragment>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Balance */}
       <div
         className="flex h-full flex-row items-center"
-        style={columnStyleMap.balanceUsd}
+        style={columnStyleMap.balance}
       >
-        {position.balanceUsd === undefined ? (
-          <Skeleton className="h-[24px] w-16" />
-        ) : (
-          <Tooltip title={formatUsd(position.balanceUsd, { exact: true })}>
-            <p className="text-p1 text-foreground">
-              {formatUsd(position.balanceUsd)}
-            </p>
-          </Tooltip>
-        )}
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex flex-row items-center gap-2">
+            {position.balanceUsd === undefined ? (
+              <Skeleton className="h-[24px] w-16" />
+            ) : (
+              <Tooltip title={formatUsd(position.balanceUsd, { exact: true })}>
+                <p className="text-p1 text-foreground">
+                  {formatUsd(position.balanceUsd)}
+                </p>
+              </Tooltip>
+            )}
+
+            {balanceUsdChange === undefined ||
+            balanceUsdChangePercent === undefined ? (
+              <Skeleton className="h-[21px] w-20" />
+            ) : (
+              <p
+                className={cn(
+                  "!text-p2",
+                  balanceUsdChange.gte(0) ? "text-success" : "text-error",
+                )}
+              >
+                {"("}
+                {balanceUsdChange.gte(0) ? "+" : "-"}
+                {formatUsd(balanceUsdChange)}
+                {", "}
+                {balanceUsdChangePercent.gte(0) ? "+" : "-"}
+                {formatPercent(new BigNumber(balanceUsdChangePercent.abs()))}
+                {")"}
+              </p>
+            )}
+          </div>
+
+          {position.pool.coinTypes.map((coinType, index) => {
+            const coinMetadata = appData.coinMetadataMap[coinType];
+
+            const change =
+              position.deposited === undefined ||
+              position.balances === undefined
+                ? undefined
+                : new BigNumber(
+                    position.balances[index].minus(position.deposited[index]),
+                  );
+            const changePercent =
+              position.deposited === undefined ||
+              position.balances === undefined
+                ? undefined
+                : new BigNumber(
+                    position.balances[index].minus(position.deposited[index]),
+                  )
+                    .div(position.deposited[index])
+                    .times(100);
+
+            return (
+              <div key={coinType} className="flex flex-row items-center gap-2">
+                {position.balances === undefined ? (
+                  <Skeleton className="h-[21px] w-16" />
+                ) : (
+                  <>
+                    <TokenLogo
+                      token={getToken(coinType, coinMetadata)}
+                      size={16}
+                    />
+                    <Tooltip
+                      title={`${formatToken(position.balances[index], { dp: coinMetadata.decimals })} ${coinMetadata.symbol}`}
+                    >
+                      <p className="text-p2 text-foreground">
+                        {formatToken(position.balances[index], {
+                          exact: false,
+                        })}{" "}
+                        {coinMetadata.symbol}
+                      </p>
+                    </Tooltip>
+                  </>
+                )}
+
+                {change === undefined || changePercent === undefined ? (
+                  <Skeleton className="h-[18px] w-20" />
+                ) : (
+                  <p
+                    className={cn(
+                      "!text-p3",
+                      change.gte(0) ? "text-success" : "text-error",
+                    )}
+                  >
+                    {"("}
+                    {change.gte(0) ? "+" : "-"}
+                    {formatToken(change, { exact: false })}
+                    {", "}
+                    {changePercent.gte(0) ? "+" : "-"}
+                    {formatPercent(new BigNumber(changePercent.abs()))}
+                    {")"}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Staked */}

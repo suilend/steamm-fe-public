@@ -76,6 +76,9 @@ export type PoolGroup = {
 
 export type PoolPosition = {
   pool: ParsedPool;
+  deposited?: [BigNumber, BigNumber];
+  depositedUsd?: BigNumber;
+  balances?: [BigNumber, BigNumber];
   balanceUsd?: BigNumber;
   stakedPercent: BigNumber;
   claimableRewards: Record<string, BigNumber>;
