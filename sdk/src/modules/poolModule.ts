@@ -1,22 +1,9 @@
-import { SuiTransactionBlockResponse } from "@mysten/sui/client";
-import {
-  Transaction,
-  TransactionArgument,
-  TransactionObjectInput,
-} from "@mysten/sui/transactions";
-import { normalizeSuiAddress } from "@mysten/sui/utils";
+import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
+import { SUI_CLOCK_OBJECT_ID, normalizeSuiAddress } from "@mysten/sui/utils";
 
+import { PriceInfoObject } from "../_codegen/_generated/_dependencies/source/0x8d97f1cd6ac663735be08d1d2b6d02a159e711586461306ce60a2b7a6a565a9e/price-info/structs";
+import { getPythPrice } from "../_codegen/orcFunctions";
 import {
-  CreatePoolArgs,
-  CreatePoolTopArgs,
-  PoolArgs,
-  PoolDepositLiquidityArgs,
-  PoolQuoteDepositArgs,
-  PoolQuoteRedeemArgs,
-  PoolRedeemLiquidityArgs,
-  QuoteSwapArgs,
-  SwapArgs,
-  // SwapArgs,
   SwapQuote,
   createConstantProductPool,
   createOraclePool,
@@ -28,11 +15,21 @@ import {
   castRedeemQuote,
   castSwapQuote,
 } from "../base/pool/poolTypes";
+import { OracleSwapExtraArgs } from "../base/quoters/oracleQuoter/args";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
-import { BankList, PoolInfo } from "../types";
-import { SuiTypeName } from "../utils";
+import { BankList, OracleInfo, PoolInfo, getQuoterType } from "../types";
 import { SuiAddressType } from "../utils";
+
+import {
+  CreatePoolParams,
+  DepositLiquidityParams,
+  QuoteDepositParams,
+  QuoteRedeemParams,
+  QuoteSwapParams,
+  RedeemLiquidityParams,
+  SwapParams,
+} from ".";
 
 /**
  * Helper class to help interact with pools.
@@ -50,7 +47,7 @@ export class PoolModule implements IModule {
 
   public async depositLiquidityEntry(
     tx: Transaction,
-    args: PoolDepositLiquidityArgs & PoolArgs,
+    args: DepositLiquidityParams,
   ) {
     const [lpToken, _depositResult] = await this.depositLiquidity(tx, args);
 
@@ -59,7 +56,7 @@ export class PoolModule implements IModule {
 
   public async depositLiquidity(
     tx: Transaction,
-    args: PoolDepositLiquidityArgs & PoolArgs,
+    args: DepositLiquidityParams,
   ): Promise<[TransactionArgument, TransactionArgument]> {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
@@ -82,7 +79,7 @@ export class PoolModule implements IModule {
 
   public async redeemLiquidityEntry(
     tx: Transaction,
-    args: PoolRedeemLiquidityArgs & PoolArgs,
+    args: RedeemLiquidityParams,
   ) {
     const [coinA, coinB, _redeemResult] = await this.redeemLiquidity(tx, args);
 
@@ -91,7 +88,7 @@ export class PoolModule implements IModule {
 
   public async redeemLiquidity(
     tx: Transaction,
-    args: PoolRedeemLiquidityArgs & PoolArgs,
+    args: RedeemLiquidityParams,
   ): Promise<[TransactionArgument, TransactionArgument, TransactionArgument]> {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
@@ -113,24 +110,33 @@ export class PoolModule implements IModule {
 
   public async swap(
     tx: Transaction,
-    args: SwapArgs & PoolArgs,
+    args: SwapParams,
   ): Promise<TransactionArgument> {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
 
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
+    const poolInfo: PoolInfo = pools.find((pool) => pool.poolId === args.pool)!;
     const bankInfoA = bankList[args.coinTypeA];
     const bankInfoB = bankList[args.coinTypeB];
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
-    const swapResult = poolScript.swap(tx, args);
+    const quoterType = getQuoterType(poolInfo.quoterType);
+    const extraArgs: OracleSwapExtraArgs | { type: "ConstantProduct" } =
+      quoterType === "Oracle"
+        ? await this.getOracleArgs(tx, poolInfo)
+        : { type: "ConstantProduct" };
+
+    const swapResult = poolScript.swap(tx, {
+      ...args,
+      ...extraArgs,
+    });
 
     return swapResult;
   }
 
   public async quoteSwap(
-    args: QuoteSwapArgs & { pool: SuiAddressType },
+    args: QuoteSwapParams,
     tx: Transaction = new Transaction(),
   ): Promise<SwapQuote> {
     const pools = await this.sdk.getPools();
@@ -142,14 +148,18 @@ export class PoolModule implements IModule {
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
-    poolScript.quoteSwap(tx, args);
+    const quoterType = getQuoterType(poolInfo.quoterType);
+    const extraArgs: OracleSwapExtraArgs | { type: "ConstantProduct" } =
+      quoterType === "Oracle"
+        ? await this.getOracleArgs(tx, poolInfo)
+        : { type: "ConstantProduct" };
+
+    poolScript.quoteSwap(tx, { ...args, ...extraArgs });
 
     return castSwapQuote(await this.getQuoteResult<SwapQuote>(tx, "SwapQuote"));
   }
 
-  public async quoteDeposit(
-    args: PoolQuoteDepositArgs & { pool: SuiAddressType },
-  ): Promise<DepositQuote> {
+  public async quoteDeposit(args: QuoteDepositParams): Promise<DepositQuote> {
     const tx = new Transaction();
     const pools = await this.sdk.getPools();
     const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
@@ -170,9 +180,7 @@ export class PoolModule implements IModule {
     );
   }
 
-  public async quoteRedeem(
-    args: PoolQuoteRedeemArgs & { pool: SuiAddressType },
-  ): Promise<RedeemQuote> {
+  public async quoteRedeem(args: QuoteRedeemParams): Promise<RedeemQuote> {
     const tx = new Transaction();
     const pools = await this.sdk.getPools();
     const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
@@ -213,7 +221,7 @@ export class PoolModule implements IModule {
     return tx;
   }
 
-  public async createPool(tx: Transaction, args: CreatePoolTopArgs) {
+  public async createPool(tx: Transaction, args: CreatePoolParams) {
     // wait until the sui rpc recognizes the treasuryCapId
     while (true) {
       const object = await this.sdk.fullClient.getObject({
@@ -330,4 +338,82 @@ export class PoolModule implements IModule {
 
   //   return [coinA, coinB];
   // }
+
+  private async getOracleArgs(
+    tx: Transaction,
+    poolInfo: PoolInfo,
+  ): Promise<OracleSwapExtraArgs> {
+    const oracleData: OracleInfo[] = await this.sdk.getOracles();
+
+    const oracleInfoA = oracleData.find(
+      (oracle) => oracle.oracleIndex === poolInfo.quoterData?.oracleIndexA,
+    ) as OracleInfo;
+
+    const oracleInfoB = oracleData.find(
+      (oracle) => oracle.oracleIndex === poolInfo.quoterData?.oracleIndexA,
+    ) as OracleInfo;
+
+    // assuming oracles are of type pyth
+    const priceInfoObjectIdA = (await this.sdk.pythClient.getPriceFeedObjectId(
+      oracleInfoA.oracleIdentifier as string,
+    )) as string;
+    const priceInfoObjectIdB = (await this.sdk.pythClient.getPriceFeedObjectId(
+      oracleInfoB.oracleIdentifier as string,
+    )) as string;
+
+    const priceInfoObjectIds: string[] = [];
+    const stalePriceIdentifiers: string[] = [];
+    priceInfoObjectIds.push(priceInfoObjectIdA);
+    priceInfoObjectIds.push(priceInfoObjectIdB);
+
+    for (const priceInfoObjectId of priceInfoObjectIds) {
+      const priceInfoObject = await PriceInfoObject.fetch(
+        this.sdk.fullClient,
+        priceInfoObjectId,
+      );
+
+      const publishTime = priceInfoObject.priceInfo.priceFeed.price.timestamp;
+      const stalenessSeconds = Date.now() / 1000 - Number(publishTime);
+
+      if (stalenessSeconds > 20) {
+        stalePriceIdentifiers.push(priceInfoObjectId);
+      }
+    }
+
+    if (stalePriceIdentifiers.length > 0) {
+      const stalePriceUpdateData =
+        await this.sdk.pythConnection.getPriceFeedsUpdateData(
+          stalePriceIdentifiers,
+        );
+      await this.sdk.pythClient.updatePriceFeeds(
+        tx,
+        stalePriceUpdateData,
+        stalePriceIdentifiers,
+      );
+    }
+
+    const oraclePriceA = getPythPrice(tx, {
+      registry: tx.object(
+        this.sdk.sdkOptions.oracle_config.config?.oracleRegistryId as string,
+      ),
+      priceInfoObj: tx.object(priceInfoObjectIdA),
+      oracleIndex: tx.pure.u64(oracleInfoA.oracleIndex),
+      clock: tx.object(SUI_CLOCK_OBJECT_ID),
+    });
+
+    const oraclePriceB = getPythPrice(tx, {
+      registry: tx.object(
+        this.sdk.sdkOptions.oracle_config.config?.oracleRegistryId as string,
+      ),
+      priceInfoObj: tx.object(priceInfoObjectIdB),
+      oracleIndex: tx.pure.u64(oracleInfoB.oracleIndex),
+      clock: tx.object(SUI_CLOCK_OBJECT_ID),
+    });
+
+    return {
+      type: "Oracle",
+      oraclePriceA,
+      oraclePriceB,
+    };
+  }
 }

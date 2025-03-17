@@ -10,15 +10,14 @@ import { ConstantProductQuoter } from "../quoters/constantQuoter";
 import { Quoter } from "../quoters/quoter";
 
 import {
-  BaseSwapArgs,
   CollectProtocolFeesArgs,
+  DepositLiquidityArgs,
   MigrateArgs,
-  PoolDepositLiquidityArgs,
-  PoolQuoteDepositArgs,
-  PoolQuoteRedeemArgs,
-  PoolRedeemLiquidityArgs,
-  QuoteSwapArgs,
-  SwapArgs,
+  QuoteDepositArgs,
+  QuoteRedeemArgs,
+  QuoteSwapFullArgs,
+  RedeemLiquidityArgs,
+  SwapFullArgs,
 } from "./poolArgs";
 
 export * from "./poolArgs";
@@ -47,17 +46,20 @@ export class Pool {
     }
   }
 
-  public swap(tx: Transaction, args: SwapArgs): TransactionResult {
+  public swap(tx: Transaction, args: SwapFullArgs): TransactionResult {
     return this.quoter.swap(tx, args);
   }
 
-  public quoteSwap(tx: Transaction, args: QuoteSwapArgs): TransactionArgument {
+  public quoteSwap(
+    tx: Transaction,
+    args: QuoteSwapFullArgs,
+  ): TransactionArgument {
     return this.quoter.quoteSwap(tx, args);
   }
 
   public depositLiquidity(
     tx: Transaction,
-    args: PoolDepositLiquidityArgs,
+    args: DepositLiquidityArgs,
   ): [TransactionArgument, TransactionArgument] {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
@@ -78,7 +80,7 @@ export class Pool {
 
   public redeemLiquidity(
     tx: Transaction,
-    args: PoolRedeemLiquidityArgs,
+    args: RedeemLiquidityArgs,
   ): [TransactionArgument, TransactionArgument, TransactionArgument] {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
@@ -98,7 +100,7 @@ export class Pool {
 
   public quoteDeposit(
     tx: Transaction,
-    args: PoolQuoteDepositArgs,
+    args: QuoteDepositArgs,
   ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
@@ -117,7 +119,7 @@ export class Pool {
 
   public quoteRedeem(
     tx: Transaction,
-    args: PoolQuoteRedeemArgs,
+    args: QuoteRedeemArgs,
   ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),

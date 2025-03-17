@@ -109,6 +109,7 @@ export class RouterModule implements IModule {
           : BigInt(0);
 
       const swapResult = pool.swap(tx, {
+        type: "ConstantProduct",
         coinA,
         coinB,
         a2b: hop.a2b,
@@ -227,6 +228,7 @@ export class RouterModule implements IModule {
       const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
       const quote = poolScript.quoteSwap(tx, {
+        type: "ConstantProduct",
         a2b: hop.a2b,
         amountIn: nextBTokenAmountIn,
       });

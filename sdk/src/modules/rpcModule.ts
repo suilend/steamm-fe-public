@@ -23,6 +23,7 @@ import {
   PhantomReified,
   Reified,
 } from "../_codegen/_generated/_framework/reified";
+import { OracleRegistry } from "../_codegen/_generated/oracles/oracles/structs";
 import { Bank } from "../_codegen/_generated/steamm/bank/structs";
 import {
   CpQuoter,
@@ -425,6 +426,55 @@ export class RpcModule extends SuiClient {
       ];
 
       return Bank.fromSuiParsedData(parsedTypes, parsedData);
+    } catch (error) {
+      console.error("Error fetching shared object:", error);
+      throw error;
+    }
+  }
+
+  async fetchOracleRegistry(
+    objectId: SuiObjectIdType,
+  ): Promise<OracleRegistry> {
+    try {
+      const object = await this.getObject({
+        id: objectId,
+        options: {
+          showContent: true,
+          showType: true,
+        },
+      });
+
+      if (!object.data) {
+        throw new Error(
+          `OracleRegistry with ID ${objectId} not found or has no data`,
+        );
+      }
+
+      if (!object.data) {
+        throw new Error(
+          `OracleRegistry with ID ${objectId} not found or has no data`,
+        );
+      }
+
+      if (object.error) {
+        throw new Error(`Error fetching OracleRegistry: ${object.error}`);
+      }
+
+      if (!object.data.content) {
+        throw new Error(
+          `Unable to parse data for OracleRegistry with ID ${objectId}`,
+        );
+      }
+
+      if (!object.data.type) {
+        throw new Error(
+          `Unable to parse type for OracleRegistry with ID ${objectId}`,
+        );
+      }
+
+      const parsedData: SuiParsedData = object.data.content as SuiParsedData;
+
+      return OracleRegistry.fromSuiParsedData(parsedData);
     } catch (error) {
       console.error("Error fetching shared object:", error);
       throw error;

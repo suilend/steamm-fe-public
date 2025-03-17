@@ -158,7 +158,7 @@ export async function test() {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const bankIdsToRebalance = await sdk.Bank.queryRebalance();
-      console.log("bankIdsToRebalance: ", bankIdsToRebalance);
+      // console.log("bankIdsToRebalance: ", bankIdsToRebalance);
 
       expect(bankIdsToRebalance.length).toBe(2);
       const rebalanceTxs = await sdk.Bank.rebalance(bankIdsToRebalance);
@@ -170,9 +170,6 @@ export async function test() {
           transactionBlock: tx,
           sender: sdk.senderAddress,
         });
-
-        const errCode = parseErrorCode(devResult);
-        console.log("Dev inspect result:", errCode);
 
         if (devResult.error) {
           console.log("DevResult failed.");

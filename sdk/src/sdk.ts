@@ -1,4 +1,8 @@
 import { Signer } from "@mysten/sui/cryptography";
+import {
+  SuiPriceServiceConnection,
+  SuiPythClient,
+} from "@pythnetwork/pyth-sui-js";
 
 import { Bank, BankScript, Pool, PoolScript } from "./base";
 import { RouterModule } from "./modules";
@@ -11,17 +15,25 @@ import {
   DataPage,
   EventData,
   NewBankEvent,
+  NewOracleQuoterEvent,
   NewPoolEvent,
   OracleConfigs,
+  OracleInfo,
   Package,
   PackageInfo,
   PoolInfo,
   SteammConfigs,
   SuilendConfigs,
   extractBankList,
+  extractOracleQuoterInfo,
   extractPoolInfo,
 } from "./types";
 import { SuiAddressType, patchFixSuiObjectId } from "./utils";
+
+const WORMHOLE_STATE_ID =
+  "0xaeab97f96cf9877fee2883315d459552b2b921edc16d7ceac6eab944dd88919c";
+const PYTH_STATE_ID =
+  "0x1f9310238ee9298fb703c3419030b35b22bb1cc37113e3bb5007c99aec79e5b8";
 
 export type SdkOptions = {
   fullRpcUrl: string;
@@ -42,6 +54,11 @@ interface BankCache {
   updatedAt: number;
 }
 
+interface OracleCache {
+  oracles: OracleInfo[];
+  updatedAt: number;
+}
+
 export class SteammSDK {
   protected _rpcModule: RpcModule;
   protected _pool: PoolModule;
@@ -50,6 +67,9 @@ export class SteammSDK {
   protected _sdkOptions: SdkOptions;
   protected _pools?: PoolCache;
   protected _banks?: BankCache;
+  protected _oracleRegistry?: OracleCache;
+  protected _pythClient: SuiPythClient;
+  protected _pythConnection: SuiPriceServiceConnection;
 
   protected _signer: Signer | undefined;
   protected _senderAddress = "";
@@ -66,8 +86,23 @@ export class SteammSDK {
     this._pool = new PoolModule(this);
     this._bank = new BankModule(this);
     this._router = new RouterModule(this);
+    this._pythClient = new SuiPythClient(
+      this._rpcModule,
+      PYTH_STATE_ID,
+      WORMHOLE_STATE_ID,
+    );
+    this._pythConnection = new SuiPriceServiceConnection(
+      "https://hermes.pyth.network",
+    );
 
     patchFixSuiObjectId(this.sdkOptions);
+  }
+
+  get pythClient(): SuiPythClient {
+    return this._pythClient;
+  }
+  get pythConnection(): SuiPriceServiceConnection {
+    return this._pythConnection;
   }
 
   get senderAddress(): SuiAddressType {
@@ -229,6 +264,54 @@ export class SteammSDK {
     }
   }
 
+  async getOracles(): Promise<OracleInfo[]> {
+    if (!this._oracleRegistry) {
+      await this.refreshOracleCache();
+    } else if (
+      this.sdkOptions.cache_refresh_ms &&
+      Date.now() >
+        this._oracleRegistry.updatedAt + this.sdkOptions.cache_refresh_ms
+    ) {
+      await this.refreshBankCache();
+    }
+
+    if (!this._oracleRegistry) {
+      throw new Error("Bank cache not initialized");
+    }
+
+    return this._oracleRegistry.oracles;
+  }
+
+  private async refreshOracleCache() {
+    const oracleRegistry = await this.fullClient.fetchOracleRegistry(
+      this._sdkOptions.oracle_config.config!.oracleRegistryId,
+    );
+
+    const oracles = oracleRegistry.oracles;
+
+    const oracleInfos: OracleInfo[] = oracles.map((oracle, index) => {
+      const oracleType = oracle.oracleType;
+      const oracleVariant = oracleType.$data;
+
+      let identifier;
+      if (oracleVariant.$kind === "pyth") {
+        identifier = oracleType.$data.pyth?.priceIdentifier.bytes as number[];
+      } else if (oracleVariant.$kind === "switchboard") {
+        identifier = oracleType.$data.switchboard?.feedId as string;
+      } else {
+        throw new Error(`Unknown oracle type: ${oracleVariant}`);
+      }
+
+      return {
+        oracleIdentifier: identifier,
+        oracleIndex: index,
+        oracleType: oracleVariant.$kind,
+      };
+    });
+
+    this._oracleRegistry = { oracles: oracleInfos, updatedAt: Date.now() };
+  }
+
   private async refreshBankCache() {
     const pkgAddy = this.sourcePkgId();
 
@@ -255,6 +338,26 @@ export class SteammSDK {
       });
 
     eventData = res.data.reduce((acc, curr) => acc.concat(curr), []);
+
+    const oracleQuoterPkgId =
+      this.sdkOptions.steamm_config.config?.oracleQuoterPkgId;
+
+    let quoterEventData: EventData<NewOracleQuoterEvent>[] = [];
+    const res2: DataPage<EventData<NewOracleQuoterEvent>[]> =
+      await this.fullClient.queryEventsByPage({
+        MoveEventType: `${pkgAddy}::events::Event<${oracleQuoterPkgId}::omm::NewOracleQuoter>`,
+      });
+
+    quoterEventData = res2.data.reduce((acc, curr) => acc.concat(curr), []);
+    const pools = extractPoolInfo(eventData);
+    const oracleQuoterData = extractOracleQuoterInfo(quoterEventData);
+
+    pools.forEach((pool) => {
+      if (oracleQuoterData[pool.poolId]) {
+        pool.quoterData = oracleQuoterData[pool.poolId];
+      }
+    });
+
     this._pools = { pools: extractPoolInfo(eventData), updatedAt: Date.now() };
   }
 }

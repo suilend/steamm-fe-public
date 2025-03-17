@@ -3,31 +3,20 @@ import {
   TransactionObjectInput,
 } from "@mysten/sui/transactions";
 
-import { SuiAddressType, SuiTypeName } from "../../utils";
 import {
   CpQuoteSwapArgs,
   CpSwapArgs,
   CreateCpPoolArgs,
-  CreateCpPooltTopArgs,
 } from "../quoters/constantQuoter/args";
 import {
   CreateOraclePoolArgs,
-  CreateOraclePoolTopArgs,
   OracleQuoteSwapArgs,
   OracleSwapArgs,
 } from "../quoters/oracleQuoter/args";
 
-export type PoolArgs = {
-  pool: SuiAddressType;
-  coinTypeA: SuiTypeName;
-  coinTypeB: SuiTypeName;
-};
-
-export type SwapArgs = CpSwapArgs | OracleSwapArgs;
-export type QuoteSwapArgs = CpQuoteSwapArgs | OracleQuoteSwapArgs;
-
+export type SwapFullArgs = CpSwapArgs | OracleSwapArgs;
+export type QuoteSwapFullArgs = CpQuoteSwapArgs | OracleQuoteSwapArgs;
 export type CreatePoolArgs = CreateCpPoolArgs | CreateOraclePoolArgs;
-export type CreatePoolTopArgs = CreateCpPooltTopArgs | CreateOraclePoolTopArgs;
 
 export interface CreatePoolBaseArgs {
   coinTypeA: string;
@@ -41,7 +30,7 @@ export interface CreatePoolBaseArgs {
   lpTreasuryId: string | TransactionObjectInput;
 }
 
-export interface BaseSwapArgs {
+export interface SwapArgs {
   coinA: TransactionObjectInput;
   coinB: TransactionObjectInput;
   a2b: boolean | TransactionArgument;
@@ -49,30 +38,30 @@ export interface BaseSwapArgs {
   minAmountOut: bigint | TransactionArgument;
 }
 
-export interface BaseQuoteSwapArgs {
+export interface QuoteSwapArgs {
   amountIn: bigint | TransactionArgument;
   a2b: boolean | TransactionArgument;
 }
 
-export interface PoolDepositLiquidityArgs {
+export interface DepositLiquidityArgs {
   coinA: TransactionArgument;
   coinB: TransactionArgument;
   maxA: bigint | TransactionArgument;
   maxB: bigint | TransactionArgument;
 }
 
-export interface PoolRedeemLiquidityArgs {
+export interface RedeemLiquidityArgs {
   lpCoin: TransactionObjectInput;
   minA: bigint | TransactionArgument;
   minB: bigint | TransactionArgument;
 }
 
-export interface PoolQuoteDepositArgs {
+export interface QuoteDepositArgs {
   maxA: bigint | TransactionArgument;
   maxB: bigint | TransactionArgument;
 }
 
-export interface PoolQuoteRedeemArgs {
+export interface QuoteRedeemArgs {
   lpTokens: bigint | TransactionArgument;
 }
 

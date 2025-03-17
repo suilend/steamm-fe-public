@@ -13,15 +13,7 @@ import dotenv from "dotenv";
 import { SteammSDK } from "../../src/sdk";
 import { BankList, DataPage, PoolInfo } from "../../src/types";
 
-import {
-  GLOBAL_ADMIN_ID,
-  LENDING_MARKET_ID,
-  LENDING_MARKET_TYPE,
-  REGISTRY_ID,
-  STEAMM_PKG_ID,
-  STEAMM_SCRIPT_PKG_ID,
-  SUILEND_PKG_ID,
-} from "./../packages";
+import { STEAMM_PKG_ID } from "./../packages";
 import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
 import { parseErrorCode, PoolModule } from "../../src";
 import {

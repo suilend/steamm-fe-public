@@ -41,6 +41,13 @@ export type NewPoolEvent = {
   swap_fee_bps: string;
 };
 
+export type NewOracleQuoterEvent = {
+  pool_id: string;
+  oracle_registry_id: string;
+  oracle_index_a: string;
+  oracle_index_b: string;
+};
+
 export type NewBankEvent = {
   bank_id: string;
   btoken_type: { name: string };
@@ -114,6 +121,25 @@ export function extractPoolInfo(events: EventData<NewPoolEvent>[]): PoolInfo[] {
   });
 }
 
+export function extractOracleQuoterInfo(
+  events: EventData<NewOracleQuoterEvent>[],
+): Record<string, QuoterData> {
+  return events.reduce(
+    (acc, event) => {
+      const { pool_id, oracle_registry_id, oracle_index_a, oracle_index_b } =
+        event.parsedJson.event;
+      acc[pool_id] = {
+        type: "Oracle",
+        oracleRegistryId: oracle_registry_id,
+        oracleIndexA: Number(oracle_index_a),
+        oracleIndexB: Number(oracle_index_b),
+      };
+      return acc;
+    },
+    {} as Record<string, QuoterData>,
+  );
+}
+
 export type SteammConfigs = {
   registryId: SuiObjectIdType;
   globalAdmin: SuiObjectIdType;
@@ -127,6 +153,12 @@ export type OracleConfigs = {
 export type SuilendConfigs = {
   lendingMarketId: SuiObjectIdType;
   lendingMarketType: string;
+};
+
+export type OracleInfo = {
+  oracleIdentifier: number[] | string;
+  oracleIndex: number;
+  oracleType: "pyth" | "switchboard";
 };
 
 export type BankList = Record<string, BankInfo>;
@@ -182,7 +214,27 @@ export type PoolInfo = {
   lpTokenType: string;
   quoterType: string;
   swapFeeBps: number;
+  quoterData?: QuoterData;
 };
+
+export type QuoterData = {
+  type: "Oracle";
+  oracleIndexA: number;
+  oracleIndexB: number;
+  oracleRegistryId: SuiObjectIdType;
+};
+
+export function getQuoterType(
+  quoterType: string,
+): "ConstantProduct" | "Oracle" {
+  if (quoterType.includes("::cpmm::CpQuoter")) {
+    return "ConstantProduct";
+  } else if (quoterType.includes("::omm::OracleQuoter")) {
+    return "Oracle";
+  } else {
+    throw new Error(`Unknown quoter type: ${quoterType}`);
+  }
+}
 
 export type BankInfo = {
   coinType: string;

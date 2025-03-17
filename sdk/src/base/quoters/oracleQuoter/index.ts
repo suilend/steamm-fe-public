@@ -5,7 +5,7 @@ import {
 } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
-import { OracleFunctions } from "../../..";
+import { OracleQuoterFunctions } from "../../..";
 import { PackageInfo, PoolInfo } from "../../../types";
 import { MigrateArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
@@ -33,8 +33,8 @@ export class OracleQuoter implements Quoter {
       bankA: tx.object(args.bankA),
       bankB: tx.object(args.bankB),
       lendingMarket: tx.object(args.lendingMarket),
-      oraclePriceUpdateA: tx.object(args.oraclePriceUpdateA),
-      oraclePriceUpdateB: tx.object(args.oraclePriceUpdateB),
+      oraclePriceUpdateA: tx.object(args.oraclePriceA),
+      oraclePriceUpdateB: tx.object(args.oraclePriceB),
       coinA: args.coinA,
       coinB: args.coinB,
       amountIn: args.amountIn,
@@ -43,7 +43,7 @@ export class OracleQuoter implements Quoter {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const swapResult = OracleFunctions.swap(
+    const swapResult = OracleQuoterFunctions.swap(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -62,14 +62,14 @@ export class OracleQuoter implements Quoter {
       bankA: tx.object(args.bankA),
       bankB: tx.object(args.bankB),
       lendingMarket: tx.object(args.lendingMarket),
-      oraclePriceUpdateA: tx.object(args.oraclePriceUpdateA),
-      oraclePriceUpdateB: tx.object(args.oraclePriceUpdateB),
+      oraclePriceUpdateA: tx.object(args.oraclePriceA),
+      oraclePriceUpdateB: tx.object(args.oraclePriceB),
       amountIn: args.amountIn,
       a2B: args.a2b,
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const quote = OracleFunctions.quoteSwap(
+    const quote = OracleQuoterFunctions.quoteSwap(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -113,7 +113,7 @@ export class OracleQuoter implements Quoter {
       admin: args.adminCap,
     };
 
-    const [coinA, coinB] = OracleFunctions.migrate(
+    const [coinA, coinB] = OracleQuoterFunctions.migrate(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -150,9 +150,7 @@ export function createOraclePool(
     bTokenTypeB,
   } = args;
 
-  console.log("OINK");
-
-  const pool = OracleFunctions.new_(
+  const pool = OracleQuoterFunctions.new_(
     tx,
     [
       lendingMarketType,

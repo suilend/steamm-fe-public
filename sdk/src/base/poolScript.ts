@@ -10,13 +10,13 @@ import { BankInfo, PackageInfo, PoolInfo } from "../types";
 
 import { Bank } from "./bank";
 import {
+  DepositLiquidityArgs,
   Pool,
-  PoolDepositLiquidityArgs,
-  PoolQuoteDepositArgs,
-  PoolQuoteRedeemArgs,
-  PoolRedeemLiquidityArgs,
-  QuoteSwapArgs,
-  SwapArgs,
+  QuoteDepositArgs,
+  QuoteRedeemArgs,
+  QuoteSwapFullArgs,
+  RedeemLiquidityArgs,
+  SwapFullArgs,
 } from "./pool";
 
 export class PoolScript {
@@ -66,7 +66,7 @@ export class PoolScript {
     }
   }
 
-  public swap(tx: Transaction, args: SwapArgs): TransactionResult {
+  public swap(tx: Transaction, args: SwapFullArgs): TransactionResult {
     switch (args.type) {
       case "ConstantProduct":
         return PoolScriptFunctions.cpmmSwap(
@@ -95,8 +95,8 @@ export class PoolScript {
             bankA: tx.object(this.bankA.bankInfo.bankId),
             bankB: tx.object(this.bankB.bankInfo.bankId),
             lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
-            oraclePriceUpdateA: tx.object(args.oraclePriceUpdateA),
-            oraclePriceUpdateB: tx.object(args.oraclePriceUpdateB),
+            oraclePriceUpdateA: args.oraclePriceA,
+            oraclePriceUpdateB: args.oraclePriceB,
             coinA: args.coinA,
             coinB: args.coinB,
             amountIn: args.amountIn,
@@ -107,11 +107,15 @@ export class PoolScript {
           this.publishedAt,
         );
       default:
+        console.log("Args:", args);
         throw new Error("Unknown pool type");
     }
   }
 
-  public quoteSwap(tx: Transaction, args: QuoteSwapArgs): TransactionResult {
+  public quoteSwap(
+    tx: Transaction,
+    args: QuoteSwapFullArgs,
+  ): TransactionResult {
     switch (args.type) {
       case "ConstantProduct":
         return PoolScriptFunctions.quoteCpmmSwap(
@@ -138,8 +142,8 @@ export class PoolScript {
             bankA: tx.object(this.bankA.bankInfo.bankId),
             bankB: tx.object(this.bankB.bankInfo.bankId),
             lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
-            oraclePriceUpdateA: tx.object(args.oraclePriceUpdateA),
-            oraclePriceUpdateB: tx.object(args.oraclePriceUpdateB),
+            oraclePriceUpdateA: tx.object(args.oraclePriceA),
+            oraclePriceUpdateB: tx.object(args.oraclePriceA),
             amountIn: args.amountIn,
             a2B: args.a2b,
             clock: tx.object(SUI_CLOCK_OBJECT_ID),
@@ -153,7 +157,7 @@ export class PoolScript {
 
   public depositLiquidity(
     tx: Transaction,
-    args: PoolDepositLiquidityArgs,
+    args: DepositLiquidityArgs,
   ): [TransactionArgument, TransactionArgument] {
     const callArgs = {
       pool: tx.object(this.pool.poolInfo.poolId),
@@ -179,7 +183,7 @@ export class PoolScript {
 
   public redeemLiquidity(
     tx: Transaction,
-    args: PoolRedeemLiquidityArgs,
+    args: RedeemLiquidityArgs,
   ): [TransactionArgument, TransactionArgument, TransactionArgument] {
     const callArgs = {
       pool: tx.object(this.pool.poolInfo.poolId),
@@ -203,7 +207,7 @@ export class PoolScript {
 
   public quoteDeposit(
     tx: Transaction,
-    args: PoolQuoteDepositArgs,
+    args: QuoteDepositArgs,
   ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.pool.poolInfo.poolId),
@@ -226,7 +230,7 @@ export class PoolScript {
 
   public quoteRedeem(
     tx: Transaction,
-    args: PoolQuoteRedeemArgs,
+    args: QuoteRedeemArgs,
   ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.pool.poolInfo.poolId),
