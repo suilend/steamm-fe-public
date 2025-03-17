@@ -14,12 +14,12 @@ type Column =
   | "pair"
   | "type"
   | "aprPercent_24h"
-  | "deposited"
   | "balance"
+  | "pnlPercent"
   | "stakedPercent"
   | "claimableRewards"
   | "points";
-type SortableColumn = "aprPercent_24h" | "deposited" | "balance";
+type SortableColumn = "aprPercent_24h" | "balance" | "pnlPercent";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
@@ -38,15 +38,15 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
-  deposited: {
+  balance: {
     flex: 1,
     minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
-  balance: {
+  pnlPercent: {
     flex: 1,
-    minWidth: 250, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -105,10 +105,10 @@ export default function PoolPositionsTable({
         !positions.every(
           (position) => position.pool.aprPercent_24h !== undefined,
         )) ||
-      (sortState.column === "deposited" &&
-        !positions.every((position) => position.depositedUsd !== undefined)) ||
       (sortState.column === "balance" &&
-        !positions.every((position) => position.balanceUsd !== undefined))
+        !positions.every((position) => position.balanceUsd !== undefined)) ||
+      (sortState.column === "pnlPercent" &&
+        !positions.every((position) => position.pnlPercent !== undefined))
     )
       return positions;
 
@@ -121,14 +121,14 @@ export default function PoolPositionsTable({
           : +(a.pool.aprPercent_24h as BigNumber).minus(
               b.pool.aprPercent_24h as BigNumber,
             );
-      } else if (sortState.column === "deposited") {
-        return sortState.direction === SortDirection.DESC
-          ? +(b.depositedUsd as BigNumber).minus(a.depositedUsd as BigNumber)
-          : +(a.depositedUsd as BigNumber).minus(b.depositedUsd as BigNumber);
       } else if (sortState.column === "balance") {
         return sortState.direction === SortDirection.DESC
           ? +(b.balanceUsd as BigNumber).minus(a.balanceUsd as BigNumber)
           : +(a.balanceUsd as BigNumber).minus(b.balanceUsd as BigNumber);
+      } else if (sortState.column === "pnlPercent") {
+        return sortState.direction === SortDirection.DESC
+          ? +(b.pnlPercent as BigNumber).minus(a.pnlPercent as BigNumber)
+          : +(a.pnlPercent as BigNumber).minus(b.pnlPercent as BigNumber);
       }
 
       return 0; // Should never reach here
@@ -174,21 +174,6 @@ export default function PoolPositionsTable({
         </HeaderColumn>
 
         <HeaderColumn<Column, SortableColumn>
-          id="deposited"
-          sortState={sortState}
-          toggleSortByColumn={
-            !!(positions ?? []).every(
-              (position) => position.depositedUsd !== undefined,
-            )
-              ? toggleSortByColumn
-              : undefined
-          }
-          style={columnStyleMap.deposited}
-        >
-          Deposited
-        </HeaderColumn>
-
-        <HeaderColumn<Column, SortableColumn>
           id="balance"
           sortState={sortState}
           toggleSortByColumn={
@@ -201,6 +186,21 @@ export default function PoolPositionsTable({
           style={columnStyleMap.balance}
         >
           Balance
+        </HeaderColumn>
+
+        <HeaderColumn<Column, SortableColumn>
+          id="pnlPercent"
+          sortState={sortState}
+          toggleSortByColumn={
+            !!(positions ?? []).every(
+              (position) => position.pnlPercent !== undefined,
+            )
+              ? toggleSortByColumn
+              : undefined
+          }
+          style={columnStyleMap.pnlPercent}
+        >
+          PnL
         </HeaderColumn>
 
         <HeaderColumn<Column, SortableColumn>
