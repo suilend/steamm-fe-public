@@ -26,7 +26,7 @@ import {
 } from "@suilend/sdk";
 
 import AprBreakdown from "@/components/AprBreakdown";
-import { columnStyleMap } from "@/components/positions/PoolPositionsTable";
+import { columnStyleMap } from "@/components/portfolio/PoolPositionsTable";
 import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
 import TokenLogos from "@/components/TokenLogos";
@@ -42,12 +42,12 @@ import { PoolPosition } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolPositionRowProps {
-  position: PoolPosition;
+  poolPosition: PoolPosition;
   isLast?: boolean;
 }
 
 export default function PoolPositionRow({
-  position,
+  poolPosition,
   isLast,
 }: PoolPositionRowProps) {
   const { explorer } = useSettingsContext();
@@ -60,7 +60,7 @@ export default function PoolPositionRow({
   const [stakedPercentOverride, setStakedPercentOverride] = useState<
     BigNumber | undefined
   >(undefined);
-  const stakedPercent = stakedPercentOverride ?? position.stakedPercent;
+  const stakedPercent = stakedPercentOverride ?? poolPosition.stakedPercent;
 
   // Stake
   const [isStaking, setIsStaking] = useState<boolean>(false);
@@ -74,9 +74,11 @@ export default function PoolPositionRow({
 
       setIsStaking(true);
 
-      const submitAmount = new BigNumber(getBalance(position.pool.lpTokenType))
+      const submitAmount = new BigNumber(
+        getBalance(poolPosition.pool.lpTokenType),
+      )
         .times(
-          10 ** appData.coinMetadataMap[position.pool.lpTokenType].decimals,
+          10 ** appData.coinMetadataMap[poolPosition.pool.lpTokenType].decimals,
         )
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
@@ -85,7 +87,7 @@ export default function PoolPositionRow({
 
       let obligationIndex = getIndexOfObligationWithDeposit(
         userData.obligations,
-        position.pool.lpTokenType,
+        poolPosition.pool.lpTokenType,
       ); // Assumes up to one obligation has deposits of the LP token type
       if (obligationIndex === -1)
         obligationIndex = userData.obligations.findIndex(
@@ -102,7 +104,7 @@ export default function PoolPositionRow({
       );
       await appData.lm.suilendClient.depositIntoObligation(
         address,
-        position.pool.lpTokenType,
+        poolPosition.pool.lpTokenType,
         submitAmount,
         transaction,
         obligationOwnerCapId,
@@ -115,7 +117,7 @@ export default function PoolPositionRow({
 
       showSuccessTxnToast(
         `Staked ${formatPair(
-          position.pool.coinTypes.map(
+          poolPosition.pool.coinTypes.map(
             (coinType) => appData.coinMetadataMap[coinType].symbol,
           ),
         )} LP tokens`,
@@ -138,7 +140,7 @@ export default function PoolPositionRow({
     } finally {
       setIsStaking(false);
 
-      // The order of these two calls is important (refreshRawBalancesMap must be called after refreshUserData so the position doesn't disappear while the new obligations are still being fetched)
+      // The order of these two calls is important (refreshRawBalancesMap must be called after refreshUserData so the pool position doesn't disappear while the new obligations are still being fetched)
       await refreshUserData();
       await refreshRawBalancesMap();
     }
@@ -163,7 +165,7 @@ export default function PoolPositionRow({
       try {
         const obligationIndex = getIndexOfObligationWithDeposit(
           userData.obligations,
-          position.pool.lpTokenType,
+          poolPosition.pool.lpTokenType,
         ); // Assumes up to one obligation has deposits of the LP token type
         if (obligationIndex === -1) throw Error("Obligation not found"); // Should never happen as you can't unstake if you don't have any staked
         console.log("XXX obligationIndex:", obligationIndex);
@@ -172,7 +174,7 @@ export default function PoolPositionRow({
           address,
           userData.obligationOwnerCaps[obligationIndex].id,
           userData.obligations[obligationIndex].id,
-          position.pool.lpTokenType,
+          poolPosition.pool.lpTokenType,
           submitAmount,
           transaction,
         );
@@ -187,7 +189,7 @@ export default function PoolPositionRow({
 
       showSuccessTxnToast(
         `Unstaked ${formatPair(
-          position.pool.coinTypes.map(
+          poolPosition.pool.coinTypes.map(
             (coinType) => appData.coinMetadataMap[coinType].symbol,
           ),
         )} LP tokens`,
@@ -210,7 +212,7 @@ export default function PoolPositionRow({
     } finally {
       setIsUnstaking(false);
 
-      // The order of these two calls is important (refreshUserData must be called after refreshRawBalancesMap so the position doesn't disappear while the new balances are still being fetched)
+      // The order of these two calls is important (refreshUserData must be called after refreshRawBalancesMap so the pool position doesn't disappear while the new balances are still being fetched)
       await refreshRawBalancesMap();
       await refreshUserData();
     }
@@ -222,17 +224,17 @@ export default function PoolPositionRow({
         "group relative z-[1] flex min-h-[106px] w-full min-w-max shrink-0 cursor-pointer flex-row items-center py-[16px] transition-colors hover:bg-tertiary",
         !isLast && "min-h-[calc(106px+1px)] border-b",
       )}
-      href={`${POOL_URL_PREFIX}/${position.pool.id}`}
+      href={`${POOL_URL_PREFIX}/${poolPosition.pool.id}`}
     >
       {/* Pair */}
       <div
         className="flex h-full flex-row items-center gap-3"
         style={columnStyleMap.pair}
       >
-        <TokenLogos coinTypes={position.pool.coinTypes} size={24} />
+        <TokenLogos coinTypes={poolPosition.pool.coinTypes} size={24} />
         <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
           {formatPair(
-            position.pool.coinTypes.map(
+            poolPosition.pool.coinTypes.map(
               (coinType) => appData.coinMetadataMap[coinType].symbol,
             ),
           )}
@@ -244,8 +246,8 @@ export default function PoolPositionRow({
         className="flex h-full flex-row items-center gap-1"
         style={columnStyleMap.type}
       >
-        <Tag>{position.pool.quoter.name}</Tag>
-        <Tag>{formatFeeTier(position.pool.feeTierPercent)}</Tag>
+        <Tag>{poolPosition.pool.quoter.name}</Tag>
+        <Tag>{formatFeeTier(poolPosition.pool.feeTierPercent)}</Tag>
       </div>
 
       {/* APR */}
@@ -255,7 +257,7 @@ export default function PoolPositionRow({
       >
         <AprBreakdown
           valueClassName="text-success decoration-success/50"
-          pool={position.pool}
+          pool={poolPosition.pool}
         />
       </div>
 
@@ -265,20 +267,22 @@ export default function PoolPositionRow({
         style={columnStyleMap.balance}
       >
         <div className="flex flex-col items-end gap-1">
-          {position.balanceUsd === undefined ? (
+          {poolPosition.balanceUsd === undefined ? (
             <Skeleton className="h-[24px] w-16" />
           ) : (
-            <Tooltip title={formatUsd(position.balanceUsd, { exact: true })}>
+            <Tooltip
+              title={formatUsd(poolPosition.balanceUsd, { exact: true })}
+            >
               <p className="text-p1 text-foreground">
-                {formatUsd(position.balanceUsd)}
+                {formatUsd(poolPosition.balanceUsd)}
               </p>
             </Tooltip>
           )}
 
-          {position.pool.coinTypes.map((coinType, index) => (
+          {poolPosition.pool.coinTypes.map((coinType, index) => (
             <Fragment key={index}>
-              {position.balances === undefined ? (
-                <Skeleton className="h-[21px] w-16" />
+              {poolPosition.balances === undefined ? (
+                <Skeleton className="h-[21px] w-24" />
               ) : (
                 <div className="flex flex-row items-center gap-2">
                   <TokenLogo
@@ -289,10 +293,10 @@ export default function PoolPositionRow({
                     size={16}
                   />
                   <Tooltip
-                    title={`${formatToken(position.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
+                    title={`${formatToken(poolPosition.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
                   >
                     <p className="text-p2 text-foreground">
-                      {formatToken(position.balances[index], {
+                      {formatToken(poolPosition.balances[index], {
                         exact: false,
                       })}{" "}
                       {appData.coinMetadataMap[coinType].symbol}
@@ -310,17 +314,17 @@ export default function PoolPositionRow({
         className="flex h-full flex-row items-center"
         style={columnStyleMap.pnlPercent}
       >
-        {position.pnlPercent === undefined ? (
+        {poolPosition.pnlPercent === undefined ? (
           <Skeleton className="h-[24px] w-16" />
         ) : (
           <p
             className={cn(
               "!text-p1",
-              position.pnlPercent.gte(0) ? "text-success" : "text-error",
+              poolPosition.pnlPercent.gte(0) ? "text-success" : "text-error",
             )}
           >
-            {position.pnlPercent.gte(0) ? "+" : "-"}
-            {formatPercent(new BigNumber(position.pnlPercent.abs()))}
+            {poolPosition.pnlPercent.gte(0) ? "+" : "-"}
+            {formatPercent(new BigNumber(poolPosition.pnlPercent.abs()))}
           </p>
         )}
       </div>
@@ -330,7 +334,7 @@ export default function PoolPositionRow({
         className="flex h-full flex-row items-center gap-3"
         style={columnStyleMap.stakedPercent}
       >
-        {!!appData.lm.reserveMap[position.pool.lpTokenType] ? (
+        {!!appData.lm.reserveMap[poolPosition.pool.lpTokenType] ? (
           <>
             <p className="text-p1 text-foreground">
               {formatPercent(stakedPercent)}
@@ -376,9 +380,9 @@ export default function PoolPositionRow({
         className="flex h-full flex-row items-center"
         style={columnStyleMap.claimableRewards}
       >
-        {Object.keys(position.claimableRewards).length > 0 ? (
+        {Object.keys(poolPosition.claimableRewards).length > 0 ? (
           <div className="flex flex-col items-end gap-1">
-            {Object.entries(position.claimableRewards).map(
+            {Object.entries(poolPosition.claimableRewards).map(
               ([coinType, amount]) => {
                 const coinMetadata = appData.coinMetadataMap[coinType];
 
@@ -424,10 +428,10 @@ export default function PoolPositionRow({
           />
 
           <Tooltip
-            title={`${formatPoints(position.points, { dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].decimals })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
+            title={`${formatPoints(poolPosition.points, { dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].decimals })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
           >
             <p className="text-p2 text-foreground">
-              {formatPoints(position.points)}
+              {formatPoints(poolPosition.points)}
             </p>
           </Tooltip>
         </div>

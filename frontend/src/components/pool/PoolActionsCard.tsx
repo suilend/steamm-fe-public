@@ -1061,7 +1061,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
         </div>
       </div>
 
-      <div className="flex w-full flex-col gap-2">
+      <div className="flex w-full flex-col gap-1">
         {pool.coinTypes.map((coinType, index) => {
           const coinMetadata = appData.coinMetadataMap[coinType];
 
@@ -1071,7 +1071,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
               className="flex w-full flex-row items-center justify-between"
             >
               <div className="flex flex-row items-center gap-2">
-                <TokenLogo token={getToken(coinType, coinMetadata)} size={20} />
+                <TokenLogo token={getToken(coinType, coinMetadata)} size={16} />
                 <p className="text-p1 text-foreground">{coinMetadata.symbol}</p>
               </div>
 

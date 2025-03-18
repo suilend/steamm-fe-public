@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { useLocalStorage } from "usehooks-ts";
 
-import PoolPositionRow from "@/components/positions/PoolPositionRow";
+import PoolPositionRow from "@/components/portfolio/PoolPositionRow";
 import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PoolPosition } from "@/lib/types";
@@ -72,12 +72,12 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
 
 interface PoolPositionsTableProps {
   className?: ClassValue;
-  positions?: PoolPosition[];
+  poolPositions?: PoolPosition[];
 }
 
 export default function PoolPositionsTable({
   className,
-  positions,
+  poolPositions,
 }: PoolPositionsTableProps) {
   // Sort
   type SortState = { column: SortableColumn; direction: SortDirection };
@@ -97,22 +97,25 @@ export default function PoolPositionsTable({
     });
   };
 
-  const sortedPositions = useMemo(() => {
-    if (positions === undefined || sortState === undefined) return positions;
+  const sortedPoolPositions = useMemo(() => {
+    if (poolPositions === undefined || sortState === undefined)
+      return poolPositions;
 
     if (
       (sortState.column === "aprPercent_24h" &&
-        !positions.every(
+        !poolPositions.every(
           (position) => position.pool.aprPercent_24h !== undefined,
         )) ||
       (sortState.column === "balance" &&
-        !positions.every((position) => position.balanceUsd !== undefined)) ||
+        !poolPositions.every(
+          (position) => position.balanceUsd !== undefined,
+        )) ||
       (sortState.column === "pnlPercent" &&
-        !positions.every((position) => position.pnlPercent !== undefined))
+        !poolPositions.every((position) => position.pnlPercent !== undefined))
     )
-      return positions;
+      return poolPositions;
 
-    return positions.slice().sort((a, b) => {
+    return poolPositions.slice().sort((a, b) => {
       if (sortState.column === "aprPercent_24h") {
         return sortState.direction === SortDirection.DESC
           ? +(b.pool.aprPercent_24h as BigNumber).minus(
@@ -133,7 +136,7 @@ export default function PoolPositionsTable({
 
       return 0; // Should never reach here
     });
-  }, [positions, sortState]);
+  }, [poolPositions, sortState]);
 
   return (
     <div
@@ -162,7 +165,7 @@ export default function PoolPositionsTable({
           id="aprPercent_24h"
           sortState={sortState}
           toggleSortByColumn={
-            !!(positions ?? []).every(
+            !!(poolPositions ?? []).every(
               (position) => position.pool.aprPercent_24h !== undefined,
             )
               ? toggleSortByColumn
@@ -177,7 +180,7 @@ export default function PoolPositionsTable({
           id="balance"
           sortState={sortState}
           toggleSortByColumn={
-            !!(positions ?? []).every(
+            !!(poolPositions ?? []).every(
               (position) => position.balanceUsd !== undefined,
             )
               ? toggleSortByColumn
@@ -192,7 +195,7 @@ export default function PoolPositionsTable({
           id="pnlPercent"
           sortState={sortState}
           toggleSortByColumn={
-            !!(positions ?? []).every(
+            !!(poolPositions ?? []).every(
               (position) => position.pnlPercent !== undefined,
             )
               ? toggleSortByColumn
@@ -226,7 +229,7 @@ export default function PoolPositionsTable({
       </div>
 
       {/* Rows */}
-      {sortedPositions === undefined ? (
+      {sortedPoolPositions === undefined ? (
         Array.from({ length: 3 }).map((_, index, array) => (
           <Skeleton
             key={index}
@@ -236,15 +239,15 @@ export default function PoolPositionsTable({
             )}
           />
         ))
-      ) : sortedPositions.length === 0 ? (
+      ) : sortedPoolPositions.length === 0 ? (
         <div className="flex h-[106px] w-full flex-row items-center justify-center">
           <p className="text-p2 text-tertiary-foreground">No positions</p>
         </div>
       ) : (
-        sortedPositions.map((position, index, array) => (
+        sortedPoolPositions.map((position, index, array) => (
           <PoolPositionRow
             key={position.pool.id}
-            position={position}
+            poolPosition={position}
             isLast={index === array.length - 1}
           />
         ))

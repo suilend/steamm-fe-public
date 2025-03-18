@@ -1,17 +1,17 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 
-import * as Sentry from "@sentry/nextjs";
 import { ChevronRight } from "lucide-react";
 
 import { formatUsd } from "@suilend/frontend-sui";
-import { showErrorToast, useWalletContext } from "@suilend/frontend-sui-next";
+import { useWalletContext } from "@suilend/frontend-sui-next";
 
 import AprBreakdown from "@/components/AprBreakdown";
 import PoolActionsCard from "@/components/pool/PoolActionsCard";
 import PoolChartCard from "@/components/pool/PoolChartCard";
 import PoolParametersCard from "@/components/pool/PoolParametersCard";
+import PoolPositionCard from "@/components/pool/PoolPositionCard";
 import SuggestedPools from "@/components/pool/SuggestedPools";
 import TransactionHistoryTable from "@/components/pool/TransactionHistoryTable";
 import Tag from "@/components/Tag";
@@ -21,19 +21,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { PoolContextProvider, usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
+import { useLoadedUserContext } from "@/contexts/UserContext";
 import useBreakpoint from "@/hooks/useBreakpoint";
+import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
 import { formatFeeTier, formatPair } from "@/lib/format";
-import { API_URL, ROOT_URL } from "@/lib/navigation";
-import {
-  HistoryDeposit,
-  HistoryRedeem,
-  HistoryTransactionType,
-} from "@/lib/types";
+import { ROOT_URL } from "@/lib/navigation";
 
 function PoolPage() {
   const { address } = useWalletContext();
   const { appData } = useLoadedAppContext();
   const { poolStats } = useStatsContext();
+  const { refresh } = useLoadedUserContext();
 
   const { pool } = usePoolContext();
 
@@ -45,68 +43,13 @@ function PoolPage() {
   );
 
   // Transaction history
-  const [transactionHistoryMapMap, setTransactionHistoryMapMap] = useState<
-    Record<string, Record<string, (HistoryDeposit | HistoryRedeem)[]>>
-  >({});
+  const { poolTransactionHistoryMap, fetchPoolTransactionHistoryMap } =
+    usePoolTransactionHistoryMap([pool.id]);
+
   const poolTransactionHistory = useMemo(
-    () => (!address ? [] : transactionHistoryMapMap[address]?.[pool.id]),
-    [address, transactionHistoryMapMap, pool.id],
+    () => (address ? poolTransactionHistoryMap?.[pool.id] : []),
+    [address, poolTransactionHistoryMap, pool.id],
   );
-
-  const fetchPoolTransactionHistory = useCallback(async () => {
-    try {
-      const res = await fetch(
-        `${API_URL}/steamm/historical/lp?${new URLSearchParams({
-          user: address!, // Checked in useEffect below
-          poolId: pool.id,
-        })}`,
-      );
-      const json: {
-        deposits: Omit<HistoryDeposit, "type">[];
-        redeems: Omit<HistoryRedeem, "type">[];
-      } = await res.json();
-      if ((json as any)?.statusCode === 500) return;
-
-      setTransactionHistoryMapMap((prev) => ({
-        ...prev,
-        [address!]: {
-          ...prev[address!],
-          [pool.id]: [
-            ...(json.deposits.map((entry) => ({
-              ...entry,
-              type: HistoryTransactionType.DEPOSIT,
-            })) as HistoryDeposit[]),
-            ...(json.redeems.map((entry) => ({
-              ...entry,
-              type: HistoryTransactionType.REDEEM,
-            })) as HistoryRedeem[]),
-          ].sort((a, b) => +b.timestamp - +a.timestamp),
-        },
-      }));
-    } catch (err) {
-      showErrorToast("Failed to fetch pool transaction history", err as Error);
-      console.error(err);
-      Sentry.captureException(err);
-    }
-  }, [address, pool.id]);
-
-  const hasFetchedTransactionHistoryMapMapRef = useRef<
-    Record<string, Record<string, boolean>>
-  >({});
-  useEffect(() => {
-    if (!address) return;
-
-    if (
-      hasFetchedTransactionHistoryMapMapRef.current[address] !== undefined &&
-      hasFetchedTransactionHistoryMapMapRef.current[address][pool.id]
-    )
-      return;
-    if (!hasFetchedTransactionHistoryMapMapRef.current[address])
-      hasFetchedTransactionHistoryMapMapRef.current[address] = {};
-    hasFetchedTransactionHistoryMapMapRef.current[address][pool.id] = true;
-
-    fetchPoolTransactionHistory();
-  }, [address, pool.id, fetchPoolTransactionHistory]);
 
   // Suggested pools
   const suggestedPools = appData.pools
@@ -117,12 +60,20 @@ function PoolPage() {
     .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
 
   // Actions
-  const onDeposit = () => {
-    setTimeout(() => fetchPoolTransactionHistory(), 1000);
+  const onDeposit = async () => {
+    refresh();
+
+    setTimeout(() => {
+      fetchPoolTransactionHistoryMap([pool.id]);
+    }, 1000);
   };
 
-  const onWithdraw = () => {
-    setTimeout(() => fetchPoolTransactionHistory(), 1000);
+  const onWithdraw = async () => {
+    refresh();
+
+    setTimeout(() => {
+      fetchPoolTransactionHistoryMap([pool.id]);
+    }, 1000);
   };
 
   return (
@@ -242,7 +193,8 @@ function PoolPage() {
               </div>
 
               {/* Right */}
-              <div className="max-md:w-full md:flex-1 lg:flex-[2]">
+              <div className="flex flex-col gap-1 max-md:w-full md:flex-1 lg:flex-[2]">
+                <PoolPositionCard />
                 <PoolActionsCard
                   key={pool.id}
                   onDeposit={onDeposit}
@@ -256,7 +208,11 @@ function PoolPage() {
           <div className="flex w-full flex-col gap-4">
             <div className="flex flex-row items-center gap-3">
               <p className="text-h3 text-foreground">Transaction history</p>
-              <Tag>{poolTransactionHistory?.length ?? 0}</Tag>
+              {poolTransactionHistory === undefined ? (
+                <Skeleton className="h-[22px] w-12" />
+              ) : (
+                <Tag>{poolTransactionHistory.length}</Tag>
+              )}
             </div>
 
             <TransactionHistoryTable

@@ -37,8 +37,8 @@ export default function TransactionHistoryRow({
   return (
     <div
       className={cn(
-        "relative z-[1] flex min-h-[56px] w-full min-w-max shrink-0 flex-row items-center py-[16px]",
-        !isLast && "min-h-[calc(56px+1px)] border-b",
+        "relative z-[1] flex min-h-[44px] w-full min-w-max shrink-0 flex-row items-center",
+        !isLast && "min-h-[calc(44px+1px)] border-b",
       )}
     >
       {/* Date */}
@@ -46,7 +46,7 @@ export default function TransactionHistoryRow({
         className="flex h-full flex-row items-center"
         style={columnStyleMap.date}
       >
-        <p className="text-p1 text-secondary-foreground">
+        <p className="text-p2 text-secondary-foreground">
           {format(
             new Date(+transaction.timestamp * 1000),
             "yyyy-MM-dd hh:mm:ss",
@@ -59,7 +59,7 @@ export default function TransactionHistoryRow({
         className="flex h-full flex-row items-center"
         style={columnStyleMap.type}
       >
-        <p className="text-p1 text-foreground">
+        <p className="text-p2 text-foreground">
           {transaction.type === HistoryTransactionType.DEPOSIT
             ? "Deposit"
             : "Withdraw"}
@@ -90,8 +90,8 @@ export default function TransactionHistoryRow({
               <Tooltip
                 title={formatToken(amount, { dp: coinMetadata.decimals })}
               >
-                <p className="text-p1 text-foreground">
-                  {formatToken(amount, { exact: false })}
+                <p className="text-p2 text-foreground">
+                  {formatToken(amount, { exact: false })} {coinMetadata.symbol}
                 </p>
               </Tooltip>
 

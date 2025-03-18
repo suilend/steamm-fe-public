@@ -269,12 +269,29 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
             const pool = await steammClient.fullClient.fetchPool(id);
 
-            const balanceA = new BigNumber(pool.balanceA.value.toString()).div(
+            const redeemQuote = await steammClient.Pool.quoteRedeem({
+              lpTokens: pool.lpSupply.value,
+              poolInfo,
+              bankInfoA: bankMap[coinTypes[0]].bankInfo,
+              bankInfoB: bankMap[coinTypes[1]].bankInfo,
+            });
+
+            const withdrawA = new BigNumber(
+              redeemQuote.withdrawA.toString(),
+            ).div(10 ** coinMetadataMap[coinTypes[0]].decimals);
+            const withdrawB = new BigNumber(
+              redeemQuote.withdrawB.toString(),
+            ).div(10 ** coinMetadataMap[coinTypes[1]].decimals);
+
+            let balanceA = new BigNumber(pool.balanceA.value.toString()).div(
               10 ** coinMetadataMap[coinTypeA].decimals,
             );
-            const balanceB = new BigNumber(pool.balanceB.value.toString()).div(
+            let balanceB = new BigNumber(pool.balanceB.value.toString()).div(
               10 ** coinMetadataMap[coinTypeB].decimals,
             );
+            balanceA = balanceA.times(withdrawA.div(balanceA));
+            balanceB = balanceB.times(withdrawB.div(balanceB));
+
             const balances = [balanceA, balanceB];
 
             const priceA =
@@ -305,6 +322,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               return undefined;
             }
 
+            const lpSupply = new BigNumber(pool.lpSupply.value.toString()).div(
+              10 ** 9,
+            );
             const tvlUsd = balanceA.times(priceA).plus(balanceB.times(priceB));
 
             const feeTierPercent = new BigNumber(poolInfo.swapFeeBps).div(100);
@@ -344,6 +364,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               balances,
               prices,
 
+              lpSupply,
               tvlUsd,
 
               feeTierPercent,

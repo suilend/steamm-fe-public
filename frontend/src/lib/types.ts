@@ -56,6 +56,7 @@ export type ParsedPool = {
   balances: [BigNumber, BigNumber];
   prices: [BigNumber, BigNumber];
 
+  lpSupply: BigNumber;
   tvlUsd: BigNumber;
 
   feeTierPercent: BigNumber;
@@ -76,9 +77,9 @@ export type PoolGroup = {
 
 export type PoolPosition = {
   pool: ParsedPool;
-  balances?: [BigNumber, BigNumber];
-  balanceUsd?: BigNumber;
-  pnlPercent?: BigNumber;
+  balances: [BigNumber, BigNumber];
+  balanceUsd: BigNumber;
+  pnlPercent?: BigNumber; // Fetched separately (BE)
   stakedPercent: BigNumber;
   claimableRewards: Record<string, BigNumber>;
   points: BigNumber;
