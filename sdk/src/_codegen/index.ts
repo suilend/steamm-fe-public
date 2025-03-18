@@ -6,4 +6,4 @@ export * as ConstantProductFunctions from "./constantProductFunctions";
 export * as OracleQuoterFunctions from "./oracleQuoterFunctions";
 export * as QuoteFunctions from "./quoteFunctions";
 export * as EmitDryRun from "./emitDryRun";
-export * as OracFunctions from "./orcFunctions";
+export * as OracleFunctions from "./oracleFunctions";

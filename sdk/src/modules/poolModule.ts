@@ -1,8 +1,13 @@
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
-import { SUI_CLOCK_OBJECT_ID, normalizeSuiAddress } from "@mysten/sui/utils";
+import {
+  SUI_CLOCK_OBJECT_ID,
+  normalizeSuiAddress,
+  toHex,
+} from "@mysten/sui/utils";
 
+import { OracleFunctions } from "../_codegen";
 import { PriceInfoObject } from "../_codegen/_generated/_dependencies/source/0x8d97f1cd6ac663735be08d1d2b6d02a159e711586461306ce60a2b7a6a565a9e/price-info/structs";
-import { getPythPrice } from "../_codegen/orcFunctions";
+import { getPythPrice } from "../_codegen/oracleFunctions";
 import {
   SwapQuote,
   createConstantProductPool,
@@ -124,7 +129,7 @@ export class PoolModule implements IModule {
     const quoterType = getQuoterType(poolInfo.quoterType);
     const extraArgs: OracleSwapExtraArgs | { type: "ConstantProduct" } =
       quoterType === "Oracle"
-        ? await this.getOracleArgs(tx, poolInfo)
+        ? await getOracleArgs(this.sdk, tx, poolInfo)
         : { type: "ConstantProduct" };
 
     const swapResult = poolScript.swap(tx, {
@@ -151,7 +156,7 @@ export class PoolModule implements IModule {
     const quoterType = getQuoterType(poolInfo.quoterType);
     const extraArgs: OracleSwapExtraArgs | { type: "ConstantProduct" } =
       quoterType === "Oracle"
-        ? await this.getOracleArgs(tx, poolInfo)
+        ? await getOracleArgs(this.sdk, tx, poolInfo)
         : { type: "ConstantProduct" };
 
     poolScript.quoteSwap(tx, { ...args, ...extraArgs });
@@ -338,82 +343,159 @@ export class PoolModule implements IModule {
 
   //   return [coinA, coinB];
   // }
+}
 
-  private async getOracleArgs(
-    tx: Transaction,
-    poolInfo: PoolInfo,
-  ): Promise<OracleSwapExtraArgs> {
-    const oracleData: OracleInfo[] = await this.sdk.getOracles();
+export async function getOracleArgs(
+  sdk: SteammSDK,
+  tx: Transaction,
+  poolInfo: PoolInfo,
+): Promise<OracleSwapExtraArgs> {
+  const oracleData: OracleInfo[] = await sdk.getOracles();
 
-    const oracleInfoA = oracleData.find(
-      (oracle) => oracle.oracleIndex === poolInfo.quoterData?.oracleIndexA,
-    ) as OracleInfo;
+  const oracleInfoA = oracleData.find(
+    (oracle) => oracle.oracleIndex === poolInfo.quoterData?.oracleIndexA,
+  );
 
-    const oracleInfoB = oracleData.find(
-      (oracle) => oracle.oracleIndex === poolInfo.quoterData?.oracleIndexA,
-    ) as OracleInfo;
+  if (!oracleInfoA) {
+    throw new Error("Oracle info A not found");
+  }
 
-    // assuming oracles are of type pyth
-    const priceInfoObjectIdA = (await this.sdk.pythClient.getPriceFeedObjectId(
-      oracleInfoA.oracleIdentifier as string,
+  const oracleInfoB = oracleData.find(
+    (oracle) => oracle.oracleIndex === poolInfo.quoterData?.oracleIndexB,
+  ) as OracleInfo;
+
+  if (!oracleInfoB) {
+    throw new Error("Oracle info B not found");
+  }
+
+  // assuming oracles are of type pyth
+  if (oracleInfoA.oracleType !== "pyth" || oracleInfoB.oracleType !== "pyth") {
+    throw new Error("unimplemented: switchboard");
+  }
+
+  let priceInfoObjectIdA;
+  let priceInfoObjectIdB;
+  if (sdk.sdkOptions.enableTestMode) {
+    priceInfoObjectIdA = sdk.getMockOraclePriceObject(
+      toHex(new Uint8Array(oracleInfoA.oracleIdentifier as number[])),
+    );
+    priceInfoObjectIdB = sdk.getMockOraclePriceObject(
+      toHex(new Uint8Array(oracleInfoB.oracleIdentifier as number[])),
+    );
+  } else {
+    priceInfoObjectIdA = (await sdk.pythClient.getPriceFeedObjectId(
+      toHex(new Uint8Array(oracleInfoA.oracleIdentifier as number[])),
     )) as string;
-    const priceInfoObjectIdB = (await this.sdk.pythClient.getPriceFeedObjectId(
-      oracleInfoB.oracleIdentifier as string,
+    priceInfoObjectIdB = (await sdk.pythClient.getPriceFeedObjectId(
+      toHex(new Uint8Array(oracleInfoB.oracleIdentifier as number[])),
     )) as string;
+  }
 
-    const priceInfoObjectIds: string[] = [];
-    const stalePriceIdentifiers: string[] = [];
-    priceInfoObjectIds.push(priceInfoObjectIdA);
-    priceInfoObjectIds.push(priceInfoObjectIdB);
+  const priceInfoObjectIds: string[] = [];
+  const stalePriceIdentifiers: string[] = [];
+  priceInfoObjectIds.push(priceInfoObjectIdA);
+  priceInfoObjectIds.push(priceInfoObjectIdB);
 
-    for (const priceInfoObjectId of priceInfoObjectIds) {
-      const priceInfoObject = await PriceInfoObject.fetch(
-        this.sdk.fullClient,
-        priceInfoObjectId,
-      );
+  for (const priceInfoObjectId of priceInfoObjectIds) {
+    const priceInfoObject = await PriceInfoObject.fetch(
+      sdk.fullClient,
+      priceInfoObjectId,
+    );
 
-      const publishTime = priceInfoObject.priceInfo.priceFeed.price.timestamp;
-      const stalenessSeconds = Date.now() / 1000 - Number(publishTime);
+    const publishTime = priceInfoObject.priceInfo.priceFeed.price.timestamp;
+    const stalenessSeconds = Date.now() / 1000 - Number(publishTime);
 
-      if (stalenessSeconds > 20) {
-        stalePriceIdentifiers.push(priceInfoObjectId);
-      }
+    console.log("Date now: ", Date.now() / 1000);
+    console.log("Publish time: ", publishTime);
+    console.log("Staleness: ", stalenessSeconds);
+    if (stalenessSeconds > 20) {
+      stalePriceIdentifiers.push(priceInfoObjectId);
     }
+  }
 
-    if (stalePriceIdentifiers.length > 0) {
-      const stalePriceUpdateData =
-        await this.sdk.pythConnection.getPriceFeedsUpdateData(
-          stalePriceIdentifiers,
-        );
-      await this.sdk.pythClient.updatePriceFeeds(
-        tx,
-        stalePriceUpdateData,
-        stalePriceIdentifiers,
-      );
-    }
+  if (stalePriceIdentifiers.length > 0) {
+    console.log("PRICE STALE...");
+    const stalePriceUpdateData =
+      await sdk.pythConnection.getPriceFeedsUpdateData(stalePriceIdentifiers);
+    await sdk.pythClient.updatePriceFeeds(
+      tx,
+      stalePriceUpdateData,
+      stalePriceIdentifiers,
+    );
+  }
 
-    const oraclePriceA = getPythPrice(tx, {
+  const oraclePriceA = getPythPrice(
+    tx,
+    {
       registry: tx.object(
-        this.sdk.sdkOptions.oracle_config.config?.oracleRegistryId as string,
+        sdk.sdkOptions.oracle_config.config?.oracleRegistryId as string,
       ),
       priceInfoObj: tx.object(priceInfoObjectIdA),
       oracleIndex: tx.pure.u64(oracleInfoA.oracleIndex),
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
-    });
+    },
+    sdk.sdkOptions.oracle_config.published_at,
+  );
 
-    const oraclePriceB = getPythPrice(tx, {
+  const oraclePriceB = getPythPrice(
+    tx,
+    {
       registry: tx.object(
-        this.sdk.sdkOptions.oracle_config.config?.oracleRegistryId as string,
+        sdk.sdkOptions.oracle_config.config?.oracleRegistryId as string,
       ),
       priceInfoObj: tx.object(priceInfoObjectIdB),
       oracleIndex: tx.pure.u64(oracleInfoB.oracleIndex),
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
-    });
+    },
+    sdk.sdkOptions.oracle_config.published_at,
+  );
 
-    return {
-      type: "Oracle",
-      oraclePriceA,
-      oraclePriceB,
-    };
-  }
+  return {
+    type: "Oracle",
+    oraclePriceA,
+    oraclePriceB,
+  };
+}
+
+export async function initOracleRegistry(
+  sdk: SteammSDK,
+  tx: Transaction,
+  args: {
+    pythMaxStalenessThresholdS: number;
+    pythMaxConfidenceIntervalPct: number;
+    switchboardMaxStalenessThresholdS: number;
+    switchboardMaxConfidenceIntervalPct: number;
+  },
+) {
+  const pubAt = sdk.sdkOptions.oracle_config.published_at;
+  const pkgId = sdk.sdkOptions.oracle_config.package_id;
+
+  const config = OracleFunctions.newOracleRegistryConfig(
+    tx,
+    {
+      pythMaxStalenessThresholdS: BigInt(args.pythMaxStalenessThresholdS),
+      pythMaxConfidenceIntervalPct: BigInt(args.pythMaxConfidenceIntervalPct),
+      switchboardMaxStalenessThresholdS: BigInt(
+        args.switchboardMaxStalenessThresholdS,
+      ),
+      switchboardMaxConfidenceIntervalPct: BigInt(
+        args.switchboardMaxConfidenceIntervalPct,
+      ),
+    },
+    pubAt,
+  );
+
+  const [oracleRegistry, adminCap] = OracleFunctions.newRegistry(
+    tx,
+    config,
+    pubAt,
+  );
+
+  tx.transferObjects([adminCap], sdk.senderAddress);
+
+  tx.moveCall({
+    target: `0x2::transfer::public_share_object`,
+    typeArguments: [`${pkgId}::oracles::OracleRegistry`],
+    arguments: [oracleRegistry],
+  });
 }

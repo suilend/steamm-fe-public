@@ -6,6 +6,17 @@ import {
   TransactionObjectInput,
 } from "@mysten/sui/transactions";
 
+export function newRegistry(
+  tx: Transaction,
+  config: TransactionObjectInput,
+  publishedAt: string = PUBLISHED_AT,
+) {
+  return tx.moveCall({
+    target: `${publishedAt}::oracles::new`,
+    arguments: [obj(tx, config)],
+  });
+}
+
 export function metadata(
   tx: Transaction,
   priceUpdate: TransactionObjectInput,

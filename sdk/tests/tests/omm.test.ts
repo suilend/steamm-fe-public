@@ -15,14 +15,8 @@ import { BankList, DataPage, PoolInfo } from "../../src/types";
 
 import { STEAMM_PKG_ID } from "./../packages";
 import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
-import { parseErrorCode, PoolModule } from "../../src";
-import {
-  createCoinAndBankHelper,
-  createOraclePoolHelper,
-  createPoolHelper,
-  mintCoin,
-  testConfig,
-} from "../utils/utils";
+import { PoolModule } from "../../src";
+import { createCoinAndBankHelper, mintCoin, testConfig } from "../utils/utils";
 
 dotenv.config();
 
@@ -38,6 +32,8 @@ export async function test() {
     beforeEach((): void => {
       // jest.setTimeout(60000);
       setDefaultTimeout(60000);
+
+      sdk.testConfig = { mockOracleObjs: {} };
     });
 
     beforeAll(async () => {
@@ -87,16 +83,6 @@ export async function test() {
       const coinAData = await createCoinAndBankHelper(sdk, "A");
       const coinBData = await createCoinAndBankHelper(sdk, "B");
 
-      // get banks
-      const banks = await sdk.getBanks();
-      const bankA = banks[coinAData.coinType];
-      const bankB = banks[coinBData.coinType];
-
-      const lpAB = await createOraclePoolHelper(sdk, coinAData, coinBData);
-
-      // Seed the pools with liquidity
-      const pools = await sdk.getPools();
-
       const poolAB = (
         await sdk.getPools([coinAData.coinType, coinBData.coinType])
       )[0];
@@ -118,7 +104,7 @@ export async function test() {
 
       depositTx.transferObjects([coinA, coinB], sdk.senderAddress);
 
-      const txResult = await sdk.fullClient.signAndExecuteTransaction({
+      await sdk.fullClient.signAndExecuteTransaction({
         transaction: depositTx,
         signer: keypair,
         options: {
@@ -132,18 +118,19 @@ export async function test() {
       const swapTx = new Transaction();
 
       const coinIn = mintCoin(
-        depositTx,
+        swapTx,
         coinAData.coinType,
         coinAData.treasury,
         "10000",
       );
       const coinOut = mintCoin(
-        depositTx,
+        swapTx,
         coinBData.coinType,
         coinBData.treasury,
         "0",
       );
 
+      await sdk.refreshPoolCache();
       const poolModule = new PoolModule(sdk);
 
       await poolModule.swap(swapTx, {
@@ -157,9 +144,9 @@ export async function test() {
         minAmountOut: BigInt("0"),
       });
 
-      depositTx.transferObjects([coinA, coinB], sdk.senderAddress);
+      swapTx.transferObjects([coinA, coinB], sdk.senderAddress);
 
-      const swapTxResult = await sdk.fullClient.signAndExecuteTransaction({
+      await sdk.fullClient.signAndExecuteTransaction({
         transaction: swapTx,
         signer: keypair,
         options: {
@@ -167,51 +154,6 @@ export async function test() {
           showEvents: true,
         },
       });
-
-      console.log(swapTxResult);
-
-      // const { route, quote } = await sdk.Router.getBestSwapRoute(
-      //   {
-      //     coinIn: coinAData.coinType,
-      //     coinOut: coinCData.coinType,
-      //   },
-      //   BigInt("50000"),
-      // );
-
-      // await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // const swapTx = new Transaction();
-      // const coinIn = mintCoin(swapTx, coinAData.coinType, coinAData.treasury);
-
-      // await sdk.Router.swapWithRoute(swapTx, {
-      //   coinIn: coinIn,
-      //   route,
-      //   quote,
-      // });
-
-      // swapTx.transferObjects([coinIn], sdk.senderAddress);
-
-      // // Dry run the transaction first
-      // const devResult = await sdk.fullClient.devInspectTransactionBlock({
-      //   transactionBlock: swapTx,
-      //   sender: sdk.senderAddress,
-      //   additionalArgs: { showRawTxnDataAndEffects: true },
-      // });
-
-      // // Check if dry run was successful
-      // if (devResult.effects.status.status !== "success") {
-      //   const parsedError = parseErrorCode(devResult);
-      //   throw new Error(`Dry run failed: ${JSON.stringify(parsedError)}`);
-      // }
-
-      // const swapTxResult = await sdk.fullClient.signAndExecuteTransaction({
-      //   transaction: swapTx,
-      //   signer: keypair,
-      //   options: {
-      //     showEffects: true,
-      //     showEvents: true,
-      //   },
-      // });
     });
   });
 }

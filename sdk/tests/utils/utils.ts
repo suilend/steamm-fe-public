@@ -1,5 +1,6 @@
+import { ObjectOwner } from "@mysten/sui/client";
 import { Transaction, TransactionResult } from "@mysten/sui/transactions";
-import { normalizeSuiAddress } from "@mysten/sui/utils";
+import { normalizeSuiAddress, toHex } from "@mysten/sui/utils";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
 import { SteammSDK, SuiAddressType, parseErrorCode } from "../../src";
@@ -20,9 +21,12 @@ import {
 import { createCoinBytecode, getTreasuryAndCoinMeta } from "./coinGen";
 import { createBToken2, createLpToken2 } from "./createHelper";
 
+let feedIdCounter = 0;
+
 export function testConfig() {
   return {
     fullRpcUrl: "http://127.0.0.1:9000",
+    enableTestMode: true,
     steamm_config: {
       package_id: STEAMM_PKG_ID,
       published_at: STEAMM_PKG_ID,
@@ -301,18 +305,24 @@ export async function createOraclePoolHelper(
   const newPoolTx = new Transaction();
   console.log("A");
 
+  const oracleIndexA = feedIdCounter++;
+  const oracleIndexB = feedIdCounter++;
   const priceObjA = createPythPrice(sdk, newPoolTx, {
     price: BigInt("1"),
     expo: 1,
-    idx: 0,
+    idx: oracleIndexA,
   });
+
+  // Note: its u8 so only works until 255
+  const oracleIndexAByteArray = [oracleIndexA, ...Array(31).fill(0)];
+  const oracleIndexBByteArray = [oracleIndexB, ...Array(31).fill(0)];
 
   console.log("b");
 
   const priceObjB = createPythPrice(sdk, newPoolTx, {
     price: BigInt("1"),
     expo: 1,
-    idx: 1,
+    idx: oracleIndexB,
   });
 
   newPoolTx.moveCall({
@@ -348,8 +358,8 @@ export async function createOraclePoolHelper(
 
   await sdk.Pool.createPool(newPoolTx, {
     type: "Oracle",
-    oracleIndexA: BigInt("0"),
-    oracleIndexB: BigInt("1"),
+    oracleIndexA: BigInt(oracleIndexA),
+    oracleIndexB: BigInt(oracleIndexB),
     bTokenMetaA: coinAData.bTokenmeta,
     bTokenMetaB: coinBData.bTokenmeta,
     bTokenTypeA: coinAData.btokenType,
@@ -364,8 +374,6 @@ export async function createOraclePoolHelper(
     coinMetaB: coinBData.coinMeta,
   });
 
-  console.log("call data: ", JSON.stringify(newPoolTx.getData()));
-
   const newPoolTxResponse = await sdk.fullClient.signAndExecuteTransaction({
     transaction: newPoolTx,
     signer: sdk.signer!,
@@ -375,6 +383,38 @@ export async function createOraclePoolHelper(
       showObjectChanges: true,
     },
   });
+
+  const priceInfoObjects = newPoolTxResponse.objectChanges!.filter((change) => {
+    if (change.type === "created") {
+      return change.objectType.includes("price_info::PriceInfoObject");
+    }
+    return false;
+  }) as {
+    digest: string;
+    objectId: string;
+    objectType: string;
+    owner: ObjectOwner;
+    sender: string;
+    type: "created";
+    version: string;
+  }[];
+
+  if (priceInfoObjects.length !== 2) {
+    throw new Error(
+      `Expected 2 price info objects, got ${priceInfoObjects.length}`,
+    );
+  }
+
+  console.log("Price Info Objects:", priceInfoObjects);
+
+  sdk.mockOracleObjectForTesting(
+    toHex(new Uint8Array(oracleIndexAByteArray as number[])),
+    priceInfoObjects[0].objectId,
+  );
+  sdk.mockOracleObjectForTesting(
+    toHex(new Uint8Array(oracleIndexBByteArray as number[])),
+    priceInfoObjects[1].objectId,
+  );
 
   await new Promise((resolve) => setTimeout(resolve, 500));
 

@@ -36,7 +36,7 @@ import { fromB64 } from "@mysten/sui/utils";
 
 export function isAdminCap(type: string): boolean {
   type = compressSuiType(type);
-  return type === `${PKG_V1}::oracles::AdminCap`;
+  return /^0x[a-fA-F0-9]+::oracles::AdminCap$/.test(type);
 }
 
 export interface AdminCapFields {
@@ -136,7 +136,7 @@ export class AdminCap implements StructClass {
       id: decodeFromFieldsWithTypes(UID.reified(), item.fields.id),
       oracleRegistryId: decodeFromFieldsWithTypes(
         ID.reified(),
-        item.fields.oracleRegistryId,
+        item.fields.oracle_registry_id,
       ),
     });
   }
@@ -228,7 +228,7 @@ export class AdminCap implements StructClass {
 
 export function isOracle(type: string): boolean {
   type = compressSuiType(type);
-  return type === `${PKG_V1}::oracles::Oracle`;
+  return /^0x[a-fA-F0-9]+::oracles::Oracle$/.test(type);
 }
 
 export interface OracleFields {
@@ -326,11 +326,11 @@ export class Oracle implements StructClass {
     return Oracle.reified().new({
       oracleType: decodeFromFieldsWithTypes(
         OracleType.reified(),
-        item.fields.oracleType,
+        item.fields.oracle_type, // error is here NOTE
       ),
       extraFields: decodeFromFieldsWithTypes(
         Bag.reified(),
-        item.fields.extraFields,
+        item.fields.extra_fields,
       ),
     });
   }
@@ -419,7 +419,7 @@ export class Oracle implements StructClass {
 
 export function isOraclePriceUpdate(type: string): boolean {
   type = compressSuiType(type);
-  return type === `${PKG_V1}::oracles::OraclePriceUpdate`;
+  return /^0x[a-fA-F0-9]+::oracles::OraclePriceUpdate$/.test(type);
 }
 
 export interface OraclePriceUpdateFields {
@@ -540,16 +540,16 @@ export class OraclePriceUpdate implements StructClass {
     return OraclePriceUpdate.reified().new({
       oracleRegistryId: decodeFromFieldsWithTypes(
         ID.reified(),
-        item.fields.oracleRegistryId,
+        item.fields.oracle_registry_id,
       ),
-      oracleIndex: decodeFromFieldsWithTypes("u64", item.fields.oracleIndex),
+      oracleIndex: decodeFromFieldsWithTypes("u64", item.fields.oracle_index),
       price: decodeFromFieldsWithTypes(
         OracleDecimal.reified(),
         item.fields.price,
       ),
       emaPrice: decodeFromFieldsWithTypes(
         Option.reified(OracleDecimal.reified()),
-        item.fields.emaPrice,
+        item.fields.ema_price,
       ),
       metadata: decodeFromFieldsWithTypes(
         OracleMetadata.reified(),
@@ -663,7 +663,7 @@ export class OraclePriceUpdate implements StructClass {
 
 export function isOracleRegistry(type: string): boolean {
   type = compressSuiType(type);
-  return type === `${PKG_V1}::oracles::OracleRegistry`;
+  return /^0x[a-fA-F0-9]+::oracles::OracleRegistry$/.test(type);
 }
 
 export interface OracleRegistryFields {
@@ -797,7 +797,7 @@ export class OracleRegistry implements StructClass {
       ),
       extraFields: decodeFromFieldsWithTypes(
         Bag.reified(),
-        item.fields.extraFields,
+        item.fields.extra_fields,
       ),
     });
   }
@@ -901,7 +901,7 @@ export class OracleRegistry implements StructClass {
 
 export function isOracleRegistryConfig(type: string): boolean {
   type = compressSuiType(type);
-  return type === `${PKG_V1}::oracles::OracleRegistryConfig`;
+  return /^0x[a-fA-F0-9]+::oracles::OracleRegistryConfig$/.test(type);
 }
 
 export interface OracleRegistryConfigFields {
@@ -1034,23 +1034,23 @@ export class OracleRegistryConfig implements StructClass {
     return OracleRegistryConfig.reified().new({
       pythMaxStalenessThresholdS: decodeFromFieldsWithTypes(
         "u64",
-        item.fields.pythMaxStalenessThresholdS,
+        item.fields.pyth_max_staleness_threshold_s,
       ),
       pythMaxConfidenceIntervalPct: decodeFromFieldsWithTypes(
         "u64",
-        item.fields.pythMaxConfidenceIntervalPct,
+        item.fields.pyth_max_confidence_interval_pct,
       ),
       switchboardMaxStalenessThresholdS: decodeFromFieldsWithTypes(
         "u64",
-        item.fields.switchboardMaxStalenessThresholdS,
+        item.fields.switchboard_max_staleness_threshold_s,
       ),
       switchboardMaxConfidenceIntervalPct: decodeFromFieldsWithTypes(
         "u64",
-        item.fields.switchboardMaxConfidenceIntervalPct,
+        item.fields.switchboard_max_confidence_interval_pct,
       ),
       extraFields: decodeFromFieldsWithTypes(
         Bag.reified(),
-        item.fields.extraFields,
+        item.fields.extra_fields,
       ),
     });
   }
@@ -1415,31 +1415,31 @@ export class OracleType implements EnumClass {
   static fromFieldsWithTypes(
     data: EnumOutputShapeWithKeys<any, any>,
   ): OracleType {
-    switch (data.$kind) {
-      case "pyth":
+    switch (data.variant) {
+      case "Pyth":
         return OracleType.reified().new({
           pyth: {
             priceIdentifier: decodeFromFieldsWithTypes(
               PriceIdentifier.reified(),
-              data.pyth!.priceIdentifier,
+              data.fields.price_identifier,
             ),
           },
           $kind: "pyth",
         });
 
-      case "switchboard":
+      case "Switchboard":
         return OracleType.reified().new({
           switchboard: {
             feedId: decodeFromFieldsWithTypes(
               ID.reified(),
-              data.switchboard!.feedId,
+              data.fields.feed_id,
             ),
           },
           $kind: "switchboard",
         });
 
       default:
-        throw new Error(" unknown variant: " + data.$kind);
+        throw new Error(" unknown variant: " + data.variant);
     }
   }
 

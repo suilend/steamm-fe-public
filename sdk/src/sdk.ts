@@ -42,7 +42,12 @@ export type SdkOptions = {
   steamm_script_config: Package;
   suilend_config: Package<SuilendConfigs>;
   cache_refresh_ms?: number /* default: 5000 */;
+  enableTestMode?: boolean;
 };
+
+interface TestConfig {
+  mockOracleObjs: Record<string, string>;
+}
 
 interface PoolCache {
   pools: PoolInfo[];
@@ -70,6 +75,7 @@ export class SteammSDK {
   protected _oracleRegistry?: OracleCache;
   protected _pythClient: SuiPythClient;
   protected _pythConnection: SuiPriceServiceConnection;
+  testConfig?: TestConfig;
 
   protected _signer: Signer | undefined;
   protected _senderAddress = "";
@@ -272,7 +278,7 @@ export class SteammSDK {
       Date.now() >
         this._oracleRegistry.updatedAt + this.sdkOptions.cache_refresh_ms
     ) {
-      await this.refreshBankCache();
+      await this.refreshOracleCache();
     }
 
     if (!this._oracleRegistry) {
@@ -327,7 +333,7 @@ export class SteammSDK {
     this._banks = { banks: extractBankList(eventData), updatedAt: Date.now() };
   }
 
-  private async refreshPoolCache() {
+  async refreshPoolCache() {
     const pkgAddy = this.sourcePkgId();
 
     let eventData: EventData<NewPoolEvent>[] = [];
@@ -358,6 +364,28 @@ export class SteammSDK {
       }
     });
 
-    this._pools = { pools: extractPoolInfo(eventData), updatedAt: Date.now() };
+    this._pools = { pools, updatedAt: Date.now() };
+  }
+
+  mockOracleObjectForTesting(feedId: string, objectId: string) {
+    if (!this._sdkOptions.enableTestMode) {
+      throw new Error("Mocking only enabled in test mode.");
+    }
+    if (!this.testConfig) {
+      this.testConfig = { mockOracleObjs: {} };
+    }
+    this.testConfig.mockOracleObjs[feedId] = objectId;
+  }
+
+  getMockOraclePriceObject(feedId: string): string {
+    if (!this._sdkOptions.enableTestMode) {
+      throw new Error("Mocking only enabled in test mode.");
+    }
+
+    const mockObject = this.testConfig!.mockOracleObjs[feedId];
+    if (!mockObject) {
+      throw new Error(`Mock oracle object for feedId ${feedId} not found.`);
+    }
+    return mockObject;
   }
 }
