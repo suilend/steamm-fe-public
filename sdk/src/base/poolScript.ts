@@ -205,6 +205,31 @@ export class PoolScript {
     return [coinA, coinB, redeemResult];
   }
 
+  public redeemLiquidityWithProvision(
+    tx: Transaction,
+    args: PoolRedeemLiquidityArgs,
+  ): [TransactionArgument, TransactionArgument, TransactionArgument] {
+    const callArgs = {
+      pool: tx.object(this.pool.poolInfo.poolId),
+      bankA: tx.object(this.bankA.bankInfo.bankId),
+      bankB: tx.object(this.bankB.bankInfo.bankId),
+      lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
+      lpTokens: args.lpCoin,
+      minA: args.minA,
+      minB: args.minB,
+      clock: tx.object(SUI_CLOCK_OBJECT_ID),
+    };
+
+    const [coinA, coinB, redeemResult] =
+      PoolScriptFunctions.redeemLiquidityWithProvision(
+        tx,
+        this.poolScriptTypes(),
+        callArgs,
+        this.publishedAt,
+      );
+    return [coinA, coinB, redeemResult];
+  }
+
   public quoteDeposit(
     tx: Transaction,
     args: QuoteDepositArgs,

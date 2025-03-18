@@ -1,7 +1,14 @@
 import BigNumber from "bignumber.js";
 
+import { BankInfo, PoolInfo } from "@suilend/steamm-sdk";
+import { Bank } from "@suilend/steamm-sdk/_codegen/_generated/steamm/bank/structs";
+import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
+import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
+
 export type ParsedBank = {
   id: string;
+  bank: Bank<string, string, string>;
+  bankInfo: BankInfo;
   coinType: string;
   bTokenType: string;
 
@@ -13,21 +20,35 @@ export type ParsedBank = {
   suilendDepositAprPercent: BigNumber;
 };
 
-export enum PoolType {
+export enum QuoterId {
   CPMM = "cpmm",
-  PYTH_ORACLE = "pythOracle",
-  STABLE_SWAP = "stableSwap",
+  ORACLE = "oracle",
+  STABLE = "stable",
 }
-
-export const poolTypeNameMap: Record<PoolType, string> = {
-  [PoolType.CPMM]: "CPMM",
-  [PoolType.PYTH_ORACLE]: "Pyth oracle",
-  [PoolType.STABLE_SWAP]: "Stable swap",
+export type Quoter = {
+  id: QuoterId;
+  name: string;
 };
+export const QUOTERS: Quoter[] = [
+  {
+    id: QuoterId.CPMM,
+    name: "CPMM",
+  },
+  {
+    id: QuoterId.ORACLE,
+    name: "Oracle",
+  },
+  {
+    id: QuoterId.STABLE,
+    name: "Stable",
+  },
+];
 
 export type ParsedPool = {
   id: string;
-  type?: PoolType;
+  pool: Pool<string, string, CpQuoter, string>;
+  poolInfo: PoolInfo;
+  quoter: Quoter;
 
   lpTokenType: string;
   bTokenTypes: [string, string];
@@ -35,6 +56,7 @@ export type ParsedPool = {
   balances: [BigNumber, BigNumber];
   prices: [BigNumber, BigNumber];
 
+  lpSupply: BigNumber;
   tvlUsd: BigNumber;
 
   feeTierPercent: BigNumber;
@@ -55,8 +77,51 @@ export type PoolGroup = {
 
 export type PoolPosition = {
   pool: ParsedPool;
-  balanceUsd?: BigNumber;
+  balances: [BigNumber, BigNumber];
+  balanceUsd: BigNumber;
+  pnlPercent?: BigNumber; // Fetched separately (BE)
   stakedPercent: BigNumber;
   claimableRewards: Record<string, BigNumber>;
   points: BigNumber;
+};
+
+export enum HistoryTransactionType {
+  DEPOSIT = "DEPOSIT",
+  REDEEM = "REDEEM",
+}
+
+export type HistoryDeposit = {
+  id: number;
+  timestamp: string;
+  digest: string;
+  eventIndex: number;
+  user: string;
+  pool_id: string;
+  deposit_a: string;
+  deposit_b: string;
+  mint_lp: string;
+  balance_a: string;
+  balance_b: string;
+
+  // Custom
+  type: HistoryTransactionType.DEPOSIT;
+};
+
+export type HistoryRedeem = {
+  id: number;
+  timestamp: string;
+  digest: string;
+  eventIndex: number;
+  user: string;
+  pool_id: string;
+  withdraw_a: string;
+  withdraw_b: string;
+  fees_a: string;
+  fees_b: string;
+  burn_lp: string;
+  balance_a: string;
+  balance_b: string;
+
+  // Custom
+  type: HistoryTransactionType.REDEEM;
 };

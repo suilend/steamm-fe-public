@@ -8,6 +8,7 @@ import Countdown from "@/components/Countdown";
 import Footer from "@/components/Footer";
 import Nav from "@/components/Nav";
 import { useAppContext } from "@/contexts/AppContext";
+import { PoolPositionsContextProvider } from "@/contexts/PoolPositionsContext";
 import { useUserContext } from "@/contexts/UserContext";
 import { ASSETS_URL, LAUNCH_TIMESTAMP_MS } from "@/lib/constants";
 
@@ -43,9 +44,11 @@ export default function Layout({ children }: PropsWithChildren) {
         <>
           <Nav />
 
-          <Container className="relative z-[1] flex-1 py-6 md:py-8">
-            {children}
-          </Container>
+          <PoolPositionsContextProvider>
+            <Container className="relative z-[1] flex-1 py-6 md:py-8">
+              {children}
+            </Container>
+          </PoolPositionsContextProvider>
 
           <Footer />
         </>

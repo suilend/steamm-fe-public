@@ -321,8 +321,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
     // TVL
     if (
+      Object.keys(poolHistoricalStats.tvlUsd_24h).length > 0 &&
       Object.keys(poolHistoricalStats.tvlUsd_24h).length ===
-      poolCountRef.current
+        poolCountRef.current
     ) {
       const timestampsS = Object.values(poolHistoricalStats.tvlUsd_24h)[0].map(
         (d) => d.timestampS,
@@ -345,8 +346,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
     // Volume
     if (
+      Object.keys(poolHistoricalStats.volumeUsd_24h).length > 0 &&
       Object.keys(poolHistoricalStats.volumeUsd_24h).length ===
-      poolCountRef.current
+        poolCountRef.current
     ) {
       const timestampsS = Object.values(
         poolHistoricalStats.volumeUsd_24h,

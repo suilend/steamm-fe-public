@@ -1,6 +1,7 @@
 import {
   TransactionArgument,
   TransactionObjectInput,
+  TransactionResult,
 } from "@mysten/sui/transactions";
 
 import {
@@ -75,4 +76,11 @@ export interface MigrateArgs {
 
 export interface MigratePoolArgs {
   globalAdmin: TransactionObjectInput;
+}
+
+export interface SharePoolArgs {
+  pool: TransactionResult;
+  coinTypeA: string;
+  coinTypeB: string;
+  lpTokenType: string;
 }

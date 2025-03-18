@@ -1,7 +1,4 @@
-import { PropsWithChildren } from "react";
-
 import BigNumber from "bignumber.js";
-import { ClassValue } from "clsx";
 
 import {
   formatAddress,
@@ -14,6 +11,7 @@ import { useSettingsContext } from "@suilend/frontend-sui-next";
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
 import OpenOnExplorerButton from "@/components/OpenOnExplorerButton";
+import Parameter from "@/components/Parameter";
 import SuilendLogo from "@/components/SuilendLogo";
 import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
@@ -22,20 +20,6 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { formatFeeTier } from "@/lib/format";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
-
-interface ParameterProps extends PropsWithChildren {
-  className?: ClassValue;
-  label?: string;
-}
-
-function Parameter({ className, label, children }: ParameterProps) {
-  return (
-    <div className={cn("flex flex-col gap-1", className)}>
-      {label && <p className="text-p2 text-secondary-foreground">{label}</p>}
-      {children}
-    </div>
-  );
-}
 
 export default function PoolParametersCard() {
   const { explorer } = useSettingsContext();
@@ -111,8 +95,14 @@ export default function PoolParametersCard() {
       </Parameter>
 
       <ExchangeRateParameter
-        inCoinType={pool.coinTypes[0]}
-        outCoinType={pool.coinTypes[1]}
+        inToken={getToken(
+          pool.coinTypes[0],
+          appData.coinMetadataMap[pool.coinTypes[0]],
+        )}
+        outToken={getToken(
+          pool.coinTypes[1],
+          appData.coinMetadataMap[pool.coinTypes[1]],
+        )}
         quote={{
           amountIn: BigInt(
             pool.balances[0]

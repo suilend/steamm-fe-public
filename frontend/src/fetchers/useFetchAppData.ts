@@ -1,15 +1,13 @@
 import { CoinMetadata } from "@mysten/sui/client";
 import { normalizeStructTag } from "@mysten/sui/utils";
+import { PriceFeed, SuiPriceServiceConnection } from "@pythnetwork/pyth-sui-js";
 import BigNumber from "bignumber.js";
 import useSWR from "swr";
 
 import {
-  NORMALIZED_SEND_POINTS_S2_COINTYPE,
-  NORMALIZED_SUI_COINTYPE,
-  NORMALIZED_USDC_COINTYPE,
+  NORMALIZED_STEAMM_POINTS_COINTYPE,
+  COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP as SUILEND_COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP,
   getCoinMetadataMap,
-  isSui,
-  issSui,
 } from "@suilend/frontend-sui";
 import { showErrorToast, useSettingsContext } from "@suilend/frontend-sui-next";
 import {
@@ -23,7 +21,7 @@ import { SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
 import { formatPair } from "@/lib/format";
-import { ParsedBank, ParsedPool, PoolType } from "@/lib/types";
+import { ParsedBank, ParsedPool, QUOTERS, QuoterId } from "@/lib/types";
 
 export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
@@ -83,15 +81,16 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
     const pointsCoinMetadataMap = await getCoinMetadataMap(
       suiClient,
-      [NORMALIZED_SEND_POINTS_S2_COINTYPE].filter(
+      [NORMALIZED_STEAMM_POINTS_COINTYPE].filter(
         (coinType) => !Object.keys(coinMetadataMap).includes(coinType),
       ),
     );
     coinMetadataMap = { ...coinMetadataMap, ...pointsCoinMetadataMap };
 
     // Prices
-    const suiPrice = mainMarket_reserveMap[NORMALIZED_SUI_COINTYPE].price;
-    const usdcPrice = mainMarket_reserveMap[NORMALIZED_USDC_COINTYPE].price;
+    const pythConnection = new SuiPriceServiceConnection(
+      "https://hermes.pyth.network",
+    );
 
     // Banks
     const bankCoinTypes: string[] = [];
@@ -129,7 +128,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           const depositedAmount = new BigNumber(
             bank.lending ? bank.lending.ctokens.toString() : 0,
           )
-            .times(mainMarket_reserveMap[coinType]?.cTokenExchangeRate ?? 0) // Fallback for when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true and Main market (beta) does not have the reserve
+            .times(mainMarket_reserveMap[coinType]?.cTokenExchangeRate ?? 0) // Fallback for when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true and Main market  stablecoin
             .div(10 ** coinMetadataMap[coinType].decimals);
           const totalAmount = liquidAmount.plus(depositedAmount);
 
@@ -142,6 +141,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
           return {
             id,
+            bank,
+            bankInfo,
             coinType,
             bTokenType,
 
@@ -181,14 +182,77 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     );
     coinMetadataMap = { ...coinMetadataMap, ...poolCoinMetadataMap };
 
+    const uniqueReservelessPoolCoinTypes = Array.from(
+      new Set(
+        poolInfos
+          .map((poolInfo) => [
+            bTokenTypeCoinTypeMap[poolInfo.coinTypeA],
+            bTokenTypeCoinTypeMap[poolInfo.coinTypeB],
+          ])
+          .flat()
+          .filter((coinType) => !mainMarket_reserveMap[coinType]),
+      ),
+    );
+
+    // coinType -> price feed symbol
+    const COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP: Record<string, string> = {
+      ...SUILEND_COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP,
+      // TODO: Add on-chain price feed symbol mappings (for Oracle quoter pools)
+    };
+
+    // Price feed symbol -> price feed id
+    const PYTH_PRICE_FEED_SYMBOL_PRICE_ID_MAP = Object.fromEntries(
+      (
+        await (
+          await fetch(
+            "https://hermes.pyth.network/v2/price_feeds?asset_type=crypto",
+          )
+        ).json()
+      ).map((priceFeed: any) => [
+        priceFeed.attributes.symbol,
+        `0x${priceFeed.id}`,
+      ]),
+    );
+
+    const pythPriceFeeds: PriceFeed[] =
+      (await pythConnection.getLatestPriceFeeds(
+        uniqueReservelessPoolCoinTypes
+          .map(
+            (coinType) =>
+              PYTH_PRICE_FEED_SYMBOL_PRICE_ID_MAP[
+                COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP[coinType]
+              ],
+          )
+          .filter(Boolean),
+      )) ?? [];
+    console.log("XXX pythPriceFeeds:", pythPriceFeeds);
+
+    const PYTH_PRICE_FEED_SYMBOL_PRICE_MAP: Record<string, BigNumber> =
+      Object.fromEntries(
+        pythPriceFeeds.map((pythPriceFeed) => [
+          Object.entries(PYTH_PRICE_FEED_SYMBOL_PRICE_ID_MAP).find(
+            ([, priceId]) => priceId === `0x${pythPriceFeed.id}`,
+          )![0],
+          new BigNumber(
+            pythPriceFeed.getPriceUnchecked().getPriceAsNumberUnchecked(),
+          ),
+        ]),
+      );
+
+    console.log(
+      "XXX PYTH_PRICE_FEED_SYMBOL_PRICE_MAP:",
+      PYTH_PRICE_FEED_SYMBOL_PRICE_MAP,
+    );
+
     const pools: ParsedPool[] = (
       await Promise.all(
         poolInfos.map((poolInfo) =>
           (async () => {
             const id = poolInfo.poolId;
-            const type = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
-              ? PoolType.CPMM
-              : undefined; // TODO: Add support for other pool types
+            // TODO: Add support for other pool types
+            const quoter = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
+              ? QUOTERS.find((_quoter) => _quoter.id === QuoterId.CPMM)!
+              : QUOTERS.find((_quoter) => _quoter.id === QuoterId.CPMM)!; // Should never need to use the fallback
 
             const bTokenTypeA = poolInfo.coinTypeA;
             const bTokenTypeB = poolInfo.coinTypeB;
@@ -205,39 +269,62 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
             const pool = await steammClient.fullClient.fetchPool(id);
 
-            const balanceA = new BigNumber(pool.balanceA.value.toString()).div(
+            const redeemQuote = await steammClient.Pool.quoteRedeem({
+              lpTokens: pool.lpSupply.value,
+              poolInfo,
+              bankInfoA: bankMap[coinTypes[0]].bankInfo,
+              bankInfoB: bankMap[coinTypes[1]].bankInfo,
+            });
+
+            const withdrawA = new BigNumber(
+              redeemQuote.withdrawA.toString(),
+            ).div(10 ** coinMetadataMap[coinTypes[0]].decimals);
+            const withdrawB = new BigNumber(
+              redeemQuote.withdrawB.toString(),
+            ).div(10 ** coinMetadataMap[coinTypes[1]].decimals);
+
+            let balanceA = new BigNumber(pool.balanceA.value.toString()).div(
               10 ** coinMetadataMap[coinTypeA].decimals,
             );
-            const balanceB = new BigNumber(pool.balanceB.value.toString()).div(
+            let balanceB = new BigNumber(pool.balanceB.value.toString()).div(
               10 ** coinMetadataMap[coinTypeB].decimals,
             );
+            balanceA = balanceA.times(withdrawA.div(balanceA));
+            balanceB = balanceB.times(withdrawB.div(balanceB));
+
             const balances = [balanceA, balanceB];
 
-            let priceA, priceB;
-            if (isSui(coinTypeB) || issSui(coinTypeB)) {
-              priceB = suiPrice;
-              priceA =
-                coinTypeA === NORMALIZED_USDC_COINTYPE
-                  ? usdcPrice
-                  : !balanceA.eq(0)
-                    ? balanceB.div(balanceA).times(priceB)
-                    : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
-            } else if (coinTypeB === NORMALIZED_USDC_COINTYPE) {
-              priceB = usdcPrice;
-              priceA =
-                isSui(coinTypeA) || issSui(coinTypeA)
-                  ? suiPrice
-                  : !balanceA.eq(0)
-                    ? balanceB.div(balanceA).times(priceB)
-                    : new BigNumber(0); // Assumes the pool is balanced (only works for CPMM quoter)
-            } else {
+            const priceA =
+              mainMarket_reserveMap[coinTypeA]?.price ??
+              PYTH_PRICE_FEED_SYMBOL_PRICE_MAP[
+                COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP[coinTypeA]
+              ] ??
+              undefined;
+            const priceB =
+              mainMarket_reserveMap[coinTypeB]?.price ??
+              PYTH_PRICE_FEED_SYMBOL_PRICE_MAP[
+                COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP[coinTypeB]
+              ] ??
+              undefined;
+            const prices = [priceA, priceB];
+
+            if (prices.some((price) => price === undefined)) {
               console.error(
-                `Quote asset must be one of SUI, sSUI, USDC - skipping pool with id: ${id}`,
+                "Price(s) missing for pool",
+                id,
+                "coinType(s):",
+                coinTypes
+                  .map((_, index) =>
+                    prices[index] === undefined ? coinTypes[index] : undefined,
+                  )
+                  .filter(Boolean),
               );
               return undefined;
             }
-            const prices = [priceA, priceB];
 
+            const lpSupply = new BigNumber(pool.lpSupply.value.toString()).div(
+              10 ** 9,
+            );
             const tvlUsd = balanceA.times(priceA).plus(balanceB.times(priceB));
 
             const feeTierPercent = new BigNumber(poolInfo.swapFeeBps).div(100);
@@ -267,7 +354,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
             return {
               id,
-              type,
+              pool,
+              poolInfo,
+              quoter,
 
               lpTokenType: poolInfo.lpTokenType,
               bTokenTypes,
@@ -275,6 +364,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               balances,
               prices,
 
+              lpSupply,
               tvlUsd,
 
               feeTierPercent,

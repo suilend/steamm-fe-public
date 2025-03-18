@@ -88,7 +88,36 @@ export default function useFetchUserData() {
       }
     }
 
-    return { obligationOwnerCaps, obligations, rewardMap };
+    // Pool rewards
+    const poolRewardMap = appData.pools.reduce(
+      (acc, pool) => ({
+        ...acc,
+        [pool.id]: (rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []).reduce(
+          (acc2, r) => {
+            for (let i = 0; i < obligations.length; i++) {
+              const obligation = obligations[i];
+
+              const minAmount = 10 ** (-1 * r.stats.mintDecimals);
+              if (
+                !r.obligationClaims[obligation.id] ||
+                r.obligationClaims[obligation.id].claimableAmount.lt(minAmount) // This also covers the 0 case
+              )
+                continue;
+
+              acc2[r.stats.rewardCoinType] = new BigNumber(
+                acc2[r.stats.rewardCoinType] ?? 0,
+              ).plus(r.obligationClaims[obligation.id].claimableAmount);
+            }
+
+            return acc2;
+          },
+          {} as Record<string, BigNumber>,
+        ),
+      }),
+      {} as Record<string, Record<string, BigNumber>>,
+    );
+
+    return { obligationOwnerCaps, obligations, rewardMap, poolRewardMap };
   };
 
   const { data, mutate } = useSWR<UserData>(

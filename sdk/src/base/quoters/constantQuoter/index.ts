@@ -6,7 +6,7 @@ import {
 
 import { ConstantProductFunctions } from "../../..";
 import { PackageInfo, PoolInfo } from "../../../types";
-import { MigrateArgs } from "../../pool/poolArgs";
+import { MigrateArgs, SharePoolArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
 
 import { CpQuoteSwapArgs, CpSwapArgs, CreateCpPoolArgs } from "./args";
@@ -131,18 +131,18 @@ export function createConstantProductPool(
   tx: Transaction,
   args: CreateCpPoolArgs,
   pkgInfo: PackageInfo,
-) {
+): TransactionResult {
   const {
     coinTypeA,
+    coinMetaA,
     coinTypeB,
+    coinMetaB,
     lpTokenType,
-    registry,
     swapFeeBps,
     offset,
-    coinMetaA,
-    coinMetaB,
     lpMetadataId,
     lpTreasuryId,
+    registry,
   } = args;
 
   const pool = ConstantProductFunctions.new_(
@@ -160,13 +160,40 @@ export function createConstantProductPool(
     pkgInfo.publishedAt,
   );
 
+  return pool;
+}
+
+export function shareConstantProductPool(
+  tx: Transaction,
+  args: SharePoolArgs,
+  pkgInfo: PackageInfo,
+): TransactionResult {
   const quoterType = `${pkgInfo.sourcePkgId}::cpmm::CpQuoter`;
 
   return tx.moveCall({
     target: `0x2::transfer::public_share_object`,
     typeArguments: [
-      `${pkgInfo.sourcePkgId}::pool::Pool<${coinTypeA}, ${coinTypeB}, ${quoterType}, ${lpTokenType}>`,
+      `${pkgInfo.sourcePkgId}::pool::Pool<${args.coinTypeA}, ${args.coinTypeB}, ${quoterType}, ${args.lpTokenType}>`,
     ],
-    arguments: [pool],
+    arguments: [args.pool],
   });
+}
+
+export function createConstantProductPoolAndShare(
+  tx: Transaction,
+  args: CreateCpPoolArgs,
+  pkgInfo: PackageInfo,
+) {
+  const pool = createConstantProductPool(tx, args, pkgInfo);
+
+  return shareConstantProductPool(
+    tx,
+    {
+      pool,
+      coinTypeA: args.coinTypeA,
+      coinTypeB: args.coinTypeB,
+      lpTokenType: args.lpTokenType,
+    },
+    pkgInfo,
+  );
 }

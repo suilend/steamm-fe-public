@@ -49,15 +49,14 @@ function WalletItem({ wallet }: WalletItemProps) {
       <div className="flex flex-row items-center gap-2">
         {wallet.iconUrl ? (
           <Image
-            className="h-5 w-5"
             src={wallet.iconUrl}
             alt={`${wallet.name} logo`}
-            width={20}
-            height={20}
+            width={16}
+            height={16}
             quality={100}
           />
         ) : (
-          <div className="h-5 w-5" />
+          <div className="h-4 w-4" />
         )}
 
         <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">

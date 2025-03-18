@@ -2,7 +2,8 @@ import { CSSProperties, PropsWithChildren } from "react";
 
 import { ArrowDown, ArrowUp } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import Tooltip from "@/components/Tooltip";
+import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 export enum SortDirection {
   ASC = "asc",
@@ -11,6 +12,7 @@ export enum SortDirection {
 
 type HeaderColumnProps<Column, SortableColumn> = PropsWithChildren & {
   id: Column | SortableColumn;
+  tooltip?: string;
   sortState?: { column: SortableColumn; direction: SortDirection };
   toggleSortByColumn?: (column: SortableColumn) => void;
   titleEndDecorator?: string;
@@ -19,6 +21,7 @@ type HeaderColumnProps<Column, SortableColumn> = PropsWithChildren & {
 
 export default function HeaderColumn<Column, SortableColumn>({
   id,
+  tooltip,
   sortState,
   toggleSortByColumn,
   titleEndDecorator,
@@ -46,23 +49,32 @@ export default function HeaderColumn<Column, SortableColumn>({
         ))}
 
       <div className="flex shrink-0 flex-row items-baseline gap-1.5">
-        <p
-          className={cn(
-            "!text-p2 text-secondary-foreground transition-colors",
-            sortState?.column === id
-              ? "text-button-2-foreground"
-              : "group-hover:text-foreground",
-          )}
-        >
-          {children}
-        </p>
+        <Tooltip title={tooltip}>
+          <p
+            className={cn(
+              "!text-p2 transition-colors",
+              sortState?.column === id
+                ? "text-button-2-foreground"
+                : "text-secondary-foreground group-hover:text-foreground",
+              tooltip &&
+                cn(
+                  sortState?.column === id
+                    ? "decoration-button-2-foreground/50"
+                    : "decoration-secondary-foreground/50",
+                  hoverUnderlineClassName,
+                ),
+            )}
+          >
+            {children}
+          </p>
+        </Tooltip>
         {titleEndDecorator && (
           <p
             className={cn(
-              "!text-p3 text-tertiary-foreground transition-colors",
+              "!text-p3 transition-colors",
               sortState?.column === id
                 ? "text-button-2-foreground/75"
-                : "group-hover:text-foreground/75",
+                : "text-tertiary-foreground group-hover:text-foreground/75",
             )}
           >
             {titleEndDecorator}

@@ -1,4 +1,8 @@
-import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
+import {
+  Transaction,
+  TransactionArgument,
+  TransactionResult,
+} from "@mysten/sui/transactions";
 import {
   SUI_CLOCK_OBJECT_ID,
   normalizeSuiAddress,
@@ -11,7 +15,11 @@ import { getPythPrice } from "../_codegen/oracleFunctions";
 import {
   SwapQuote,
   createConstantProductPool,
+  createConstantProductPoolAndShare,
   createOraclePool,
+  createOraclePoolAndShare,
+  shareConstantProductPool,
+  shareOraclePool,
 } from "../base";
 import {
   DepositQuote,
@@ -23,7 +31,14 @@ import {
 import { OracleSwapExtraArgs } from "../base/quoters/oracleQuoter/args";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
-import { BankList, OracleInfo, PoolInfo, getQuoterType } from "../types";
+import {
+  BankInfo,
+  BankList,
+  OracleInfo,
+  PoolInfo,
+  getQuoterType,
+} from "../types";
+import { SuiTypeName } from "../utils";
 import { SuiAddressType } from "../utils";
 
 import {
@@ -33,6 +48,7 @@ import {
   QuoteRedeemParams,
   QuoteSwapParams,
   RedeemLiquidityParams,
+  SharePoolParams,
   SwapParams,
 } from ".";
 
@@ -63,12 +79,8 @@ export class PoolModule implements IModule {
     tx: Transaction,
     args: DepositLiquidityParams,
   ): Promise<[TransactionArgument, TransactionArgument]> {
-    const pools = await this.sdk.getPools();
-    const bankList = await this.sdk.getBanks();
-
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankInfoA = bankList[args.coinTypeA];
-    const bankInfoB = bankList[args.coinTypeB];
+    const [poolInfo, bankInfoA, bankInfoB] =
+      await this.getPoolAndBankInfos(args);
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -95,12 +107,8 @@ export class PoolModule implements IModule {
     tx: Transaction,
     args: RedeemLiquidityParams,
   ): Promise<[TransactionArgument, TransactionArgument, TransactionArgument]> {
-    const pools = await this.sdk.getPools();
-    const bankList = await this.sdk.getBanks();
-
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankInfoA = bankList[args.coinTypeA];
-    const bankInfoB = bankList[args.coinTypeB];
+    const [poolInfo, bankInfoA, bankInfoB] =
+      await this.getPoolAndBankInfos(args);
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -113,16 +121,41 @@ export class PoolModule implements IModule {
     return [coinA, coinB, redeemResult];
   }
 
+  public async redeemLiquidityWithProvisionEntry(
+    tx: Transaction,
+    args: RedeemLiquidityParams,
+  ) {
+    const [coinA, coinB, _redeemResult] =
+      await this.redeemLiquidityWithProvision(tx, args);
+
+    tx.transferObjects([coinA, coinB], this.sdk.senderAddress);
+  }
+
+  public async redeemLiquidityWithProvision(
+    tx: Transaction,
+    args: RedeemLiquidityParams,
+  ): Promise<[TransactionArgument, TransactionArgument, TransactionArgument]> {
+    const [poolInfo, bankInfoA, bankInfoB] =
+      await this.getPoolAndBankInfos(args);
+
+    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+
+    const [coinA, coinB, redeemResult] =
+      poolScript.redeemLiquidityWithProvision(tx, {
+        lpCoin: tx.object(args.lpCoin),
+        minA: args.minA,
+        minB: args.minB,
+      });
+
+    return [coinA, coinB, redeemResult];
+  }
+
   public async swap(
     tx: Transaction,
     args: SwapParams,
   ): Promise<TransactionArgument> {
-    const pools = await this.sdk.getPools();
-    const bankList = await this.sdk.getBanks();
-
-    const poolInfo: PoolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankInfoA = bankList[args.coinTypeA];
-    const bankInfoB = bankList[args.coinTypeB];
+    const [poolInfo, bankInfoA, bankInfoB] =
+      await this.getPoolAndBankInfos(args);
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -144,12 +177,8 @@ export class PoolModule implements IModule {
     args: QuoteSwapParams,
     tx: Transaction = new Transaction(),
   ): Promise<SwapQuote> {
-    const pools = await this.sdk.getPools();
-    const bankList = await this.sdk.getBanks();
-
-    const poolInfo: PoolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
-    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
+    const [poolInfo, bankInfoA, bankInfoB] =
+      await this.getPoolAndBankInfosForQuote(args);
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -164,14 +193,12 @@ export class PoolModule implements IModule {
     return castSwapQuote(await this.getQuoteResult<SwapQuote>(tx, "SwapQuote"));
   }
 
-  public async quoteDeposit(args: QuoteDepositParams): Promise<DepositQuote> {
-    const tx = new Transaction();
-    const pools = await this.sdk.getPools();
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-
-    const bankList = await this.sdk.getBanks();
-    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
-    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
+  public async quoteDeposit(
+    args: QuoteDepositParams,
+    tx: Transaction = new Transaction(),
+  ): Promise<DepositQuote> {
+    const [poolInfo, bankInfoA, bankInfoB] =
+      await this.getPoolAndBankInfosForQuote(args);
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -185,13 +212,12 @@ export class PoolModule implements IModule {
     );
   }
 
-  public async quoteRedeem(args: QuoteRedeemParams): Promise<RedeemQuote> {
-    const tx = new Transaction();
-    const pools = await this.sdk.getPools();
-    const poolInfo = pools.find((pool) => pool.poolId === args.pool)!;
-    const bankList = await this.sdk.getBanks();
-    const bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
-    const bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
+  public async quoteRedeem(
+    args: QuoteRedeemParams,
+    tx: Transaction = new Transaction(),
+  ): Promise<RedeemQuote> {
+    const [poolInfo, bankInfoA, bankInfoB] =
+      await this.getPoolAndBankInfosForQuote(args);
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
@@ -226,7 +252,10 @@ export class PoolModule implements IModule {
     return tx;
   }
 
-  public async createPool(tx: Transaction, args: CreatePoolParams) {
+  public async createPool(
+    tx: Transaction,
+    args: CreatePoolParams,
+  ): Promise<TransactionResult> {
     // wait until the sui rpc recognizes the treasuryCapId
     while (true) {
       const object = await this.sdk.fullClient.getObject({
@@ -241,7 +270,7 @@ export class PoolModule implements IModule {
 
     switch (args.type) {
       case "ConstantProduct":
-        createConstantProductPool(
+        return createConstantProductPool(
           tx,
           {
             ...args,
@@ -249,9 +278,8 @@ export class PoolModule implements IModule {
           },
           this.sdk.packageInfo(),
         );
-        break;
       case "Oracle":
-        createOraclePool(
+        return createOraclePool(
           tx,
           {
             ...args,
@@ -265,7 +293,63 @@ export class PoolModule implements IModule {
           },
           this.sdk.packageInfo(),
         );
+      default:
+        throw new Error("Unknown pool type");
+    }
+  }
+
+  public async sharePool(args: SharePoolParams, tx: Transaction) {
+    switch (args.type) {
+      case "ConstantProduct":
+        shareConstantProductPool(tx, args, this.sdk.packageInfo());
+      case "Oracle":
+        shareOraclePool(tx, args, this.sdk.packageInfo());
+      default:
+        throw new Error("Unknown pool type");
+    }
+  }
+
+  public async createPoolAndShare(
+    tx: Transaction,
+    args: CreatePoolParams,
+  ): Promise<TransactionResult> {
+    // wait until the sui rpc recognizes the treasuryCapId
+    while (true) {
+      const object = await this.sdk.fullClient.getObject({
+        id: args.lpTreasuryId,
+      });
+      if (object.error) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } else {
         break;
+      }
+    }
+
+    switch (args.type) {
+      case "ConstantProduct":
+        return createConstantProductPoolAndShare(
+          tx,
+          {
+            ...args,
+            registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
+          },
+          this.sdk.packageInfo(),
+        );
+      case "Oracle":
+        return createOraclePoolAndShare(
+          tx,
+          {
+            ...args,
+            registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
+            lendingMarket:
+              this.sdk.sdkOptions.suilend_config.config!.lendingMarketId,
+            oracleRegistry:
+              this.sdk.sdkOptions.oracle_config.config!.oracleRegistryId,
+            lendingMarketType:
+              this.sdk.sdkOptions.suilend_config.config!.lendingMarketType,
+          },
+          this.sdk.packageInfo(),
+        );
       default:
         throw new Error("Unknown pool type");
     }
@@ -343,6 +427,67 @@ export class PoolModule implements IModule {
 
   //   return [coinA, coinB];
   // }
+  async getPoolAndBankInfos(
+    args:
+      | {
+          pool: SuiAddressType;
+          coinTypeA: SuiTypeName;
+          coinTypeB: SuiTypeName;
+        }
+      | {
+          poolInfo: PoolInfo;
+          bankInfoA: BankInfo;
+          bankInfoB: BankInfo;
+        },
+  ): Promise<[PoolInfo, BankInfo, BankInfo]> {
+    let poolInfo: PoolInfo;
+    let bankInfoA: BankInfo;
+    let bankInfoB: BankInfo;
+
+    if ("pool" in args) {
+      const pools = await this.sdk.getPools();
+      const bankList = await this.sdk.getBanks();
+
+      poolInfo = pools.find((pool) => pool.poolId === args.pool!)!;
+      bankInfoA = bankList[args.coinTypeA!];
+      bankInfoB = bankList[args.coinTypeB!];
+    } else {
+      poolInfo = args.poolInfo!;
+      bankInfoA = args.bankInfoA!;
+      bankInfoB = args.bankInfoB!;
+    }
+
+    return [poolInfo, bankInfoA, bankInfoB];
+  }
+
+  async getPoolAndBankInfosForQuote(
+    args:
+      | { pool: SuiAddressType }
+      | {
+          poolInfo: PoolInfo;
+          bankInfoA: BankInfo;
+          bankInfoB: BankInfo;
+        },
+  ): Promise<[PoolInfo, BankInfo, BankInfo]> {
+    let poolInfo: PoolInfo;
+    let bankInfoA: BankInfo;
+    let bankInfoB: BankInfo;
+
+    if ("pool" in args) {
+      const pools = await this.sdk.getPools();
+      const bankList = await this.sdk.getBanks();
+
+      poolInfo = pools.find((pool) => pool.poolId === args.pool!)!;
+      bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
+      bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
+    } else {
+      poolInfo = args.poolInfo!;
+      bankInfoA = args.bankInfoA!;
+      bankInfoB = args.bankInfoB!;
+    }
+
+    return [poolInfo, bankInfoA, bankInfoB];
+  }
 }
 
 export async function getOracleArgs(

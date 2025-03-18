@@ -6,7 +6,7 @@ import {
   formatPoints,
   formatToken,
   getToken,
-  isSendPoints,
+  isSteammPoints,
 } from "@suilend/frontend-sui";
 import {
   Side,
@@ -108,7 +108,7 @@ export default function AprBreakdown({
                       isLast={index === perDayRewards.length - 1}
                       value={
                         <>
-                          {isSendPoints(r.stats.rewardCoinType)
+                          {isSteammPoints(r.stats.rewardCoinType)
                             ? formatPoints(r.stats.perDay, { dp: 3 })
                             : formatToken(r.stats.perDay, {
                                 exact: false,

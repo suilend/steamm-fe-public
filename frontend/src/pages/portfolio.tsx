@@ -1,294 +1,138 @@
 import Head from "next/head";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
-import { Loader2 } from "lucide-react";
 
 import {
-  NORMALIZED_SEND_POINTS_S2_COINTYPE,
   formatPercent,
-  formatPoints,
-  formatToken,
   formatUsd,
-  getToken,
-  isSendPoints,
+  isSteammPoints,
 } from "@suilend/frontend-sui";
 import {
   showErrorToast,
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import {
-  ClaimRewardsReward,
-  RewardSummary,
-  Side,
-  getFilteredRewards,
-  getStakingYieldAprPercent,
-} from "@suilend/sdk";
+import { ClaimRewardsReward, RewardSummary, Side } from "@suilend/sdk";
 
 import Divider from "@/components/Divider";
-import PoolPositionsTable from "@/components/positions/PoolPositionsTable";
+import PoolPositionsTable from "@/components/portfolio/PoolPositionsTable";
 import Tag from "@/components/Tag";
-import TokenLogo from "@/components/TokenLogo";
-import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { useStatsContext } from "@/contexts/StatsContext";
+import { usePoolPositionsContext } from "@/contexts/PoolPositionsContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
-import { getTotalAprPercent } from "@/lib/liquidityMining";
-import {
-  getIndexOfObligationWithDeposit,
-  getObligationDepositedAmount,
-} from "@/lib/obligation";
+import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { PoolPosition } from "@/lib/types";
+import { HistoryTransactionType, PoolPosition } from "@/lib/types";
 
 export default function PortfolioPage() {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, lstData } = useLoadedAppContext();
-  const { getBalance, userData, refresh } = useLoadedUserContext();
-  const { poolStats } = useStatsContext();
+  const { appData } = useLoadedAppContext();
+  const { userData, refresh } = useLoadedUserContext();
 
-  // Pools - rewards (across all obligations)
-  const poolRewardsMap: Record<string, Record<string, BigNumber>> = useMemo(
-    () =>
-      appData.pools.reduce(
-        (acc, pool) => ({
-          ...acc,
-          [pool.lpTokenType]: (
-            userData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []
-          ).reduce(
-            (acc2, r) => {
-              for (let i = 0; i < userData.obligations.length; i++) {
-                const obligation = userData.obligations[i];
+  const { poolPositions } = usePoolPositionsContext();
 
-                const minAmount = 10 ** (-1 * r.stats.mintDecimals);
-                if (
-                  !r.obligationClaims[obligation.id] ||
-                  r.obligationClaims[obligation.id].claimableAmount.lt(
-                    minAmount,
-                  ) // This also covers the 0 case
-                )
-                  continue;
-
-                acc2[r.stats.rewardCoinType] = new BigNumber(
-                  acc2[r.stats.rewardCoinType] ?? 0,
-                ).plus(r.obligationClaims[obligation.id].claimableAmount);
-              }
-
-              return acc2;
-            },
-            {} as Record<string, BigNumber>,
-          ),
-        }),
-        {} as Record<string, Record<string, BigNumber>>,
-      ),
-    [appData.pools, userData.obligations, userData.rewardMap],
+  // Pool positions - Deposited USD for PnL calc. (BE)
+  const { poolTransactionHistoryMap } = usePoolTransactionHistoryMap(
+    poolPositions.map((position) => position.pool.id),
   );
 
-  // Positions
-  const positions: PoolPosition[] | undefined = useMemo(
-    () =>
-      appData.pools
-        .map((pool) => {
-          const obligationIndex = getIndexOfObligationWithDeposit(
-            userData.obligations,
-            pool.lpTokenType,
-          ); // Assumes up to one obligation has deposits of the LP token type
-
-          const balance = getBalance(pool.lpTokenType);
-          const depositedAmount = getObligationDepositedAmount(
-            userData.obligations[obligationIndex],
-            pool.lpTokenType,
-          );
-          const totalAmount = balance.plus(depositedAmount);
-
-          // Same code as in frontend/src/components/AprBreakdown.tsx
-          const rewards =
-            userData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
-          const filteredRewards = getFilteredRewards(rewards);
-
-          const stakingYieldAprPercent: BigNumber | undefined =
-            lstData !== undefined
-              ? pool.tvlUsd.gt(0)
-                ? pool.coinTypes
-                    .reduce(
-                      (acc, coinType, index) =>
-                        acc.plus(
-                          new BigNumber(
-                            getStakingYieldAprPercent(
-                              Side.DEPOSIT,
-                              coinType,
-                              lstData.aprPercentMap,
-                            ) ?? 0,
-                          ).times(
-                            pool.prices[index].times(pool.balances[index]),
-                          ),
-                        ),
-                      new BigNumber(0),
-                    )
-                    .div(pool.tvlUsd)
-                : new BigNumber(0)
-              : undefined;
-
-          const totalAprPercent: BigNumber | undefined =
-            poolStats.aprPercent_24h[pool.id] !== undefined &&
-            stakingYieldAprPercent !== undefined
-              ? getTotalAprPercent(
-                  poolStats.aprPercent_24h[pool.id].feesAprPercent,
-                  pool.suilendWeightedAverageDepositAprPercent,
-                  filteredRewards,
-                  stakingYieldAprPercent,
-                )
-              : undefined;
-
-          if (balance.eq(0) && depositedAmount.eq(0)) return undefined;
-          return {
-            pool: {
-              ...pool,
-              aprPercent_24h: totalAprPercent,
-            },
-            balanceUsd: undefined, // Fetched below
-            stakedPercent: depositedAmount.div(totalAmount).times(100),
-            claimableRewards: Object.fromEntries(
-              Object.entries(poolRewardsMap[pool.lpTokenType] ?? {}).filter(
-                ([coinType]) => !isSendPoints(coinType),
-              ),
-            ),
-            points:
-              poolRewardsMap[pool.lpTokenType]?.[
-                NORMALIZED_SEND_POINTS_S2_COINTYPE
-              ] ?? new BigNumber(0),
-          };
-        })
-        .filter(Boolean) as PoolPosition[],
-    [
-      appData.pools,
-      getBalance,
-      userData.obligations,
-      userData.rewardMap,
-      lstData,
-      poolStats.aprPercent_24h,
-      poolRewardsMap,
-    ],
-  );
-
-  // Positions - Balances in USD (on-chain)
-  const [poolBalancesUsd, setPoolBalancesUsd] = useState<
-    Record<string, BigNumber>
-  >({});
-
-  useEffect(() => {
-    if (positions === undefined) return;
-
-    (async () => {
-      try {
-        const result: Record<string, BigNumber> = {};
-
-        const redeemQuotes = await Promise.all(
-          positions.map((position) => {
-            const obligationIndex = getIndexOfObligationWithDeposit(
-              userData.obligations,
-              position.pool.lpTokenType,
-            ); // Assumes up to one obligation has deposits of the LP token type
-
-            const balance = getBalance(position.pool.lpTokenType);
-            const depositedAmount = getObligationDepositedAmount(
-              userData.obligations[obligationIndex],
-              position.pool.lpTokenType,
-            );
-            const totalAmount = balance.plus(depositedAmount);
-
-            return steammClient.Pool.quoteRedeem({
-              pool: position.pool.id,
-              lpTokens: BigInt(
-                totalAmount
-                  .times(
-                    10 **
-                      appData.coinMetadataMap[position.pool.lpTokenType]
-                        .decimals,
-                  )
-                  .integerValue(BigNumber.ROUND_DOWN)
-                  .toString(),
-              ),
-            });
-          }),
-        );
-
-        for (let i = 0; i < positions.length; i++) {
-          const pool = positions[i].pool;
-
-          const balanceUsdA = new BigNumber(
-            redeemQuotes[i].withdrawA.toString(),
-          )
-            .div(10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals)
-            .times(pool.prices[0]);
-          const balanceUsdB = new BigNumber(
-            redeemQuotes[i].withdrawB.toString(),
-          )
-            .div(10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals)
-            .times(pool.prices[1]);
-
-          result[pool.id] = balanceUsdA.plus(balanceUsdB);
-        }
-
-        setPoolBalancesUsd(result);
-      } catch (err) {
-        showErrorToast("Failed to fetch pool balances", err as Error);
-        console.error(err);
-        Sentry.captureException(err);
-      }
-    })();
-  }, [
-    positions,
-    getBalance,
-    userData.obligations,
-    steammClient,
-    appData.coinMetadataMap,
-  ]);
-
-  const positionsWithExtraData: PoolPosition[] | undefined = useMemo(
-    () =>
-      positions === undefined
+  const poolDepositedUsdMap: Record<string, BigNumber> | undefined =
+    useMemo(() => {
+      return poolTransactionHistoryMap === undefined
         ? undefined
-        : positions.map((position) => ({
-            ...position,
-            balanceUsd: poolBalancesUsd[position.pool.id],
-          })),
-    [positions, poolBalancesUsd],
+        : Object.fromEntries(
+            Object.entries(poolTransactionHistoryMap).reduce(
+              (acc, [poolId, transactionHistory]) => {
+                const pool = appData.pools.find((p) => p.id === poolId);
+                if (!pool) return acc;
+
+                const depositedAmounts = [0, 1].map((index) =>
+                  transactionHistory.reduce(
+                    (acc, entry) =>
+                      entry.type === HistoryTransactionType.DEPOSIT
+                        ? acc.plus(
+                            new BigNumber(
+                              index === 0 ? entry.deposit_a : entry.deposit_b,
+                            ).div(
+                              10 **
+                                appData.coinMetadataMap[pool.coinTypes[index]]
+                                  .decimals,
+                            ),
+                          )
+                        : acc.minus(
+                            new BigNumber(
+                              index === 0 ? entry.withdraw_a : entry.withdraw_b,
+                            ).div(
+                              10 **
+                                appData.coinMetadataMap[pool.coinTypes[index]]
+                                  .decimals,
+                            ),
+                          ),
+                    new BigNumber(0),
+                  ),
+                );
+
+                const result = new BigNumber(
+                  depositedAmounts[0].times(pool.prices[0]),
+                ).plus(depositedAmounts[1].times(pool.prices[1]));
+
+                return [...acc, [poolId, result]];
+              },
+              [] as [string, BigNumber][],
+            ),
+          );
+    }, [poolTransactionHistoryMap, appData.pools, appData.coinMetadataMap]);
+
+  // Pool positions - Extra data
+  const poolPositionsWithExtraData: PoolPosition[] = useMemo(
+    () =>
+      poolPositions.map((position) => ({
+        ...position,
+        pnlPercent:
+          poolDepositedUsdMap?.[position.pool.id] !== undefined
+            ? new BigNumber(
+                position.balanceUsd.minus(
+                  poolDepositedUsdMap[position.pool.id],
+                ),
+              )
+                .div(poolDepositedUsdMap[position.pool.id])
+                .times(100)
+            : undefined,
+      })),
+    [poolPositions, poolDepositedUsdMap],
   );
 
   // Summary
   // Summary - Net worth
   const netWorthUsd: BigNumber | undefined = useMemo(
     () =>
-      positionsWithExtraData === undefined ||
-      positionsWithExtraData.some(
+      poolPositionsWithExtraData.some(
         (position) => position.balanceUsd === undefined,
       )
         ? undefined
-        : positionsWithExtraData.reduce(
+        : poolPositionsWithExtraData.reduce(
             (sum, position) => sum.plus(position.balanceUsd as BigNumber),
             new BigNumber(0),
           ),
-    [positionsWithExtraData],
+    [poolPositionsWithExtraData],
   );
 
   // Summary - APR
   const weightedAverageAprPercent: BigNumber | undefined = useMemo(
     () =>
-      positionsWithExtraData === undefined ||
-      positionsWithExtraData.some(
+      poolPositionsWithExtraData.some(
         (position) =>
           position.pool.aprPercent_24h === undefined ||
           position.balanceUsd === undefined,
       )
         ? undefined
-        : positionsWithExtraData
+        : poolPositionsWithExtraData
             .reduce(
               (acc, position) =>
                 acc.plus(
@@ -299,33 +143,32 @@ export default function PortfolioPage() {
               new BigNumber(0),
             )
             .div(
-              positionsWithExtraData.length > 0
-                ? positionsWithExtraData.reduce(
+              poolPositionsWithExtraData.length > 0
+                ? poolPositionsWithExtraData.reduce(
                     (sum, position) =>
                       sum.plus(position.balanceUsd as BigNumber),
                     new BigNumber(0),
                   )
                 : 1,
             ),
-    [positionsWithExtraData],
+    [poolPositionsWithExtraData],
   );
 
   // Summary - Rewards
   const claimableRewards: Record<string, BigNumber> | undefined = useMemo(
     () =>
-      Object.entries(poolRewardsMap)
-        .filter(([coinType]) => !isSendPoints(coinType))
-        .reduce(
-          (acc, [, rewards]) => {
-            Object.entries(rewards).forEach(([coinType, amount]) => {
-              acc[coinType] = new BigNumber(acc[coinType] ?? 0).plus(amount);
-            });
+      Object.entries(userData.poolRewardMap).reduce(
+        (acc, [, rewards]) => {
+          Object.entries(rewards).forEach(([coinType, amount]) => {
+            if (isSteammPoints(coinType)) return;
+            acc[coinType] = new BigNumber(acc[coinType] ?? 0).plus(amount);
+          });
 
-            return acc;
-          },
-          {} as Record<string, BigNumber>,
-        ),
-    [poolRewardsMap],
+          return acc;
+        },
+        {} as Record<string, BigNumber>,
+      ),
+    [userData.poolRewardMap],
   );
 
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
@@ -348,7 +191,7 @@ export default function PortfolioPage() {
         const rewardsMap: Record<string, RewardSummary[]> = {};
         Object.values(userData.rewardMap).flatMap((rewards) =>
           rewards.deposit.forEach((r) => {
-            if (isSendPoints(r.stats.rewardCoinType)) return;
+            if (isSteammPoints(r.stats.rewardCoinType)) return;
 
             const minAmount = 10 ** (-1 * r.stats.mintDecimals);
             if (
@@ -395,19 +238,18 @@ export default function PortfolioPage() {
     }
   };
 
-  // Summary - Points (S2 only)
+  // Summary - Points
   const points: BigNumber | undefined = useMemo(
     () =>
-      Object.entries(poolRewardsMap)
-        .filter(([coinType]) => coinType === NORMALIZED_SEND_POINTS_S2_COINTYPE)
-        .reduce((acc, [, rewards]) => {
-          Object.entries(rewards).forEach(([coinType, amount]) => {
-            acc = acc.plus(amount);
-          });
+      Object.entries(userData.poolRewardMap).reduce((acc, [, rewards]) => {
+        Object.entries(rewards).forEach(([coinType, amount]) => {
+          if (!isSteammPoints(coinType)) return;
+          acc = acc.plus(amount);
+        });
 
-          return acc;
-        }, new BigNumber(0)),
-    [poolRewardsMap],
+        return acc;
+      }, new BigNumber(0)),
+    [userData.poolRewardMap],
   );
 
   return (
@@ -423,7 +265,8 @@ export default function PortfolioPage() {
           {/* Stats */}
           <div className="grid w-full grid-cols-2 rounded-md border md:flex md:flex-row md:items-stretch">
             {/* Net worth */}
-            <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1">
+            {/* <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1"> */}
+            <div className="max-md:w-full max-md:border-r md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">Net worth</p>
 
@@ -442,7 +285,8 @@ export default function PortfolioPage() {
             <Divider className="h-auto w-px max-md:hidden" />
 
             {/* APR */}
-            <div className="max-md:w-full max-md:border-b md:flex-1">
+            {/* <div className="max-md:w-full max-md:border-b md:flex-1"> */}
+            <div className="max-md:w-full md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">Average APR</p>
 
@@ -456,11 +300,10 @@ export default function PortfolioPage() {
               </div>
             </div>
 
-            <Divider className="h-auto w-px max-md:hidden" />
+            {/* <Divider className="h-auto w-px max-md:hidden" /> */}
 
             {/* Claimable rewards */}
-            {/* <div className="max-md:w-full max-md:border-r md:flex-1"> */}
-            <div className="max-md:w-full md:flex-1">
+            {/* <div className="max-md:w-full max-md:border-r md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">
                   Claimable rewards
@@ -505,7 +348,7 @@ export default function PortfolioPage() {
                           <div className="flex h-[24px] w-max flex-row items-center">
                             <TokenLogos
                               coinTypes={Object.keys(claimableRewards)}
-                              size={20}
+                              size={16}
                             />
                           </div>
                         </Tooltip>
@@ -530,7 +373,7 @@ export default function PortfolioPage() {
                   </>
                 )}
               </div>
-            </div>
+            </div> */}
 
             {/* <Divider className="h-auto w-px max-md:hidden" /> */}
 
@@ -543,17 +386,17 @@ export default function PortfolioPage() {
                   <Skeleton className="h-[30px] w-20" />
                 ) : (
                   <Tooltip
-                    title={`${formatPoints(points, { dp: appData.coinMetadataMap[NORMALIZED_SEND_POINTS_S2_COINTYPE].decimals })} ${appData.coinMetadataMap[NORMALIZED_SEND_POINTS_S2_COINTYPE].symbol}`}
+                    title={`${formatPoints(points, { dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].decimals })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
                   >
                     <div className="flex w-max flex-row items-center gap-2">
                       <TokenLogo
                         token={getToken(
-                          NORMALIZED_SEND_POINTS_S2_COINTYPE,
+                          NORMALIZED_STEAMM_POINTS_COINTYPE,
                           appData.coinMetadataMap[
-                            NORMALIZED_SEND_POINTS_S2_COINTYPE
+                            NORMALIZED_STEAMM_POINTS_COINTYPE
                           ],
                         )}
-                        size={20}
+                        size={16}
                       />
                       <p className="text-h3 text-foreground">
                         {formatPoints(points)}
@@ -566,18 +409,14 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        {/* Positions */}
+        {/* Pool positions */}
         <div className="flex w-full flex-col gap-6">
           <div className="flex flex-row items-center gap-3">
             <h2 className="text-h3 text-foreground">Positions</h2>
-            {positionsWithExtraData === undefined ? (
-              <Skeleton className="h-[22px] w-12" />
-            ) : (
-              <Tag>{positionsWithExtraData.length}</Tag>
-            )}
+            <Tag>{poolPositionsWithExtraData.length}</Tag>
           </div>
 
-          <PoolPositionsTable positions={positionsWithExtraData} />
+          <PoolPositionsTable poolPositions={poolPositionsWithExtraData} />
         </div>
       </div>
     </>

@@ -1,15 +1,19 @@
 import Head from "next/head";
 import Link from "next/link";
+import { useMemo } from "react";
 
 import { ChevronRight } from "lucide-react";
 
 import { formatUsd } from "@suilend/frontend-sui";
+import { useWalletContext } from "@suilend/frontend-sui-next";
 
 import AprBreakdown from "@/components/AprBreakdown";
 import PoolActionsCard from "@/components/pool/PoolActionsCard";
 import PoolChartCard from "@/components/pool/PoolChartCard";
 import PoolParametersCard from "@/components/pool/PoolParametersCard";
+import PoolPositionCard from "@/components/pool/PoolPositionCard";
 import SuggestedPools from "@/components/pool/SuggestedPools";
+import TransactionHistoryTable from "@/components/pool/TransactionHistoryTable";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
@@ -17,14 +21,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { PoolContextProvider, usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
+import { useLoadedUserContext } from "@/contexts/UserContext";
 import useBreakpoint from "@/hooks/useBreakpoint";
+import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { ROOT_URL } from "@/lib/navigation";
-import { poolTypeNameMap } from "@/lib/types";
 
 function PoolPage() {
+  const { address } = useWalletContext();
   const { appData } = useLoadedAppContext();
   const { poolStats } = useStatsContext();
+  const { refresh } = useLoadedUserContext();
 
   const { pool } = usePoolContext();
 
@@ -35,6 +42,15 @@ function PoolPage() {
     pool.coinTypes.map((coinType) => appData.coinMetadataMap[coinType].symbol),
   );
 
+  // Transaction history
+  const { poolTransactionHistoryMap, fetchPoolTransactionHistoryMap } =
+    usePoolTransactionHistoryMap([pool.id]);
+
+  const poolTransactionHistory = useMemo(
+    () => (address ? poolTransactionHistoryMap?.[pool.id] : []),
+    [address, poolTransactionHistoryMap, pool.id],
+  );
+
   // Suggested pools
   const suggestedPools = appData.pools
     .filter(
@@ -42,6 +58,23 @@ function PoolPage() {
         _pool.id !== pool.id && _pool.coinTypes[0] === pool.coinTypes[0],
     )
     .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
+
+  // Actions
+  const onDeposit = async () => {
+    refresh();
+
+    setTimeout(() => {
+      fetchPoolTransactionHistoryMap([pool.id]);
+    }, 1000);
+  };
+
+  const onWithdraw = async () => {
+    refresh();
+
+    setTimeout(() => {
+      fetchPoolTransactionHistoryMap([pool.id]);
+    }, 1000);
+  };
 
   return (
     <>
@@ -74,7 +107,7 @@ function PoolPage() {
                 <h1 className="text-h2 text-foreground">{formattedPair}</h1>
 
                 <div className="flex flex-row items-center gap-1">
-                  <Tag>{pool.type ? poolTypeNameMap[pool.type] : "--"}</Tag>
+                  <Tag>{pool.quoter.name}</Tag>
                   <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
                 </div>
               </div>
@@ -113,10 +146,6 @@ function PoolPage() {
                         </p>
                       </Tooltip>
                     )}
-
-                    {/* <PercentChange
-                    value={new BigNumber(-5 + Math.random() * 10)}
-                  /> */}
                   </div>
                 </div>
 
@@ -140,10 +169,6 @@ function PoolPage() {
                         </p>
                       </Tooltip>
                     )}
-
-                    {/* <PercentChange
-                    value={new BigNumber(-5 + Math.random() * 10)}
-                  /> */}
                   </div>
                 </div>
 
@@ -155,10 +180,6 @@ function PoolPage() {
                       valueClassName="text-success decoration-success/50"
                       pool={pool}
                     />
-
-                    {/* <PercentChange
-                    value={new BigNumber(-5 + Math.random() * 10)}
-                  /> */}
                   </div>
                 </div>
               </div>
@@ -172,12 +193,34 @@ function PoolPage() {
               </div>
 
               {/* Right */}
-              <div className="max-md:w-full md:flex-1 lg:flex-[2]">
-                <PoolActionsCard key={pool.id} />
+              <div className="flex flex-col gap-1 max-md:w-full md:flex-1 lg:flex-[2]">
+                <PoolPositionCard />
+                <PoolActionsCard
+                  key={pool.id}
+                  onDeposit={onDeposit}
+                  onWithdraw={onWithdraw}
+                />
               </div>
             </div>
           </div>
 
+          {/* Transaction history */}
+          <div className="flex w-full flex-col gap-4">
+            <div className="flex flex-row items-center gap-3">
+              <p className="text-h3 text-foreground">Transaction history</p>
+              {poolTransactionHistory === undefined ? (
+                <Skeleton className="h-[22px] w-12" />
+              ) : (
+                <Tag>{poolTransactionHistory.length}</Tag>
+              )}
+            </div>
+
+            <TransactionHistoryTable
+              transactionHistory={poolTransactionHistory}
+            />
+          </div>
+
+          {/* Suggested pools */}
           {suggestedPools.length > 0 && (
             <SuggestedPools
               containerClassName="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"

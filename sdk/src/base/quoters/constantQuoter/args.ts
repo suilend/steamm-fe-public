@@ -1,4 +1,7 @@
-import { TransactionArgument } from "@mysten/sui/transactions";
+import {
+  TransactionArgument,
+  TransactionResult,
+} from "@mysten/sui/transactions";
 
 import {
   CreatePoolBaseArgs,

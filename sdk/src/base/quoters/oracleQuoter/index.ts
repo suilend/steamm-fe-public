@@ -7,7 +7,7 @@ import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
 import { OracleQuoterFunctions } from "../../..";
 import { PackageInfo, PoolInfo } from "../../../types";
-import { MigrateArgs } from "../../pool/poolArgs";
+import { MigrateArgs, SharePoolArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
 
 import {
@@ -128,7 +128,7 @@ export function createOraclePool(
   tx: Transaction,
   args: CreateOraclePoolArgs,
   pkgInfo: PackageInfo,
-) {
+): TransactionResult {
   const {
     coinTypeA,
     coinTypeB,
@@ -150,7 +150,7 @@ export function createOraclePool(
     bTokenTypeB,
   } = args;
 
-  const pool = OracleQuoterFunctions.new_(
+  return OracleQuoterFunctions.new_(
     tx,
     [
       lendingMarketType,
@@ -176,15 +176,39 @@ export function createOraclePool(
     },
     pkgInfo.publishedAt,
   );
+}
 
-  // TODO: has to be the package ID in which the quoter was introduced
+export function shareOraclePool(
+  tx: Transaction,
+  args: SharePoolArgs,
+  pkgInfo: PackageInfo,
+): TransactionResult {
   const quoterType = `${pkgInfo.sourcePkgId}::omm::OracleQuoter`;
 
   return tx.moveCall({
     target: `0x2::transfer::public_share_object`,
     typeArguments: [
-      `${pkgInfo.sourcePkgId}::pool::Pool<${bTokenTypeA}, ${bTokenTypeB}, ${quoterType}, ${lpTokenType}>`,
+      `${pkgInfo.sourcePkgId}::pool::Pool<${args.coinTypeA}, ${args.coinTypeB}, ${quoterType}, ${args.lpTokenType}>`,
     ],
-    arguments: [pool],
+    arguments: [args.pool],
   });
+}
+
+export function createOraclePoolAndShare(
+  tx: Transaction,
+  args: CreateOraclePoolArgs,
+  pkgInfo: PackageInfo,
+) {
+  const pool = createOraclePool(tx, args, pkgInfo);
+
+  return shareOraclePool(
+    tx,
+    {
+      pool,
+      coinTypeA: args.coinTypeA,
+      coinTypeB: args.coinTypeB,
+      lpTokenType: args.lpTokenType,
+    },
+    pkgInfo,
+  );
 }

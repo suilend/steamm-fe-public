@@ -70,8 +70,8 @@ export interface CoinData {
 
 export interface LpData {
   lpTreasuryId: string;
-  lpMetadataId: string;
   lpTokenType: string;
+  lpMetadataId: string;
 }
 
 export async function createCoinTx(
@@ -224,7 +224,7 @@ export async function createPoolHelper(
 
   const newPoolTx = new Transaction();
 
-  await sdk.Pool.createPool(newPoolTx, {
+  await sdk.Pool.createPoolAndShare(newPoolTx, {
     type: "ConstantProduct",
     lpTreasuryId,
     lpMetadataId,
@@ -251,8 +251,8 @@ export async function createPoolHelper(
 
   return {
     lpTreasuryId,
-    lpMetadataId,
     lpTokenType,
+    lpMetadataId,
   };
 }
 
@@ -356,7 +356,7 @@ export async function createOraclePoolHelper(
 
   console.log("c");
 
-  await sdk.Pool.createPool(newPoolTx, {
+  await sdk.Pool.createPoolAndShare(newPoolTx, {
     type: "Oracle",
     oracleIndexA: BigInt(oracleIndexA),
     oracleIndexB: BigInt(oracleIndexB),

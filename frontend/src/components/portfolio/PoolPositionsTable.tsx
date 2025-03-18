@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { useLocalStorage } from "usehooks-ts";
 
-import PoolPositionRow from "@/components/positions/PoolPositionRow";
+import PoolPositionRow from "@/components/portfolio/PoolPositionRow";
 import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PoolPosition } from "@/lib/types";
@@ -14,11 +14,12 @@ type Column =
   | "pair"
   | "type"
   | "aprPercent_24h"
-  | "balanceUsd"
+  | "balance"
+  | "pnlPercent"
   | "stakedPercent"
   | "claimableRewards"
   | "points";
-type SortableColumn = "aprPercent_24h" | "balanceUsd";
+type SortableColumn = "aprPercent_24h" | "balance" | "pnlPercent";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
@@ -37,7 +38,13 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
-  balanceUsd: {
+  balance: {
+    flex: 1,
+    minWidth: 150, // px
+    justifyContent: "end",
+    paddingRight: 4 * 5, // px
+  },
+  pnlPercent: {
     flex: 1,
     minWidth: 150, // px
     justifyContent: "end",
@@ -45,13 +52,13 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   stakedPercent: {
     flex: 1,
-    minWidth: 175, // px
+    minWidth: 200, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   claimableRewards: {
     flex: 1,
-    minWidth: 175, // px
+    minWidth: 200, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -65,12 +72,12 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
 
 interface PoolPositionsTableProps {
   className?: ClassValue;
-  positions?: PoolPosition[];
+  poolPositions?: PoolPosition[];
 }
 
 export default function PoolPositionsTable({
   className,
-  positions,
+  poolPositions,
 }: PoolPositionsTableProps) {
   // Sort
   type SortState = { column: SortableColumn; direction: SortDirection };
@@ -90,20 +97,25 @@ export default function PoolPositionsTable({
     });
   };
 
-  const sortedPositions = useMemo(() => {
-    if (positions === undefined || sortState === undefined) return positions;
+  const sortedPoolPositions = useMemo(() => {
+    if (poolPositions === undefined || sortState === undefined)
+      return poolPositions;
 
     if (
       (sortState.column === "aprPercent_24h" &&
-        !positions.every(
+        !poolPositions.every(
           (position) => position.pool.aprPercent_24h !== undefined,
         )) ||
-      (sortState.column === "balanceUsd" &&
-        !positions.every((position) => position.balanceUsd !== undefined))
+      (sortState.column === "balance" &&
+        !poolPositions.every(
+          (position) => position.balanceUsd !== undefined,
+        )) ||
+      (sortState.column === "pnlPercent" &&
+        !poolPositions.every((position) => position.pnlPercent !== undefined))
     )
-      return positions;
+      return poolPositions;
 
-    return positions.slice().sort((a, b) => {
+    return poolPositions.slice().sort((a, b) => {
       if (sortState.column === "aprPercent_24h") {
         return sortState.direction === SortDirection.DESC
           ? +(b.pool.aprPercent_24h as BigNumber).minus(
@@ -112,15 +124,19 @@ export default function PoolPositionsTable({
           : +(a.pool.aprPercent_24h as BigNumber).minus(
               b.pool.aprPercent_24h as BigNumber,
             );
-      } else if (sortState.column === "balanceUsd") {
+      } else if (sortState.column === "balance") {
         return sortState.direction === SortDirection.DESC
           ? +(b.balanceUsd as BigNumber).minus(a.balanceUsd as BigNumber)
           : +(a.balanceUsd as BigNumber).minus(b.balanceUsd as BigNumber);
+      } else if (sortState.column === "pnlPercent") {
+        return sortState.direction === SortDirection.DESC
+          ? +(b.pnlPercent as BigNumber).minus(a.pnlPercent as BigNumber)
+          : +(a.pnlPercent as BigNumber).minus(b.pnlPercent as BigNumber);
       }
 
       return 0; // Should never reach here
     });
-  }, [positions, sortState]);
+  }, [poolPositions, sortState]);
 
   return (
     <div
@@ -149,7 +165,7 @@ export default function PoolPositionsTable({
           id="aprPercent_24h"
           sortState={sortState}
           toggleSortByColumn={
-            !!(positions ?? []).every(
+            !!(poolPositions ?? []).every(
               (position) => position.pool.aprPercent_24h !== undefined,
             )
               ? toggleSortByColumn
@@ -161,33 +177,49 @@ export default function PoolPositionsTable({
         </HeaderColumn>
 
         <HeaderColumn<Column, SortableColumn>
-          id="balanceUsd"
+          id="balance"
           sortState={sortState}
           toggleSortByColumn={
-            !!(positions ?? []).every(
+            !!(poolPositions ?? []).every(
               (position) => position.balanceUsd !== undefined,
             )
               ? toggleSortByColumn
               : undefined
           }
-          style={columnStyleMap.balanceUsd}
+          style={columnStyleMap.balance}
         >
           Balance
         </HeaderColumn>
 
         <HeaderColumn<Column, SortableColumn>
+          id="pnlPercent"
+          tooltip="The PnL takes into account the yield and the Suilend deposit interest for the underlying assets. It does not include any changes in the USD prices of the underlying assets."
+          sortState={sortState}
+          toggleSortByColumn={
+            !!(poolPositions ?? []).every(
+              (position) => position.pnlPercent !== undefined,
+            )
+              ? toggleSortByColumn
+              : undefined
+          }
+          style={columnStyleMap.pnlPercent}
+        >
+          PnL
+        </HeaderColumn>
+
+        {/* <HeaderColumn<Column, SortableColumn>
           id="stakedPercent"
           style={columnStyleMap.stakedPercent}
         >
           Staked
-        </HeaderColumn>
+        </HeaderColumn> */}
 
-        <HeaderColumn<Column, SortableColumn>
+        {/* <HeaderColumn<Column, SortableColumn>
           id="claimableRewards"
           style={columnStyleMap.claimableRewards}
         >
           Claimable rewards
-        </HeaderColumn>
+        </HeaderColumn> */}
 
         {/* <HeaderColumn<Column, SortableColumn>
           id="points"
@@ -198,25 +230,25 @@ export default function PoolPositionsTable({
       </div>
 
       {/* Rows */}
-      {sortedPositions === undefined ? (
+      {sortedPoolPositions === undefined ? (
         Array.from({ length: 3 }).map((_, index, array) => (
           <Skeleton
             key={index}
             className={cn(
-              "relative z-[1] h-[56px] w-full",
-              index !== array.length - 1 && "h-[calc(56px+1px)] border-b",
+              "relative z-[1] h-[106px] w-full",
+              index !== array.length - 1 && "h-[calc(106px+1px)] border-b",
             )}
           />
         ))
-      ) : sortedPositions.length === 0 ? (
-        <div className="flex h-[56px] w-full flex-row items-center justify-center">
+      ) : sortedPoolPositions.length === 0 ? (
+        <div className="flex h-[106px] w-full flex-row items-center justify-center">
           <p className="text-p2 text-tertiary-foreground">No positions</p>
         </div>
       ) : (
-        sortedPositions.map((position, index, array) => (
+        sortedPoolPositions.map((position, index, array) => (
           <PoolPositionRow
             key={position.pool.id}
-            position={position}
+            poolPosition={position}
             isLast={index === array.length - 1}
           />
         ))

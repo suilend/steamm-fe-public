@@ -17,20 +17,20 @@ export default function TokenLogo({ className, token, size }: TokenLogoProps) {
   if (!token)
     return (
       <Skeleton
-        className={cn("rounded-[50%]", className)}
+        className={cn("shrink-0 rounded-[50%]", className)}
         style={{ width: size, height: size }}
       />
     );
   if (!token.iconUrl || token.iconUrl === "" || token.iconUrl === "TODO")
     return (
       <div
-        className={cn("rounded-[50%] bg-card", className)}
+        className={cn("shrink-0 rounded-[50%] bg-card", className)}
         style={{ width: size, height: size }}
       />
     );
   return (
     <Image
-      className={cn("rounded-[50%]", className)}
+      className={cn("shrink-0 rounded-[50%]", className)}
       src={token.iconUrl}
       alt={`${token.symbol} logo`}
       width={size}

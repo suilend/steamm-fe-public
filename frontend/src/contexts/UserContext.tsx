@@ -22,6 +22,8 @@ export interface UserData {
   obligationOwnerCaps: ObligationOwnerCap<string>[];
   obligations: ParsedObligation[];
   rewardMap: RewardMap;
+
+  poolRewardMap: Record<string, Record<string, BigNumber>>;
 }
 
 interface UserContext {
