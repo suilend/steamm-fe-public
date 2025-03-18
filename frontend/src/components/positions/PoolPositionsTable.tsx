@@ -14,11 +14,12 @@ type Column =
   | "pair"
   | "type"
   | "aprPercent_24h"
-  | "balanceUsd"
+  | "balance"
+  | "pnlPercent"
   | "stakedPercent"
   | "claimableRewards"
   | "points";
-type SortableColumn = "aprPercent_24h" | "balanceUsd";
+type SortableColumn = "aprPercent_24h" | "balance" | "pnlPercent";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
@@ -37,7 +38,13 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
-  balanceUsd: {
+  balance: {
+    flex: 1,
+    minWidth: 150, // px
+    justifyContent: "end",
+    paddingRight: 4 * 5, // px
+  },
+  pnlPercent: {
     flex: 1,
     minWidth: 150, // px
     justifyContent: "end",
@@ -45,13 +52,13 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   stakedPercent: {
     flex: 1,
-    minWidth: 175, // px
+    minWidth: 200, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   claimableRewards: {
     flex: 1,
-    minWidth: 175, // px
+    minWidth: 200, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -98,8 +105,10 @@ export default function PoolPositionsTable({
         !positions.every(
           (position) => position.pool.aprPercent_24h !== undefined,
         )) ||
-      (sortState.column === "balanceUsd" &&
-        !positions.every((position) => position.balanceUsd !== undefined))
+      (sortState.column === "balance" &&
+        !positions.every((position) => position.balanceUsd !== undefined)) ||
+      (sortState.column === "pnlPercent" &&
+        !positions.every((position) => position.pnlPercent !== undefined))
     )
       return positions;
 
@@ -112,10 +121,14 @@ export default function PoolPositionsTable({
           : +(a.pool.aprPercent_24h as BigNumber).minus(
               b.pool.aprPercent_24h as BigNumber,
             );
-      } else if (sortState.column === "balanceUsd") {
+      } else if (sortState.column === "balance") {
         return sortState.direction === SortDirection.DESC
           ? +(b.balanceUsd as BigNumber).minus(a.balanceUsd as BigNumber)
           : +(a.balanceUsd as BigNumber).minus(b.balanceUsd as BigNumber);
+      } else if (sortState.column === "pnlPercent") {
+        return sortState.direction === SortDirection.DESC
+          ? +(b.pnlPercent as BigNumber).minus(a.pnlPercent as BigNumber)
+          : +(a.pnlPercent as BigNumber).minus(b.pnlPercent as BigNumber);
       }
 
       return 0; // Should never reach here
@@ -161,7 +174,7 @@ export default function PoolPositionsTable({
         </HeaderColumn>
 
         <HeaderColumn<Column, SortableColumn>
-          id="balanceUsd"
+          id="balance"
           sortState={sortState}
           toggleSortByColumn={
             !!(positions ?? []).every(
@@ -170,31 +183,46 @@ export default function PoolPositionsTable({
               ? toggleSortByColumn
               : undefined
           }
-          style={columnStyleMap.balanceUsd}
+          style={columnStyleMap.balance}
         >
           Balance
         </HeaderColumn>
 
         <HeaderColumn<Column, SortableColumn>
+          id="pnlPercent"
+          sortState={sortState}
+          toggleSortByColumn={
+            !!(positions ?? []).every(
+              (position) => position.pnlPercent !== undefined,
+            )
+              ? toggleSortByColumn
+              : undefined
+          }
+          style={columnStyleMap.pnlPercent}
+        >
+          PnL
+        </HeaderColumn>
+
+        {/* <HeaderColumn<Column, SortableColumn>
           id="stakedPercent"
           style={columnStyleMap.stakedPercent}
         >
           Staked
-        </HeaderColumn>
+        </HeaderColumn> */}
 
-        <HeaderColumn<Column, SortableColumn>
+        {/* <HeaderColumn<Column, SortableColumn>
           id="claimableRewards"
           style={columnStyleMap.claimableRewards}
         >
           Claimable rewards
-        </HeaderColumn>
+        </HeaderColumn> */}
 
-        <HeaderColumn<Column, SortableColumn>
+        {/* <HeaderColumn<Column, SortableColumn>
           id="points"
           style={columnStyleMap.points}
         >
           Points
-        </HeaderColumn>
+        </HeaderColumn> */}
       </div>
 
       {/* Rows */}
@@ -203,13 +231,13 @@ export default function PoolPositionsTable({
           <Skeleton
             key={index}
             className={cn(
-              "relative z-[1] h-[56px] w-full",
-              index !== array.length - 1 && "h-[calc(56px+1px)] border-b",
+              "relative z-[1] h-[106px] w-full",
+              index !== array.length - 1 && "h-[calc(106px+1px)] border-b",
             )}
           />
         ))
       ) : sortedPositions.length === 0 ? (
-        <div className="flex h-[56px] w-full flex-row items-center justify-center">
+        <div className="flex h-[106px] w-full flex-row items-center justify-center">
           <p className="text-p2 text-tertiary-foreground">No positions</p>
         </div>
       ) : (

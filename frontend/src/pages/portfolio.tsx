@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
@@ -38,6 +38,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
+import usePoolBalancesMap from "@/hooks/usePoolBalancesMap";
+import usePoolDepositedUsdMap from "@/hooks/usePoolDepositedUsdMap";
 import { getTotalAprPercent } from "@/lib/liquidityMining";
 import {
   getIndexOfObligationWithDeposit,
@@ -49,7 +51,7 @@ import { PoolPosition } from "@/lib/types";
 export default function PortfolioPage() {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, lstData } = useLoadedAppContext();
+  const { appData, lstData } = useLoadedAppContext();
   const { getBalance, userData, refresh } = useLoadedUserContext();
   const { poolStats } = useStatsContext();
 
@@ -152,7 +154,9 @@ export default function PortfolioPage() {
               ...pool,
               aprPercent_24h: totalAprPercent,
             },
-            balanceUsd: undefined, // Fetched below
+            balances: undefined, // Fetched below (on-chain)
+            balanceUsd: undefined, // Fetched below (on-chain)
+            pnlPercent: undefined, // Fetched below (BE)
             stakedPercent: depositedAmount.div(totalAmount).times(100),
             claimableRewards: Object.fromEntries(
               Object.entries(poolRewardsMap[pool.lpTokenType] ?? {}).filter(
@@ -177,92 +181,51 @@ export default function PortfolioPage() {
     ],
   );
 
-  // Positions - Balances in USD (on-chain)
-  const [poolBalancesUsd, setPoolBalancesUsd] = useState<
-    Record<string, BigNumber>
-  >({});
+  // Positions - Deposited USD for PnL calc. (BE)
+  const poolDepositedUsdMap = usePoolDepositedUsdMap(
+    positions === undefined
+      ? undefined
+      : positions.map((position) => position.pool.id),
+  );
 
-  useEffect(() => {
-    if (positions === undefined) return;
+  // Positions - Balances (on-chain)
+  const poolBalancesMap = usePoolBalancesMap(
+    positions === undefined
+      ? undefined
+      : positions.map((position) => position.pool.id),
+  );
 
-    (async () => {
-      try {
-        const result: Record<string, BigNumber> = {};
-
-        const redeemQuotes = await Promise.all(
-          positions.map((position) => {
-            const obligationIndex = getIndexOfObligationWithDeposit(
-              userData.obligations,
-              position.pool.lpTokenType,
-            ); // Assumes up to one obligation has deposits of the LP token type
-
-            const balance = getBalance(position.pool.lpTokenType);
-            const depositedAmount = getObligationDepositedAmount(
-              userData.obligations[obligationIndex],
-              position.pool.lpTokenType,
-            );
-            const totalAmount = balance.plus(depositedAmount);
-
-            return steammClient.Pool.quoteRedeem({
-              lpTokens: BigInt(
-                totalAmount
-                  .times(
-                    10 **
-                      appData.coinMetadataMap[position.pool.lpTokenType]
-                        .decimals,
-                  )
-                  .integerValue(BigNumber.ROUND_DOWN)
-                  .toString(),
-              ),
-              poolInfo: position.pool.poolInfo,
-              bankInfoA: appData.bankMap[position.pool.coinTypes[0]].bankInfo,
-              bankInfoB: appData.bankMap[position.pool.coinTypes[1]].bankInfo,
-            });
-          }),
-        );
-
-        for (let i = 0; i < positions.length; i++) {
-          const pool = positions[i].pool;
-
-          const balanceUsdA = new BigNumber(
-            redeemQuotes[i].withdrawA.toString(),
-          )
-            .div(10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals)
-            .times(pool.prices[0]);
-          const balanceUsdB = new BigNumber(
-            redeemQuotes[i].withdrawB.toString(),
-          )
-            .div(10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals)
-            .times(pool.prices[1]);
-
-          result[pool.id] = balanceUsdA.plus(balanceUsdB);
-        }
-
-        setPoolBalancesUsd(result);
-      } catch (err) {
-        showErrorToast("Failed to fetch pool balances", err as Error);
-        console.error(err);
-        Sentry.captureException(err);
-      }
-    })();
-  }, [
-    positions,
-    getBalance,
-    userData.obligations,
-    steammClient,
-    appData.coinMetadataMap,
-    appData.bankMap,
-  ]);
-
+  // Positions - Extra data
   const positionsWithExtraData: PoolPosition[] | undefined = useMemo(
     () =>
       positions === undefined
         ? undefined
         : positions.map((position) => ({
             ...position,
-            balanceUsd: poolBalancesUsd[position.pool.id],
+            balances:
+              poolBalancesMap?.[position.pool.id] !== undefined
+                ? [
+                    poolBalancesMap[position.pool.id].a,
+                    poolBalancesMap[position.pool.id].b,
+                  ]
+                : undefined,
+            balanceUsd:
+              poolBalancesMap?.[position.pool.id] !== undefined
+                ? poolBalancesMap[position.pool.id].usd
+                : undefined,
+            pnlPercent:
+              poolDepositedUsdMap?.[position.pool.id] !== undefined &&
+              poolBalancesMap?.[position.pool.id] !== undefined
+                ? new BigNumber(
+                    poolBalancesMap[position.pool.id].usd.minus(
+                      poolDepositedUsdMap[position.pool.id],
+                    ),
+                  )
+                    .div(poolDepositedUsdMap[position.pool.id])
+                    .times(100)
+                : undefined,
           })),
-    [positions, poolBalancesUsd],
+    [positions, poolBalancesMap, poolDepositedUsdMap],
   );
 
   // Summary
@@ -424,7 +387,8 @@ export default function PortfolioPage() {
           {/* Stats */}
           <div className="grid w-full grid-cols-2 rounded-md border md:flex md:flex-row md:items-stretch">
             {/* Net worth */}
-            <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1">
+            {/* <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1"> */}
+            <div className="max-md:w-full max-md:border-r md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">Net worth</p>
 
@@ -443,7 +407,8 @@ export default function PortfolioPage() {
             <Divider className="h-auto w-px max-md:hidden" />
 
             {/* APR */}
-            <div className="max-md:w-full max-md:border-b md:flex-1">
+            {/* <div className="max-md:w-full max-md:border-b md:flex-1"> */}
+            <div className="max-md:w-full md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">Average APR</p>
 
@@ -457,10 +422,10 @@ export default function PortfolioPage() {
               </div>
             </div>
 
-            <Divider className="h-auto w-px max-md:hidden" />
+            {/* <Divider className="h-auto w-px max-md:hidden" /> */}
 
             {/* Claimable rewards */}
-            <div className="max-md:w-full max-md:border-r md:flex-1">
+            {/* <div className="max-md:w-full max-md:border-r md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">
                   Claimable rewards
@@ -530,12 +495,12 @@ export default function PortfolioPage() {
                   </>
                 )}
               </div>
-            </div>
+            </div> */}
 
-            <Divider className="h-auto w-px max-md:hidden" />
+            {/* <Divider className="h-auto w-px max-md:hidden" /> */}
 
             {/* Points */}
-            <div className="max-md:w-full md:flex-1">
+            {/* <div className="max-md:w-full md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">Points</p>
 
@@ -562,7 +527,7 @@ export default function PortfolioPage() {
                   </Tooltip>
                 )}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 

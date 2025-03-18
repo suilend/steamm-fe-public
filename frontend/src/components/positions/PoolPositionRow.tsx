@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MouseEvent, useState } from "react";
+import { Fragment, MouseEvent, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
@@ -219,8 +219,8 @@ export default function PoolPositionRow({
   return (
     <Link
       className={cn(
-        "group relative z-[1] flex min-h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row items-center py-[16px] transition-colors hover:bg-tertiary",
-        !isLast && "min-h-[calc(56px+1px)] border-b",
+        "group relative z-[1] flex min-h-[106px] w-full min-w-max shrink-0 cursor-pointer flex-row items-center py-[16px] transition-colors hover:bg-tertiary",
+        !isLast && "min-h-[calc(106px+1px)] border-b",
       )}
       href={`${POOL_URL_PREFIX}/${position.pool.id}`}
     >
@@ -262,21 +262,71 @@ export default function PoolPositionRow({
       {/* Balance */}
       <div
         className="flex h-full flex-row items-center"
-        style={columnStyleMap.balanceUsd}
+        style={columnStyleMap.balance}
       >
-        {position.balanceUsd === undefined ? (
+        <div className="flex flex-col items-end gap-1">
+          {position.balanceUsd === undefined ? (
+            <Skeleton className="h-[24px] w-16" />
+          ) : (
+            <Tooltip title={formatUsd(position.balanceUsd, { exact: true })}>
+              <p className="text-p1 text-foreground">
+                {formatUsd(position.balanceUsd)}
+              </p>
+            </Tooltip>
+          )}
+
+          {position.pool.coinTypes.map((coinType, index) => (
+            <Fragment key={index}>
+              {position.balances === undefined ? (
+                <Skeleton className="h-[21px] w-16" />
+              ) : (
+                <div className="flex flex-row items-center gap-2">
+                  <TokenLogo
+                    token={getToken(
+                      coinType,
+                      appData.coinMetadataMap[coinType],
+                    )}
+                    size={16}
+                  />
+                  <Tooltip
+                    title={`${formatToken(position.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
+                  >
+                    <p className="text-p2 text-foreground">
+                      {formatToken(position.balances[index], {
+                        exact: false,
+                      })}{" "}
+                      {appData.coinMetadataMap[coinType].symbol}
+                    </p>
+                  </Tooltip>
+                </div>
+              )}
+            </Fragment>
+          ))}
+        </div>
+      </div>
+
+      {/* PnL */}
+      <div
+        className="flex h-full flex-row items-center"
+        style={columnStyleMap.pnlPercent}
+      >
+        {position.pnlPercent === undefined ? (
           <Skeleton className="h-[24px] w-16" />
         ) : (
-          <Tooltip title={formatUsd(position.balanceUsd, { exact: true })}>
-            <p className="text-p1 text-foreground">
-              {formatUsd(position.balanceUsd)}
-            </p>
-          </Tooltip>
+          <p
+            className={cn(
+              "!text-p1",
+              position.pnlPercent.gte(0) ? "text-success" : "text-error",
+            )}
+          >
+            {position.pnlPercent.gte(0) ? "+" : "-"}
+            {formatPercent(new BigNumber(position.pnlPercent.abs()))}
+          </p>
         )}
       </div>
 
       {/* Staked */}
-      <div
+      {/* <div
         className="flex h-full flex-row items-center gap-3"
         style={columnStyleMap.stakedPercent}
       >
@@ -287,7 +337,6 @@ export default function PoolPositionRow({
             </p>
 
             <div className="flex flex-col items-end gap-1">
-              {/* Stake */}
               {!stakedPercent.eq(100) && (
                 <button
                   className="flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-1 px-2 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
@@ -302,7 +351,6 @@ export default function PoolPositionRow({
                 </button>
               )}
 
-              {/* Unstake */}
               {!stakedPercent.eq(0) && (
                 <button
                   className="flex h-6 w-[60px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
@@ -321,10 +369,10 @@ export default function PoolPositionRow({
         ) : (
           <p className="text-p1 text-foreground">--</p>
         )}
-      </div>
+      </div> */}
 
       {/* Claimable rewards */}
-      <div
+      {/* <div
         className="flex h-full flex-row items-center"
         style={columnStyleMap.claimableRewards}
       >
@@ -359,10 +407,10 @@ export default function PoolPositionRow({
         ) : (
           <p className="text-p1 text-foreground">--</p>
         )}
-      </div>
+      </div> */}
 
       {/* Points */}
-      <div
+      {/* <div
         className="flex h-full flex-row items-center"
         style={columnStyleMap.points}
       >
@@ -383,7 +431,7 @@ export default function PoolPositionRow({
             </p>
           </Tooltip>
         </div>
-      </div>
+      </div> */}
     </Link>
   );
 }
