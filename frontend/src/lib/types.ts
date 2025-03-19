@@ -3,6 +3,7 @@ import BigNumber from "bignumber.js";
 import { BankInfo, PoolInfo } from "@suilend/steamm-sdk";
 import { Bank } from "@suilend/steamm-sdk/_codegen/_generated/steamm/bank/structs";
 import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
+import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
 export type ParsedBank = {
@@ -46,7 +47,9 @@ export const QUOTERS: Quoter[] = [
 
 export type ParsedPool = {
   id: string;
-  pool: Pool<string, string, CpQuoter, string>;
+  pool:
+    | Pool<string, string, CpQuoter, string>
+    | Pool<string, string, OracleQuoter, string>;
   poolInfo: PoolInfo;
   quoter: Quoter;
 

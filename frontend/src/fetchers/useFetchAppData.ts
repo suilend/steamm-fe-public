@@ -252,7 +252,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             // TODO: Add support for other pool types
             const quoter = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
               ? QUOTERS.find((_quoter) => _quoter.id === QuoterId.CPMM)!
-              : QUOTERS.find((_quoter) => _quoter.id === QuoterId.CPMM)!; // Should never need to use the fallback
+              : poolInfo.quoterType.endsWith("omm::OracleQuoter")
+                ? QUOTERS.find((_quoter) => _quoter.id === QuoterId.ORACLE)!
+                : QUOTERS.find((_quoter) => _quoter.id === QuoterId.CPMM)!; // Should never need to use the fallback
 
             const bTokenTypeA = poolInfo.coinTypeA;
             const bTokenTypeB = poolInfo.coinTypeB;
