@@ -3,8 +3,7 @@ import BigNumber from "bignumber.js";
 import { Token } from "@suilend/frontend-sui";
 import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 
-export const PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD = 1;
-export const PRICE_DIFFERENCE_PERCENT_DESTRUCTIVE_THRESHOLD = 8;
+export const PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD = 2;
 
 export const getQuoteRatio = (
   inToken: Token,
