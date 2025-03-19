@@ -80,7 +80,7 @@ export interface MigratePoolArgs {
 
 export interface SharePoolArgs {
   pool: TransactionResult;
-  coinTypeA: string;
-  coinTypeB: string;
+  bTokenTypeA: string;
+  bTokenTypeB: string;
   lpTokenType: string;
 }

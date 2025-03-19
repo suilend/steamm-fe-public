@@ -133,10 +133,10 @@ export function createConstantProductPool(
   pkgInfo: PackageInfo,
 ): TransactionResult {
   const {
-    coinTypeA,
-    coinMetaA,
-    coinTypeB,
-    coinMetaB,
+    bTokenTypeA,
+    bTokenMetaA,
+    bTokenTypeB,
+    bTokenMetaB,
     lpTokenType,
     swapFeeBps,
     offset,
@@ -147,13 +147,13 @@ export function createConstantProductPool(
 
   const pool = ConstantProductFunctions.new_(
     tx,
-    [coinTypeA, coinTypeB, lpTokenType],
+    [bTokenTypeA, bTokenTypeB, lpTokenType],
     {
       registry,
       swapFeeBps,
       offset,
-      metaA: coinMetaA,
-      metaB: coinMetaB,
+      metaA: bTokenMetaA,
+      metaB: bTokenMetaB,
       metaLp: lpMetadataId,
       lpTreasury: lpTreasuryId,
     },
@@ -173,7 +173,7 @@ export function shareConstantProductPool(
   return tx.moveCall({
     target: `0x2::transfer::public_share_object`,
     typeArguments: [
-      `${pkgInfo.sourcePkgId}::pool::Pool<${args.coinTypeA}, ${args.coinTypeB}, ${quoterType}, ${args.lpTokenType}>`,
+      `${pkgInfo.sourcePkgId}::pool::Pool<${args.bTokenTypeA}, ${args.bTokenTypeB}, ${quoterType}, ${args.lpTokenType}>`,
     ],
     arguments: [args.pool],
   });
@@ -190,8 +190,8 @@ export function createConstantProductPoolAndShare(
     tx,
     {
       pool,
-      coinTypeA: args.coinTypeA,
-      coinTypeB: args.coinTypeB,
+      bTokenTypeA: args.bTokenTypeA,
+      bTokenTypeB: args.bTokenTypeB,
       lpTokenType: args.lpTokenType,
     },
     pkgInfo,

@@ -188,7 +188,7 @@ export function shareOraclePool(
   return tx.moveCall({
     target: `0x2::transfer::public_share_object`,
     typeArguments: [
-      `${pkgInfo.sourcePkgId}::pool::Pool<${args.coinTypeA}, ${args.coinTypeB}, ${quoterType}, ${args.lpTokenType}>`,
+      `${pkgInfo.sourcePkgId}::pool::Pool<${args.bTokenTypeA}, ${args.bTokenTypeB}, ${quoterType}, ${args.lpTokenType}>`,
     ],
     arguments: [args.pool],
   });
@@ -205,8 +205,8 @@ export function createOraclePoolAndShare(
     tx,
     {
       pool,
-      coinTypeA: args.coinTypeA,
-      coinTypeB: args.coinTypeB,
+      bTokenTypeA: args.bTokenTypeA,
+      bTokenTypeB: args.bTokenTypeB,
       lpTokenType: args.lpTokenType,
     },
     pkgInfo,
