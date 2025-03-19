@@ -132,7 +132,6 @@ export class PoolScript {
           },
           this.publishedAt,
         );
-
       case "Oracle":
         return PoolScriptFunctions.quoteOmmSwap(
           tx,
