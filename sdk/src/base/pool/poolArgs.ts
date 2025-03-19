@@ -20,13 +20,13 @@ export type QuoteSwapFullArgs = CpQuoteSwapArgs | OracleQuoteSwapArgs;
 export type CreatePoolArgs = CreateCpPoolArgs | CreateOraclePoolArgs;
 
 export interface CreatePoolBaseArgs {
-  coinTypeA: string;
-  coinTypeB: string;
+  bTokenTypeA: string;
+  bTokenTypeB: string;
   lpTokenType: string;
   registry: string | TransactionObjectInput;
   swapFeeBps: bigint | TransactionArgument;
-  coinMetaA: string | TransactionObjectInput;
-  coinMetaB: string | TransactionObjectInput;
+  bTokenMetaA: string | TransactionObjectInput;
+  bTokenMetaB: string | TransactionObjectInput;
   lpMetadataId: string | TransactionObjectInput;
   lpTreasuryId: string | TransactionObjectInput;
 }

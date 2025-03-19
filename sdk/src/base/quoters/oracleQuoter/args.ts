@@ -30,8 +30,8 @@ export type CreateOraclePoolArgs = CreatePoolBaseArgs & {
   oracleIndexA: bigint | TransactionArgument;
   oracleIndexB: bigint | TransactionArgument;
   lendingMarketType: string;
-  bTokenTypeA: string;
-  bTokenTypeB: string;
-  bTokenMetaA: string | TransactionObjectInput;
-  bTokenMetaB: string | TransactionObjectInput;
+  coinTypeA: string;
+  coinTypeB: string;
+  coinMetaA: string | TransactionObjectInput;
+  coinMetaB: string | TransactionObjectInput;
 };

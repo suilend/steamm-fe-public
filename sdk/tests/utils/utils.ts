@@ -229,12 +229,12 @@ export async function createPoolHelper(
     lpTreasuryId,
     lpMetadataId,
     lpTokenType,
-    coinTypeA: coinAData.btokenType,
-    coinTypeB: coinBData.btokenType,
+    bTokenTypeA: coinAData.btokenType,
+    bTokenTypeB: coinBData.btokenType,
     swapFeeBps: BigInt(100),
     offset: BigInt(0),
-    coinMetaA: coinAData.bTokenmeta,
-    coinMetaB: coinBData.bTokenmeta,
+    bTokenMetaA: coinAData.bTokenmeta,
+    bTokenMetaB: coinBData.bTokenmeta,
   });
 
   const newPoolTxResponse = await sdk.fullClient.signAndExecuteTransaction({
