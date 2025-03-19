@@ -807,7 +807,7 @@ export default function AdminPage() {
               </Parameter>
 
               {/* Market price */}
-              <div className="flex w-full flex-col items-end gap-1">
+              <div className="flex w-full flex-col items-end gap-2">
                 <Parameter label="Market price (Birdeye)" isHorizontal>
                   {coinTypes.every((coinType) => coinType !== "") ? (
                     birdeyeRatio !== undefined ? (
@@ -830,7 +830,7 @@ export default function AdminPage() {
                       onClick={onUseBirdeyePriceClick}
                     >
                       <p className="text-p3 text-button-2-foreground">
-                        Use price
+                        Use market price
                       </p>
                     </button>
                   ) : (
