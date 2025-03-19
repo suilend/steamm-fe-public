@@ -182,6 +182,7 @@ export class PoolModule implements IModule {
 
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
+    console.log("POOL INFO: ", poolInfo);
     const quoterType = getQuoterType(poolInfo.quoterType);
     const extraArgs: OracleSwapExtraArgs | { type: "ConstantProduct" } =
       quoterType === "Oracle"
@@ -538,12 +539,22 @@ export async function getOracleArgs(
     priceInfoObjectIdB = (await sdk.pythClient.getPriceFeedObjectId(
       toHex(new Uint8Array(oracleInfoB.oracleIdentifier as number[])),
     )) as string;
+
+    console.log("price id from feedA: ", priceInfoObjectIdA);
+    console.log("price id from feedB: ", priceInfoObjectIdB);
   }
 
+  const feedIdentifiers: Record<string, string> = {};
   const priceInfoObjectIds: string[] = [];
   const stalePriceIdentifiers: string[] = [];
   priceInfoObjectIds.push(priceInfoObjectIdA);
   priceInfoObjectIds.push(priceInfoObjectIdB);
+  feedIdentifiers[priceInfoObjectIdA] = toHex(
+    new Uint8Array(oracleInfoA.oracleIdentifier as number[]),
+  );
+  feedIdentifiers[priceInfoObjectIdB] = toHex(
+    new Uint8Array(oracleInfoB.oracleIdentifier as number[]),
+  );
 
   for (const priceInfoObjectId of priceInfoObjectIds) {
     const priceInfoObject = await PriceInfoObject.fetch(
@@ -557,13 +568,14 @@ export async function getOracleArgs(
     console.log("Date now: ", Date.now() / 1000);
     console.log("Publish time: ", publishTime);
     console.log("Staleness: ", stalenessSeconds);
-    if (stalenessSeconds > 20) {
-      stalePriceIdentifiers.push(priceInfoObjectId);
+    if (stalenessSeconds > 15) {
+      stalePriceIdentifiers.push(feedIdentifiers[priceInfoObjectId]);
     }
   }
 
   if (stalePriceIdentifiers.length > 0) {
     console.log("PRICE STALE...");
+    console.log("identifiers: ", stalePriceIdentifiers);
     const stalePriceUpdateData =
       await sdk.pythConnection.getPriceFeedsUpdateData(stalePriceIdentifiers);
     await sdk.pythClient.updatePriceFeeds(

@@ -271,8 +271,8 @@ export function quoteOmmSwap(
       obj(tx, args.lendingMarket),
       obj(tx, args.oraclePriceUpdateA),
       obj(tx, args.oraclePriceUpdateB),
-      pure(tx, args.a2B, `bool`),
       pure(tx, args.amountIn, `u64`),
+      pure(tx, args.a2B, `bool`), // TODO: fix this... it should be above amountIn
       obj(tx, args.clock),
     ],
   });
