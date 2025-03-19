@@ -3,7 +3,12 @@ import { Transaction, TransactionResult } from "@mysten/sui/transactions";
 import { normalizeSuiAddress, toHex } from "@mysten/sui/utils";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
-import { SteammSDK, SuiAddressType, parseErrorCode } from "../../src";
+import {
+  SdkOptions,
+  SteammSDK,
+  SuiAddressType,
+  parseErrorCode,
+} from "../../src";
 import {
   GLOBAL_ADMIN_ID,
   LENDING_MARKET_ID,
@@ -23,7 +28,7 @@ import { createBToken2, createLpToken2 } from "./createHelper";
 
 let feedIdCounter = 0;
 
-export function testConfig() {
+export function testConfig(): SdkOptions {
   return {
     fullRpcUrl: "http://127.0.0.1:9000",
     enableTestMode: true,
@@ -33,7 +38,10 @@ export function testConfig() {
       config: {
         registryId: REGISTRY_ID,
         globalAdmin: GLOBAL_ADMIN_ID,
-        oracleQuoterPkgId: STEAMM_PKG_ID,
+        quoterSourcePkgs: {
+          cpmm: STEAMM_PKG_ID,
+          omm: STEAMM_PKG_ID,
+        },
       },
     },
     suilend_config: {
@@ -303,7 +311,6 @@ export async function createOraclePoolHelper(
     getTreasuryAndCoinMeta(coinTxResponse);
 
   const newPoolTx = new Transaction();
-  console.log("A");
 
   const oracleIndexA = feedIdCounter++;
   const oracleIndexB = feedIdCounter++;
@@ -316,8 +323,6 @@ export async function createOraclePoolHelper(
   // Note: its u8 so only works until 255
   const oracleIndexAByteArray = [oracleIndexA, ...Array(31).fill(0)];
   const oracleIndexBByteArray = [oracleIndexB, ...Array(31).fill(0)];
-
-  console.log("b");
 
   const priceObjB = createPythPrice(sdk, newPoolTx, {
     price: BigInt("1"),
@@ -353,8 +358,6 @@ export async function createOraclePoolHelper(
     typeArguments: [`${PYTH_PKG_ID}::price_info::PriceInfoObject`],
     arguments: [priceObjB],
   });
-
-  console.log("c");
 
   await sdk.Pool.createPoolAndShare(newPoolTx, {
     type: "Oracle",
@@ -404,8 +407,6 @@ export async function createOraclePoolHelper(
       `Expected 2 price info objects, got ${priceInfoObjects.length}`,
     );
   }
-
-  console.log("Price Info Objects:", priceInfoObjects);
 
   sdk.mockOracleObjectForTesting(
     toHex(new Uint8Array(oracleIndexAByteArray as number[])),

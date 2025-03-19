@@ -16,7 +16,13 @@ import { BankList, DataPage, PoolInfo } from "../../src/types";
 import { STEAMM_PKG_ID } from "./../packages";
 import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
 import { PoolModule } from "../../src";
-import { createCoinAndBankHelper, mintCoin, testConfig } from "../utils/utils";
+import {
+  createCoinAndBankHelper,
+  createOraclePoolHelper,
+  createPoolHelper,
+  mintCoin,
+  testConfig,
+} from "../utils/utils";
 
 dotenv.config();
 
@@ -82,6 +88,13 @@ export async function test() {
     it("Oracle quoter", async () => {
       const coinAData = await createCoinAndBankHelper(sdk, "A");
       const coinBData = await createCoinAndBankHelper(sdk, "B");
+
+      const lpAB = await createOraclePoolHelper(sdk, coinAData, coinBData);
+
+      console.log(
+        "pools: ",
+        await sdk.getPools([coinAData.coinType, coinBData.coinType]),
+      );
 
       const poolAB = (
         await sdk.getPools([coinAData.coinType, coinBData.coinType])
