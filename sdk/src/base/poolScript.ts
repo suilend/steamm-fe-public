@@ -6,14 +6,7 @@ import {
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
 import { PoolScriptFunctions } from "../_codegen";
-import {
-  BankInfo,
-  Package,
-  PackageInfoX,
-  PoolInfo,
-  SteammConfigs,
-  SteammPackageInfo,
-} from "../types";
+import { BankInfo, PackageInfo, PoolInfo, SteammPackageInfo } from "../types";
 
 import { Bank } from "./bank";
 import {
@@ -27,14 +20,14 @@ import {
 } from "./pool";
 
 export class PoolScript {
-  public pkgInfo: PackageInfoX;
+  public pkgInfo: PackageInfo;
   public pool: Pool;
   public bankA: Bank;
   public bankB: Bank;
 
   constructor(
     pkgInfo: SteammPackageInfo,
-    scriptPkgInfo: PackageInfoX,
+    scriptPkgInfo: PackageInfo,
     // steammPkgInfo: PackageInfo,
     // scriptPkgInfo: PackageInfo,
     poolInfo: PoolInfo,

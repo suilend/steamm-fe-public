@@ -7,7 +7,7 @@ export interface SteammPackageInfo {
   };
 }
 
-export interface PackageInfoX {
+export interface PackageInfo {
   sourcePkgId: string;
   publishedAt: string;
 }

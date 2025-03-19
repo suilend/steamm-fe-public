@@ -53,6 +53,13 @@ import { cn } from "@/lib/utils";
 
 const FEE_TIER_PERCENTS: number[] = [0.01, 0.05, 0.3, 1, 2];
 
+const COIN_TYPE_ORACLE_INDEX_MAP: Record<string, number> = {
+  [NORMALIZED_SUI_COINTYPE]: 0,
+  [NORMALIZED_USDC_COINTYPE]: 1,
+  [NORMALIZED_SEND_COINTYPE]: 2,
+  [NORMALIZED_DEEP_COINTYPE]: 3,
+};
+
 const generate_bytecode = (
   module: string,
   type: string,
@@ -228,18 +235,25 @@ export default function AdminPage() {
           ([, a], [, b]) =>
             a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1, // Sort by symbol (ascending)
         )
-        .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata)),
+        .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
+        .filter((token) =>
+          Object.keys(COIN_TYPE_ORACLE_INDEX_MAP).includes(token.coinType),
+        ),
     [balancesCoinMetadataMap],
   );
 
   const quotePopoverTokens = useMemo(
     () =>
-      basePopoverTokens.filter(
-        (token) =>
-          isSui(token.coinType) ||
-          issSui(token.coinType) ||
-          isStablecoin(token.coinType),
-      ),
+      basePopoverTokens
+        .filter(
+          (token) =>
+            isSui(token.coinType) ||
+            issSui(token.coinType) ||
+            isStablecoin(token.coinType),
+        )
+        .filter((token) =>
+          Object.keys(COIN_TYPE_ORACLE_INDEX_MAP).includes(token.coinType),
+        ),
     [basePopoverTokens],
   );
 
@@ -572,12 +586,6 @@ export default function AdminPage() {
         createLpTokenResult,
       );
 
-      const COIN_TYPE_ORACLE_INDEX_MAP: Record<string, number> = {
-        [NORMALIZED_SEND_COINTYPE]: 0,
-        [NORMALIZED_SUI_COINTYPE]: 1,
-        [NORMALIZED_USDC_COINTYPE]: 2,
-        [NORMALIZED_DEEP_COINTYPE]: 3,
-      };
       if (COIN_TYPE_ORACLE_INDEX_MAP[coinTypes[0]] === undefined)
         throw new Error("coinType 0 not found in COIN_TYPE_ORACLE_INDEX_MAP");
       if (COIN_TYPE_ORACLE_INDEX_MAP[coinTypes[1]] === undefined)
@@ -651,8 +659,10 @@ export default function AdminPage() {
           bTokens[0].coinType,
           bTokens[1].coinType,
           {
-            [QuoterId.CPMM]: `${steammClient.sourcePkgId()}::cpmm::CpQuoter`,
-            [QuoterId.ORACLE]: `${steammClient.sdkOptions.steamm_config.config!.oracleQuoterPkgId}::omm::OracleQuoter`,
+            [QuoterId.CPMM]: `${steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.cpmm}::cpmm::CpQuoter`,
+            [QuoterId.ORACLE]: `${
+              steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm
+            }::omm::OracleQuoter`,
             [QuoterId.STABLE]: "", // TODO
           }[quoterId],
           createLpTokenResult.coinType,

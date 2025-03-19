@@ -4,8 +4,8 @@ import {
   TransactionResult,
 } from "@mysten/sui/transactions";
 
-import { ConstantProductFunctions } from "../../..";
-import { PackageInfoX, PoolInfo } from "../../../types";
+import { ConstantProductFunctions, SdkOptions } from "../../..";
+import { PackageInfo, PoolInfo } from "../../../types";
 import { MigrateArgs, SharePoolArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
 
@@ -16,7 +16,7 @@ export class ConstantProductQuoter implements Quoter {
   public publishedAt: string;
   public poolInfo: PoolInfo;
 
-  constructor(pkgInfo: PackageInfoX, poolInfo: PoolInfo) {
+  constructor(pkgInfo: PackageInfo, poolInfo: PoolInfo) {
     this.sourcePkgId = pkgInfo.sourcePkgId;
     this.publishedAt = pkgInfo.publishedAt;
     this.poolInfo = poolInfo;
@@ -130,7 +130,7 @@ export class ConstantProductQuoter implements Quoter {
 export function createConstantProductPool(
   tx: Transaction,
   args: CreateCpPoolArgs,
-  pkgInfo: PackageInfoX,
+  pkgInfo: PackageInfo,
 ): TransactionResult {
   const {
     bTokenTypeA,
@@ -166,9 +166,10 @@ export function createConstantProductPool(
 export function shareConstantProductPool(
   tx: Transaction,
   args: SharePoolArgs,
-  pkgInfo: PackageInfoX,
+  pkgInfo: PackageInfo,
+  sdkOptions: SdkOptions,
 ): TransactionResult {
-  const quoterType = `${pkgInfo.sourcePkgId}::cpmm::CpQuoter`;
+  const quoterType = `${sdkOptions.steamm_config.config!.quoterSourcePkgs.omm}::cpmm::CpQuoter`;
 
   return tx.moveCall({
     target: `0x2::transfer::public_share_object`,
@@ -182,7 +183,8 @@ export function shareConstantProductPool(
 export function createConstantProductPoolAndShare(
   tx: Transaction,
   args: CreateCpPoolArgs,
-  pkgInfo: PackageInfoX,
+  pkgInfo: PackageInfo,
+  sdkOptions: SdkOptions,
 ) {
   const pool = createConstantProductPool(tx, args, pkgInfo);
 
@@ -195,5 +197,6 @@ export function createConstantProductPoolAndShare(
       lpTokenType: args.lpTokenType,
     },
     pkgInfo,
+    sdkOptions,
   );
 }

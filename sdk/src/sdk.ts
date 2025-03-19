@@ -20,7 +20,7 @@ import {
   OracleConfigs,
   OracleInfo,
   Package,
-  PackageInfoX,
+  PackageInfo,
   PoolInfo,
   SteammConfigs,
   SteammPackageInfo,
@@ -210,7 +210,7 @@ export class SteammSDK {
     };
   }
 
-  public scriptPackageInfo(): PackageInfoX {
+  public scriptPackageInfo(): PackageInfo {
     return {
       sourcePkgId: this.sdkOptions.steamm_script_config.package_id,
       publishedAt: this.sdkOptions.steamm_script_config.published_at,

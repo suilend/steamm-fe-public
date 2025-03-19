@@ -302,7 +302,12 @@ export class PoolModule implements IModule {
   public async sharePool(args: SharePoolParams, tx: Transaction) {
     switch (args.type) {
       case "ConstantProduct":
-        shareConstantProductPool(tx, args, this.sdk.packageInfo());
+        shareConstantProductPool(
+          tx,
+          args,
+          this.sdk.packageInfo(),
+          this.sdk.sdkOptions,
+        );
         break;
       case "Oracle":
         shareOraclePool(tx, args, this.sdk.packageInfo(), this.sdk.sdkOptions);
@@ -337,6 +342,7 @@ export class PoolModule implements IModule {
             registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
           },
           this.sdk.packageInfo(),
+          this.sdk.sdkOptions,
         );
       case "Oracle":
         return createOraclePoolAndShare(
