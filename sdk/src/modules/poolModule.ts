@@ -370,6 +370,7 @@ export class PoolModule implements IModule {
     );
 
     if (inspectResults.error) {
+      console.log(tx.getData());
       console.log(inspectResults);
       throw new Error("DevInspect Failed");
     }

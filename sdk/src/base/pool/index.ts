@@ -5,7 +5,7 @@ import {
 } from "@mysten/sui/transactions";
 
 import { OracleQuoter, PoolFunctions } from "../..";
-import { PackageInfo, PoolInfo } from "../../types";
+import { PoolInfo, SteammPackageInfo } from "../../types";
 import { ConstantProductQuoter } from "../quoters/constantQuoter";
 import { Quoter } from "../quoters/quoter";
 
@@ -29,7 +29,7 @@ export class Pool {
   public poolInfo: PoolInfo;
   public quoter: Quoter;
 
-  constructor(pkgInfo: PackageInfo, poolInfo: PoolInfo) {
+  constructor(pkgInfo: SteammPackageInfo, poolInfo: PoolInfo) {
     this.sourcePkgId = pkgInfo.sourcePkgId;
     this.publishedAt = pkgInfo.publishedAt;
     this.poolInfo = poolInfo;
@@ -37,12 +37,14 @@ export class Pool {
     this.quoter = this.createQuoter(pkgInfo, poolInfo);
   }
 
-  private createQuoter(pkgInfo: PackageInfo, poolInfo: PoolInfo): Quoter {
+  private createQuoter(pkgInfo: SteammPackageInfo, poolInfo: PoolInfo): Quoter {
     switch (poolInfo.quoterType) {
-      case `${pkgInfo.sourcePkgId}::cpmm::CpQuoter`:
+      case `${pkgInfo.quoterPkgs.cpmm}::cpmm::CpQuoter`:
+        return new ConstantProductQuoter(pkgInfo, poolInfo);
+      case `${pkgInfo.quoterPkgs.omm}::omm::OracleQuoter`:
         return new ConstantProductQuoter(pkgInfo, poolInfo);
       default:
-        return new OracleQuoter(pkgInfo, poolInfo);
+        throw new Error(`Unsupported quoter type: ${poolInfo.quoterType}`);
     }
   }
 

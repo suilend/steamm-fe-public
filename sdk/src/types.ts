@@ -1,9 +1,13 @@
-export interface PackageInfo {
+export interface SteammPackageInfo {
   sourcePkgId: string;
   publishedAt: string;
+  quoterPkgs: {
+    cpmm: string;
+    omm: string;
+  };
 }
 
-export interface PackageInfo {
+export interface PackageInfoX {
   sourcePkgId: string;
   publishedAt: string;
 }
@@ -143,7 +147,10 @@ export function extractOracleQuoterInfo(
 export type SteammConfigs = {
   registryId: SuiObjectIdType;
   globalAdmin: SuiObjectIdType;
-  oracleQuoterPkgId: SuiObjectIdType;
+  quoterSourcePkgs: {
+    cpmm: SuiObjectIdType;
+    omm: SuiObjectIdType;
+  };
 };
 
 export type OracleConfigs = {

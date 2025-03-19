@@ -20,9 +20,10 @@ import {
   OracleConfigs,
   OracleInfo,
   Package,
-  PackageInfo,
+  PackageInfoX,
   PoolInfo,
   SteammConfigs,
+  SteammPackageInfo,
   SuilendConfigs,
   extractBankList,
   extractOracleQuoterInfo,
@@ -198,14 +199,18 @@ export class SteammSDK {
     );
   }
 
-  public packageInfo(): PackageInfo {
+  public packageInfo(): SteammPackageInfo {
     return {
       sourcePkgId: this.sourcePkgId(),
       publishedAt: this.publishedAt(),
+      quoterPkgs: {
+        cpmm: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.cpmm,
+        omm: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm,
+      },
     };
   }
 
-  public scriptPackageInfo(): PackageInfo {
+  public scriptPackageInfo(): PackageInfoX {
     return {
       sourcePkgId: this.sdkOptions.steamm_script_config.package_id,
       publishedAt: this.sdkOptions.steamm_script_config.published_at,
@@ -346,7 +351,7 @@ export class SteammSDK {
     eventData = res.data.reduce((acc, curr) => acc.concat(curr), []);
 
     const oracleQuoterPkgId =
-      this.sdkOptions.steamm_config.config?.oracleQuoterPkgId;
+      this.sdkOptions.steamm_config.config?.quoterSourcePkgs.omm;
 
     let quoterEventData: EventData<NewOracleQuoterEvent>[] = [];
     const res2: DataPage<EventData<NewOracleQuoterEvent>[]> =

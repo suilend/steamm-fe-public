@@ -5,7 +5,7 @@ import {
 } from "@mysten/sui/transactions";
 
 import { ConstantProductFunctions } from "../../..";
-import { PackageInfo, PoolInfo } from "../../../types";
+import { PackageInfoX, PoolInfo } from "../../../types";
 import { MigrateArgs, SharePoolArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
 
@@ -16,7 +16,7 @@ export class ConstantProductQuoter implements Quoter {
   public publishedAt: string;
   public poolInfo: PoolInfo;
 
-  constructor(pkgInfo: PackageInfo, poolInfo: PoolInfo) {
+  constructor(pkgInfo: PackageInfoX, poolInfo: PoolInfo) {
     this.sourcePkgId = pkgInfo.sourcePkgId;
     this.publishedAt = pkgInfo.publishedAt;
     this.poolInfo = poolInfo;
@@ -130,7 +130,7 @@ export class ConstantProductQuoter implements Quoter {
 export function createConstantProductPool(
   tx: Transaction,
   args: CreateCpPoolArgs,
-  pkgInfo: PackageInfo,
+  pkgInfo: PackageInfoX,
 ): TransactionResult {
   const {
     bTokenTypeA,
@@ -166,7 +166,7 @@ export function createConstantProductPool(
 export function shareConstantProductPool(
   tx: Transaction,
   args: SharePoolArgs,
-  pkgInfo: PackageInfo,
+  pkgInfo: PackageInfoX,
 ): TransactionResult {
   const quoterType = `${pkgInfo.sourcePkgId}::cpmm::CpQuoter`;
 
@@ -182,7 +182,7 @@ export function shareConstantProductPool(
 export function createConstantProductPoolAndShare(
   tx: Transaction,
   args: CreateCpPoolArgs,
-  pkgInfo: PackageInfo,
+  pkgInfo: PackageInfoX,
 ) {
   const pool = createConstantProductPool(tx, args, pkgInfo);
 

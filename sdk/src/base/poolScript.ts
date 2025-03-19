@@ -6,7 +6,14 @@ import {
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
 import { PoolScriptFunctions } from "../_codegen";
-import { BankInfo, PackageInfo, PoolInfo } from "../types";
+import {
+  BankInfo,
+  Package,
+  PackageInfoX,
+  PoolInfo,
+  SteammConfigs,
+  SteammPackageInfo,
+} from "../types";
 
 import { Bank } from "./bank";
 import {
@@ -20,24 +27,24 @@ import {
 } from "./pool";
 
 export class PoolScript {
-  public sourcePkgId: string;
-  public publishedAt: string;
+  public pkgInfo: PackageInfoX;
   public pool: Pool;
   public bankA: Bank;
   public bankB: Bank;
 
   constructor(
-    steammPkgInfo: PackageInfo,
-    scriptPkgInfo: PackageInfo,
+    pkgInfo: SteammPackageInfo,
+    scriptPkgInfo: PackageInfoX,
+    // steammPkgInfo: PackageInfo,
+    // scriptPkgInfo: PackageInfo,
     poolInfo: PoolInfo,
     bankInfoA: BankInfo,
     bankInfoB: BankInfo,
   ) {
-    this.pool = new Pool(steammPkgInfo, poolInfo);
-    this.bankA = new Bank(steammPkgInfo, bankInfoA);
-    this.bankB = new Bank(steammPkgInfo, bankInfoB);
-    this.sourcePkgId = scriptPkgInfo.sourcePkgId;
-    this.publishedAt = scriptPkgInfo.publishedAt;
+    this.pool = new Pool(pkgInfo, poolInfo);
+    this.bankA = new Bank(pkgInfo, bankInfoA);
+    this.bankB = new Bank(pkgInfo, bankInfoB);
+    this.pkgInfo = scriptPkgInfo;
 
     const [bTokenAType, bTokenBType, _quoterType, _lpTokenType] =
       this.pool.poolTypes();
@@ -84,7 +91,7 @@ export class PoolScript {
             minAmountOut: args.minAmountOut,
             clock: tx.object(SUI_CLOCK_OBJECT_ID),
           },
-          this.publishedAt,
+          this.pkgInfo.publishedAt,
         );
       case "Oracle":
         return PoolScriptFunctions.ommSwap(
@@ -104,7 +111,7 @@ export class PoolScript {
             minAmountOut: args.minAmountOut,
             clock: tx.object(SUI_CLOCK_OBJECT_ID),
           },
-          this.publishedAt,
+          this.pkgInfo.publishedAt,
         );
       default:
         console.log("Args:", args);
@@ -130,7 +137,7 @@ export class PoolScript {
             a2B: args.a2b,
             clock: tx.object(SUI_CLOCK_OBJECT_ID),
           },
-          this.publishedAt,
+          this.pkgInfo.publishedAt,
         );
       case "Oracle":
         return PoolScriptFunctions.quoteOmmSwap(
@@ -142,12 +149,12 @@ export class PoolScript {
             bankB: tx.object(this.bankB.bankInfo.bankId),
             lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
             oraclePriceUpdateA: tx.object(args.oraclePriceA),
-            oraclePriceUpdateB: tx.object(args.oraclePriceA),
+            oraclePriceUpdateB: tx.object(args.oraclePriceB),
             amountIn: args.amountIn,
             a2B: args.a2b,
             clock: tx.object(SUI_CLOCK_OBJECT_ID),
           },
-          this.publishedAt,
+          this.pkgInfo.publishedAt,
         );
       default:
         throw new Error("Unknown pool type");
@@ -174,7 +181,7 @@ export class PoolScript {
       tx,
       this.poolScriptTypes(),
       callArgs,
-      this.publishedAt,
+      this.pkgInfo.publishedAt,
     );
 
     return [lpCoin, depositResult];
@@ -199,14 +206,14 @@ export class PoolScript {
       tx,
       this.poolScriptTypes(),
       callArgs,
-      this.publishedAt,
+      this.pkgInfo.publishedAt,
     );
     return [coinA, coinB, redeemResult];
   }
 
   public redeemLiquidityWithProvision(
     tx: Transaction,
-    args: PoolRedeemLiquidityArgs,
+    args: RedeemLiquidityArgs,
   ): [TransactionArgument, TransactionArgument, TransactionArgument] {
     const callArgs = {
       pool: tx.object(this.pool.poolInfo.poolId),
@@ -224,7 +231,7 @@ export class PoolScript {
         tx,
         this.poolScriptTypes(),
         callArgs,
-        this.publishedAt,
+        this.pkgInfo.publishedAt,
       );
     return [coinA, coinB, redeemResult];
   }
@@ -247,7 +254,7 @@ export class PoolScript {
       tx,
       this.poolScriptTypes(),
       callArgs,
-      this.publishedAt,
+      this.pkgInfo.publishedAt,
     );
     return quote;
   }
@@ -269,7 +276,7 @@ export class PoolScript {
       tx,
       this.poolScriptTypes(),
       callArgs,
-      this.publishedAt,
+      this.pkgInfo.publishedAt,
     );
     return quote;
   }

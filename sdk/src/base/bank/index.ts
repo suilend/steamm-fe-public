@@ -7,7 +7,7 @@ import {
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
 import { BankFunctions } from "../..";
-import { BankInfo, PackageInfo } from "../../types";
+import { BankInfo, PackageInfoX, SteammPackageInfo } from "../../types";
 
 import {
   BurnBTokensArgs,
@@ -27,7 +27,7 @@ export class Bank {
   public publishedAt: string;
   public bankInfo: BankInfo;
 
-  constructor(pkgInfo: PackageInfo, bankInfo: BankInfo) {
+  constructor(pkgInfo: SteammPackageInfo, bankInfo: BankInfo) {
     this.bankInfo = bankInfo;
     this.sourcePkgId = pkgInfo.sourcePkgId;
     this.publishedAt = pkgInfo.publishedAt;
@@ -308,7 +308,7 @@ export class Bank {
 export function createBank(
   tx: Transaction,
   args: CreateBankArgs,
-  pkgInfo: PackageInfo,
+  pkgInfo: PackageInfoX,
 ): TransactionArgument {
   const { lendingMarketType, coinType, btokenType } = args;
 
