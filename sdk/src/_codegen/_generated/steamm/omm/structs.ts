@@ -14,7 +14,7 @@ import {
   composeSuiType,
   compressSuiType,
 } from "../../_framework/util";
-import { PKG_V1 } from "../index";
+import { ORACLE_PKG_V1 } from "../index";
 import { ID, UID } from "../../_dependencies/source/0x2/object/structs";
 import { Version } from "../version/structs";
 import { bcs } from "@mysten/sui/bcs";
@@ -25,7 +25,7 @@ import { fromB64 } from "@mysten/sui/utils";
 
 export function isOracleQuoter(type: string): boolean {
   type = compressSuiType(type);
-  return type === `${PKG_V1}::omm::OracleQuoter`;
+  return type === `${ORACLE_PKG_V1}::omm::OracleQuoter`;
 }
 
 export interface OracleQuoterFields {
@@ -42,12 +42,12 @@ export type OracleQuoterReified = Reified<OracleQuoter, OracleQuoterFields>;
 export class OracleQuoter implements StructClass {
   __StructClass = true as const;
 
-  static readonly $typeName = `${PKG_V1}::omm::OracleQuoter`;
+  static readonly $typeName = `${ORACLE_PKG_V1}::omm::OracleQuoter`;
   static readonly $numTypeParams = 0;
   static readonly $isPhantom = [] as const;
 
   readonly $typeName = OracleQuoter.$typeName;
-  readonly $fullTypeName: `${typeof PKG_V1}::omm::OracleQuoter`;
+  readonly $fullTypeName: `${typeof ORACLE_PKG_V1}::omm::OracleQuoter`;
   readonly $typeArgs: [];
   readonly $isPhantom = OracleQuoter.$isPhantom;
 
@@ -62,7 +62,7 @@ export class OracleQuoter implements StructClass {
     this.$fullTypeName = composeSuiType(
       OracleQuoter.$typeName,
       ...typeArgs,
-    ) as `${typeof PKG_V1}::omm::OracleQuoter`;
+    ) as `${typeof ORACLE_PKG_V1}::omm::OracleQuoter`;
     this.$typeArgs = typeArgs;
 
     this.version = fields.version;
@@ -79,7 +79,7 @@ export class OracleQuoter implements StructClass {
       fullTypeName: composeSuiType(
         OracleQuoter.$typeName,
         ...[],
-      ) as `${typeof PKG_V1}::omm::OracleQuoter`,
+      ) as `${typeof ORACLE_PKG_V1}::omm::OracleQuoter`,
       typeArgs: [] as [],
       isPhantom: OracleQuoter.$isPhantom,
       reifiedTypeArgs: [],

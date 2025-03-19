@@ -1,5 +1,10 @@
-import { STEAMM_PKG_ID, STEAMM_PUBLISHED_AT } from "../../../config/mainnet";
 import {
+  STEAMM_ORACLE_QUOTER_PKG_ID,
+  STEAMM_PKG_ID,
+  STEAMM_PUBLISHED_AT,
+} from "../../../config/mainnet";
+import {
+  STEAMM_BETA_ORACLE_QUOTER_PKG_ID,
   STEAMM_BETA_PKG_ID,
   STEAMM_BETA_PUBLISHED_AT,
 } from "../../../config/mainnetBeta";
@@ -13,6 +18,9 @@ export let PUBLISHED_AT = process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET
 export const PKG_V1 = process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET
   ? STEAMM_BETA_PKG_ID
   : STEAMM_PKG_ID;
+export const ORACLE_PKG_V1 = process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET
+  ? STEAMM_BETA_ORACLE_QUOTER_PKG_ID
+  : STEAMM_ORACLE_QUOTER_PKG_ID;
 
 export function setPublishedAt(publishedAt: string) {
   PUBLISHED_AT = publishedAt;
