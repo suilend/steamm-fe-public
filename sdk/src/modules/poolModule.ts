@@ -302,8 +302,10 @@ export class PoolModule implements IModule {
     switch (args.type) {
       case "ConstantProduct":
         shareConstantProductPool(tx, args, this.sdk.packageInfo());
+        break;
       case "Oracle":
-        shareOraclePool(tx, args, this.sdk.packageInfo());
+        shareOraclePool(tx, args, this.sdk.packageInfo(), this.sdk.sdkOptions);
+        break;
       default:
         throw new Error("Unknown pool type");
     }
@@ -349,6 +351,7 @@ export class PoolModule implements IModule {
               this.sdk.sdkOptions.suilend_config.config!.lendingMarketType,
           },
           this.sdk.packageInfo(),
+          this.sdk.sdkOptions,
         );
       default:
         throw new Error("Unknown pool type");

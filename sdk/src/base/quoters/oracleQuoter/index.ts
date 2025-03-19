@@ -5,7 +5,7 @@ import {
 } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
-import { OracleQuoterFunctions } from "../../..";
+import { OracleQuoterFunctions, SdkOptions } from "../../..";
 import { PackageInfo, PoolInfo } from "../../../types";
 import { MigrateArgs, SharePoolArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
@@ -182,8 +182,9 @@ export function shareOraclePool(
   tx: Transaction,
   args: SharePoolArgs,
   pkgInfo: PackageInfo,
+  sdkOptions: SdkOptions,
 ): TransactionResult {
-  const quoterType = `${pkgInfo.sourcePkgId}::omm::OracleQuoter`;
+  const quoterType = `${sdkOptions.steamm_config.config!.oracleQuoterPkgId}::omm::OracleQuoter`;
 
   return tx.moveCall({
     target: `0x2::transfer::public_share_object`,
@@ -198,6 +199,7 @@ export function createOraclePoolAndShare(
   tx: Transaction,
   args: CreateOraclePoolArgs,
   pkgInfo: PackageInfo,
+  sdkOptions: SdkOptions,
 ) {
   const pool = createOraclePool(tx, args, pkgInfo);
 
@@ -210,5 +212,6 @@ export function createOraclePoolAndShare(
       lpTokenType: args.lpTokenType,
     },
     pkgInfo,
+    sdkOptions,
   );
 }

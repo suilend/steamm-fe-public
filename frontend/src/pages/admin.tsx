@@ -16,7 +16,10 @@ import {
 import BigNumber from "bignumber.js";
 
 import {
+  NORMALIZED_DEEP_COINTYPE,
+  NORMALIZED_SEND_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
+  NORMALIZED_USDC_COINTYPE,
   SUI_GAS_MIN,
   Token,
   getCoinMetadataMap,
@@ -569,19 +572,50 @@ export default function AdminPage() {
         "lp token:",
         createLpTokenResult,
       );
-      const pool = await steammClient.Pool.createPool(transaction, {
-        type: "ConstantProduct",
-        coinTypeA: bTokens[0].coinType,
-        coinMetaA: bTokens[0].id!, // Checked above
-        coinTypeB: bTokens[1].coinType,
-        coinMetaB: bTokens[1].id!, // Checked above
+
+      const COIN_TYPE_ORACLE_INDEX_MAP: Record<string, number> = {
+        [NORMALIZED_SEND_COINTYPE]: 0,
+        [NORMALIZED_SUI_COINTYPE]: 1,
+        [NORMALIZED_USDC_COINTYPE]: 2,
+        [NORMALIZED_DEEP_COINTYPE]: 3,
+      };
+      if (COIN_TYPE_ORACLE_INDEX_MAP[coinTypes[0]] === undefined)
+        throw new Error("coinType 0 not found in COIN_TYPE_ORACLE_INDEX_MAP");
+      if (COIN_TYPE_ORACLE_INDEX_MAP[coinTypes[1]] === undefined)
+        throw new Error("coinType 1 not found in COIN_TYPE_ORACLE_INDEX_MAP");
+
+      const createPoolBaseArgs = {
+        bTokenTypeA: bTokens[0].coinType,
+        bTokenMetaA: bTokens[0].id!, // Checked above
+        bTokenTypeB: bTokens[1].coinType,
+        bTokenMetaB: bTokens[1].id!, // Checked above
         lpTreasuryId: createLpTokenResult.treasuryCapId,
         lpTokenType: createLpTokenResult.coinType,
         lpMetadataId: createLpTokenResult.coinMetadataId,
         swapFeeBps: BigInt(feeTierPercent * 100),
-        offset: BigInt(0), // TODO
-        // TODO: Support other quoters
-      });
+      };
+
+      const pool = await steammClient.Pool.createPool(
+        transaction,
+        {
+          [QuoterId.CPMM]: {
+            ...createPoolBaseArgs,
+            type: "ConstantProduct" as const,
+            offset: BigInt(0), // TODO
+          },
+          [QuoterId.ORACLE]: {
+            ...createPoolBaseArgs,
+            type: "Oracle" as const,
+            oracleIndexA: BigInt(COIN_TYPE_ORACLE_INDEX_MAP[coinTypes[0]]),
+            oracleIndexB: BigInt(COIN_TYPE_ORACLE_INDEX_MAP[coinTypes[1]]),
+            coinTypeA: tokens[0].coinType,
+            coinMetaA: tokens[0].id!, // Checked above
+            coinTypeB: tokens[1].coinType,
+            coinMetaB: tokens[1].id!, // Checked above
+          },
+          [QuoterId.STABLE]: {} as any,
+        }[quoterId],
+      );
 
       // Step 4.2: Deposit
       console.log("xxx step 4.2: deposit - pool:", pool);
@@ -617,7 +651,11 @@ export default function AdminPage() {
           tokens[1].coinType,
           bTokens[0].coinType,
           bTokens[1].coinType,
-          `${steammClient.sourcePkgId()}::cpmm::CpQuoter`,
+          {
+            [QuoterId.CPMM]: `${steammClient.sourcePkgId()}::cpmm::CpQuoter`,
+            [QuoterId.ORACLE]: `${steammClient.sdkOptions.steamm_config.config!.oracleQuoterPkgId}::omm::OracleQuoter`,
+            [QuoterId.STABLE]: "", // TODO
+          }[quoterId],
           createLpTokenResult.coinType,
         ],
         {
@@ -637,14 +675,25 @@ export default function AdminPage() {
       transaction.transferObjects([lpCoin], address);
 
       // Step 4.3: Share pool
+      const sharePoolBaseArgs = {
+        pool,
+        lpTokenType: createLpTokenResult.coinType,
+        bTokenTypeA: bTokens[0].coinType,
+        bTokenTypeB: bTokens[1].coinType,
+      };
+
       steammClient.Pool.sharePool(
         {
-          type: "ConstantProduct",
-          pool,
-          lpTokenType: createLpTokenResult.coinType,
-          coinTypeA: bTokens[0].coinType,
-          coinTypeB: bTokens[1].coinType,
-        },
+          [QuoterId.CPMM]: {
+            ...sharePoolBaseArgs,
+            type: "ConstantProduct" as const,
+          },
+          [QuoterId.ORACLE]: {
+            ...sharePoolBaseArgs,
+            type: "Oracle" as const,
+          },
+          [QuoterId.STABLE]: {} as any,
+        }[quoterId],
         transaction,
       );
 
@@ -808,9 +857,7 @@ export default function AdminPage() {
                     <div key={_quoter.id} className="w-max">
                       <Tooltip
                         title={
-                          [QuoterId.ORACLE, QuoterId.STABLE].includes(
-                            _quoter.id,
-                          )
+                          [QuoterId.STABLE].includes(_quoter.id)
                             ? "Coming soon"
                             : hasExistingPool
                               ? existingPoolTooltip
@@ -828,9 +875,8 @@ export default function AdminPage() {
                             )}
                             onClick={() => setQuoterId(_quoter.id)}
                             disabled={
-                              [QuoterId.ORACLE, QuoterId.STABLE].includes(
-                                _quoter.id,
-                              ) || hasExistingPool
+                              [QuoterId.STABLE].includes(_quoter.id) ||
+                              hasExistingPool
                             }
                           >
                             <p
