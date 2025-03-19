@@ -62,9 +62,13 @@ export default function PoolGroupRow({
     <>
       <div
         className={cn(
-          "group relative z-[1] flex h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row transition-colors",
+          "group relative z-[1] flex h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row transition-[background]",
           isExpanded ? "bg-tertiary" : "hover:bg-tertiary",
-          (isExpanded || !isLast) && "h-[calc(56px+1px)] border-b",
+          (isExpanded || !isLast) &&
+            cn(
+              "h-[calc(56px+1px)] border-b",
+              isExpanded && "border-b-background",
+            ),
         )}
         onClick={() => setIsExpanded((prev) => !prev)}
       >
@@ -73,32 +77,14 @@ export default function PoolGroupRow({
           className="flex h-full flex-row items-center gap-3"
           style={columnStyleMap.pair}
         >
-          <div className="-mr-3 flex h-full w-16 shrink-0 flex-col">
-            <div className="w-full flex-1" />
-            <Tag
-              className={cn("w-max", isExpanded && "bg-border")}
-              labelClassName={cn(
-                "flex flex-row items-center gap-1",
-                isExpanded && "text-foreground",
-              )}
-            >
-              <Chevron
-                className={cn(
-                  "-ml-0.5 h-4 w-4 transition-colors",
-                  isExpanded
-                    ? "text-foreground"
-                    : "text-secondary-foreground group-hover:text-foreground",
-                )}
-              />
-              {poolGroup.pools.length}
-            </Tag>
-            <div className="relative w-full flex-1">
-              {isExpanded && (
-                <div className="absolute bottom-0 left-4 top-0 w-px bg-border" />
-              )}
-            </div>
-          </div>
-
+          <Chevron
+            className={cn(
+              "h-5 w-5 transition-colors",
+              isExpanded
+                ? "text-foreground"
+                : "text-secondary-foreground group-hover:text-foreground",
+            )}
+          />
           <TokenLogos coinTypes={poolGroup.coinTypes} size={24} />
           <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
             {formatPair(
@@ -107,6 +93,13 @@ export default function PoolGroupRow({
               ),
             )}
           </p>
+
+          <Tag
+            className={cn("w-max", isExpanded && "bg-border")}
+            labelClassName={cn(isExpanded && "text-foreground")}
+          >
+            {poolGroup.pools.length}
+          </Tag>
         </div>
 
         {/* Type */}

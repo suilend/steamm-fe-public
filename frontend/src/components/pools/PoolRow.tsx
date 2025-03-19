@@ -30,8 +30,8 @@ export default function PoolRow({
   return (
     <Link
       className={cn(
-        "group relative z-[1] flex h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row transition-colors hover:bg-tertiary",
-        !isLastTableRow && "h-[calc(56px+1px)] border-b",
+        "group relative z-[1] flex h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row transition-colors hover:bg-tertiary/50",
+        isLastPoolInGroup && !isLastTableRow && "h-[calc(56px+1px)] border-b",
       )}
       href={`${POOL_URL_PREFIX}/${pool.id}`}
     >
@@ -40,9 +40,11 @@ export default function PoolRow({
         className="flex h-full flex-row items-center gap-3"
         style={columnStyleMap.pair}
       >
-        <div className="relative -mr-3 h-full w-16 shrink-0 pl-4">
-          {!isLastPoolInGroup && <div className="h-full w-px bg-border" />}
-          <div className="absolute left-4 top-0 h-1/2 w-5 rounded-bl-md border-b border-l" />
+        <div className="relative ml-2.5 h-full w-5 shrink-0">
+          {!isLastPoolInGroup && (
+            <div className="absolute bottom-0 left-0 top-0 w-px bg-tertiary-foreground" />
+          )}
+          <div className="absolute bottom-1/2 left-0 right-0 top-0 rounded-bl-md border-b border-l border-b-tertiary-foreground border-l-tertiary-foreground" />
         </div>
 
         <TokenLogos coinTypes={pool.coinTypes} size={24} />
