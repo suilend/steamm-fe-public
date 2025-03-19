@@ -38,7 +38,7 @@ import { formatFeeTier, formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { getIndexOfObligationWithDeposit } from "@/lib/obligation";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { PoolPosition } from "@/lib/types";
+import { PoolPosition, QUOTER_ID_NAME_MAP } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolPositionRowProps {
@@ -246,7 +246,7 @@ export default function PoolPositionRow({
         className="flex h-full flex-row items-center gap-1"
         style={columnStyleMap.type}
       >
-        <Tag>{poolPosition.pool.quoter.name}</Tag>
+        <Tag>{QUOTER_ID_NAME_MAP[poolPosition.pool.quoterId]}</Tag>
         <Tag>{formatFeeTier(poolPosition.pool.feeTierPercent)}</Tag>
       </div>
 

@@ -26,24 +26,11 @@ export enum QuoterId {
   ORACLE = "oracle",
   STABLE = "stable",
 }
-export type Quoter = {
-  id: QuoterId;
-  name: string;
+export const QUOTER_ID_NAME_MAP: Record<QuoterId, string> = {
+  [QuoterId.CPMM]: "CPMM",
+  [QuoterId.ORACLE]: "Oracle",
+  [QuoterId.STABLE]: "Stable",
 };
-export const QUOTERS: Quoter[] = [
-  {
-    id: QuoterId.CPMM,
-    name: "CPMM",
-  },
-  {
-    id: QuoterId.ORACLE,
-    name: "Oracle",
-  },
-  {
-    id: QuoterId.STABLE,
-    name: "Stable",
-  },
-];
 
 export type ParsedPool = {
   id: string;
@@ -51,7 +38,7 @@ export type ParsedPool = {
     | Pool<string, string, CpQuoter, string>
     | Pool<string, string, OracleQuoter, string>;
   poolInfo: PoolInfo;
-  quoter: Quoter;
+  quoterId: QuoterId;
 
   lpTokenType: string;
   bTokenTypes: [string, string];

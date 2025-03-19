@@ -21,7 +21,7 @@ import { SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
 import { formatPair } from "@/lib/format";
-import { ParsedBank, ParsedPool, QUOTERS, QuoterId } from "@/lib/types";
+import { ParsedBank, ParsedPool, QuoterId } from "@/lib/types";
 
 export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
@@ -249,12 +249,12 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         poolInfos.map((poolInfo) =>
           (async () => {
             const id = poolInfo.poolId;
-            // TODO: Add support for other pool types
-            const quoter = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
-              ? QUOTERS.find((_quoter) => _quoter.id === QuoterId.CPMM)!
+
+            const quoterId = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
+              ? QuoterId.CPMM
               : poolInfo.quoterType.endsWith("omm::OracleQuoter")
-                ? QUOTERS.find((_quoter) => _quoter.id === QuoterId.ORACLE)!
-                : QUOTERS.find((_quoter) => _quoter.id === QuoterId.CPMM)!; // Should never need to use the fallback
+                ? QuoterId.ORACLE
+                : QuoterId.CPMM; // Should never need to use the fallback
 
             const bTokenTypeA = poolInfo.coinTypeA;
             const bTokenTypeB = poolInfo.coinTypeB;
@@ -269,7 +269,12 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             const coinTypeB = bTokenTypeCoinTypeMap[bTokenTypeB];
             const coinTypes = [coinTypeA, coinTypeB];
 
-            const pool = await steammClient.fullClient.fetchPool(id);
+            const pool =
+              quoterId === QuoterId.CPMM
+                ? await steammClient.fullClient.fetchConstantProductPool(id)
+                : quoterId === QuoterId.ORACLE
+                  ? await steammClient.fullClient.fetchOraclePool(id)
+                  : await steammClient.fullClient.fetchConstantProductPool(id); // Should never need to use the fallback
 
             const redeemQuote = await steammClient.Pool.quoteRedeem({
               lpTokens: pool.lpSupply.value,
@@ -358,7 +363,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               id,
               pool,
               poolInfo,
-              quoter,
+              quoterId,
 
               lpTokenType: poolInfo.lpTokenType,
               bTokenTypes,

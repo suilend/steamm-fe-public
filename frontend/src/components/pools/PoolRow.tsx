@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
-import { ParsedPool } from "@/lib/types";
+import { ParsedPool, QUOTER_ID_NAME_MAP } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolRowProps {
@@ -60,7 +60,7 @@ export default function PoolRow({
         className="flex h-full flex-row items-center gap-1"
         style={columnStyleMap.type}
       >
-        <Tag>{pool.quoter.name}</Tag>
+        <Tag>{QUOTER_ID_NAME_MAP[pool.quoterId]}</Tag>
         <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
       </div>
 
