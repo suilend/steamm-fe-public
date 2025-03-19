@@ -29,6 +29,10 @@ import {
   CpQuoter,
   CpQuoterFields,
 } from "../_codegen/_generated/steamm/cpmm/structs";
+import {
+  OracleQuoter,
+  OracleQuoterFields,
+} from "../_codegen/_generated/steamm/omm/structs";
 import { Pool } from "../_codegen/_generated/steamm/pool/structs";
 import { DataPage, PaginationArgs, SuiObjectIdType } from "../types";
 import { extractGenerics } from "../utils";
@@ -303,7 +307,7 @@ export class RpcModule extends SuiClient {
    * @param objectId - The ID of the pool
    * @returns Promise resolving to the pool state
    */
-  async fetchPool(
+  async fetchConstantProductPool(
     objectId: SuiObjectIdType,
   ): Promise<Pool<string, string, CpQuoter, string>> {
     try {
@@ -314,10 +318,6 @@ export class RpcModule extends SuiClient {
           showType: true,
         },
       });
-
-      if (!object.data) {
-        throw new Error(`Pool with ID ${objectId} not found or has no data`);
-      }
 
       if (!object.data) {
         throw new Error(`Pool with ID ${objectId} not found or has no data`);
@@ -353,6 +353,65 @@ export class RpcModule extends SuiClient {
           kind: "PhantomReified",
         },
         CpQuoter.reified(),
+        {
+          phantomType: poolTypes[3],
+          kind: "PhantomReified",
+        },
+      ];
+
+      return Pool.fromSuiParsedData(parsedTypes, parsedData);
+    } catch (error) {
+      console.error("Error fetching shared object:", error);
+      throw error;
+    }
+  }
+
+  async fetchOraclePool(
+    objectId: SuiObjectIdType,
+  ): Promise<Pool<string, string, OracleQuoter, string>> {
+    try {
+      const object = await this.getObject({
+        id: objectId,
+        options: {
+          showContent: true,
+          showType: true,
+        },
+      });
+
+      if (!object.data) {
+        throw new Error(`Pool with ID ${objectId} not found or has no data`);
+      }
+
+      if (object.error) {
+        throw new Error(`Error fetching pool: ${object.error}`);
+      }
+
+      if (!object.data.content) {
+        throw new Error(`Unable to parse data for Pool with ID ${objectId}`);
+      }
+
+      if (!object.data.type) {
+        throw new Error(`Unable to parse type for Pool with ID ${objectId}`);
+      }
+
+      const parsedData: SuiParsedData = object.data.content as SuiParsedData;
+      const poolTypes = extractGenerics(object.data.type);
+
+      const parsedTypes: [
+        PhantomReified<string>,
+        PhantomReified<string>,
+        Reified<OracleQuoter, OracleQuoterFields>,
+        PhantomReified<string>,
+      ] = [
+        {
+          phantomType: poolTypes[0],
+          kind: "PhantomReified",
+        },
+        {
+          phantomType: poolTypes[1],
+          kind: "PhantomReified",
+        },
+        OracleQuoter.reified(),
         {
           phantomType: poolTypes[3],
           kind: "PhantomReified",
