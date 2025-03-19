@@ -199,6 +199,24 @@ export default function AdminPage() {
   const birdeyeRatio = getBirdeyeRatio(usdPrices[0], usdPrices[1]);
   console.log("AdminPage - birdeyeRatio:", birdeyeRatio?.toString());
 
+  const onUseBirdeyePriceClick = () => {
+    if (birdeyeRatio === undefined) return;
+
+    const inValue = new BigNumber(values[0] || 0).lte(0)
+      ? 1
+      : new BigNumber(values[0]);
+    setValues([
+      inValue.toFixed(
+        balancesCoinMetadataMap![coinTypes[0]].decimals,
+        BigNumber.ROUND_DOWN,
+      ),
+      new BigNumber(birdeyeRatio.times(inValue)).toFixed(
+        balancesCoinMetadataMap![coinTypes[1]].decimals,
+        BigNumber.ROUND_DOWN,
+      ),
+    ]);
+  };
+
   // Select
   const basePopoverTokens = useMemo(
     () =>
@@ -613,7 +631,7 @@ export default function AdminPage() {
           maxB: BigInt(submitAmountB),
           clock: transaction.object(SUI_CLOCK_OBJECT_ID),
         },
-        steammClient.publishedAt(),
+        steammClient.scriptPackageInfo().publishedAt,
       );
       transaction.transferObjects([coinA, coinB], address);
       transaction.transferObjects([lpCoin], address);
@@ -741,22 +759,36 @@ export default function AdminPage() {
               </Parameter>
 
               {/* Market price */}
-              <Parameter label="Market price (Birdeye)" isHorizontal>
-                {coinTypes.every((coinType) => coinType !== "") ? (
-                  birdeyeRatio !== undefined ? (
-                    `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${new BigNumber(
-                      birdeyeRatio,
-                    ).toFixed(
-                      balancesCoinMetadataMap![coinTypes[1]].decimals,
-                      BigNumber.ROUND_DOWN,
-                    )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
+              <div className="flex w-full flex-col items-end gap-1">
+                <Parameter label="Market price (Birdeye)" isHorizontal>
+                  {coinTypes.every((coinType) => coinType !== "") ? (
+                    birdeyeRatio !== undefined ? (
+                      `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${birdeyeRatio.toFixed(
+                        balancesCoinMetadataMap![coinTypes[1]].decimals,
+                        BigNumber.ROUND_DOWN,
+                      )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
+                    ) : (
+                      <Skeleton className="h-[21px] w-24" />
+                    )
                   ) : (
-                    <Skeleton className="h-[21px] w-24" />
-                  )
-                ) : (
-                  "--"
-                )}
-              </Parameter>
+                    "--"
+                  )}
+                </Parameter>
+
+                {coinTypes.every((coinType) => coinType !== "") &&
+                  (birdeyeRatio !== undefined ? (
+                    <button
+                      className="group flex h-6 flex-row items-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80"
+                      onClick={onUseBirdeyePriceClick}
+                    >
+                      <p className="text-p3 text-button-2-foreground">
+                        Use price
+                      </p>
+                    </button>
+                  ) : (
+                    <Skeleton className="h-[24px] w-16" />
+                  ))}
+              </div>
             </div>
 
             <Divider />
