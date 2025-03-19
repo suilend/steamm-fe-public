@@ -237,11 +237,18 @@ export class RouterModule implements IModule {
 
       const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
-      const quote = poolScript.quoteSwap(tx, {
-        type: "ConstantProduct",
+      const quoterType = getQuoterType(poolInfo.quoterType);
+      const extraArgs: OracleSwapExtraArgs | { type: "ConstantProduct" } =
+        quoterType === "Oracle"
+          ? await getOracleArgs(this.sdk, tx, poolInfo)
+          : { type: "ConstantProduct" };
+
+      const args = {
         a2b: hop.a2b,
         amountIn: nextBTokenAmountIn,
-      });
+      };
+
+      const quote = poolScript.quoteSwap(tx, { ...args, ...extraArgs });
 
       const amountOut = QuoteFunctions.amountOut(
         tx,
@@ -274,6 +281,8 @@ export class RouterModule implements IModule {
     );
 
     if (inspectResults.error) {
+      console.log("Error:", inspectResults.error);
+      console.log(tx.getData());
       console.log("Failed to fetch quotes");
       return [];
     }
