@@ -1478,7 +1478,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
 
   return (
     <>
-      <div className="relative flex w-full min-w-0 flex-col items-center gap-1">
+      <div className="relative flex w-full min-w-0 flex-col items-center gap-2">
         <CoinInput
           className="relative z-[1]"
           token={getToken(activeCoinType, activeCoinMetadata)}
