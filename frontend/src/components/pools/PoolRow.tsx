@@ -5,14 +5,12 @@ import { formatUsd } from "@suilend/frontend-sui";
 import AprBreakdown from "@/components/AprBreakdown";
 import { columnStyleMap } from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
-import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { ParsedPool } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 interface PoolRowProps {
   pool: ParsedPool;
@@ -45,7 +43,6 @@ export default function PoolRow({ pool, isLastPoolInGroup }: PoolRowProps) {
           />
         </div>
 
-        <TokenLogos coinTypes={pool.coinTypes} size={24} />
         <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
           {formatPair(
             pool.coinTypes.map(
@@ -53,15 +50,11 @@ export default function PoolRow({ pool, isLastPoolInGroup }: PoolRowProps) {
             ),
           )}
         </p>
-      </div>
 
-      {/* Type */}
-      <div
-        className="flex h-full flex-row items-center gap-1"
-        style={columnStyleMap.type}
-      >
-        <Tag>{pool.quoter.name}</Tag>
-        <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
+        <div className="flex flex-row items-center gap-1">
+          <Tag>{pool.quoter.name}</Tag>
+          <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
+        </div>
       </div>
 
       {/* TVL */}

@@ -10,35 +10,30 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Column = "pair" | "type" | "tvlUsd" | "volumeUsd_24h" | "aprPercent_24h";
+type Column = "pair" | "tvlUsd" | "volumeUsd_24h" | "aprPercent_24h";
 type SortableColumn = "tvlUsd" | "volumeUsd_24h" | "aprPercent_24h";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
     flex: 2,
-    minWidth: 250, // px
-    paddingLeft: 4 * 5, // px
-  },
-  type: {
-    width: 150, // px
-    minWidth: 150, // px
+    minWidth: 300, // px
     paddingLeft: 4 * 5, // px
   },
   tvlUsd: {
     flex: 1,
-    minWidth: 150, // px
+    minWidth: 125, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   volumeUsd_24h: {
     flex: 1,
-    minWidth: 150, // px
+    minWidth: 125, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   aprPercent_24h: {
     flex: 1,
-    minWidth: 150, // px
+    minWidth: 125, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -149,13 +144,6 @@ export default function PoolsTable({
         </HeaderColumn>
 
         <HeaderColumn<Column, SortableColumn>
-          id="type"
-          style={columnStyleMap.type}
-        >
-          Type & Fee tier
-        </HeaderColumn>
-
-        <HeaderColumn<Column, SortableColumn>
           id="tvlUsd"
           sortState={sortState}
           toggleSortByColumn={toggleSortByColumn}
@@ -204,17 +192,14 @@ export default function PoolsTable({
 
       {/* Rows */}
       {sortedPoolGroups === undefined ? (
-        Array.from({ length: 3 }).map((_, index, array) => (
+        Array.from({ length: 3 }).map((_, index) => (
           <Skeleton
             key={index}
-            className={cn(
-              "relative z-[1] h-[56px] w-full",
-              index !== array.length - 1 && "h-[calc(56px+1px)] border-b",
-            )}
+            className="relative z-[1] h-[calc(56px+1px)] w-full border-x border-b"
           />
         ))
       ) : sortedPoolGroups.length === 0 ? (
-        <div className="flex h-[56px] w-full flex-row items-center justify-center">
+        <div className="flex h-[calc(56px+1px)] w-full flex-row items-center justify-center border-x border-b bg-background">
           <p className="text-p2 text-tertiary-foreground">
             {searchString ? `No matches for "${searchString}"` : "No pools"}
           </p>

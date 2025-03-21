@@ -19,18 +19,18 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
     paddingLeft: 4 * 5, // px
   },
   type: {
-    width: 150, // px
-    minWidth: 150, // px
+    width: 125, // px
+    minWidth: 125, // px
     paddingLeft: 4 * 5, // px
   },
   amounts: {
     flex: 1,
-    minWidth: 200, // px
+    minWidth: 300, // px
     paddingLeft: 4 * 5, // px
   },
   digest: {
-    width: 75, // px
-    minWidth: 75, // px
+    width: 50, // px
+    minWidth: 50, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -118,17 +118,14 @@ export default function TransactionHistoryTable({
 
       {/* Rows */}
       {sortedTransactionHistory === undefined ? (
-        Array.from({ length: 3 }).map((_, index, array) => (
+        Array.from({ length: 3 }).map((_, index) => (
           <Skeleton
             key={index}
-            className={cn(
-              "relative z-[1] h-[44px] w-full",
-              index !== array.length - 1 && "h-[calc(44px+1px)] border-b",
-            )}
+            className="relative z-[1] h-[calc(44px+1px)] w-full border-x border-b"
           />
         ))
       ) : sortedTransactionHistory.length === 0 ? (
-        <div className="flex h-[44px] w-full flex-row items-center justify-center">
+        <div className="flex h-[calc(44px+1px)] w-full flex-row items-center justify-center border-x border-b bg-background">
           <p className="text-p2 text-tertiary-foreground">No transactions</p>
         </div>
       ) : (
