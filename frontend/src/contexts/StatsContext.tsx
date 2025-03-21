@@ -132,7 +132,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
                   ...acc,
                   {
                     timestampS: d.start,
-                    tvlUsd_7d: +d.usdValue,
+                    tvlUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
                   },
                 ],
                 [] as ChartData[],
@@ -171,7 +171,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
                   ...acc,
                   {
                     timestampS: d.start,
-                    volumeUsd_7d: +d.usdValue,
+                    volumeUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
                   },
                 ],
                 [] as ChartData[],
