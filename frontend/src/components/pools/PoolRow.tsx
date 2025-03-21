@@ -51,10 +51,15 @@ export default function PoolRow({ pool, isLastPoolInGroup }: PoolRowProps) {
           )}
         </p>
 
-        <div className="flex flex-row items-center gap-1">
-          <Tag>{pool.quoter.name}</Tag>
-          <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
-        </div>
+        <Tag>{pool.quoter.name}</Tag>
+      </div>
+
+      {/* Fee tier */}
+      <div
+        className="flex h-full flex-row items-center"
+        style={columnStyleMap.feeTier}
+      >
+        <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
       </div>
 
       {/* TVL */}

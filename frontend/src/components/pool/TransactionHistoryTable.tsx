@@ -15,12 +15,10 @@ type SortableColumn = "date";
 export const columnStyleMap: Record<Column, CSSProperties> = {
   date: {
     width: 200, // px
-    minWidth: 200, // px
     paddingLeft: 4 * 5, // px
   },
   type: {
     width: 125, // px
-    minWidth: 125, // px
     paddingLeft: 4 * 5, // px
   },
   amounts: {
@@ -30,7 +28,6 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   digest: {
     width: 50, // px
-    minWidth: 50, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },

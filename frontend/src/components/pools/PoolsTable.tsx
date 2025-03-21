@@ -10,18 +10,27 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Column = "pair" | "tvlUsd" | "volumeUsd_24h" | "aprPercent_24h";
+type Column =
+  | "pair"
+  | "feeTier"
+  | "tvlUsd"
+  | "volumeUsd_24h"
+  | "aprPercent_24h";
 type SortableColumn = "tvlUsd" | "volumeUsd_24h" | "aprPercent_24h";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
     flex: 2,
-    minWidth: 300, // px
+    minWidth: 275, // px
+    paddingLeft: 4 * 5, // px
+  },
+  feeTier: {
+    width: 100, // px
     paddingLeft: 4 * 5, // px
   },
   tvlUsd: {
     flex: 1,
-    minWidth: 125, // px
+    width: 125, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -141,6 +150,13 @@ export default function PoolsTable({
           style={columnStyleMap.pair}
         >
           Pair
+        </HeaderColumn>
+
+        <HeaderColumn<Column, SortableColumn>
+          id="feeTier"
+          style={columnStyleMap.feeTier}
+        >
+          Fee tier
         </HeaderColumn>
 
         <HeaderColumn<Column, SortableColumn>
