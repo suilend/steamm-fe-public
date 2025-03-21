@@ -29,6 +29,7 @@ type ChartConfig = {
   hideTitlePeriod?: boolean;
   value?: string;
   chartType: ChartType;
+  periodDays: 1 | 7 | 30;
   periodChangePercent?: BigNumber | null;
   data?: ChartData[];
   formatValue: (value: number) => string;
@@ -57,8 +58,9 @@ export default function PoolChartCard() {
         hideTitlePeriod: true,
         value: formatUsd(pool.tvlUsd),
         chartType: ChartType.LINE,
+        periodDays: 7,
         periodChangePercent: null,
-        data: poolHistoricalStats.tvlUsd_24h[pool.id],
+        data: poolHistoricalStats.tvlUsd_7d[pool.id],
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.VOLUME]: {
@@ -68,6 +70,7 @@ export default function PoolChartCard() {
             ? undefined
             : formatUsd(poolStats.volumeUsd_24h[pool.id]),
         chartType: ChartType.BAR,
+        periodDays: 1,
         periodChangePercent: null,
         data: poolHistoricalStats.volumeUsd_24h[pool.id],
         formatValue: (value) => formatUsd(new BigNumber(value)),
@@ -79,6 +82,7 @@ export default function PoolChartCard() {
             ? undefined
             : formatUsd(poolStats.feesUsd_24h[pool.id]),
         chartType: ChartType.BAR,
+        periodDays: 1,
         periodChangePercent: null,
         data: poolHistoricalStats.feesUsd_24h[pool.id],
         formatValue: (value) => formatUsd(new BigNumber(value)),
@@ -86,7 +90,7 @@ export default function PoolChartCard() {
     }),
     [
       pool.tvlUsd,
-      poolHistoricalStats.tvlUsd_24h,
+      poolHistoricalStats.tvlUsd_7d,
       pool.id,
       poolStats.volumeUsd_24h,
       poolHistoricalStats.volumeUsd_24h,
@@ -120,7 +124,7 @@ export default function PoolChartCard() {
         hideTitlePeriod={chartConfig.hideTitlePeriod}
         value={chartConfig.value}
         chartType={chartConfig.chartType}
-        periodDays={1}
+        periodDays={chartConfig.periodDays}
         periodChangePercent={chartConfig.periodChangePercent}
         data={chartConfig.data}
         formatCategory={(category) => category}

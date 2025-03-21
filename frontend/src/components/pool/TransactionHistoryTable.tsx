@@ -82,14 +82,9 @@ export default function TransactionHistoryTable({
   }, [transactionHistory, sortState]);
 
   return (
-    <div
-      className={cn(
-        "relative w-full overflow-auto rounded-md border bg-background",
-        className,
-      )}
-    >
+    <div className={cn("relative w-full overflow-auto", className)}>
       {/* Header */}
-      <div className="sticky left-0 top-0 z-[2] flex h-[calc(40px+1px)] w-full min-w-max shrink-0 flex-row border-b bg-secondary">
+      <div className="sticky left-0 top-0 z-[2] flex h-[calc(1px+40px+1px)] w-full min-w-max shrink-0 flex-row border bg-secondary">
         <HeaderColumn<Column, SortableColumn>
           id="date"
           sortState={sortState}
@@ -137,11 +132,10 @@ export default function TransactionHistoryTable({
           <p className="text-p2 text-tertiary-foreground">No transactions</p>
         </div>
       ) : (
-        sortedTransactionHistory.map((transaction, index, array) => (
+        sortedTransactionHistory.map((transaction) => (
           <TransactionHistoryRow
             key={transaction.id}
             transaction={transaction}
-            isLast={index === array.length - 1}
           />
         ))
       )}

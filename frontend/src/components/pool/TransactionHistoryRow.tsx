@@ -22,12 +22,10 @@ import { cn } from "@/lib/utils";
 
 interface TransactionHistoryRowProps {
   transaction: HistoryDeposit | HistoryRedeem;
-  isLast?: boolean;
 }
 
 export default function TransactionHistoryRow({
   transaction,
-  isLast,
 }: TransactionHistoryRowProps) {
   const { explorer } = useSettingsContext();
   const { appData } = useLoadedAppContext();
@@ -35,12 +33,7 @@ export default function TransactionHistoryRow({
   const { pool } = usePoolContext();
 
   return (
-    <div
-      className={cn(
-        "relative z-[1] flex min-h-[44px] w-full min-w-max shrink-0 flex-row items-center",
-        !isLast && "min-h-[calc(44px+1px)] border-b",
-      )}
-    >
+    <div className="relative z-[1] flex min-h-[calc(44px+1px)] w-full min-w-max shrink-0 flex-row items-center border-x border-b bg-background">
       {/* Date */}
       <div
         className="flex h-full flex-row items-center"

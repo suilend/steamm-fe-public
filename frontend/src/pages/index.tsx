@@ -180,9 +180,9 @@ export default function PoolsPage() {
                   hideTitlePeriod
                   value={formatUsd(totalTvlUsd)}
                   chartType={ChartType.LINE}
-                  periodDays={1}
+                  periodDays={7}
                   periodChangePercent={null}
-                  data={totalHistoricalStats.tvlUsd_24h}
+                  data={totalHistoricalStats.tvlUsd_7d}
                   // formatCategory={(category) =>
                   //   formatCoinTypeCategory(
                   //     category,
