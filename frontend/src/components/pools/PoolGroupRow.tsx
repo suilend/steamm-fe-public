@@ -97,12 +97,6 @@ export default function PoolGroupRow({
           </Tag>
         </div>
 
-        {/* Type */}
-        <div
-          className="flex h-full flex-row items-center"
-          style={columnStyleMap.type}
-        />
-
         {/* TVL */}
         <div
           className="flex h-full flex-row items-center"

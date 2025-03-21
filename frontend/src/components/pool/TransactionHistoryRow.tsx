@@ -18,7 +18,6 @@ import {
   HistoryRedeem,
   HistoryTransactionType,
 } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 interface TransactionHistoryRowProps {
   transaction: HistoryDeposit | HistoryRedeem;

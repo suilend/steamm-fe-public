@@ -221,10 +221,10 @@ export default function PoolPositionRow({
       className="group relative z-[1] flex min-h-[calc(106px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row items-center border-x border-b bg-background py-[16px] transition-colors hover:bg-tertiary"
       href={`${POOL_URL_PREFIX}/${poolPosition.pool.id}`}
     >
-      {/* Pair */}
+      {/* Pool */}
       <div
         className="flex h-full flex-row items-center gap-3"
-        style={columnStyleMap.pair}
+        style={columnStyleMap.pool}
       >
         <TokenLogos coinTypes={poolPosition.pool.coinTypes} size={24} />
         <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
@@ -234,15 +234,11 @@ export default function PoolPositionRow({
             ),
           )}
         </p>
-      </div>
 
-      {/* Type */}
-      <div
-        className="flex h-full flex-row items-center gap-1"
-        style={columnStyleMap.type}
-      >
-        <Tag>{QUOTER_ID_NAME_MAP[poolPosition.pool.quoterId]}</Tag>
-        <Tag>{formatFeeTier(poolPosition.pool.feeTierPercent)}</Tag>
+        <div className="flex flex-row items-center gap-1">
+          <Tag>{QUOTER_ID_NAME_MAP[poolPosition.pool.quoterId]}</Tag>
+          <Tag>{formatFeeTier(poolPosition.pool.feeTierPercent)}</Tag>
+        </div>
       </div>
 
       {/* APR */}
