@@ -138,14 +138,9 @@ export default function PoolsTable({
   }, [poolGroups, sortState]);
 
   return (
-    <div
-      className={cn(
-        "relative w-full overflow-auto rounded-md border bg-background",
-        className,
-      )}
-    >
+    <div className={cn("relative w-full overflow-auto", className)}>
       {/* Header */}
-      <div className="sticky left-0 top-0 z-[2] flex h-[calc(40px+1px)] w-full min-w-max shrink-0 flex-row border-b bg-secondary">
+      <div className="sticky left-0 top-0 z-[2] flex h-[calc(1px+40px+1px)] w-full min-w-max shrink-0 flex-row border bg-secondary">
         <HeaderColumn<Column, SortableColumn>
           id="pair"
           style={columnStyleMap.pair}
@@ -225,12 +220,11 @@ export default function PoolsTable({
           </p>
         </div>
       ) : (
-        sortedPoolGroups.map((poolGroup, index, array) => (
+        sortedPoolGroups.map((poolGroup) => (
           <PoolGroupRow
             key={poolGroup.id}
             tableId={tableId}
             poolGroup={poolGroup}
-            isLast={index === array.length - 1}
           />
         ))
       )}

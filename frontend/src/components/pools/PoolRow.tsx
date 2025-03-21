@@ -17,22 +17,14 @@ import { cn } from "@/lib/utils";
 interface PoolRowProps {
   pool: ParsedPool;
   isLastPoolInGroup?: boolean;
-  isLastTableRow?: boolean;
 }
 
-export default function PoolRow({
-  pool,
-  isLastPoolInGroup,
-  isLastTableRow,
-}: PoolRowProps) {
+export default function PoolRow({ pool, isLastPoolInGroup }: PoolRowProps) {
   const { appData } = useLoadedAppContext();
 
   return (
     <Link
-      className={cn(
-        "group relative z-[1] flex h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row transition-colors hover:bg-tertiary/50",
-        isLastPoolInGroup && !isLastTableRow && "h-[calc(56px+1px)] border-b",
-      )}
+      className="group relative z-[1] flex h-[calc(56px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row border-x border-b bg-background shadow-[inset_2px_0_0_0px_hsl(var(--button-1))] transition-colors hover:bg-tertiary"
       href={`${POOL_URL_PREFIX}/${pool.id}`}
     >
       {/* Pair */}
@@ -40,11 +32,17 @@ export default function PoolRow({
         className="flex h-full flex-row items-center gap-3"
         style={columnStyleMap.pair}
       >
-        <div className="relative ml-2.5 h-full w-5 shrink-0">
+        <div
+          className="relative h-full w-7 shrink-0"
+          style={{ marginLeft: (20 - 1) / 2 }}
+        >
           {!isLastPoolInGroup && (
-            <div className="absolute bottom-0 left-0 top-0 w-px bg-tertiary-foreground" />
+            <div className="absolute bottom-0 left-0 top-0 w-px bg-border" />
           )}
-          <div className="absolute bottom-1/2 left-0 right-0 top-0 rounded-bl-md border-b border-l border-b-tertiary-foreground border-l-tertiary-foreground" />
+          <div
+            className="absolute left-0 right-0 top-0 rounded-bl-md border-b border-l"
+            style={{ bottom: `calc(50% - ${1 / 2}px)` }}
+          />
         </div>
 
         <TokenLogos coinTypes={pool.coinTypes} size={24} />

@@ -8,7 +8,7 @@ export default function ReverseAssetsButton({
   onClick,
 }: ReverseAssetsButtonProps) {
   return (
-    <div className="relative z-[2] -my-[16px] flex h-8 w-8 rounded-[16px] bg-background">
+    <div className="relative z-[2] -my-4 flex h-8 w-8 rounded-[16px] bg-background">
       <button
         className="flex h-full w-full flex-row items-center justify-center rounded-[16px] bg-button-1 transition-colors hover:bg-button-1/80"
         onClick={onClick}

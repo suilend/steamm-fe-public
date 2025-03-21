@@ -18,13 +18,11 @@ import { cn } from "@/lib/utils";
 interface PoolGroupRowProps {
   tableId: string;
   poolGroup: PoolGroup;
-  isLast?: boolean;
 }
 
 export default function PoolGroupRow({
   tableId,
   poolGroup,
-  isLast,
 }: PoolGroupRowProps) {
   const { appData } = useLoadedAppContext();
 
@@ -62,13 +60,9 @@ export default function PoolGroupRow({
     <>
       <div
         className={cn(
-          "group relative z-[1] flex h-[56px] w-full min-w-max shrink-0 cursor-pointer flex-row transition-[background]",
-          isExpanded ? "bg-tertiary" : "hover:bg-tertiary",
-          (isExpanded || !isLast) &&
-            cn(
-              "h-[calc(56px+1px)] border-b",
-              isExpanded && "border-b-background",
-            ),
+          "group relative z-[1] flex h-[calc(56px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row border-x border-b bg-background transition-colors hover:bg-tertiary",
+          isExpanded &&
+            "bg-tertiary shadow-[inset_2px_0_0_0px_hsl(var(--button-1))]",
         )}
         onClick={() => setIsExpanded((prev) => !prev)}
       >
@@ -85,6 +79,7 @@ export default function PoolGroupRow({
                 : "text-secondary-foreground group-hover:text-foreground",
             )}
           />
+
           <TokenLogos coinTypes={poolGroup.coinTypes} size={24} />
           <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
             {formatPair(
@@ -156,7 +151,6 @@ export default function PoolGroupRow({
             key={pool.id}
             pool={pool}
             isLastPoolInGroup={index === poolGroup.pools.length - 1}
-            isLastTableRow={isLast && index === poolGroup.pools.length - 1}
           />
         ))}
     </>

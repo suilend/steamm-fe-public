@@ -43,12 +43,10 @@ import { cn } from "@/lib/utils";
 
 interface PoolPositionRowProps {
   poolPosition: PoolPosition;
-  isLast?: boolean;
 }
 
 export default function PoolPositionRow({
   poolPosition,
-  isLast,
 }: PoolPositionRowProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
@@ -220,10 +218,7 @@ export default function PoolPositionRow({
 
   return (
     <Link
-      className={cn(
-        "group relative z-[1] flex min-h-[106px] w-full min-w-max shrink-0 cursor-pointer flex-row items-center py-[16px] transition-colors hover:bg-tertiary",
-        !isLast && "min-h-[calc(106px+1px)] border-b",
-      )}
+      className="group relative z-[1] flex min-h-[calc(106px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row items-center border-x border-b bg-background py-[16px] transition-colors hover:bg-tertiary"
       href={`${POOL_URL_PREFIX}/${poolPosition.pool.id}`}
     >
       {/* Pair */}
