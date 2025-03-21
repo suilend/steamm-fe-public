@@ -28,7 +28,7 @@ import { ParsedPool, PoolGroup } from "@/lib/types";
 export default function PoolsPage() {
   const { appData, lstData } = useLoadedAppContext();
   const { userData } = useLoadedUserContext();
-  const { poolStats, totalHistoricalStats, totalStats } = useStatsContext();
+  const { poolStats, globalHistoricalStats, globalStats } = useStatsContext();
 
   const { sm } = useBreakpoint();
 
@@ -177,12 +177,11 @@ export default function PoolsPage() {
               <div className="w-full p-5">
                 <HistoricalDataChart
                   title="TVL"
-                  hideTitlePeriod
                   value={formatUsd(totalTvlUsd)}
                   chartType={ChartType.LINE}
-                  periodDays={7}
                   periodChangePercent={null}
-                  data={totalHistoricalStats.tvlUsd_7d}
+                  data={globalHistoricalStats.tvlUsd_7d}
+                  dataPeriodDays={7}
                   // formatCategory={(category) =>
                   //   formatCoinTypeCategory(
                   //     category,
@@ -203,14 +202,15 @@ export default function PoolsPage() {
                 <HistoricalDataChart
                   title="Volume"
                   value={
-                    totalStats.volumeUsd_24h === undefined
+                    globalStats.volumeUsd_24h === undefined
                       ? undefined
-                      : formatUsd(totalStats.volumeUsd_24h)
+                      : formatUsd(globalStats.volumeUsd_24h)
                   }
+                  valuePeriodDays={1}
                   chartType={ChartType.BAR}
-                  periodDays={1}
                   periodChangePercent={null}
-                  data={totalHistoricalStats.volumeUsd_24h}
+                  data={globalHistoricalStats.volumeUsd_7d}
+                  dataPeriodDays={7}
                   // formatCategory={(category) =>
                   //   formatCoinTypeCategory(
                   //     category,

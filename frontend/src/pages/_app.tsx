@@ -19,7 +19,6 @@ import Layout from "@/components/Layout";
 import Toaster from "@/components/Toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppContextProvider } from "@/contexts/AppContext";
-import { PoolPositionsContextProvider } from "@/contexts/PoolPositionsContext";
 import { StatsContextProvider } from "@/contexts/StatsContext";
 import { UserContextProvider } from "@/contexts/UserContext";
 import { TITLE } from "@/lib/constants";

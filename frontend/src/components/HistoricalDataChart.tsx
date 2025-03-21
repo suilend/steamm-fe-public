@@ -35,7 +35,7 @@ function ActiveBar({ ...props }) {
 }
 
 interface TooltipContentProps {
-  periodDays: 1 | 7 | 30;
+  dataPeriodDays: 1 | 7 | 30;
   formatCategory: (category: string) => string | undefined;
   formatValue: (value: number) => string;
   sortedCategories: string[];
@@ -45,7 +45,7 @@ interface TooltipContentProps {
 }
 
 function TooltipContent({
-  periodDays,
+  dataPeriodDays,
   formatCategory,
   formatValue,
   sortedCategories,
@@ -63,7 +63,7 @@ function TooltipContent({
         <p className="text-p2 text-secondary-foreground">
           {format(
             new Date(d.timestampS * 1000),
-            periodDays === 1 ? "h:mm a" : "d MMM h:mm a",
+            dataPeriodDays === 1 ? "h:mm a" : "d MMM h:mm a",
           )}
         </p>
         {sortedCategories.map((category, categoryIndex) => {
@@ -104,12 +104,12 @@ function TooltipContent({
 interface HistoricalDataChartProps {
   className?: ClassValue;
   title: string;
-  hideTitlePeriod?: boolean;
   value?: string;
+  valuePeriodDays?: 1 | 7 | 30;
   chartType: ChartType;
-  periodDays: 1 | 7 | 30;
   periodChangePercent?: BigNumber | null;
   data?: ChartData[];
+  dataPeriodDays: 1 | 7 | 30;
   formatCategory: (category: string) => string | undefined;
   formatValue: (value: number) => string;
 }
@@ -117,12 +117,12 @@ interface HistoricalDataChartProps {
 export default function HistoricalDataChart({
   className,
   title,
-  hideTitlePeriod,
   value,
+  valuePeriodDays,
   chartType,
-  periodDays,
   periodChangePercent,
   data,
+  dataPeriodDays,
   formatCategory,
   formatValue,
 }: HistoricalDataChartProps) {
@@ -240,20 +240,20 @@ export default function HistoricalDataChart({
       <div className="flex flex-row items-start justify-between">
         {/* Top left */}
         <div className="flex flex-col gap-1">
-          <div className="flex flex-row items-baseline gap-1.5">
-            <p className="text-p2 text-secondary-foreground">{title}</p>
-            {!hideTitlePeriod && (
-              <p className="text-p3 text-tertiary-foreground">
-                {periodDays === 1 ? "24H" : `${periodDays}D`}
-              </p>
-            )}
-          </div>
+          <p className="text-p2 text-secondary-foreground">{title}</p>
 
           <div className="flex flex-row items-center gap-2">
             {value === undefined ? (
               <Skeleton className="h-[36px] w-20" />
             ) : (
-              <p className="text-h2 text-foreground">{value}</p>
+              <div className="flex flex-row items-baseline gap-1.5">
+                <p className="text-h2 text-foreground">{value}</p>
+                {valuePeriodDays !== undefined && (
+                  <p className="text-p1 text-tertiary-foreground">
+                    {valuePeriodDays === 1 ? "24H" : `${valuePeriodDays}D`}
+                  </p>
+                )}
+              </div>
             )}
 
             {periodChangePercent !== null &&
@@ -347,7 +347,7 @@ export default function HistoricalDataChart({
 
                           return (
                             <TooltipContent
-                              periodDays={periodDays}
+                              dataPeriodDays={dataPeriodDays}
                               formatCategory={formatCategory}
                               formatValue={formatValue}
                               sortedCategories={sortedCategories}
@@ -465,7 +465,7 @@ export default function HistoricalDataChart({
 
                         return (
                           <TooltipContent
-                            periodDays={periodDays}
+                            dataPeriodDays={dataPeriodDays}
                             formatCategory={formatCategory}
                             formatValue={formatValue}
                             sortedCategories={sortedCategories}
@@ -492,7 +492,7 @@ export default function HistoricalDataChart({
               <p key={tickX} className="text-p3 text-tertiary-foreground">
                 {format(
                   new Date(tickX * 1000),
-                  periodDays === 1 ? "h:mm a" : "d MMM",
+                  dataPeriodDays === 1 ? "h:mm a" : "d MMM",
                 )}
               </p>
             ))}
