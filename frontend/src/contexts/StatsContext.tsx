@@ -26,7 +26,7 @@ interface StatsContext {
   poolHistoricalStats: {
     tvlUsd_7d: Record<string, ChartData[]>;
     volumeUsd_7d: Record<string, ChartData[]>;
-    feesUsd_24h: Record<string, ChartData[]>;
+    feesUsd_7d: Record<string, ChartData[]>;
   };
   poolStats: {
     volumeUsd_24h: Record<string, BigNumber>;
@@ -47,7 +47,7 @@ const StatsContext = createContext<StatsContext>({
   poolHistoricalStats: {
     tvlUsd_7d: {},
     volumeUsd_7d: {},
-    feesUsd_24h: {},
+    feesUsd_7d: {},
   },
   poolStats: {
     volumeUsd_24h: {},
@@ -93,11 +93,11 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   const [poolHistoricalStats, setPoolHistoricalStats] = useState<{
     tvlUsd_7d: Record<string, ChartData[]>;
     volumeUsd_7d: Record<string, ChartData[]>;
-    feesUsd_24h: Record<string, ChartData[]>;
+    feesUsd_7d: Record<string, ChartData[]>;
   }>({
     tvlUsd_7d: {},
     volumeUsd_7d: {},
-    feesUsd_24h: {},
+    feesUsd_7d: {},
   });
 
   const fetchPoolHistoricalStats = useCallback(async () => {
@@ -188,9 +188,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         try {
           const res = await fetch(
             `${API_URL}/steamm/historical/fees?${new URLSearchParams({
-              startTimestampS: `${referenceTimestampSRef.current - ONE_DAY_S}`,
+              startTimestampS: `${referenceTimestampSRef.current - SEVEN_DAYS_S}`,
               endTimestampS: `${referenceTimestampSRef.current - 1}`,
-              intervalS: `${ONE_HOUR_S}`,
+              intervalS: `${SIX_HOURS_S}`,
               poolId: pool.id,
             })}`,
           );
@@ -203,14 +203,14 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
           setPoolHistoricalStats((prev) => ({
             ...prev,
-            feesUsd_24h: {
-              ...prev.feesUsd_24h,
+            feesUsd_7d: {
+              ...prev.feesUsd_7d,
               [pool.id]: json.reduce(
                 (acc, d) => [
                   ...acc,
                   {
                     timestampS: d.start,
-                    feesUsd_24h: Object.entries(d.fees).reduce(
+                    feesUsd_7d: Object.entries(d.fees).reduce(
                       (acc2, [coinType, fees]) =>
                         acc2 +
                         +new BigNumber(fees)
@@ -258,18 +258,19 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         }),
         {} as Record<string, BigNumber>,
       ),
-      feesUsd_24h: Object.entries(poolHistoricalStats.feesUsd_24h).reduce(
+      feesUsd_24h: Object.entries(poolHistoricalStats.feesUsd_7d).reduce(
         (acc, [poolId, data]) => ({
           ...acc,
-          [poolId]: data.reduce(
-            (acc2, d) => acc2.plus(d.feesUsd_24h),
-            new BigNumber(0),
-          ),
+          [poolId]: data
+            .filter(
+              (d) => d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,
+            )
+            .reduce((acc2, d) => acc2.plus(d.feesUsd_7d), new BigNumber(0)),
         }),
         {} as Record<string, BigNumber>,
       ),
       aprPercent_24h: appData
-        ? Object.entries(poolHistoricalStats.feesUsd_24h).reduce(
+        ? Object.entries(poolHistoricalStats.feesUsd_7d).reduce(
             (acc, [poolId, data]) => {
               const pool = appData.pools.find((_pool) => _pool.id === poolId);
               if (!pool) return acc; // `pool` should always be defined
@@ -277,8 +278,13 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
               const feesAprPercent = (
                 !pool.tvlUsd.eq(0)
                   ? data
+                      .filter(
+                        (d) =>
+                          d.timestampS >=
+                          referenceTimestampSRef.current - ONE_DAY_S,
+                      )
                       .reduce(
-                        (acc2, d) => acc2.plus(d.feesUsd_24h),
+                        (acc2, d) => acc2.plus(d.feesUsd_7d),
                         new BigNumber(0),
                       )
                       .div(pool.tvlUsd)

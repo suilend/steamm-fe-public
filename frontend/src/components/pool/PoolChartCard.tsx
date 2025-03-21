@@ -83,9 +83,9 @@ export default function PoolChartCard() {
             : formatUsd(poolStats.feesUsd_24h[pool.id]),
         valuePeriodDays: 1,
         chartType: ChartType.BAR,
-        dataPeriodDays: 1,
+        dataPeriodDays: 7,
         periodChangePercent: null,
-        data: poolHistoricalStats.feesUsd_24h[pool.id],
+        data: poolHistoricalStats.feesUsd_7d[pool.id],
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
     }),
@@ -96,7 +96,7 @@ export default function PoolChartCard() {
       poolStats.volumeUsd_24h,
       poolHistoricalStats.volumeUsd_7d,
       poolStats.feesUsd_24h,
-      poolHistoricalStats.feesUsd_24h,
+      poolHistoricalStats.feesUsd_7d,
     ],
   );
 
