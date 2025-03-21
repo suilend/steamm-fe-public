@@ -34,7 +34,7 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   balance: {
     flex: 1,
-    minWidth: 125, // px
+    minWidth: 250, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
