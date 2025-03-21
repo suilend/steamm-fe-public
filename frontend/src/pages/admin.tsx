@@ -14,6 +14,7 @@ import {
   normalizeSuiAddress,
 } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
+import { useFlags } from "launchdarkly-react-client-sdk";
 
 import {
   NORMALIZED_SUI_COINTYPE,
@@ -132,7 +133,14 @@ export default function AdminPage() {
   const { balancesCoinMetadataMap, getBalance, refresh } =
     useLoadedUserContext();
 
-  const isEditable = address === ADMIN_ADDRESS;
+  const flags = useFlags();
+  const isWhitelisted = useMemo(
+    () =>
+      !!address &&
+      (address === ADMIN_ADDRESS ||
+        (flags?.steammCreatePoolWhitelist ?? []).includes(address)),
+    [address, flags?.steammCreatePoolWhitelist],
+  );
 
   // CoinTypes
   const [coinTypes, setCoinTypes] = useState<[string, string]>(["", ""]);
@@ -301,7 +309,7 @@ export default function AdminPage() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    if (!isEditable)
+    if (!isWhitelisted)
       return { isDisabled: true, title: "Create pool and deposit" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
 

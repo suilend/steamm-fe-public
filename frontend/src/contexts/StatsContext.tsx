@@ -88,7 +88,6 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       );
     })(),
   );
-  console.log("XXX", referenceTimestampSRef.current);
 
   // Pool
   const [poolHistoricalStats, setPoolHistoricalStats] = useState<{
