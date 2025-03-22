@@ -202,11 +202,11 @@ export default function PoolsPage() {
                 <HistoricalDataChart
                   title="Volume"
                   value={
-                    globalStats.volumeUsd_24h === undefined
+                    globalStats.volumeUsd_7d === undefined
                       ? undefined
-                      : formatUsd(globalStats.volumeUsd_24h)
+                      : formatUsd(globalStats.volumeUsd_7d)
                   }
-                  valuePeriodDays={1}
+                  valuePeriodDays={7}
                   chartType={ChartType.BAR}
                   periodChangePercent={null}
                   data={globalHistoricalStats.volumeUsd_7d}

@@ -65,10 +65,10 @@ export default function PoolChartCard() {
       [ChartStat.VOLUME]: {
         title: chartStatNameMap[ChartStat.VOLUME],
         value:
-          poolStats.volumeUsd_24h[pool.id] === undefined
+          poolStats.volumeUsd_7d[pool.id] === undefined
             ? undefined
-            : formatUsd(poolStats.volumeUsd_24h[pool.id]),
-        valuePeriodDays: 1,
+            : formatUsd(poolStats.volumeUsd_7d[pool.id]),
+        valuePeriodDays: 7,
         chartType: ChartType.BAR,
         periodChangePercent: null,
         data: poolHistoricalStats.volumeUsd_7d[pool.id],
@@ -78,10 +78,10 @@ export default function PoolChartCard() {
       [ChartStat.FEES]: {
         title: chartStatNameMap[ChartStat.FEES],
         value:
-          poolStats.feesUsd_24h[pool.id] === undefined
+          poolStats.feesUsd_7d[pool.id] === undefined
             ? undefined
-            : formatUsd(poolStats.feesUsd_24h[pool.id]),
-        valuePeriodDays: 1,
+            : formatUsd(poolStats.feesUsd_7d[pool.id]),
+        valuePeriodDays: 7,
         chartType: ChartType.BAR,
         dataPeriodDays: 7,
         periodChangePercent: null,
@@ -93,9 +93,9 @@ export default function PoolChartCard() {
       pool.tvlUsd,
       poolHistoricalStats.tvlUsd_7d,
       pool.id,
-      poolStats.volumeUsd_24h,
+      poolStats.volumeUsd_7d,
       poolHistoricalStats.volumeUsd_7d,
-      poolStats.feesUsd_24h,
+      poolStats.feesUsd_7d,
       poolHistoricalStats.feesUsd_7d,
     ],
   );

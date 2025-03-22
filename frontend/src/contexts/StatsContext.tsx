@@ -29,7 +29,9 @@ interface StatsContext {
     feesUsd_7d: Record<string, ChartData[]>;
   };
   poolStats: {
+    volumeUsd_7d: Record<string, BigNumber>;
     volumeUsd_24h: Record<string, BigNumber>;
+    feesUsd_7d: Record<string, BigNumber>;
     feesUsd_24h: Record<string, BigNumber>;
     aprPercent_24h: Record<string, { feesAprPercent: BigNumber }>;
   };
@@ -39,7 +41,7 @@ interface StatsContext {
     volumeUsd_7d: ChartData[] | undefined;
   };
   globalStats: {
-    volumeUsd_24h: BigNumber | undefined;
+    volumeUsd_7d: BigNumber | undefined;
   };
 }
 
@@ -50,7 +52,9 @@ const StatsContext = createContext<StatsContext>({
     feesUsd_7d: {},
   },
   poolStats: {
+    volumeUsd_7d: {},
     volumeUsd_24h: {},
+    feesUsd_7d: {},
     feesUsd_24h: {},
     aprPercent_24h: {},
   },
@@ -60,7 +64,7 @@ const StatsContext = createContext<StatsContext>({
     volumeUsd_7d: undefined,
   },
   globalStats: {
-    volumeUsd_24h: undefined,
+    volumeUsd_7d: undefined,
   },
 });
 
@@ -198,6 +202,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             start: number;
             end: number;
             fees: Record<string, string>;
+            usdValue: string;
           }[] = await res.json();
           if ((json as any)?.statusCode === 500) return;
 
@@ -210,14 +215,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
                   ...acc,
                   {
                     timestampS: d.start,
-                    feesUsd_7d: Object.entries(d.fees).reduce(
-                      (acc2, [coinType, fees]) =>
-                        acc2 +
-                        +new BigNumber(fees)
-                          .div(10 ** appData.coinMetadataMap[coinType].decimals)
-                          .times(pool.prices[pool.coinTypes.indexOf(coinType)]),
-                      0,
-                    ),
+                    feesUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
                   },
                 ],
                 [] as ChartData[],
@@ -242,11 +240,23 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   }, [appData, fetchPoolHistoricalStats]);
 
   const poolStats: {
+    volumeUsd_7d: Record<string, BigNumber>;
     volumeUsd_24h: Record<string, BigNumber>;
+    feesUsd_7d: Record<string, BigNumber>;
     feesUsd_24h: Record<string, BigNumber>;
     aprPercent_24h: Record<string, { feesAprPercent: BigNumber }>;
   } = useMemo(
     () => ({
+      volumeUsd_7d: Object.entries(poolHistoricalStats.volumeUsd_7d).reduce(
+        (acc, [poolId, data]) => ({
+          ...acc,
+          [poolId]: data.reduce(
+            (acc2, d) => acc2.plus(d.volumeUsd_7d),
+            new BigNumber(0),
+          ),
+        }),
+        {} as Record<string, BigNumber>,
+      ),
       volumeUsd_24h: Object.entries(poolHistoricalStats.volumeUsd_7d).reduce(
         (acc, [poolId, data]) => ({
           ...acc,
@@ -255,6 +265,16 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
               (d) => d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,
             )
             .reduce((acc2, d) => acc2.plus(d.volumeUsd_7d), new BigNumber(0)),
+        }),
+        {} as Record<string, BigNumber>,
+      ),
+      feesUsd_7d: Object.entries(poolHistoricalStats.feesUsd_7d).reduce(
+        (acc, [poolId, data]) => ({
+          ...acc,
+          [poolId]: data.reduce(
+            (acc2, d) => acc2.plus(d.feesUsd_7d),
+            new BigNumber(0),
+          ),
         }),
         {} as Record<string, BigNumber>,
       ),
@@ -380,17 +400,15 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   ]);
 
   const globalStats: {
-    volumeUsd_24h: BigNumber | undefined;
+    volumeUsd_7d: BigNumber | undefined;
   } = useMemo(
     () => ({
-      volumeUsd_24h:
+      volumeUsd_7d:
         globalHistoricalStats.volumeUsd_7d !== undefined
-          ? globalHistoricalStats.volumeUsd_7d
-              .filter(
-                (d) =>
-                  d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,
-              )
-              .reduce((acc, d) => acc.plus(d.volumeUsd_7d), new BigNumber(0))
+          ? globalHistoricalStats.volumeUsd_7d.reduce(
+              (acc, d) => acc.plus(d.volumeUsd_7d),
+              new BigNumber(0),
+            )
           : undefined,
     }),
     [globalHistoricalStats.volumeUsd_7d],
