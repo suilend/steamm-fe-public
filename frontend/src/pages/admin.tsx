@@ -836,7 +836,7 @@ export default function AdminPage() {
                             key={_quoterId}
                             className={cn(
                               "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
-                              quoterId === _quoterId
+                              _quoterId === quoterId
                                 ? "cursor-default bg-button-1"
                                 : "hover:bg-border/50",
                             )}
@@ -850,7 +850,7 @@ export default function AdminPage() {
                             <p
                               className={cn(
                                 "!text-p2 transition-colors",
-                                quoterId === _quoterId
+                                _quoterId === quoterId
                                   ? "text-button-1-foreground"
                                   : "text-secondary-foreground group-hover:text-foreground",
                               )}
