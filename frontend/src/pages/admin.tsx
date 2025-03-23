@@ -44,9 +44,10 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
 import { formatFeeTier, formatPair, formatTextInputValue } from "@/lib/format";
+import { COINTYPE_ORACLE_INDEX_MAP } from "@/lib/oracles";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { QUOTERS, QuoterId } from "@/lib/types";
+import { QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const FEE_TIER_PERCENTS: number[] = [0.01, 0.05, 0.3, 1, 2];
@@ -296,8 +297,7 @@ export default function AdminPage() {
   ) =>
     !!existingPools.find(
       (pool) =>
-        pool.quoter.id === _quoterId &&
-        +pool.feeTierPercent === _feeTierPercent,
+        pool.quoterId === _quoterId && +pool.feeTierPercent === _feeTierPercent,
     );
 
   const existingPoolTooltip = coinTypes.every((coinType) => coinType !== "")
@@ -430,6 +430,13 @@ export default function AdminPage() {
     if (!address || !quoterId || !feeTierPercent) return;
 
     try {
+      if (quoterId === QuoterId.ORACLE) {
+        if (COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]] === undefined)
+          throw new Error("coinType 0 not found in COINTYPE_ORACLE_INDEX_MAP");
+        if (COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]] === undefined)
+          throw new Error("coinType 1 not found in COINTYPE_ORACLE_INDEX_MAP");
+      }
+
       setIsSubmitting(true);
 
       const tokens = coinTypes.map((coinType) =>
@@ -664,7 +671,7 @@ export default function AdminPage() {
         `Created ${formatPair(tokens.map((token) => token.symbol))} pool`,
         txUrl,
         {
-          description: `Quoter: ${QUOTERS.find((_quoter) => _quoter.id === quoterId)!.name}, fee tier: ${formatFeeTier(new BigNumber(feeTierPercent))}`,
+          description: `Quoter: ${QUOTER_ID_NAME_MAP[quoterId]}}, fee tier: ${formatFeeTier(new BigNumber(feeTierPercent))}`,
         },
       );
 
@@ -768,7 +775,7 @@ export default function AdminPage() {
               </Parameter>
 
               {/* Market price */}
-              <div className="flex w-full flex-col items-end gap-1">
+              <div className="flex w-full flex-col items-end gap-2">
                 <Parameter label="Market price (Birdeye)" isHorizontal>
                   {coinTypes.every((coinType) => coinType !== "") ? (
                     birdeyeRatio !== undefined ? (
@@ -791,7 +798,7 @@ export default function AdminPage() {
                       onClick={onUseBirdeyePriceClick}
                     >
                       <p className="text-p3 text-button-2-foreground">
-                        Use price
+                        Use market price
                       </p>
                     </button>
                   ) : (
@@ -807,19 +814,17 @@ export default function AdminPage() {
               <p className="text-p2 text-secondary-foreground">Quoter</p>
 
               <div className="flex flex-row gap-1">
-                {QUOTERS.map((_quoter) => {
+                {Object.values(QuoterId).map((_quoterId) => {
                   const hasExistingPool = hasExistingPoolForQuoterAndFeeTier(
-                    _quoter.id,
+                    _quoterId,
                     feeTierPercent,
                   );
 
                   return (
-                    <div key={_quoter.id} className="w-max">
+                    <div key={_quoterId} className="w-max">
                       <Tooltip
                         title={
-                          [QuoterId.ORACLE, QuoterId.STABLE].includes(
-                            _quoter.id,
-                          )
+                          [QuoterId.ORACLE, QuoterId.STABLE].includes(_quoterId)
                             ? "Coming soon"
                             : hasExistingPool
                               ? existingPoolTooltip
@@ -828,29 +833,29 @@ export default function AdminPage() {
                       >
                         <div className="w-max">
                           <button
-                            key={_quoter.id}
+                            key={_quoterId}
                             className={cn(
                               "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
-                              quoterId === _quoter.id
+                              quoterId === _quoterId
                                 ? "cursor-default bg-button-1"
                                 : "hover:bg-border/50",
                             )}
-                            onClick={() => setQuoterId(_quoter.id)}
+                            onClick={() => setQuoterId(_quoterId)}
                             disabled={
                               [QuoterId.ORACLE, QuoterId.STABLE].includes(
-                                _quoter.id,
+                                _quoterId,
                               ) || hasExistingPool
                             }
                           >
                             <p
                               className={cn(
                                 "!text-p2 transition-colors",
-                                quoterId === _quoter.id
+                                quoterId === _quoterId
                                   ? "text-button-1-foreground"
                                   : "text-secondary-foreground group-hover:text-foreground",
                               )}
                             >
-                              {_quoter.name}
+                              {QUOTER_ID_NAME_MAP[_quoterId]}
                             </p>
                           </button>
                         </div>

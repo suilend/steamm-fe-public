@@ -42,6 +42,9 @@ export interface AppData {
   coinMetadataMap: Record<string, CoinMetadata>;
   bTokenTypeCoinTypeMap: Record<string, string>;
 
+  coinTypePythPriceMap: Record<string, BigNumber>;
+  coinTypeSwitchboardPriceMap: Record<string, BigNumber>;
+
   banks: ParsedBank[];
   bankMap: Record<string, ParsedBank>;
   bankCoinTypes: string[];

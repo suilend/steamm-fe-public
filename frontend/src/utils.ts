@@ -1,7 +1,7 @@
 import { MAX_U64 } from "@suilend/frontend-sui";
 import { DepositQuote } from "@suilend/steamm-sdk";
-import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
-import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
+
+import { ParsedPool } from "@/lib/types";
 
 // interface Pool {
 //   lpSupplyVal: () => bigint;
@@ -12,7 +12,7 @@ import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/struct
 type Option<T> = { value: T } | null;
 
 // Function to perform multiplication and division with rounding up
-function checkedMulDivUp(x: bigint, y: bigint, z: bigint): Option<bigint> {
+const checkedMulDivUp = (x: bigint, y: bigint, z: bigint): Option<bigint> => {
   if (z === BigInt(0)) {
     return null;
   }
@@ -27,9 +27,9 @@ function checkedMulDivUp(x: bigint, y: bigint, z: bigint): Option<bigint> {
   }
 
   return { value: res };
-}
+};
 
-function safeMulDivUp(x: bigint, y: bigint, z: bigint): bigint {
+const safeMulDivUp = (x: bigint, y: bigint, z: bigint): bigint => {
   // Check for division by zero
   if (z <= BigInt(0)) {
     throw new Error("EDivideByZero");
@@ -46,9 +46,9 @@ function safeMulDivUp(x: bigint, y: bigint, z: bigint): bigint {
   }
 
   return res;
-}
+};
 
-function safeMulDiv(x: bigint, y: bigint, z: bigint): bigint {
+const safeMulDiv = (x: bigint, y: bigint, z: bigint): bigint => {
   // Check for division by zero
   if (z <= BigInt(0)) {
     throw new Error("EDivideByZero");
@@ -63,9 +63,9 @@ function safeMulDiv(x: bigint, y: bigint, z: bigint): bigint {
   }
 
   return res;
-}
+};
 
-function sqrt(value: bigint): bigint {
+const sqrt = (value: bigint): bigint => {
   if (value < BigInt(0)) throw new Error("Square root of negative number");
   if (value < BigInt(2)) return value;
 
@@ -80,18 +80,18 @@ function sqrt(value: bigint): bigint {
   }
 
   return result;
-}
+};
 
-function min(a: bigint, b: bigint): bigint {
+const min = (a: bigint, b: bigint): bigint => {
   return a < b ? a : b;
-}
+};
 
-function tokensToDeposit(
+const tokensToDeposit = (
   reserveA: bigint,
   reserveB: bigint,
   maxA: bigint,
   maxB: bigint,
-): [bigint, bigint] {
+): [bigint, bigint] => {
   if (maxA === BigInt(0))
     throw new Error("Deposit max A parameter cannot be zero");
 
@@ -113,15 +113,15 @@ function tokensToDeposit(
     if (aStar > maxA) throw new Error("Deposit ratio invalid");
     return [aStar, maxB];
   }
-}
+};
 
-function lpTokensToMint(
+const lpTokensToMint = (
   reserveA: bigint,
   reserveB: bigint,
   lpSupply: bigint,
   amountA: bigint,
   amountB: bigint,
-): bigint {
+): bigint => {
   if (lpSupply === BigInt(0)) {
     if (amountB === BigInt(0)) {
       return amountA;
@@ -137,32 +137,32 @@ function lpTokensToMint(
       );
     }
   }
-}
+};
 
-function quoteDeposit(
+const quoteDeposit = (
   reserveA: bigint,
   reserveB: bigint,
   lpSupply: bigint,
   maxA: bigint,
   maxB: bigint,
-): [bigint, bigint, bigint] {
+): [bigint, bigint, bigint] => {
   const [deltaA, deltaB] = tokensToDeposit(reserveA, reserveB, maxA, maxB);
   const deltaLp = lpTokensToMint(reserveA, reserveB, lpSupply, deltaA, deltaB);
 
   if (deltaLp === BigInt(0)) throw new Error("Empty LP mint amount");
 
   return [deltaA, deltaB, deltaLp];
-}
+};
 
-export function quotePoolDeposit(
-  pool: Pool<string, string, CpQuoter, string>,
+export const quotePoolDeposit = (
+  pool: ParsedPool,
   maxA: bigint,
   maxB: bigint,
-): DepositQuote {
+): DepositQuote => {
   // ): void {
-  const reserveA = BigInt(pool.balanceA.value.toString());
-  const reserveB = BigInt(pool.balanceB.value.toString());
-  const lpSupply = BigInt(pool.lpSupply.value.toString());
+  const reserveA = BigInt(pool.pool.balanceA.value.toString());
+  const reserveB = BigInt(pool.pool.balanceB.value.toString());
+  const lpSupply = BigInt(pool.pool.lpSupply.value.toString());
   console.log(`balanceA: ${reserveA}`);
   console.log(`balanceB: ${reserveB}`);
   console.log(`lpSupply: ${lpSupply}`);
@@ -183,4 +183,4 @@ export function quotePoolDeposit(
     depositB,
     mintLp,
   };
-}
+};

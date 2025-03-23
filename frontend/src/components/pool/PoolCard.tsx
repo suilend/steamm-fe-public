@@ -5,7 +5,7 @@ import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
-import { ParsedPool } from "@/lib/types";
+import { ParsedPool, QUOTER_ID_NAME_MAP } from "@/lib/types";
 
 interface PoolCardProps {
   pool: ParsedPool;
@@ -28,7 +28,7 @@ export default function PoolCard({ pool }: PoolCardProps) {
         </p>
 
         <div className="flex flex-row items-center gap-1">
-          <Tag>{pool.quoter.name}</Tag>
+          <Tag>{QUOTER_ID_NAME_MAP[pool.quoterId]}</Tag>
           <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
         </div>
       </div>

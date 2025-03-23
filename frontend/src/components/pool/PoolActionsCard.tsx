@@ -157,7 +157,7 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
         .toString();
 
       const quote = quotePoolDeposit(
-        pool.pool,
+        pool,
         index === 0 ? BigInt(submitAmount) : BigInt(MAX_U64.toString()),
         index === 0 ? BigInt(MAX_U64.toString()) : BigInt(submitAmount),
       );

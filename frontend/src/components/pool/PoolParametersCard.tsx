@@ -28,7 +28,7 @@ export default function PoolParametersCard() {
 
   return (
     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
-      <Parameter className="gap-2" label="Pool composition">
+      <Parameter label="Assets">
         {pool.coinTypes.map((coinType, index) => {
           const coinMetadata = appData.coinMetadataMap[coinType];
 
@@ -81,17 +81,10 @@ export default function PoolParametersCard() {
         })}
       </Parameter>
 
-      <Parameter label="Pool address">
-        <div className="flex flex-row items-center gap-2">
-          <Tooltip title={pool.id}>
-            <p className="text-p2 text-foreground">{formatAddress(pool.id)}</p>
-          </Tooltip>
-
-          <div className="flex flex-row items-center gap-1">
-            <CopyToClipboardButton value={pool.id} />
-            <OpenOnExplorerButton url={explorer.buildObjectUrl(pool.id)} />
-          </div>
-        </div>
+      <Parameter label="Fee tier">
+        <p className="text-p2 text-foreground">
+          {formatFeeTier(pool.feeTierPercent)}
+        </p>
       </Parameter>
 
       <ExchangeRateParameter
@@ -120,10 +113,17 @@ export default function PoolParametersCard() {
         label="Current price"
       />
 
-      <Parameter label="Fee tier">
-        <p className="text-p2 text-foreground">
-          {formatFeeTier(pool.feeTierPercent)}
-        </p>
+      <Parameter label="Address">
+        <div className="flex flex-row items-center gap-2">
+          <Tooltip title={pool.id}>
+            <p className="text-p2 text-foreground">{formatAddress(pool.id)}</p>
+          </Tooltip>
+
+          <div className="flex flex-row items-center gap-1">
+            <CopyToClipboardButton value={pool.id} />
+            <OpenOnExplorerButton url={explorer.buildObjectUrl(pool.id)} />
+          </div>
+        </div>
       </Parameter>
     </div>
   );
