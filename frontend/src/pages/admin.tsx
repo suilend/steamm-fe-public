@@ -671,7 +671,7 @@ export default function AdminPage() {
         `Created ${formatPair(tokens.map((token) => token.symbol))} pool`,
         txUrl,
         {
-          description: `Quoter: ${QUOTER_ID_NAME_MAP[quoterId]}}, fee tier: ${formatFeeTier(new BigNumber(feeTierPercent))}`,
+          description: `Quoter: ${QUOTER_ID_NAME_MAP[quoterId]}, fee tier: ${formatFeeTier(new BigNumber(feeTierPercent))}`,
         },
       );
 
