@@ -5,6 +5,7 @@ import { ClassValue } from "clsx";
 import { useLocalStorage } from "usehooks-ts";
 
 import PoolGroupRow from "@/components/pools/PoolGroupRow";
+import PoolRow from "@/components/pools/PoolRow";
 import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PoolGroup } from "@/lib/types";
@@ -26,23 +27,24 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   feeTier: {
     width: 100, // px
-    paddingLeft: 4 * 5, // px
+    justifyContent: "end",
+    paddingRight: 4 * 5, // px
   },
   tvlUsd: {
     flex: 1,
-    width: 125, // px
+    width: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   volumeUsd_24h: {
     flex: 1,
-    minWidth: 125, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   aprPercent_24h: {
     flex: 1,
-    minWidth: 125, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -221,13 +223,21 @@ export default function PoolsTable({
           </p>
         </div>
       ) : (
-        sortedPoolGroups.map((poolGroup) => (
-          <PoolGroupRow
-            key={poolGroup.id}
-            tableId={tableId}
-            poolGroup={poolGroup}
-          />
-        ))
+        sortedPoolGroups.map((poolGroup) =>
+          poolGroup.pools.length === 1 ? (
+            <PoolRow
+              key={poolGroup.id}
+              pool={poolGroup.pools[0]}
+              isLastPoolInGroup
+            />
+          ) : (
+            <PoolGroupRow
+              key={poolGroup.id}
+              tableId={tableId}
+              poolGroup={poolGroup}
+            />
+          ),
+        )
       )}
     </div>
   );

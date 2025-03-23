@@ -246,7 +246,7 @@ export default function HistoricalDataChart({
             {value === undefined ? (
               <Skeleton className="h-[36px] w-20" />
             ) : (
-              <div className="flex flex-row items-baseline gap-1.5">
+              <div className="flex flex-row items-baseline gap-2">
                 <p className="text-h2 text-foreground">{value}</p>
                 {valuePeriodDays !== undefined && (
                   <p className="text-p1 text-tertiary-foreground">
