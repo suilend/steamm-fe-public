@@ -16,6 +16,7 @@ import HistoricalDataChart from "@/components/HistoricalDataChart";
 import PoolsTable from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
 import Tooltip from "@/components/Tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
@@ -26,7 +27,7 @@ import { getTotalAprPercent } from "@/lib/liquidityMining";
 import { ParsedPool, PoolGroup } from "@/lib/types";
 
 export default function PoolsPage() {
-  const { appData, lstData } = useLoadedAppContext();
+  const { appData, lstData, featuredPoolPairs } = useLoadedAppContext();
   const { userData } = useLoadedUserContext();
   const { poolStats, globalHistoricalStats, globalStats } = useStatsContext();
 
@@ -118,18 +119,23 @@ export default function PoolsPage() {
     poolStats.volumeUsd_24h,
   ]);
 
-  // Featured pairs
+  // Featured pools
   const featuredPoolGroups = useMemo(
     () =>
-      poolGroups.filter(
-        (poolGroup) =>
-          !!appData.featuredCoinTypePairs.find(
-            (pair) =>
-              poolGroup.coinTypes[0] === pair[0] &&
-              poolGroup.coinTypes[1] === pair[1],
+      featuredPoolPairs === undefined
+        ? undefined
+        : poolGroups.filter(
+            (poolGroup) =>
+              !!featuredPoolPairs.find(
+                (pair) =>
+                  formatPair(
+                    poolGroup.coinTypes.map(
+                      (coinType) => appData.coinMetadataMap[coinType].symbol,
+                    ),
+                  ) === pair,
+              ),
           ),
-      ),
-    [poolGroups, appData.featuredCoinTypePairs],
+    [featuredPoolPairs, poolGroups, appData.coinMetadataMap],
   );
 
   // Search
@@ -226,10 +232,23 @@ export default function PoolsPage() {
         </div>
 
         {/* Featured pools */}
-        {featuredPoolGroups.length > 0 && (
+        {(featuredPoolGroups === undefined ||
+          featuredPoolGroups.length > 0) && (
           <div className="flex w-full flex-col gap-6">
-            <div className="flex h-[30px] w-full flex-row items-center justify-between">
-              <h2 className="text-h3 text-foreground">Featured pools</h2>
+            <div className="flex h-[30px] w-full flex-row items-center justify-between gap-4">
+              <div className="flex flex-row items-center gap-3">
+                <h2 className="text-h3 text-foreground">Featured pools</h2>
+                {featuredPoolGroups === undefined ? (
+                  <Skeleton className="h-5 w-12" />
+                ) : (
+                  <Tag>
+                    {featuredPoolGroups.reduce(
+                      (acc, poolGroup) => acc + poolGroup.pools.length,
+                      0,
+                    )}
+                  </Tag>
+                )}
+              </div>
             </div>
 
             <PoolsTable

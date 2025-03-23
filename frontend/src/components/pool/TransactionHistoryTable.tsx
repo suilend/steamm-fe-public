@@ -79,60 +79,64 @@ export default function TransactionHistoryTable({
   }, [transactionHistory, sortState]);
 
   return (
-    <div className={cn("relative w-full overflow-auto", className)}>
-      {/* Header */}
-      <div className="sticky left-0 top-0 z-[2] flex h-[calc(1px+40px+1px)] w-full min-w-max shrink-0 flex-row border bg-secondary">
-        <HeaderColumn<Column, SortableColumn>
-          id="date"
-          sortState={sortState}
-          toggleSortByColumn={toggleSortByColumn}
-          style={columnStyleMap.date}
-        >
-          Date
-        </HeaderColumn>
+    <div className="relative w-full">
+      <div className="pointer-events-none absolute inset-0 z-[2] border" />
 
-        <HeaderColumn<Column, SortableColumn>
-          id="type"
-          style={columnStyleMap.type}
-        >
-          Action
-        </HeaderColumn>
+      <div className={cn("relative z-[1] w-full overflow-auto", className)}>
+        {/* Header */}
+        <div className="sticky left-0 top-0 z-[2] flex h-[calc(1px+40px+1px)] w-full min-w-max shrink-0 flex-row border bg-secondary">
+          <HeaderColumn<Column, SortableColumn>
+            id="date"
+            sortState={sortState}
+            toggleSortByColumn={toggleSortByColumn}
+            style={columnStyleMap.date}
+          >
+            Date
+          </HeaderColumn>
 
-        <HeaderColumn<Column, SortableColumn>
-          id="amounts"
-          style={columnStyleMap.amounts}
-        >
-          Details
-        </HeaderColumn>
+          <HeaderColumn<Column, SortableColumn>
+            id="type"
+            style={columnStyleMap.type}
+          >
+            Action
+          </HeaderColumn>
 
-        <HeaderColumn<Column, SortableColumn>
-          id="digest"
-          style={columnStyleMap.digest}
-        >
-          Txn
-        </HeaderColumn>
-      </div>
+          <HeaderColumn<Column, SortableColumn>
+            id="amounts"
+            style={columnStyleMap.amounts}
+          >
+            Details
+          </HeaderColumn>
 
-      {/* Rows */}
-      {sortedTransactionHistory === undefined ? (
-        Array.from({ length: 3 }).map((_, index) => (
-          <Skeleton
-            key={index}
-            className="relative z-[1] h-[calc(44px+1px)] w-full border-x border-b"
-          />
-        ))
-      ) : sortedTransactionHistory.length === 0 ? (
-        <div className="flex h-[calc(44px+1px)] w-full flex-row items-center justify-center border-x border-b bg-background">
-          <p className="text-p2 text-tertiary-foreground">No transactions</p>
+          <HeaderColumn<Column, SortableColumn>
+            id="digest"
+            style={columnStyleMap.digest}
+          >
+            Txn
+          </HeaderColumn>
         </div>
-      ) : (
-        sortedTransactionHistory.map((transaction) => (
-          <TransactionHistoryRow
-            key={transaction.id}
-            transaction={transaction}
-          />
-        ))
-      )}
+
+        {/* Rows */}
+        {sortedTransactionHistory === undefined ? (
+          Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton
+              key={index}
+              className="relative z-[1] h-[calc(44px+1px)] w-full border-x border-b"
+            />
+          ))
+        ) : sortedTransactionHistory.length === 0 ? (
+          <div className="flex h-[calc(44px+1px)] w-full flex-row items-center justify-center border-x border-b bg-background">
+            <p className="text-p2 text-tertiary-foreground">No transactions</p>
+          </div>
+        ) : (
+          sortedTransactionHistory.map((transaction) => (
+            <TransactionHistoryRow
+              key={transaction.id}
+              transaction={transaction}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 }

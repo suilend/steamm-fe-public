@@ -202,7 +202,7 @@ function PoolPage() {
             <div className="flex flex-row items-center gap-3">
               <p className="text-h3 text-foreground">Transaction history</p>
               {poolTransactionHistory === undefined ? (
-                <Skeleton className="h-[22px] w-12" />
+                <Skeleton className="h-5 w-12" />
               ) : (
                 <Tag>{poolTransactionHistory.length}</Tag>
               )}

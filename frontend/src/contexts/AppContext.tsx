@@ -8,6 +8,7 @@ import {
 
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
+import { useFlags } from "launchdarkly-react-client-sdk";
 import { useLocalStorage } from "usehooks-ts";
 
 import {
@@ -51,8 +52,6 @@ export interface AppData {
 
   pools: ParsedPool[];
   poolCoinTypes: string[];
-
-  featuredCoinTypePairs: [string, string][];
 }
 export interface LstData {
   lstCoinTypes: string[];
@@ -68,6 +67,8 @@ interface AppContext {
 
   slippagePercent: number;
   setSlippagePercent: (slippagePercent: number) => void;
+
+  featuredPoolPairs: string[] | undefined;
 }
 type LoadedAppContext = AppContext & {
   steammClient: SteammSDK;
@@ -87,6 +88,8 @@ const AppContext = createContext<AppContext>({
   setSlippagePercent: () => {
     throw Error("AppContextProvider not initialized");
   },
+
+  featuredPoolPairs: undefined,
 });
 
 export const useAppContext = () => useContext(AppContext);
@@ -128,6 +131,13 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     1,
   );
 
+  // Featured pools
+  const flags = useFlags();
+  const featuredPoolPairs: string[] | undefined = useMemo(
+    () => flags?.steammFeaturedPoolPairs ?? [],
+    [flags?.steammFeaturedPoolPairs],
+  );
+
   // Context
   const contextValue: AppContext = useMemo(
     () => ({
@@ -139,6 +149,8 @@ export function AppContextProvider({ children }: PropsWithChildren) {
 
       slippagePercent,
       setSlippagePercent,
+
+      featuredPoolPairs,
     }),
     [
       steammClient,
@@ -147,6 +159,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       lstData,
       slippagePercent,
       setSlippagePercent,
+      featuredPoolPairs,
     ],
   );
 

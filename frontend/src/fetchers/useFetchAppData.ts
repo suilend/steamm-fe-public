@@ -364,8 +364,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         : 1; // Sort by pair (ascending)
     });
 
-    const featuredCoinTypePairs: [[string, string]] = [["", ""]];
-
     return {
       lm: {
         suilendClient: lmMarket_suilendClient,
@@ -391,8 +389,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
       pools: sortedPools,
       poolCoinTypes,
-
-      featuredCoinTypePairs,
     };
   };
 
