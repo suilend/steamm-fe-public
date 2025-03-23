@@ -33,30 +33,36 @@ export default function PoolPositionCard() {
         </Tooltip>
       )}
 
-      {pool.coinTypes.map((coinType, index) => (
-        <Fragment key={index}>
-          {poolPosition === undefined ? (
-            <Skeleton className="h-[21px] w-24" />
-          ) : (
-            <div className="flex flex-row items-center gap-2">
-              <TokenLogo
-                token={getToken(coinType, appData.coinMetadataMap[coinType])}
-                size={16}
-              />
-              <Tooltip
-                title={`${formatToken(poolPosition.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
-              >
-                <p className="text-p2 text-foreground">
-                  {formatToken(poolPosition.balances[index], {
-                    exact: false,
-                  })}{" "}
-                  {appData.coinMetadataMap[coinType].symbol}
-                </p>
-              </Tooltip>
-            </div>
-          )}
-        </Fragment>
-      ))}
+      <div className="flex flex-row items-center gap-2">
+        {pool.coinTypes.map((coinType, index) => (
+          <Fragment key={index}>
+            {poolPosition === undefined ? (
+              <Skeleton className="h-[21px] w-24" />
+            ) : (
+              <Fragment key={coinType}>
+                <TokenLogo
+                  token={getToken(coinType, appData.coinMetadataMap[coinType])}
+                  size={16}
+                />
+                <Tooltip
+                  title={`${formatToken(poolPosition.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
+                >
+                  <p className="text-p2 text-foreground">
+                    {formatToken(poolPosition.balances[index], {
+                      exact: false,
+                    })}{" "}
+                    {appData.coinMetadataMap[coinType].symbol}
+                  </p>
+                </Tooltip>
+
+                {index === 0 && (
+                  <p className="text-p2 text-secondary-foreground">+</p>
+                )}
+              </Fragment>
+            )}
+          </Fragment>
+        ))}
+      </div>
     </div>
   );
 }

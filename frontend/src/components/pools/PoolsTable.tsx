@@ -5,35 +5,46 @@ import { ClassValue } from "clsx";
 import { useLocalStorage } from "usehooks-ts";
 
 import PoolGroupRow from "@/components/pools/PoolGroupRow";
+import PoolRow from "@/components/pools/PoolRow";
 import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Column = "pair" | "tvlUsd" | "volumeUsd_24h" | "aprPercent_24h";
+type Column =
+  | "pair"
+  | "feeTier"
+  | "tvlUsd"
+  | "volumeUsd_24h"
+  | "aprPercent_24h";
 type SortableColumn = "tvlUsd" | "volumeUsd_24h" | "aprPercent_24h";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
     flex: 2,
-    minWidth: 300, // px
+    minWidth: 275, // px
     paddingLeft: 4 * 5, // px
+  },
+  feeTier: {
+    width: 100, // px
+    justifyContent: "end",
+    paddingRight: 4 * 5, // px
   },
   tvlUsd: {
     flex: 1,
-    minWidth: 125, // px
+    width: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   volumeUsd_24h: {
     flex: 1,
-    minWidth: 125, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   aprPercent_24h: {
     flex: 1,
-    minWidth: 125, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -144,6 +155,13 @@ export default function PoolsTable({
         </HeaderColumn>
 
         <HeaderColumn<Column, SortableColumn>
+          id="feeTier"
+          style={columnStyleMap.feeTier}
+        >
+          Fee tier
+        </HeaderColumn>
+
+        <HeaderColumn<Column, SortableColumn>
           id="tvlUsd"
           sortState={sortState}
           toggleSortByColumn={toggleSortByColumn}
@@ -205,13 +223,21 @@ export default function PoolsTable({
           </p>
         </div>
       ) : (
-        sortedPoolGroups.map((poolGroup) => (
-          <PoolGroupRow
-            key={poolGroup.id}
-            tableId={tableId}
-            poolGroup={poolGroup}
-          />
-        ))
+        sortedPoolGroups.map((poolGroup) =>
+          poolGroup.pools.length === 1 ? (
+            <PoolRow
+              key={poolGroup.id}
+              pool={poolGroup.pools[0]}
+              isLastPoolInGroup
+            />
+          ) : (
+            <PoolGroupRow
+              key={poolGroup.id}
+              tableId={tableId}
+              poolGroup={poolGroup}
+            />
+          ),
+        )
       )}
     </div>
   );

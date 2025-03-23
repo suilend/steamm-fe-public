@@ -118,13 +118,11 @@ function PoolPage() {
                 <div className="flex flex-col gap-1">
                   <p className="text-p2 text-secondary-foreground">TVL</p>
 
-                  <div className="flex flex-row items-center gap-1.5">
-                    <Tooltip title={formatUsd(pool.tvlUsd, { exact: true })}>
-                      <p className="text-p1 text-foreground">
-                        {formatUsd(pool.tvlUsd)}
-                      </p>
-                    </Tooltip>
-                  </div>
+                  <Tooltip title={formatUsd(pool.tvlUsd, { exact: true })}>
+                    <p className="text-p1 text-foreground">
+                      {formatUsd(pool.tvlUsd)}
+                    </p>
+                  </Tooltip>
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -133,21 +131,19 @@ function PoolPage() {
                     <p className="text-p3 text-tertiary-foreground">24H</p>
                   </div>
 
-                  <div className="flex flex-row items-center gap-1.5">
-                    {poolStats.volumeUsd_24h[pool.id] === undefined ? (
-                      <Skeleton className="h-[24px] w-16" />
-                    ) : (
-                      <Tooltip
-                        title={formatUsd(poolStats.volumeUsd_24h[pool.id], {
-                          exact: true,
-                        })}
-                      >
-                        <p className="text-p1 text-foreground">
-                          {formatUsd(poolStats.volumeUsd_24h[pool.id])}
-                        </p>
-                      </Tooltip>
-                    )}
-                  </div>
+                  {poolStats.volumeUsd_24h[pool.id] === undefined ? (
+                    <Skeleton className="h-[24px] w-16" />
+                  ) : (
+                    <Tooltip
+                      title={formatUsd(poolStats.volumeUsd_24h[pool.id], {
+                        exact: true,
+                      })}
+                    >
+                      <p className="text-p1 text-foreground">
+                        {formatUsd(poolStats.volumeUsd_24h[pool.id])}
+                      </p>
+                    </Tooltip>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -156,32 +152,28 @@ function PoolPage() {
                     <p className="text-p3 text-tertiary-foreground">24H</p>
                   </div>
 
-                  <div className="flex flex-row items-center gap-1.5">
-                    {poolStats.feesUsd_24h[pool.id] === undefined ? (
-                      <Skeleton className="h-[24px] w-16" />
-                    ) : (
-                      <Tooltip
-                        title={formatUsd(poolStats.feesUsd_24h[pool.id], {
-                          exact: true,
-                        })}
-                      >
-                        <p className="text-p1 text-foreground">
-                          {formatUsd(poolStats.feesUsd_24h[pool.id])}
-                        </p>
-                      </Tooltip>
-                    )}
-                  </div>
+                  {poolStats.feesUsd_24h[pool.id] === undefined ? (
+                    <Skeleton className="h-[24px] w-16" />
+                  ) : (
+                    <Tooltip
+                      title={formatUsd(poolStats.feesUsd_24h[pool.id], {
+                        exact: true,
+                      })}
+                    >
+                      <p className="text-p1 text-foreground">
+                        {formatUsd(poolStats.feesUsd_24h[pool.id])}
+                      </p>
+                    </Tooltip>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-1">
                   <p className="text-p2 text-secondary-foreground">APR</p>
 
-                  <div className="flex flex-row items-center gap-1.5">
-                    <AprBreakdown
-                      valueClassName="text-success decoration-success/50"
-                      pool={pool}
-                    />
-                  </div>
+                  <AprBreakdown
+                    valueClassName="text-success decoration-success/50"
+                    pool={pool}
+                  />
                 </div>
               </div>
             </div>

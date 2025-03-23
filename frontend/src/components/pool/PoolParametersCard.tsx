@@ -16,6 +16,7 @@ import ExchangeRateParameter from "@/components/ExchangeRateParameter";
 import OpenOnExplorerButton from "@/components/OpenOnExplorerButton";
 import Parameter from "@/components/Parameter";
 import SuilendLogo from "@/components/SuilendLogo";
+import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
@@ -32,7 +33,7 @@ export default function PoolParametersCard() {
 
   return (
     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
-      <Parameter label="Composition">
+      <Parameter label="Assets">
         {pool.coinTypes.map((coinType, index) => {
           const coinMetadata = appData.coinMetadataMap[coinType];
 
@@ -63,39 +64,32 @@ export default function PoolParametersCard() {
                 <OpenOnExplorerButton url={explorer.buildCoinUrl(coinType)} />
               </div>
 
-              {appData.bankMap[coinType] &&
-                appData.bankMap[coinType].utilizationPercent.gt(0) && (
-                  <>
-                    <div className="h-[2px] w-[2px] rounded-[50%] bg-secondary-foreground" />
-
-                    <Tooltip
-                      title={`${formatPercent(appData.bankMap[coinType].utilizationPercent)} of deposited ${coinMetadata.symbol} is earning ${formatPercent(appData.bankMap[coinType].suilendDepositAprPercent)} APR on Suilend`}
-                    >
-                      <div className="flex flex-row items-center gap-2">
-                        <SuilendLogo size={16} />
-
-                        <p
-                          className={cn(
-                            "!text-p2 text-foreground decoration-foreground/50",
-                            hoverUnderlineClassName,
-                          )}
-                        >
-                          {formatPercent(
-                            appData.bankMap[coinType].suilendDepositAprPercent
-                              .times(
-                                appData.bankMap[coinType].utilizationPercent,
-                              )
-                              .div(100),
-                          )}{" "}
-                          APR
-                        </p>
-                      </div>
-                    </Tooltip>
-                  </>
-                )}
+              {appData.bankMap[coinType] && (
+                <Tag
+                  labelClassName={cn(
+                    "text-foreground decoration-foreground/50",
+                    hoverUnderlineClassName,
+                  )}
+                  tooltip={`${formatPercent(appData.bankMap[coinType].utilizationPercent)} of deposited ${coinMetadata.symbol} is earning ${formatPercent(appData.bankMap[coinType].suilendDepositAprPercent)} APR on Suilend`}
+                  startDecorator={<SuilendLogo size={12} />}
+                >
+                  {formatPercent(
+                    appData.bankMap[coinType].suilendDepositAprPercent
+                      .times(appData.bankMap[coinType].utilizationPercent)
+                      .div(100),
+                  )}{" "}
+                  APR
+                </Tag>
+              )}
             </div>
           );
         })}
+      </Parameter>
+
+      <Parameter label="Fee tier">
+        <p className="text-p2 text-foreground">
+          {formatFeeTier(pool.feeTierPercent)}
+        </p>
       </Parameter>
 
       <ExchangeRateParameter
@@ -162,12 +156,6 @@ export default function PoolParametersCard() {
           ))}
         </Parameter>
       )}
-
-      <Parameter label="Fee tier">
-        <p className="text-p2 text-foreground">
-          {formatFeeTier(pool.feeTierPercent)}
-        </p>
-      </Parameter>
 
       <Parameter label="Address">
         <div className="flex flex-row items-center gap-2">

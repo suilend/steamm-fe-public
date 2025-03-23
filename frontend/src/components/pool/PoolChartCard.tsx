@@ -26,12 +26,12 @@ const chartStatNameMap: Record<ChartStat, string> = {
 
 type ChartConfig = {
   title: string;
-  hideTitlePeriod?: boolean;
   value?: string;
+  valuePeriodDays?: 1 | 7 | 30;
   chartType: ChartType;
-  periodDays: 1 | 7 | 30;
   periodChangePercent?: BigNumber | null;
   data?: ChartData[];
+  dataPeriodDays: 1 | 7 | 30;
   formatValue: (value: number) => string;
 };
 
@@ -55,36 +55,37 @@ export default function PoolChartCard() {
     () => ({
       [ChartStat.TVL]: {
         title: chartStatNameMap[ChartStat.TVL],
-        hideTitlePeriod: true,
         value: formatUsd(pool.tvlUsd),
         chartType: ChartType.LINE,
-        periodDays: 7,
         periodChangePercent: null,
         data: poolHistoricalStats.tvlUsd_7d[pool.id],
+        dataPeriodDays: 7,
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.VOLUME]: {
         title: chartStatNameMap[ChartStat.VOLUME],
         value:
-          poolStats.volumeUsd_24h[pool.id] === undefined
+          poolStats.volumeUsd_7d[pool.id] === undefined
             ? undefined
-            : formatUsd(poolStats.volumeUsd_24h[pool.id]),
+            : formatUsd(poolStats.volumeUsd_7d[pool.id]),
+        valuePeriodDays: 7,
         chartType: ChartType.BAR,
-        periodDays: 1,
         periodChangePercent: null,
-        data: poolHistoricalStats.volumeUsd_24h[pool.id],
+        data: poolHistoricalStats.volumeUsd_7d[pool.id],
+        dataPeriodDays: 7,
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
       [ChartStat.FEES]: {
         title: chartStatNameMap[ChartStat.FEES],
         value:
-          poolStats.feesUsd_24h[pool.id] === undefined
+          poolStats.feesUsd_7d[pool.id] === undefined
             ? undefined
-            : formatUsd(poolStats.feesUsd_24h[pool.id]),
+            : formatUsd(poolStats.feesUsd_7d[pool.id]),
+        valuePeriodDays: 7,
         chartType: ChartType.BAR,
-        periodDays: 1,
+        dataPeriodDays: 7,
         periodChangePercent: null,
-        data: poolHistoricalStats.feesUsd_24h[pool.id],
+        data: poolHistoricalStats.feesUsd_7d[pool.id],
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
     }),
@@ -92,10 +93,10 @@ export default function PoolChartCard() {
       pool.tvlUsd,
       poolHistoricalStats.tvlUsd_7d,
       pool.id,
-      poolStats.volumeUsd_24h,
-      poolHistoricalStats.volumeUsd_24h,
-      poolStats.feesUsd_24h,
-      poolHistoricalStats.feesUsd_24h,
+      poolStats.volumeUsd_7d,
+      poolHistoricalStats.volumeUsd_7d,
+      poolStats.feesUsd_7d,
+      poolHistoricalStats.feesUsd_7d,
     ],
   );
 
@@ -121,12 +122,12 @@ export default function PoolChartCard() {
       <HistoricalDataChart
         className="relative z-[1]"
         title={chartConfig.title}
-        hideTitlePeriod={chartConfig.hideTitlePeriod}
         value={chartConfig.value}
+        valuePeriodDays={chartConfig.valuePeriodDays}
         chartType={chartConfig.chartType}
-        periodDays={chartConfig.periodDays}
         periodChangePercent={chartConfig.periodChangePercent}
         data={chartConfig.data}
+        dataPeriodDays={chartConfig.dataPeriodDays}
         formatCategory={(category) => category}
         formatValue={chartConfig.formatValue}
       />

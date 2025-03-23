@@ -60,9 +60,10 @@ export default function PoolGroupRow({
     <>
       <div
         className={cn(
-          "group relative z-[1] flex h-[calc(56px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row border-x border-b bg-background transition-colors hover:bg-tertiary",
-          isExpanded &&
-            "bg-tertiary shadow-[inset_2px_0_0_0px_hsl(var(--button-1))]",
+          "group relative z-[1] flex h-[calc(56px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row border-x border-b bg-background transition-colors",
+          isExpanded
+            ? "bg-card/75 shadow-[inset_2px_0_0_0px_hsl(var(--button-1))]"
+            : "hover:bg-tertiary",
         )}
         onClick={() => setIsExpanded((prev) => !prev)}
       >
@@ -71,14 +72,22 @@ export default function PoolGroupRow({
           className="flex h-full flex-row items-center gap-3"
           style={columnStyleMap.pair}
         >
-          <Chevron
-            className={cn(
-              "h-5 w-5 transition-colors",
-              isExpanded
-                ? "text-foreground"
-                : "text-secondary-foreground group-hover:text-foreground",
-            )}
-          />
+          <Tag
+            className={cn("min-w-[50px]", isExpanded && "bg-border")}
+            labelClassName={cn("w-max", isExpanded && "text-foreground")}
+            startDecorator={
+              <Chevron
+                className={cn(
+                  "h-4 w-4 transition-colors",
+                  isExpanded
+                    ? "text-foreground"
+                    : "text-secondary-foreground group-hover:text-foreground",
+                )}
+              />
+            }
+          >
+            {poolGroup.pools.length}
+          </Tag>
 
           <TokenLogos coinTypes={poolGroup.coinTypes} size={24} />
           <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
@@ -88,23 +97,28 @@ export default function PoolGroupRow({
               ),
             )}
           </p>
-
-          <Tag
-            className={cn("w-max", isExpanded && "bg-border")}
-            labelClassName={cn(isExpanded && "text-foreground")}
-          >
-            {poolGroup.pools.length}
-          </Tag>
         </div>
+
+        {/* Fee tier */}
+        <div
+          className="flex h-full flex-row items-center"
+          style={columnStyleMap.feeTier}
+        ></div>
 
         {/* TVL */}
         <div
           className="flex h-full flex-row items-center"
           style={columnStyleMap.tvlUsd}
         >
-          <Tooltip title={formatUsd(totalTvlUsd, { exact: true })}>
-            <p className="text-p1 text-foreground">{formatUsd(totalTvlUsd)}</p>
-          </Tooltip>
+          <div className="flex flex-row items-baseline gap-2">
+            <p className="text-p3 text-tertiary-foreground">Total</p>
+
+            <Tooltip title={formatUsd(totalTvlUsd, { exact: true })}>
+              <p className="text-p1 text-foreground">
+                {formatUsd(totalTvlUsd)}
+              </p>
+            </Tooltip>
+          </div>
         </div>
 
         {/* Volume */}
@@ -112,15 +126,19 @@ export default function PoolGroupRow({
           className="flex h-full flex-row items-center"
           style={columnStyleMap.volumeUsd_24h}
         >
-          {totalVolumeUsd_24h === undefined ? (
-            <Skeleton className="h-[24px] w-16" />
-          ) : (
-            <Tooltip title={formatUsd(totalVolumeUsd_24h, { exact: true })}>
-              <p className="text-p1 text-foreground">
-                {formatUsd(totalVolumeUsd_24h)}
-              </p>
-            </Tooltip>
-          )}
+          <div className="flex flex-row items-baseline gap-2">
+            <p className="text-p3 text-tertiary-foreground">Total</p>
+
+            {totalVolumeUsd_24h === undefined ? (
+              <Skeleton className="h-[24px] w-16" />
+            ) : (
+              <Tooltip title={formatUsd(totalVolumeUsd_24h, { exact: true })}>
+                <p className="text-p1 text-foreground">
+                  {formatUsd(totalVolumeUsd_24h)}
+                </p>
+              </Tooltip>
+            )}
+          </div>
         </div>
 
         {/* APR */}
@@ -128,14 +146,17 @@ export default function PoolGroupRow({
           className="flex h-full flex-row items-center"
           style={columnStyleMap.aprPercent_24h}
         >
-          {maxAprPercent_24h === undefined ? (
-            <Skeleton className="h-[24px] w-16" />
-          ) : (
-            <p className="text-p1 text-foreground">
-              {poolGroup.pools.length > 1 && "<"}
-              {formatPercent(maxAprPercent_24h)}
-            </p>
-          )}
+          <div className="flex flex-row items-baseline gap-2">
+            <p className="text-p3 text-tertiary-foreground">Up to</p>
+
+            {maxAprPercent_24h === undefined ? (
+              <Skeleton className="h-[24px] w-16" />
+            ) : (
+              <p className="text-p1 text-foreground">
+                {formatPercent(maxAprPercent_24h)}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -144,6 +165,7 @@ export default function PoolGroupRow({
           <PoolRow
             key={pool.id}
             pool={pool}
+            isInsideGroup
             isLastPoolInGroup={index === poolGroup.pools.length - 1}
           />
         ))}

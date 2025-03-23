@@ -103,10 +103,10 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       "https://hermes.pyth.network",
     );
 
-    const pythPriceIdentifiers = pythOracles.map((x) =>
-      typeof x.oracleIdentifier === "string"
-        ? x.oracleIdentifier
-        : toHexString(x.oracleIdentifier),
+    const pythPriceIdentifiers = pythOracles.map((oracle) =>
+      typeof oracle.oracleIdentifier === "string"
+        ? oracle.oracleIdentifier
+        : toHexString(oracle.oracleIdentifier),
     );
 
     const pythPriceFeeds: PriceFeed[] =
@@ -214,24 +214,11 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     );
     coinMetadataMap = { ...coinMetadataMap, ...poolCoinMetadataMap };
 
-    const uniqueReservelessPoolCoinTypes = Array.from(
-      new Set(
-        poolInfos
-          .map((poolInfo) => [
-            bTokenTypeCoinTypeMap[poolInfo.coinTypeA],
-            bTokenTypeCoinTypeMap[poolInfo.coinTypeB],
-          ])
-          .flat()
-          .filter((coinType) => !mainMarket_reserveMap[coinType]),
-      ),
-    );
-
     const pools: ParsedPool[] = (
       await Promise.all(
         poolInfos.map((poolInfo) =>
           (async () => {
             const id = poolInfo.poolId;
-
             const quoterId = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
               ? QuoterId.CPMM
               : poolInfo.quoterType.endsWith("omm::OracleQuoter")
@@ -282,28 +269,38 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             balanceB = balanceB.times(withdrawB.div(balanceB));
             const balances = [balanceA, balanceB];
 
-            const priceA =
+            let priceA =
               coinTypePythPriceMap[coinTypeA] ??
               coinTypeSwitchboardPriceMap[coinTypeA] ??
               mainMarket_reserveMap[coinTypeA]?.price ??
               undefined;
-            const priceB =
+            let priceB =
               coinTypePythPriceMap[coinTypeB] ??
               coinTypeSwitchboardPriceMap[coinTypeB] ??
               mainMarket_reserveMap[coinTypeB]?.price ??
               undefined;
-            const prices = [priceA, priceB];
 
-            if (prices.some((price) => price === undefined)) {
+            if (priceA === undefined && priceB === undefined) {
               console.error(
-                `Skipping pool with id ${id}. Missing prices (no Pyth price feed, no Switchboard price feed, and no Suilend main market reserve) for coinType(s) ${coinTypes
-                  .map((_, index) =>
-                    prices[index] === undefined ? coinTypes[index] : undefined,
-                  )
-                  .filter(Boolean)}`,
+                `Skipping pool with id ${id}, quoterId ${quoterId} - missing prices for both assets (no Pyth price feed, no Switchboard price feed, and no Suilend main market reserve) for coinType(s) ${coinTypes.join(", ")}`,
               );
-              return undefined;
+              return;
+            } else if (priceA === undefined) {
+              console.warn(
+                `Missing price for coinTypeA ${coinTypeA}, using balance ratio to calculate price (pool with id ${id}, quoterId ${quoterId})`,
+              );
+              priceA = !balanceA.eq(0)
+                ? balanceB.div(balanceA).times(priceB)
+                : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM quoter)
+            } else if (priceB === undefined) {
+              console.warn(
+                `Missing price for coinTypeB ${coinTypeB}, using balance ratio to calculate price (pool with id ${id}, quoterId ${quoterId})`,
+              );
+              priceB = !balanceB.eq(0)
+                ? balanceA.div(balanceB).times(priceA)
+                : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM quoter)
             }
+            const prices = [priceA, priceB];
 
             const lpSupply = new BigNumber(pool.lpSupply.value.toString()).div(
               10 ** 9,

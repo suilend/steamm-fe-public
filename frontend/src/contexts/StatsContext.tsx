@@ -16,50 +16,55 @@ import { useAppContext } from "@/contexts/AppContext";
 import { ChartData } from "@/lib/chart";
 import { API_URL } from "@/lib/navigation";
 
-const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
-const ONE_HOUR_MS = FIFTEEN_MINUTES_MS * 4;
-const ONE_DAY_MS = ONE_HOUR_MS * 24;
-const SEVEN_DAYS_MS = ONE_DAY_MS * 7;
+const FIFTEEN_MINUTES_S = 15 * 60;
+const ONE_HOUR_S = FIFTEEN_MINUTES_S * 4;
+const SIX_HOURS_S = ONE_HOUR_S * 6;
+const ONE_DAY_S = SIX_HOURS_S * 4;
+const SEVEN_DAYS_S = ONE_DAY_S * 7;
 
 interface StatsContext {
   poolHistoricalStats: {
     tvlUsd_7d: Record<string, ChartData[]>;
-    volumeUsd_24h: Record<string, ChartData[]>;
-    feesUsd_24h: Record<string, ChartData[]>;
+    volumeUsd_7d: Record<string, ChartData[]>;
+    feesUsd_7d: Record<string, ChartData[]>;
   };
   poolStats: {
+    volumeUsd_7d: Record<string, BigNumber>;
     volumeUsd_24h: Record<string, BigNumber>;
+    feesUsd_7d: Record<string, BigNumber>;
     feesUsd_24h: Record<string, BigNumber>;
     aprPercent_24h: Record<string, { feesAprPercent: BigNumber }>;
   };
 
-  totalHistoricalStats: {
+  globalHistoricalStats: {
     tvlUsd_7d: ChartData[] | undefined;
-    volumeUsd_24h: ChartData[] | undefined;
+    volumeUsd_7d: ChartData[] | undefined;
   };
-  totalStats: {
-    volumeUsd_24h: BigNumber | undefined;
+  globalStats: {
+    volumeUsd_7d: BigNumber | undefined;
   };
 }
 
 const StatsContext = createContext<StatsContext>({
   poolHistoricalStats: {
     tvlUsd_7d: {},
-    volumeUsd_24h: {},
-    feesUsd_24h: {},
+    volumeUsd_7d: {},
+    feesUsd_7d: {},
   },
   poolStats: {
+    volumeUsd_7d: {},
     volumeUsd_24h: {},
+    feesUsd_7d: {},
     feesUsd_24h: {},
     aprPercent_24h: {},
   },
 
-  totalHistoricalStats: {
+  globalHistoricalStats: {
     tvlUsd_7d: undefined,
-    volumeUsd_24h: undefined,
+    volumeUsd_7d: undefined,
   },
-  totalStats: {
-    volumeUsd_24h: undefined,
+  globalStats: {
+    volumeUsd_7d: undefined,
   },
 });
 
@@ -76,28 +81,31 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
     poolCountRef.current = appData.pools.length;
   }, [appData]);
 
+  const referenceTimestampSRef = useRef(
+    (() => {
+      const nowS = Math.floor(Date.now() / 1000);
+      const hourStartS = startOfHour(nowS * 1000).getTime();
+
+      return (
+        hourStartS +
+        Math.floor((nowS - hourStartS) / FIFTEEN_MINUTES_S) * FIFTEEN_MINUTES_S
+      );
+    })(),
+  );
+
   // Pool
   const [poolHistoricalStats, setPoolHistoricalStats] = useState<{
     tvlUsd_7d: Record<string, ChartData[]>;
-    volumeUsd_24h: Record<string, ChartData[]>;
-    feesUsd_24h: Record<string, ChartData[]>;
+    volumeUsd_7d: Record<string, ChartData[]>;
+    feesUsd_7d: Record<string, ChartData[]>;
   }>({
     tvlUsd_7d: {},
-    volumeUsd_24h: {},
-    feesUsd_24h: {},
+    volumeUsd_7d: {},
+    feesUsd_7d: {},
   });
 
   const fetchPoolHistoricalStats = useCallback(async () => {
     if (!appData) return;
-
-    const nowMs = Date.now();
-    const hourStartMs = startOfHour(nowMs);
-
-    const referenceTimestampMs =
-      hourStartMs.getTime() +
-      Math.floor((nowMs - hourStartMs.getTime()) / FIFTEEN_MINUTES_MS) *
-        FIFTEEN_MINUTES_MS;
-    const referenceTimestampS = Math.floor(referenceTimestampMs / 1000);
 
     for (const pool of appData.pools) {
       // TVL
@@ -105,9 +113,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         try {
           const res = await fetch(
             `${API_URL}/steamm/historical/tvl?${new URLSearchParams({
-              startTimestampS: `${referenceTimestampS - SEVEN_DAYS_MS / 1000}`,
-              endTimestampS: `${referenceTimestampS - 1}`,
-              intervalS: `${ONE_HOUR_MS / 1000}`,
+              startTimestampS: `${referenceTimestampSRef.current - SEVEN_DAYS_S}`,
+              endTimestampS: `${referenceTimestampSRef.current - 1}`,
+              intervalS: `${ONE_HOUR_S}`,
               poolId: pool.id,
             })}`,
           );
@@ -128,7 +136,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
                   ...acc,
                   {
                     timestampS: d.start,
-                    tvlUsd_7d: +d.usdValue,
+                    tvlUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
                   },
                 ],
                 [] as ChartData[],
@@ -145,9 +153,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         try {
           const res = await fetch(
             `${API_URL}/steamm/historical/volume?${new URLSearchParams({
-              startTimestampS: `${referenceTimestampS - ONE_DAY_MS / 1000}`,
-              endTimestampS: `${referenceTimestampS - 1}`,
-              intervalS: `${ONE_HOUR_MS / 1000}`,
+              startTimestampS: `${referenceTimestampSRef.current - SEVEN_DAYS_S}`,
+              endTimestampS: `${referenceTimestampSRef.current - 1}`,
+              intervalS: `${SIX_HOURS_S}`,
               poolId: pool.id,
             })}`,
           );
@@ -160,14 +168,14 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
           setPoolHistoricalStats((prev) => ({
             ...prev,
-            volumeUsd_24h: {
-              ...prev.volumeUsd_24h,
+            volumeUsd_7d: {
+              ...prev.volumeUsd_7d,
               [pool.id]: json.reduce(
                 (acc, d) => [
                   ...acc,
                   {
                     timestampS: d.start,
-                    volumeUsd_24h: +d.usdValue,
+                    volumeUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
                   },
                 ],
                 [] as ChartData[],
@@ -184,9 +192,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         try {
           const res = await fetch(
             `${API_URL}/steamm/historical/fees?${new URLSearchParams({
-              startTimestampS: `${referenceTimestampS - ONE_DAY_MS / 1000}`,
-              endTimestampS: `${referenceTimestampS - 1}`,
-              intervalS: `${ONE_HOUR_MS / 1000}`,
+              startTimestampS: `${referenceTimestampSRef.current - SEVEN_DAYS_S}`,
+              endTimestampS: `${referenceTimestampSRef.current - 1}`,
+              intervalS: `${SIX_HOURS_S}`,
               poolId: pool.id,
             })}`,
           );
@@ -194,26 +202,20 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             start: number;
             end: number;
             fees: Record<string, string>;
+            usdValue: string;
           }[] = await res.json();
           if ((json as any)?.statusCode === 500) return;
 
           setPoolHistoricalStats((prev) => ({
             ...prev,
-            feesUsd_24h: {
-              ...prev.feesUsd_24h,
+            feesUsd_7d: {
+              ...prev.feesUsd_7d,
               [pool.id]: json.reduce(
                 (acc, d) => [
                   ...acc,
                   {
                     timestampS: d.start,
-                    feesUsd_24h: Object.entries(d.fees).reduce(
-                      (acc2, [coinType, fees]) =>
-                        acc2 +
-                        +new BigNumber(fees)
-                          .div(10 ** appData.coinMetadataMap[coinType].decimals)
-                          .times(pool.prices[pool.coinTypes.indexOf(coinType)]),
-                      0,
-                    ),
+                    feesUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
                   },
                 ],
                 [] as ChartData[],
@@ -238,33 +240,57 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   }, [appData, fetchPoolHistoricalStats]);
 
   const poolStats: {
+    volumeUsd_7d: Record<string, BigNumber>;
     volumeUsd_24h: Record<string, BigNumber>;
+    feesUsd_7d: Record<string, BigNumber>;
     feesUsd_24h: Record<string, BigNumber>;
     aprPercent_24h: Record<string, { feesAprPercent: BigNumber }>;
   } = useMemo(
     () => ({
-      volumeUsd_24h: Object.entries(poolHistoricalStats.volumeUsd_24h).reduce(
+      volumeUsd_7d: Object.entries(poolHistoricalStats.volumeUsd_7d).reduce(
         (acc, [poolId, data]) => ({
           ...acc,
           [poolId]: data.reduce(
-            (acc2, d) => acc2.plus(d.volumeUsd_24h),
+            (acc2, d) => acc2.plus(d.volumeUsd_7d),
             new BigNumber(0),
           ),
         }),
         {} as Record<string, BigNumber>,
       ),
-      feesUsd_24h: Object.entries(poolHistoricalStats.feesUsd_24h).reduce(
+      volumeUsd_24h: Object.entries(poolHistoricalStats.volumeUsd_7d).reduce(
+        (acc, [poolId, data]) => ({
+          ...acc,
+          [poolId]: data
+            .filter(
+              (d) => d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,
+            )
+            .reduce((acc2, d) => acc2.plus(d.volumeUsd_7d), new BigNumber(0)),
+        }),
+        {} as Record<string, BigNumber>,
+      ),
+      feesUsd_7d: Object.entries(poolHistoricalStats.feesUsd_7d).reduce(
         (acc, [poolId, data]) => ({
           ...acc,
           [poolId]: data.reduce(
-            (acc2, d) => acc2.plus(d.feesUsd_24h),
+            (acc2, d) => acc2.plus(d.feesUsd_7d),
             new BigNumber(0),
           ),
+        }),
+        {} as Record<string, BigNumber>,
+      ),
+      feesUsd_24h: Object.entries(poolHistoricalStats.feesUsd_7d).reduce(
+        (acc, [poolId, data]) => ({
+          ...acc,
+          [poolId]: data
+            .filter(
+              (d) => d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,
+            )
+            .reduce((acc2, d) => acc2.plus(d.feesUsd_7d), new BigNumber(0)),
         }),
         {} as Record<string, BigNumber>,
       ),
       aprPercent_24h: appData
-        ? Object.entries(poolHistoricalStats.feesUsd_24h).reduce(
+        ? Object.entries(poolHistoricalStats.feesUsd_7d).reduce(
             (acc, [poolId, data]) => {
               const pool = appData.pools.find((_pool) => _pool.id === poolId);
               if (!pool) return acc; // `pool` should always be defined
@@ -272,8 +298,13 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
               const feesAprPercent = (
                 !pool.tvlUsd.eq(0)
                   ? data
+                      .filter(
+                        (d) =>
+                          d.timestampS >=
+                          referenceTimestampSRef.current - ONE_DAY_S,
+                      )
                       .reduce(
-                        (acc2, d) => acc2.plus(d.feesUsd_24h),
+                        (acc2, d) => acc2.plus(d.feesUsd_7d),
                         new BigNumber(0),
                       )
                       .div(pool.tvlUsd)
@@ -292,22 +323,22 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   );
 
   // Total
-  const totalHistoricalStats: {
+  const globalHistoricalStats: {
     tvlUsd_7d: ChartData[] | undefined;
-    volumeUsd_24h: ChartData[] | undefined;
+    volumeUsd_7d: ChartData[] | undefined;
   } = useMemo(() => {
     if (!appData)
       return {
         tvlUsd_7d: undefined,
-        volumeUsd_24h: undefined,
+        volumeUsd_7d: undefined,
       };
 
     const result: {
       tvlUsd_7d: ChartData[] | undefined;
-      volumeUsd_24h: ChartData[] | undefined;
+      volumeUsd_7d: ChartData[] | undefined;
     } = {
       tvlUsd_7d: undefined,
-      volumeUsd_24h: undefined,
+      volumeUsd_7d: undefined,
     };
 
     // TVL
@@ -336,23 +367,23 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
     // Volume
     if (
-      Object.keys(poolHistoricalStats.volumeUsd_24h).length > 0 &&
-      Object.keys(poolHistoricalStats.volumeUsd_24h).length ===
+      Object.keys(poolHistoricalStats.volumeUsd_7d).length > 0 &&
+      Object.keys(poolHistoricalStats.volumeUsd_7d).length ===
         poolCountRef.current
     ) {
       const timestampsS = Object.values(
-        poolHistoricalStats.volumeUsd_24h,
+        poolHistoricalStats.volumeUsd_7d,
       )[0].map((d) => d.timestampS);
 
-      result.volumeUsd_24h = timestampsS.reduce(
+      result.volumeUsd_7d = timestampsS.reduce(
         (acc, timestampS, i) => [
           ...acc,
           {
             timestampS,
-            volumeUsd_24h: +Object.values(
-              poolHistoricalStats.volumeUsd_24h,
+            volumeUsd_7d: +Object.values(
+              poolHistoricalStats.volumeUsd_7d,
             ).reduce(
-              (acc2, data) => acc2.plus(data[i].volumeUsd_24h),
+              (acc2, data) => acc2.plus(data[i].volumeUsd_7d),
               new BigNumber(0),
             ),
           },
@@ -365,22 +396,22 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   }, [
     appData,
     poolHistoricalStats.tvlUsd_7d,
-    poolHistoricalStats.volumeUsd_24h,
+    poolHistoricalStats.volumeUsd_7d,
   ]);
 
-  const totalStats: {
-    volumeUsd_24h: BigNumber | undefined;
+  const globalStats: {
+    volumeUsd_7d: BigNumber | undefined;
   } = useMemo(
     () => ({
-      volumeUsd_24h:
-        totalHistoricalStats.volumeUsd_24h !== undefined
-          ? totalHistoricalStats.volumeUsd_24h.reduce(
-              (acc, d) => acc.plus(d.volumeUsd_24h),
+      volumeUsd_7d:
+        globalHistoricalStats.volumeUsd_7d !== undefined
+          ? globalHistoricalStats.volumeUsd_7d.reduce(
+              (acc, d) => acc.plus(d.volumeUsd_7d),
               new BigNumber(0),
             )
           : undefined,
     }),
-    [totalHistoricalStats.volumeUsd_24h],
+    [globalHistoricalStats.volumeUsd_7d],
   );
 
   // Context
@@ -389,10 +420,10 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       poolHistoricalStats,
       poolStats,
 
-      totalHistoricalStats,
-      totalStats,
+      globalHistoricalStats,
+      globalStats,
     }),
-    [poolHistoricalStats, poolStats, totalHistoricalStats, totalStats],
+    [poolHistoricalStats, poolStats, globalHistoricalStats, globalStats],
   );
 
   return (
