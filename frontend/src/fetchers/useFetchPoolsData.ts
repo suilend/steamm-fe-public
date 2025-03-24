@@ -64,23 +64,8 @@ export default function useFetchPoolsData(
     const coinTypeSwitchboardPriceMap: Record<string, BigNumber> = {};
 
     // LSTs
-    let LIQUID_STAKING_INFO_MAP: Record<string, LiquidStakingObjectInfo>;
-    try {
-      LIQUID_STAKING_INFO_MAP = await (
-        await fetch(
-          `${SPRINGSUI_ASSETS_URL}/liquid-staking-info-map.json?timestamp=${Date.now()}`,
-        )
-      ).json();
-    } catch (err) {
-      LIQUID_STAKING_INFO_MAP = {};
-    }
-
-    const lstCoinTypes = Object.values(LIQUID_STAKING_INFO_MAP).map(
-      (LIQUID_STAKING_INFO) => LIQUID_STAKING_INFO.type,
-    );
-
     const lstAprPercentMapEntries: [string, BigNumber][] = await Promise.all(
-      Object.values(LIQUID_STAKING_INFO_MAP)
+      Object.values(appData.LIQUID_STAKING_INFO_MAP)
         .filter((LIQUID_STAKING_INFO) =>
           poolInfos.some(
             (poolInfo) =>
@@ -105,7 +90,6 @@ export default function useFetchPoolsData(
         ),
     );
     const lstAprPercentMap = Object.fromEntries(lstAprPercentMapEntries);
-    console.log("XXX lstAprPercentMap", lstAprPercentMap);
 
     // Pools
     const pools: ParsedPool[] = (
@@ -262,7 +246,6 @@ export default function useFetchPoolsData(
       coinTypePythPriceMap,
       coinTypeSwitchboardPriceMap,
 
-      lstCoinTypes,
       lstAprPercentMap,
 
       pools: sortedPools,

@@ -130,7 +130,7 @@ const LP_TOKEN_IMAGE_URL =
 export default function AdminPage() {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, banksData, poolsData } = useLoadedAppContext();
+  const { steammClient, appData, banksData, poolsData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
   const flags = useFlags();
@@ -244,9 +244,9 @@ export default function AdminPage() {
           isSui(token.coinType) ||
           issSui(token.coinType) ||
           isStablecoin(token.coinType) ||
-          (poolsData?.lstCoinTypes ?? []).includes(token.coinType),
+          appData.lstCoinTypes.includes(token.coinType),
       ),
-    [baseTokens, poolsData?.lstCoinTypes],
+    [baseTokens, appData.lstCoinTypes],
   );
 
   const onSelectToken = (token: Token, index: number) => {

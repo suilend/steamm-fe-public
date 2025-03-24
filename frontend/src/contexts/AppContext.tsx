@@ -21,6 +21,7 @@ import {
   SuilendClient,
 } from "@suilend/sdk";
 import { Reserve } from "@suilend/sdk/_generated/suilend/reserve/structs";
+import { LiquidStakingObjectInfo } from "@suilend/springsui-sdk";
 import {
   BETA_CONFIG,
   BankInfo,
@@ -54,6 +55,9 @@ export interface AppData {
 
   coinMetadataMap: Record<string, CoinMetadata>;
 
+  LIQUID_STAKING_INFO_MAP: Record<string, LiquidStakingObjectInfo>;
+  lstCoinTypes: string[];
+
   bankInfos: BankInfo[];
   poolInfos: PoolInfo[];
 }
@@ -66,8 +70,6 @@ export interface BanksData {
 export interface PoolsData {
   coinTypePythPriceMap: Record<string, BigNumber>;
   coinTypeSwitchboardPriceMap: Record<string, BigNumber>;
-
-  lstCoinTypes: string[];
   lstAprPercentMap: Record<string, BigNumber>;
 
   pools: ParsedPool[];
