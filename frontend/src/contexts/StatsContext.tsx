@@ -71,7 +71,7 @@ const StatsContext = createContext<StatsContext>({
 export const useStatsContext = () => useContext(StatsContext);
 
 export function StatsContextProvider({ children }: PropsWithChildren) {
-  const { poolsData } = useAppContext();
+  const { appData, poolsData } = useAppContext();
 
   const poolCountRef = useRef<number | undefined>(undefined);
   useEffect(() => {
@@ -105,7 +105,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   });
 
   const fetchPoolHistoricalStats = useCallback(async () => {
-    if (poolsData === undefined) return;
+    if (appData === undefined || poolsData === undefined) return;
 
     for (const pool of poolsData.pools) {
       // TVL
@@ -136,7 +136,21 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
                   ...acc,
                   {
                     timestampS: d.start,
-                    tvlUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
+                    tvlUsd_7d: !isNaN(+d.usdValue)
+                      ? +d.usdValue
+                      : Object.entries(d.tvl).reduce(
+                          (acc2, [coinType, tvl]) =>
+                            acc2 +
+                            +new BigNumber(tvl)
+                              .div(
+                                10 **
+                                  appData.coinMetadataMap[coinType].decimals,
+                              )
+                              .times(
+                                pool.prices[pool.coinTypes.indexOf(coinType)],
+                              ),
+                          0,
+                        ),
                   },
                 ],
                 [] as ChartData[],
@@ -162,6 +176,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           const json: {
             start: number;
             end: number;
+            volume: Record<string, string>;
             usdValue: string;
           }[] = await res.json();
           if ((json as any)?.statusCode === 500) return;
@@ -175,7 +190,21 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
                   ...acc,
                   {
                     timestampS: d.start,
-                    volumeUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
+                    volumeUsd_7d: !isNaN(+d.usdValue)
+                      ? +d.usdValue
+                      : Object.entries(d.volume ?? {}).reduce(
+                          (acc2, [coinType, volume]) =>
+                            acc2 +
+                            +new BigNumber(volume)
+                              .div(
+                                10 **
+                                  appData.coinMetadataMap[coinType].decimals,
+                              )
+                              .times(
+                                pool.prices[pool.coinTypes.indexOf(coinType)],
+                              ),
+                          0,
+                        ),
                   },
                 ],
                 [] as ChartData[],
@@ -215,7 +244,21 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
                   ...acc,
                   {
                     timestampS: d.start,
-                    feesUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
+                    feesUsd_7d: !isNaN(+d.usdValue)
+                      ? +d.usdValue
+                      : Object.entries(d.fees).reduce(
+                          (acc2, [coinType, fees]) =>
+                            acc2 +
+                            +new BigNumber(fees)
+                              .div(
+                                10 **
+                                  appData.coinMetadataMap[coinType].decimals,
+                              )
+                              .times(
+                                pool.prices[pool.coinTypes.indexOf(coinType)],
+                              ),
+                          0,
+                        ),
                   },
                 ],
                 [] as ChartData[],
@@ -227,17 +270,17 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         }
       })();
     }
-  }, [poolsData]);
+  }, [appData, poolsData]);
 
   const hasFetchedPoolHistoricalStatsRef = useRef<boolean>(false);
   useEffect(() => {
-    if (poolsData === undefined) return;
+    if (appData === undefined || poolsData === undefined) return;
 
     if (hasFetchedPoolHistoricalStatsRef.current) return;
     hasFetchedPoolHistoricalStatsRef.current = true;
 
     fetchPoolHistoricalStats();
-  }, [poolsData, fetchPoolHistoricalStats]);
+  }, [appData, poolsData, fetchPoolHistoricalStats]);
 
   const poolStats: {
     volumeUsd_7d: Record<string, BigNumber>;

@@ -548,7 +548,11 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
 
       onDeposit();
       showSuccessTxnToast("Deposited liquidity", txUrl, {
-        description: `${balanceChangeAFormatted} ${coinMetadataA.symbol} and ${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
+        description: [
+          `${balanceChangeAFormatted} ${coinMetadataA.symbol}`,
+          "and",
+          `${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
+        ].join(" "),
       });
       setValues(["", ""]);
       setQuote(undefined);
@@ -1012,7 +1016,11 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
 
       onWithdraw();
       showSuccessTxnToast("Withdrew liquidity", txUrl, {
-        description: `${balanceChangeAFormatted} ${coinMetadataA.symbol} and ${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
+        description: [
+          `${balanceChangeAFormatted} ${coinMetadataA.symbol}`,
+          "and",
+          `${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
+        ].join(" "),
       });
       setValue("0");
       setQuote(undefined);
@@ -1479,7 +1487,15 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
       );
 
       showSuccessTxnToast("Swapped", txUrl, {
-        description: `${balanceChangeAFormatted} ${coinMetadataA.symbol} for ${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
+        description: [
+          activeCoinIndex === 0
+            ? `${balanceChangeAFormatted} ${coinMetadataA.symbol}`
+            : `${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
+          "for",
+          activeCoinIndex === 0
+            ? `${balanceChangeBFormatted} ${coinMetadataB.symbol}`
+            : `${balanceChangeAFormatted} ${coinMetadataA.symbol}`,
+        ].join(" "),
       });
       setValue("");
       setQuote(undefined);

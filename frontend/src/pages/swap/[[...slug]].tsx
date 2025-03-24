@@ -457,7 +457,11 @@ export default function SwapPage() {
       );
 
       showSuccessTxnToast("Swapped", txUrl, {
-        description: `${balanceChangeInFormatted} ${inCoinMetadata.symbol} for ${balanceChangeOutFormatted} ${outCoinMetadata.symbol}`,
+        description: [
+          `${balanceChangeInFormatted} ${inCoinMetadata.symbol}`,
+          "for",
+          `${balanceChangeOutFormatted} ${outCoinMetadata.symbol}`,
+        ].join(" "),
       });
       setValue("");
       setQuote(undefined);

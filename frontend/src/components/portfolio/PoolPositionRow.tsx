@@ -116,11 +116,15 @@ export default function PoolPositionRow({
       const txUrl = explorer.buildTxUrl(res.digest);
 
       showSuccessTxnToast(
-        `Staked ${formatPair(
-          poolPosition.pool.coinTypes.map(
-            (coinType) => appData.coinMetadataMap[coinType].symbol,
+        [
+          "Staked",
+          formatPair(
+            poolPosition.pool.coinTypes.map(
+              (coinType) => appData.coinMetadataMap[coinType].symbol,
+            ),
           ),
-        )} LP tokens`,
+          "LP tokens",
+        ].join(" "),
         txUrl,
       );
 
@@ -190,11 +194,15 @@ export default function PoolPositionRow({
       const txUrl = explorer.buildTxUrl(res.digest);
 
       showSuccessTxnToast(
-        `Unstaked ${formatPair(
-          poolPosition.pool.coinTypes.map(
-            (coinType) => appData.coinMetadataMap[coinType].symbol,
+        [
+          "Unstaked",
+          formatPair(
+            poolPosition.pool.coinTypes.map(
+              (coinType) => appData.coinMetadataMap[coinType].symbol,
+            ),
           ),
-        )} LP tokens`,
+          "LP tokens",
+        ].join(" "),
         txUrl,
       );
 

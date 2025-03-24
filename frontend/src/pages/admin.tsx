@@ -674,7 +674,11 @@ export default function AdminPage() {
       const txUrl = explorer.buildTxUrl(res.digest);
 
       showSuccessTxnToast(
-        `Created ${formatPair(tokens.map((token) => token.symbol))} pool`,
+        [
+          "Created",
+          formatPair(tokens.map((token) => token.symbol)),
+          "pool",
+        ].join(" "),
         txUrl,
         {
           description: `Quoter: ${QUOTER_ID_NAME_MAP[quoterId]}, fee tier: ${formatFeeTier(new BigNumber(feeTierPercent))}`,
