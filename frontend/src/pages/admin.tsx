@@ -273,7 +273,7 @@ export default function AdminPage() {
     setTimeout(
       () =>
         document.getElementById(getCoinInputId(newCoinTypes[index]))?.focus(),
-      50,
+      250,
     );
   };
 
