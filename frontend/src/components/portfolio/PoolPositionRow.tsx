@@ -329,7 +329,7 @@ export default function PoolPositionRow({
       </div>
 
       {/* Staked */}
-      {/* <div
+      <div
         className="flex h-full flex-row items-center gap-3"
         style={columnStyleMap.stakedPercent}
       >
@@ -372,10 +372,10 @@ export default function PoolPositionRow({
         ) : (
           <p className="text-p1 text-foreground">--</p>
         )}
-      </div> */}
+      </div>
 
       {/* Claimable rewards */}
-      {/* <div
+      <div
         className="flex h-full flex-row items-center"
         style={columnStyleMap.claimableRewards}
       >
@@ -410,10 +410,10 @@ export default function PoolPositionRow({
         ) : (
           <p className="text-p1 text-foreground">--</p>
         )}
-      </div> */}
+      </div>
 
       {/* Points */}
-      {/* <div
+      <div
         className="flex h-full flex-row items-center"
         style={columnStyleMap.points}
       >
@@ -434,7 +434,7 @@ export default function PoolPositionRow({
             </p>
           </Tooltip>
         </div>
-      </div> */}
+      </div>
     </Link>
   );
 }

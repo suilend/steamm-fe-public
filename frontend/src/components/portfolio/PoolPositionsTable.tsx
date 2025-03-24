@@ -46,13 +46,13 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   stakedPercent: {
     flex: 1,
-    minWidth: 200, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   claimableRewards: {
     flex: 1,
-    minWidth: 200, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -192,26 +192,26 @@ export default function PoolPositionsTable({
             PnL
           </HeaderColumn>
 
-          {/* <HeaderColumn<Column, SortableColumn>
-          id="stakedPercent"
-          style={columnStyleMap.stakedPercent}
-        >
-          Staked
-        </HeaderColumn> */}
+          <HeaderColumn<Column, SortableColumn>
+            id="stakedPercent"
+            style={columnStyleMap.stakedPercent}
+          >
+            Staked
+          </HeaderColumn>
 
-          {/* <HeaderColumn<Column, SortableColumn>
-          id="claimableRewards"
-          style={columnStyleMap.claimableRewards}
-        >
-          Claimable rewards
-        </HeaderColumn> */}
+          <HeaderColumn<Column, SortableColumn>
+            id="claimableRewards"
+            style={columnStyleMap.claimableRewards}
+          >
+            Claimable rewards
+          </HeaderColumn>
 
-          {/* <HeaderColumn<Column, SortableColumn>
-          id="points"
-          style={columnStyleMap.points}
-        >
-          Points
-        </HeaderColumn> */}
+          <HeaderColumn<Column, SortableColumn>
+            id="points"
+            style={columnStyleMap.points}
+          >
+            Points
+          </HeaderColumn>
         </div>
 
         {/* Rows */}
