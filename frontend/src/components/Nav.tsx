@@ -74,14 +74,14 @@ export default function Nav() {
             style={{ height: `${NAV_HEIGHT}px` }}
           >
             {/* Start */}
-            <div className="flex shrink-0 flex-row items-center gap-4 md:gap-8">
+            <div className="flex flex-row items-center gap-4 md:gap-8">
               {/* Logo */}
-              <Link className="w-max" href={ROOT_URL}>
+              <Link className="w-max shrink-0" href={ROOT_URL}>
                 <Logo />
               </Link>
 
               {/* Items */}
-              <div className="flex flex-row gap-6">
+              <div className="flex flex-row gap-x-6 max-md:flex-wrap">
                 {navItems.map((item) => {
                   const isSelected =
                     router.asPath === item.url ||
@@ -94,7 +94,7 @@ export default function Nav() {
                   return (
                     <Component
                       key={item.title}
-                      className="group flex h-10 flex-row items-center gap-2"
+                      className="group flex h-6 flex-row items-center gap-2 md:h-10"
                       href={item.url as string}
                     >
                       <p
@@ -115,7 +115,7 @@ export default function Nav() {
             </div>
 
             {/* End */}
-            <div className="flex min-w-0 flex-row items-center gap-3">
+            <div className="flex flex-row items-center gap-3">
               <div className="flex flex-row items-center gap-2">
                 <button
                   className="group flex h-5 w-5 flex-row items-center justify-center"
