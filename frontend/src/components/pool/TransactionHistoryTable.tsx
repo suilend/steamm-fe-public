@@ -82,12 +82,7 @@ export default function TransactionHistoryTable({
     <div className="relative w-full">
       <div className="pointer-events-none absolute inset-0 z-[2] border" />
 
-      <div
-        className={cn(
-          "relative z-[1] max-h-[240px] w-full overflow-auto",
-          className,
-        )}
-      >
+      <div className={cn("relative z-[1] w-full overflow-auto", className)}>
         {/* Header */}
         <div className="sticky left-0 top-0 z-[2] flex h-[calc(1px+40px+1px)] w-full min-w-max shrink-0 flex-row border bg-secondary">
           <HeaderColumn<Column, SortableColumn>
