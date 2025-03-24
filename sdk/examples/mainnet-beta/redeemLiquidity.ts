@@ -41,7 +41,7 @@ async function redeemLiquidity(suiPrivateKey: string) {
     minB: BigInt("0"),
   });
 
-  const devResult = await sdk.fullClient.devInspectTransactionBlock({
+  const devResult = await sdk.client.devInspectTransactionBlock({
     transactionBlock: tx,
     sender: sdk.senderAddress,
   });
@@ -55,7 +55,7 @@ async function redeemLiquidity(suiPrivateKey: string) {
   }
 
   // Proceed to submit the transaction
-  // const txResult = await sdk.fullClient.signAndExecuteTransaction({
+  // const txResult = await sdk.client.signAndExecuteTransaction({
   //   transaction: tx,
   //   signer: keypair,
   // });

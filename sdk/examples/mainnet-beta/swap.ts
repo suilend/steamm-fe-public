@@ -46,7 +46,7 @@ async function swap(suiPrivateKey: string) {
 
   tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
 
-  const devResult = await sdk.fullClient.devInspectTransactionBlock({
+  const devResult = await sdk.client.devInspectTransactionBlock({
     transactionBlock: tx,
     sender: sdk.senderAddress,
   });
@@ -60,7 +60,7 @@ async function swap(suiPrivateKey: string) {
   }
 
   // Proceed to submit the transaction
-  // const txResult = await sdk.fullClient.signAndExecuteTransaction({
+  // const txResult = await sdk.client.signAndExecuteTransaction({
   //   transaction: tx,
   //   signer: keypair,
   // });

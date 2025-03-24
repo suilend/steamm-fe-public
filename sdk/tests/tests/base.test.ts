@@ -62,7 +62,7 @@ export async function test() {
       sdk.signer = keypair;
 
       const ownedPagedObjs: DataPage<PaginatedObjectsResponse[]> =
-        await sdk.fullClient.getOwnedObjectsByPage(sdk.senderAddress, {
+        await sdk.client.getOwnedObjectsByPage(sdk.senderAddress, {
           options: {
             showType: true,
           },
@@ -128,7 +128,7 @@ export async function test() {
 
       tx.transferObjects([suiCoin, usdcCoin], sdk.senderAddress);
 
-      const devResult = await sdk.fullClient.devInspectTransactionBlock({
+      const devResult = await sdk.client.devInspectTransactionBlock({
         transactionBlock: tx,
         sender: sdk.senderAddress,
       });
@@ -140,7 +140,7 @@ export async function test() {
 
       // Execute transaction
 
-      const txResult = await sdk.fullClient.signAndExecuteTransaction({
+      const txResult = await sdk.client.signAndExecuteTransaction({
         transaction: tx,
         signer: keypair,
         options: {
@@ -221,7 +221,7 @@ export async function test() {
         sdk.senderAddress,
       );
 
-      const devResult = await sdk.fullClient.devInspectTransactionBlock({
+      const devResult = await sdk.client.devInspectTransactionBlock({
         transactionBlock: tx,
         sender: sdk.senderAddress,
       });
@@ -293,7 +293,7 @@ export async function test() {
         minB: BigInt("0"),
       });
 
-      const devResult = await sdk.fullClient.devInspectTransactionBlock({
+      const devResult = await sdk.client.devInspectTransactionBlock({
         transactionBlock: tx,
         sender: sdk.senderAddress,
       });

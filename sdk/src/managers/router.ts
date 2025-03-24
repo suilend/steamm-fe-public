@@ -9,7 +9,7 @@ import { PoolFunctions, QuoteFunctions } from "../_codegen";
 import { Bank, BankScript } from "../base";
 import { MultiSwapQuote, castMultiSwapQuote } from "../base/pool/poolTypes";
 import { OracleSwapExtraArgs } from "../base/quoters/oracleQuoter/args";
-import { IModule } from "../interfaces/IModule";
+import { IManager } from "../interfaces/IManager";
 import { SteammSDK } from "../sdk";
 import {
   BankInfo,
@@ -20,7 +20,7 @@ import {
 } from "../types";
 import { zip } from "../utils";
 
-import { getOracleArgs } from "./poolModule";
+import { getOracleArgs } from "./pool";
 
 export interface CoinPair {
   coinIn: string;
@@ -38,9 +38,13 @@ export type Route = HopData[];
 export type Routes = Route[];
 
 /**
- * Helper class to help interact with pools.
+ * RouterManager handles routing and execution of multi-hop swaps between pools.
+ * It provides functionality to:
+ * - Find all possible routes between two coins
+ * - Quote swap routes to find the best path
+ * - Execute swaps along a chosen route
  */
-export class RouterModule implements IModule {
+export class RouterManager implements IManager {
   protected _sdk: SteammSDK;
 
   constructor(sdk: SteammSDK) {
@@ -51,6 +55,13 @@ export class RouterModule implements IModule {
     return this._sdk;
   }
 
+  /**
+   * Executes a swap along a specified route.
+   * @param tx The transaction to add the swap operations to
+   * @param args.coinIn The input coin to swap
+   * @param args.route The route to follow for the swap
+   * @param args.quote The quote containing expected amounts
+   */
   public async swapWithRoute(
     tx: Transaction,
     args: {
@@ -93,12 +104,12 @@ export class RouterModule implements IModule {
       const amountIn =
         i === 0
           ? hop.a2b
-            ? this.sdk.fullClient.coinValue(tx, coinA, poolInfo.coinTypeA)
-            : this.sdk.fullClient.coinValue(tx, coinB, poolInfo.coinTypeB)
+            ? this.sdk.client.coinValue(tx, coinA, poolInfo.coinTypeA)
+            : this.sdk.client.coinValue(tx, coinB, poolInfo.coinTypeB)
           : PoolFunctions.swapResultAmountOut(
               tx,
               swapResults[i - 1],
-              this.sdk.sdkOptions.steamm_config.published_at,
+              this.sdk.sdkOptions.steamm_config.publishedAt,
             );
       // const minAmountOut = BigInt(0);
       const minAmountOut =
@@ -144,6 +155,11 @@ export class RouterModule implements IModule {
     }
   }
 
+  /**
+   * Finds all possible routes between two coins through the available pools.
+   * @param coinPair The input and output coin types
+   * @returns Array of possible routes between the coins
+   */
   public async findSwapRoutes(coinPair: CoinPair): Promise<Routes> {
     const pools = await this.sdk.getPools();
     const bankList = await this.sdk.getBanks();
@@ -160,6 +176,12 @@ export class RouterModule implements IModule {
     return findAllRoutes(bTokenIn, bTokenOut, pools);
   }
 
+  /**
+   * Finds the best route for a swap between two coins.
+   * @param coinPair The input and output coin types
+   * @param amountIn The amount of input coin to swap
+   * @returns The optimal route and its corresponding quote
+   */
   public async getBestSwapRoute(
     coinPair: CoinPair,
     amountIn: bigint,
@@ -203,6 +225,14 @@ export class RouterModule implements IModule {
     return { route: routes[bestQuoteIndex], quote: quotes[bestQuoteIndex] };
   }
 
+  /**
+   * Gets a quote for swapping along a specific route.
+   * @param tx The transaction to add the quote operations to
+   * @param coinTypeIn The input coin type
+   * @param coinTypeOut The output coin type
+   * @param route The route to quote
+   * @param amountIn The amount of input coin
+   */
   public async quoteSwapRoute(
     tx: Transaction,
     coinTypeIn: string,
@@ -253,7 +283,7 @@ export class RouterModule implements IModule {
       const amountOut = QuoteFunctions.amountOut(
         tx,
         quote,
-        this.sdk.sdkOptions.steamm_config.published_at,
+        this.sdk.sdkOptions.steamm_config.publishedAt,
       );
 
       nextBTokenAmountIn = amountOut;
@@ -268,17 +298,24 @@ export class RouterModule implements IModule {
     });
   }
 
+  /**
+   * Retrieves quote results from transaction inspection events.
+   * @private
+   * @template T - The type of quote result to return
+   * @param {Transaction} tx - The transaction to inspect for quote events
+   * @param {string} quoteType - The type of quote event to filter for
+   * @returns {Promise<T[]>} Array of quote results of type T
+   * @throws {Error} When no quote events of the specified type are found
+   */
   private async getQuoteResults<T>(
     tx: Transaction,
     quoteType: string,
   ): Promise<T[]> {
-    const inspectResults = await this.sdk.fullClient.devInspectTransactionBlock(
-      {
-        sender: this.sdk.senderAddress,
-        transactionBlock: tx,
-        additionalArgs: { showRawTxnDataAndEffects: true },
-      },
-    );
+    const inspectResults = await this.sdk.client.devInspectTransactionBlock({
+      sender: this.sdk.senderAddress,
+      transactionBlock: tx,
+      additionalArgs: { showRawTxnDataAndEffects: true },
+    });
 
     if (inspectResults.error) {
       console.log("Error:", inspectResults.error);
@@ -298,36 +335,6 @@ export class RouterModule implements IModule {
     return quoteEvents.map((event) => (event.parsedJson as any).event as T);
   }
 
-  private async getQuoteResult<T>(
-    tx: Transaction,
-    quoteType: string,
-  ): Promise<T | null> {
-    const inspectResults = await this.sdk.fullClient.devInspectTransactionBlock(
-      {
-        sender: this.sdk.senderAddress,
-        transactionBlock: tx,
-        additionalArgs: { showRawTxnDataAndEffects: true },
-      },
-    );
-
-    if (inspectResults.error) {
-      console.log("Failed to fetch quote");
-      // console.log(JSON.stringify(tx.getData()));
-      return null;
-    }
-
-    const quoteEvent = inspectResults.events.find((event) =>
-      event.type.includes(quoteType),
-    );
-
-    if (!quoteEvent) {
-      throw new Error(`Quote event of type ${quoteType} not found in events`);
-    }
-
-    const quoteResult = (quoteEvent.parsedJson as any).event as T;
-    return quoteResult;
-  }
-
   private getBankScript(bankInfoA: BankInfo, bankInfoB: BankInfo): BankScript {
     return new BankScript(
       this.sdk.packageInfo(),
@@ -337,6 +344,15 @@ export class RouterModule implements IModule {
     );
   }
 
+  /**
+   * Mints bTokens for all coins involved in a route.
+   * @param tx The transaction to add the minting operations to
+   * @param banks List of available banks
+   * @param route The route being executed
+   * @param coinIn The input coin
+   * @param amountIn The amount to mint
+   * @returns Tuple of [minted bTokens, corresponding bank infos]
+   */
   public mintBTokens(
     tx: Transaction,
     banks: BankList,
@@ -387,7 +403,7 @@ export class RouterModule implements IModule {
                 coinAmount: amountIn,
               });
             })()
-          : this.sdk.fullClient.zeroCoin(tx, coinType);
+          : this.sdk.client.zeroCoin(tx, coinType);
 
       bankDataToReturn.push(bankInfo);
       bTokens.push(bToken);
@@ -397,6 +413,12 @@ export class RouterModule implements IModule {
     return [bTokens, bankDataToReturn];
   }
 
+  /**
+   * Collects and burns remaining bTokens, transferring the underlying asset.
+   * @param tx The transaction to add the collection operations to
+   * @param bankInfo The bank info for the bToken
+   * @param bToken The bToken to collect
+   */
   public collectBTokenDust(
     tx: Transaction,
     bankInfo: BankInfo,
@@ -404,7 +426,7 @@ export class RouterModule implements IModule {
   ) {
     const bankIn = new Bank(this.sdk.packageInfo(), bankInfo);
 
-    const amount: TransactionResult = this.sdk.fullClient.coinValue(
+    const amount: TransactionResult = this.sdk.client.coinValue(
       tx,
       tx.object(bToken),
       bankInfo.btokenType,
@@ -419,6 +441,12 @@ export class RouterModule implements IModule {
     tx.transferObjects([coin], this.sdk.senderAddress);
   }
 
+  /**
+   * Either destroys zero-amount bTokens or transfers non-zero bTokens.
+   * @param tx The transaction to add the operation to
+   * @param btokenType The type of bToken
+   * @param btoken The bToken to process
+   */
   public destroyOrTransfer(
     tx: Transaction,
     btokenType: string,
@@ -431,6 +459,15 @@ export class RouterModule implements IModule {
     });
   }
 
+  /**
+   * Calculates the bToken amount needed for a quote.
+   * @param tx The transaction to add calculations to
+   * @param bankX The first bank
+   * @param bankY The second bank
+   * @param x2y Direction of the swap
+   * @param amountIn Amount of input coin
+   * @returns The calculated bToken amount
+   */
   public getBTokenAmountInForQuote(
     tx: Transaction,
     bankX: Bank,
@@ -446,6 +483,13 @@ export class RouterModule implements IModule {
   }
 }
 
+/**
+ * Finds all possible routes between two coins using depth-first search.
+ * @param start The starting coin type
+ * @param end The target coin type
+ * @param pools Available pools to route through
+ * @returns Array of possible routes between the coins
+ */
 export function findAllRoutes(
   start: string,
   end: string,

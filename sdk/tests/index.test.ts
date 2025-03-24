@@ -9,10 +9,10 @@ import { test as routerUnitTest } from "./tests/routerUnit.test";
 
 describe("Test Suite", async () => {
   // Run all tests from teston.test.ts
-  // await baseTest();
-  // await routerUnitTest();
-  // await routerTest();
-  // await errTest();
-  // await lendingTest();
+  await baseTest();
+  await routerUnitTest();
+  await routerTest();
+  await errTest();
+  await lendingTest();
   await ommTest();
 });

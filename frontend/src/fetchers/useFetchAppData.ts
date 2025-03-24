@@ -120,7 +120,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           const coinType = bankInfo.coinType;
           const bTokenType = bankInfo.btokenType;
 
-          const bank = await steammClient.fullClient.fetchBank(id);
+          const bank = await steammClient.client.fetchBank(id);
 
           const liquidAmount = new BigNumber(
             bank.fundsAvailable.value.toString(),
@@ -271,12 +271,12 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
             const pool =
               quoterId === QuoterId.CPMM
-                ? await steammClient.fullClient.fetchConstantProductPool(id)
+                ? await steammClient.client.fetchConstantProductPool(id)
                 : quoterId === QuoterId.ORACLE
-                  ? await steammClient.fullClient.fetchOraclePool(id)
-                  : await steammClient.fullClient.fetchConstantProductPool(id); // Should never need to use the fallback
+                  ? await steammClient.client.fetchOraclePool(id)
+                  : await steammClient.client.fetchConstantProductPool(id); // Should never need to use the fallback
 
-            const redeemQuote = await steammClient.Pool.quoteRedeem({
+            const redeemQuote = await steammClient.PoolManager.quoteRedeem({
               lpTokens: pool.lpSupply.value,
               poolInfo,
               bankInfoA: bankMap[coinTypes[0]].bankInfo,

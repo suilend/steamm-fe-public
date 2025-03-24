@@ -523,7 +523,7 @@ export default function AdminPage() {
             "symbol:",
             tokens[index].symbol,
           );
-          await steammClient.Bank.createBank(createBanksTransaction, {
+          await steammClient.BankManager.createBank(createBanksTransaction, {
             coinType: tokens[index].coinType,
             coinMetaT: tokens[index].id!, // Checked above
             bTokenTreasuryId: createBTokenResults[index].treasuryCapId,
@@ -602,7 +602,7 @@ export default function AdminPage() {
         swapFeeBps: BigInt(feeTierPercent * 100),
       };
 
-      const pool = await steammClient.Pool.createPool(
+      const pool = await steammClient.PoolManager.createPool(
         transaction,
         {
           [QuoterId.CPMM]: {
@@ -691,7 +691,7 @@ export default function AdminPage() {
         bTokenTypeB: bTokens[1].coinType,
       };
 
-      steammClient.Pool.sharePool(
+      steammClient.PoolManager.sharePool(
         {
           [QuoterId.CPMM]: {
             ...sharePoolBaseArgs,

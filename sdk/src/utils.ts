@@ -113,3 +113,9 @@ function zip<T, U>(a: T[], b: U[]): [T, U][] {
 }
 
 export { zip };
+
+// Add chunk helper at the top of the file
+export const chunk = <T>(arr: T[], size: number): T[][] =>
+  Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+    arr.slice(i * size, i * size + size),
+  );

@@ -114,7 +114,7 @@ export async function createCoinHelper(
 ): Promise<[string, string, string]> {
   await createCoinTx(tx, coinSymbol, sdk.senderAddress);
 
-  const txResponse = await sdk.fullClient.signAndExecuteTransaction({
+  const txResponse = await sdk.client.signAndExecuteTransaction({
     transaction: tx,
     signer: sdk.signer!,
     options: {
@@ -168,7 +168,7 @@ export async function createBTokenHelper(
 ): Promise<[string, string, string]> {
   const tx = await createBToken2(coinType, coinSymbol, sdk.senderAddress);
 
-  const coinTxResponse = await sdk.fullClient.signAndExecuteTransaction({
+  const coinTxResponse = await sdk.client.signAndExecuteTransaction({
     transaction: tx,
     signer: sdk.signer!,
     options: {
@@ -191,7 +191,7 @@ export async function createBTokenHelper(
     bTokenTokenType,
   });
 
-  const newBankTxResponse = await sdk.fullClient.signAndExecuteTransaction({
+  const newBankTxResponse = await sdk.client.signAndExecuteTransaction({
     transaction: newBankTx,
     signer: sdk.signer!,
     options: {
@@ -215,7 +215,7 @@ export async function createPoolHelper(
     sdk.senderAddress,
   );
 
-  const coinTxResponse = await sdk.fullClient.signAndExecuteTransaction({
+  const coinTxResponse = await sdk.client.signAndExecuteTransaction({
     transaction: tx,
     signer: sdk.signer!,
     options: {
@@ -245,7 +245,7 @@ export async function createPoolHelper(
     bTokenMetaB: coinBData.bTokenmeta,
   });
 
-  const newPoolTxResponse = await sdk.fullClient.signAndExecuteTransaction({
+  const newPoolTxResponse = await sdk.client.signAndExecuteTransaction({
     transaction: newPoolTx,
     signer: sdk.signer!,
     options: {
@@ -295,7 +295,7 @@ export async function createOraclePoolHelper(
     sdk.senderAddress,
   );
 
-  const coinTxResponse = await sdk.fullClient.signAndExecuteTransaction({
+  const coinTxResponse = await sdk.client.signAndExecuteTransaction({
     transaction: tx,
     signer: sdk.signer!,
     options: {
@@ -377,7 +377,7 @@ export async function createOraclePoolHelper(
     coinMetaB: coinBData.coinMeta,
   });
 
-  const newPoolTxResponse = await sdk.fullClient.signAndExecuteTransaction({
+  const newPoolTxResponse = await sdk.client.signAndExecuteTransaction({
     transaction: newPoolTx,
     signer: sdk.signer!,
     options: {
@@ -445,7 +445,7 @@ export function mintCoin(
 export async function initLendingNoOp(sdk: SteammSDK, coinType: string) {
   const banks = await sdk.getBanks();
   const bankId = banks[coinType].bankId;
-  const bankState = await sdk.fullClient.getObject({
+  const bankState = await sdk.client.getObject({
     id: bankId,
     options: {
       showContent: true,
@@ -464,7 +464,7 @@ export async function initLendingNoOp(sdk: SteammSDK, coinType: string) {
       utilisationBufferBps: 1000,
     });
 
-    const devResult = await sdk.fullClient.devInspectTransactionBlock({
+    const devResult = await sdk.client.devInspectTransactionBlock({
       transactionBlock: initLendTx,
       sender: sdk.senderAddress,
     });
@@ -477,7 +477,7 @@ export async function initLendingNoOp(sdk: SteammSDK, coinType: string) {
       throw new Error(devResult.error);
     }
 
-    const txResult = await sdk.fullClient.signAndExecuteTransaction({
+    const txResult = await sdk.client.signAndExecuteTransaction({
       transaction: initLendTx,
       signer: sdk.signer!,
       options: {

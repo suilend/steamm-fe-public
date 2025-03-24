@@ -252,55 +252,6 @@ export type BankInfo = {
 };
 
 /**
- * Represents configuration data for a cryptocurrency coin.
- */
-export type CoinConfig = {
-  /**
-   * The unique identifier of the coin.
-   */
-  id: string;
-
-  /**
-   * The name of the coin.
-   */
-  name: string;
-
-  /**
-   * The symbol of the coin.
-   */
-  symbol: string;
-
-  /**
-   * The address associated with the coin.
-   */
-  address: string;
-
-  /**
-   * The Pyth identifier of the coin.
-   */
-  pyth_id: string;
-
-  /**
-   * The project URL related to the coin.
-   */
-  project_url: string;
-
-  /**
-   * The URL to the logo image of the coin.
-   */
-  logo_url: string;
-
-  /**
-   * The number of decimal places used for the coin.
-   */
-  decimals: number;
-
-  /**
-   * Additional properties for the coin configuration.
-   */
-} & Record<string, any>;
-
-/**
  * Represents a package containing specific configuration or data.
  * @template T - The type of configuration or data contained in the package.
  */
@@ -308,11 +259,11 @@ export type Package<T = undefined> = {
   /**
    * The unique identifier of the package.
    */
-  package_id: string;
+  packageId: string;
   /**
    * the package was published.
    */
-  published_at: string;
+  publishedAt: string;
   /**
    * The version number of the package (optional).
    */

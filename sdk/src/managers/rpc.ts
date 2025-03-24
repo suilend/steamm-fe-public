@@ -40,7 +40,7 @@ import { extractGenerics } from "../utils";
 /**
  * Represents a module for making RPC (Remote Procedure Call) requests.
  */
-export class RpcModule extends SuiClient {
+export class RpcManager extends SuiClient {
   /**
    * Get events for a given query criteria
    * @param query
@@ -366,6 +366,12 @@ export class RpcModule extends SuiClient {
     }
   }
 
+  /**
+   * Fetches an Oracle Pool object from the blockchain by its ID.
+   * @param {SuiObjectIdType} objectId - The ID of the Oracle Pool to fetch
+   * @returns {Promise<Pool<string, string, OracleQuoter, string>>} A Promise that resolves to the Oracle Pool object
+   * @throws {Error} If the pool cannot be found or if there are issues parsing the data
+   */
   async fetchOraclePool(
     objectId: SuiObjectIdType,
   ): Promise<Pool<string, string, OracleQuoter, string>> {
@@ -426,9 +432,11 @@ export class RpcModule extends SuiClient {
   }
 
   /**
-   * Get a bank object strate by its ID
-   * @param objectId - The ID of the bank
-   * @returns Promise resolving to the bank state
+   * Fetches a Bank object from the blockchain by its ID.
+   * The Bank is a generic type that manages three different token types.
+   * @param {SuiObjectIdType} objectId - The ID of the Bank to fetch
+   * @returns {Promise<Bank<string, string, string>>} A Promise that resolves to the Bank object
+   * @throws {Error} If the bank cannot be found or if there are issues parsing the data
    */
   async fetchBank(
     objectId: SuiObjectIdType,
@@ -491,6 +499,13 @@ export class RpcModule extends SuiClient {
     }
   }
 
+  /**
+   * Fetches an Oracle Registry object from the blockchain by its ID.
+   * The Oracle Registry manages the registration and tracking of oracle feeds.
+   * @param {SuiObjectIdType} objectId - The ID of the Oracle Registry to fetch
+   * @returns {Promise<OracleRegistry>} A Promise that resolves to the Oracle Registry object
+   * @throws {Error} If the registry cannot be found or if there are issues parsing the data
+   */
   async fetchOracleRegistry(
     objectId: SuiObjectIdType,
   ): Promise<OracleRegistry> {

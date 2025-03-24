@@ -4,21 +4,16 @@ import { SUI_CLOCK_OBJECT_ID, normalizeSuiAddress } from "@mysten/sui/utils";
 import { BankScriptFunctions, EmitDryRun } from "../_codegen";
 import { InitLendingArgs, createBank } from "../base";
 import { castNeedsRebalance } from "../base/bank/bankTypes";
-import { IModule } from "../interfaces/IModule";
+import { IManager } from "../interfaces/IManager";
 import { SteammSDK } from "../sdk";
 import { BankInfo, SuiObjectIdType, getBankFromId } from "../types";
-import { SuiAddressType, zip } from "../utils";
-
-// Add chunk helper at the top of the file
-const chunk = <T>(arr: T[], size: number): T[][] =>
-  Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
-    arr.slice(i * size, i * size + size),
-  );
+import { SuiAddressType, chunk, zip } from "../utils";
 
 /**
- * Helper class to help interact with pools.
+ * Manages bank-related operations in the Steamm protocol
+ * This includes creating banks, managing lending, and handling rebalancing operations
  */
-export class BankModule implements IModule {
+export class BankManager implements IManager {
   protected _sdk: SteammSDK;
 
   constructor(sdk: SteammSDK) {
@@ -29,6 +24,11 @@ export class BankModule implements IModule {
     return this._sdk;
   }
 
+  /**
+   * Initializes lending for a specific bank
+   * @param tx The transaction to add the initialization to
+   * @param args Arguments containing bankId, target utilisation and buffer
+   */
   public async initLending(
     tx: Transaction,
     args: Omit<InitLendingArgs, "globalAdmin"> & { bankId: SuiAddressType },
@@ -44,6 +44,12 @@ export class BankModule implements IModule {
     });
   }
 
+  /**
+   * Rebalances multiple banks in batches
+   * @param bankIds Array of bank IDs to rebalance
+   * @param batchSize Maximum number of banks to process in a single batch
+   * @returns Array of transactions for each batch
+   */
   public async rebalance(
     bankIds: SuiObjectIdType[],
     batchSize: number = 20,
@@ -57,13 +63,18 @@ export class BankModule implements IModule {
     return txs;
   }
 
+  /**
+   * Gets the total funds in a bank, including both available and deployed funds
+   * @param bankId The ID of the bank to query
+   * @returns Total funds as a BigInt
+   */
   public async getTotalFunds(bankId: SuiObjectIdType): Promise<bigint> {
     const tx = new Transaction();
     const banks = await this.sdk.getBanks();
     const bankInfo = getBankFromId(banks, bankId);
     const bank = this.sdk.getBank(bankInfo);
 
-    const bankObj = await this.sdk.fullClient.getObject({
+    const bankObj = await this.sdk.client.getObject({
       id: bankId,
       options: {
         showContent: true,
@@ -72,7 +83,7 @@ export class BankModule implements IModule {
     });
 
     // TODO: use fetchBank instead
-    // const bankState = await this.sdk.fullClient.fetchBank(bankId);
+    // const bankState = await this.sdk.client.fetchBank(bankId);
     // const btokenAmount = bankState.btokenSupply.value;
     const btokenAmount = BigInt(
       (bankObj.data?.content as any).fields.btoken_supply.fields.value,
@@ -95,12 +106,17 @@ export class BankModule implements IModule {
     return BigInt(await this.getDryResult<bigint>(tx, "u64"));
   }
 
+  /**
+   * Calculates the effective utilisation rate of a bank
+   * @param bankId The ID of the bank to query
+   * @returns Utilisation rate as a decimal between 0 and 1
+   */
   public async getEffectiveUtilisation(
     bankId: SuiObjectIdType,
   ): Promise<number> {
     const totalFunds = await this.getTotalFunds(bankId);
 
-    const bankObj = await this.sdk.fullClient.getObject({
+    const bankObj = await this.sdk.client.getObject({
       id: bankId,
       options: {
         showContent: true,
@@ -118,6 +134,11 @@ export class BankModule implements IModule {
     return Number(fundsDeployed) / Number(totalFunds);
   }
 
+  /**
+   * Queries which banks need rebalancing
+   * @param batchSize Maximum number of banks to check in a single batch
+   * @returns Array of bank IDs that need rebalancing
+   */
   public async queryRebalance(
     batchSize: number = 20,
   ): Promise<SuiAddressType[]> {
@@ -131,6 +152,12 @@ export class BankModule implements IModule {
     return batchResults.flat();
   }
 
+  /**
+   * Creates a new BToken contract
+   * @param bytecode The bytecode for the BToken contract
+   * @param sender The address that will receive the upgrade capability
+   * @returns Transaction for creating the BToken
+   */
   public async createBToken(
     bytecode: any,
     sender: SuiAddressType,
@@ -147,6 +174,11 @@ export class BankModule implements IModule {
     return tx;
   }
 
+  /**
+   * Creates a new bank
+   * @param tx The transaction to add the bank creation to
+   * @param args Configuration arguments for the new bank
+   */
   public async createBank(
     tx: Transaction,
     args: {
@@ -157,13 +189,9 @@ export class BankModule implements IModule {
       bTokenMetadataId: string;
     },
   ) {
-    // // Step 2: Get the treasury Cap id from the transaction
-    // const [bTokenTreasuryId, bTokenMetadataId, bTokenTokenType] =
-    //   getTreasuryAndCoinMeta(publishTxResponse);
-
     // wait until the sui rpc recognizes the treasuryCapId
     while (true) {
-      const object = await this.sdk.fullClient.getObject({
+      const object = await this.sdk.client.getObject({
         id: args.bTokenTreasuryId,
       });
       if (object.error) {
@@ -188,6 +216,11 @@ export class BankModule implements IModule {
     createBank(tx, callArgs, this.sdk.packageInfo());
   }
 
+  /**
+   * Processes a batch of banks for rebalancing
+   * @param bankIds Array of bank IDs to rebalance in this batch
+   * @returns Transaction containing the rebalancing operations
+   */
   private async batchRebalance(
     bankIds: SuiObjectIdType[],
   ): Promise<Transaction> {
@@ -203,6 +236,11 @@ export class BankModule implements IModule {
     return tx;
   }
 
+  /**
+   * Queries a batch of banks to check if they need rebalancing
+   * @param banks Array of bank information to check
+   * @returns Array of bank IDs that need rebalancing
+   */
   private async batchQueryRebalance(
     banks: BankInfo[],
   ): Promise<SuiAddressType[]> {
@@ -238,15 +276,18 @@ export class BankModule implements IModule {
     return banksToRebalance;
   }
 
+  /**
+   * Gets the result of a rebalance query from a dry-run transaction
+   * @param tx The transaction to inspect
+   * @returns Array of boolean values indicating which banks need rebalancing
+   */
   private async getRebalanceQueryResult(tx: Transaction): Promise<boolean[]> {
     const quoteType = "NeedsRebalance";
-    const inspectResults = await this.sdk.fullClient.devInspectTransactionBlock(
-      {
-        sender: this.sdk.senderAddress,
-        transactionBlock: tx,
-        additionalArgs: { showRawTxnDataAndEffects: true },
-      },
-    );
+    const inspectResults = await this.sdk.client.devInspectTransactionBlock({
+      sender: this.sdk.senderAddress,
+      transactionBlock: tx,
+      additionalArgs: { showRawTxnDataAndEffects: true },
+    });
 
     if (inspectResults.error) {
       console.log("Failed to fetch rebalancing query");
@@ -268,16 +309,20 @@ export class BankModule implements IModule {
     return quoteResults;
   }
 
+  /**
+   * Gets the result of a dry-run transaction
+   * @param tx The transaction to inspect
+   * @param eventType The type of event to look for
+   * @returns The parsed event result
+   */
   private async getDryResult<T>(
     tx: Transaction,
     eventType: string,
   ): Promise<T> {
-    const inspectResults = await this.sdk.fullClient.devInspectTransactionBlock(
-      {
-        sender: this.sdk.senderAddress,
-        transactionBlock: tx,
-      },
-    );
+    const inspectResults = await this.sdk.client.devInspectTransactionBlock({
+      sender: this.sdk.senderAddress,
+      transactionBlock: tx,
+    });
 
     if (inspectResults.error) {
       console.log(inspectResults);

@@ -1,5 +1,5 @@
 import { SteammSDK } from "../sdk";
 
-export interface IModule {
+export interface IManager {
   readonly sdk: SteammSDK;
 }

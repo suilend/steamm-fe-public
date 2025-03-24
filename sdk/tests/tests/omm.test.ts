@@ -62,7 +62,7 @@ export async function test() {
       sdk.signer = keypair;
 
       const ownedPagedObjs: DataPage<PaginatedObjectsResponse[]> =
-        await sdk.fullClient.getOwnedObjectsByPage(sdk.senderAddress, {
+        await sdk.client.getOwnedObjectsByPage(sdk.senderAddress, {
           options: {
             showType: true,
           },
@@ -117,7 +117,7 @@ export async function test() {
 
       depositTx.transferObjects([coinA, coinB], sdk.senderAddress);
 
-      await sdk.fullClient.signAndExecuteTransaction({
+      await sdk.client.signAndExecuteTransaction({
         transaction: depositTx,
         signer: keypair,
         options: {
@@ -159,7 +159,7 @@ export async function test() {
 
       swapTx.transferObjects([coinA, coinB], sdk.senderAddress);
 
-      await sdk.fullClient.signAndExecuteTransaction({
+      await sdk.client.signAndExecuteTransaction({
         transaction: swapTx,
         signer: keypair,
         options: {
