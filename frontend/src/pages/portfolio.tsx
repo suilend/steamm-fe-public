@@ -24,7 +24,7 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolPositionsContext } from "@/contexts/PoolPositionsContext";
-import { useLoadedUserContext } from "@/contexts/UserContext";
+import { useUserContext } from "@/contexts/UserContext";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { HistoryTransactionType, PoolPosition } from "@/lib/types";
@@ -32,24 +32,26 @@ import { HistoryTransactionType, PoolPosition } from "@/lib/types";
 export default function PortfolioPage() {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { appData } = useLoadedAppContext();
-  const { userData, refresh } = useLoadedUserContext();
+  const { appData, poolsData } = useLoadedAppContext();
+  const { userData, refresh } = useUserContext();
 
   const { poolPositions } = usePoolPositionsContext();
 
   // Pool positions - Deposited USD for PnL calc. (BE)
   const { poolTransactionHistoryMap } = usePoolTransactionHistoryMap(
-    poolPositions.map((position) => position.pool.id),
+    poolPositions === undefined
+      ? undefined
+      : poolPositions.map((position) => position.pool.id),
   );
 
   const poolDepositedUsdMap: Record<string, BigNumber> | undefined =
     useMemo(() => {
-      return poolTransactionHistoryMap === undefined
+      return poolsData === undefined || poolTransactionHistoryMap === undefined
         ? undefined
         : Object.fromEntries(
             Object.entries(poolTransactionHistoryMap).reduce(
               (acc, [poolId, transactionHistory]) => {
-                const pool = appData.pools.find((p) => p.id === poolId);
+                const pool = poolsData.pools.find((p) => p.id === poolId);
                 if (!pool) return acc;
 
                 const depositedAmounts = [0, 1].map((index) =>
@@ -87,24 +89,26 @@ export default function PortfolioPage() {
               [] as [string, BigNumber][],
             ),
           );
-    }, [poolTransactionHistoryMap, appData.pools, appData.coinMetadataMap]);
+    }, [poolsData, poolTransactionHistoryMap, appData.coinMetadataMap]);
 
   // Pool positions - Extra data
-  const poolPositionsWithExtraData: PoolPosition[] = useMemo(
+  const poolPositionsWithExtraData: PoolPosition[] | undefined = useMemo(
     () =>
-      poolPositions.map((position) => ({
-        ...position,
-        pnlPercent:
-          poolDepositedUsdMap?.[position.pool.id] !== undefined
-            ? new BigNumber(
-                position.balanceUsd.minus(
-                  poolDepositedUsdMap[position.pool.id],
-                ),
-              )
-                .div(poolDepositedUsdMap[position.pool.id])
-                .times(100)
-            : undefined,
-      })),
+      poolPositions === undefined
+        ? undefined
+        : poolPositions.map((position) => ({
+            ...position,
+            pnlPercent:
+              poolDepositedUsdMap?.[position.pool.id] !== undefined
+                ? new BigNumber(
+                    position.balanceUsd.minus(
+                      poolDepositedUsdMap[position.pool.id],
+                    ),
+                  )
+                    .div(poolDepositedUsdMap[position.pool.id])
+                    .times(100)
+                : undefined,
+          })),
     [poolPositions, poolDepositedUsdMap],
   );
 
@@ -112,6 +116,7 @@ export default function PortfolioPage() {
   // Summary - Net worth
   const netWorthUsd: BigNumber | undefined = useMemo(
     () =>
+      poolPositionsWithExtraData === undefined ||
       poolPositionsWithExtraData.some(
         (position) => position.balanceUsd === undefined,
       )
@@ -126,6 +131,7 @@ export default function PortfolioPage() {
   // Summary - APR
   const weightedAverageAprPercent: BigNumber | undefined = useMemo(
     () =>
+      poolPositionsWithExtraData === undefined ||
       poolPositionsWithExtraData.some(
         (position) =>
           position.pool.aprPercent_24h === undefined ||
@@ -157,23 +163,27 @@ export default function PortfolioPage() {
   // Summary - Rewards
   const claimableRewards: Record<string, BigNumber> | undefined = useMemo(
     () =>
-      Object.entries(userData.poolRewardMap).reduce(
-        (acc, [, rewards]) => {
-          Object.entries(rewards).forEach(([coinType, amount]) => {
-            if (isSteammPoints(coinType)) return;
-            acc[coinType] = new BigNumber(acc[coinType] ?? 0).plus(amount);
-          });
+      userData === undefined
+        ? undefined
+        : Object.entries(userData.poolRewardMap).reduce(
+            (acc, [, rewards]) => {
+              Object.entries(rewards).forEach(([coinType, amount]) => {
+                if (isSteammPoints(coinType)) return;
+                acc[coinType] = new BigNumber(acc[coinType] ?? 0).plus(amount);
+              });
 
-          return acc;
-        },
-        {} as Record<string, BigNumber>,
-      ),
-    [userData.poolRewardMap],
+              return acc;
+            },
+            {} as Record<string, BigNumber>,
+          ),
+    [userData],
   );
 
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
 
   const onClaimRewardsClick = async () => {
+    if (userData === undefined) return;
+
     try {
       if (isClaiming) return;
       if (!address) throw Error("Wallet not connected");
@@ -216,7 +226,7 @@ export default function PortfolioPage() {
             side: Side.DEPOSIT,
           }));
 
-        appData.lm.suilendClient.claimRewardsAndSendToUser(
+        appData.lmMarket.suilendClient.claimRewardsAndSendToUser(
           address,
           obligationOwnerCap.id,
           rewards,
@@ -241,15 +251,17 @@ export default function PortfolioPage() {
   // Summary - Points
   const points: BigNumber | undefined = useMemo(
     () =>
-      Object.entries(userData.poolRewardMap).reduce((acc, [, rewards]) => {
-        Object.entries(rewards).forEach(([coinType, amount]) => {
-          if (!isSteammPoints(coinType)) return;
-          acc = acc.plus(amount);
-        });
+      userData === undefined
+        ? undefined
+        : Object.entries(userData.poolRewardMap).reduce((acc, [, rewards]) => {
+            Object.entries(rewards).forEach(([coinType, amount]) => {
+              if (!isSteammPoints(coinType)) return;
+              acc = acc.plus(amount);
+            });
 
-        return acc;
-      }, new BigNumber(0)),
-    [userData.poolRewardMap],
+            return acc;
+          }, new BigNumber(0)),
+    [userData],
   );
 
   return (
@@ -353,19 +365,23 @@ export default function PortfolioPage() {
                           </div>
                         </Tooltip>
 
-                        <button
-                          className="flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-1 px-2 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
-                          disabled={isClaiming}
-                          onClick={onClaimRewardsClick}
-                        >
-                          {isClaiming ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-button-1-foreground" />
-                          ) : (
-                            <p className="text-p3 text-button-1-foreground">
-                              Claim
-                            </p>
-                          )}
-                        </button>
+                        {userData === undefined ? (
+                          <Skeleton className="h-6 w-[48px]" />
+                        ) : (
+                          <button
+                            className="flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-1 px-2 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
+                            disabled={isClaiming}
+                            onClick={onClaimRewardsClick}
+                          >
+                            {isClaiming ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-button-1-foreground" />
+                            ) : (
+                              <p className="text-p3 text-button-1-foreground">
+                                Claim
+                              </p>
+                            )}
+                          </button>
+                        )}
                       </div>
                     ) : (
                       <p className="text-h3 text-foreground">--</p>
@@ -413,7 +429,11 @@ export default function PortfolioPage() {
         <div className="flex w-full flex-col gap-6">
           <div className="flex flex-row items-center gap-3">
             <h2 className="text-h3 text-foreground">Positions</h2>
-            <Tag>{poolPositionsWithExtraData.length}</Tag>
+            {poolPositionsWithExtraData === undefined ? (
+              <Skeleton className="h-5 w-12" />
+            ) : (
+              <Tag>{poolPositionsWithExtraData.length}</Tag>
+            )}
           </div>
 
           <PoolPositionsTable poolPositions={poolPositionsWithExtraData} />

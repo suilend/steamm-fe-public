@@ -45,7 +45,7 @@ import TokenLogo from "@/components/TokenLogo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
-import { useLoadedUserContext } from "@/contexts/UserContext";
+import { useUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
 import {
@@ -83,8 +83,9 @@ interface DepositTabProps {
 function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
-  const { getBalance, userData, refresh } = useLoadedUserContext();
+  const { steammClient, appData, banksData, slippagePercent } =
+    useLoadedAppContext();
+  const { getBalance, userData, refresh } = useUserContext();
   const { pool } = usePoolContext();
 
   const currentRatio = pool.balances[0].div(pool.balances[1]); // NaN if pool.balances[1] === 0 (i.e. tvlUsd === 0)
@@ -148,6 +149,7 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
       appData.coinMetadataMap[pool.coinTypes[1]].decimals,
     ];
 
+    if (banksData === undefined) return;
     if (valuesRef.current[index] !== _value) return;
 
     try {
@@ -167,8 +169,8 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
       //   maxA: index === 0 ? BigInt(submitAmount) : BigInt(MAX_U64.toString()),
       //   maxB: index === 0 ? BigInt(MAX_U64.toString()) : BigInt(submitAmount),
       //   poolInfo: pool.poolInfo,
-      //   bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
-      //   bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
+      //   bankInfoA: banksData.bankMap[pool.coinTypes[0]].bankInfo,
+      //   bankInfoB: banksData.bankMap[pool.coinTypes[1]].bankInfo,
       // });
 
       if (valuesRef.current[index] !== _value) return;
@@ -439,6 +441,8 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
     console.log("DepositTab.onSubmitClick");
 
     if (submitButtonState.isDisabled) return;
+
+    if (banksData === undefined || userData === undefined) return;
     if (!address || !quote) return;
 
     try {
@@ -476,13 +480,13 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
         maxA: BigInt(submitAmountA),
         maxB: BigInt(submitAmountB),
         poolInfo: pool.poolInfo,
-        bankInfoA: appData.bankMap[coinTypeA].bankInfo,
-        bankInfoB: appData.bankMap[coinTypeB].bankInfo,
+        bankInfoA: banksData.bankMap[coinTypeA].bankInfo,
+        bankInfoB: banksData.bankMap[coinTypeB].bankInfo,
       });
       transaction.transferObjects([coinA, coinB], address);
 
       // Stake LP tokens (if reserve exists)
-      if (appData.lm.reserveMap[pool.lpTokenType]) {
+      if (appData.lmMarket.reserveMap[pool.lpTokenType]) {
         let obligationIndex = getIndexOfObligationWithDeposit(
           userData.obligations,
           pool.lpTokenType,
@@ -495,13 +499,13 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
 
         const { obligationOwnerCapId, didCreate } =
           createObligationIfNoneExists(
-            appData.lm.suilendClient,
+            appData.lmMarket.suilendClient,
             transaction,
             obligationIndex !== -1
               ? userData.obligationOwnerCaps[obligationIndex]
               : undefined, // Create new obligation
           );
-        appData.lm.suilendClient.deposit(
+        appData.lmMarket.suilendClient.deposit(
           lpCoin,
           pool.lpTokenType,
           obligationOwnerCapId,
@@ -682,21 +686,25 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
   const { explorer } = useSettingsContext();
   const { address, dryRunTransaction, signExecuteAndWaitForTransaction } =
     useWalletContext();
-  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
-  const { getBalance, userData, refresh } = useLoadedUserContext();
+  const { steammClient, appData, banksData, slippagePercent } =
+    useLoadedAppContext();
+  const { getBalance, userData, refresh } = useUserContext();
   const { pool } = usePoolContext();
 
-  const lpTokenObligationIndex = getIndexOfObligationWithDeposit(
-    userData.obligations,
-    pool.lpTokenType,
-  ); // Assumes up to one obligation has deposits of the LP token type
-
   const lpTokenBalance = getBalance(pool.lpTokenType);
-  const lpTokenDepositedAmount = getObligationDepositedAmount(
-    userData.obligations[lpTokenObligationIndex],
-    pool.lpTokenType,
-  );
-  const lpTokenTotalAmount = lpTokenBalance.plus(lpTokenDepositedAmount);
+  const lpTokenDepositedAmount =
+    userData === undefined
+      ? undefined
+      : getObligationDepositedAmount(
+          userData.obligations[
+            getIndexOfObligationWithDeposit(
+              userData.obligations,
+              pool.lpTokenType,
+            )
+          ], // Assumes up to one obligation has deposits of the LP token type
+          pool.lpTokenType,
+        );
+  const lpTokenTotalAmount = lpTokenBalance.plus(lpTokenDepositedAmount ?? 0);
 
   // Value
   const [value, setValue] = useState<string>("0");
@@ -713,6 +721,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
       valueRef.current,
     );
 
+    if (banksData === undefined) return;
     if (valueRef.current !== _value) return;
 
     try {
@@ -725,8 +734,8 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
       const quote = await _steammClient.Pool.quoteRedeem({
         lpTokens: BigInt(submitAmount),
         poolInfo: pool.poolInfo,
-        bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
-        bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
+        bankInfoA: banksData.bankMap[pool.coinTypes[0]].bankInfo,
+        bankInfoB: banksData.bankMap[pool.coinTypes[1]].bankInfo,
       });
 
       if (valueRef.current !== _value) return;
@@ -788,6 +797,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
   })();
 
   const buildTransaction = async (withoutProvision: boolean) => {
+    if (banksData === undefined || userData === undefined) return;
     if (!address || !quote) return;
 
     const [lpTokenType, coinTypeA, coinTypeB] = [
@@ -851,7 +861,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
         console.log("XXX max suilend");
         const submitAmount = MAX_U64.toString();
 
-        const [_lpCoin] = await appData.lm.suilendClient.withdraw(
+        const [_lpCoin] = await appData.lmMarket.suilendClient.withdraw(
           userData.obligationOwnerCaps[obligationIndex].id,
           userData.obligations[obligationIndex].id,
           pool.lpTokenType,
@@ -877,12 +887,14 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
               .integerValue(BigNumber.ROUND_DOWN)
               .toString(),
           )
-            .div(appData.lm.reserveMap[pool.lpTokenType].cTokenExchangeRate)
+            .div(
+              appData.lmMarket.reserveMap[pool.lpTokenType].cTokenExchangeRate,
+            )
             .integerValue(BigNumber.ROUND_UP),
           lpTokenDepositPosition.depositedCtokenAmount,
         ).toString();
 
-        const [_lpCoin] = await appData.lm.suilendClient.withdraw(
+        const [_lpCoin] = await appData.lmMarket.suilendClient.withdraw(
           userData.obligationOwnerCaps[obligationIndex].id,
           userData.obligations[obligationIndex].id,
           pool.lpTokenType,
@@ -921,8 +933,8 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
       minA: BigInt(submitAmountA),
       minB: BigInt(submitAmountB),
       poolInfo: pool.poolInfo,
-      bankInfoA: appData.bankMap[coinTypeA].bankInfo,
-      bankInfoB: appData.bankMap[coinTypeB].bankInfo,
+      bankInfoA: banksData.bankMap[coinTypeA].bankInfo,
+      bankInfoB: banksData.bankMap[coinTypeB].bankInfo,
     });
     transaction.transferObjects([coinA, coinB], address);
 
@@ -933,6 +945,8 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
     console.log("WithdrawTab.onSubmitClick");
 
     if (submitButtonState.isDisabled) return;
+
+    if (banksData === undefined || userData === undefined) return;
     if (!address || !quote) return;
 
     try {
@@ -1147,8 +1161,9 @@ interface SwapTabProps {
 function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
-  const { getBalance, refresh } = useLoadedUserContext();
+  const { steammClient, appData, banksData, slippagePercent } =
+    useLoadedAppContext();
+  const { getBalance, refresh } = useUserContext();
   const { pool } = usePoolContext();
 
   // CoinTypes
@@ -1186,6 +1201,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
         valueRef.current,
       );
 
+      if (banksData === undefined) return;
       if (valueRef.current !== _value) return;
 
       try {
@@ -1201,8 +1217,8 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
           a2b: _activeCoinIndex === 0,
           amountIn: BigInt(submitAmount),
           poolInfo: pool.poolInfo,
-          bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
-          bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
+          bankInfoA: banksData.bankMap[pool.coinTypes[0]].bankInfo,
+          bankInfoB: banksData.bankMap[pool.coinTypes[1]].bankInfo,
         });
 
         if (valueRef.current !== _value) return;
@@ -1216,7 +1232,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
         Sentry.captureException(err);
       }
     },
-    [appData.coinMetadataMap, pool.coinTypes, pool.poolInfo, appData.bankMap],
+    [banksData, appData.coinMetadataMap, pool.coinTypes, pool.poolInfo],
   );
   const debouncedFetchQuote = useRef(debounce(fetchQuote, 100)).current;
 
@@ -1373,6 +1389,8 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
     console.log("SwapTab.onSubmitClick");
 
     if (submitButtonState.isDisabled) return;
+
+    if (banksData === undefined) return;
     if (!address || !quote) return;
 
     try {
@@ -1416,8 +1434,8 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
         amountIn: BigInt(amountIn),
         minAmountOut: BigInt(minAmountOut),
         poolInfo: pool.poolInfo,
-        bankInfoA: appData.bankMap[coinTypeA].bankInfo,
-        bankInfoB: appData.bankMap[coinTypeB].bankInfo,
+        bankInfoA: banksData.bankMap[coinTypeA].bankInfo,
+        bankInfoB: banksData.bankMap[coinTypeB].bankInfo,
       });
       transaction.transferObjects([coinA, coinB], address);
 

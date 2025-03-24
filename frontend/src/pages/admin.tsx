@@ -41,13 +41,13 @@ import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { useLoadedUserContext } from "@/contexts/UserContext";
+import { useUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
 import { formatFeeTier, formatPair, formatTextInputValue } from "@/lib/format";
 import { COINTYPE_ORACLE_INDEX_MAP } from "@/lib/oracles";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
+import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const FEE_TIER_PERCENTS: number[] = [0.01, 0.05, 0.3, 1, 2];
@@ -130,9 +130,8 @@ const LP_TOKEN_IMAGE_URL =
 export default function AdminPage() {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData } = useLoadedAppContext();
-  const { balancesCoinMetadataMap, getBalance, refresh } =
-    useLoadedUserContext();
+  const { steammClient, banksData, poolsData } = useLoadedAppContext();
+  const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
   const flags = useFlags();
   const isWhitelisted = useMemo(
@@ -286,16 +285,21 @@ export default function AdminPage() {
   );
 
   // Existing pools
-  const existingPools = appData.pools.filter(
-    (pool) =>
-      pool.coinTypes[0] === coinTypes[0] && pool.coinTypes[1] === coinTypes[1],
-  );
+  const existingPools: ParsedPool[] | undefined = useMemo(() => {
+    if (poolsData === undefined) return undefined;
+
+    return poolsData.pools.filter(
+      (pool) =>
+        pool.coinTypes[0] === coinTypes[0] &&
+        pool.coinTypes[1] === coinTypes[1],
+    );
+  }, [poolsData, coinTypes]);
 
   const hasExistingPoolForQuoterAndFeeTier = (
     _quoterId?: QuoterId,
     _feeTierPercent?: number,
   ) =>
-    !!existingPools.find(
+    !!(existingPools ?? []).find(
       (pool) =>
         pool.quoterId === _quoterId && +pool.feeTierPercent === _feeTierPercent,
     );
@@ -426,6 +430,8 @@ export default function AdminPage() {
   type CreateCoinReturnType = Awaited<ReturnType<typeof createCoin>>;
 
   const onSubmitClick = async () => {
+    if (banksData === undefined) return;
+
     if (submitButtonState.isDisabled) return;
     if (!address || !quoterId || !feeTierPercent) return;
 
@@ -450,7 +456,7 @@ export default function AdminPage() {
 
       const existingBTokenTypeCoinMetadataMap = await getCoinMetadataMap(
         suiClient,
-        Object.keys(appData.bTokenTypeCoinTypeMap),
+        Object.keys(banksData.bTokenTypeCoinTypeMap),
       );
       console.log(
         "XXX existingBTokenTypeCoinMetadataMap:",
@@ -458,7 +464,7 @@ export default function AdminPage() {
       );
 
       const getExistingBTokenForToken = (token: Token) => {
-        const bank = appData.bankMap[token.coinType];
+        const bank = banksData.bankMap[token.coinType];
         return bank
           ? getToken(
               bank.bTokenType,
@@ -545,7 +551,7 @@ export default function AdminPage() {
 
       const bankIds = createBTokenResults.map((result, index) => {
         if (result === undefined)
-          return appData.bankMap[tokens[index].coinType].id;
+          return banksData.bankMap[tokens[index].coinType].id;
         else {
           const event = createBankEvents.find(
             (event) =>

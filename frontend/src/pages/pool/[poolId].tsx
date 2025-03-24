@@ -21,18 +21,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { PoolContextProvider, usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
-import { useLoadedUserContext } from "@/contexts/UserContext";
+import { useUserContext } from "@/contexts/UserContext";
 import useBreakpoint from "@/hooks/useBreakpoint";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { ROOT_URL } from "@/lib/navigation";
-import { QUOTER_ID_NAME_MAP } from "@/lib/types";
+import { ParsedPool, QUOTER_ID_NAME_MAP } from "@/lib/types";
 
 function PoolPage() {
   const { address } = useWalletContext();
-  const { appData } = useLoadedAppContext();
+  const { appData, poolsData } = useLoadedAppContext();
   const { poolStats } = useStatsContext();
-  const { refresh } = useLoadedUserContext();
+  const { refresh } = useUserContext();
 
   const { pool } = usePoolContext();
 
@@ -53,12 +53,27 @@ function PoolPage() {
   );
 
   // Suggested pools
-  const suggestedPools = appData.pools
-    .filter(
-      (_pool) =>
-        _pool.id !== pool.id && _pool.coinTypes[0] === pool.coinTypes[0],
-    )
-    .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
+  const otherBaseAssetPools: ParsedPool[] | undefined = useMemo(() => {
+    if (poolsData === undefined) return undefined;
+
+    return poolsData.pools
+      .filter(
+        (_pool) =>
+          _pool.id !== pool.id && _pool.coinTypes[0] === pool.coinTypes[0],
+      )
+      .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
+  }, [poolsData, pool]);
+
+  const otherQuoteAssetPools: ParsedPool[] | undefined = useMemo(() => {
+    if (poolsData === undefined) return undefined;
+
+    return poolsData.pools
+      .filter(
+        (_pool) =>
+          _pool.id !== pool.id && _pool.coinTypes[1] === pool.coinTypes[1],
+      )
+      .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
+  }, [poolsData, pool]);
 
   // Actions
   const onDeposit = async () => {
@@ -214,14 +229,19 @@ function PoolPage() {
           </div>
 
           {/* Suggested pools */}
-          {suggestedPools.length > 0 && (
-            <SuggestedPools
-              containerClassName="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-              title={`Other ${appData.coinMetadataMap[pool.coinTypes[0]].symbol} pools`}
-              pools={suggestedPools}
-              collapsedPoolCount={lg ? 3 : md ? 2 : 1}
-            />
-          )}
+          <SuggestedPools
+            containerClassName="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+            title={`Other ${appData.coinMetadataMap[pool.coinTypes[0]].symbol} pools`}
+            pools={otherBaseAssetPools}
+            collapsedPoolCount={lg ? 3 : md ? 2 : 1}
+          />
+
+          <SuggestedPools
+            containerClassName="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+            title={`Other ${appData.coinMetadataMap[pool.coinTypes[1]].symbol} pools`}
+            pools={otherQuoteAssetPools}
+            collapsedPoolCount={lg ? 3 : md ? 2 : 1}
+          />
         </div>
       </div>
     </>

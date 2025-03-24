@@ -33,7 +33,7 @@ import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { useLoadedUserContext } from "@/contexts/UserContext";
+import { useUserContext } from "@/contexts/UserContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { getIndexOfObligationWithDeposit } from "@/lib/obligation";
@@ -52,7 +52,7 @@ export default function PoolPositionRow({
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { appData } = useLoadedAppContext();
   const { refreshRawBalancesMap, getBalance, userData, refreshUserData } =
-    useLoadedUserContext();
+    useUserContext();
 
   // Stake/unstake
   const [stakedPercentOverride, setStakedPercentOverride] = useState<
@@ -65,6 +65,8 @@ export default function PoolPositionRow({
 
   const onStakeClick = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+
+    if (userData === undefined) return;
 
     try {
       if (isStaking) return;
@@ -94,13 +96,13 @@ export default function PoolPositionRow({
       console.log("XXX obligationIndex:", obligationIndex);
 
       const { obligationOwnerCapId, didCreate } = createObligationIfNoneExists(
-        appData.lm.suilendClient,
+        appData.lmMarket.suilendClient,
         transaction,
         obligationIndex !== -1
           ? userData.obligationOwnerCaps[obligationIndex]
           : undefined, // Create new obligation
       );
-      await appData.lm.suilendClient.depositIntoObligation(
+      await appData.lmMarket.suilendClient.depositIntoObligation(
         address,
         poolPosition.pool.lpTokenType,
         submitAmount,
@@ -150,10 +152,12 @@ export default function PoolPositionRow({
   const onUnstakeClick = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
-    if (isUnstaking) return;
-    if (!address) throw Error("Wallet not connected");
+    if (userData === undefined) return;
 
     try {
+      if (isUnstaking) return;
+      if (!address) throw Error("Wallet not connected");
+
       setIsUnstaking(true);
 
       const submitAmount = MAX_U64.toString();
@@ -168,7 +172,7 @@ export default function PoolPositionRow({
         if (obligationIndex === -1) throw Error("Obligation not found"); // Should never happen as you can't unstake if you don't have any staked
         console.log("XXX obligationIndex:", obligationIndex);
 
-        await appData.lm.suilendClient.withdrawAndSendToUser(
+        await appData.lmMarket.suilendClient.withdrawAndSendToUser(
           address,
           userData.obligationOwnerCaps[obligationIndex].id,
           userData.obligations[obligationIndex].id,
@@ -270,39 +274,37 @@ export default function PoolPositionRow({
             </Tooltip>
           )}
 
-          <div className="flex flex-row items-center gap-2">
-            {poolPosition.pool.coinTypes.map((coinType, index) => (
-              <Fragment key={index}>
-                {poolPosition.balances === undefined ? (
-                  <Skeleton className="h-[21px] w-24" />
-                ) : (
-                  <div className="flex flex-row items-center gap-2">
-                    <TokenLogo
-                      token={getToken(
-                        coinType,
-                        appData.coinMetadataMap[coinType],
-                      )}
-                      size={16}
-                    />
-                    <Tooltip
-                      title={`${formatToken(poolPosition.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
-                    >
-                      <p className="text-p2 text-foreground">
-                        {formatToken(poolPosition.balances[index], {
-                          exact: false,
-                        })}{" "}
-                        {appData.coinMetadataMap[coinType].symbol}
-                      </p>
-                    </Tooltip>
-                  </div>
-                )}
+          {poolPosition.balances === undefined ? (
+            <Skeleton className="h-[21px] w-40" />
+          ) : (
+            <div className="flex flex-row items-center gap-2">
+              {poolPosition.pool.coinTypes.map((coinType, index) => (
+                <Fragment key={coinType}>
+                  <TokenLogo
+                    token={getToken(
+                      coinType,
+                      appData.coinMetadataMap[coinType],
+                    )}
+                    size={16}
+                  />
+                  <Tooltip
+                    title={`${formatToken(poolPosition.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
+                  >
+                    <p className="text-p2 text-foreground">
+                      {formatToken(poolPosition.balances[index], {
+                        exact: false,
+                      })}{" "}
+                      {appData.coinMetadataMap[coinType].symbol}
+                    </p>
+                  </Tooltip>
 
-                {index === 0 && (
-                  <p className="text-p2 text-secondary-foreground">+</p>
-                )}
-              </Fragment>
-            ))}
-          </div>
+                  {index === 0 && (
+                    <p className="text-p2 text-secondary-foreground">+</p>
+                  )}
+                </Fragment>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -331,7 +333,7 @@ export default function PoolPositionRow({
         className="flex h-full flex-row items-center gap-3"
         style={columnStyleMap.stakedPercent}
       >
-        {!!appData.lm.reserveMap[poolPosition.pool.lpTokenType] ? (
+        {!!appData.lmMarket.reserveMap[poolPosition.pool.lpTokenType] ? (
           <>
             <p className="text-p1 text-foreground">
               {formatPercent(stakedPercent)}

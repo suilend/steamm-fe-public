@@ -7,7 +7,7 @@ import { Token, formatToken, formatUsd } from "@suilend/frontend-sui";
 import CoinPopover from "@/components/CoinPopover";
 import TokenLogo from "@/components/TokenLogo";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLoadedUserContext } from "@/contexts/UserContext";
+import { useUserContext } from "@/contexts/UserContext";
 import { cn } from "@/lib/utils";
 
 export const getCoinInputId = (coinType: string) => `coin-input-${coinType}`;
@@ -35,7 +35,7 @@ export default function CoinInput({
   popoverTokens,
   onPopoverTokenClick,
 }: CoinInputProps) {
-  const { getBalance } = useLoadedUserContext();
+  const { getBalance } = useUserContext();
 
   const isReadOnly = onChange === undefined;
 

@@ -69,7 +69,7 @@ export default function CoinPopover({
 
           <Chevron
             className={cn(
-              "-ml-0.5 -mr-1 h-4 w-4 shrink-0 transition-colors",
+              "-ml-0.5 -mr-1 h-5 w-5 shrink-0 transition-colors",
               isOpen
                 ? "text-foreground"
                 : "text-secondary-foreground group-hover:text-foreground",

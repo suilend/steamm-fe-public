@@ -2,8 +2,6 @@ import BigNumber from "bignumber.js";
 
 import { formatUsd } from "@suilend/frontend-sui";
 
-import { AppData } from "@/contexts/AppContext";
-
 export type ViewBox = {
   width: number;
   height: number;
@@ -47,14 +45,6 @@ export type ChartData = {
 };
 
 export const OTHER_CATEGORY = "Other";
-
-export const formatCoinTypeCategory = (
-  category: string,
-  coinMetadataMap: AppData["coinMetadataMap"],
-): string | undefined => {
-  if (category === OTHER_CATEGORY) return "Other";
-  return coinMetadataMap[category]?.symbol;
-};
 
 export const formatValueUsd = (valueUsd: number): string =>
   formatUsd(new BigNumber(valueUsd));

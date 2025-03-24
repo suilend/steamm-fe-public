@@ -63,8 +63,7 @@ export default function TransactionHistoryRow({
         className="flex h-full flex-row items-center gap-2"
         style={columnStyleMap.amounts}
       >
-        {[0, 1].map((index) => {
-          const coinType = pool.coinTypes[index];
+        {pool.coinTypes.map((coinType, index) => {
           const coinMetadata = appData.coinMetadataMap[coinType];
 
           const amount =
@@ -77,7 +76,7 @@ export default function TransactionHistoryRow({
                 ).div(10 ** coinMetadata.decimals);
 
           return (
-            <Fragment key={index}>
+            <Fragment key={coinType}>
               <TokenLogo token={getToken(coinType, coinMetadata)} size={16} />
               <Tooltip
                 title={formatToken(amount, { dp: coinMetadata.decimals })}

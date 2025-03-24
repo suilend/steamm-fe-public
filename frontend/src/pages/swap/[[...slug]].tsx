@@ -38,11 +38,12 @@ import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { useLoadedUserContext } from "@/contexts/UserContext";
+import { useUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
 import { formatTextInputValue } from "@/lib/format";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
+import { ParsedPool } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 export default function SwapPage() {
@@ -51,8 +52,9 @@ export default function SwapPage() {
 
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
-  const { getBalance, refresh } = useLoadedUserContext();
+  const { steammClient, appData, banksData, poolsData, slippagePercent } =
+    useLoadedAppContext();
+  const { getBalance, refresh } = useUserContext();
 
   // CoinTypes
   const [inCoinType, outCoinType] = useMemo(() => {
@@ -255,20 +257,22 @@ export default function SwapPage() {
   };
 
   // Select
-  const popoverTokens: Token[] = useMemo(
+  const popoverTokens: Token[] | undefined = useMemo(
     () =>
-      Object.values(appData.bTokenTypeCoinTypeMap)
-        .sort(
-          (a, b) =>
-            appData.coinMetadataMap[a].symbol.toLowerCase() <
-            appData.coinMetadataMap[b].symbol.toLowerCase()
-              ? -1
-              : 1, // Sort by symbol (ascending)
-        )
-        .map((coinType) =>
-          getToken(coinType, appData.coinMetadataMap[coinType]),
-        ),
-    [appData.bTokenTypeCoinTypeMap, appData.coinMetadataMap],
+      banksData === undefined
+        ? undefined
+        : Object.values(banksData.bTokenTypeCoinTypeMap)
+            .sort(
+              (a, b) =>
+                appData.coinMetadataMap[a].symbol.toLowerCase() <
+                appData.coinMetadataMap[b].symbol.toLowerCase()
+                  ? -1
+                  : 1, // Sort by symbol (ascending)
+            )
+            .map((coinType) =>
+              getToken(coinType, appData.coinMetadataMap[coinType]),
+            ),
+    [banksData, appData.coinMetadataMap],
   );
 
   const onPopoverTokenClick = (token: Token, direction: "in" | "out") => {
@@ -469,12 +473,17 @@ export default function SwapPage() {
   };
 
   // Suggested pools
-  const suggestedPools = appData.pools
-    .filter(
-      (_pool) =>
-        _pool.coinTypes[0] === inCoinType || _pool.coinTypes[1] === outCoinType,
-    )
-    .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
+  const suggestedPools: ParsedPool[] | undefined = useMemo(() => {
+    if (poolsData === undefined) return undefined;
+
+    return poolsData.pools
+      .filter(
+        (_pool) =>
+          _pool.coinTypes[0] === inCoinType ||
+          _pool.coinTypes[1] === outCoinType,
+      )
+      .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
+  }, [poolsData, inCoinType, outCoinType]);
 
   return (
     <>
@@ -546,7 +555,10 @@ export default function SwapPage() {
                     label=""
                   />
 
-                  {isFetchingQuote || !quote || !route ? (
+                  {isFetchingQuote ||
+                  !quote ||
+                  !route ||
+                  banksData === undefined ? (
                     <Skeleton className="h-[21px] w-16" />
                   ) : (
                     <Tooltip
@@ -557,7 +569,9 @@ export default function SwapPage() {
                               <p className="text-p3 text-foreground">
                                 {
                                   appData.coinMetadataMap[
-                                    appData.bTokenTypeCoinTypeMap[r.bTokenType]
+                                    banksData.bTokenTypeCoinTypeMap[
+                                      r.bTokenType
+                                    ]
                                   ].symbol
                                 }
                               </p>

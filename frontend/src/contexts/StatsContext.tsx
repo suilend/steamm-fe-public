@@ -71,15 +71,15 @@ const StatsContext = createContext<StatsContext>({
 export const useStatsContext = () => useContext(StatsContext);
 
 export function StatsContextProvider({ children }: PropsWithChildren) {
-  const { appData } = useAppContext();
+  const { poolsData } = useAppContext();
 
   const poolCountRef = useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (!appData) return;
+    if (poolsData === undefined) return;
 
     if (poolCountRef.current !== undefined) return;
-    poolCountRef.current = appData.pools.length;
-  }, [appData]);
+    poolCountRef.current = poolsData.pools.length;
+  }, [poolsData]);
 
   const referenceTimestampSRef = useRef(
     (() => {
@@ -105,9 +105,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   });
 
   const fetchPoolHistoricalStats = useCallback(async () => {
-    if (!appData) return;
+    if (poolsData === undefined) return;
 
-    for (const pool of appData.pools) {
+    for (const pool of poolsData.pools) {
       // TVL
       (async () => {
         try {
@@ -227,17 +227,17 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         }
       })();
     }
-  }, [appData]);
+  }, [poolsData]);
 
   const hasFetchedPoolHistoricalStatsRef = useRef<boolean>(false);
   useEffect(() => {
-    if (!appData) return;
+    if (poolsData === undefined) return;
 
     if (hasFetchedPoolHistoricalStatsRef.current) return;
     hasFetchedPoolHistoricalStatsRef.current = true;
 
     fetchPoolHistoricalStats();
-  }, [appData, fetchPoolHistoricalStats]);
+  }, [poolsData, fetchPoolHistoricalStats]);
 
   const poolStats: {
     volumeUsd_7d: Record<string, BigNumber>;
@@ -289,10 +289,10 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         }),
         {} as Record<string, BigNumber>,
       ),
-      aprPercent_24h: appData
+      aprPercent_24h: poolsData
         ? Object.entries(poolHistoricalStats.feesUsd_7d).reduce(
             (acc, [poolId, data]) => {
-              const pool = appData.pools.find((_pool) => _pool.id === poolId);
+              const pool = poolsData.pools.find((_pool) => _pool.id === poolId);
               if (!pool) return acc; // `pool` should always be defined
 
               const feesAprPercent = (
@@ -319,7 +319,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           )
         : {},
     }),
-    [poolHistoricalStats, appData],
+    [poolHistoricalStats, poolsData],
   );
 
   // Total
@@ -327,7 +327,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
     tvlUsd_7d: ChartData[] | undefined;
     volumeUsd_7d: ChartData[] | undefined;
   } = useMemo(() => {
-    if (!appData)
+    if (poolsData === undefined)
       return {
         tvlUsd_7d: undefined,
         volumeUsd_7d: undefined,
@@ -394,7 +394,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
     return result;
   }, [
-    appData,
+    poolsData,
     poolHistoricalStats.tvlUsd_7d,
     poolHistoricalStats.volumeUsd_7d,
   ]);

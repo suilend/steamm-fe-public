@@ -21,14 +21,27 @@ import {
   SuilendClient,
 } from "@suilend/sdk";
 import { Reserve } from "@suilend/sdk/_generated/suilend/reserve/structs";
-import { BETA_CONFIG, MAINNET_CONFIG, SteammSDK } from "@suilend/steamm-sdk";
+import {
+  BETA_CONFIG,
+  BankInfo,
+  MAINNET_CONFIG,
+  PoolInfo,
+  SteammSDK,
+} from "@suilend/steamm-sdk";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
+import useFetchBanksData from "@/fetchers/useFetchBanksData";
 import useFetchLstData from "@/fetchers/useFetchLstData";
+import useFetchPoolsData from "@/fetchers/useFetchPoolsData";
 import { ParsedBank, ParsedPool } from "@/lib/types";
 
 export interface AppData {
-  lm: {
+  mainMarket: {
+    reserveMap: Record<string, ParsedReserve>;
+
+    depositAprPercentMap: Record<string, BigNumber>;
+  };
+  lmMarket: {
     suilendClient: SuilendClient;
 
     lendingMarket: ParsedLendingMarket;
@@ -41,17 +54,21 @@ export interface AppData {
   };
 
   coinMetadataMap: Record<string, CoinMetadata>;
-  bTokenTypeCoinTypeMap: Record<string, string>;
 
-  coinTypePythPriceMap: Record<string, BigNumber>;
-  coinTypeSwitchboardPriceMap: Record<string, BigNumber>;
+  bankInfos: BankInfo[];
+  poolInfos: PoolInfo[];
+}
+export interface BanksData {
+  bTokenTypeCoinTypeMap: Record<string, string>;
 
   banks: ParsedBank[];
   bankMap: Record<string, ParsedBank>;
-  bankCoinTypes: string[];
+}
+export interface PoolsData {
+  coinTypePythPriceMap: Record<string, BigNumber>;
+  coinTypeSwitchboardPriceMap: Record<string, BigNumber>;
 
   pools: ParsedPool[];
-  poolCoinTypes: string[];
 }
 export interface LstData {
   lstCoinTypes: string[];
@@ -60,8 +77,15 @@ export interface LstData {
 
 interface AppContext {
   steammClient: SteammSDK | undefined;
+
   appData: AppData | undefined;
   refreshAppData: () => Promise<void>;
+
+  banksData: BanksData | undefined; // Depends on appData
+  refreshBanksData: () => Promise<void>;
+
+  poolsData: PoolsData | undefined; // Depends on appData and banksData
+  refreshPoolsData: () => Promise<void>;
 
   lstData: LstData | undefined;
 
@@ -72,6 +96,7 @@ interface AppContext {
 }
 type LoadedAppContext = AppContext & {
   steammClient: SteammSDK;
+
   appData: AppData;
 };
 
@@ -79,6 +104,16 @@ const AppContext = createContext<AppContext>({
   steammClient: undefined,
   appData: undefined,
   refreshAppData: async () => {
+    throw Error("AppContextProvider not initialized");
+  },
+
+  banksData: undefined,
+  refreshBanksData: async () => {
+    throw Error("AppContextProvider not initialized");
+  },
+
+  poolsData: undefined,
+  refreshPoolsData: async () => {
     throw Error("AppContextProvider not initialized");
   },
 
@@ -122,6 +157,27 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     await mutateAppData();
   }, [mutateAppData]);
 
+  // Banks (non-blocking)
+  const { data: banksData, mutateData: mutateBanksData } = useFetchBanksData(
+    steammClient,
+    appData,
+  );
+
+  const refreshBanksData = useCallback(async () => {
+    await mutateBanksData();
+  }, [mutateBanksData]);
+
+  // Pools (non-blocking)
+  const { data: poolsData, mutateData: mutatePoolsData } = useFetchPoolsData(
+    steammClient,
+    appData,
+    banksData,
+  );
+
+  const refreshPoolsData = useCallback(async () => {
+    await mutatePoolsData();
+  }, [mutatePoolsData]);
+
   // LST (non-blocking)
   const { data: lstData } = useFetchLstData();
 
@@ -142,8 +198,15 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   const contextValue: AppContext = useMemo(
     () => ({
       steammClient,
+
       appData,
       refreshAppData,
+
+      banksData,
+      refreshBanksData,
+
+      poolsData,
+      refreshPoolsData,
 
       lstData,
 
@@ -156,6 +219,10 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       steammClient,
       appData,
       refreshAppData,
+      banksData,
+      refreshBanksData,
+      poolsData,
+      refreshPoolsData,
       lstData,
       slippagePercent,
       setSlippagePercent,
