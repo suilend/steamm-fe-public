@@ -2,11 +2,13 @@ import { PriceFeed, SuiPriceServiceConnection } from "@pythnetwork/pyth-sui-js";
 import BigNumber from "bignumber.js";
 import useSWR from "swr";
 
-import { showErrorToast } from "@suilend/frontend-sui-next";
+import { showErrorToast, useSettingsContext } from "@suilend/frontend-sui-next";
 import { toHexString } from "@suilend/sdk";
+import { LiquidStakingObjectInfo, LstClient } from "@suilend/springsui-sdk";
 import { SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData, BanksData, PoolsData } from "@/contexts/AppContext";
+import { SPRINGSUI_ASSETS_URL } from "@/lib/constants";
 import { formatPair } from "@/lib/format";
 import { COINTYPE_ORACLE_INDEX_MAP } from "@/lib/oracles";
 import { ParsedPool, QuoterId } from "@/lib/types";
@@ -16,6 +18,8 @@ export default function useFetchPoolsData(
   appData: AppData | undefined,
   banksData: BanksData | undefined,
 ) {
+  const { suiClient } = useSettingsContext();
+
   // Data
   const dataFetcher = async () => {
     if (!appData || !banksData) return undefined as unknown as PoolsData; // In practice `dataFetcher` won't be called if `appData` or `banksData` is falsy
@@ -58,6 +62,50 @@ export default function useFetchPoolsData(
 
     // Oracles - Switchboard
     const coinTypeSwitchboardPriceMap: Record<string, BigNumber> = {};
+
+    // LSTs
+    let LIQUID_STAKING_INFO_MAP: Record<string, LiquidStakingObjectInfo>;
+    try {
+      LIQUID_STAKING_INFO_MAP = await (
+        await fetch(
+          `${SPRINGSUI_ASSETS_URL}/liquid-staking-info-map.json?timestamp=${Date.now()}`,
+        )
+      ).json();
+    } catch (err) {
+      LIQUID_STAKING_INFO_MAP = {};
+    }
+
+    const lstCoinTypes = Object.values(LIQUID_STAKING_INFO_MAP).map(
+      (LIQUID_STAKING_INFO) => LIQUID_STAKING_INFO.type,
+    );
+
+    const lstAprPercentMapEntries: [string, BigNumber][] = await Promise.all(
+      Object.values(LIQUID_STAKING_INFO_MAP)
+        .filter((LIQUID_STAKING_INFO) =>
+          poolInfos.some(
+            (poolInfo) =>
+              bTokenTypeCoinTypeMap[poolInfo.coinTypeA] ===
+                LIQUID_STAKING_INFO.type ||
+              bTokenTypeCoinTypeMap[poolInfo.coinTypeB] ===
+                LIQUID_STAKING_INFO.type,
+          ),
+        )
+        .map((LIQUID_STAKING_INFO) =>
+          (async () => {
+            const lstClient = await LstClient.initialize(
+              suiClient,
+              LIQUID_STAKING_INFO,
+            );
+
+            const apr = await lstClient.getSpringSuiApy(); // TODO: Use APR
+            const aprPercent = new BigNumber(apr).times(100);
+
+            return [LIQUID_STAKING_INFO.type, aprPercent];
+          })(),
+        ),
+    );
+    const lstAprPercentMap = Object.fromEntries(lstAprPercentMapEntries);
+    console.log("XXX lstAprPercentMap", lstAprPercentMap);
 
     // Pools
     const pools: ParsedPool[] = (
@@ -213,6 +261,9 @@ export default function useFetchPoolsData(
     return {
       coinTypePythPriceMap,
       coinTypeSwitchboardPriceMap,
+
+      lstCoinTypes,
+      lstAprPercentMap,
 
       pools: sortedPools,
     };

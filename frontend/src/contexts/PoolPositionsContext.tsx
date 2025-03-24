@@ -33,7 +33,7 @@ const PoolPositionsContext = createContext<PoolPositionsContext>({
 export const usePoolPositionsContext = () => useContext(PoolPositionsContext);
 
 export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
-  const { poolsData, lstData } = useLoadedAppContext();
+  const { poolsData } = useLoadedAppContext();
   const { getBalance, userData } = useUserContext();
   const { poolStats } = useStatsContext();
 
@@ -74,27 +74,25 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
               const filteredRewards = getFilteredRewards(rewards);
 
               const stakingYieldAprPercent: BigNumber | undefined =
-                lstData !== undefined
-                  ? pool.tvlUsd.gt(0)
-                    ? pool.coinTypes
-                        .reduce(
-                          (acc, coinType, index) =>
-                            acc.plus(
-                              new BigNumber(
-                                getStakingYieldAprPercent(
-                                  Side.DEPOSIT,
-                                  coinType,
-                                  lstData.aprPercentMap,
-                                ) ?? 0,
-                              ).times(
-                                pool.prices[index].times(pool.balances[index]),
-                              ),
+                pool.tvlUsd.gt(0)
+                  ? pool.coinTypes
+                      .reduce(
+                        (acc, coinType, index) =>
+                          acc.plus(
+                            new BigNumber(
+                              getStakingYieldAprPercent(
+                                Side.DEPOSIT,
+                                coinType,
+                                poolsData.lstAprPercentMap,
+                              ) ?? 0,
+                            ).times(
+                              pool.prices[index].times(pool.balances[index]),
                             ),
-                          new BigNumber(0),
-                        )
-                        .div(pool.tvlUsd)
-                    : new BigNumber(0)
-                  : undefined;
+                          ),
+                        new BigNumber(0),
+                      )
+                      .div(pool.tvlUsd)
+                  : new BigNumber(0);
 
               const totalAprPercent: BigNumber | undefined =
                 poolStats.aprPercent_24h[pool.id] !== undefined &&
@@ -130,7 +128,7 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
               };
             })
             .filter(Boolean) as PoolPosition[]),
-    [poolsData, userData, getBalance, lstData, poolStats.aprPercent_24h],
+    [poolsData, userData, getBalance, poolStats.aprPercent_24h],
   );
 
   // Context

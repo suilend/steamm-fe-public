@@ -243,9 +243,10 @@ export default function AdminPage() {
         (token) =>
           isSui(token.coinType) ||
           issSui(token.coinType) ||
-          isStablecoin(token.coinType),
+          isStablecoin(token.coinType) ||
+          (poolsData?.lstCoinTypes ?? []).includes(token.coinType),
       ),
-    [baseTokens],
+    [baseTokens, poolsData?.lstCoinTypes],
   );
 
   const onSelectToken = (token: Token, index: number) => {

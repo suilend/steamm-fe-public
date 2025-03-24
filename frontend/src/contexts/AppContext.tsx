@@ -31,7 +31,6 @@ import {
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
 import useFetchBanksData from "@/fetchers/useFetchBanksData";
-import useFetchLstData from "@/fetchers/useFetchLstData";
 import useFetchPoolsData from "@/fetchers/useFetchPoolsData";
 import { ParsedBank, ParsedPool } from "@/lib/types";
 
@@ -68,11 +67,10 @@ export interface PoolsData {
   coinTypePythPriceMap: Record<string, BigNumber>;
   coinTypeSwitchboardPriceMap: Record<string, BigNumber>;
 
-  pools: ParsedPool[];
-}
-export interface LstData {
   lstCoinTypes: string[];
-  aprPercentMap: Record<string, BigNumber>;
+  lstAprPercentMap: Record<string, BigNumber>;
+
+  pools: ParsedPool[];
 }
 
 interface AppContext {
@@ -86,8 +84,6 @@ interface AppContext {
 
   poolsData: PoolsData | undefined; // Depends on appData and banksData
   refreshPoolsData: () => Promise<void>;
-
-  lstData: LstData | undefined;
 
   slippagePercent: number;
   setSlippagePercent: (slippagePercent: number) => void;
@@ -116,8 +112,6 @@ const AppContext = createContext<AppContext>({
   refreshPoolsData: async () => {
     throw Error("AppContextProvider not initialized");
   },
-
-  lstData: undefined,
 
   slippagePercent: 1,
   setSlippagePercent: () => {
@@ -178,9 +172,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     await mutatePoolsData();
   }, [mutatePoolsData]);
 
-  // LST (non-blocking)
-  const { data: lstData } = useFetchLstData();
-
   // Slippage
   const [slippagePercent, setSlippagePercent] = useLocalStorage<number>(
     "slippagePercent",
@@ -208,8 +199,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       poolsData,
       refreshPoolsData,
 
-      lstData,
-
       slippagePercent,
       setSlippagePercent,
 
@@ -223,7 +212,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       refreshBanksData,
       poolsData,
       refreshPoolsData,
-      lstData,
       slippagePercent,
       setSlippagePercent,
       featuredPoolPairs,

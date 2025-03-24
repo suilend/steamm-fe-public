@@ -27,8 +27,7 @@ import { getTotalAprPercent } from "@/lib/liquidityMining";
 import { ParsedPool, PoolGroup } from "@/lib/types";
 
 export default function PoolsPage() {
-  const { appData, poolsData, lstData, featuredPoolPairs } =
-    useLoadedAppContext();
+  const { appData, poolsData, featuredPoolPairs } = useLoadedAppContext();
   const { userData } = useUserContext();
   const { poolStats, globalHistoricalStats, globalStats } = useStatsContext();
 
@@ -73,7 +72,7 @@ export default function PoolsPage() {
             const filteredRewards = getFilteredRewards(rewards);
 
             const stakingYieldAprPercent: BigNumber | undefined =
-              lstData !== undefined
+              poolsData !== undefined
                 ? pool.tvlUsd.gt(0)
                   ? pool.coinTypes
                       .reduce(
@@ -83,7 +82,7 @@ export default function PoolsPage() {
                               getStakingYieldAprPercent(
                                 Side.DEPOSIT,
                                 coinType,
-                                lstData.aprPercentMap,
+                                poolsData.lstAprPercentMap,
                               ) ?? 0,
                             ).times(
                               pool.prices[index].times(pool.balances[index]),
@@ -119,7 +118,6 @@ export default function PoolsPage() {
   }, [
     poolsData,
     userData?.rewardMap,
-    lstData,
     poolStats.aprPercent_24h,
     poolStats.volumeUsd_24h,
   ]);

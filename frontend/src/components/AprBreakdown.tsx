@@ -39,7 +39,7 @@ export default function AprBreakdown({
   valueClassName,
   pool,
 }: AprBreakdownProps) {
-  const { appData, lstData } = useLoadedAppContext();
+  const { appData, poolsData } = useLoadedAppContext();
   const { userData } = useUserContext();
   const { poolStats } = useStatsContext();
 
@@ -51,7 +51,7 @@ export default function AprBreakdown({
 
   // LST staking yield APR
   const stakingYieldAprPercent: BigNumber | undefined =
-    lstData !== undefined
+    poolsData !== undefined
       ? pool.tvlUsd.gt(0)
         ? pool.coinTypes
             .reduce(
@@ -61,7 +61,7 @@ export default function AprBreakdown({
                     getStakingYieldAprPercent(
                       Side.DEPOSIT,
                       coinType,
-                      lstData.aprPercentMap,
+                      poolsData.lstAprPercentMap,
                     ) ?? 0,
                   ).times(pool.prices[index].times(pool.balances[index])),
                 ),
