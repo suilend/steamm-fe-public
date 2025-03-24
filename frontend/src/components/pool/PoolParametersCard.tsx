@@ -60,10 +60,10 @@ export default function PoolParametersCard() {
                 <OpenOnExplorerButton url={explorer.buildCoinUrl(coinType)} />
               </div>
 
-              {banksData === undefined ? (
-                <Skeleton className="h-5 w-20" />
-              ) : (
-                banksData.bankMap[coinType] && (
+              {appData.mainMarket.reserveMap[coinType] &&
+                (banksData === undefined ? (
+                  <Skeleton className="h-5 w-20" />
+                ) : (
                   <Tag
                     labelClassName={cn(
                       "text-foreground decoration-foreground/50",
@@ -79,8 +79,7 @@ export default function PoolParametersCard() {
                     )}{" "}
                     APR
                   </Tag>
-                )
-              )}
+                ))}
             </div>
           );
         })}
