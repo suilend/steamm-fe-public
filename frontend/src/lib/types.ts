@@ -112,3 +112,8 @@ export type HistoryRedeem = {
   // Custom
   type: HistoryTransactionType.REDEEM;
 };
+
+export enum TokenDirection {
+  IN = "in",
+  OUT = "out",
+}

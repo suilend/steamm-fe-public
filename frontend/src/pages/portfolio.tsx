@@ -365,7 +365,7 @@ export default function PortfolioPage() {
                           <div className="flex h-[24px] w-max flex-row items-center">
                             <TokenLogos
                               coinTypes={Object.keys(claimableRewards)}
-                              size={16}
+                              size={20}
                             />
                           </div>
                         </Tooltip>
@@ -417,7 +417,7 @@ export default function PortfolioPage() {
                             NORMALIZED_STEAMM_POINTS_COINTYPE
                           ],
                         )}
-                        size={16}
+                        size={20}
                       />
                       <p className="text-h3 text-foreground">
                         {formatPoints(points)}

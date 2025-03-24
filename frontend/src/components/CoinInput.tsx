@@ -4,7 +4,7 @@ import { Wallet } from "lucide-react";
 
 import { Token, formatToken, formatUsd } from "@suilend/frontend-sui";
 
-import CoinPopover from "@/components/CoinPopover";
+import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
 import TokenLogo from "@/components/TokenLogo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUserContext } from "@/contexts/UserContext";
@@ -20,8 +20,8 @@ interface CoinInputProps {
   usdValue?: BigNumber | "";
   onChange?: (value: string) => void;
   onBalanceClick?: () => void;
-  popoverTokens?: Token[];
-  onPopoverTokenClick?: (token: Token) => void;
+  tokens?: Token[];
+  onSelectToken?: (token: Token) => void;
 }
 
 export default function CoinInput({
@@ -32,8 +32,8 @@ export default function CoinInput({
   usdValue,
   onChange,
   onBalanceClick,
-  popoverTokens,
-  onPopoverTokenClick,
+  tokens,
+  onSelectToken,
 }: CoinInputProps) {
   const { getBalance } = useUserContext();
 
@@ -41,8 +41,7 @@ export default function CoinInput({
 
   const isBalanceClickable =
     token !== undefined && value !== undefined && onBalanceClick !== undefined;
-  const hasPopover =
-    popoverTokens !== undefined && onPopoverTokenClick !== undefined;
+  const hasDialog = tokens !== undefined && onSelectToken !== undefined;
 
   return (
     <div
@@ -82,12 +81,12 @@ export default function CoinInput({
       </div>
 
       <div className="flex flex-col items-end gap-2">
-        {hasPopover ? (
+        {hasDialog ? (
           <div className="flex h-[24px] flex-row items-center">
-            <CoinPopover
+            <TokenSelectionDialog
               token={token}
-              tokens={popoverTokens}
-              onTokenClick={onPopoverTokenClick}
+              tokens={tokens}
+              onSelectToken={onSelectToken}
             />
           </div>
         ) : (

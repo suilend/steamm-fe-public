@@ -34,9 +34,9 @@ import {
 import { ADMIN_ADDRESS } from "@suilend/sdk";
 import { PoolScriptFunctions } from "@suilend/steamm-sdk";
 
+import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import Divider from "@/components/Divider";
 import Parameter from "@/components/Parameter";
-import CoinInput, { getCoinInputId } from "@/components/pool/CoinInput";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -226,7 +226,7 @@ export default function AdminPage() {
   };
 
   // Select
-  const basePopoverTokens = useMemo(
+  const baseTokens = useMemo(
     () =>
       Object.entries(balancesCoinMetadataMap ?? {})
         .sort(
@@ -237,18 +237,18 @@ export default function AdminPage() {
     [balancesCoinMetadataMap],
   );
 
-  const quotePopoverTokens = useMemo(
+  const quoteTokens = useMemo(
     () =>
-      basePopoverTokens.filter(
+      baseTokens.filter(
         (token) =>
           isSui(token.coinType) ||
           issSui(token.coinType) ||
           isStablecoin(token.coinType),
       ),
-    [basePopoverTokens],
+    [baseTokens],
   );
 
-  const onPopoverTokenClick = (token: Token, index: number) => {
+  const onSelectToken = (token: Token, index: number) => {
     const newCoinTypes: [string, string] = [
       index === 0
         ? token.coinType
@@ -732,8 +732,8 @@ export default function AdminPage() {
                 onBalanceClick={
                   coinTypes[0] !== "" ? () => onBalanceClick(0) : undefined
                 }
-                popoverTokens={basePopoverTokens}
-                onPopoverTokenClick={(token) => onPopoverTokenClick(token, 0)}
+                tokens={baseTokens}
+                onSelectToken={(token) => onSelectToken(token, 0)}
               />
             </div>
 
@@ -765,8 +765,8 @@ export default function AdminPage() {
                 onBalanceClick={
                   coinTypes[1] !== "" ? () => onBalanceClick(1) : undefined
                 }
-                popoverTokens={quotePopoverTokens}
-                onPopoverTokenClick={(token) => onPopoverTokenClick(token, 1)}
+                tokens={quoteTokens}
+                onSelectToken={(token) => onSelectToken(token, 1)}
               />
             </div>
 

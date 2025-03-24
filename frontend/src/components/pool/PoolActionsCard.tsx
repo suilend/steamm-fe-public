@@ -33,10 +33,10 @@ import {
   SwapQuote,
 } from "@suilend/steamm-sdk";
 
+import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
 import Parameter from "@/components/Parameter";
 import PercentInput from "@/components/PercentInput";
-import CoinInput, { getCoinInputId } from "@/components/pool/CoinInput";
 import SlippagePopover from "@/components/SlippagePopover";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import PriceDifferenceLabel from "@/components/swap/PriceDifferenceLabel";
