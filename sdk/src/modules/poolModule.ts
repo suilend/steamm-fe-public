@@ -260,7 +260,7 @@ export class PoolModule implements IModule {
     // wait until the sui rpc recognizes the treasuryCapId
     while (true) {
       const object = await this.sdk.fullClient.getObject({
-        id: args.lpTreasuryId,
+        id: args.lpTreasuryId as any, // TODO: Fix this
       });
       if (object.error) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -324,7 +324,7 @@ export class PoolModule implements IModule {
     // wait until the sui rpc recognizes the treasuryCapId
     while (true) {
       const object = await this.sdk.fullClient.getObject({
-        id: args.lpTreasuryId,
+        id: args.lpTreasuryId as any, // TODO: Fix this
       });
       if (object.error) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
