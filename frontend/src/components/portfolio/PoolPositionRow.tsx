@@ -230,7 +230,7 @@ export default function PoolPositionRow({
 
   return (
     <Link
-      className="group relative z-[1] flex min-h-[calc(106px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row items-center border-x border-b bg-background py-[16px] transition-colors hover:bg-tertiary"
+      className="group relative z-[1] flex min-h-[calc(81px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row items-center border-x border-b bg-background py-[16px] transition-colors hover:bg-tertiary"
       href={`${POOL_URL_PREFIX}/${poolPosition.pool.id}`}
     >
       {/* Pool */}
