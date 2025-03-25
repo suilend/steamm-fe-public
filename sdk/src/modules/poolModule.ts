@@ -666,3 +666,41 @@ export async function initOracleRegistry(
     arguments: [oracleRegistry],
   });
 }
+
+export async function addOracleToRegistry(
+  sdk: SteammSDK,
+  tx: Transaction,
+  args:
+    | {
+        type: "pyth";
+        adminCap: SuiAddressType;
+        priceInfoObj: SuiAddressType;
+      }
+    | {
+        type: "switchboard";
+        adminCap: SuiAddressType;
+        aggregator: SuiAddressType;
+      },
+) {
+  const pubAt = sdk.sdkOptions.oracle_config.published_at;
+
+  switch (args.type) {
+    case "pyth":
+      OracleFunctions.addPythOracle(
+        tx,
+        {
+          registry: tx.object(
+            sdk.sdkOptions.oracle_config.config!.oracleRegistryId,
+          ),
+          adminCap: tx.object(args.adminCap),
+          priceInfoObj: tx.object(args.priceInfoObj),
+        },
+        pubAt,
+      );
+      break;
+    case "switchboard":
+      throw new Error("Switchboard oracle type not implemented");
+    default:
+      throw new Error("Unknown oracle type");
+  }
+}
