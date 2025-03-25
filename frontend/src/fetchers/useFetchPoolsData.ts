@@ -27,7 +27,7 @@ export default function useFetchPoolsData(
     const { bTokenTypeCoinTypeMap, bankMap } = banksData;
 
     // Oracles
-    const oracles: any[] = []; // await steammClient.getOracles();
+    const oracles = await steammClient.getOracles();
 
     const pythOracles = oracles.filter(
       (oracle) => oracle.oracleType === "pyth",

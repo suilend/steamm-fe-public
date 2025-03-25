@@ -129,7 +129,7 @@ const LP_TOKEN_IMAGE_URL =
 export default function CreatePoolCard() {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, poolsData, banksData } = useLoadedAppContext();
+  const { steammClient, appData, banksData, poolsData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
   const flags = useFlags();
@@ -232,8 +232,9 @@ export default function CreatePoolCard() {
           ([, a], [, b]) =>
             a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1, // Sort by symbol (ascending)
         )
+        .filter(([coinType]) => getBalance(coinType).gt(0))
         .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata)),
-    [balancesCoinMetadataMap],
+    [balancesCoinMetadataMap, getBalance],
   );
 
   const quoteTokens = useMemo(

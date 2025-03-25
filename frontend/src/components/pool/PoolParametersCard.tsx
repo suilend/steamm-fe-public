@@ -29,7 +29,7 @@ import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 export default function PoolParametersCard() {
   const { explorer } = useSettingsContext();
-  const { appData, banksData } = useLoadedAppContext();
+  const { appData, banksData, poolsData } = useLoadedAppContext();
   const { pool } = usePoolContext();
 
   return (
@@ -126,16 +126,25 @@ export default function PoolParametersCard() {
         <Parameter label="Oracle prices">
           {pool.coinTypes.map((coinType) => (
             <div key={coinType} className="flex flex-row items-center gap-2">
-              <p className="text-p2 text-foreground">
-                1 {appData.coinMetadataMap[coinType].symbol}
-                {" ≈ "}
-                {formatPrice(
-                  appData.coinTypePythPriceMap[coinType] ??
-                    appData.coinTypeSwitchboardPriceMap[coinType],
-                )}
-              </p>
+              {poolsData === undefined ? (
+                <Skeleton className="h-[21px] w-16" />
+              ) : (
+                <p className="text-p2 text-foreground">
+                  1 {appData.coinMetadataMap[coinType].symbol}
+                  {" ≈ "}
+                  {formatPrice(
+                    poolsData.coinTypePythPriceMap[coinType] ??
+                      poolsData.coinTypeSwitchboardPriceMap[coinType] ??
+                      new BigNumber(0.00001),
+                  )}
+                </p>
+              )}
 
-              {Object.keys(appData.coinTypePythPriceMap).includes(coinType) ? (
+              {poolsData === undefined ? (
+                <Skeleton className="h-4 w-4" />
+              ) : Object.keys(poolsData.coinTypePythPriceMap).includes(
+                  coinType,
+                ) ? (
                 <Tooltip title="Powered by Pyth">
                   <Image
                     src={`${SUILEND_ASSETS_URL}/partners/Pyth.png`}
