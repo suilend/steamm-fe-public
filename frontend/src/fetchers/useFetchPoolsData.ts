@@ -4,11 +4,10 @@ import useSWR from "swr";
 
 import { showErrorToast, useSettingsContext } from "@suilend/frontend-sui-next";
 import { toHexString } from "@suilend/sdk";
-import { LiquidStakingObjectInfo, LstClient } from "@suilend/springsui-sdk";
+import { LstClient } from "@suilend/springsui-sdk";
 import { SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData, BanksData, PoolsData } from "@/contexts/AppContext";
-import { SPRINGSUI_ASSETS_URL } from "@/lib/constants";
 import { formatPair } from "@/lib/format";
 import { COINTYPE_ORACLE_INDEX_MAP } from "@/lib/oracles";
 import { ParsedPool, QuoterId } from "@/lib/types";
@@ -49,19 +48,28 @@ export default function useFetchPoolsData(
     );
 
     const pythPriceFeeds: PriceFeed[] =
-      (await pythConnection.getLatestPriceFeeds(pythPriceIdentifiers)) ?? [];
+      pythPriceIdentifiers.length === 0
+        ? []
+        : ((await pythConnection.getLatestPriceFeeds(pythPriceIdentifiers)) ??
+          []);
 
-    const coinTypePythPriceMap: Record<string, BigNumber> = Object.fromEntries(
-      Object.keys(COINTYPE_ORACLE_INDEX_MAP).map((coinType, index) => [
-        coinType,
-        new BigNumber(
-          pythPriceFeeds[index].getPriceUnchecked().getPriceAsNumberUnchecked(),
-        ),
-      ]),
-    );
+    const coinTypePythPriceMap: Record<string, BigNumber | undefined> =
+      Object.fromEntries(
+        Object.keys(COINTYPE_ORACLE_INDEX_MAP).map((coinType, index) => [
+          coinType,
+          pythPriceFeeds[index] === undefined
+            ? undefined
+            : new BigNumber(
+                pythPriceFeeds[index]
+                  .getPriceUnchecked()
+                  .getPriceAsNumberUnchecked(),
+              ),
+        ]),
+      );
 
     // Oracles - Switchboard
-    const coinTypeSwitchboardPriceMap: Record<string, BigNumber> = {};
+    const coinTypeSwitchboardPriceMap: Record<string, BigNumber | undefined> =
+      {};
 
     // LSTs
     const lstAprPercentMapEntries: [string, BigNumber][] = await Promise.all(

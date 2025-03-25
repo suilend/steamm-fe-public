@@ -68,8 +68,8 @@ export interface BanksData {
   bankMap: Record<string, ParsedBank>;
 }
 export interface PoolsData {
-  coinTypePythPriceMap: Record<string, BigNumber>;
-  coinTypeSwitchboardPriceMap: Record<string, BigNumber>;
+  coinTypePythPriceMap: Record<string, BigNumber | undefined>;
+  coinTypeSwitchboardPriceMap: Record<string, BigNumber | undefined>;
   lstAprPercentMap: Record<string, BigNumber>;
 
   pools: ParsedPool[];
