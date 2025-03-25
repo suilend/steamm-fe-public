@@ -124,7 +124,12 @@ export default function useFetchPoolsData(
             const coinTypeB = bTokenTypeCoinTypeMap[bTokenTypeB];
             const coinTypes = [coinTypeA, coinTypeB];
 
-            const pool = await steammClient.fullClient.fetchPool(id);
+            const pool =
+              quoterId === QuoterId.CPMM
+                ? await steammClient.fullClient.fetchConstantProductPool(id)
+                : quoterId === QuoterId.ORACLE
+                  ? await steammClient.fullClient.fetchOraclePool(id)
+                  : await steammClient.fullClient.fetchConstantProductPool(id); // Should never need to use the fallback
 
             const redeemQuote = await steammClient.Pool.quoteRedeem({
               lpTokens: pool.lpSupply.value,
