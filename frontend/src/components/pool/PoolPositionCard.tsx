@@ -11,9 +11,8 @@ import { usePoolPositionsContext } from "@/contexts/PoolPositionsContext";
 
 export default function PoolPositionCard() {
   const { appData } = useLoadedAppContext();
-  const { pool } = usePoolContext();
-
   const { poolPositions } = usePoolPositionsContext();
+  const { pool } = usePoolContext();
 
   const poolPosition =
     poolPositions === undefined

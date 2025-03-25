@@ -41,8 +41,7 @@ export default function PortfolioPage() {
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { appData, poolsData } = useLoadedAppContext();
   const { userData, refresh } = useUserContext();
-
-  const { poolPositions } = usePoolPositionsContext();
+  const { poolPositions, totalPoints } = usePoolPositionsContext();
 
   // Pool positions - Deposited USD for PnL calc. (BE)
   const { poolTransactionHistoryMap } = usePoolTransactionHistoryMap(
@@ -255,22 +254,6 @@ export default function PortfolioPage() {
     }
   };
 
-  // Summary - Points
-  const points: BigNumber | undefined = useMemo(
-    () =>
-      userData === undefined
-        ? undefined
-        : Object.entries(userData.poolRewardMap).reduce((acc, [, rewards]) => {
-            Object.entries(rewards).forEach(([coinType, amount]) => {
-              if (!isSteammPoints(coinType)) return;
-              acc = acc.plus(amount);
-            });
-
-            return acc;
-          }, new BigNumber(0)),
-    [userData],
-  );
-
   return (
     <>
       <Head>
@@ -403,27 +386,32 @@ export default function PortfolioPage() {
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">Points</p>
 
-                {points === undefined ? (
+                {totalPoints === undefined ? (
                   <Skeleton className="h-[30px] w-20" />
                 ) : (
-                  <Tooltip
-                    title={`${formatPoints(points, { dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].decimals })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
-                  >
-                    <div className="flex w-max flex-row items-center gap-2">
-                      <TokenLogo
-                        token={getToken(
-                          NORMALIZED_STEAMM_POINTS_COINTYPE,
-                          appData.coinMetadataMap[
-                            NORMALIZED_STEAMM_POINTS_COINTYPE
-                          ],
-                        )}
-                        size={20}
-                      />
+                  <div className="flex w-max flex-row items-center gap-2">
+                    <TokenLogo
+                      token={getToken(
+                        NORMALIZED_STEAMM_POINTS_COINTYPE,
+                        appData.coinMetadataMap[
+                          NORMALIZED_STEAMM_POINTS_COINTYPE
+                        ],
+                      )}
+                      size={20}
+                    />
+
+                    <Tooltip
+                      title={`${formatPoints(totalPoints, {
+                        dp: appData.coinMetadataMap[
+                          NORMALIZED_STEAMM_POINTS_COINTYPE
+                        ].decimals,
+                      })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
+                    >
                       <p className="text-h3 text-foreground">
-                        {formatPoints(points)}
+                        {formatPoints(totalPoints)}
                       </p>
-                    </div>
-                  </Tooltip>
+                    </Tooltip>
+                  </div>
                 )}
               </div>
             </div>

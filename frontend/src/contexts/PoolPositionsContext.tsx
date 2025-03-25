@@ -12,7 +12,7 @@ import {
   getStakingYieldAprPercent,
 } from "@suilend/sdk";
 
-import { useLoadedAppContext } from "@/contexts/AppContext";
+import { useAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { useUserContext } from "@/contexts/UserContext";
 import { getTotalAprPercent } from "@/lib/liquidityMining";
@@ -24,16 +24,22 @@ import { PoolPosition } from "@/lib/types";
 
 interface PoolPositionsContext {
   poolPositions: PoolPosition[] | undefined;
+
+  totalPoints: BigNumber | undefined;
+  pointsPerDay: BigNumber | undefined;
 }
 
 const PoolPositionsContext = createContext<PoolPositionsContext>({
   poolPositions: undefined,
+
+  totalPoints: undefined,
+  pointsPerDay: undefined,
 });
 
 export const usePoolPositionsContext = () => useContext(PoolPositionsContext);
 
 export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
-  const { poolsData } = useLoadedAppContext();
+  const { poolsData } = useAppContext();
   const { getBalance, userData } = useUserContext();
   const { poolStats } = useStatsContext();
 
@@ -67,6 +73,10 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
               const balanceUsd = new BigNumber(
                 balances[0].times(pool.prices[0]),
               ).plus(balances[1].times(pool.prices[1]));
+
+              const stakedPercent = lpTokenDepositedAmount
+                .div(lpTokenTotalAmount)
+                .times(100);
 
               // Same code as in frontend/src/components/AprBreakdown.tsx
               const rewards =
@@ -113,30 +123,61 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
                 balances,
                 balanceUsd,
                 pnlPercent: undefined, // Fetched separately (BE)
-                stakedPercent: lpTokenDepositedAmount
-                  .div(lpTokenTotalAmount)
-                  .times(100),
+                stakedPercent,
                 claimableRewards: Object.fromEntries(
                   Object.entries(userData.poolRewardMap[pool.id] ?? {}).filter(
                     ([coinType, amount]) => !isSteammPoints(coinType),
                   ),
                 ),
-                points:
+                totalPoints:
                   userData.poolRewardMap[pool.id]?.[
                     NORMALIZED_STEAMM_POINTS_COINTYPE
                   ] ?? new BigNumber(0),
+                pointsPerDay: (
+                  userData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT].find(
+                    (reward) => isSteammPoints(reward.stats.rewardCoinType),
+                  )?.stats.perDay ?? new BigNumber(0)
+                )
+                  .times(balanceUsd)
+                  .times(stakedPercent.div(100)),
               };
             })
             .filter(Boolean) as PoolPosition[]),
     [poolsData, userData, getBalance, poolStats.aprPercent_24h],
   );
 
+  // Points
+  const totalPoints: BigNumber | undefined = useMemo(
+    () =>
+      poolPositions === undefined
+        ? undefined
+        : poolPositions.reduce(
+            (acc, position) => acc.plus(position.totalPoints),
+            new BigNumber(0),
+          ),
+    [poolPositions],
+  );
+
+  const pointsPerDay: BigNumber | undefined = useMemo(
+    () =>
+      poolPositions === undefined
+        ? undefined
+        : poolPositions.reduce(
+            (acc, position) => acc.plus(position.pointsPerDay),
+            new BigNumber(0),
+          ),
+    [poolPositions],
+  );
+
   // Context
   const contextValue: PoolPositionsContext = useMemo(
     () => ({
       poolPositions,
+
+      totalPoints,
+      pointsPerDay,
     }),
-    [poolPositions],
+    [poolPositions, totalPoints, pointsPerDay],
   );
 
   return (

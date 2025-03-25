@@ -422,23 +422,47 @@ export default function PoolPositionRow({
         className="flex h-full flex-row items-center"
         style={columnStyleMap.points}
       >
-        <div className="flex flex-row items-center gap-2">
-          <TokenLogo
-            token={getToken(
-              NORMALIZED_STEAMM_POINTS_COINTYPE,
-              appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
-            )}
-            size={16}
-          />
+        {poolPosition.totalPoints.gt(0) || poolPosition.pointsPerDay.gt(0) ? (
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex flex-row items-center gap-2">
+              <TokenLogo
+                token={getToken(
+                  NORMALIZED_STEAMM_POINTS_COINTYPE,
+                  appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
+                )}
+                size={16}
+              />
 
-          <Tooltip
-            title={`${formatPoints(poolPosition.points, { dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].decimals })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
-          >
-            <p className="text-p2 text-foreground">
-              {formatPoints(poolPosition.points)}
-            </p>
-          </Tooltip>
-        </div>
+              <Tooltip
+                title={`${formatPoints(poolPosition.totalPoints, {
+                  dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE]
+                    .decimals,
+                })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
+              >
+                <p className="text-p1 text-foreground">
+                  {formatPoints(poolPosition.totalPoints)}
+                </p>
+              </Tooltip>
+            </div>
+
+            <div className="flex flex-row items-center gap-2">
+              <div className="w-4" />
+
+              <Tooltip
+                title={`${formatPoints(poolPosition.pointsPerDay, {
+                  dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE]
+                    .decimals,
+                })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol} per day`}
+              >
+                <p className="text-p2 text-secondary-foreground">
+                  {formatPoints(poolPosition.pointsPerDay)} per day
+                </p>
+              </Tooltip>
+            </div>
+          </div>
+        ) : (
+          <p className="text-p1 text-foreground">--</p>
+        )}
       </div>
     </Link>
   );

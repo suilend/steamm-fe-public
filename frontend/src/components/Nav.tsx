@@ -6,6 +6,7 @@ import { RotateCw } from "lucide-react";
 import ConnectWalletButton from "@/components/ConnectWalletButton";
 import Container from "@/components/Container";
 import Logo from "@/components/Logo";
+import NavPointsPopover from "@/components/NavPointsPopover";
 import NavPopover from "@/components/NavPopover";
 import SettingsDialog from "@/components/SettingsDialog";
 import { useUserContext } from "@/contexts/UserContext";
@@ -97,7 +98,12 @@ export default function Nav() {
                 <SettingsDialog />
               </div>
 
-              <ConnectWalletButton />
+              <div className="flex shrink-0 flex-row items-center gap-2">
+                <div className="max-sm:hidden">
+                  <NavPointsPopover />
+                </div>
+                <ConnectWalletButton />
+              </div>
 
               <div className="md:hidden">
                 <NavPopover />

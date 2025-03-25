@@ -19,6 +19,7 @@ import Layout from "@/components/Layout";
 import Toaster from "@/components/Toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppContextProvider } from "@/contexts/AppContext";
+import { PoolPositionsContextProvider } from "@/contexts/PoolPositionsContext";
 import { StatsContextProvider } from "@/contexts/StatsContext";
 import { UserContextProvider } from "@/contexts/UserContext";
 import { TITLE } from "@/lib/constants";
@@ -78,12 +79,14 @@ export default function App({ Component, pageProps }: AppProps) {
               <AppContextProvider>
                 <UserContextProvider>
                   <StatsContextProvider>
-                    <TooltipProvider>
-                      <Layout>
-                        <Component {...pageProps} />
-                      </Layout>
-                      <Toaster />
-                    </TooltipProvider>
+                    <PoolPositionsContextProvider>
+                      <TooltipProvider>
+                        <Layout>
+                          <Component {...pageProps} />
+                        </Layout>
+                        <Toaster />
+                      </TooltipProvider>
+                    </PoolPositionsContextProvider>
                   </StatsContextProvider>
                 </UserContextProvider>
               </AppContextProvider>

@@ -110,9 +110,7 @@ export default function AprBreakdown({
                         <>
                           {isSteammPoints(r.stats.rewardCoinType)
                             ? formatPoints(r.stats.perDay, { dp: 3 })
-                            : formatToken(r.stats.perDay, {
-                                exact: false,
-                              })}
+                            : formatToken(r.stats.perDay, { exact: false })}
                           <span className="text-p2 text-secondary-foreground">
                             Per $ per day
                           </span>
