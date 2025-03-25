@@ -30,9 +30,9 @@ export class OracleQuoter implements Quoter {
   public swap(tx: Transaction, args: OracleSwapArgs): TransactionResult {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
-      bankA: tx.object(args.bankA),
-      bankB: tx.object(args.bankB),
-      lendingMarket: tx.object(args.lendingMarket),
+      bankA: tx.object(args.bankA as any), // TODO: Fix this
+      bankB: tx.object(args.bankB as any), // TODO: Fix this
+      lendingMarket: tx.object(args.lendingMarket as any), // TODO: Fix this
       oraclePriceUpdateA: tx.object(args.oraclePriceA),
       oraclePriceUpdateB: tx.object(args.oraclePriceB),
       coinA: args.coinA,
@@ -59,9 +59,9 @@ export class OracleQuoter implements Quoter {
   ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
-      bankA: tx.object(args.bankA),
-      bankB: tx.object(args.bankB),
-      lendingMarket: tx.object(args.lendingMarket),
+      bankA: tx.object(args.bankA as any), // TODO: Fix this
+      bankB: tx.object(args.bankB as any), // TODO: Fix this
+      lendingMarket: tx.object(args.lendingMarket as any), // TODO: Fix this
       oraclePriceUpdateA: tx.object(args.oraclePriceA),
       oraclePriceUpdateB: tx.object(args.oraclePriceB),
       amountIn: args.amountIn,
