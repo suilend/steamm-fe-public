@@ -19,7 +19,7 @@ if [ "$CI" = false ]; then
 
     # Create suilend directory if it doesn't exist and cd into it
     mkdir -p temp &&
-    git clone --branch oracle-pool-script git@github.com:solendprotocol/steamm.git temp/git
+    git clone --branch develop git@github.com:solendprotocol/steamm.git temp/git
 else
     ./bin/unpublocal.sh --ci
 fi
@@ -247,6 +247,7 @@ sui client --client.config sui/client.yaml faucet
 sleep 1
 
 sui client --client.config sui/client.yaml addresses
+sui client --client.config sui/client.yaml gas
 
 LIQUID_STAKING_RESPONSE=$(publish_package "temp/liquid_staking" "LIQUID_STAKING_PKG_ID")
 WORMHOLE_RESPONSE=$(publish_package "temp/wormhole" "WORMHOLE_PKG_ID")
@@ -268,10 +269,29 @@ echo "lending_market_registry: $lending_market_registry"
 registry=$(find_object_id "$STEAMM_RESPONSE" ".*::registry::Registry")
 echo "registry: $registry"
 
-oracle_registry=$(find_object_id "$ORACLES_RESPONSE" ".*::oracles::OracleRegistry")
+ORACLE_PACKAGE_ID=$(echo "$ORACLES_RESPONSE" | grep -A 3 '"type": "published"' | grep "packageId" | cut -d'"' -f4)
+echo "ORACLE_PACKAGE_ID: $ORACLE_PACKAGE_ID"
+
+sleep 1
+
+sui client --client.config sui/client.yaml gas
+sui client --client.config sui/client.yaml addresses
+
+ORACLE_REGISTRY_RESPONSE=$(sui client --client.config sui/client.yaml ptb \
+    --move-call sui::tx_context::sender \
+    --assign sender \
+    --move-call "$ORACLE_PACKAGE_ID::oracles::new_oracle_registry_config" 15 10 15 10 \
+    --assign config \
+    --move-call "$ORACLE_PACKAGE_ID::oracles::new" config \
+    --assign response \
+    --move-call "0x2::transfer::public_share_object" "<$ORACLE_PACKAGE_ID::oracles::OracleRegistry>" response.0 \
+    --transfer-objects "[response.1]" sender \
+    --gas-budget 30000000 --json)
+
+oracle_registry=$(find_object_id "$ORACLE_REGISTRY_RESPONSE" ".*::oracles::OracleRegistry")
 echo "oracle_registry: $oracle_registry"
 
-oracle_cap=$(find_object_id "$ORACLES_RESPONSE" ".*::oracles::AdminCap")
+oracle_cap=$(find_object_id "$ORACLE_REGISTRY_RESPONSE" ".*::oracles::AdminCap")
 echo "oracle_cap: $oracle_cap"
 
 global_admin=$(find_object_id "$STEAMM_RESPONSE" ".*::global_admin::GlobalAdmin")
