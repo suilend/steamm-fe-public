@@ -228,7 +228,7 @@ export default function AprBreakdown({
                 aprRewards.length > 0
                 ? perDayRewards.length > 0 || aprRewards.length > 0
                   ? cn(
-                      "text-success decoration-success/50",
+                      "text-button-2-foreground decoration-button-2-foreground/50",
                       hoverUnderlineClassName,
                     )
                   : cn(

@@ -29,7 +29,6 @@ type ChartConfig = {
   value?: string;
   valuePeriodDays?: 1 | 7 | 30;
   chartType: ChartType;
-  periodChangePercent?: BigNumber | null;
   data?: ChartData[];
   dataPeriodDays: 1 | 7 | 30;
   formatValue: (value: number) => string;
@@ -57,7 +56,6 @@ export default function PoolChartCard() {
         title: chartStatNameMap[ChartStat.TVL],
         value: formatUsd(pool.tvlUsd),
         chartType: ChartType.LINE,
-        periodChangePercent: null,
         data: poolHistoricalStats.tvlUsd_7d[pool.id],
         dataPeriodDays: 7,
         formatValue: (value) => formatUsd(new BigNumber(value)),
@@ -70,7 +68,6 @@ export default function PoolChartCard() {
             : formatUsd(poolStats.volumeUsd_7d[pool.id]),
         valuePeriodDays: 7,
         chartType: ChartType.BAR,
-        periodChangePercent: null,
         data: poolHistoricalStats.volumeUsd_7d[pool.id],
         dataPeriodDays: 7,
         formatValue: (value) => formatUsd(new BigNumber(value)),
@@ -84,7 +81,6 @@ export default function PoolChartCard() {
         valuePeriodDays: 7,
         chartType: ChartType.BAR,
         dataPeriodDays: 7,
-        periodChangePercent: null,
         data: poolHistoricalStats.feesUsd_7d[pool.id],
         formatValue: (value) => formatUsd(new BigNumber(value)),
       },
@@ -125,7 +121,6 @@ export default function PoolChartCard() {
         value={chartConfig.value}
         valuePeriodDays={chartConfig.valuePeriodDays}
         chartType={chartConfig.chartType}
-        periodChangePercent={chartConfig.periodChangePercent}
         data={chartConfig.data}
         dataPeriodDays={chartConfig.dataPeriodDays}
         formatCategory={(category) => category}

@@ -3,50 +3,25 @@ import { useRouter } from "next/router";
 
 import { RotateCw } from "lucide-react";
 
-import { useWalletContext } from "@suilend/frontend-sui-next";
-import { ADMIN_ADDRESS } from "@suilend/sdk";
-
 import ConnectWalletButton from "@/components/ConnectWalletButton";
 import Container from "@/components/Container";
 import Logo from "@/components/Logo";
+import NavPopover from "@/components/NavPopover";
 import SettingsDialog from "@/components/SettingsDialog";
 import { useUserContext } from "@/contexts/UserContext";
-import {
-  ADMIN_URL,
-  POOL_URL_PREFIX,
-  PORTFOLIO_URL,
-  ROOT_URL,
-  SWAP_URL,
-} from "@/lib/navigation";
+import useNavItems from "@/hooks/useNavItems";
+import { ROOT_URL } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 const NAV_HEIGHT = 64; // px
 
-type NavItem = {
-  url: string;
-  startsWithUrl?: string;
-  title: string;
-};
-
 export default function Nav() {
   const router = useRouter();
 
-  const { address } = useWalletContext();
   const { refresh } = useUserContext();
 
   // Items
-  const NAV_ITEMS: NavItem[] = [
-    { url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX },
-    { url: PORTFOLIO_URL, title: "Portfolio" },
-    { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
-  ];
-  const ADMIN_NAV_ITEM: NavItem = {
-    url: ADMIN_URL,
-    title: "Admin",
-  };
-
-  const navItems = [...NAV_ITEMS];
-  if (address === ADMIN_ADDRESS) navItems.push(ADMIN_NAV_ITEM);
+  const navItems = useNavItems();
 
   // Refresh
   const refreshAll = () => {
@@ -74,49 +49,44 @@ export default function Nav() {
             style={{ height: `${NAV_HEIGHT}px` }}
           >
             {/* Start */}
-            <div className="flex flex-row items-center gap-4 md:gap-8">
-              {/* Logo */}
-              <Link className="w-max shrink-0" href={ROOT_URL}>
+            <div className="flex shrink-0 flex-row items-center gap-12">
+              <Link href={ROOT_URL}>
                 <Logo />
               </Link>
 
               {/* Items */}
-              <div className="flex flex-row gap-x-6 max-md:flex-wrap">
+              <div className="flex flex-row items-center gap-8 max-md:hidden">
                 {navItems.map((item) => {
                   const isSelected =
-                    router.asPath === item.url ||
+                    router.asPath.split("?")[0] === item.url ||
                     (item.startsWithUrl &&
                       router.asPath.startsWith(item.startsWithUrl));
 
-                  const isDisabled = !item.url;
-                  const Component = !isDisabled ? Link : "div";
-
                   return (
-                    <Component
+                    <Link
                       key={item.title}
-                      className="group flex h-6 flex-row items-center gap-2 md:h-10"
-                      href={item.url as string}
+                      className="group flex h-10 flex-row items-center gap-2"
+                      href={item.url}
                     >
                       <p
                         className={cn(
+                          "!text-p2 transition-colors",
                           isSelected
-                            ? "text-foreground transition-colors"
-                            : !isDisabled
-                              ? "text-secondary-foreground group-hover:text-foreground"
-                              : "text-tertiary-foreground",
+                            ? "text-foreground"
+                            : "text-secondary-foreground group-hover:text-foreground",
                         )}
                       >
                         {item.title}
                       </p>
-                    </Component>
+                    </Link>
                   );
                 })}
               </div>
             </div>
 
             {/* End */}
-            <div className="flex flex-row items-center gap-3">
-              <div className="flex flex-row items-center gap-2">
+            <div className="flex min-w-0 flex-row items-center gap-4">
+              <div className="flex shrink-0 flex-row items-center gap-2">
                 <button
                   className="group flex h-5 w-5 flex-row items-center justify-center"
                   onClick={refreshAll}
@@ -128,6 +98,10 @@ export default function Nav() {
               </div>
 
               <ConnectWalletButton />
+
+              <div className="md:hidden">
+                <NavPopover />
+              </div>
             </div>
           </div>
         </Container>

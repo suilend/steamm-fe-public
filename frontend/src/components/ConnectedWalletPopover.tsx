@@ -1,5 +1,5 @@
 import Image from "next/image";
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { ChevronDown, ChevronUp, VenetianMask } from "lucide-react";
 
@@ -44,7 +44,7 @@ export default function ConnectedWalletPopover() {
         maxWidth: 280,
       }}
       trigger={
-        <button className="group flex h-10 min-w-0 max-w-40 flex-row items-center gap-2 rounded-md border bg-card px-3">
+        <button className="group flex h-10 min-w-20 max-w-40 flex-row items-center gap-2 rounded-md border bg-card px-3">
           {isImpersonating ? (
             <VenetianMask className="h-4 w-4 shrink-0 text-secondary-foreground" />
           ) : wallet?.iconUrl ? (

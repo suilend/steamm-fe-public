@@ -189,7 +189,7 @@ export default function PoolGroupRow({
                 className={cn(
                   "!text-p1",
                   [...perDayRewards, ...aprRewards].length > 0
-                    ? "text-success"
+                    ? "text-button-2-foreground"
                     : "text-foreground",
                 )}
               >

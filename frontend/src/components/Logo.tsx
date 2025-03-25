@@ -12,6 +12,7 @@ export default function Logo() {
         height={24}
         quality={100}
       />
+      <p className="text-p1 text-foreground">STEAMM</p>
     </div>
   );
 }

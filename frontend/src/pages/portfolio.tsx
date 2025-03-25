@@ -310,7 +310,7 @@ export default function PortfolioPage() {
                 {weightedAverageAprPercent === undefined ? (
                   <Skeleton className="h-[30px] w-20" />
                 ) : (
-                  <p className="text-h3 text-success">
+                  <p className="text-h3 text-foreground">
                     {formatPercent(weightedAverageAprPercent)}
                   </p>
                 )}

@@ -1,18 +1,8 @@
-import Image from "next/image";
-import React, { useState } from "react";
+import { useState } from "react";
 
-import { ChevronDown, ChevronUp, VenetianMask } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
-import { formatAddress } from "@suilend/frontend-sui";
-import {
-  useSettingsContext,
-  useWalletContext,
-} from "@suilend/frontend-sui-next";
-
-import CopyToClipboardButton from "@/components/CopyToClipboardButton";
-import OpenOnExplorerButton from "@/components/OpenOnExplorerButton";
 import Popover from "@/components/Popover";
-import Tooltip from "@/components/Tooltip";
 import { cn } from "@/lib/utils";
 
 interface SelectPopoverProps {

@@ -192,7 +192,6 @@ export default function PoolsPage() {
                       : formatUsd(totalTvlUsd)
                   }
                   chartType={ChartType.LINE}
-                  periodChangePercent={null}
                   data={globalHistoricalStats.tvlUsd_7d}
                   dataPeriodDays={7}
                   formatCategory={(category) => category}
@@ -215,7 +214,6 @@ export default function PoolsPage() {
                   }
                   valuePeriodDays={7}
                   chartType={ChartType.BAR}
-                  periodChangePercent={null}
                   data={globalHistoricalStats.volumeUsd_7d}
                   dataPeriodDays={7}
                   formatCategory={(category) => category}
