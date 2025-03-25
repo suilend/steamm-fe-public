@@ -56,19 +56,19 @@ export type SuiStructTag = {
   type_arguments: SuiAddressType[];
 };
 
-export function fixSuiObjectId(value: string): string {
+export const fixSuiObjectId = (value: string): string => {
   if (value.toLowerCase().startsWith("0x")) {
     return normalizeSuiObjectId(value);
   }
   return value;
-}
+};
 
 /**
  * Recursively traverses the given data object and patches any string values that represent Sui object IDs.
  *
  * @param {any} data - The data object to be patched.
  */
-export function patchFixSuiObjectId(data: any) {
+export const patchFixSuiObjectId = (data: any) => {
   for (const key in data) {
     const type = typeof data[key];
     if (type === "object") {
@@ -80,9 +80,9 @@ export function patchFixSuiObjectId(data: any) {
       }
     }
   }
-}
+};
 
-export function extractGenerics(typeString: string): string[] {
+export const extractGenerics = (typeString: string): string[] => {
   const match = typeString.match(/<(.+)>/);
   if (!match) return [];
 
@@ -106,10 +106,10 @@ export function extractGenerics(typeString: string): string[] {
   if (current) generics.push(current.trim());
 
   return generics;
-}
+};
 
-function zip<T, U>(a: T[], b: U[]): [T, U][] {
+const zip = <T, U>(a: T[], b: U[]): [T, U][] => {
   return a.map((k, i) => [k, b[i]]);
-}
+};
 
 export { zip };

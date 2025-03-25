@@ -43,12 +43,10 @@ import { cn } from "@/lib/utils";
 
 interface PoolPositionRowProps {
   poolPosition: PoolPosition;
-  isLast?: boolean;
 }
 
 export default function PoolPositionRow({
   poolPosition,
-  isLast,
 }: PoolPositionRowProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
@@ -220,16 +218,13 @@ export default function PoolPositionRow({
 
   return (
     <Link
-      className={cn(
-        "group relative z-[1] flex min-h-[106px] w-full min-w-max shrink-0 cursor-pointer flex-row items-center py-[16px] transition-colors hover:bg-tertiary",
-        !isLast && "min-h-[calc(106px+1px)] border-b",
-      )}
+      className="group relative z-[1] flex min-h-[calc(106px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row items-center border-x border-b bg-background py-[16px] transition-colors hover:bg-tertiary"
       href={`${POOL_URL_PREFIX}/${poolPosition.pool.id}`}
     >
-      {/* Pair */}
+      {/* Pool */}
       <div
         className="flex h-full flex-row items-center gap-3"
-        style={columnStyleMap.pair}
+        style={columnStyleMap.pool}
       >
         <TokenLogos coinTypes={poolPosition.pool.coinTypes} size={24} />
         <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
@@ -239,15 +234,11 @@ export default function PoolPositionRow({
             ),
           )}
         </p>
-      </div>
 
-      {/* Type */}
-      <div
-        className="flex h-full flex-row items-center gap-1"
-        style={columnStyleMap.type}
-      >
-        <Tag>{QUOTER_ID_NAME_MAP[poolPosition.pool.quoterId]}</Tag>
-        <Tag>{formatFeeTier(poolPosition.pool.feeTierPercent)}</Tag>
+        <div className="flex flex-row items-center gap-1">
+          <Tag>{QUOTER_ID_NAME_MAP[poolPosition.pool.quoterId]}</Tag>
+          <Tag>{formatFeeTier(poolPosition.pool.feeTierPercent)}</Tag>
+        </div>
       </div>
 
       {/* APR */}
@@ -279,33 +270,39 @@ export default function PoolPositionRow({
             </Tooltip>
           )}
 
-          {poolPosition.pool.coinTypes.map((coinType, index) => (
-            <Fragment key={index}>
-              {poolPosition.balances === undefined ? (
-                <Skeleton className="h-[21px] w-24" />
-              ) : (
-                <div className="flex flex-row items-center gap-2">
-                  <TokenLogo
-                    token={getToken(
-                      coinType,
-                      appData.coinMetadataMap[coinType],
-                    )}
-                    size={16}
-                  />
-                  <Tooltip
-                    title={`${formatToken(poolPosition.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
-                  >
-                    <p className="text-p2 text-foreground">
-                      {formatToken(poolPosition.balances[index], {
-                        exact: false,
-                      })}{" "}
-                      {appData.coinMetadataMap[coinType].symbol}
-                    </p>
-                  </Tooltip>
-                </div>
-              )}
-            </Fragment>
-          ))}
+          <div className="flex flex-row items-center gap-2">
+            {poolPosition.pool.coinTypes.map((coinType, index) => (
+              <Fragment key={index}>
+                {poolPosition.balances === undefined ? (
+                  <Skeleton className="h-[21px] w-24" />
+                ) : (
+                  <div className="flex flex-row items-center gap-2">
+                    <TokenLogo
+                      token={getToken(
+                        coinType,
+                        appData.coinMetadataMap[coinType],
+                      )}
+                      size={16}
+                    />
+                    <Tooltip
+                      title={`${formatToken(poolPosition.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
+                    >
+                      <p className="text-p2 text-foreground">
+                        {formatToken(poolPosition.balances[index], {
+                          exact: false,
+                        })}{" "}
+                        {appData.coinMetadataMap[coinType].symbol}
+                      </p>
+                    </Tooltip>
+                  </div>
+                )}
+
+                {index === 0 && (
+                  <p className="text-p2 text-secondary-foreground">+</p>
+                )}
+              </Fragment>
+            ))}
+          </div>
         </div>
       </div>
 

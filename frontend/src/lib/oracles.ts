@@ -1,0 +1,16 @@
+import {
+  NORMALIZED_DEEP_COINTYPE,
+  NORMALIZED_SEND_COINTYPE,
+  NORMALIZED_SUI_COINTYPE,
+  NORMALIZED_USDC_COINTYPE,
+} from "@suilend/frontend-sui";
+
+export const COINTYPE_ORACLE_INDEX_MAP: Record<string, number> =
+  process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+    ? {
+        [NORMALIZED_SUI_COINTYPE]: 0,
+        [NORMALIZED_USDC_COINTYPE]: 1,
+        [NORMALIZED_SEND_COINTYPE]: 2,
+        [NORMALIZED_DEEP_COINTYPE]: 3,
+      }
+    : {}; // TODO: Add the indexes for mainnet

@@ -1,8 +1,11 @@
+import Image from "next/image";
+
 import BigNumber from "bignumber.js";
 
 import {
   formatAddress,
   formatPercent,
+  formatPrice,
   formatToken,
   getToken,
 } from "@suilend/frontend-sui";
@@ -18,7 +21,9 @@ import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
+import { SUILEND_ASSETS_URL } from "@/lib/constants";
 import { formatFeeTier } from "@/lib/format";
+import { QuoterId } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 export default function PoolParametersCard() {
@@ -28,7 +33,7 @@ export default function PoolParametersCard() {
 
   return (
     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
-      <Parameter className="gap-2" label="Pool composition">
+      <Parameter label="Assets">
         {pool.coinTypes.map((coinType, index) => {
           const coinMetadata = appData.coinMetadataMap[coinType];
 
@@ -62,12 +67,12 @@ export default function PoolParametersCard() {
               {appData.bankMap[coinType] && (
                 <Tag
                   labelClassName={cn(
-                    "flex flex-row items-center gap-1.5 text-foreground decoration-foreground/50",
+                    "text-foreground decoration-foreground/50",
                     hoverUnderlineClassName,
                   )}
                   tooltip={`${formatPercent(appData.bankMap[coinType].utilizationPercent)} of deposited ${coinMetadata.symbol} is earning ${formatPercent(appData.bankMap[coinType].suilendDepositAprPercent)} APR on Suilend`}
+                  startDecorator={<SuilendLogo size={12} />}
                 >
-                  <SuilendLogo size={12} />
                   {formatPercent(
                     appData.bankMap[coinType].suilendDepositAprPercent
                       .times(appData.bankMap[coinType].utilizationPercent)
@@ -81,17 +86,10 @@ export default function PoolParametersCard() {
         })}
       </Parameter>
 
-      <Parameter label="Pool address">
-        <div className="flex flex-row items-center gap-2">
-          <Tooltip title={pool.id}>
-            <p className="text-p2 text-foreground">{formatAddress(pool.id)}</p>
-          </Tooltip>
-
-          <div className="flex flex-row items-center gap-1">
-            <CopyToClipboardButton value={pool.id} />
-            <OpenOnExplorerButton url={explorer.buildObjectUrl(pool.id)} />
-          </div>
-        </div>
+      <Parameter label="Fee tier">
+        <p className="text-p2 text-foreground">
+          {formatFeeTier(pool.feeTierPercent)}
+        </p>
       </Parameter>
 
       <ExchangeRateParameter
@@ -120,10 +118,56 @@ export default function PoolParametersCard() {
         label="Current price"
       />
 
-      <Parameter label="Fee tier">
-        <p className="text-p2 text-foreground">
-          {formatFeeTier(pool.feeTierPercent)}
-        </p>
+      {pool.quoterId === QuoterId.ORACLE && (
+        <Parameter label="Oracle prices">
+          {pool.coinTypes.map((coinType) => (
+            <div key={coinType} className="flex flex-row items-center gap-2">
+              <p className="text-p2 text-foreground">
+                1 {appData.coinMetadataMap[coinType].symbol}
+                {" ≈ "}
+                {formatPrice(
+                  appData.coinTypePythPriceMap[coinType] ??
+                    appData.coinTypeSwitchboardPriceMap[coinType],
+                )}
+              </p>
+
+              {Object.keys(appData.coinTypePythPriceMap).includes(coinType) ? (
+                <Tooltip title="Powered by Pyth">
+                  <Image
+                    src={`${SUILEND_ASSETS_URL}/partners/Pyth.png`}
+                    alt="Pyth logo"
+                    width={16}
+                    height={16}
+                    quality={100}
+                  />
+                </Tooltip>
+              ) : (
+                <Tooltip title="Powered by Switchboard">
+                  <Image
+                    src={`${SUILEND_ASSETS_URL}/partners/Switchboard.png`}
+                    alt="Switchboard logo"
+                    width={16}
+                    height={16}
+                    quality={100}
+                  />
+                </Tooltip>
+              )}
+            </div>
+          ))}
+        </Parameter>
+      )}
+
+      <Parameter label="Address">
+        <div className="flex flex-row items-center gap-2">
+          <Tooltip title={pool.id}>
+            <p className="text-p2 text-foreground">{formatAddress(pool.id)}</p>
+          </Tooltip>
+
+          <div className="flex flex-row items-center gap-1">
+            <CopyToClipboardButton value={pool.id} />
+            <OpenOnExplorerButton url={explorer.buildObjectUrl(pool.id)} />
+          </div>
+        </div>
       </Parameter>
     </div>
   );

@@ -6,7 +6,6 @@ import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  PRICE_DIFFERENCE_PERCENT_DESTRUCTIVE_THRESHOLD,
   PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD,
   getQuoteRatio,
 } from "@/lib/swap";
@@ -56,13 +55,7 @@ export default function PriceDifferenceLabel({
         "text-p2 text-foreground",
         priceDifferencePercent!.gte(
           PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD,
-        ) &&
-          cn(
-            "text-warning",
-            priceDifferencePercent!.gte(
-              PRICE_DIFFERENCE_PERCENT_DESTRUCTIVE_THRESHOLD,
-            ) && "text-error",
-          ),
+        ) && "text-warning",
       )}
     >
       <PriceDifferenceIcon className="mb-0.5 mr-1.5 inline h-3.5 w-3.5" />

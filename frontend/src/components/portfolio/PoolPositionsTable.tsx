@@ -11,8 +11,7 @@ import { PoolPosition } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type Column =
-  | "pair"
-  | "type"
+  | "pool"
   | "aprPercent_24h"
   | "balance"
   | "pnlPercent"
@@ -22,31 +21,26 @@ type Column =
 type SortableColumn = "aprPercent_24h" | "balance" | "pnlPercent";
 
 export const columnStyleMap: Record<Column, CSSProperties> = {
-  pair: {
+  pool: {
     flex: 2,
-    minWidth: 250, // px
-    paddingLeft: 4 * 5, // px
-  },
-  type: {
-    width: 150, // px
-    minWidth: 150, // px
+    minWidth: 300, // px
     paddingLeft: 4 * 5, // px
   },
   aprPercent_24h: {
     flex: 1,
-    minWidth: 150, // px
+    minWidth: 125, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   balance: {
     flex: 1,
-    minWidth: 150, // px
+    minWidth: 250, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   pnlPercent: {
     flex: 1,
-    minWidth: 150, // px
+    minWidth: 125, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -64,7 +58,7 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   points: {
     flex: 1,
-    minWidth: 150, // px
+    minWidth: 125, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -139,26 +133,14 @@ export default function PoolPositionsTable({
   }, [poolPositions, sortState]);
 
   return (
-    <div
-      className={cn(
-        "relative w-full overflow-auto rounded-md border bg-background",
-        className,
-      )}
-    >
+    <div className={cn("relative w-full overflow-auto", className)}>
       {/* Header */}
-      <div className="sticky left-0 top-0 z-[2] flex h-[calc(40px+1px)] w-full min-w-max shrink-0 flex-row border-b bg-secondary">
+      <div className="sticky left-0 top-0 z-[2] flex h-[calc(1px+40px+1px)] w-full min-w-max shrink-0 flex-row border bg-secondary">
         <HeaderColumn<Column, SortableColumn>
-          id="pair"
-          style={columnStyleMap.pair}
+          id="pool"
+          style={columnStyleMap.pool}
         >
-          Pair
-        </HeaderColumn>
-
-        <HeaderColumn<Column, SortableColumn>
-          id="type"
-          style={columnStyleMap.type}
-        >
-          Type & Fee tier
+          Pool
         </HeaderColumn>
 
         <HeaderColumn<Column, SortableColumn>
@@ -231,26 +213,19 @@ export default function PoolPositionsTable({
 
       {/* Rows */}
       {sortedPoolPositions === undefined ? (
-        Array.from({ length: 3 }).map((_, index, array) => (
+        Array.from({ length: 3 }).map((_, index) => (
           <Skeleton
             key={index}
-            className={cn(
-              "relative z-[1] h-[106px] w-full",
-              index !== array.length - 1 && "h-[calc(106px+1px)] border-b",
-            )}
+            className="relative z-[1] h-[calc(106px+1px)] w-full border-x border-b"
           />
         ))
       ) : sortedPoolPositions.length === 0 ? (
-        <div className="flex h-[106px] w-full flex-row items-center justify-center">
+        <div className="flex h-[calc(106px+1px)] w-full flex-row items-center justify-center border-x border-b bg-background">
           <p className="text-p2 text-tertiary-foreground">No positions</p>
         </div>
       ) : (
-        sortedPoolPositions.map((position, index, array) => (
-          <PoolPositionRow
-            key={position.pool.id}
-            poolPosition={position}
-            isLast={index === array.length - 1}
-          />
+        sortedPoolPositions.map((position) => (
+          <PoolPositionRow key={position.pool.id} poolPosition={position} />
         ))
       )}
     </div>

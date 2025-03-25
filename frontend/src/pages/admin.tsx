@@ -14,12 +14,10 @@ import {
   normalizeSuiAddress,
 } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
+import { useFlags } from "launchdarkly-react-client-sdk";
 
 import {
-  NORMALIZED_DEEP_COINTYPE,
-  NORMALIZED_SEND_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
-  NORMALIZED_USDC_COINTYPE,
   SUI_GAS_MIN,
   Token,
   getCoinMetadataMap,
@@ -46,19 +44,13 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useLoadedUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
 import { formatFeeTier, formatPair, formatTextInputValue } from "@/lib/format";
+import { COINTYPE_ORACLE_INDEX_MAP } from "@/lib/oracles";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const FEE_TIER_PERCENTS: number[] = [0.01, 0.05, 0.3, 1, 2];
-
-const COIN_TYPE_ORACLE_INDEX_MAP: Record<string, number> = {
-  [NORMALIZED_SUI_COINTYPE]: 0,
-  [NORMALIZED_USDC_COINTYPE]: 1,
-  [NORMALIZED_SEND_COINTYPE]: 2,
-  [NORMALIZED_DEEP_COINTYPE]: 3,
-};
 
 const generate_bytecode = (
   module: string,
@@ -142,7 +134,14 @@ export default function AdminPage() {
   const { balancesCoinMetadataMap, getBalance, refresh } =
     useLoadedUserContext();
 
-  const isEditable = address === ADMIN_ADDRESS;
+  const flags = useFlags();
+  const isWhitelisted = useMemo(
+    () =>
+      !!address &&
+      (address === ADMIN_ADDRESS ||
+        (flags?.steammCreatePoolWhitelist ?? []).includes(address)),
+    [address, flags?.steammCreatePoolWhitelist],
+  );
 
   // CoinTypes
   const [coinTypes, setCoinTypes] = useState<[string, string]>(["", ""]);
@@ -235,25 +234,18 @@ export default function AdminPage() {
           ([, a], [, b]) =>
             a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1, // Sort by symbol (ascending)
         )
-        .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
-        .filter((token) =>
-          Object.keys(COIN_TYPE_ORACLE_INDEX_MAP).includes(token.coinType),
-        ),
+        .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata)),
     [balancesCoinMetadataMap],
   );
 
   const quotePopoverTokens = useMemo(
     () =>
-      basePopoverTokens
-        .filter(
-          (token) =>
-            isSui(token.coinType) ||
-            issSui(token.coinType) ||
-            isStablecoin(token.coinType),
-        )
-        .filter((token) =>
-          Object.keys(COIN_TYPE_ORACLE_INDEX_MAP).includes(token.coinType),
-        ),
+      basePopoverTokens.filter(
+        (token) =>
+          isSui(token.coinType) ||
+          issSui(token.coinType) ||
+          isStablecoin(token.coinType),
+      ),
     [basePopoverTokens],
   );
 
@@ -317,7 +309,7 @@ export default function AdminPage() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    if (!isEditable)
+    if (!isWhitelisted)
       return { isDisabled: true, title: "Create pool and deposit" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
 
@@ -438,6 +430,13 @@ export default function AdminPage() {
     if (!address || !quoterId || !feeTierPercent) return;
 
     try {
+      if (quoterId === QuoterId.ORACLE) {
+        if (COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]] === undefined)
+          throw new Error("coinType 0 not found in COINTYPE_ORACLE_INDEX_MAP");
+        if (COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]] === undefined)
+          throw new Error("coinType 1 not found in COINTYPE_ORACLE_INDEX_MAP");
+      }
+
       setIsSubmitting(true);
 
       const tokens = coinTypes.map((coinType) =>
@@ -586,11 +585,6 @@ export default function AdminPage() {
         createLpTokenResult,
       );
 
-      if (COIN_TYPE_ORACLE_INDEX_MAP[coinTypes[0]] === undefined)
-        throw new Error("coinType 0 not found in COIN_TYPE_ORACLE_INDEX_MAP");
-      if (COIN_TYPE_ORACLE_INDEX_MAP[coinTypes[1]] === undefined)
-        throw new Error("coinType 1 not found in COIN_TYPE_ORACLE_INDEX_MAP");
-
       const createPoolBaseArgs = {
         bTokenTypeA: bTokens[0].coinType,
         bTokenMetaA: bTokens[0].id!, // Checked above
@@ -613,14 +607,14 @@ export default function AdminPage() {
           [QuoterId.ORACLE]: {
             ...createPoolBaseArgs,
             type: "Oracle" as const,
-            oracleIndexA: BigInt(COIN_TYPE_ORACLE_INDEX_MAP[coinTypes[0]]),
-            oracleIndexB: BigInt(COIN_TYPE_ORACLE_INDEX_MAP[coinTypes[1]]),
+            oracleIndexA: BigInt(COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]]),
+            oracleIndexB: BigInt(COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]]),
             coinTypeA: tokens[0].coinType,
             coinMetaA: tokens[0].id!, // Checked above
             coinTypeB: tokens[1].coinType,
             coinMetaB: tokens[1].id!, // Checked above
           },
-          [QuoterId.STABLE]: {} as any,
+          [QuoterId.STABLE]: {} as any, // TODO
         }[quoterId],
       );
 
@@ -701,7 +695,7 @@ export default function AdminPage() {
             ...sharePoolBaseArgs,
             type: "Oracle" as const,
           },
-          [QuoterId.STABLE]: {} as any,
+          [QuoterId.STABLE]: {} as any, // TODO
         }[quoterId],
         transaction,
       );

@@ -6,7 +6,6 @@ import useSWR from "swr";
 
 import {
   NORMALIZED_STEAMM_POINTS_COINTYPE,
-  COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP as SUILEND_COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP,
   getCoinMetadataMap,
 } from "@suilend/frontend-sui";
 import { showErrorToast, useSettingsContext } from "@suilend/frontend-sui-next";
@@ -16,11 +15,13 @@ import {
   SuilendClient,
   initializeSuilend,
   initializeSuilendRewards,
+  toHexString,
 } from "@suilend/sdk";
 import { SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
 import { formatPair } from "@/lib/format";
+import { COINTYPE_ORACLE_INDEX_MAP } from "@/lib/oracles";
 import { ParsedBank, ParsedPool, QuoterId } from "@/lib/types";
 
 export default function useFetchAppData(steammClient: SteammSDK) {
@@ -87,10 +88,41 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     );
     coinMetadataMap = { ...coinMetadataMap, ...pointsCoinMetadataMap };
 
-    // Prices
+    // Oracles
+    const oracles = await steammClient.getOracles();
+
+    const pythOracles = oracles.filter(
+      (oracle) => oracle.oracleType === "pyth",
+    );
+    const switchboardOracles = oracles.filter(
+      (oracle) => oracle.oracleType === "switchboard",
+    );
+
+    // Oracles - Pyth
     const pythConnection = new SuiPriceServiceConnection(
       "https://hermes.pyth.network",
     );
+
+    const pythPriceIdentifiers = pythOracles.map((oracle) =>
+      typeof oracle.oracleIdentifier === "string"
+        ? oracle.oracleIdentifier
+        : toHexString(oracle.oracleIdentifier),
+    );
+
+    const pythPriceFeeds: PriceFeed[] =
+      (await pythConnection.getLatestPriceFeeds(pythPriceIdentifiers)) ?? [];
+
+    const coinTypePythPriceMap: Record<string, BigNumber> = Object.fromEntries(
+      Object.keys(COINTYPE_ORACLE_INDEX_MAP).map((coinType, index) => [
+        coinType,
+        new BigNumber(
+          pythPriceFeeds[index].getPriceUnchecked().getPriceAsNumberUnchecked(),
+        ),
+      ]),
+    );
+
+    // Oracles - Switchboard
+    const coinTypeSwitchboardPriceMap: Record<string, BigNumber> = {};
 
     // Banks
     const bankCoinTypes: string[] = [];
@@ -182,74 +214,11 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     );
     coinMetadataMap = { ...coinMetadataMap, ...poolCoinMetadataMap };
 
-    const uniqueReservelessPoolCoinTypes = Array.from(
-      new Set(
-        poolInfos
-          .map((poolInfo) => [
-            bTokenTypeCoinTypeMap[poolInfo.coinTypeA],
-            bTokenTypeCoinTypeMap[poolInfo.coinTypeB],
-          ])
-          .flat()
-          .filter((coinType) => !mainMarket_reserveMap[coinType]),
-      ),
-    );
-
-    // coinType -> price feed symbol
-    const COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP: Record<string, string> = {
-      ...SUILEND_COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP,
-      // TODO: Add on-chain price feed symbol mappings (for Oracle quoter pools)
-    };
-
-    // Price feed symbol -> price feed id
-    const PYTH_PRICE_FEED_SYMBOL_PRICE_ID_MAP = Object.fromEntries(
-      (
-        await (
-          await fetch(
-            "https://hermes.pyth.network/v2/price_feeds?asset_type=crypto",
-          )
-        ).json()
-      ).map((priceFeed: any) => [
-        priceFeed.attributes.symbol,
-        `0x${priceFeed.id}`,
-      ]),
-    );
-
-    const pythPriceFeeds: PriceFeed[] =
-      (await pythConnection.getLatestPriceFeeds(
-        uniqueReservelessPoolCoinTypes
-          .map(
-            (coinType) =>
-              PYTH_PRICE_FEED_SYMBOL_PRICE_ID_MAP[
-                COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP[coinType]
-              ],
-          )
-          .filter(Boolean),
-      )) ?? [];
-    console.log("XXX pythPriceFeeds:", pythPriceFeeds);
-
-    const PYTH_PRICE_FEED_SYMBOL_PRICE_MAP: Record<string, BigNumber> =
-      Object.fromEntries(
-        pythPriceFeeds.map((pythPriceFeed) => [
-          Object.entries(PYTH_PRICE_FEED_SYMBOL_PRICE_ID_MAP).find(
-            ([, priceId]) => priceId === `0x${pythPriceFeed.id}`,
-          )![0],
-          new BigNumber(
-            pythPriceFeed.getPriceUnchecked().getPriceAsNumberUnchecked(),
-          ),
-        ]),
-      );
-
-    console.log(
-      "XXX PYTH_PRICE_FEED_SYMBOL_PRICE_MAP:",
-      PYTH_PRICE_FEED_SYMBOL_PRICE_MAP,
-    );
-
     const pools: ParsedPool[] = (
       await Promise.all(
         poolInfos.map((poolInfo) =>
           (async () => {
             const id = poolInfo.poolId;
-
             const quoterId = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
               ? QuoterId.CPMM
               : poolInfo.quoterType.endsWith("omm::OracleQuoter")
@@ -298,36 +267,40 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             );
             balanceA = balanceA.times(withdrawA.div(balanceA));
             balanceB = balanceB.times(withdrawB.div(balanceB));
-
             const balances = [balanceA, balanceB];
 
-            const priceA =
+            let priceA =
+              coinTypePythPriceMap[coinTypeA] ??
+              coinTypeSwitchboardPriceMap[coinTypeA] ??
               mainMarket_reserveMap[coinTypeA]?.price ??
-              PYTH_PRICE_FEED_SYMBOL_PRICE_MAP[
-                COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP[coinTypeA]
-              ] ??
               undefined;
-            const priceB =
+            let priceB =
+              coinTypePythPriceMap[coinTypeB] ??
+              coinTypeSwitchboardPriceMap[coinTypeB] ??
               mainMarket_reserveMap[coinTypeB]?.price ??
-              PYTH_PRICE_FEED_SYMBOL_PRICE_MAP[
-                COINTYPE_PYTH_PRICE_FEED_SYMBOL_MAP[coinTypeB]
-              ] ??
               undefined;
-            const prices = [priceA, priceB];
 
-            if (prices.some((price) => price === undefined)) {
+            if (priceA === undefined && priceB === undefined) {
               console.error(
-                "Price(s) missing for pool",
-                id,
-                "coinType(s):",
-                coinTypes
-                  .map((_, index) =>
-                    prices[index] === undefined ? coinTypes[index] : undefined,
-                  )
-                  .filter(Boolean),
+                `Skipping pool with id ${id}, quoterId ${quoterId} - missing prices for both assets (no Pyth price feed, no Switchboard price feed, and no Suilend main market reserve) for coinType(s) ${coinTypes.join(", ")}`,
               );
-              return undefined;
+              return;
+            } else if (priceA === undefined) {
+              console.warn(
+                `Missing price for coinTypeA ${coinTypeA}, using balance ratio to calculate price (pool with id ${id}, quoterId ${quoterId})`,
+              );
+              priceA = !balanceA.eq(0)
+                ? balanceB.div(balanceA).times(priceB)
+                : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM quoter)
+            } else if (priceB === undefined) {
+              console.warn(
+                `Missing price for coinTypeB ${coinTypeB}, using balance ratio to calculate price (pool with id ${id}, quoterId ${quoterId})`,
+              );
+              priceB = !balanceB.eq(0)
+                ? balanceA.div(balanceB).times(priceA)
+                : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM quoter)
             }
+            const prices = [priceA, priceB];
 
             const lpSupply = new BigNumber(pool.lpSupply.value.toString()).div(
               10 ** 9,
@@ -412,6 +385,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
       coinMetadataMap,
       bTokenTypeCoinTypeMap,
+
+      coinTypePythPriceMap,
+      coinTypeSwitchboardPriceMap,
 
       banks,
       bankMap,
