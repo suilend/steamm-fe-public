@@ -16,9 +16,10 @@ import HistoricalDataChart from "@/components/HistoricalDataChart";
 import PoolsTable from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
 import Tooltip from "@/components/Tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
-import { useLoadedUserContext } from "@/contexts/UserContext";
+import { useUserContext } from "@/contexts/UserContext";
 import useBreakpoint from "@/hooks/useBreakpoint";
 import { ChartType } from "@/lib/chart";
 import { formatPair } from "@/lib/format";
@@ -26,8 +27,8 @@ import { getTotalAprPercent } from "@/lib/liquidityMining";
 import { ParsedPool, PoolGroup } from "@/lib/types";
 
 export default function PoolsPage() {
-  const { appData, lstData } = useLoadedAppContext();
-  const { userData } = useLoadedUserContext();
+  const { appData, poolsData, featuredPoolIds } = useLoadedAppContext();
+  const { userData } = useUserContext();
   const { poolStats, globalHistoricalStats, globalStats } = useStatsContext();
 
   const { sm } = useBreakpoint();
@@ -35,18 +36,22 @@ export default function PoolsPage() {
   // TVL
   const totalTvlUsd = useMemo(
     () =>
-      appData.pools.reduce(
-        (acc, pool) => acc.plus(pool.tvlUsd),
-        new BigNumber(0),
-      ),
-    [appData.pools],
+      poolsData === undefined
+        ? undefined
+        : poolsData.pools.reduce(
+            (acc, pool) => acc.plus(pool.tvlUsd),
+            new BigNumber(0),
+          ),
+    [poolsData],
   );
 
   // Group pools by pair
-  const poolGroups = useMemo(() => {
+  const poolGroups: PoolGroup[] | undefined = useMemo(() => {
+    if (poolsData === undefined) return undefined;
+
     const poolGroupsByPair: Record<string, ParsedPool[]> = {};
 
-    for (const pool of appData.pools) {
+    for (const pool of poolsData.pools) {
       const formattedPair = formatPair(pool.coinTypes);
 
       if (!poolGroupsByPair[formattedPair])
@@ -63,11 +68,11 @@ export default function PoolsPage() {
           pools: pools.map((pool) => {
             // Same code as in frontend/src/components/AprBreakdown.tsx
             const rewards =
-              userData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
+              userData?.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
             const filteredRewards = getFilteredRewards(rewards);
 
             const stakingYieldAprPercent: BigNumber | undefined =
-              lstData !== undefined
+              poolsData !== undefined
                 ? pool.tvlUsd.gt(0)
                   ? pool.coinTypes
                       .reduce(
@@ -77,7 +82,7 @@ export default function PoolsPage() {
                               getStakingYieldAprPercent(
                                 Side.DEPOSIT,
                                 coinType,
-                                lstData.aprPercentMap,
+                                poolsData.lstAprPercentMap,
                               ) ?? 0,
                             ).times(
                               pool.prices[index].times(pool.balances[index]),
@@ -111,31 +116,35 @@ export default function PoolsPage() {
       [] as PoolGroup[],
     );
   }, [
-    appData.pools,
-    userData.rewardMap,
-    lstData,
+    poolsData,
+    userData?.rewardMap,
     poolStats.aprPercent_24h,
     poolStats.volumeUsd_24h,
   ]);
 
-  // Featured pairs
+  // Featured pools
   const featuredPoolGroups = useMemo(
     () =>
-      poolGroups.filter(
-        (poolGroup) =>
-          !!appData.featuredCoinTypePairs.find(
-            (pair) =>
-              poolGroup.coinTypes[0] === pair[0] &&
-              poolGroup.coinTypes[1] === pair[1],
-          ),
-      ),
-    [poolGroups, appData.featuredCoinTypePairs],
+      poolGroups === undefined || featuredPoolIds === undefined
+        ? undefined
+        : poolGroups
+            .filter((poolGroup) =>
+              poolGroup.pools.some((pool) => featuredPoolIds.includes(pool.id)),
+            )
+            .map((poolGroup) => ({
+              ...poolGroup,
+              pools: poolGroup.pools.filter((pool) =>
+                featuredPoolIds.includes(pool.id),
+              ),
+            })),
+    [poolGroups, featuredPoolIds],
   );
 
   // Search
   const [searchString, setSearchString] = useState<string>("");
 
   const filteredPoolGroups = useMemo(() => {
+    if (poolGroups === undefined) return undefined;
     if (searchString === "") return poolGroups;
 
     return poolGroups
@@ -156,7 +165,7 @@ export default function PoolsPage() {
           ),
         ),
       }));
-  }, [searchString, poolGroups, appData.coinMetadataMap]);
+  }, [poolGroups, searchString, appData.coinMetadataMap]);
 
   return (
     <>
@@ -177,17 +186,14 @@ export default function PoolsPage() {
               <div className="w-full p-5">
                 <HistoricalDataChart
                   title="TVL"
-                  value={formatUsd(totalTvlUsd)}
+                  value={
+                    totalTvlUsd === undefined
+                      ? undefined
+                      : formatUsd(totalTvlUsd)
+                  }
                   chartType={ChartType.LINE}
-                  periodChangePercent={null}
                   data={globalHistoricalStats.tvlUsd_7d}
                   dataPeriodDays={7}
-                  // formatCategory={(category) =>
-                  //   formatCoinTypeCategory(
-                  //     category,
-                  //     appData.coinMetadataMap,
-                  //   )
-                  // }
                   formatCategory={(category) => category}
                   formatValue={(value) => formatUsd(new BigNumber(value))}
                 />
@@ -208,15 +214,8 @@ export default function PoolsPage() {
                   }
                   valuePeriodDays={7}
                   chartType={ChartType.BAR}
-                  periodChangePercent={null}
                   data={globalHistoricalStats.volumeUsd_7d}
                   dataPeriodDays={7}
-                  // formatCategory={(category) =>
-                  //   formatCoinTypeCategory(
-                  //     category,
-                  //     appData.coinMetadataMap,
-                  //   )
-                  // }
                   formatCategory={(category) => category}
                   formatValue={(value) => formatUsd(new BigNumber(value))}
                 />
@@ -226,10 +225,23 @@ export default function PoolsPage() {
         </div>
 
         {/* Featured pools */}
-        {featuredPoolGroups.length > 0 && (
+        {(featuredPoolGroups === undefined ||
+          featuredPoolGroups.length > 0) && (
           <div className="flex w-full flex-col gap-6">
-            <div className="flex h-[30px] w-full flex-row items-center justify-between">
-              <h2 className="text-h3 text-foreground">Featured pools</h2>
+            <div className="flex h-[30px] w-full flex-row items-center justify-between gap-4">
+              <div className="flex flex-row items-center gap-3">
+                <h2 className="text-h3 text-foreground">Featured pools</h2>
+                {featuredPoolGroups === undefined ? (
+                  <Skeleton className="h-5 w-12" />
+                ) : (
+                  <Tag>
+                    {featuredPoolGroups.reduce(
+                      (acc, poolGroup) => acc + poolGroup.pools.length,
+                      0,
+                    )}
+                  </Tag>
+                )}
+              </div>
             </div>
 
             <PoolsTable
@@ -244,12 +256,16 @@ export default function PoolsPage() {
           <div className="flex h-[30px] w-full flex-row items-center justify-between gap-4">
             <div className="flex flex-row items-center gap-3">
               <h2 className="text-h3 text-foreground">All pools</h2>
-              <Tag>
-                {filteredPoolGroups.reduce(
-                  (acc, poolGroup) => acc + poolGroup.pools.length,
-                  0,
-                )}
-              </Tag>
+              {filteredPoolGroups === undefined ? (
+                <Skeleton className="h-5 w-12" />
+              ) : (
+                <Tag>
+                  {filteredPoolGroups.reduce(
+                    (acc, poolGroup) => acc + poolGroup.pools.length,
+                    0,
+                  )}
+                </Tag>
+              )}
             </div>
 
             <div className="flex flex-row items-center justify-end gap-2 max-md:flex-1">

@@ -13,4 +13,9 @@ export const COINTYPE_ORACLE_INDEX_MAP: Record<string, number> =
         [NORMALIZED_SEND_COINTYPE]: 2,
         [NORMALIZED_DEEP_COINTYPE]: 3,
       }
-    : {}; // TODO: Add the indexes for mainnet
+    : {
+        [NORMALIZED_SUI_COINTYPE]: 0,
+        [NORMALIZED_USDC_COINTYPE]: 1,
+        [NORMALIZED_SEND_COINTYPE]: 2,
+        [NORMALIZED_DEEP_COINTYPE]: 3,
+      };

@@ -27,9 +27,9 @@ import {
 } from "@suilend/frontend-sui-next";
 import { MultiSwapQuote, Route, SteammSDK } from "@suilend/steamm-sdk";
 
+import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
 import Parameter from "@/components/Parameter";
-import CoinInput, { getCoinInputId } from "@/components/pool/CoinInput";
 import SuggestedPools from "@/components/pool/SuggestedPools";
 import SlippagePopover from "@/components/SlippagePopover";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
@@ -38,11 +38,12 @@ import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { useLoadedUserContext } from "@/contexts/UserContext";
+import { useUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
 import { formatTextInputValue } from "@/lib/format";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
+import { ParsedPool, TokenDirection } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 export default function SwapPage() {
@@ -51,8 +52,9 @@ export default function SwapPage() {
 
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
-  const { getBalance, refresh } = useLoadedUserContext();
+  const { steammClient, appData, banksData, poolsData, slippagePercent } =
+    useLoadedAppContext();
+  const { getBalance, refresh } = useUserContext();
 
   // CoinTypes
   const [inCoinType, outCoinType] = useMemo(() => {
@@ -255,32 +257,34 @@ export default function SwapPage() {
   };
 
   // Select
-  const popoverTokens: Token[] = useMemo(
+  const tokens: Token[] | undefined = useMemo(
     () =>
-      Object.values(appData.bTokenTypeCoinTypeMap)
-        .sort(
-          (a, b) =>
-            appData.coinMetadataMap[a].symbol.toLowerCase() <
-            appData.coinMetadataMap[b].symbol.toLowerCase()
-              ? -1
-              : 1, // Sort by symbol (ascending)
-        )
-        .map((coinType) =>
-          getToken(coinType, appData.coinMetadataMap[coinType]),
-        ),
-    [appData.bTokenTypeCoinTypeMap, appData.coinMetadataMap],
+      banksData === undefined
+        ? undefined
+        : Object.values(banksData.bTokenTypeCoinTypeMap)
+            .sort(
+              (a, b) =>
+                appData.coinMetadataMap[a].symbol.toLowerCase() <
+                appData.coinMetadataMap[b].symbol.toLowerCase()
+                  ? -1
+                  : 1, // Sort by symbol (ascending)
+            )
+            .map((coinType) =>
+              getToken(coinType, appData.coinMetadataMap[coinType]),
+            ),
+    [banksData, appData.coinMetadataMap],
   );
 
-  const onPopoverTokenClick = (token: Token, direction: "in" | "out") => {
+  const onSelectToken = (token: Token, direction: TokenDirection) => {
     const newInCoinType =
-      direction === "in"
+      direction === TokenDirection.IN
         ? token.coinType
         : token.coinType === inCoinType
           ? outCoinType
           : inCoinType;
     const newInCoinMetadata = appData.coinMetadataMap[newInCoinType];
     const newOutCoinType =
-      direction === "in"
+      direction === TokenDirection.IN
         ? token.coinType === outCoinType
           ? inCoinType
           : outCoinType
@@ -300,7 +304,7 @@ export default function SwapPage() {
 
     setTimeout(
       () => document.getElementById(getCoinInputId(newInCoinType))?.focus(),
-      50,
+      250,
     );
 
     // value === "" || value <= 0
@@ -453,7 +457,11 @@ export default function SwapPage() {
       );
 
       showSuccessTxnToast("Swapped", txUrl, {
-        description: `${balanceChangeInFormatted} ${inCoinMetadata.symbol} for ${balanceChangeOutFormatted} ${outCoinMetadata.symbol}`,
+        description: [
+          `${balanceChangeInFormatted} ${inCoinMetadata.symbol}`,
+          "for",
+          `${balanceChangeOutFormatted} ${outCoinMetadata.symbol}`,
+        ].join(" "),
       });
       setValue("");
       setQuote(undefined);
@@ -469,12 +477,33 @@ export default function SwapPage() {
   };
 
   // Suggested pools
-  const suggestedPools = appData.pools
-    .filter(
-      (_pool) =>
-        _pool.coinTypes[0] === inCoinType || _pool.coinTypes[1] === outCoinType,
-    )
-    .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
+  const suggestedPools: ParsedPool[] | undefined = useMemo(() => {
+    if (poolsData === undefined) return undefined;
+
+    return [
+      ...poolsData.pools
+        .filter(
+          (_pool) =>
+            _pool.coinTypes[0] === inCoinType &&
+            _pool.coinTypes[1] === outCoinType,
+        )
+        .sort((a, b) => +b.tvlUsd - +a.tvlUsd),
+      ...poolsData.pools
+        .filter(
+          (_pool) =>
+            _pool.coinTypes[0] === inCoinType &&
+            _pool.coinTypes[1] !== outCoinType,
+        )
+        .sort((a, b) => +b.tvlUsd - +a.tvlUsd),
+      ...poolsData.pools
+        .filter(
+          (_pool) =>
+            _pool.coinTypes[0] !== inCoinType &&
+            _pool.coinTypes[1] === outCoinType,
+        )
+        .sort((a, b) => +b.tvlUsd - +a.tvlUsd),
+    ];
+  }, [poolsData, inCoinType, outCoinType]);
 
   return (
     <>
@@ -499,9 +528,9 @@ export default function SwapPage() {
                 usdValue={inUsdValue}
                 onChange={(value) => onValueChange(value)}
                 onBalanceClick={() => onBalanceClick()}
-                popoverTokens={popoverTokens}
-                onPopoverTokenClick={(token) =>
-                  onPopoverTokenClick(token, "in")
+                tokens={tokens}
+                onSelectToken={(token) =>
+                  onSelectToken(token, TokenDirection.IN)
                 }
               />
 
@@ -526,9 +555,9 @@ export default function SwapPage() {
                       : ""
                 }
                 usdValue={outUsdValue}
-                popoverTokens={popoverTokens}
-                onPopoverTokenClick={(token) =>
-                  onPopoverTokenClick(token, "out")
+                tokens={tokens}
+                onSelectToken={(token) =>
+                  onSelectToken(token, TokenDirection.OUT)
                 }
               />
             </div>
@@ -546,7 +575,10 @@ export default function SwapPage() {
                     label=""
                   />
 
-                  {isFetchingQuote || !quote || !route ? (
+                  {isFetchingQuote ||
+                  !quote ||
+                  !route ||
+                  banksData === undefined ? (
                     <Skeleton className="h-[21px] w-16" />
                   ) : (
                     <Tooltip
@@ -557,7 +589,9 @@ export default function SwapPage() {
                               <p className="text-p3 text-foreground">
                                 {
                                   appData.coinMetadataMap[
-                                    appData.bTokenTypeCoinTypeMap[r.bTokenType]
+                                    banksData.bTokenTypeCoinTypeMap[
+                                      r.bTokenType
+                                    ]
                                   ].symbol
                                 }
                               </p>

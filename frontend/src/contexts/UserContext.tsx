@@ -32,14 +32,11 @@ interface UserContext {
   balancesCoinMetadataMap: Record<string, CoinMetadata> | undefined;
   getBalance: (coinType: string) => BigNumber;
 
-  userData: UserData | undefined; // Depends on appData
+  userData: UserData | undefined; // Depends on appData and poolsData
   refreshUserData: () => Promise<void>;
 
-  refresh: () => void; // Refreshes appData, balances, and userData
+  refresh: () => void; // Refreshes appData, banksData, poolsData, balances, and userData
 }
-type LoadedUserContext = UserContext & {
-  userData: UserData;
-};
 
 const UserContext = createContext<UserContext>({
   rawBalancesMap: undefined,
@@ -62,10 +59,10 @@ const UserContext = createContext<UserContext>({
 });
 
 export const useUserContext = () => useContext(UserContext);
-export const useLoadedUserContext = () => useUserContext() as LoadedUserContext;
 
 export function UserContextProvider({ children }: PropsWithChildren) {
-  const { refreshAppData } = useAppContext();
+  const { refreshAppData, refreshBanksData, refreshPoolsData } =
+    useAppContext();
 
   // Balances
   const { data: rawBalancesMap, mutateData: mutateRawBalancesMap } =
@@ -95,7 +92,7 @@ export function UserContextProvider({ children }: PropsWithChildren) {
     [rawBalancesMap, balancesCoinMetadataMap],
   );
 
-  // User data (blocking)
+  // User data (non-blocking)
   const { data: userData, mutateData: mutateUserData } = useFetchUserData();
 
   // Refresh
@@ -106,10 +103,18 @@ export function UserContextProvider({ children }: PropsWithChildren) {
   const refresh = useCallback(() => {
     (async () => {
       await refreshAppData();
+      await refreshBanksData();
+      await refreshPoolsData();
       await refreshUserData();
     })();
     refreshRawBalancesMap();
-  }, [refreshAppData, refreshUserData, refreshRawBalancesMap]);
+  }, [
+    refreshAppData,
+    refreshBanksData,
+    refreshPoolsData,
+    refreshUserData,
+    refreshRawBalancesMap,
+  ]);
 
   useRefreshOnBalancesChange(refresh as () => Promise<void>);
 

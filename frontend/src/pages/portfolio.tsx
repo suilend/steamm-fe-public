@@ -4,10 +4,15 @@ import { useMemo, useState } from "react";
 import { Transaction } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
+import { Loader2 } from "lucide-react";
 
 import {
+  NORMALIZED_STEAMM_POINTS_COINTYPE,
   formatPercent,
+  formatPoints,
+  formatToken,
   formatUsd,
+  getToken,
   isSteammPoints,
 } from "@suilend/frontend-sui";
 import {
@@ -20,11 +25,13 @@ import { ClaimRewardsReward, RewardSummary, Side } from "@suilend/sdk";
 import Divider from "@/components/Divider";
 import PoolPositionsTable from "@/components/portfolio/PoolPositionsTable";
 import Tag from "@/components/Tag";
+import TokenLogo from "@/components/TokenLogo";
+import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolPositionsContext } from "@/contexts/PoolPositionsContext";
-import { useLoadedUserContext } from "@/contexts/UserContext";
+import { useUserContext } from "@/contexts/UserContext";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { HistoryTransactionType, PoolPosition } from "@/lib/types";
@@ -32,24 +39,25 @@ import { HistoryTransactionType, PoolPosition } from "@/lib/types";
 export default function PortfolioPage() {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { appData } = useLoadedAppContext();
-  const { userData, refresh } = useLoadedUserContext();
-
-  const { poolPositions } = usePoolPositionsContext();
+  const { appData, poolsData } = useLoadedAppContext();
+  const { userData, refresh } = useUserContext();
+  const { poolPositions, totalPoints } = usePoolPositionsContext();
 
   // Pool positions - Deposited USD for PnL calc. (BE)
   const { poolTransactionHistoryMap } = usePoolTransactionHistoryMap(
-    poolPositions.map((position) => position.pool.id),
+    poolPositions === undefined
+      ? undefined
+      : poolPositions.map((position) => position.pool.id),
   );
 
   const poolDepositedUsdMap: Record<string, BigNumber> | undefined =
     useMemo(() => {
-      return poolTransactionHistoryMap === undefined
+      return poolsData === undefined || poolTransactionHistoryMap === undefined
         ? undefined
         : Object.fromEntries(
             Object.entries(poolTransactionHistoryMap).reduce(
               (acc, [poolId, transactionHistory]) => {
-                const pool = appData.pools.find((p) => p.id === poolId);
+                const pool = poolsData.pools.find((p) => p.id === poolId);
                 if (!pool) return acc;
 
                 const depositedAmounts = [0, 1].map((index) =>
@@ -87,24 +95,26 @@ export default function PortfolioPage() {
               [] as [string, BigNumber][],
             ),
           );
-    }, [poolTransactionHistoryMap, appData.pools, appData.coinMetadataMap]);
+    }, [poolsData, poolTransactionHistoryMap, appData.coinMetadataMap]);
 
   // Pool positions - Extra data
-  const poolPositionsWithExtraData: PoolPosition[] = useMemo(
+  const poolPositionsWithExtraData: PoolPosition[] | undefined = useMemo(
     () =>
-      poolPositions.map((position) => ({
-        ...position,
-        pnlPercent:
-          poolDepositedUsdMap?.[position.pool.id] !== undefined
-            ? new BigNumber(
-                position.balanceUsd.minus(
-                  poolDepositedUsdMap[position.pool.id],
-                ),
-              )
-                .div(poolDepositedUsdMap[position.pool.id])
-                .times(100)
-            : undefined,
-      })),
+      poolPositions === undefined
+        ? undefined
+        : poolPositions.map((position) => ({
+            ...position,
+            pnlPercent:
+              poolDepositedUsdMap?.[position.pool.id] !== undefined
+                ? new BigNumber(
+                    position.balanceUsd.minus(
+                      poolDepositedUsdMap[position.pool.id],
+                    ),
+                  )
+                    .div(poolDepositedUsdMap[position.pool.id])
+                    .times(100)
+                : undefined,
+          })),
     [poolPositions, poolDepositedUsdMap],
   );
 
@@ -112,6 +122,7 @@ export default function PortfolioPage() {
   // Summary - Net worth
   const netWorthUsd: BigNumber | undefined = useMemo(
     () =>
+      poolPositionsWithExtraData === undefined ||
       poolPositionsWithExtraData.some(
         (position) => position.balanceUsd === undefined,
       )
@@ -126,6 +137,7 @@ export default function PortfolioPage() {
   // Summary - APR
   const weightedAverageAprPercent: BigNumber | undefined = useMemo(
     () =>
+      poolPositionsWithExtraData === undefined ||
       poolPositionsWithExtraData.some(
         (position) =>
           position.pool.aprPercent_24h === undefined ||
@@ -157,23 +169,27 @@ export default function PortfolioPage() {
   // Summary - Rewards
   const claimableRewards: Record<string, BigNumber> | undefined = useMemo(
     () =>
-      Object.entries(userData.poolRewardMap).reduce(
-        (acc, [, rewards]) => {
-          Object.entries(rewards).forEach(([coinType, amount]) => {
-            if (isSteammPoints(coinType)) return;
-            acc[coinType] = new BigNumber(acc[coinType] ?? 0).plus(amount);
-          });
+      userData === undefined
+        ? undefined
+        : Object.entries(userData.poolRewardMap).reduce(
+            (acc, [, rewards]) => {
+              Object.entries(rewards).forEach(([coinType, amount]) => {
+                if (isSteammPoints(coinType)) return;
+                acc[coinType] = new BigNumber(acc[coinType] ?? 0).plus(amount);
+              });
 
-          return acc;
-        },
-        {} as Record<string, BigNumber>,
-      ),
-    [userData.poolRewardMap],
+              return acc;
+            },
+            {} as Record<string, BigNumber>,
+          ),
+    [userData],
   );
 
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
 
   const onClaimRewardsClick = async () => {
+    if (userData === undefined) return;
+
     try {
       if (isClaiming) return;
       if (!address) throw Error("Wallet not connected");
@@ -216,7 +232,7 @@ export default function PortfolioPage() {
             side: Side.DEPOSIT,
           }));
 
-        appData.lm.suilendClient.claimRewardsAndSendToUser(
+        appData.lmMarket.suilendClient.claimRewardsAndSendToUser(
           address,
           obligationOwnerCap.id,
           rewards,
@@ -238,20 +254,6 @@ export default function PortfolioPage() {
     }
   };
 
-  // Summary - Points
-  const points: BigNumber | undefined = useMemo(
-    () =>
-      Object.entries(userData.poolRewardMap).reduce((acc, [, rewards]) => {
-        Object.entries(rewards).forEach(([coinType, amount]) => {
-          if (!isSteammPoints(coinType)) return;
-          acc = acc.plus(amount);
-        });
-
-        return acc;
-      }, new BigNumber(0)),
-    [userData.poolRewardMap],
-  );
-
   return (
     <>
       <Head>
@@ -265,8 +267,7 @@ export default function PortfolioPage() {
           {/* Stats */}
           <div className="grid w-full grid-cols-2 rounded-md border md:flex md:flex-row md:items-stretch">
             {/* Net worth */}
-            {/* <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1"> */}
-            <div className="max-md:w-full max-md:border-r md:flex-1">
+            <div className="max-md:w-full max-md:border-b max-md:border-r md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">Net worth</p>
 
@@ -285,25 +286,24 @@ export default function PortfolioPage() {
             <Divider className="h-auto w-px max-md:hidden" />
 
             {/* APR */}
-            {/* <div className="max-md:w-full max-md:border-b md:flex-1"> */}
-            <div className="max-md:w-full md:flex-1">
+            <div className="max-md:w-full max-md:border-b md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">Average APR</p>
 
                 {weightedAverageAprPercent === undefined ? (
                   <Skeleton className="h-[30px] w-20" />
                 ) : (
-                  <p className="text-h3 text-success">
+                  <p className="text-h3 text-foreground">
                     {formatPercent(weightedAverageAprPercent)}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* <Divider className="h-auto w-px max-md:hidden" /> */}
+            <Divider className="h-auto w-px max-md:hidden" />
 
             {/* Claimable rewards */}
-            {/* <div className="max-md:w-full max-md:border-r md:flex-1">
+            <div className="max-md:w-full max-md:border-r md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">
                   Claimable rewards
@@ -348,24 +348,28 @@ export default function PortfolioPage() {
                           <div className="flex h-[24px] w-max flex-row items-center">
                             <TokenLogos
                               coinTypes={Object.keys(claimableRewards)}
-                              size={16}
+                              size={20}
                             />
                           </div>
                         </Tooltip>
 
-                        <button
-                          className="flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-1 px-2 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
-                          disabled={isClaiming}
-                          onClick={onClaimRewardsClick}
-                        >
-                          {isClaiming ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-button-1-foreground" />
-                          ) : (
-                            <p className="text-p3 text-button-1-foreground">
-                              Claim
-                            </p>
-                          )}
-                        </button>
+                        {userData === undefined ? (
+                          <Skeleton className="h-6 w-[48px]" />
+                        ) : (
+                          <button
+                            className="flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-1 px-2 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
+                            disabled={isClaiming}
+                            onClick={onClaimRewardsClick}
+                          >
+                            {isClaiming ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-button-1-foreground" />
+                            ) : (
+                              <p className="text-p3 text-button-1-foreground">
+                                Claim
+                              </p>
+                            )}
+                          </button>
+                        )}
                       </div>
                     ) : (
                       <p className="text-h3 text-foreground">--</p>
@@ -373,39 +377,44 @@ export default function PortfolioPage() {
                   </>
                 )}
               </div>
-            </div> */}
+            </div>
 
-            {/* <Divider className="h-auto w-px max-md:hidden" /> */}
+            <Divider className="h-auto w-px max-md:hidden" />
 
             {/* Points */}
-            {/* <div className="max-md:w-full md:flex-1">
+            <div className="max-md:w-full md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">Points</p>
 
-                {points === undefined ? (
+                {totalPoints === undefined ? (
                   <Skeleton className="h-[30px] w-20" />
                 ) : (
-                  <Tooltip
-                    title={`${formatPoints(points, { dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].decimals })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
-                  >
-                    <div className="flex w-max flex-row items-center gap-2">
-                      <TokenLogo
-                        token={getToken(
-                          NORMALIZED_STEAMM_POINTS_COINTYPE,
-                          appData.coinMetadataMap[
-                            NORMALIZED_STEAMM_POINTS_COINTYPE
-                          ],
-                        )}
-                        size={16}
-                      />
+                  <div className="flex w-max flex-row items-center gap-2">
+                    <TokenLogo
+                      token={getToken(
+                        NORMALIZED_STEAMM_POINTS_COINTYPE,
+                        appData.coinMetadataMap[
+                          NORMALIZED_STEAMM_POINTS_COINTYPE
+                        ],
+                      )}
+                      size={20}
+                    />
+
+                    <Tooltip
+                      title={`${formatPoints(totalPoints, {
+                        dp: appData.coinMetadataMap[
+                          NORMALIZED_STEAMM_POINTS_COINTYPE
+                        ].decimals,
+                      })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
+                    >
                       <p className="text-h3 text-foreground">
-                        {formatPoints(points)}
+                        {formatPoints(totalPoints)}
                       </p>
-                    </div>
-                  </Tooltip>
+                    </Tooltip>
+                  </div>
                 )}
               </div>
-            </div> */}
+            </div>
           </div>
         </div>
 
@@ -413,7 +422,11 @@ export default function PortfolioPage() {
         <div className="flex w-full flex-col gap-6">
           <div className="flex flex-row items-center gap-3">
             <h2 className="text-h3 text-foreground">Positions</h2>
-            <Tag>{poolPositionsWithExtraData.length}</Tag>
+            {poolPositionsWithExtraData === undefined ? (
+              <Skeleton className="h-5 w-12" />
+            ) : (
+              <Tag>{poolPositionsWithExtraData.length}</Tag>
+            )}
           </div>
 
           <PoolPositionsTable poolPositions={poolPositionsWithExtraData} />

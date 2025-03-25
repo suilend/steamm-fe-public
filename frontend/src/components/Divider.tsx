@@ -7,5 +7,5 @@ interface DividerProps {
 }
 
 export default function Divider({ className }: DividerProps) {
-  return <div className={cn("h-px w-full bg-border", className)} />;
+  return <div className={cn("h-px w-full shrink-0 bg-border", className)} />;
 }

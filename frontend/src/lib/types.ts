@@ -72,7 +72,8 @@ export type PoolPosition = {
   pnlPercent?: BigNumber; // Fetched separately (BE)
   stakedPercent: BigNumber;
   claimableRewards: Record<string, BigNumber>;
-  points: BigNumber;
+  totalPoints: BigNumber;
+  pointsPerDay: BigNumber;
 };
 
 export enum HistoryTransactionType {
@@ -115,3 +116,8 @@ export type HistoryRedeem = {
   // Custom
   type: HistoryTransactionType.REDEEM;
 };
+
+export enum TokenDirection {
+  IN = "in",
+  OUT = "out",
+}

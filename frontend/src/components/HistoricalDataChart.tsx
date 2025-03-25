@@ -1,12 +1,10 @@
 import { useMemo, useRef } from "react";
 
-import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { format } from "date-fns";
 import * as Recharts from "recharts";
 import { v4 as uuidv4 } from "uuid";
 
-import PercentChange from "@/components/PercentChange";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ChartData,
@@ -107,7 +105,6 @@ interface HistoricalDataChartProps {
   value?: string;
   valuePeriodDays?: 1 | 7 | 30;
   chartType: ChartType;
-  periodChangePercent?: BigNumber | null;
   data?: ChartData[];
   dataPeriodDays: 1 | 7 | 30;
   formatCategory: (category: string) => string | undefined;
@@ -120,7 +117,6 @@ export default function HistoricalDataChart({
   value,
   valuePeriodDays,
   chartType,
-  periodChangePercent,
   data,
   dataPeriodDays,
   formatCategory,
@@ -242,27 +238,18 @@ export default function HistoricalDataChart({
         <div className="flex flex-col gap-1">
           <p className="text-p2 text-secondary-foreground">{title}</p>
 
-          <div className="flex flex-row items-center gap-2">
-            {value === undefined ? (
-              <Skeleton className="h-[36px] w-20" />
-            ) : (
-              <div className="flex flex-row items-baseline gap-2">
-                <p className="text-h2 text-foreground">{value}</p>
-                {valuePeriodDays !== undefined && (
-                  <p className="text-p1 text-tertiary-foreground">
-                    {valuePeriodDays === 1 ? "24H" : `${valuePeriodDays}D`}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {periodChangePercent !== null &&
-              (periodChangePercent === undefined ? (
-                <Skeleton className="h-[21px] w-12" />
-              ) : (
-                <PercentChange value={periodChangePercent} />
-              ))}
-          </div>
+          {value === undefined ? (
+            <Skeleton className="h-[36px] w-20" />
+          ) : (
+            <div className="flex flex-row items-baseline gap-2">
+              <p className="text-h2 text-foreground">{value}</p>
+              {valuePeriodDays !== undefined && (
+                <p className="text-p1 text-tertiary-foreground">
+                  {valuePeriodDays === 1 ? "24H" : `${valuePeriodDays}D`}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Top right */}

@@ -16,7 +16,7 @@ const chunk = <T>(arr: T[], size: number): T[][] =>
   );
 
 /**
- * Helper class to help interact with pools.
+ * Helper class to help interact with banks.
  */
 export class BankModule implements IModule {
   protected _sdk: SteammSDK;

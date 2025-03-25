@@ -23,7 +23,7 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
-import { useLoadedUserContext } from "@/contexts/UserContext";
+import { useUserContext } from "@/contexts/UserContext";
 import { getTotalAprPercent } from "@/lib/liquidityMining";
 import { ParsedPool } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
@@ -39,11 +39,11 @@ export default function AprBreakdown({
   valueClassName,
   pool,
 }: AprBreakdownProps) {
-  const { appData, lstData } = useLoadedAppContext();
-  const { userData } = useLoadedUserContext();
+  const { appData, poolsData } = useLoadedAppContext();
+  const { userData } = useUserContext();
   const { poolStats } = useStatsContext();
 
-  const rewards = userData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
+  const rewards = userData?.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
   const filteredRewards = getFilteredRewards(rewards);
 
   // Rewards - per day
@@ -51,7 +51,7 @@ export default function AprBreakdown({
 
   // LST staking yield APR
   const stakingYieldAprPercent: BigNumber | undefined =
-    lstData !== undefined
+    poolsData !== undefined
       ? pool.tvlUsd.gt(0)
         ? pool.coinTypes
             .reduce(
@@ -61,7 +61,7 @@ export default function AprBreakdown({
                     getStakingYieldAprPercent(
                       Side.DEPOSIT,
                       coinType,
-                      lstData.aprPercentMap,
+                      poolsData.lstAprPercentMap,
                     ) ?? 0,
                   ).times(pool.prices[index].times(pool.balances[index])),
                 ),
@@ -110,9 +110,7 @@ export default function AprBreakdown({
                         <>
                           {isSteammPoints(r.stats.rewardCoinType)
                             ? formatPoints(r.stats.perDay, { dp: 3 })
-                            : formatToken(r.stats.perDay, {
-                                exact: false,
-                              })}
+                            : formatToken(r.stats.perDay, { exact: false })}
                           <span className="text-p2 text-secondary-foreground">
                             Per $ per day
                           </span>
@@ -221,12 +219,21 @@ export default function AprBreakdown({
           />
           <p
             className={cn(
-              "!text-p1 text-foreground",
-              (perDayRewards.length > 0 ||
+              "!text-p1",
+              perDayRewards.length > 0 ||
                 pool.suilendWeightedAverageDepositAprPercent.gt(0) ||
                 stakingYieldAprPercent.gt(0) ||
-                aprRewards.length > 0) &&
-                cn("decoration-foreground/50", hoverUnderlineClassName),
+                aprRewards.length > 0
+                ? perDayRewards.length > 0 || aprRewards.length > 0
+                  ? cn(
+                      "text-button-2-foreground decoration-button-2-foreground/50",
+                      hoverUnderlineClassName,
+                    )
+                  : cn(
+                      "text-foreground decoration-foreground/50",
+                      hoverUnderlineClassName,
+                    )
+                : "text-foreground",
               valueClassName,
             )}
           >

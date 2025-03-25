@@ -46,19 +46,19 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   stakedPercent: {
     flex: 1,
-    minWidth: 200, // px
+    minWidth: 175, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   claimableRewards: {
     flex: 1,
-    minWidth: 200, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
   points: {
     flex: 1,
-    minWidth: 125, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -133,101 +133,105 @@ export default function PoolPositionsTable({
   }, [poolPositions, sortState]);
 
   return (
-    <div className={cn("relative w-full overflow-auto", className)}>
-      {/* Header */}
-      <div className="sticky left-0 top-0 z-[2] flex h-[calc(1px+40px+1px)] w-full min-w-max shrink-0 flex-row border bg-secondary">
-        <HeaderColumn<Column, SortableColumn>
-          id="pool"
-          style={columnStyleMap.pool}
-        >
-          Pool
-        </HeaderColumn>
+    <div className="relative w-full">
+      <div className="pointer-events-none absolute inset-0 z-[2] border" />
 
-        <HeaderColumn<Column, SortableColumn>
-          id="aprPercent_24h"
-          sortState={sortState}
-          toggleSortByColumn={
-            !!(poolPositions ?? []).every(
-              (position) => position.pool.aprPercent_24h !== undefined,
-            )
-              ? toggleSortByColumn
-              : undefined
-          }
-          style={columnStyleMap.aprPercent_24h}
-        >
-          APR
-        </HeaderColumn>
+      <div className={cn("relative z-[1] w-full overflow-auto", className)}>
+        {/* Header */}
+        <div className="sticky left-0 top-0 z-[2] flex h-[calc(1px+40px+1px)] w-full min-w-max shrink-0 flex-row border bg-secondary">
+          <HeaderColumn<Column, SortableColumn>
+            id="pool"
+            style={columnStyleMap.pool}
+          >
+            Pool
+          </HeaderColumn>
 
-        <HeaderColumn<Column, SortableColumn>
-          id="balance"
-          sortState={sortState}
-          toggleSortByColumn={
-            !!(poolPositions ?? []).every(
-              (position) => position.balanceUsd !== undefined,
-            )
-              ? toggleSortByColumn
-              : undefined
-          }
-          style={columnStyleMap.balance}
-        >
-          Balance
-        </HeaderColumn>
+          <HeaderColumn<Column, SortableColumn>
+            id="aprPercent_24h"
+            sortState={sortState}
+            toggleSortByColumn={
+              !!(poolPositions ?? []).every(
+                (position) => position.pool.aprPercent_24h !== undefined,
+              )
+                ? toggleSortByColumn
+                : undefined
+            }
+            style={columnStyleMap.aprPercent_24h}
+          >
+            APR
+          </HeaderColumn>
 
-        <HeaderColumn<Column, SortableColumn>
-          id="pnlPercent"
-          tooltip="The PnL takes into account the yield and the Suilend deposit interest for the underlying assets. It does not include any changes in the USD prices of the underlying assets."
-          sortState={sortState}
-          toggleSortByColumn={
-            !!(poolPositions ?? []).every(
-              (position) => position.pnlPercent !== undefined,
-            )
-              ? toggleSortByColumn
-              : undefined
-          }
-          style={columnStyleMap.pnlPercent}
-        >
-          PnL
-        </HeaderColumn>
+          <HeaderColumn<Column, SortableColumn>
+            id="balance"
+            sortState={sortState}
+            toggleSortByColumn={
+              !!(poolPositions ?? []).every(
+                (position) => position.balanceUsd !== undefined,
+              )
+                ? toggleSortByColumn
+                : undefined
+            }
+            style={columnStyleMap.balance}
+          >
+            Balance
+          </HeaderColumn>
 
-        {/* <HeaderColumn<Column, SortableColumn>
-          id="stakedPercent"
-          style={columnStyleMap.stakedPercent}
-        >
-          Staked
-        </HeaderColumn> */}
+          <HeaderColumn<Column, SortableColumn>
+            id="pnlPercent"
+            tooltip="The PnL takes into account the yield and the Suilend deposit interest for the underlying assets. It does not include any changes in the USD prices of the underlying assets."
+            sortState={sortState}
+            toggleSortByColumn={
+              !!(poolPositions ?? []).every(
+                (position) => position.pnlPercent !== undefined,
+              )
+                ? toggleSortByColumn
+                : undefined
+            }
+            style={columnStyleMap.pnlPercent}
+          >
+            PnL
+          </HeaderColumn>
 
-        {/* <HeaderColumn<Column, SortableColumn>
-          id="claimableRewards"
-          style={columnStyleMap.claimableRewards}
-        >
-          Claimable rewards
-        </HeaderColumn> */}
+          <HeaderColumn<Column, SortableColumn>
+            id="stakedPercent"
+            style={columnStyleMap.stakedPercent}
+          >
+            Staked
+          </HeaderColumn>
 
-        {/* <HeaderColumn<Column, SortableColumn>
-          id="points"
-          style={columnStyleMap.points}
-        >
-          Points
-        </HeaderColumn> */}
-      </div>
+          <HeaderColumn<Column, SortableColumn>
+            id="claimableRewards"
+            style={columnStyleMap.claimableRewards}
+          >
+            Claimable rewards
+          </HeaderColumn>
 
-      {/* Rows */}
-      {sortedPoolPositions === undefined ? (
-        Array.from({ length: 3 }).map((_, index) => (
-          <Skeleton
-            key={index}
-            className="relative z-[1] h-[calc(106px+1px)] w-full border-x border-b"
-          />
-        ))
-      ) : sortedPoolPositions.length === 0 ? (
-        <div className="flex h-[calc(106px+1px)] w-full flex-row items-center justify-center border-x border-b bg-background">
-          <p className="text-p2 text-tertiary-foreground">No positions</p>
+          <HeaderColumn<Column, SortableColumn>
+            id="points"
+            style={columnStyleMap.points}
+          >
+            Points
+          </HeaderColumn>
         </div>
-      ) : (
-        sortedPoolPositions.map((position) => (
-          <PoolPositionRow key={position.pool.id} poolPosition={position} />
-        ))
-      )}
+
+        {/* Rows */}
+        {sortedPoolPositions === undefined ? (
+          Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton
+              key={index}
+              className="relative z-[1] h-[calc(81px+1px)] w-full border-x border-b"
+            />
+          ))
+        ) : sortedPoolPositions.length === 0 ? (
+          <div className="flex h-[calc(81px+1px)] w-full flex-row items-center justify-center border-x border-b bg-background">
+            <p className="text-p2 text-tertiary-foreground">No positions</p>
+          </div>
+        ) : (
+          sortedPoolPositions.map((position) => (
+            <PoolPositionRow key={position.pool.id} poolPosition={position} />
+          ))
+        )}
+      </div>
     </div>
   );
 }

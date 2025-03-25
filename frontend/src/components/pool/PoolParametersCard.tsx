@@ -19,6 +19,7 @@ import SuilendLogo from "@/components/SuilendLogo";
 import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { SUILEND_ASSETS_URL } from "@/lib/constants";
@@ -28,7 +29,7 @@ import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 export default function PoolParametersCard() {
   const { explorer } = useSettingsContext();
-  const { appData } = useLoadedAppContext();
+  const { appData, banksData } = useLoadedAppContext();
   const { pool } = usePoolContext();
 
   return (
@@ -64,23 +65,26 @@ export default function PoolParametersCard() {
                 <OpenOnExplorerButton url={explorer.buildCoinUrl(coinType)} />
               </div>
 
-              {appData.bankMap[coinType] && (
-                <Tag
-                  labelClassName={cn(
-                    "text-foreground decoration-foreground/50",
-                    hoverUnderlineClassName,
-                  )}
-                  tooltip={`${formatPercent(appData.bankMap[coinType].utilizationPercent)} of deposited ${coinMetadata.symbol} is earning ${formatPercent(appData.bankMap[coinType].suilendDepositAprPercent)} APR on Suilend`}
-                  startDecorator={<SuilendLogo size={12} />}
-                >
-                  {formatPercent(
-                    appData.bankMap[coinType].suilendDepositAprPercent
-                      .times(appData.bankMap[coinType].utilizationPercent)
-                      .div(100),
-                  )}{" "}
-                  APR
-                </Tag>
-              )}
+              {appData.mainMarket.reserveMap[coinType] &&
+                (banksData === undefined ? (
+                  <Skeleton className="h-5 w-20" />
+                ) : (
+                  <Tag
+                    labelClassName={cn(
+                      "text-foreground decoration-foreground/50",
+                      hoverUnderlineClassName,
+                    )}
+                    tooltip={`${formatPercent(banksData.bankMap[coinType].utilizationPercent)} of deposited ${coinMetadata.symbol} is earning ${formatPercent(banksData.bankMap[coinType].suilendDepositAprPercent)} APR on Suilend`}
+                    startDecorator={<SuilendLogo size={12} />}
+                  >
+                    {formatPercent(
+                      banksData.bankMap[coinType].suilendDepositAprPercent
+                        .times(banksData.bankMap[coinType].utilizationPercent)
+                        .div(100),
+                    )}{" "}
+                    APR
+                  </Tag>
+                ))}
             </div>
           );
         })}

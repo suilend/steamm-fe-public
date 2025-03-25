@@ -3,6 +3,13 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useLocalStorage } from "usehooks-ts";
 
 import { formatPercent, formatUsd } from "@suilend/frontend-sui";
+import {
+  RewardSummary,
+  Side,
+  getDedupedAprRewards,
+  getDedupedPerDayRewards,
+  getFilteredRewards,
+} from "@suilend/sdk";
 
 import PoolRow from "@/components/pools/PoolRow";
 import { columnStyleMap } from "@/components/pools/PoolsTable";
@@ -11,6 +18,7 @@ import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import { useUserContext } from "@/contexts/UserContext";
 import { formatPair } from "@/lib/format";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -25,6 +33,7 @@ export default function PoolGroupRow({
   poolGroup,
 }: PoolGroupRowProps) {
   const { appData } = useLoadedAppContext();
+  const { userData } = useUserContext();
 
   // State
   const [isExpanded, setIsExpanded] = useLocalStorage<boolean>(
@@ -55,6 +64,19 @@ export default function PoolGroupRow({
     : BigNumber.max(
         ...poolGroup.pools.map((pool) => pool.aprPercent_24h as BigNumber),
       );
+
+  // Rewards
+  const rewards = poolGroup.pools.reduce(
+    (acc, pool) => [
+      ...acc,
+      ...(userData?.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []),
+    ],
+    [] as RewardSummary[],
+  );
+  const filteredRewards = getFilteredRewards(rewards);
+
+  const perDayRewards = getDedupedPerDayRewards(filteredRewards);
+  const aprRewards = getDedupedAprRewards(filteredRewards);
 
   return (
     <>
@@ -146,13 +168,31 @@ export default function PoolGroupRow({
           className="flex h-full flex-row items-center"
           style={columnStyleMap.aprPercent_24h}
         >
-          <div className="flex flex-row items-baseline gap-2">
+          <div className="flex flex-row items-center gap-2">
             <p className="text-p3 text-tertiary-foreground">Up to</p>
+
+            <TokenLogos
+              coinTypes={Array.from(
+                new Set(
+                  [...perDayRewards, ...aprRewards].map(
+                    (r) => r.stats.rewardCoinType,
+                  ),
+                ),
+              )}
+              size={16}
+            />
 
             {maxAprPercent_24h === undefined ? (
               <Skeleton className="h-[24px] w-16" />
             ) : (
-              <p className="text-p1 text-foreground">
+              <p
+                className={cn(
+                  "!text-p1",
+                  [...perDayRewards, ...aprRewards].length > 0
+                    ? "text-button-2-foreground"
+                    : "text-foreground",
+                )}
+              >
                 {formatPercent(maxAprPercent_24h)}
               </p>
             )}

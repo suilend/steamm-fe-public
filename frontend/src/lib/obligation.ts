@@ -3,12 +3,12 @@ import BigNumber from "bignumber.js";
 import { ParsedObligation } from "@suilend/sdk";
 
 export const getObligationDepositPosition = (
-  obligation: ParsedObligation,
+  obligation: ParsedObligation | undefined,
   coinType: string,
 ) => obligation?.deposits.find((d) => d.coinType === coinType);
 
 export const getObligationDepositedAmount = (
-  obligation: ParsedObligation,
+  obligation: ParsedObligation | undefined,
   coinType: string,
 ) =>
   getObligationDepositPosition(obligation, coinType)?.depositedAmount ??

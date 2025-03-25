@@ -4,6 +4,7 @@ import Head from "next/head";
 import { PropsWithChildren, useEffect, useRef } from "react";
 
 // import { registerWallet } from "@mysten/wallet-standard";
+// import { createPhantom } from "@phantom/wallet-sdk";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { LDProvider } from "launchdarkly-react-client-sdk";
@@ -19,6 +20,7 @@ import Layout from "@/components/Layout";
 import Toaster from "@/components/Toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppContextProvider } from "@/contexts/AppContext";
+import { PoolPositionsContextProvider } from "@/contexts/PoolPositionsContext";
 import { StatsContextProvider } from "@/contexts/StatsContext";
 import { UserContextProvider } from "@/contexts/UserContext";
 import { TITLE } from "@/lib/constants";
@@ -55,6 +57,11 @@ export default function App({ Component, pageProps }: AppProps) {
     });
   }, []);
 
+  // Phantom
+  // useEffect(() => {
+  //   createPhantom({ hideLauncherBeforeOnboarded: true });
+  // }, []);
+
   return (
     <>
       <SpeedInsights />
@@ -78,12 +85,14 @@ export default function App({ Component, pageProps }: AppProps) {
               <AppContextProvider>
                 <UserContextProvider>
                   <StatsContextProvider>
-                    <TooltipProvider>
-                      <Layout>
-                        <Component {...pageProps} />
-                      </Layout>
-                      <Toaster />
-                    </TooltipProvider>
+                    <PoolPositionsContextProvider>
+                      <TooltipProvider>
+                        <Layout>
+                          <Component {...pageProps} />
+                        </Layout>
+                        <Toaster />
+                      </TooltipProvider>
+                    </PoolPositionsContextProvider>
                   </StatsContextProvider>
                 </UserContextProvider>
               </AppContextProvider>

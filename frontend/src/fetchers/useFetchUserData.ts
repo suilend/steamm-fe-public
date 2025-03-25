@@ -19,18 +19,18 @@ import { UserData } from "@/contexts/UserContext";
 export default function useFetchUserData() {
   const { suiClient } = useSettingsContext();
   const { address } = useWalletContext();
-  const { appData } = useAppContext();
+  const { appData, poolsData } = useAppContext();
 
   // Data
   const dataFetcher = async () => {
-    if (!appData) return undefined as unknown as UserData; // In practice `dataFetcher` won't be called if `appData` is falsy
+    if (!appData || !poolsData) return undefined as unknown as UserData; // In practice `dataFetcher` won't be called if `appData` is falsy
 
     const { obligationOwnerCaps: _obligationOwnerCaps, obligations } =
       await initializeObligations(
         suiClient,
-        appData.lm.suilendClient,
-        appData.lm.refreshedRawReserves,
-        appData.lm.reserveMap,
+        appData.lmMarket.suilendClient,
+        appData.lmMarket.refreshedRawReserves,
+        appData.lmMarket.reserveMap,
         address,
       );
     const obligationOwnerCaps = _obligationOwnerCaps
@@ -42,18 +42,18 @@ export default function useFetchUserData() {
       ); // Same order as `obligations`
 
     const rewardMap = formatRewards(
-      appData.lm.reserveMap,
-      appData.lm.rewardCoinMetadataMap,
-      appData.lm.rewardPriceMap,
+      appData.lmMarket.reserveMap,
+      appData.lmMarket.rewardCoinMetadataMap,
+      appData.lmMarket.rewardPriceMap,
       obligations,
     );
     for (const coinType of Object.keys(rewardMap)) {
-      const pool = appData.pools.find(
+      const pool = poolsData.pools.find(
         (_pool) => _pool.lpTokenType === coinType,
       );
       if (!pool) continue; // Skip rewards for reserves that don't have a pool
 
-      const reserve = appData.lm.reserveMap[coinType];
+      const reserve = appData.lmMarket.reserveMap[coinType];
       const rewards = rewardMap[coinType][Side.DEPOSIT];
       for (const r of rewards) {
         if (r.stats.aprPercent !== undefined) {
@@ -89,7 +89,7 @@ export default function useFetchUserData() {
     }
 
     // Pool rewards
-    const poolRewardMap = appData.pools.reduce(
+    const poolRewardMap = poolsData.pools.reduce(
       (acc, pool) => ({
         ...acc,
         [pool.id]: (rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []).reduce(
@@ -121,7 +121,7 @@ export default function useFetchUserData() {
   };
 
   const { data, mutate } = useSWR<UserData>(
-    !appData ? null : `userData-${address}`,
+    !appData || !poolsData ? null : `userData-${address}`,
     dataFetcher,
     {
       refreshInterval: 30 * 1000,

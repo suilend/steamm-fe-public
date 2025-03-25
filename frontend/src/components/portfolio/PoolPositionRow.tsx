@@ -33,7 +33,7 @@ import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { useLoadedUserContext } from "@/contexts/UserContext";
+import { useUserContext } from "@/contexts/UserContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { getIndexOfObligationWithDeposit } from "@/lib/obligation";
@@ -52,7 +52,7 @@ export default function PoolPositionRow({
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { appData } = useLoadedAppContext();
   const { refreshRawBalancesMap, getBalance, userData, refreshUserData } =
-    useLoadedUserContext();
+    useUserContext();
 
   // Stake/unstake
   const [stakedPercentOverride, setStakedPercentOverride] = useState<
@@ -65,6 +65,8 @@ export default function PoolPositionRow({
 
   const onStakeClick = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+
+    if (userData === undefined) return;
 
     try {
       if (isStaking) return;
@@ -94,13 +96,13 @@ export default function PoolPositionRow({
       console.log("XXX obligationIndex:", obligationIndex);
 
       const { obligationOwnerCapId, didCreate } = createObligationIfNoneExists(
-        appData.lm.suilendClient,
+        appData.lmMarket.suilendClient,
         transaction,
         obligationIndex !== -1
           ? userData.obligationOwnerCaps[obligationIndex]
           : undefined, // Create new obligation
       );
-      await appData.lm.suilendClient.depositIntoObligation(
+      await appData.lmMarket.suilendClient.depositIntoObligation(
         address,
         poolPosition.pool.lpTokenType,
         submitAmount,
@@ -114,11 +116,15 @@ export default function PoolPositionRow({
       const txUrl = explorer.buildTxUrl(res.digest);
 
       showSuccessTxnToast(
-        `Staked ${formatPair(
-          poolPosition.pool.coinTypes.map(
-            (coinType) => appData.coinMetadataMap[coinType].symbol,
+        [
+          "Staked",
+          formatPair(
+            poolPosition.pool.coinTypes.map(
+              (coinType) => appData.coinMetadataMap[coinType].symbol,
+            ),
           ),
-        )} LP tokens`,
+          "LP tokens",
+        ].join(" "),
         txUrl,
       );
 
@@ -150,10 +156,12 @@ export default function PoolPositionRow({
   const onUnstakeClick = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
-    if (isUnstaking) return;
-    if (!address) throw Error("Wallet not connected");
+    if (userData === undefined) return;
 
     try {
+      if (isUnstaking) return;
+      if (!address) throw Error("Wallet not connected");
+
       setIsUnstaking(true);
 
       const submitAmount = MAX_U64.toString();
@@ -168,7 +176,7 @@ export default function PoolPositionRow({
         if (obligationIndex === -1) throw Error("Obligation not found"); // Should never happen as you can't unstake if you don't have any staked
         console.log("XXX obligationIndex:", obligationIndex);
 
-        await appData.lm.suilendClient.withdrawAndSendToUser(
+        await appData.lmMarket.suilendClient.withdrawAndSendToUser(
           address,
           userData.obligationOwnerCaps[obligationIndex].id,
           userData.obligations[obligationIndex].id,
@@ -186,11 +194,15 @@ export default function PoolPositionRow({
       const txUrl = explorer.buildTxUrl(res.digest);
 
       showSuccessTxnToast(
-        `Unstaked ${formatPair(
-          poolPosition.pool.coinTypes.map(
-            (coinType) => appData.coinMetadataMap[coinType].symbol,
+        [
+          "Unstaked",
+          formatPair(
+            poolPosition.pool.coinTypes.map(
+              (coinType) => appData.coinMetadataMap[coinType].symbol,
+            ),
           ),
-        )} LP tokens`,
+          "LP tokens",
+        ].join(" "),
         txUrl,
       );
 
@@ -218,7 +230,7 @@ export default function PoolPositionRow({
 
   return (
     <Link
-      className="group relative z-[1] flex min-h-[calc(106px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row items-center border-x border-b bg-background py-[16px] transition-colors hover:bg-tertiary"
+      className="group relative z-[1] flex min-h-[calc(81px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row items-center border-x border-b bg-background py-[16px] transition-colors hover:bg-tertiary"
       href={`${POOL_URL_PREFIX}/${poolPosition.pool.id}`}
     >
       {/* Pool */}
@@ -246,10 +258,7 @@ export default function PoolPositionRow({
         className="flex h-full flex-row items-center"
         style={columnStyleMap.aprPercent_24h}
       >
-        <AprBreakdown
-          valueClassName="text-success decoration-success/50"
-          pool={poolPosition.pool}
-        />
+        <AprBreakdown pool={poolPosition.pool} />
       </div>
 
       {/* Balance */}
@@ -270,39 +279,37 @@ export default function PoolPositionRow({
             </Tooltip>
           )}
 
-          <div className="flex flex-row items-center gap-2">
-            {poolPosition.pool.coinTypes.map((coinType, index) => (
-              <Fragment key={index}>
-                {poolPosition.balances === undefined ? (
-                  <Skeleton className="h-[21px] w-24" />
-                ) : (
-                  <div className="flex flex-row items-center gap-2">
-                    <TokenLogo
-                      token={getToken(
-                        coinType,
-                        appData.coinMetadataMap[coinType],
-                      )}
-                      size={16}
-                    />
-                    <Tooltip
-                      title={`${formatToken(poolPosition.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
-                    >
-                      <p className="text-p2 text-foreground">
-                        {formatToken(poolPosition.balances[index], {
-                          exact: false,
-                        })}{" "}
-                        {appData.coinMetadataMap[coinType].symbol}
-                      </p>
-                    </Tooltip>
-                  </div>
-                )}
+          {poolPosition.balances === undefined ? (
+            <Skeleton className="h-[21px] w-40" />
+          ) : (
+            <div className="flex flex-row items-center gap-2">
+              {poolPosition.pool.coinTypes.map((coinType, index) => (
+                <Fragment key={coinType}>
+                  <TokenLogo
+                    token={getToken(
+                      coinType,
+                      appData.coinMetadataMap[coinType],
+                    )}
+                    size={16}
+                  />
+                  <Tooltip
+                    title={`${formatToken(poolPosition.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
+                  >
+                    <p className="text-p2 text-foreground">
+                      {formatToken(poolPosition.balances[index], {
+                        exact: false,
+                      })}{" "}
+                      {appData.coinMetadataMap[coinType].symbol}
+                    </p>
+                  </Tooltip>
 
-                {index === 0 && (
-                  <p className="text-p2 text-secondary-foreground">+</p>
-                )}
-              </Fragment>
-            ))}
-          </div>
+                  {index === 0 && (
+                    <p className="text-p2 text-secondary-foreground">+</p>
+                  )}
+                </Fragment>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -327,11 +334,11 @@ export default function PoolPositionRow({
       </div>
 
       {/* Staked */}
-      {/* <div
+      <div
         className="flex h-full flex-row items-center gap-3"
         style={columnStyleMap.stakedPercent}
       >
-        {!!appData.lm.reserveMap[poolPosition.pool.lpTokenType] ? (
+        {!!appData.lmMarket.reserveMap[poolPosition.pool.lpTokenType] ? (
           <>
             <p className="text-p1 text-foreground">
               {formatPercent(stakedPercent)}
@@ -370,10 +377,10 @@ export default function PoolPositionRow({
         ) : (
           <p className="text-p1 text-foreground">--</p>
         )}
-      </div> */}
+      </div>
 
       {/* Claimable rewards */}
-      {/* <div
+      <div
         className="flex h-full flex-row items-center"
         style={columnStyleMap.claimableRewards}
       >
@@ -408,31 +415,55 @@ export default function PoolPositionRow({
         ) : (
           <p className="text-p1 text-foreground">--</p>
         )}
-      </div> */}
+      </div>
 
       {/* Points */}
-      {/* <div
+      <div
         className="flex h-full flex-row items-center"
         style={columnStyleMap.points}
       >
-        <div className="flex flex-row items-center gap-2">
-          <TokenLogo
-            token={getToken(
-              NORMALIZED_STEAMM_POINTS_COINTYPE,
-              appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
-            )}
-            size={16}
-          />
+        {poolPosition.totalPoints.gt(0) || poolPosition.pointsPerDay.gt(0) ? (
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex flex-row items-center gap-2">
+              <TokenLogo
+                token={getToken(
+                  NORMALIZED_STEAMM_POINTS_COINTYPE,
+                  appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
+                )}
+                size={16}
+              />
 
-          <Tooltip
-            title={`${formatPoints(poolPosition.points, { dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].decimals })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
-          >
-            <p className="text-p2 text-foreground">
-              {formatPoints(poolPosition.points)}
-            </p>
-          </Tooltip>
-        </div>
-      </div> */}
+              <Tooltip
+                title={`${formatPoints(poolPosition.totalPoints, {
+                  dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE]
+                    .decimals,
+                })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
+              >
+                <p className="text-p1 text-foreground">
+                  {formatPoints(poolPosition.totalPoints)}
+                </p>
+              </Tooltip>
+            </div>
+
+            <div className="flex flex-row items-center gap-2">
+              <div className="w-4" />
+
+              <Tooltip
+                title={`${formatPoints(poolPosition.pointsPerDay, {
+                  dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE]
+                    .decimals,
+                })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol} per day`}
+              >
+                <p className="text-p2 text-secondary-foreground">
+                  {formatPoints(poolPosition.pointsPerDay)} per day
+                </p>
+              </Tooltip>
+            </div>
+          </div>
+        ) : (
+          <p className="text-p1 text-foreground">--</p>
+        )}
+      </div>
     </Link>
   );
 }
