@@ -41,7 +41,7 @@ function BankRow({ bank }: BankRowProps) {
 
       steammClient.Bank.initLending(transaction, {
         bankId: bank.id,
-        targetUtilisationBps: 2000,
+        targetUtilisationBps: 8000,
         utilisationBufferBps: 1000,
       });
 
