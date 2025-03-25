@@ -185,10 +185,7 @@ function PoolPage() {
                 <div className="flex flex-col gap-1">
                   <p className="text-p2 text-secondary-foreground">APR</p>
 
-                  <AprBreakdown
-                    valueClassName="text-success decoration-success/50"
-                    pool={pool}
-                  />
+                  <AprBreakdown pool={pool} />
                 </div>
               </div>
             </div>

@@ -258,10 +258,7 @@ export default function PoolPositionRow({
         className="flex h-full flex-row items-center"
         style={columnStyleMap.aprPercent_24h}
       >
-        <AprBreakdown
-          valueClassName="text-success decoration-success/50"
-          pool={poolPosition.pool}
-        />
+        <AprBreakdown pool={poolPosition.pool} />
       </div>
 
       {/* Balance */}

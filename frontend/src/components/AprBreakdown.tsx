@@ -221,12 +221,21 @@ export default function AprBreakdown({
           />
           <p
             className={cn(
-              "!text-p1 text-foreground",
-              (perDayRewards.length > 0 ||
+              "!text-p1",
+              perDayRewards.length > 0 ||
                 pool.suilendWeightedAverageDepositAprPercent.gt(0) ||
                 stakingYieldAprPercent.gt(0) ||
-                aprRewards.length > 0) &&
-                cn("decoration-foreground/50", hoverUnderlineClassName),
+                aprRewards.length > 0
+                ? perDayRewards.length > 0 || aprRewards.length > 0
+                  ? cn(
+                      "text-success decoration-success/50",
+                      hoverUnderlineClassName,
+                    )
+                  : cn(
+                      "text-foreground decoration-foreground/50",
+                      hoverUnderlineClassName,
+                    )
+                : "text-foreground",
               valueClassName,
             )}
           >

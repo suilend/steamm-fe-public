@@ -185,7 +185,14 @@ export default function PoolGroupRow({
             {maxAprPercent_24h === undefined ? (
               <Skeleton className="h-[24px] w-16" />
             ) : (
-              <p className="text-p1 text-foreground">
+              <p
+                className={cn(
+                  "!text-p1",
+                  [...perDayRewards, ...aprRewards].length > 0
+                    ? "text-success"
+                    : "text-foreground",
+                )}
+              >
                 {formatPercent(maxAprPercent_24h)}
               </p>
             )}
