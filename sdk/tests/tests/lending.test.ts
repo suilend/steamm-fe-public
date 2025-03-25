@@ -13,6 +13,7 @@ import {
   GLOBAL_ADMIN_ID,
   LENDING_MARKET_ID,
   LENDING_MARKET_TYPE,
+  ORACLES_PKG_ID,
   REGISTRY_ID,
   STEAMM_PKG_ID,
   STEAMM_SCRIPT_PKG_ID,
@@ -20,7 +21,7 @@ import {
 } from "./../packages";
 import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
 import { parseErrorCode } from "../../src";
-import { initLendingNoOp } from "../utils/utils";
+import { initLendingNoOp, testConfig } from "../utils/utils";
 
 dotenv.config();
 
@@ -50,29 +51,7 @@ export async function test() {
     });
 
     beforeAll(async () => {
-      sdk = new SteammSDK({
-        fullRpcUrl: "http://127.0.0.1:9000",
-        steamm_config: {
-          package_id: STEAMM_PKG_ID,
-          published_at: STEAMM_PKG_ID,
-          config: {
-            registryId: REGISTRY_ID,
-            globalAdmin: GLOBAL_ADMIN_ID,
-          },
-        },
-        suilend_config: {
-          package_id: SUILEND_PKG_ID,
-          published_at: SUILEND_PKG_ID,
-          config: {
-            lendingMarketId: LENDING_MARKET_ID,
-            lendingMarketType: LENDING_MARKET_TYPE,
-          },
-        },
-        steamm_script_config: {
-          package_id: STEAMM_SCRIPT_PKG_ID,
-          published_at: STEAMM_SCRIPT_PKG_ID,
-        },
-      });
+      sdk = new SteammSDK(testConfig());
       pools = await sdk.getPools();
       banks = await sdk.getBanks();
       pool = (
@@ -179,7 +158,7 @@ export async function test() {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const bankIdsToRebalance = await sdk.Bank.queryRebalance();
-      console.log("bankIdsToRebalance: ", bankIdsToRebalance);
+      // console.log("bankIdsToRebalance: ", bankIdsToRebalance);
 
       expect(bankIdsToRebalance.length).toBe(2);
       const rebalanceTxs = await sdk.Bank.rebalance(bankIdsToRebalance);
@@ -191,9 +170,6 @@ export async function test() {
           transactionBlock: tx,
           sender: sdk.senderAddress,
         });
-
-        const errCode = parseErrorCode(devResult);
-        console.log("Dev inspect result:", errCode);
 
         if (devResult.error) {
           console.log("DevResult failed.");

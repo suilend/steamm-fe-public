@@ -1,0 +1,11 @@
+[package]
+name = "oracles"
+edition = "2024.beta"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet-v1.40.1" }
+Pyth = { local = "../pyth" }
+Switchboard = { local = "../switchboard" }
+
+[addresses]
+oracles = "0x0"

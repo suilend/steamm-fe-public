@@ -1,19 +1,37 @@
 import {
   TransactionArgument,
   TransactionObjectInput,
+  TransactionResult,
 } from "@mysten/sui/transactions";
 
-// TODO: change TransactionObjectInput to TransactionArgument
+import {
+  CpQuoteSwapArgs,
+  CpSwapArgs,
+  CreateCpPoolArgs,
+} from "../quoters/constantQuoter/args";
+import {
+  CreateOraclePoolArgs,
+  OracleQuoteSwapArgs,
+  OracleSwapArgs,
+} from "../quoters/oracleQuoter/args";
 
-export interface PoolNewArgs {
-  coinMetadataA: TransactionObjectInput;
-  coinMetadataB: TransactionObjectInput;
-  coinMetadataLp: TransactionObjectInput;
-  LpTreasury: TransactionObjectInput;
-  registry: TransactionObjectInput;
+export type SwapFullArgs = CpSwapArgs | OracleSwapArgs;
+export type QuoteSwapFullArgs = CpQuoteSwapArgs | OracleQuoteSwapArgs;
+export type CreatePoolArgs = CreateCpPoolArgs | CreateOraclePoolArgs;
+
+export interface CreatePoolBaseArgs {
+  bTokenTypeA: string;
+  bTokenTypeB: string;
+  lpTokenType: string;
+  registry: string | TransactionObjectInput;
   swapFeeBps: bigint | TransactionArgument;
+  bTokenMetaA: string | TransactionObjectInput;
+  bTokenMetaB: string | TransactionObjectInput;
+  lpMetadataId: string | TransactionObjectInput;
+  lpTreasuryId: string | TransactionObjectInput;
 }
-export interface PoolSwapArgs {
+
+export interface SwapArgs {
   coinA: TransactionObjectInput;
   coinB: TransactionObjectInput;
   a2b: boolean | TransactionArgument;
@@ -21,30 +39,30 @@ export interface PoolSwapArgs {
   minAmountOut: bigint | TransactionArgument;
 }
 
-export interface PoolQuoteSwapArgs {
+export interface QuoteSwapArgs {
   amountIn: bigint | TransactionArgument;
   a2b: boolean | TransactionArgument;
 }
 
-export interface PoolDepositLiquidityArgs {
+export interface DepositLiquidityArgs {
   coinA: TransactionArgument;
   coinB: TransactionArgument;
   maxA: bigint | TransactionArgument;
   maxB: bigint | TransactionArgument;
 }
 
-export interface PoolRedeemLiquidityArgs {
+export interface RedeemLiquidityArgs {
   lpCoin: TransactionObjectInput;
   minA: bigint | TransactionArgument;
   minB: bigint | TransactionArgument;
 }
 
-export interface PoolQuoteDepositArgs {
+export interface QuoteDepositArgs {
   maxA: bigint | TransactionArgument;
   maxB: bigint | TransactionArgument;
 }
 
-export interface PoolQuoteRedeemArgs {
+export interface QuoteRedeemArgs {
   lpTokens: bigint | TransactionArgument;
 }
 
@@ -58,4 +76,11 @@ export interface MigrateArgs {
 
 export interface MigratePoolArgs {
   globalAdmin: TransactionObjectInput;
+}
+
+export interface SharePoolArgs {
+  pool: TransactionResult;
+  bTokenTypeA: string;
+  bTokenTypeB: string;
+  lpTokenType: string;
 }

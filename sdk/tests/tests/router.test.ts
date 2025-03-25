@@ -28,6 +28,7 @@ import {
   createCoinAndBankHelper,
   createPoolHelper,
   mintCoin,
+  testConfig,
 } from "../utils/utils";
 
 dotenv.config();
@@ -59,29 +60,7 @@ export async function test() {
     });
 
     beforeAll(async () => {
-      sdk = new SteammSDK({
-        fullRpcUrl: "http://127.0.0.1:9000",
-        steamm_config: {
-          package_id: STEAMM_PKG_ID,
-          published_at: STEAMM_PKG_ID,
-          config: {
-            registryId: REGISTRY_ID,
-            globalAdmin: GLOBAL_ADMIN_ID,
-          },
-        },
-        suilend_config: {
-          package_id: SUILEND_PKG_ID,
-          published_at: SUILEND_PKG_ID,
-          config: {
-            lendingMarketId: LENDING_MARKET_ID,
-            lendingMarketType: LENDING_MARKET_TYPE,
-          },
-        },
-        steamm_script_config: {
-          package_id: STEAMM_SCRIPT_PKG_ID,
-          published_at: STEAMM_SCRIPT_PKG_ID,
-        },
-      });
+      sdk = new SteammSDK(testConfig());
       pools = await sdk.getPools();
       banks = await sdk.getBanks();
 

@@ -4,19 +4,20 @@ import {
   TransactionResult,
 } from "@mysten/sui/transactions";
 
-import { PoolFunctions } from "../..";
-import { PackageInfo, PoolInfo } from "../../types";
+import { OracleQuoter, PoolFunctions } from "../..";
+import { PoolInfo, SteammPackageInfo } from "../../types";
 import { ConstantProductQuoter } from "../quoters/constantQuoter";
 import { Quoter } from "../quoters/quoter";
 
 import {
   CollectProtocolFeesArgs,
+  DepositLiquidityArgs,
   MigrateArgs,
-  PoolDepositLiquidityArgs,
-  PoolQuoteDepositArgs,
-  PoolQuoteRedeemArgs,
-  PoolRedeemLiquidityArgs,
-  PoolSwapArgs,
+  QuoteDepositArgs,
+  QuoteRedeemArgs,
+  QuoteSwapFullArgs,
+  RedeemLiquidityArgs,
+  SwapFullArgs,
 } from "./poolArgs";
 
 export * from "./poolArgs";
@@ -28,7 +29,7 @@ export class Pool {
   public poolInfo: PoolInfo;
   public quoter: Quoter;
 
-  constructor(pkgInfo: PackageInfo, poolInfo: PoolInfo) {
+  constructor(pkgInfo: SteammPackageInfo, poolInfo: PoolInfo) {
     this.sourcePkgId = pkgInfo.sourcePkgId;
     this.publishedAt = pkgInfo.publishedAt;
     this.poolInfo = poolInfo;
@@ -36,26 +37,31 @@ export class Pool {
     this.quoter = this.createQuoter(pkgInfo, poolInfo);
   }
 
-  private createQuoter(pkgInfo: PackageInfo, poolInfo: PoolInfo): Quoter {
+  private createQuoter(pkgInfo: SteammPackageInfo, poolInfo: PoolInfo): Quoter {
     switch (poolInfo.quoterType) {
-      case `${pkgInfo.sourcePkgId}::cpmm::CpQuoter`:
+      case `${pkgInfo.quoterPkgs.cpmm}::cpmm::CpQuoter`:
+        return new ConstantProductQuoter(pkgInfo, poolInfo);
+      case `${pkgInfo.quoterPkgs.omm}::omm::OracleQuoter`:
         return new ConstantProductQuoter(pkgInfo, poolInfo);
       default:
         throw new Error(`Unsupported quoter type: ${poolInfo.quoterType}`);
     }
   }
 
-  public swap(tx: Transaction, args: PoolSwapArgs): TransactionResult {
+  public swap(tx: Transaction, args: SwapFullArgs): TransactionResult {
     return this.quoter.swap(tx, args);
   }
 
-  public quoteSwap(tx: Transaction, args: PoolSwapArgs): TransactionArgument {
-    return this.quoter.swap(tx, args);
+  public quoteSwap(
+    tx: Transaction,
+    args: QuoteSwapFullArgs,
+  ): TransactionArgument {
+    return this.quoter.quoteSwap(tx, args);
   }
 
   public depositLiquidity(
     tx: Transaction,
-    args: PoolDepositLiquidityArgs,
+    args: DepositLiquidityArgs,
   ): [TransactionArgument, TransactionArgument] {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
@@ -76,7 +82,7 @@ export class Pool {
 
   public redeemLiquidity(
     tx: Transaction,
-    args: PoolRedeemLiquidityArgs,
+    args: RedeemLiquidityArgs,
   ): [TransactionArgument, TransactionArgument, TransactionArgument] {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
@@ -96,7 +102,7 @@ export class Pool {
 
   public quoteDeposit(
     tx: Transaction,
-    args: PoolQuoteDepositArgs,
+    args: QuoteDepositArgs,
   ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
@@ -115,7 +121,7 @@ export class Pool {
 
   public quoteRedeem(
     tx: Transaction,
-    args: PoolQuoteRedeemArgs,
+    args: QuoteRedeemArgs,
   ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),

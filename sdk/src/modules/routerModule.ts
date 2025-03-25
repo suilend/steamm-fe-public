@@ -8,6 +8,7 @@ import {
 import { PoolFunctions, QuoteFunctions } from "../_codegen";
 import { Bank, BankScript } from "../base";
 import { MultiSwapQuote, castMultiSwapQuote } from "../base/pool/poolTypes";
+import { OracleSwapExtraArgs } from "../base/quoters/oracleQuoter/args";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
 import {
@@ -15,8 +16,11 @@ import {
   BankList,
   getBankFromBToken,
   getBankFromUnderlying,
+  getQuoterType,
 } from "../types";
 import { zip } from "../utils";
+
+import { getOracleArgs } from "./poolModule";
 
 export interface CoinPair {
   coinIn: string;
@@ -108,12 +112,19 @@ export class RouterModule implements IModule {
             })()
           : BigInt(0);
 
+      const quoterType = getQuoterType(poolInfo.quoterType);
+      const extraArgs: OracleSwapExtraArgs | { type: "ConstantProduct" } =
+        quoterType === "Oracle"
+          ? await getOracleArgs(this.sdk, tx, poolInfo)
+          : { type: "ConstantProduct" };
+
       const swapResult = pool.swap(tx, {
         coinA,
         coinB,
         a2b: hop.a2b,
         amountIn,
         minAmountOut,
+        ...extraArgs,
       });
 
       swapResults.push(swapResult);
@@ -226,10 +237,18 @@ export class RouterModule implements IModule {
 
       const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
-      const quote = poolScript.quoteSwap(tx, {
+      const quoterType = getQuoterType(poolInfo.quoterType);
+      const extraArgs: OracleSwapExtraArgs | { type: "ConstantProduct" } =
+        quoterType === "Oracle"
+          ? await getOracleArgs(this.sdk, tx, poolInfo)
+          : { type: "ConstantProduct" };
+
+      const args = {
         a2b: hop.a2b,
         amountIn: nextBTokenAmountIn,
-      });
+      };
+
+      const quote = poolScript.quoteSwap(tx, { ...args, ...extraArgs });
 
       const amountOut = QuoteFunctions.amountOut(
         tx,
@@ -262,6 +281,8 @@ export class RouterModule implements IModule {
     );
 
     if (inspectResults.error) {
+      console.log("Error:", inspectResults.error);
+      console.log(tx.getData());
       console.log("Failed to fetch quotes");
       return [];
     }

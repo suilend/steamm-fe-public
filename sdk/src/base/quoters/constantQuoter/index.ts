@@ -4,19 +4,12 @@ import {
   TransactionResult,
 } from "@mysten/sui/transactions";
 
-import { ConstantProductFunctions } from "../../..";
+import { ConstantProductFunctions, SdkOptions } from "../../..";
 import { PackageInfo, PoolInfo } from "../../../types";
-import { MigrateArgs } from "../../pool/poolArgs";
+import { MigrateArgs, SharePoolArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
 
-import {
-  CpQuoteSwapArgs,
-  CpSwapArgs,
-  CreateCpPoolArgs,
-  ShareCpPoolArgs,
-} from "./constantProductArgs";
-
-export * from "./constantProductArgs";
+import { CpQuoteSwapArgs, CpSwapArgs, CreateCpPoolArgs } from "./args";
 
 export class ConstantProductQuoter implements Quoter {
   public sourcePkgId: string;
@@ -134,35 +127,35 @@ export class ConstantProductQuoter implements Quoter {
   }
 }
 
-export function createPool(
+export function createConstantProductPool(
   tx: Transaction,
   args: CreateCpPoolArgs,
   pkgInfo: PackageInfo,
 ): TransactionResult {
   const {
-    coinTypeA,
-    coinMetaA,
-    coinTypeB,
-    coinMetaB,
-    lpTreasury,
+    bTokenTypeA,
+    bTokenMetaA,
+    bTokenTypeB,
+    bTokenMetaB,
     lpTokenType,
-    lpTokenMeta,
     swapFeeBps,
     offset,
+    lpMetadataId,
+    lpTreasuryId,
     registry,
   } = args;
 
   const pool = ConstantProductFunctions.new_(
     tx,
-    [coinTypeA, coinTypeB, lpTokenType],
+    [bTokenTypeA, bTokenTypeB, lpTokenType],
     {
       registry,
       swapFeeBps,
       offset,
-      metaA: coinMetaA,
-      metaB: coinMetaB,
-      metaLp: lpTokenMeta,
-      lpTreasury,
+      metaA: bTokenMetaA,
+      metaB: bTokenMetaB,
+      metaLp: lpMetadataId,
+      lpTreasury: lpTreasuryId,
     },
     pkgInfo.publishedAt,
   );
@@ -170,37 +163,40 @@ export function createPool(
   return pool;
 }
 
-export function sharePool(
+export function shareConstantProductPool(
   tx: Transaction,
-  args: ShareCpPoolArgs,
+  args: SharePoolArgs,
   pkgInfo: PackageInfo,
+  sdkOptions: SdkOptions,
 ): TransactionResult {
-  const quoterType = `${pkgInfo.sourcePkgId}::cpmm::CpQuoter`;
+  const quoterType = `${sdkOptions.steamm_config.config!.quoterSourcePkgs.omm}::cpmm::CpQuoter`;
 
   return tx.moveCall({
     target: `0x2::transfer::public_share_object`,
     typeArguments: [
-      `${pkgInfo.sourcePkgId}::pool::Pool<${args.coinTypeA}, ${args.coinTypeB}, ${quoterType}, ${args.lpTokenType}>`,
+      `${pkgInfo.sourcePkgId}::pool::Pool<${args.bTokenTypeA}, ${args.bTokenTypeB}, ${quoterType}, ${args.lpTokenType}>`,
     ],
     arguments: [args.pool],
   });
 }
 
-export function createPoolAndShare(
+export function createConstantProductPoolAndShare(
   tx: Transaction,
   args: CreateCpPoolArgs,
   pkgInfo: PackageInfo,
+  sdkOptions: SdkOptions,
 ) {
-  const pool = createPool(tx, args, pkgInfo);
+  const pool = createConstantProductPool(tx, args, pkgInfo);
 
-  return sharePool(
+  return shareConstantProductPool(
     tx,
     {
       pool,
-      coinTypeA: args.coinTypeA,
-      coinTypeB: args.coinTypeB,
+      bTokenTypeA: args.bTokenTypeA,
+      bTokenTypeB: args.bTokenTypeB,
       lpTokenType: args.lpTokenType,
     },
     pkgInfo,
+    sdkOptions,
   );
 }

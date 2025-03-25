@@ -5,6 +5,7 @@ edition = "2024.beta"
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet-v1.40.1" }
 suilend = { local = "../suilend" }
+oracles = { local = "../oracles" }
 
 [addresses]
 steamm = "0x0"

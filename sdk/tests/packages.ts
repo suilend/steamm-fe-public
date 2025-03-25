@@ -1,12 +1,18 @@
 // These addresses are filled automatically by the test pipeline
-export const LIQUID_STAKING_PKG_ID = "";
-export const WORMHOLE_PKG_ID = "";
-export const SPRUNGSUI_PKG_ID = "";
-export const PYTH_PKG_ID = "";
-export const SUILEND_PKG_ID = "";
-export const STEAMM_PKG_ID = "";
-export const STEAMM_SCRIPT_PKG_ID = "";
-export const REGISTRY_ID = "";
-export const GLOBAL_ADMIN_ID = "";
-export const LENDING_MARKET_ID = "";
-export const LENDING_MARKET_TYPE = "";
+// These addresses are filled automatically by the test pipeline
+export const LIQUID_STAKING_PKG_ID = "0x4c923b45c56d008fe0c6cc85a1324631e8184ff6273eda86f5b5d1f4c96b0a63";
+export const WORMHOLE_PKG_ID = "0xe3aeda084a12ca3dabccc56e03ea896f99629b70bfb21ff78ca1b5564c6d61b8";
+export const SPRUNGSUI_PKG_ID = "0xdf5e9397b92f74b1ea17c5c11578cec3d8043ad78de3cb54cbb8826dca8a67c7";
+export const PYTH_PKG_ID = "0x25fbcffae21aaa0ae5411e6ecd87f23786458734b545559bbba763acbaa68de4";
+export const SWITCHBOARD_PKG_ID = "0x6b78b0d0804638c8bd43dd8ccb17b1cbf4d9a39741bd3007c2c2657de446406a";
+export const ORACLES_PKG_ID = "0x3a039ea0976621758da27f0385de5fc89963111b98ab41365ed9b0d74c1e3782";
+export const SUILEND_PKG_ID = "0xf6dc03459a8e218d3b32c7528d5b74cebd1dc113a9e0a8410e33c1fc6a4c727b";
+export const STEAMM_PKG_ID = "0x3403b37dd7105c4108322ad13e495335490043c925f280a04b7ec3a1c9eaf8aa";
+export const STEAMM_SCRIPT_PKG_ID = "0x2c954988f8d70507427062487c05b4506565ce854284d20ad1d36ebf736c1d74";
+export const REGISTRY_ID = "0x97d52e1efb5d3e2712f98345dd4a1f7ef123a5111bab7892d72af441a1f93d4c";
+export const GLOBAL_ADMIN_ID = "0x06f16c7bcc524331fcc2ae9c5fae435dd25fb0be7cca7721fe24d07a470929aa";
+export const LENDING_MARKET_ID = "0xc27a75f271d472f5c4a9dd63e2277f28802227a6fcd12da7cea46d2da1b2177e";
+export const LENDING_MARKET_TYPE = "0x3403b37dd7105c4108322ad13e495335490043c925f280a04b7ec3a1c9eaf8aa::setup::LENDING_MARKET";
+export const ORACLE_REGISTRY_ID = "0x52e5596e2057ad767acd60da6c4894d08cf064bed873cbccfbd069896d90d413";
+export const ORACLE_ADMIN_CAP_ID = "0x789b4c09d8ab969a35506b1d6df15df32d31f7daaf52f212a12779a7c6d0befc";
+

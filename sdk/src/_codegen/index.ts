@@ -3,5 +3,7 @@ export * as PoolFunctions from "./poolFunctions";
 export * as PoolScriptFunctions from "./poolScriptFunctions";
 export * as BankScriptFunctions from "./bankScriptFunctions";
 export * as ConstantProductFunctions from "./constantProductFunctions";
+export * as OracleQuoterFunctions from "./oracleQuoterFunctions";
 export * as QuoteFunctions from "./quoteFunctions";
 export * as EmitDryRun from "./emitDryRun";
+export * as OracleFunctions from "./oracleFunctions";

@@ -232,8 +232,9 @@ export default function CreatePoolCard() {
           ([, a], [, b]) =>
             a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1, // Sort by symbol (ascending)
         )
+        .filter(([coinType]) => getBalance(coinType).gt(0))
         .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata)),
-    [balancesCoinMetadataMap],
+    [balancesCoinMetadataMap, getBalance],
   );
 
   const quoteTokens = useMemo(
@@ -590,20 +591,38 @@ export default function CreatePoolCard() {
         "lp token:",
         createLpTokenResult,
       );
+
+      const createPoolBaseArgs = {
+        bTokenTypeA: bTokens[0].coinType,
+        bTokenMetaA: bTokens[0].id!, // Checked above
+        bTokenTypeB: bTokens[1].coinType,
+        bTokenMetaB: bTokens[1].id!, // Checked above
+        lpTreasuryId: createLpTokenResult.treasuryCapId,
+        lpTokenType: createLpTokenResult.coinType,
+        lpMetadataId: createLpTokenResult.coinMetadataId,
+        swapFeeBps: BigInt(feeTierPercent * 100),
+      };
+
       const pool = await steammClient.Pool.createPool(
-        {
-          btokenTypeA: bTokens[0].coinType,
-          coinMetaA: bTokens[0].id!, // Checked above
-          btokenTypeB: bTokens[1].coinType,
-          coinMetaB: bTokens[1].id!, // Checked above
-          lpTreasuryId: createLpTokenResult.treasuryCapId,
-          lpTokenType: createLpTokenResult.coinType,
-          lpMetadataId: createLpTokenResult.coinMetadataId,
-          swapFeeBps: BigInt(feeTierPercent * 100),
-          offset: BigInt(0), // TODO
-          // TODO: Support other quoters
-        },
         transaction,
+        {
+          [QuoterId.CPMM]: {
+            ...createPoolBaseArgs,
+            type: "ConstantProduct" as const,
+            offset: BigInt(0), // TODO
+          },
+          [QuoterId.ORACLE]: {
+            ...createPoolBaseArgs,
+            type: "Oracle" as const,
+            oracleIndexA: BigInt(COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]]),
+            oracleIndexB: BigInt(COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]]),
+            coinTypeA: tokens[0].coinType,
+            coinMetaA: tokens[0].id!, // Checked above
+            coinTypeB: tokens[1].coinType,
+            coinMetaB: tokens[1].id!, // Checked above
+          },
+          [QuoterId.STABLE]: {} as any, // TODO
+        }[quoterId],
       );
 
       // Step 4.2: Deposit
@@ -640,7 +659,13 @@ export default function CreatePoolCard() {
           tokens[1].coinType,
           bTokens[0].coinType,
           bTokens[1].coinType,
-          `${steammClient.sourcePkgId()}::cpmm::CpQuoter`,
+          {
+            [QuoterId.CPMM]: `${steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.cpmm}::cpmm::CpQuoter`,
+            [QuoterId.ORACLE]: `${
+              steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm
+            }::omm::OracleQuoter`,
+            [QuoterId.STABLE]: "", // TODO
+          }[quoterId],
           createLpTokenResult.coinType,
         ],
         {
@@ -660,13 +685,25 @@ export default function CreatePoolCard() {
       transaction.transferObjects([lpCoin], address);
 
       // Step 4.3: Share pool
+      const sharePoolBaseArgs = {
+        pool,
+        lpTokenType: createLpTokenResult.coinType,
+        bTokenTypeA: bTokens[0].coinType,
+        bTokenTypeB: bTokens[1].coinType,
+      };
+
       steammClient.Pool.sharePool(
         {
-          pool,
-          lpTokenType: createLpTokenResult.coinType,
-          btokenTypeA: bTokens[0].coinType,
-          btokenTypeB: bTokens[1].coinType,
-        },
+          [QuoterId.CPMM]: {
+            ...sharePoolBaseArgs,
+            type: "ConstantProduct" as const,
+          },
+          [QuoterId.ORACLE]: {
+            ...sharePoolBaseArgs,
+            type: "Oracle" as const,
+          },
+          [QuoterId.STABLE]: {} as any, // TODO
+        }[quoterId],
         transaction,
       );
 
@@ -674,11 +711,7 @@ export default function CreatePoolCard() {
       const txUrl = explorer.buildTxUrl(res.digest);
 
       showSuccessTxnToast(
-        [
-          "Created",
-          formatPair(tokens.map((token) => token.symbol)),
-          "pool",
-        ].join(" "),
+        `Created ${formatPair(tokens.map((token) => token.symbol))} pool`,
         txUrl,
         {
           description: `Quoter: ${QUOTER_ID_NAME_MAP[quoterId]}, fee tier: ${formatFeeTier(new BigNumber(feeTierPercent))}`,
@@ -815,7 +848,7 @@ export default function CreatePoolCard() {
               <div key={_quoterId} className="w-max">
                 <Tooltip
                   title={
-                    [QuoterId.ORACLE, QuoterId.STABLE].includes(_quoterId)
+                    [QuoterId.STABLE].includes(_quoterId)
                       ? "Coming soon"
                       : hasExistingPool
                         ? existingPoolTooltip
@@ -833,9 +866,7 @@ export default function CreatePoolCard() {
                       )}
                       onClick={() => setQuoterId(_quoterId)}
                       disabled={
-                        [QuoterId.ORACLE, QuoterId.STABLE].includes(
-                          _quoterId,
-                        ) || hasExistingPool
+                        [QuoterId.STABLE].includes(_quoterId) || hasExistingPool
                       }
                     >
                       <p
