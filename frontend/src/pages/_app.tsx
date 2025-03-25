@@ -4,6 +4,7 @@ import Head from "next/head";
 import { PropsWithChildren, useEffect, useRef } from "react";
 
 // import { registerWallet } from "@mysten/wallet-standard";
+// import { createPhantom } from "@phantom/wallet-sdk";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { LDProvider } from "launchdarkly-react-client-sdk";
@@ -55,6 +56,11 @@ export default function App({ Component, pageProps }: AppProps) {
       persistence: "localStorage",
     });
   }, []);
+
+  // Phantom
+  // useEffect(() => {
+  //   createPhantom({ hideLauncherBeforeOnboarded: true });
+  // }, []);
 
   return (
     <>
