@@ -27,7 +27,7 @@ import { getTotalAprPercent } from "@/lib/liquidityMining";
 import { ParsedPool, PoolGroup } from "@/lib/types";
 
 export default function PoolsPage() {
-  const { appData, poolsData, featuredPoolPairs } = useLoadedAppContext();
+  const { appData, poolsData, featuredPoolIds } = useLoadedAppContext();
   const { userData } = useUserContext();
   const { poolStats, globalHistoricalStats, globalStats } = useStatsContext();
 
@@ -125,20 +125,19 @@ export default function PoolsPage() {
   // Featured pools
   const featuredPoolGroups = useMemo(
     () =>
-      poolGroups === undefined || featuredPoolPairs === undefined
+      poolGroups === undefined || featuredPoolIds === undefined
         ? undefined
-        : poolGroups.filter(
-            (poolGroup) =>
-              !!featuredPoolPairs.find(
-                (pair) =>
-                  formatPair(
-                    poolGroup.coinTypes.map(
-                      (coinType) => appData.coinMetadataMap[coinType].symbol,
-                    ),
-                  ) === pair,
+        : poolGroups
+            .filter((poolGroup) =>
+              poolGroup.pools.some((pool) => featuredPoolIds.includes(pool.id)),
+            )
+            .map((poolGroup) => ({
+              ...poolGroup,
+              pools: poolGroup.pools.filter((pool) =>
+                featuredPoolIds.includes(pool.id),
               ),
-          ),
-    [poolGroups, featuredPoolPairs, appData.coinMetadataMap],
+            })),
+    [poolGroups, featuredPoolIds],
   );
 
   // Search

@@ -90,7 +90,7 @@ interface AppContext {
   slippagePercent: number;
   setSlippagePercent: (slippagePercent: number) => void;
 
-  featuredPoolPairs: string[] | undefined;
+  featuredPoolIds: string[] | undefined;
 }
 type LoadedAppContext = AppContext & {
   steammClient: SteammSDK;
@@ -120,7 +120,7 @@ const AppContext = createContext<AppContext>({
     throw Error("AppContextProvider not initialized");
   },
 
-  featuredPoolPairs: undefined,
+  featuredPoolIds: undefined,
 });
 
 export const useAppContext = () => useContext(AppContext);
@@ -182,9 +182,9 @@ export function AppContextProvider({ children }: PropsWithChildren) {
 
   // Featured pools
   const flags = useFlags();
-  const featuredPoolPairs: string[] | undefined = useMemo(
-    () => flags?.steammFeaturedPoolPairs ?? [],
-    [flags?.steammFeaturedPoolPairs],
+  const featuredPoolIds: string[] | undefined = useMemo(
+    () => flags?.steammFeaturedPoolIds ?? [],
+    [flags?.steammFeaturedPoolIds],
   );
 
   // Context
@@ -204,7 +204,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       slippagePercent,
       setSlippagePercent,
 
-      featuredPoolPairs,
+      featuredPoolIds,
     }),
     [
       steammClient,
@@ -216,7 +216,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       refreshPoolsData,
       slippagePercent,
       setSlippagePercent,
-      featuredPoolPairs,
+      featuredPoolIds,
     ],
   );
 
