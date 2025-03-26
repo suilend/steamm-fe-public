@@ -12,7 +12,7 @@ export default function Container({ className, children }: ContainerProps) {
   return (
     <div
       className={cn(
-        "mx-auto flex w-full max-w-[1360px] flex-col items-center px-4 md:px-10",
+        "mx-auto flex w-full max-w-[1440px] flex-col items-center px-4 md:px-10",
         className,
       )}
     >

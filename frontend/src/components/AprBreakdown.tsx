@@ -23,7 +23,6 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
-import { useUserContext } from "@/contexts/UserContext";
 import { getTotalAprPercent } from "@/lib/liquidityMining";
 import { ParsedPool } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
@@ -40,10 +39,10 @@ export default function AprBreakdown({
   pool,
 }: AprBreakdownProps) {
   const { appData, poolsData } = useLoadedAppContext();
-  const { userData } = useUserContext();
   const { poolStats } = useStatsContext();
 
-  const rewards = userData?.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
+  const rewards =
+    appData.lmMarket.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
   const filteredRewards = getFilteredRewards(rewards);
 
   // Rewards - per day

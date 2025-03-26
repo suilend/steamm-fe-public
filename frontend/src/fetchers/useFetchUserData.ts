@@ -117,7 +117,13 @@ export default function useFetchUserData() {
       {} as Record<string, Record<string, BigNumber>>,
     );
 
-    return { obligationOwnerCaps, obligations, rewardMap, poolRewardMap };
+    return {
+      obligationOwnerCaps,
+      obligations,
+
+      rewardMap,
+      poolRewardMap,
+    };
   };
 
   const { data, mutate } = useSWR<UserData>(

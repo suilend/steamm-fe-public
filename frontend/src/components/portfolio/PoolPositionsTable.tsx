@@ -46,7 +46,7 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   stakedPercent: {
     flex: 1,
-    minWidth: 175, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -219,11 +219,11 @@ export default function PoolPositionsTable({
           Array.from({ length: 3 }).map((_, index) => (
             <Skeleton
               key={index}
-              className="relative z-[1] h-[calc(81px+1px)] w-full border-x border-b"
+              className="relative z-[1] h-[calc(84px+1px)] w-full border-x border-b"
             />
           ))
         ) : sortedPoolPositions.length === 0 ? (
-          <div className="flex h-[calc(81px+1px)] w-full flex-row items-center justify-center border-x border-b bg-background">
+          <div className="flex h-[calc(84px+1px)] w-full flex-row items-center justify-center border-x border-b bg-background">
             <p className="text-p2 text-tertiary-foreground">No positions</p>
           </div>
         ) : (

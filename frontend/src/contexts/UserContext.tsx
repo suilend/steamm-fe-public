@@ -21,8 +21,8 @@ import useFetchUserData from "@/fetchers/useFetchUserData";
 export interface UserData {
   obligationOwnerCaps: ObligationOwnerCap<string>[];
   obligations: ParsedObligation[];
-  rewardMap: RewardMap;
 
+  rewardMap: RewardMap;
   poolRewardMap: Record<string, Record<string, BigNumber>>;
 }
 

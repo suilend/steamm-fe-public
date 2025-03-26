@@ -18,6 +18,7 @@ import {
 import {
   ParsedLendingMarket,
   ParsedReserve,
+  RewardMap,
   SuilendClient,
 } from "@suilend/sdk";
 import { Reserve } from "@suilend/sdk/_generated/suilend/reserve/structs";
@@ -52,6 +53,8 @@ export interface AppData {
 
     rewardPriceMap: Record<string, BigNumber | undefined>;
     rewardCoinMetadataMap: Record<string, CoinMetadata>;
+
+    rewardMap: RewardMap;
   };
 
   coinMetadataMap: Record<string, CoinMetadata>;

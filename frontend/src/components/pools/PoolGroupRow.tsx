@@ -18,7 +18,6 @@ import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { useUserContext } from "@/contexts/UserContext";
 import { formatPair } from "@/lib/format";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -33,7 +32,6 @@ export default function PoolGroupRow({
   poolGroup,
 }: PoolGroupRowProps) {
   const { appData } = useLoadedAppContext();
-  const { userData } = useUserContext();
 
   // State
   const [isExpanded, setIsExpanded] = useLocalStorage<boolean>(
@@ -69,7 +67,7 @@ export default function PoolGroupRow({
   const rewards = poolGroup.pools.reduce(
     (acc, pool) => [
       ...acc,
-      ...(userData?.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []),
+      ...(appData.lmMarket.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []),
     ],
     [] as RewardSummary[],
   );

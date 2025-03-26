@@ -19,7 +19,6 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
-import { useUserContext } from "@/contexts/UserContext";
 import useBreakpoint from "@/hooks/useBreakpoint";
 import { ChartType } from "@/lib/chart";
 import { formatPair } from "@/lib/format";
@@ -28,7 +27,6 @@ import { ParsedPool, PoolGroup } from "@/lib/types";
 
 export default function PoolsPage() {
   const { appData, poolsData, featuredPoolIds } = useLoadedAppContext();
-  const { userData } = useUserContext();
   const { poolStats, globalHistoricalStats, globalStats } = useStatsContext();
 
   const { sm } = useBreakpoint();
@@ -68,7 +66,8 @@ export default function PoolsPage() {
           pools: pools.map((pool) => {
             // Same code as in frontend/src/components/AprBreakdown.tsx
             const rewards =
-              userData?.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
+              appData.lmMarket.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ??
+              [];
             const filteredRewards = getFilteredRewards(rewards);
 
             const stakingYieldAprPercent: BigNumber | undefined =
@@ -117,7 +116,7 @@ export default function PoolsPage() {
     );
   }, [
     poolsData,
-    userData?.rewardMap,
+    appData.lmMarket.rewardMap,
     poolStats.aprPercent_24h,
     poolStats.volumeUsd_24h,
   ]);

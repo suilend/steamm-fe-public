@@ -231,7 +231,7 @@ export default function PoolPositionRow({
 
   return (
     <Link
-      className="group relative z-[1] flex min-h-[calc(81px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row items-center border-x border-b bg-background py-[16px] transition-colors hover:bg-tertiary"
+      className="group relative z-[1] flex min-h-[calc(84px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row items-center border-x border-b bg-background py-[16px] transition-colors hover:bg-tertiary"
       href={`${POOL_URL_PREFIX}/${poolPosition.pool.id}`}
     >
       {/* Pool */}
@@ -340,12 +340,12 @@ export default function PoolPositionRow({
         style={columnStyleMap.stakedPercent}
       >
         {!!appData.lmMarket.reserveMap[poolPosition.pool.lpTokenType] ? (
-          <>
+          <div className="flex flex-col items-end gap-1">
             <p className="text-p1 text-foreground">
               {formatPercent(stakedPercent)}
             </p>
 
-            <div className="flex flex-col items-end gap-1">
+            <div className="flex flex-row items-center gap-2">
               {!stakedPercent.eq(100) && (
                 <button
                   className="flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-1 px-2 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
@@ -374,7 +374,7 @@ export default function PoolPositionRow({
                 </button>
               )}
             </div>
-          </>
+          </div>
         ) : (
           <p className="text-p1 text-foreground">--</p>
         )}
