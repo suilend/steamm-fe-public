@@ -28,6 +28,8 @@ export default function useFetchPoolsData(
 
     const { mainMarket, coinMetadataMap, poolInfos } = appData;
     const { bTokenTypeCoinTypeMap, bankMap } = banksData;
+    const limit3 = pLimit(3);
+    const limit10 = pLimit(10);
 
     // Oracles
     const oracleInfos = await steammClient.getOracles();
@@ -42,13 +44,12 @@ export default function useFetchPoolsData(
       "https://hermes.pyth.network",
     );
 
-    const limit = pLimit(3);
     const oracleIndexOracleInfoPriceEntries: [
       number,
       { oracleInfo: OracleInfo; price: BigNumber },
     ][] = await Promise.all(
       Object.entries(oracleIndexOracleInfoMap).map(([index, oracleInfo]) =>
-        limit<[], [number, { oracleInfo: OracleInfo; price: BigNumber }]>(
+        limit3<[], [number, { oracleInfo: OracleInfo; price: BigNumber }]>(
           async () => {
             const priceIdentifier =
               typeof oracleInfo.oracleIdentifier === "string"
@@ -114,7 +115,7 @@ export default function useFetchPoolsData(
           ),
         )
         .map((LIQUID_STAKING_INFO) =>
-          (async () => {
+          limit10<[], [string, BigNumber]>(async () => {
             const lstClient = await LstClient.initialize(
               suiClient,
               LIQUID_STAKING_INFO,
@@ -124,7 +125,7 @@ export default function useFetchPoolsData(
             const aprPercent = new BigNumber(apr).times(100);
 
             return [LIQUID_STAKING_INFO.type, aprPercent];
-          })(),
+          }),
         ),
     );
     const lstAprPercentMap = Object.fromEntries(lstAprPercentMapEntries);
@@ -133,7 +134,7 @@ export default function useFetchPoolsData(
     const pools: ParsedPool[] = (
       await Promise.all(
         poolInfos.map((poolInfo) =>
-          (async () => {
+          limit10(async () => {
             const id = poolInfo.poolId;
             const quoterId = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
               ? QuoterId.CPMM
@@ -275,7 +276,7 @@ export default function useFetchPoolsData(
 
               suilendWeightedAverageDepositAprPercent,
             };
-          })(),
+          }),
         ),
       )
     ).filter(Boolean) as ParsedPool[];

@@ -1,5 +1,6 @@
 import { normalizeStructTag } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
+import pLimit from "p-limit";
 import useSWR from "swr";
 
 import { showErrorToast } from "@suilend/frontend-sui-next";
@@ -17,6 +18,7 @@ export default function useFetchBanksData(
     if (!appData) return undefined as unknown as BanksData; // In practice `dataFetcher` won't be called if `appData` is falsy
 
     const { mainMarket, coinMetadataMap, bankInfos } = appData;
+    const limit10 = pLimit(10);
 
     // Banks
     const bTokenTypeCoinTypeMap: Record<string, string> = {};
@@ -29,7 +31,7 @@ export default function useFetchBanksData(
 
     const banks: ParsedBank[] = await Promise.all(
       bankInfos.map((bankInfo) =>
-        (async () => {
+        limit10(async () => {
           const id = bankInfo.bankId;
           const coinType = bankInfo.coinType;
           const bTokenType = bankInfo.btokenType;
@@ -66,7 +68,7 @@ export default function useFetchBanksData(
             utilizationPercent,
             suilendDepositAprPercent,
           };
-        })(),
+        }),
       ),
     );
     const bankMap = Object.fromEntries(
