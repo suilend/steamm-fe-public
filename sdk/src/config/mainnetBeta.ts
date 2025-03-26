@@ -1,8 +1,6 @@
 import { SdkOptions } from "../sdk";
 import { Package, SteammConfigs } from "../types";
 
-import { SUILEND_CONFIG } from "./mainnet";
-
 export const STEAMM_BETA_CONFIG: Package<SteammConfigs> = {
   package_id:
     "0xddaa7c8c1e74d4b0448c5a11fdbee779eaca26c40183d8791e315c8f62530d51",
@@ -27,8 +25,18 @@ export const STEAMM_SCRIPT_BETA_CONFIG = {
     "0x9caa34a479ff313e20b0be665540bf8b10192650a7886039fffdb449585c48f6",
 };
 
-// export const ORACLE_ADMIN_CAP_OBJECT_ID =
-//   "0x7b077b66c8bffd20cfc2f006254bf5f60dc74f4157a09ea5c967c5bf2a4e83df";
+export const SUILEND_BETA_CONFIG = {
+  package_id:
+    "0x1f54a9a2d71799553197e9ea24557797c6398d6a65f2d4d3818c9304b75d5e21",
+  published_at:
+    "0x5bb8cb3894945f523736f4f5059b1621056e8093b165ea56b20805d0ef2461a9",
+  config: {
+    lendingMarketId:
+      "0x12e46de3eafaf0308a2dd64f1158782ed19e6621835bf883a1dd6b3061115667", // Main market (beta)
+    lendingMarketType:
+      "0x83556891f4a0f233ce7b05cfe7f957d4020492a34f5405b2cb9377d060bef4bf::spring_sui::SPRING_SUI",
+  },
+};
 
 export const ORACLE_BETA_CONFIG = {
   package_id:
@@ -43,7 +51,7 @@ export const ORACLE_BETA_CONFIG = {
 
 export const BETA_CONFIG: SdkOptions = {
   fullRpcUrl: "https://fullnode.mainnet.sui.io:443",
-  suilend_config: SUILEND_CONFIG,
+  suilend_config: SUILEND_BETA_CONFIG,
   steamm_config: STEAMM_BETA_CONFIG,
   steamm_script_config: STEAMM_SCRIPT_BETA_CONFIG,
   oracle_config: ORACLE_BETA_CONFIG,
