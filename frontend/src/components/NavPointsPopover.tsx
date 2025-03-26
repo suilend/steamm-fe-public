@@ -10,12 +10,12 @@ import Popover from "@/components/Popover";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLoadedAppContext } from "@/contexts/AppContext";
+import { useAppContext } from "@/contexts/AppContext";
 import { usePoolPositionsContext } from "@/contexts/PoolPositionsContext";
 import { cn } from "@/lib/utils";
 
 export default function NavPointsPopover() {
-  const { appData } = useLoadedAppContext();
+  const { appData } = useAppContext();
 
   const { totalPoints, pointsPerDay } = usePoolPositionsContext();
 
@@ -37,10 +37,14 @@ export default function NavPointsPopover() {
           )}
         >
           <TokenLogo
-            token={getToken(
-              NORMALIZED_STEAMM_POINTS_COINTYPE,
-              appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
-            )}
+            token={
+              appData === undefined
+                ? undefined
+                : getToken(
+                    NORMALIZED_STEAMM_POINTS_COINTYPE,
+                    appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
+                  )
+            }
             size={16}
           />
           {totalPoints === undefined ? (
@@ -56,10 +60,14 @@ export default function NavPointsPopover() {
       <div className="flex w-full flex-col gap-3">
         <div className="flex flex-row items-center gap-2">
           <TokenLogo
-            token={getToken(
-              NORMALIZED_STEAMM_POINTS_COINTYPE,
-              appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
-            )}
+            token={
+              appData === undefined
+                ? undefined
+                : getToken(
+                    NORMALIZED_STEAMM_POINTS_COINTYPE,
+                    appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
+                  )
+            }
             size={16}
           />
           <p className="text-p1 text-foreground">STEAMM Points</p>
@@ -72,10 +80,15 @@ export default function NavPointsPopover() {
               <Skeleton className="h-[21px] w-12" />
             ) : (
               <Tooltip
-                title={`${formatPoints(totalPoints, {
-                  dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE]
-                    .decimals,
-                })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
+                title={
+                  appData === undefined
+                    ? undefined
+                    : `${formatPoints(totalPoints, {
+                        dp: appData.coinMetadataMap[
+                          NORMALIZED_STEAMM_POINTS_COINTYPE
+                        ].decimals,
+                      })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`
+                }
               >
                 <p className="!text-p2 text-foreground">
                   {formatPoints(totalPoints)}
@@ -90,10 +103,15 @@ export default function NavPointsPopover() {
               <Skeleton className="h-[21px] w-12" />
             ) : (
               <Tooltip
-                title={`${formatPoints(pointsPerDay, {
-                  dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE]
-                    .decimals,
-                })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
+                title={
+                  appData === undefined
+                    ? undefined
+                    : `${formatPoints(pointsPerDay, {
+                        dp: appData.coinMetadataMap[
+                          NORMALIZED_STEAMM_POINTS_COINTYPE
+                        ].decimals,
+                      })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`
+                }
               >
                 <p className="!text-p2 text-foreground">
                   {formatPoints(pointsPerDay)}

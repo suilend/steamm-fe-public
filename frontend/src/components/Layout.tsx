@@ -21,9 +21,15 @@ export default function Layout({ children }: PropsWithChildren) {
       }}
     >
       {appData === undefined ? (
-        <div className="fixed inset-0 flex flex-col items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
-        </div>
+        <>
+          <Nav />
+
+          <div className="flex flex-1 flex-col items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-foreground" />
+          </div>
+
+          <Footer />
+        </>
       ) : process.env.NEXT_PUBLIC_ENVIRONMENT === "production" &&
         Date.now() < LAUNCH_TIMESTAMP_MS ? (
         <div className="fixed inset-0 flex flex-col items-center justify-center gap-6">
