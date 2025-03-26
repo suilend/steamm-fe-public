@@ -9,14 +9,12 @@ import {
 } from "@suilend/frontend-sui";
 import { showErrorToast, useSettingsContext } from "@suilend/frontend-sui-next";
 import {
-  LENDING_MARKET_ID,
-  LENDING_MARKET_TYPE,
   SuilendClient,
   initializeSuilend,
   initializeSuilendRewards,
 } from "@suilend/sdk";
 import { LiquidStakingObjectInfo } from "@suilend/springsui-sdk";
-import { SteammSDK } from "@suilend/steamm-sdk";
+import { BETA_CONFIG, MAINNET_CONFIG, SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
 import { SPRINGSUI_ASSETS_URL } from "@/lib/constants";
@@ -31,8 +29,12 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     // Suilend
     // Suilend - Main market
     const mainMarket_suilendClient = await SuilendClient.initialize(
-      LENDING_MARKET_ID, // Main market / Main market (beta) when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
-      LENDING_MARKET_TYPE,
+      process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+        ? BETA_CONFIG.suilend_config.config!.lendingMarketId // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true (may not match bank config)
+        : MAINNET_CONFIG.suilend_config.config!.lendingMarketId,
+      process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+        ? BETA_CONFIG.suilend_config.config!.lendingMarketType // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true (may not match bank config)
+        : MAINNET_CONFIG.suilend_config.config!.lendingMarketType,
       suiClient,
     );
 
@@ -52,7 +54,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     // Suilend - LM market
     const lmMarket_suilendClient = await SuilendClient.initialize(
       process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-        ? "0xb1d89cf9082cedce09d3647f0ebda4a8b5db125aff5d312a8bfd7eefa715bd35"
+        ? "0xb1d89cf9082cedce09d3647f0ebda4a8b5db125aff5d312a8bfd7eefa715bd35" // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
         : "0xc1888ec1b81a414e427a44829310508352aec38252ee0daa9f8b181b6947de9f",
       process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
         ? "0xdeeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP"

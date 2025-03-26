@@ -1,15 +1,17 @@
-import { PriceFeed, SuiPriceServiceConnection } from "@pythnetwork/pyth-sui-js";
+import { SuiPriceServiceConnection } from "@pythnetwork/pyth-sui-js";
 import BigNumber from "bignumber.js";
+import pLimit from "p-limit";
 import useSWR from "swr";
 
 import { showErrorToast, useSettingsContext } from "@suilend/frontend-sui-next";
 import { toHexString } from "@suilend/sdk";
 import { LstClient } from "@suilend/springsui-sdk";
-import { SteammSDK } from "@suilend/steamm-sdk";
+import { OracleInfo, SteammSDK } from "@suilend/steamm-sdk";
+import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 
 import { AppData, BanksData, PoolsData } from "@/contexts/AppContext";
 import { formatPair } from "@/lib/format";
-import { COINTYPE_ORACLE_INDEX_MAP } from "@/lib/oracles";
+import { ORACLE_INDEX_TYPE_COINTYPE_MAP, OracleType } from "@/lib/oracles";
 import { ParsedPool, QuoterId } from "@/lib/types";
 
 export default function useFetchPoolsData(
@@ -27,49 +29,76 @@ export default function useFetchPoolsData(
     const { bTokenTypeCoinTypeMap, bankMap } = banksData;
 
     // Oracles
-    const oracles = await steammClient.getOracles();
+    const oracleInfos = await steammClient.getOracles();
 
-    const pythOracles = oracles.filter(
-      (oracle) => oracle.oracleType === "pyth",
-    );
-    const switchboardOracles = oracles.filter(
-      (oracle) => oracle.oracleType === "switchboard",
-    );
+    const oracleIndexOracleInfoMap: Record<number, OracleInfo> =
+      oracleInfos.reduce(
+        (acc, oracleInfo, index) => ({ ...acc, [index]: oracleInfo }),
+        {} as Record<number, OracleInfo>,
+      );
 
-    // Oracles - Pyth
     const pythConnection = new SuiPriceServiceConnection(
       "https://hermes.pyth.network",
     );
 
-    const pythPriceIdentifiers = pythOracles.map((oracle) =>
-      typeof oracle.oracleIdentifier === "string"
-        ? oracle.oracleIdentifier
-        : toHexString(oracle.oracleIdentifier),
+    const limit = pLimit(3);
+    const oracleIndexOracleInfoPriceEntries: [
+      number,
+      { oracleInfo: OracleInfo; price: BigNumber },
+    ][] = await Promise.all(
+      Object.entries(oracleIndexOracleInfoMap).map(([index, oracleInfo]) =>
+        limit<[], [number, { oracleInfo: OracleInfo; price: BigNumber }]>(
+          async () => {
+            const priceIdentifier =
+              typeof oracleInfo.oracleIdentifier === "string"
+                ? oracleInfo.oracleIdentifier
+                : toHexString(oracleInfo.oracleIdentifier);
+
+            if (oracleInfo.oracleType === OracleType.PYTH) {
+              const pythPriceFeeds =
+                (await pythConnection.getLatestPriceFeeds([priceIdentifier])) ??
+                [];
+
+              return [
+                +index,
+                {
+                  oracleInfo,
+                  price: new BigNumber(
+                    pythPriceFeeds[0]
+                      .getPriceUnchecked()
+                      .getPriceAsNumberUnchecked(),
+                  ),
+                },
+              ];
+            } else if (oracleInfo.oracleType === OracleType.SWITCHBOARD) {
+              return [
+                +index,
+                {
+                  oracleInfo,
+                  price: new BigNumber(0.000001), // TODO: Fetch Switchboard price
+                },
+              ];
+            } else {
+              throw new Error(`Unknown oracle type: ${oracleInfo.oracleType}`);
+            }
+          },
+        ),
+      ),
+    );
+    const oracleIndexOracleInfoPriceMap = Object.fromEntries(
+      oracleIndexOracleInfoPriceEntries,
     );
 
-    const pythPriceFeeds: PriceFeed[] =
-      pythPriceIdentifiers.length === 0
-        ? []
-        : ((await pythConnection.getLatestPriceFeeds(pythPriceIdentifiers)) ??
-          []);
-
-    const coinTypePythPriceMap: Record<string, BigNumber | undefined> =
-      Object.fromEntries(
-        Object.keys(COINTYPE_ORACLE_INDEX_MAP).map((coinType, index) => [
-          coinType,
-          pythPriceFeeds[index] === undefined
-            ? undefined
-            : new BigNumber(
-                pythPriceFeeds[index]
-                  .getPriceUnchecked()
-                  .getPriceAsNumberUnchecked(),
-              ),
-        ]),
-      );
-
-    // Oracles - Switchboard
-    const coinTypeSwitchboardPriceMap: Record<string, BigNumber | undefined> =
-      {};
+    const coinTypeOracleInfoPriceMap: Record<
+      string,
+      { oracleInfo: OracleInfo; price: BigNumber }
+    > = oracleIndexOracleInfoPriceEntries.reduce(
+      (acc, [index, value]) => ({
+        ...acc,
+        [ORACLE_INDEX_TYPE_COINTYPE_MAP[index].coinType]: value,
+      }),
+      {} as Record<string, { oracleInfo: OracleInfo; price: BigNumber }>,
+    );
 
     // LSTs
     const lstAprPercentMapEntries: [string, BigNumber][] = await Promise.all(
@@ -113,7 +142,7 @@ export default function useFetchPoolsData(
 
             const bTokenTypeA = poolInfo.coinTypeA;
             const bTokenTypeB = poolInfo.coinTypeB;
-            const bTokenTypes = [bTokenTypeA, bTokenTypeB];
+            const bTokenTypes: [string, string] = [bTokenTypeA, bTokenTypeB];
             if (
               bTokenTypeA.startsWith("0x10e03a93cf1e3d") ||
               bTokenTypeB.startsWith("0x10e03a93cf1e3d")
@@ -122,7 +151,7 @@ export default function useFetchPoolsData(
 
             const coinTypeA = bTokenTypeCoinTypeMap[bTokenTypeA];
             const coinTypeB = bTokenTypeCoinTypeMap[bTokenTypeB];
-            const coinTypes = [coinTypeA, coinTypeB];
+            const coinTypes: [string, string] = [coinTypeA, coinTypeB];
 
             const pool =
               quoterId === QuoterId.CPMM
@@ -154,18 +183,24 @@ export default function useFetchPoolsData(
             balanceA = balanceA.times(withdrawA.div(balanceA));
             balanceB = balanceB.times(withdrawB.div(balanceB));
 
-            const balances = [balanceA, balanceB];
+            const balances: [BigNumber, BigNumber] = [balanceA, balanceB];
 
             let priceA =
-              coinTypePythPriceMap[coinTypeA] ??
-              coinTypeSwitchboardPriceMap[coinTypeA] ??
-              mainMarket.reserveMap[coinTypeA]?.price ??
-              undefined;
+              quoterId === QuoterId.ORACLE
+                ? oracleIndexOracleInfoPriceMap[
+                    +(pool.quoter as OracleQuoter).oracleIndexA.toString()
+                  ].price
+                : (coinTypeOracleInfoPriceMap[coinTypeA]?.price ??
+                  mainMarket.reserveMap[coinTypeA]?.price ??
+                  undefined);
             let priceB =
-              coinTypePythPriceMap[coinTypeB] ??
-              coinTypeSwitchboardPriceMap[coinTypeB] ??
-              mainMarket.reserveMap[coinTypeB]?.price ??
-              undefined;
+              quoterId === QuoterId.ORACLE
+                ? oracleIndexOracleInfoPriceMap[
+                    +(pool.quoter as OracleQuoter).oracleIndexB.toString()
+                  ].price
+                : (coinTypeOracleInfoPriceMap[coinTypeB]?.price ??
+                  mainMarket.reserveMap[coinTypeB]?.price ??
+                  undefined);
 
             if (priceA === undefined && priceB === undefined) {
               console.error(
@@ -187,7 +222,7 @@ export default function useFetchPoolsData(
                 ? balanceA.div(balanceB).times(priceA)
                 : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM quoter)
             }
-            const prices = [priceA, priceB];
+            const prices: [BigNumber, BigNumber] = [priceA, priceB];
 
             const lpSupply = new BigNumber(pool.lpSupply.value.toString()).div(
               10 ** 9,
@@ -256,9 +291,7 @@ export default function useFetchPoolsData(
     });
 
     return {
-      coinTypePythPriceMap,
-      coinTypeSwitchboardPriceMap,
-
+      coinTypeOracleInfoPriceMap,
       lstAprPercentMap,
 
       pools: sortedPools,

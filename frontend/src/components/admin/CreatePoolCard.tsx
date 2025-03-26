@@ -30,8 +30,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { ADMIN_ADDRESS } from "@suilend/sdk";
-import { PoolScriptFunctions } from "@suilend/steamm-sdk";
+import { ADMIN_ADDRESS, PoolScriptFunctions } from "@suilend/steamm-sdk";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import Divider from "@/components/Divider";
@@ -43,7 +42,7 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
 import { formatFeeTier, formatPair, formatTextInputValue } from "@/lib/format";
-import { COINTYPE_ORACLE_INDEX_MAP } from "@/lib/oracles";
+import { ORACLE_INDEX_TYPE_COINTYPE_MAP } from "@/lib/oracles";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
@@ -437,11 +436,20 @@ export default function CreatePoolCard() {
     if (!address || !quoterId || !feeTierPercent) return;
 
     try {
+      setIsSubmitting(true);
+
+      const oracleIndexA = Object.entries(ORACLE_INDEX_TYPE_COINTYPE_MAP).find(
+        ([, value]) => value.coinType === coinTypes[0],
+      )?.[0];
+      const oracleIndexB = Object.entries(ORACLE_INDEX_TYPE_COINTYPE_MAP).find(
+        ([, value]) => value.coinType === coinTypes[1],
+      )?.[0];
+
       if (quoterId === QuoterId.ORACLE) {
-        if (COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]] === undefined)
-          throw new Error("coinType 0 not found in COINTYPE_ORACLE_INDEX_MAP");
-        if (COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]] === undefined)
-          throw new Error("coinType 1 not found in COINTYPE_ORACLE_INDEX_MAP");
+        if (oracleIndexA === undefined)
+          throw new Error("coinType 0 not found in ORACLE_INDEX_MAP");
+        if (oracleIndexB === undefined)
+          throw new Error("coinType 1 not found in ORACLE_INDEX_MAP");
       }
 
       setIsSubmitting(true);
@@ -614,8 +622,8 @@ export default function CreatePoolCard() {
           [QuoterId.ORACLE]: {
             ...createPoolBaseArgs,
             type: "Oracle" as const,
-            oracleIndexA: BigInt(COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]]),
-            oracleIndexB: BigInt(COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]]),
+            oracleIndexA: BigInt(oracleIndexA!), // Checked above
+            oracleIndexB: BigInt(oracleIndexB!), // Checked above
             coinTypeA: tokens[0].coinType,
             coinMetaA: tokens[0].id!, // Checked above
             coinTypeB: tokens[1].coinType,

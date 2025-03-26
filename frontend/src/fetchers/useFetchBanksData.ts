@@ -42,7 +42,7 @@ export default function useFetchBanksData(
           const depositedAmount = new BigNumber(
             bank.lending ? bank.lending.ctokens.toString() : 0,
           )
-            .times(mainMarket.reserveMap[coinType]?.cTokenExchangeRate ?? 0) // Fallback for when NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true and Main market  stablecoin
+            .times(mainMarket.reserveMap[coinType]?.cTokenExchangeRate ?? 0) // Fallback for when mainMarket does not have the corresponding reserve
             .div(10 ** coinMetadataMap[coinType].decimals);
           const totalAmount = liquidAmount.plus(depositedAmount);
 

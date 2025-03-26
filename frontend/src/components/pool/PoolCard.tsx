@@ -1,11 +1,12 @@
 import { formatUsd } from "@suilend/frontend-sui";
 
 import AprBreakdown from "@/components/AprBreakdown";
+import PoolTypeTag from "@/components/pool/PoolTypeTag";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
-import { ParsedPool, QUOTER_ID_NAME_MAP } from "@/lib/types";
+import { ParsedPool } from "@/lib/types";
 
 interface PoolCardProps {
   pool: ParsedPool;
@@ -28,7 +29,7 @@ export default function PoolCard({ pool }: PoolCardProps) {
         </p>
 
         <div className="flex flex-row items-center gap-1">
-          <Tag>{QUOTER_ID_NAME_MAP[pool.quoterId]}</Tag>
+          <PoolTypeTag pool={pool} />
           <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
         </div>
       </div>

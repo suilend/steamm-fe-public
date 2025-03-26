@@ -5,17 +5,25 @@ import {
   NORMALIZED_USDC_COINTYPE,
 } from "@suilend/frontend-sui";
 
-export const COINTYPE_ORACLE_INDEX_MAP: Record<string, number> =
+export enum OracleType {
+  PYTH = "pyth",
+  SWITCHBOARD = "switchboard",
+}
+
+export const ORACLE_INDEX_TYPE_COINTYPE_MAP: Record<
+  number,
+  { type: OracleType; coinType: string }
+> =
   process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
     ? {
-        [NORMALIZED_SUI_COINTYPE]: 0,
-        [NORMALIZED_USDC_COINTYPE]: 1,
-        [NORMALIZED_SEND_COINTYPE]: 2,
-        [NORMALIZED_DEEP_COINTYPE]: 3,
+        0: { type: OracleType.PYTH, coinType: NORMALIZED_SUI_COINTYPE },
+        1: { type: OracleType.PYTH, coinType: NORMALIZED_USDC_COINTYPE },
+        2: { type: OracleType.PYTH, coinType: NORMALIZED_SEND_COINTYPE },
+        3: { type: OracleType.PYTH, coinType: NORMALIZED_DEEP_COINTYPE },
       }
     : {
-        [NORMALIZED_SUI_COINTYPE]: 0,
-        [NORMALIZED_USDC_COINTYPE]: 1,
-        [NORMALIZED_SEND_COINTYPE]: 2,
-        [NORMALIZED_DEEP_COINTYPE]: 3,
+        0: { type: OracleType.PYTH, coinType: NORMALIZED_SUI_COINTYPE },
+        1: { type: OracleType.PYTH, coinType: NORMALIZED_USDC_COINTYPE },
+        2: { type: OracleType.PYTH, coinType: NORMALIZED_SEND_COINTYPE },
+        3: { type: OracleType.PYTH, coinType: NORMALIZED_DEEP_COINTYPE },
       };

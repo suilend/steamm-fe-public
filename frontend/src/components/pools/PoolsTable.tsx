@@ -22,7 +22,7 @@ type SortableColumn = "tvlUsd" | "volumeUsd_24h" | "aprPercent_24h";
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pair: {
     flex: 2,
-    minWidth: 300, // px
+    minWidth: 350, // px
     paddingLeft: 4 * 5, // px
   },
   feeTier: {

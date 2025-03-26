@@ -23,12 +23,12 @@ type SortableColumn = "aprPercent_24h" | "balance" | "pnlPercent";
 export const columnStyleMap: Record<Column, CSSProperties> = {
   pool: {
     flex: 2,
-    minWidth: 300, // px
+    minWidth: 350, // px
     paddingLeft: 4 * 5, // px
   },
   aprPercent_24h: {
     flex: 1,
-    minWidth: 125, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },
@@ -40,7 +40,7 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   pnlPercent: {
     flex: 1,
-    minWidth: 125, // px
+    minWidth: 150, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },

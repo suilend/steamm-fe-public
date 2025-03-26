@@ -1,11 +1,8 @@
-import Image from "next/image";
-
 import BigNumber from "bignumber.js";
 
 import {
   formatAddress,
   formatPercent,
-  formatPrice,
   formatToken,
   getToken,
 } from "@suilend/frontend-sui";
@@ -22,14 +19,12 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
-import { SUILEND_ASSETS_URL } from "@/lib/constants";
 import { formatFeeTier } from "@/lib/format";
-import { QuoterId } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 export default function PoolParametersCard() {
   const { explorer } = useSettingsContext();
-  const { appData, banksData, poolsData } = useLoadedAppContext();
+  const { appData, banksData } = useLoadedAppContext();
   const { pool } = usePoolContext();
 
   return (
@@ -121,54 +116,6 @@ export default function PoolParametersCard() {
         }}
         label="Current price"
       />
-
-      {pool.quoterId === QuoterId.ORACLE && (
-        <Parameter label="Oracle prices">
-          {pool.coinTypes.map((coinType) => (
-            <div key={coinType} className="flex flex-row items-center gap-2">
-              {poolsData === undefined ? (
-                <Skeleton className="h-[21px] w-16" />
-              ) : (
-                <p className="text-p2 text-foreground">
-                  1 {appData.coinMetadataMap[coinType].symbol}
-                  {" ≈ "}
-                  {formatPrice(
-                    poolsData.coinTypePythPriceMap[coinType] ??
-                      poolsData.coinTypeSwitchboardPriceMap[coinType] ??
-                      new BigNumber(0.00001),
-                  )}
-                </p>
-              )}
-
-              {poolsData === undefined ? (
-                <Skeleton className="h-4 w-4" />
-              ) : Object.keys(poolsData.coinTypePythPriceMap).includes(
-                  coinType,
-                ) ? (
-                <Tooltip title="Powered by Pyth">
-                  <Image
-                    src={`${SUILEND_ASSETS_URL}/partners/Pyth.png`}
-                    alt="Pyth logo"
-                    width={16}
-                    height={16}
-                    quality={100}
-                  />
-                </Tooltip>
-              ) : (
-                <Tooltip title="Powered by Switchboard">
-                  <Image
-                    src={`${SUILEND_ASSETS_URL}/partners/Switchboard.png`}
-                    alt="Switchboard logo"
-                    width={16}
-                    height={16}
-                    quality={100}
-                  />
-                </Tooltip>
-              )}
-            </div>
-          ))}
-        </Parameter>
-      )}
 
       <Parameter label="Address">
         <div className="flex flex-row items-center gap-2">

@@ -1,5 +1,5 @@
 import { useWalletContext } from "@suilend/frontend-sui-next";
-import { ADMIN_ADDRESS } from "@suilend/sdk";
+import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
 
 import {
   ADMIN_URL,

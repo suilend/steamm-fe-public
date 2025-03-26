@@ -10,6 +10,7 @@ interface TagProps extends PropsWithChildren {
   labelClassName?: ClassValue;
   tooltip?: string;
   startDecorator?: ReactNode;
+  endDecorator?: ReactNode;
 }
 
 export default function Tag({
@@ -17,6 +18,7 @@ export default function Tag({
   labelClassName,
   tooltip,
   startDecorator,
+  endDecorator,
   children,
 }: TagProps) {
   return (
@@ -36,6 +38,7 @@ export default function Tag({
         >
           {children}
         </p>
+        {endDecorator}
       </div>
     </Tooltip>
   );

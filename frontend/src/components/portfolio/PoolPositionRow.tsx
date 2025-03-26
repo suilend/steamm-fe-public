@@ -26,6 +26,7 @@ import {
 } from "@suilend/sdk";
 
 import AprBreakdown from "@/components/AprBreakdown";
+import PoolTypeTag from "@/components/pool/PoolTypeTag";
 import { columnStyleMap } from "@/components/portfolio/PoolPositionsTable";
 import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
@@ -38,7 +39,7 @@ import { formatFeeTier, formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { getIndexOfObligationWithDeposit } from "@/lib/obligation";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { PoolPosition, QUOTER_ID_NAME_MAP } from "@/lib/types";
+import { PoolPosition } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolPositionRowProps {
@@ -248,7 +249,7 @@ export default function PoolPositionRow({
         </p>
 
         <div className="flex flex-row items-center gap-1">
-          <Tag>{QUOTER_ID_NAME_MAP[poolPosition.pool.quoterId]}</Tag>
+          <PoolTypeTag pool={poolPosition.pool} />
           <Tag>{formatFeeTier(poolPosition.pool.feeTierPercent)}</Tag>
         </div>
       </div>

@@ -12,6 +12,7 @@ import PoolActionsCard from "@/components/pool/PoolActionsCard";
 import PoolChartCard from "@/components/pool/PoolChartCard";
 import PoolParametersCard from "@/components/pool/PoolParametersCard";
 import PoolPositionCard from "@/components/pool/PoolPositionCard";
+import PoolTypeTag from "@/components/pool/PoolTypeTag";
 import SuggestedPools from "@/components/pool/SuggestedPools";
 import TransactionHistoryTable from "@/components/pool/TransactionHistoryTable";
 import Tag from "@/components/Tag";
@@ -26,7 +27,7 @@ import useBreakpoint from "@/hooks/useBreakpoint";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { ROOT_URL } from "@/lib/navigation";
-import { ParsedPool, QUOTER_ID_NAME_MAP } from "@/lib/types";
+import { ParsedPool } from "@/lib/types";
 
 function PoolPage() {
   const { address } = useWalletContext();
@@ -123,7 +124,7 @@ function PoolPage() {
                 <h1 className="text-h2 text-foreground">{formattedPair}</h1>
 
                 <div className="flex flex-row items-center gap-1">
-                  <Tag>{QUOTER_ID_NAME_MAP[pool.quoterId]}</Tag>
+                  <PoolTypeTag pool={pool} />
                   <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
                 </div>
               </div>

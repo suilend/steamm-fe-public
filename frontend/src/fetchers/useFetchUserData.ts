@@ -126,10 +126,10 @@ export default function useFetchUserData() {
     {
       refreshInterval: 30 * 1000,
       onSuccess: (data) => {
-        console.log("Refreshed obligations data", data);
+        console.log("Refreshed user data", data);
       },
       onError: (err) => {
-        showErrorToast("Failed to refresh obligations data", err);
+        showErrorToast("Failed to refresh user data", err);
         console.error(err);
       },
     },

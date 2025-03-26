@@ -3,6 +3,7 @@ import Link from "next/link";
 import { formatUsd } from "@suilend/frontend-sui";
 
 import AprBreakdown from "@/components/AprBreakdown";
+import PoolTypeTag from "@/components/pool/PoolTypeTag";
 import { columnStyleMap } from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
@@ -11,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
-import { ParsedPool, QUOTER_ID_NAME_MAP } from "@/lib/types";
+import { ParsedPool } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolRowProps {
@@ -65,7 +66,7 @@ export default function PoolRow({
           )}
         </p>
 
-        <Tag>{QUOTER_ID_NAME_MAP[pool.quoterId]}</Tag>
+        <PoolTypeTag pool={pool} />
       </div>
 
       {/* Fee tier */}

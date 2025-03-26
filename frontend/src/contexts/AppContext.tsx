@@ -26,6 +26,7 @@ import {
   BETA_CONFIG,
   BankInfo,
   MAINNET_CONFIG,
+  OracleInfo,
   PoolInfo,
   SteammSDK,
 } from "@suilend/steamm-sdk";
@@ -68,8 +69,10 @@ export interface BanksData {
   bankMap: Record<string, ParsedBank>;
 }
 export interface PoolsData {
-  coinTypePythPriceMap: Record<string, BigNumber | undefined>;
-  coinTypeSwitchboardPriceMap: Record<string, BigNumber | undefined>;
+  coinTypeOracleInfoPriceMap: Record<
+    string,
+    { oracleInfo: OracleInfo; price: BigNumber }
+  >;
   lstAprPercentMap: Record<string, BigNumber>;
 
   pools: ParsedPool[];
