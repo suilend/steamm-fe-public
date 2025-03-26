@@ -53,8 +53,6 @@ export interface AppData {
 
     rewardPriceMap: Record<string, BigNumber | undefined>;
     rewardCoinMetadataMap: Record<string, CoinMetadata>;
-
-    rewardMap: RewardMap;
   };
 
   coinMetadataMap: Record<string, CoinMetadata>;
@@ -77,6 +75,7 @@ export interface PoolsData {
     { oracleInfo: OracleInfo; price: BigNumber }
   >;
   lstAprPercentMap: Record<string, BigNumber>;
+  rewardMap: RewardMap;
 
   pools: ParsedPool[];
 }

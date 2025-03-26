@@ -4,13 +4,14 @@ import pLimit from "p-limit";
 import useSWR from "swr";
 
 import { showErrorToast, useSettingsContext } from "@suilend/frontend-sui-next";
-import { toHexString } from "@suilend/sdk";
+import { formatRewards, toHexString } from "@suilend/sdk";
 import { LstClient } from "@suilend/springsui-sdk";
 import { OracleInfo, SteammSDK } from "@suilend/steamm-sdk";
 import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 
 import { AppData, BanksData, PoolsData } from "@/contexts/AppContext";
 import { formatPair } from "@/lib/format";
+import { normalizeRewards } from "@/lib/liquidityMining";
 import { ORACLE_INDEX_TYPE_COINTYPE_MAP, OracleType } from "@/lib/oracles";
 import { ParsedPool, QuoterId } from "@/lib/types";
 
@@ -290,9 +291,22 @@ export default function useFetchPoolsData(
         : 1; // Sort by pair (ascending)
     });
 
+    // Rewards
+    const lmMarket_rewardMap = normalizeRewards(
+      formatRewards(
+        appData.lmMarket.reserveMap,
+        appData.lmMarket.rewardCoinMetadataMap,
+        appData.lmMarket.rewardPriceMap,
+        [],
+      ),
+      appData.lmMarket.reserveMap,
+      sortedPools,
+    );
+
     return {
       coinTypeOracleInfoPriceMap,
       lstAprPercentMap,
+      rewardMap: lmMarket_rewardMap,
 
       pools: sortedPools,
     };

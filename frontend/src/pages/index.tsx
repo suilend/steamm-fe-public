@@ -66,32 +66,29 @@ export default function PoolsPage() {
           pools: pools.map((pool) => {
             // Same code as in frontend/src/components/AprBreakdown.tsx
             const rewards =
-              appData.lmMarket.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ??
-              [];
+              poolsData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
             const filteredRewards = getFilteredRewards(rewards);
 
             const stakingYieldAprPercent: BigNumber | undefined =
-              poolsData !== undefined
-                ? pool.tvlUsd.gt(0)
-                  ? pool.coinTypes
-                      .reduce(
-                        (acc, coinType, index) =>
-                          acc.plus(
-                            new BigNumber(
-                              getStakingYieldAprPercent(
-                                Side.DEPOSIT,
-                                coinType,
-                                poolsData.lstAprPercentMap,
-                              ) ?? 0,
-                            ).times(
-                              pool.prices[index].times(pool.balances[index]),
-                            ),
+              pool.tvlUsd.gt(0)
+                ? pool.coinTypes
+                    .reduce(
+                      (acc, coinType, index) =>
+                        acc.plus(
+                          new BigNumber(
+                            getStakingYieldAprPercent(
+                              Side.DEPOSIT,
+                              coinType,
+                              poolsData.lstAprPercentMap,
+                            ) ?? 0,
+                          ).times(
+                            pool.prices[index].times(pool.balances[index]),
                           ),
-                        new BigNumber(0),
-                      )
-                      .div(pool.tvlUsd)
-                  : new BigNumber(0)
-                : undefined;
+                        ),
+                      new BigNumber(0),
+                    )
+                    .div(pool.tvlUsd)
+                : new BigNumber(0);
 
             const totalAprPercent: BigNumber | undefined =
               poolStats.aprPercent_24h[pool.id] !== undefined &&
@@ -114,12 +111,7 @@ export default function PoolsPage() {
       ],
       [] as PoolGroup[],
     );
-  }, [
-    poolsData,
-    appData.lmMarket.rewardMap,
-    poolStats.aprPercent_24h,
-    poolStats.volumeUsd_24h,
-  ]);
+  }, [poolsData, poolStats.aprPercent_24h, poolStats.volumeUsd_24h]);
 
   // Featured pools
   const featuredPoolGroups = useMemo(

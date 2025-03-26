@@ -41,8 +41,7 @@ export default function AprBreakdown({
   const { appData, poolsData } = useLoadedAppContext();
   const { poolStats } = useStatsContext();
 
-  const rewards =
-    appData.lmMarket.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
+  const rewards = poolsData?.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
   const filteredRewards = getFilteredRewards(rewards);
 
   // Rewards - per day

@@ -6,15 +6,11 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import {
-  Side,
-  formatRewards,
-  getDepositShare,
-  initializeObligations,
-} from "@suilend/sdk";
+import { Side, formatRewards, initializeObligations } from "@suilend/sdk";
 
 import { useAppContext } from "@/contexts/AppContext";
 import { UserData } from "@/contexts/UserContext";
+import { normalizeRewards } from "@/lib/liquidityMining";
 
 export default function useFetchUserData() {
   const { suiClient } = useSettingsContext();
@@ -41,52 +37,16 @@ export default function useFetchUserData() {
           obligations.findIndex((o) => o.id === b.obligationId),
       ); // Same order as `obligations`
 
-    const rewardMap = formatRewards(
+    const rewardMap = normalizeRewards(
+      formatRewards(
+        appData.lmMarket.reserveMap,
+        appData.lmMarket.rewardCoinMetadataMap,
+        appData.lmMarket.rewardPriceMap,
+        obligations,
+      ),
       appData.lmMarket.reserveMap,
-      appData.lmMarket.rewardCoinMetadataMap,
-      appData.lmMarket.rewardPriceMap,
-      obligations,
+      poolsData.pools,
     );
-    for (const coinType of Object.keys(rewardMap)) {
-      const pool = poolsData.pools.find(
-        (_pool) => _pool.lpTokenType === coinType,
-      );
-      if (!pool) continue; // Skip rewards for reserves that don't have a pool
-
-      const reserve = appData.lmMarket.reserveMap[coinType];
-      const rewards = rewardMap[coinType][Side.DEPOSIT];
-      for (const r of rewards) {
-        if (r.stats.aprPercent !== undefined) {
-          // Undo division in @suilend/sdk/src/lib/liquidityMining.ts:formatRewards
-          r.stats.aprPercent = r.stats.aprPercent.times(
-            getDepositShare(
-              reserve,
-              new BigNumber(
-                reserve.depositsPoolRewardManager.totalShares.toString(),
-              ),
-            ).times(reserve.price),
-          );
-
-          // Divide by pool TVL
-          if (pool.tvlUsd.gt(0))
-            r.stats.aprPercent = r.stats.aprPercent.div(pool.tvlUsd);
-        } else if (r.stats.perDay !== undefined) {
-          // Undo division in @suilend/sdk/src/lib/liquidityMining.ts:formatRewards
-          r.stats.perDay = r.stats.perDay.times(
-            getDepositShare(
-              reserve,
-              new BigNumber(
-                reserve.depositsPoolRewardManager.totalShares.toString(),
-              ),
-            ),
-          ); // Will be NaN if totalShares is 0
-
-          // Divide by pool TVL
-          if (pool.tvlUsd.gt(0))
-            r.stats.perDay = r.stats.perDay.div(pool.tvlUsd);
-        }
-      }
-    }
 
     // Pool rewards
     const poolRewardMap = poolsData.pools.reduce(

@@ -10,7 +10,6 @@ import {
 import { showErrorToast, useSettingsContext } from "@suilend/frontend-sui-next";
 import {
   SuilendClient,
-  formatRewards,
   initializeSuilend,
   initializeSuilendRewards,
 } from "@suilend/sdk";
@@ -79,13 +78,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         lmMarket_reserveMap,
         lmMarket_activeRewardCoinTypes,
       );
-
-    const lmMarket_rewardMap = formatRewards(
-      lmMarket_reserveMap,
-      lmMarket_rewardCoinMetadataMap,
-      lmMarket_rewardPriceMap,
-      [],
-    );
 
     const pointsCoinMetadataMap = await getCoinMetadataMap(
       suiClient,
@@ -166,8 +158,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
         rewardPriceMap: lmMarket_rewardPriceMap,
         rewardCoinMetadataMap: lmMarket_rewardCoinMetadataMap,
-
-        rewardMap: lmMarket_rewardMap,
       },
 
       coinMetadataMap,
