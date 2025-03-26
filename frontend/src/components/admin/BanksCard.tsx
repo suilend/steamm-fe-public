@@ -39,7 +39,7 @@ function BankRow({ bank }: BankRowProps) {
 
       const transaction = new Transaction();
 
-      steammClient.Bank.initLending(transaction, {
+      await steammClient.Bank.initLending(transaction, {
         bankId: bank.id,
         targetUtilisationBps: 8000,
         utilisationBufferBps: 1000,

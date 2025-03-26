@@ -26,9 +26,9 @@ export const STEAMM_SCRIPT_CONFIG = {
 
 export const SUILEND_CONFIG = {
   package_id:
-    "0x1f54a9a2d71799553197e9ea24557797c6398d6a65f2d4d3818c9304b75d5e21",
+    "0xf95b06141ed4a174f239417323bde3f209b972f5930d8521ea38a52aff3a6ddf",
   published_at:
-    "0x5bb8cb3894945f523736f4f5059b1621056e8093b165ea56b20805d0ef2461a9",
+    "0x21f544aff826a48e6bd5364498454d8487c4a90f84995604cd5c947c06b596c3",
   config: {
     lendingMarketId:
       "0x84030d26d85eaa7035084a057f2f11f701b7e2e4eda87551becbc7c97505ece1", // Main market
