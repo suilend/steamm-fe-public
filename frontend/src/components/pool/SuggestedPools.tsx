@@ -72,7 +72,7 @@ export default function SuggestedPools({
         >
           {shownPools === undefined
             ? Array.from({ length: collapsedPoolCount }).map((_, index) => (
-                <Skeleton key={index} className="h-[87px] w-full" />
+                <Skeleton key={index} className="h-[87px] w-full rounded-md" />
               ))
             : shownPools.map((_pool) => (
                 <Link

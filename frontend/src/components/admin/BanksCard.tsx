@@ -176,7 +176,7 @@ export default function BanksCard() {
       <div className="flex flex-col gap-1">
         {banksData === undefined
           ? Array.from({ length: 3 }).map((_, index) => (
-              <Skeleton key={index} className="h-[50px] w-full" />
+              <Skeleton key={index} className="h-[50px] w-full rounded-md" />
             ))
           : banksData.banks.map((bank) => (
               <BankRow key={bank.id} bank={bank} />
