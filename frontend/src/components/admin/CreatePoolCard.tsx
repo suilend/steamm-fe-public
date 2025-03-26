@@ -795,32 +795,36 @@ export default function CreatePoolCard() {
       <div className="flex w-full flex-col gap-2">
         {/* Initial price */}
         <Parameter label="Initial price" isHorizontal>
-          {coinTypes.every((coinType) => coinType !== "") &&
-          values.every((value) => value !== "")
-            ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${new BigNumber(
-                new BigNumber(values[1]).div(values[0]),
-              ).toFixed(
-                balancesCoinMetadataMap![coinTypes[1]].decimals,
-                BigNumber.ROUND_DOWN,
-              )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
-            : "--"}
+          <p className="text-p2 text-foreground">
+            {coinTypes.every((coinType) => coinType !== "") &&
+            values.every((value) => value !== "")
+              ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${new BigNumber(
+                  new BigNumber(values[1]).div(values[0]),
+                ).toFixed(
+                  balancesCoinMetadataMap![coinTypes[1]].decimals,
+                  BigNumber.ROUND_DOWN,
+                )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
+              : "--"}
+          </p>
         </Parameter>
 
         {/* Market price */}
         <div className="flex w-full flex-col items-end gap-1">
           <Parameter label="Market price (Birdeye)" isHorizontal>
-            {coinTypes.every((coinType) => coinType !== "") ? (
-              birdeyeRatio !== undefined ? (
-                `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${birdeyeRatio.toFixed(
-                  balancesCoinMetadataMap![coinTypes[1]].decimals,
-                  BigNumber.ROUND_DOWN,
-                )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
+            <p className="text-p2 text-foreground">
+              {coinTypes.every((coinType) => coinType !== "") ? (
+                birdeyeRatio !== undefined ? (
+                  `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${birdeyeRatio.toFixed(
+                    balancesCoinMetadataMap![coinTypes[1]].decimals,
+                    BigNumber.ROUND_DOWN,
+                  )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
+                ) : (
+                  <Skeleton className="h-[21px] w-24" />
+                )
               ) : (
-                <Skeleton className="h-[21px] w-24" />
-              )
-            ) : (
-              "--"
-            )}
+                "--"
+              )}
+            </p>
           </Parameter>
 
           {coinTypes.every((coinType) => coinType !== "") &&
