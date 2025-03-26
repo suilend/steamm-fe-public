@@ -28,6 +28,11 @@ export interface SetBankUtilisationBpsArgs {
   utilisationBufferBps: number | TransactionArgument;
 }
 
+export interface SetMinTokenBlockSizeArgs {
+  globalAdmin: TransactionObjectInput;
+  minTokenBlockSize: number | TransactionArgument;
+}
+
 export interface MigrateBankArgs {
   admin: TransactionObjectInput;
 }

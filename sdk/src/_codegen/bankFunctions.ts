@@ -21,4 +21,5 @@ export {
   utilisationBufferBpsUnchecked,
   toBtokens,
   fromBtokens,
+  setMinTokenBlockSize,
 } from "./_generated/steamm/bank/functions";

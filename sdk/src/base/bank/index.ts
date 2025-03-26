@@ -17,6 +17,7 @@ import {
   MigrateBankArgs,
   MintBTokensArgs,
   SetBankUtilisationBpsArgs,
+  SetMinTokenBlockSizeArgs,
 } from "./bankArgs";
 
 export * from "./bankArgs";
@@ -177,6 +178,24 @@ export class Bank {
     };
 
     BankFunctions.setUtilisationBps(
+      tx,
+      this.typeArgs(),
+      callArgs,
+      this.publishedAt,
+    );
+  }
+
+  public setMinimumTokenBlockSize(
+    tx: Transaction,
+    args: SetMinTokenBlockSizeArgs,
+  ) {
+    const callArgs = {
+      bank: tx.object(this.bankInfo.bankId),
+      globalAdmin: args.globalAdmin,
+      minTokenBlockSize: args.minTokenBlockSize,
+    };
+
+    BankFunctions.setMinTokenBlockSize(
       tx,
       this.typeArgs(),
       callArgs,

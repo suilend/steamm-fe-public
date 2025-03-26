@@ -1,4 +1,4 @@
-import { Transaction } from "@mysten/sui/transactions";
+import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID, normalizeSuiAddress } from "@mysten/sui/utils";
 
 import { BankScriptFunctions, EmitDryRun } from "../_codegen";
@@ -294,5 +294,41 @@ export class BankModule implements IModule {
 
     const quoteResult = (event.parsedJson as any).event as T;
     return quoteResult;
+  }
+
+  public async setMinTokenBlockSize(
+    tx: Transaction,
+    args: {
+      bankId: SuiObjectIdType;
+      minTokenBlockSize: number | TransactionArgument;
+    },
+  ) {
+    const banks = await this.sdk.getBanks();
+    const bankInfo = getBankFromId(banks, args.bankId);
+    const bank = this.sdk.getBank(bankInfo);
+
+    bank.setMinimumTokenBlockSize(tx, {
+      minTokenBlockSize: args.minTokenBlockSize,
+      globalAdmin: this.sdk.sdkOptions.steamm_config.config!.globalAdmin,
+    });
+  }
+
+  public async setUtilisation(
+    tx: Transaction,
+    args: {
+      bankId: SuiObjectIdType;
+      targetUtilisationBps: number | TransactionArgument;
+      utilisationBufferBps: number | TransactionArgument;
+    },
+  ) {
+    const banks = await this.sdk.getBanks();
+    const bankInfo = getBankFromId(banks, args.bankId);
+    const bank = this.sdk.getBank(bankInfo);
+
+    bank.setUtilisationBps(tx, {
+      targetUtilisationBps: args.targetUtilisationBps,
+      utilisationBufferBps: args.utilisationBufferBps,
+      globalAdmin: this.sdk.sdkOptions.steamm_config.config!.globalAdmin,
+    });
   }
 }

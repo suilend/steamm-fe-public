@@ -371,6 +371,12 @@ export interface InitLendingArgs {
   utilisationBufferBps: number | TransactionArgument;
 }
 
+export interface SetMinTokenBlockSizeArgs {
+  bank: TransactionObjectInput;
+  globalAdmin: TransactionObjectInput;
+  minTokenBlockSize: number | TransactionArgument;
+}
+
 export function initLending(
   tx: Transaction,
   typeArgs: [string, string, string],
@@ -423,6 +429,23 @@ export function minimumLiquidity(
   return tx.moveCall({
     target: `${publishedAt}::bank::minimum_liquidity`,
     arguments: [],
+  });
+}
+
+export function setMinTokenBlockSize(
+  tx: Transaction,
+  typeArgs: [string, string, string],
+  args: SetMinTokenBlockSizeArgs,
+  publishedAt: string = PUBLISHED_AT,
+) {
+  return tx.moveCall({
+    target: `${publishedAt}::bank::set_min_token_block_size`,
+    typeArguments: typeArgs,
+    arguments: [
+      obj(tx, args.bank),
+      obj(tx, args.globalAdmin),
+      pure(tx, args.minTokenBlockSize, `u64`),
+    ],
   });
 }
 
