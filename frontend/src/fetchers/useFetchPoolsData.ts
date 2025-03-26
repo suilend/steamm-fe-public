@@ -204,7 +204,7 @@ export default function useFetchPoolsData(
 
             if (priceA === undefined && priceB === undefined) {
               console.error(
-                `Skipping pool with id ${id}, quoterId ${quoterId} - missing prices for both assets (no Pyth price feed, no Switchboard price feed, and no Suilend main market reserve) for coinType(s) ${coinTypes.join(", ")}`,
+                `Skipping pool with id ${id}, quoterId ${quoterId} - missing prices for both assets (no Pyth or Switchboard price feed, no Suilend main market reserve) for coinType(s) ${coinTypes.join(", ")}`,
               );
               return;
             } else if (priceA === undefined) {
