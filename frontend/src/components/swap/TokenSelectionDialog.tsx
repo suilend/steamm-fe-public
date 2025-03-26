@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { ChevronDown, Search, Wallet } from "lucide-react";
 
@@ -13,13 +13,13 @@ import {
   formatToken,
   isSui,
 } from "@suilend/frontend-sui";
+import useIsTouchscreen from "@suilend/frontend-sui-next/hooks/useIsTouchscreen";
 
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import Dialog from "@/components/Dialog";
 import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
 import { useUserContext } from "@/contexts/UserContext";
-import useBreakpoint from "@/hooks/useBreakpoint";
 import { cn } from "@/lib/utils";
 
 interface TokenRowProps {
@@ -116,7 +116,7 @@ export default function TokenSelectionDialog({
 }: TokenSelectionDialogProps) {
   const { getBalance } = useUserContext();
 
-  const { md } = useBreakpoint();
+  const isTouchscreen = useIsTouchscreen();
 
   // State
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -158,18 +158,6 @@ export default function TokenSelectionDialog({
   );
 
   // Filter
-  const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (!isOpen) return;
-
-    setTimeout(
-      () => {
-        inputRef.current?.focus();
-      },
-      md ? 50 : 250,
-    );
-  }, [isOpen, md]);
-
   const [searchString, setSearchString] = useState<string>("");
 
   const filterTokens = useCallback(
@@ -254,7 +242,7 @@ export default function TokenSelectionDialog({
         <Search className="h-4 w-4 text-secondary-foreground" />
         <div className="flex-1">
           <input
-            ref={inputRef}
+            autoFocus={!isTouchscreen}
             className="h-10 w-full min-w-0 !border-0 !bg-[transparent] pr-4 !text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground"
             type="text"
             placeholder="Search by token symbol, name or address"
