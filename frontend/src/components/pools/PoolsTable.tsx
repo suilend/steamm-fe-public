@@ -44,7 +44,7 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   aprPercent_24h: {
     flex: 1,
-    minWidth: 150, // px
+    minWidth: 175, // px
     justifyContent: "end",
     paddingRight: 4 * 5, // px
   },

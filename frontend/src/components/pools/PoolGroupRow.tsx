@@ -167,7 +167,7 @@ export default function PoolGroupRow({
           style={columnStyleMap.aprPercent_24h}
         >
           <div className="flex flex-row items-center gap-2">
-            <p className="text-p3 text-tertiary-foreground">Up to</p>
+            <p className="w-max text-p3 text-tertiary-foreground">Up to</p>
 
             <TokenLogos
               coinTypes={Array.from(
