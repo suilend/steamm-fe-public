@@ -611,26 +611,29 @@ export default function CreatePoolCard() {
         swapFeeBps: BigInt(feeTierPercent * 100),
       };
 
+      let poolArgs;
+      if (quoterId === QuoterId.CPMM) {
+        poolArgs = {
+          ...createPoolBaseArgs,
+          type: "ConstantProduct" as const,
+          offset: BigInt(0), // TODO
+        };
+      } else if (quoterId === QuoterId.ORACLE) {
+        poolArgs = {
+          ...createPoolBaseArgs,
+          type: "Oracle" as const,
+          oracleIndexA: BigInt(oracleIndexA!), // Checked above
+          oracleIndexB: BigInt(oracleIndexB!), // Checked above
+          coinTypeA: tokens[0].coinType,
+          coinMetaA: tokens[0].id!, // Checked above
+          coinTypeB: tokens[1].coinType,
+          coinMetaB: tokens[1].id!, // Checked above
+        };
+      } else poolArgs = {};
+
       const pool = await steammClient.Pool.createPool(
         transaction,
-        {
-          [QuoterId.CPMM]: {
-            ...createPoolBaseArgs,
-            type: "ConstantProduct" as const,
-            offset: BigInt(0), // TODO
-          },
-          [QuoterId.ORACLE]: {
-            ...createPoolBaseArgs,
-            type: "Oracle" as const,
-            oracleIndexA: BigInt(oracleIndexA!), // Checked above
-            oracleIndexB: BigInt(oracleIndexB!), // Checked above
-            coinTypeA: tokens[0].coinType,
-            coinMetaA: tokens[0].id!, // Checked above
-            coinTypeB: tokens[1].coinType,
-            coinMetaB: tokens[1].id!, // Checked above
-          },
-          [QuoterId.STABLE]: {} as any, // TODO
-        }[quoterId],
+        poolArgs as any,
       );
 
       // Step 4.2: Deposit
