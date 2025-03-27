@@ -47,6 +47,7 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
+import { rebalanceBanksIfNeeded } from "@/lib/banks";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
 import {
   getIndexOfObligationWithDeposit,
@@ -474,16 +475,23 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
         useGasCoin: isSui(coinTypeB),
       })(transaction);
 
+      const banks = [
+        banksData.bankMap[coinTypeA],
+        banksData.bankMap[coinTypeB],
+      ];
+
       const [lpCoin] = await steammClient.Pool.depositLiquidity(transaction, {
         coinA,
         coinB,
         maxA: BigInt(submitAmountA),
         maxB: BigInt(submitAmountB),
         poolInfo: pool.poolInfo,
-        bankInfoA: banksData.bankMap[coinTypeA].bankInfo,
-        bankInfoB: banksData.bankMap[coinTypeB].bankInfo,
+        bankInfoA: banks[0].bankInfo,
+        bankInfoB: banks[1].bankInfo,
       });
       transaction.transferObjects([coinA, coinB], address);
+
+      rebalanceBanksIfNeeded(banks, steammClient, transaction);
 
       // Stake LP tokens (if reserve exists)
       if (appData.lmMarket.reserveMap[pool.lpTokenType]) {
@@ -932,15 +940,19 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
         : steammClient.Pool.redeemLiquidityWithProvision
     ).bind(steammClient.Pool);
 
+    const banks = [banksData.bankMap[coinTypeA], banksData.bankMap[coinTypeB]];
+
     const [coinA, coinB] = await redeemFunc(transaction, {
       lpCoin: transaction.object(lpCoin),
       minA: BigInt(submitAmountA),
       minB: BigInt(submitAmountB),
       poolInfo: pool.poolInfo,
-      bankInfoA: banksData.bankMap[coinTypeA].bankInfo,
-      bankInfoB: banksData.bankMap[coinTypeB].bankInfo,
+      bankInfoA: banks[0].bankInfo,
+      bankInfoB: banks[1].bankInfo,
     });
     transaction.transferObjects([coinA, coinB], address);
+
+    rebalanceBanksIfNeeded(banks, steammClient, transaction);
 
     return transaction;
   };
@@ -1435,6 +1447,11 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
               useGasCoin: isSui(coinTypeB),
             })(transaction);
 
+      const banks = [
+        banksData.bankMap[coinTypeA],
+        banksData.bankMap[coinTypeB],
+      ];
+
       await steammClient.Pool.swap(transaction, {
         coinA,
         coinB,
@@ -1442,10 +1459,12 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
         amountIn: BigInt(amountIn),
         minAmountOut: BigInt(minAmountOut),
         poolInfo: pool.poolInfo,
-        bankInfoA: banksData.bankMap[coinTypeA].bankInfo,
-        bankInfoB: banksData.bankMap[coinTypeB].bankInfo,
+        bankInfoA: banks[0].bankInfo,
+        bankInfoB: banks[1].bankInfo,
       });
       transaction.transferObjects([coinA, coinB], address);
+
+      rebalanceBanksIfNeeded(banks, steammClient, transaction);
 
       const res = await signExecuteAndWaitForTransaction(transaction, {
         auction: true,
