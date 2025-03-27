@@ -629,7 +629,14 @@ export default function CreatePoolCard() {
           coinTypeB: tokens[1].coinType,
           coinMetaB: tokens[1].id!, // Checked above
         };
-      } else poolArgs = {};
+      } else if (quoterId === QuoterId.STABLE) {
+        poolArgs = {
+          ...createPoolBaseArgs,
+          // TODO
+        };
+      } else {
+        throw new Error("Invalid quoterId");
+      }
 
       const pool = await steammClient.Pool.createPool(
         transaction,
