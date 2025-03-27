@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 interface ParameterProps extends PropsWithChildren {
   className?: ClassValue;
   label?: string;
+  labelContainerClassName?: ClassValue;
   labelEndDecorator?: string;
   isHorizontal?: boolean;
 }
@@ -14,6 +15,7 @@ interface ParameterProps extends PropsWithChildren {
 export default function Parameter({
   className,
   label,
+  labelContainerClassName,
   labelEndDecorator,
   isHorizontal,
   children,
@@ -27,7 +29,12 @@ export default function Parameter({
       )}
     >
       {label && (
-        <div className="flex shrink-0 flex-row items-baseline gap-1.5">
+        <div
+          className={cn(
+            "flex shrink-0 flex-row items-baseline gap-1.5",
+            labelContainerClassName,
+          )}
+        >
           <p className="text-p2 text-secondary-foreground">{label}</p>
           {labelEndDecorator && (
             <p className="text-p3 text-tertiary-foreground">

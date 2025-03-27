@@ -750,7 +750,7 @@ export default function CreatePoolCard() {
   };
 
   return (
-    <div className="flex w-full flex-col gap-4 rounded-md border p-5">
+    <div className="flex w-full max-w-lg flex-col gap-4 rounded-md border p-5">
       <p className="text-h3 text-foreground">Create pool</p>
       {/* Base asset */}
       <div className="flex w-full flex-col gap-3">

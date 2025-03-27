@@ -10,16 +10,19 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { Bank } from "@suilend/steamm-sdk";
+import { ADMIN_ADDRESS, Bank } from "@suilend/steamm-sdk";
 
 import Parameter from "@/components/Parameter";
+import PercentInput from "@/components/PercentInput";
+import TextInput from "@/components/TextInput";
 import TokenLogo from "@/components/TokenLogo";
-import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
+import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedBank } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface BankRowProps {
   bank: ParsedBank;
@@ -27,23 +30,146 @@ interface BankRowProps {
 
 function BankRow({ bank }: BankRowProps) {
   const { explorer } = useSettingsContext();
-  const { signExecuteAndWaitForTransaction } = useWalletContext();
+  const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { refresh } = useUserContext();
 
-  // Initialize
-  const [isInitializing, setIsInitializing] = useState<boolean>(false);
+  // Initialize/set target util. and util. buffer
+  const [targetUtilizationPercent, setTargetUtilizationPercent] =
+    useState<string>(
+      !!bank.bank.lending
+        ? formatPercentInputValue(
+            `${bank.bank.lending.targetUtilisationBps / 100}`,
+            2,
+          )
+        : "",
+    );
 
-  const initialize = async () => {
+  const onTargetUtilizationPercentChange = async (_value: string) => {
+    console.log("onTargetUtilizationPercentChange - _value:", _value);
+
+    const formattedValue = formatPercentInputValue(_value, 2);
+    setTargetUtilizationPercent(formattedValue);
+  };
+
+  const [utilizationBufferPercent, setUtilizationBufferPercent] =
+    useState<string>(
+      !!bank.bank.lending
+        ? formatPercentInputValue(
+            (bank.bank.lending.utilisationBufferBps / 100).toFixed(3),
+            2,
+          )
+        : "",
+    );
+
+  const onUtilizationBufferPercentChange = async (_value: string) => {
+    console.log("onUtilizationBufferPercentChange - _value:", _value);
+
+    const formattedValue = formatPercentInputValue(_value, 2);
+    setUtilizationBufferPercent(formattedValue);
+  };
+
+  const [
+    isSettingTargetUtilizationPercent,
+    setIsSettingTargetUtilizationPercent,
+  ] = useState<boolean>(false);
+
+  const submitTargetUtilizationPercent = async () => {
+    if (address !== ADMIN_ADDRESS) return;
+
     try {
-      setIsInitializing(true);
+      setIsSettingTargetUtilizationPercent(true);
 
       const transaction = new Transaction();
 
-      await steammClient.Bank.initLending(transaction, {
+      if (!bank.bank.lending) {
+        await steammClient.Bank.initLending(transaction, {
+          bankId: bank.id,
+          targetUtilisationBps: +new BigNumber(targetUtilizationPercent)
+            .times(100)
+            .toFixed(0),
+          utilisationBufferBps: +new BigNumber(utilizationBufferPercent)
+            .times(100)
+            .toFixed(0),
+        });
+      } else {
+        await steammClient.Bank.setUtilisation(transaction, {
+          bankId: bank.id,
+          targetUtilisationBps: +new BigNumber(targetUtilizationPercent)
+            .times(100)
+            .toFixed(0),
+          utilisationBufferBps: +new BigNumber(utilizationBufferPercent)
+            .times(100)
+            .toFixed(0),
+        });
+      }
+      new Bank(steammClient.packageInfo(), bank.bankInfo).rebalance(
+        transaction,
+      );
+
+      const res = await signExecuteAndWaitForTransaction(transaction);
+      const txUrl = explorer.buildTxUrl(res.digest);
+
+      showSuccessTxnToast(
+        !bank.bank.lending
+          ? `Initialized ${appData.coinMetadataMap[bank.coinType].symbol} bank and set target util. to ${targetUtilizationPercent}% and util. buffer to ${utilizationBufferPercent}%`
+          : `Set ${appData.coinMetadataMap[bank.coinType].symbol} bank target util. to ${targetUtilizationPercent}% and util. buffer to ${utilizationBufferPercent}%`,
+        txUrl,
+      );
+    } catch (err) {
+      showErrorToast(
+        !bank.bank.lending
+          ? `Failed to initialize ${appData.coinMetadataMap[bank.coinType].symbol} bank`
+          : `Failed to set ${appData.coinMetadataMap[bank.coinType].symbol} bank target util./util. buffer`,
+        err as Error,
+        undefined,
+        true,
+      );
+      console.error(err);
+    } finally {
+      setIsSettingTargetUtilizationPercent(false);
+      refresh();
+    }
+  };
+
+  // Min. token block size
+  const [minTokenBlockSize, setMinTokenBlockSize] = useState<string>(
+    formatTextInputValue(
+      new BigNumber(bank.bank.minTokenBlockSize.toString())
+        .div(10 ** appData.coinMetadataMap[bank.coinType].decimals)
+        .toFixed(
+          appData.coinMetadataMap[bank.coinType].decimals,
+          BigNumber.ROUND_DOWN,
+        ),
+      9,
+    ),
+  );
+
+  const onMinTokenBlockSizeChange = (_value: string) => {
+    console.log("onMinTokenBlockSizeChange - _value:", _value);
+
+    const formattedValue = formatTextInputValue(
+      _value,
+      appData.coinMetadataMap[bank.coinType].decimals,
+    );
+    setMinTokenBlockSize(formattedValue);
+  };
+
+  const [isSettingMinTokenBlockSize, setIsSettingMinTokenBlockSize] =
+    useState<boolean>(false);
+
+  const submitMinTokenBlockSize = async () => {
+    try {
+      setIsSettingMinTokenBlockSize(true);
+
+      const transaction = new Transaction();
+
+      await steammClient.Bank.setMinTokenBlockSize(transaction, {
         bankId: bank.id,
-        targetUtilisationBps: 8000,
-        utilisationBufferBps: 1000,
+        minTokenBlockSize: +new BigNumber(minTokenBlockSize)
+          .times(10 ** appData.coinMetadataMap[bank.coinType].decimals)
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString(),
       });
       new Bank(steammClient.packageInfo(), bank.bankInfo).rebalance(
         transaction,
@@ -53,19 +179,19 @@ function BankRow({ bank }: BankRowProps) {
       const txUrl = explorer.buildTxUrl(res.digest);
 
       showSuccessTxnToast(
-        `Initialized ${appData.coinMetadataMap[bank.coinType].symbol} bank`,
+        `Set ${appData.coinMetadataMap[bank.coinType].symbol} bank min. token block size to ${minTokenBlockSize}`,
         txUrl,
       );
     } catch (err) {
       showErrorToast(
-        "Failed to initialize bank",
+        "Failed to set min. token block size",
         err as Error,
         undefined,
         true,
       );
       console.error(err);
     } finally {
-      setIsInitializing(false);
+      setIsSettingMinTokenBlockSize(false);
       refresh();
     }
   };
@@ -96,162 +222,177 @@ function BankRow({ bank }: BankRowProps) {
     }
   };
 
-  // Min. token block size
-  const [isSettingMinTokenBlockSize, setIsSettingMinTokenBlockSize] =
-    useState<boolean>(false);
-
-  const setMinTokenBlockSize = async () => {
-    try {
-      setIsSettingMinTokenBlockSize(true);
-
-      const transaction = new Transaction();
-
-      await steammClient.Bank.setMinTokenBlockSize(transaction, {
-        bankId: bank.id,
-        minTokenBlockSize:
-          0.1 * 10 ** appData.coinMetadataMap[bank.coinType].decimals,
-      });
-
-      const res = await signExecuteAndWaitForTransaction(transaction);
-      const txUrl = explorer.buildTxUrl(res.digest);
-
-      showSuccessTxnToast(
-        `Set ${appData.coinMetadataMap[bank.coinType].symbol} bank min. token block size to 0.1`,
-        txUrl,
-      );
-    } catch (err) {
-      showErrorToast(
-        "Failed to set min. token block size",
-        err as Error,
-        undefined,
-        true,
-      );
-      console.error(err);
-    } finally {
-      setIsSettingMinTokenBlockSize(false);
-      refresh();
-    }
-  };
-
   return (
     <div
       key={bank.id}
       className="flex min-h-10 w-full flex-col gap-3 rounded-md border p-4"
     >
       {/* Top */}
-      <div className="flex w-full flex-row items-center justify-between">
-        <div className="flex flex-row items-center gap-2">
-          <TokenLogo
-            token={getToken(
-              bank.coinType,
-              appData.coinMetadataMap[bank.coinType],
-            )}
-            size={24}
-          />
-          <p className="text-h3 text-foreground">
-            {appData.coinMetadataMap[bank.coinType].symbol}
-          </p>
-        </div>
-
-        {!bank.bank.lending && (
-          <Tooltip
-            title={
-              !appData.mainMarket.reserveMap[bank.coinType]
-                ? "No Suilend reserve"
-                : undefined
-            }
-          >
-            <div className="w-max">
-              <button
-                className="group flex h-6 w-[60px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
-                disabled={
-                  isInitializing ||
-                  !appData.mainMarket.reserveMap[bank.coinType]
-                }
-                onClick={() => initialize()}
-              >
-                {isInitializing ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
-                ) : (
-                  <p className="text-p3 text-button-2-foreground">Initialize</p>
-                )}
-              </button>
-            </div>
-          </Tooltip>
-        )}
+      <div className="flex flex-row items-center gap-2">
+        <TokenLogo
+          token={getToken(
+            bank.coinType,
+            appData.coinMetadataMap[bank.coinType],
+          )}
+          size={24}
+        />
+        <p className="text-h3 text-foreground">
+          {appData.coinMetadataMap[bank.coinType].symbol}
+        </p>
       </div>
 
-      <div className="flex w-full flex-col gap-4">
-        {/* Utilization */}
-        <Parameter label="Target / buffer" isHorizontal>
-          <p className="text-p2 text-foreground">
-            {!!bank.bank.lending
-              ? formatPercent(
-                  new BigNumber(bank.bank.lending.targetUtilisationBps / 100),
-                )
-              : "--"}
-            {" / "}
-            {!!bank.bank.lending
-              ? formatPercent(
-                  new BigNumber(bank.bank.lending.utilisationBufferBps / 100),
-                )
-              : "--"}
-          </p>
-        </Parameter>
+      <div className="flex w-full flex-col gap-6">
+        {/* Initialize/update target util. and util. buffer */}
+        <div className="flex w-full flex-col items-end gap-2">
+          <Parameter
+            label="Target util."
+            labelContainerClassName="flex-1 items-center h-8"
+            isHorizontal
+          >
+            <div className="flex-1">
+              <PercentInput
+                className="h-8"
+                placeholder="80.00"
+                value={targetUtilizationPercent}
+                onChange={onTargetUtilizationPercentChange}
+              />
+            </div>
+          </Parameter>
 
-        <Parameter label="Current util." isHorizontal>
-          <div className="flex flex-col items-end gap-1">
-            <p className="text-p2 text-foreground">
-              {!!bank.bank.lending
-                ? formatPercent(bank.utilizationPercent)
-                : "--"}
-            </p>
+          <Parameter
+            label="Util. buffer"
+            labelContainerClassName="flex-1 items-center h-8"
+            isHorizontal
+          >
+            <div className="flex-1">
+              <PercentInput
+                className="h-8"
+                placeholder="10.00"
+                value={utilizationBufferPercent}
+                onChange={onUtilizationBufferPercentChange}
+              />
+            </div>
+          </Parameter>
 
-            {!!bank.bank.lending && (
-              <button
-                className="group flex h-6 w-[75px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
-                disabled={isRebalancing}
-                onClick={() => rebalance()}
-              >
-                {isRebalancing ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
-                ) : (
-                  <p className="text-p3 text-button-2-foreground">Rebalance</p>
-                )}
-              </button>
+          <button
+            className={cn(
+              "group flex h-6 flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50",
+              !bank.bank.lending ? "w-[60px]" : "w-[56px]",
             )}
-          </div>
-        </Parameter>
+            disabled={
+              address !== ADMIN_ADDRESS ||
+              !appData.mainMarket.reserveMap[bank.coinType] ||
+              isSettingTargetUtilizationPercent ||
+              (!bank.bank.lending &&
+                +targetUtilizationPercent === 0 &&
+                +utilizationBufferPercent === 0) ||
+              (!!bank.bank.lending &&
+                bank.bank.lending.targetUtilisationBps / 100 ===
+                  +targetUtilizationPercent &&
+                bank.bank.lending.utilisationBufferBps / 100 ===
+                  +utilizationBufferPercent)
+            }
+            onClick={() => submitTargetUtilizationPercent()}
+          >
+            {isSettingTargetUtilizationPercent ? (
+              <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
+            ) : (
+              <p className="text-p3 text-button-2-foreground">
+                {!bank.bank.lending ? "Initialize" : "Update"}
+              </p>
+            )}
+          </button>
+        </div>
 
-        {/* Min token block size */}
-        <Parameter label="Min. token block size" isHorizontal>
-          <div className="flex flex-col items-end gap-1">
+        {/* Min. token block size */}
+        <div className="flex w-full flex-col items-end gap-2">
+          <Parameter
+            label="Min. token block size"
+            labelContainerClassName="flex-1 items-center h-8"
+            isHorizontal
+          >
+            <div className="flex-1">
+              <TextInput
+                className="h-8"
+                value={minTokenBlockSize}
+                onChange={onMinTokenBlockSizeChange}
+              />
+            </div>
+          </Parameter>
+
+          <button
+            className="group flex h-6 w-[56px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
+            disabled={
+              address !== ADMIN_ADDRESS ||
+              !bank.bank.lending ||
+              isSettingMinTokenBlockSize ||
+              +new BigNumber(bank.bank.minTokenBlockSize.toString())
+                .div(10 ** appData.coinMetadataMap[bank.coinType].decimals)
+                .toFixed(
+                  appData.coinMetadataMap[bank.coinType].decimals,
+                  BigNumber.ROUND_DOWN,
+                ) === +minTokenBlockSize
+            }
+            onClick={() => submitMinTokenBlockSize()}
+          >
+            {isSettingMinTokenBlockSize ? (
+              <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
+            ) : (
+              <p className="text-p3 text-button-2-foreground">Update</p>
+            )}
+          </button>
+        </div>
+
+        {/* Funds and current util.*/}
+        <div className="flex w-full flex-col gap-2">
+          <Parameter label="Liquid funds" isHorizontal>
             <p className="text-p2 text-foreground">
-              {formatToken(
-                new BigNumber(bank.bank.minTokenBlockSize.toString()).div(
-                  10 ** appData.coinMetadataMap[bank.coinType].decimals,
-                ),
-                { dp: appData.coinMetadataMap[bank.coinType].decimals },
-              )}
+              {!bank.bank.lending
+                ? formatToken(new BigNumber(0), {
+                    dp: appData.coinMetadataMap[bank.coinType].decimals,
+                  })
+                : formatToken(bank.liquidAmount, {
+                    dp: appData.coinMetadataMap[bank.coinType].decimals,
+                  })}{" "}
+              {appData.coinMetadataMap[bank.coinType].symbol}
             </p>
+          </Parameter>
+
+          <Parameter label="Deployed funds" isHorizontal>
+            <p className="text-p2 text-foreground">
+              {!bank.bank.lending
+                ? formatToken(new BigNumber(0), {
+                    dp: appData.coinMetadataMap[bank.coinType].decimals,
+                  })
+                : formatToken(bank.depositedAmount, {
+                    dp: appData.coinMetadataMap[bank.coinType].decimals,
+                  })}{" "}
+              {appData.coinMetadataMap[bank.coinType].symbol}
+            </p>
+          </Parameter>
+
+          <div className="flex w-full flex-col items-end gap-1">
+            <Parameter label="Current util." isHorizontal>
+              <p className="text-p2 text-foreground">
+                {!bank.bank.lending
+                  ? formatPercent(new BigNumber(0))
+                  : formatPercent(bank.utilizationPercent)}
+              </p>
+            </Parameter>
 
             <button
-              className="group flex h-6 w-[66px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
-              disabled={
-                isSettingMinTokenBlockSize ||
-                +bank.bank.minTokenBlockSize.toString() ===
-                  0.1 * 10 ** appData.coinMetadataMap[bank.coinType].decimals
-              }
-              onClick={() => setMinTokenBlockSize()}
+              className="group flex h-6 w-[75px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
+              disabled={!bank.bank.lending || isRebalancing}
+              onClick={() => rebalance()}
             >
-              {isSettingMinTokenBlockSize ? (
+              {isRebalancing ? (
                 <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
               ) : (
-                <p className="text-p3 text-button-2-foreground">Set to 0.1</p>
+                <p className="text-p3 text-button-2-foreground">Rebalance</p>
               )}
             </button>
           </div>
-        </Parameter>
+        </div>
       </div>
     </div>
   );
@@ -261,18 +402,12 @@ export default function BanksCard() {
   const { banksData } = useLoadedAppContext();
 
   return (
-    <div className="flex w-full flex-col gap-4 rounded-md border p-5">
-      <p className="text-h3 text-foreground">Banks</p>
-
-      <div className="flex flex-col gap-1">
-        {banksData === undefined
-          ? Array.from({ length: 3 }).map((_, index) => (
-              <Skeleton key={index} className="h-[50px] w-full rounded-md" />
-            ))
-          : banksData.banks.map((bank) => (
-              <BankRow key={bank.id} bank={bank} />
-            ))}
-      </div>
+    <div className="grid w-full grid-cols-2 gap-1">
+      {banksData === undefined
+        ? Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton key={index} className="h-[336px] w-full rounded-md" />
+          ))
+        : banksData.banks.map((bank) => <BankRow key={bank.id} bank={bank} />)}
     </div>
   );
 }

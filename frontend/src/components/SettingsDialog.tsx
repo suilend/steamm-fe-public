@@ -7,6 +7,7 @@ import { useSettingsContext } from "@suilend/frontend-sui-next";
 
 import Dialog from "@/components/Dialog";
 import SelectPopover from "@/components/SelectPopover";
+import TextInput from "@/components/TextInput";
 import { cn } from "@/lib/utils";
 
 export default function SettingsDialog() {
@@ -63,17 +64,12 @@ export default function SettingsDialog() {
             />
 
             {rpc.id === RpcId.CUSTOM && (
-              <div className="relative z-[1] h-10 w-full rounded-md bg-card transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]">
-                <input
-                  className="h-full w-full min-w-0 !border-0 !bg-[transparent] px-3 text-p1 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  autoFocus
-                  type="text"
-                  placeholder=""
-                  value={customRpcUrl}
-                  onChange={(e) => setCustomRpcUrl(e.target.value)}
-                  onBlur={() => setRpcUrl(customRpcUrl)}
-                />
-              </div>
+              <TextInput
+                autoFocus
+                value={customRpcUrl}
+                onChange={setCustomRpcUrl}
+                onBlur={() => setRpcUrl(customRpcUrl)}
+              />
             )}
           </div>
         </div>
