@@ -75,7 +75,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
     const { rewardPriceMap: lmMarket_rewardPriceMap } =
       await initializeSuilendRewards(
-        lmMarket_reserveMap,
+        { ...mainMarket_reserveMap, ...lmMarket_reserveMap }, // Use main market reserve map prices for LM rewards
         lmMarket_activeRewardCoinTypes,
       );
 
