@@ -38,18 +38,24 @@ export default function useFetchBanksData(
 
           const bank = await steammClient.fullClient.fetchBank(id);
 
-          const liquidAmount = new BigNumber(
+          const totalFundsRaw = await steammClient.Bank.getTotalFunds(bankInfo);
+          const totalFunds = new BigNumber(totalFundsRaw.toString()).div(
+            10 ** coinMetadataMap[coinType].decimals,
+          );
+
+          const fundsAvailable = new BigNumber(
             bank.fundsAvailable.value.toString(),
           ).div(10 ** coinMetadataMap[coinType].decimals);
-          const depositedAmount = new BigNumber(
-            bank.lending ? bank.lending.ctokens.toString() : 0,
-          )
-            .times(mainMarket.reserveMap[coinType]?.cTokenExchangeRate ?? 0) // Fallback for when mainMarket does not have the corresponding reserve
-            .div(10 ** coinMetadataMap[coinType].decimals);
-          const totalAmount = liquidAmount.plus(depositedAmount);
+          const fundsDeployed = totalFunds.minus(fundsAvailable);
+          console.log(
+            "XXX",
+            fundsAvailable.toString(),
+            fundsDeployed.toString(),
+            totalFunds.toString(),
+          );
 
-          const utilizationPercent = totalAmount.gt(0)
-            ? depositedAmount.div(totalAmount).times(100)
+          const utilizationPercent = totalFunds.gt(0)
+            ? fundsDeployed.div(totalFunds).times(100)
             : new BigNumber(0);
           const suilendDepositAprPercent =
             mainMarket.depositAprPercentMap[coinType] ?? new BigNumber(0);
@@ -61,9 +67,9 @@ export default function useFetchBanksData(
             coinType,
             bTokenType,
 
-            liquidAmount,
-            depositedAmount,
-            totalAmount,
+            fundsAvailable,
+            fundsDeployed,
+            totalFunds,
 
             utilizationPercent,
             suilendDepositAprPercent,

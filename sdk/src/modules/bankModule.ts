@@ -57,14 +57,12 @@ export class BankModule implements IModule {
     return txs;
   }
 
-  public async getTotalFunds(bankId: SuiObjectIdType): Promise<bigint> {
+  public async getTotalFunds(bankInfo: BankInfo): Promise<bigint> {
     const tx = new Transaction();
-    const banks = await this.sdk.getBanks();
-    const bankInfo = getBankFromId(banks, bankId);
     const bank = this.sdk.getBank(bankInfo);
 
     const bankObj = await this.sdk.fullClient.getObject({
-      id: bankId,
+      id: bankInfo.bankId,
       options: {
         showContent: true,
         showType: true,
@@ -95,13 +93,11 @@ export class BankModule implements IModule {
     return BigInt(await this.getDryResult<bigint>(tx, "u64"));
   }
 
-  public async getEffectiveUtilisation(
-    bankId: SuiObjectIdType,
-  ): Promise<number> {
-    const totalFunds = await this.getTotalFunds(bankId);
+  public async getEffectiveUtilisation(bankInfo: BankInfo): Promise<number> {
+    const totalFunds = await this.getTotalFunds(bankInfo);
 
     const bankObj = await this.sdk.fullClient.getObject({
-      id: bankId,
+      id: bankInfo.bankId,
       options: {
         showContent: true,
         showType: true,

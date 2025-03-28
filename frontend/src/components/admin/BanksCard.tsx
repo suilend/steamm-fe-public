@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
@@ -16,6 +16,7 @@ import Parameter from "@/components/Parameter";
 import PercentInput from "@/components/PercentInput";
 import TextInput from "@/components/TextInput";
 import TokenLogo from "@/components/TokenLogo";
+import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
@@ -343,40 +344,51 @@ function BankRow({ bank }: BankRowProps) {
           </button>
         </div>
 
-        {/* Funds and current util.*/}
+        {/* Funds and current util. */}
         <div className="flex w-full flex-col gap-2">
+          <Parameter label="Total funds" isHorizontal>
+            <Tooltip
+              title={`${formatToken(bank.totalFunds, {
+                dp: appData.coinMetadataMap[bank.coinType].decimals,
+              })} ${appData.coinMetadataMap[bank.coinType].symbol}`}
+            >
+              <p className="text-p2 text-foreground">
+                {formatToken(bank.totalFunds, { exact: false })}{" "}
+                {appData.coinMetadataMap[bank.coinType].symbol}
+              </p>
+            </Tooltip>
+          </Parameter>
+
           <Parameter label="Liquid funds" isHorizontal>
-            <p className="text-p2 text-foreground">
-              {!bank.bank.lending
-                ? formatToken(new BigNumber(0), {
-                    dp: appData.coinMetadataMap[bank.coinType].decimals,
-                  })
-                : formatToken(bank.liquidAmount, {
-                    dp: appData.coinMetadataMap[bank.coinType].decimals,
-                  })}{" "}
-              {appData.coinMetadataMap[bank.coinType].symbol}
-            </p>
+            <Tooltip
+              title={`${formatToken(bank.fundsAvailable, {
+                dp: appData.coinMetadataMap[bank.coinType].decimals,
+              })} ${appData.coinMetadataMap[bank.coinType].symbol}`}
+            >
+              <p className="text-p2 text-foreground">
+                {formatToken(bank.fundsAvailable, { exact: false })}{" "}
+                {appData.coinMetadataMap[bank.coinType].symbol}
+              </p>
+            </Tooltip>
           </Parameter>
 
           <Parameter label="Deployed funds" isHorizontal>
-            <p className="text-p2 text-foreground">
-              {!bank.bank.lending
-                ? formatToken(new BigNumber(0), {
-                    dp: appData.coinMetadataMap[bank.coinType].decimals,
-                  })
-                : formatToken(bank.depositedAmount, {
-                    dp: appData.coinMetadataMap[bank.coinType].decimals,
-                  })}{" "}
-              {appData.coinMetadataMap[bank.coinType].symbol}
-            </p>
+            <Tooltip
+              title={`${formatToken(bank.fundsDeployed, {
+                dp: appData.coinMetadataMap[bank.coinType].decimals,
+              })} ${appData.coinMetadataMap[bank.coinType].symbol}`}
+            >
+              <p className="text-p2 text-foreground">
+                {formatToken(bank.fundsDeployed, { exact: false })}{" "}
+                {appData.coinMetadataMap[bank.coinType].symbol}
+              </p>
+            </Tooltip>
           </Parameter>
 
           <div className="flex w-full flex-col items-end gap-1">
             <Parameter label="Current util." isHorizontal>
               <p className="text-p2 text-foreground">
-                {!bank.bank.lending
-                  ? formatPercent(new BigNumber(0))
-                  : formatPercent(bank.utilizationPercent)}
+                {formatPercent(bank.utilizationPercent)}
               </p>
             </Parameter>
 
@@ -399,15 +411,27 @@ function BankRow({ bank }: BankRowProps) {
 }
 
 export default function BanksCard() {
-  const { banksData } = useLoadedAppContext();
+  const { appData, banksData } = useLoadedAppContext();
+
+  const sortedBanks = useMemo(() => {
+    if (banksData === undefined) return undefined;
+
+    return banksData.banks.slice().sort(
+      (a, b) =>
+        appData.coinMetadataMap[a.coinType].symbol.toLowerCase() <
+        appData.coinMetadataMap[b.coinType].symbol.toLowerCase()
+          ? -1
+          : 1, // Sort by symbol (ascending)
+    );
+  }, [appData, banksData]);
 
   return (
     <div className="grid w-full grid-cols-2 gap-1">
-      {banksData === undefined
+      {sortedBanks === undefined
         ? Array.from({ length: 6 }).map((_, index) => (
             <Skeleton key={index} className="h-[336px] w-full rounded-md" />
           ))
-        : banksData.banks.map((bank) => <BankRow key={bank.id} bank={bank} />)}
+        : sortedBanks.map((bank) => <BankRow key={bank.id} bank={bank} />)}
     </div>
   );
 }

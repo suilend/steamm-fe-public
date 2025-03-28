@@ -13,9 +13,9 @@ export type ParsedBank = {
   coinType: string;
   bTokenType: string;
 
-  liquidAmount: BigNumber;
-  depositedAmount: BigNumber;
-  totalAmount: BigNumber;
+  fundsAvailable: BigNumber;
+  fundsDeployed: BigNumber;
+  totalFunds: BigNumber;
 
   utilizationPercent: BigNumber;
   suilendDepositAprPercent: BigNumber;

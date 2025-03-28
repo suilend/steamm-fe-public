@@ -33,7 +33,7 @@ export async function test() {
     let sdk: SteammSDK;
     let pools: PoolInfo[];
     let pool: PoolInfo;
-    let banks: BankList;
+    let bankInfos: BankList;
 
     beforeAll(async () => {
       const suiPrivateKey = process.env.TEMP_KEY;
@@ -53,7 +53,7 @@ export async function test() {
     beforeAll(async () => {
       sdk = new SteammSDK(testConfig());
       pools = await sdk.getPools();
-      banks = await sdk.getBanks();
+      bankInfos = await sdk.getBanks();
       pool = (
         await sdk.getPools([
           `${STEAMM_PKG_ID}::usdc::USDC`,
@@ -199,9 +199,9 @@ export async function test() {
 
     it("Gets utilisation", async () => {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      const bank = Object.values(banks)[0];
+      const bankInfo = Object.values(bankInfos)[0];
 
-      const utilisation = await sdk.Bank.getEffectiveUtilisation(bank.bankId);
+      const utilisation = await sdk.Bank.getEffectiveUtilisation(bankInfo);
 
       console.log("bank effective utilisation: ", utilisation);
     });
