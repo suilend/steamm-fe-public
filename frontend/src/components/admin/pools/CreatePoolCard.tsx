@@ -153,6 +153,9 @@ export default function CreatePoolCard() {
   ) as [BigNumber, BigNumber];
 
   const [values, setValues] = useState<[string, string]>(["", ""]);
+  const [lastActiveInputIndex, setLastActiveInputIndex] = useState<
+    number | undefined
+  >(undefined);
 
   const onValueChange = (_value: string, index: number) => {
     console.log("onValueChange - _value:", _value, "index:", index);
@@ -167,7 +170,9 @@ export default function CreatePoolCard() {
       index === 0 ? values[1] : formattedValue,
     ];
     setValues(newValues);
+    setLastActiveInputIndex(index);
   };
+  console.log("XXX", lastActiveInputIndex);
 
   // Values - max
   const onBalanceClick = (index: number) => {
@@ -208,19 +213,35 @@ export default function CreatePoolCard() {
   const onUseBirdeyePriceClick = () => {
     if (birdeyeRatio === undefined) return;
 
-    const inValue = new BigNumber(values[0] || 0).lte(0)
-      ? 1
-      : new BigNumber(values[0]);
-    setValues([
-      inValue.toFixed(
-        balancesCoinMetadataMap![coinTypes[0]].decimals,
-        BigNumber.ROUND_DOWN,
-      ),
-      new BigNumber(birdeyeRatio.times(inValue)).toFixed(
-        balancesCoinMetadataMap![coinTypes[1]].decimals,
-        BigNumber.ROUND_DOWN,
-      ),
-    ]);
+    if (lastActiveInputIndex === undefined || lastActiveInputIndex === 0) {
+      const valueA = new BigNumber(values[0] || 0).lte(0)
+        ? new BigNumber(1)
+        : new BigNumber(values[0]);
+      setValues([
+        valueA.toFixed(
+          balancesCoinMetadataMap![coinTypes[0]].decimals,
+          BigNumber.ROUND_DOWN,
+        ),
+        new BigNumber(valueA.times(birdeyeRatio)).toFixed(
+          balancesCoinMetadataMap![coinTypes[1]].decimals,
+          BigNumber.ROUND_DOWN,
+        ),
+      ]);
+    } else {
+      const valueB = new BigNumber(values[1] || 0).lte(0)
+        ? new BigNumber(1)
+        : new BigNumber(values[1]);
+      setValues([
+        new BigNumber(valueB.div(birdeyeRatio)).toFixed(
+          balancesCoinMetadataMap![coinTypes[0]].decimals,
+          BigNumber.ROUND_DOWN,
+        ),
+        valueB.toFixed(
+          balancesCoinMetadataMap![coinTypes[1]].decimals,
+          BigNumber.ROUND_DOWN,
+        ),
+      ]);
+    }
   };
 
   // Select
