@@ -3,18 +3,21 @@ import { useRouter } from "next/router";
 
 import { shallowPushQuery } from "@suilend/frontend-sui-next";
 
-import BanksCard from "@/components/admin/BanksCard";
-import CreatePoolCard from "@/components/admin/CreatePoolCard";
+import BanksTab from "@/components/admin/banks/BanksTab";
+import OraclesTab from "@/components/admin/oracles/OraclesTab";
+import PoolsTab from "@/components/admin/pools/PoolsTab";
 import { cn } from "@/lib/utils";
 
 enum Tab {
-  BANKS = "banks",
   POOLS = "pools",
+  BANKS = "banks",
+  ORACLES = "oracles",
 }
 
 const tabNameMap: Record<Tab, string> = {
-  [Tab.BANKS]: "Banks",
   [Tab.POOLS]: "Pools",
+  [Tab.BANKS]: "Banks",
+  [Tab.ORACLES]: "Oracles",
 };
 
 enum QueryParams {
@@ -32,7 +35,7 @@ export default function AdminPage() {
     queryParams[QueryParams.TAB] &&
     Object.values(Tab).includes(queryParams[QueryParams.TAB])
       ? queryParams[QueryParams.TAB]
-      : Tab.BANKS;
+      : Tab.POOLS;
   const onSelectedTabChange = (tab: Tab) => {
     shallowPushQuery(router, { ...router.query, [QueryParams.TAB]: tab });
   };
@@ -79,8 +82,9 @@ export default function AdminPage() {
           })}
         </div>
 
-        {selectedTab === Tab.POOLS && <CreatePoolCard />}
-        {selectedTab === Tab.BANKS && <BanksCard />}
+        {selectedTab === Tab.POOLS && <PoolsTab />}
+        {selectedTab === Tab.BANKS && <BanksTab />}
+        {selectedTab === Tab.ORACLES && <OraclesTab />}
       </div>
     </>
   );

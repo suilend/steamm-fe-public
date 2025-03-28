@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
@@ -17,7 +17,6 @@ import PercentInput from "@/components/PercentInput";
 import TextInput from "@/components/TextInput";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
@@ -25,11 +24,11 @@ import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedBank } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-interface BankRowProps {
+interface BankCardProps {
   bank: ParsedBank;
 }
 
-function BankRow({ bank }: BankRowProps) {
+export default function BankCard({ bank }: BankCardProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
@@ -406,32 +405,6 @@ function BankRow({ bank }: BankRowProps) {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-export default function BanksCard() {
-  const { appData, banksData } = useLoadedAppContext();
-
-  const sortedBanks = useMemo(() => {
-    if (banksData === undefined) return undefined;
-
-    return banksData.banks.slice().sort(
-      (a, b) =>
-        appData.coinMetadataMap[a.coinType].symbol.toLowerCase() <
-        appData.coinMetadataMap[b.coinType].symbol.toLowerCase()
-          ? -1
-          : 1, // Sort by symbol (ascending)
-    );
-  }, [appData, banksData]);
-
-  return (
-    <div className="grid w-full grid-cols-2 gap-1">
-      {sortedBanks === undefined
-        ? Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-[336px] w-full rounded-md" />
-          ))
-        : sortedBanks.map((bank) => <BankRow key={bank.id} bank={bank} />)}
     </div>
   );
 }
