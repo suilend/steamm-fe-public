@@ -46,7 +46,7 @@ export default function AdminPage() {
         <title>STEAMM | Admin</title>
       </Head>
 
-      <div className="flex w-full max-w-[800px] flex-col items-center gap-4">
+      <div className="flex w-full max-w-5xl flex-col items-center gap-4">
         {/* Tabs */}
         <div className="flex flex-row">
           {Object.values(Tab).map((tab) => {

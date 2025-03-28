@@ -112,9 +112,14 @@ export default function BankCard({ bank }: BankCardProps) {
 
       showSuccessTxnToast(
         !bank.bank.lending
-          ? `Initialized ${appData.coinMetadataMap[bank.coinType].symbol} bank and set target util. to ${targetUtilizationPercent}% and util. buffer to ${utilizationBufferPercent}%`
+          ? `Initialized ${appData.coinMetadataMap[bank.coinType].symbol} bank`
           : `Set ${appData.coinMetadataMap[bank.coinType].symbol} bank target util. to ${targetUtilizationPercent}% and util. buffer to ${utilizationBufferPercent}%`,
         txUrl,
+        {
+          description: !bank.bank.lending
+            ? `Target util.: ${targetUtilizationPercent}%, util. buffer: ${utilizationBufferPercent}%`
+            : undefined,
+        },
       );
     } catch (err) {
       showErrorToast(
@@ -223,7 +228,14 @@ export default function BankCard({ bank }: BankCardProps) {
   };
 
   return (
-    <div className="flex w-full flex-col gap-3 rounded-md border p-4">
+    <div
+      className={cn(
+        "flex w-full flex-col gap-3 rounded-md border p-4",
+        !!appData.mainMarket.reserveMap[bank.coinType] &&
+          !bank.bank.lending &&
+          "border-button-1",
+      )}
+    >
       {/* Top */}
       <div className="flex flex-row items-center gap-2">
         <TokenLogo
