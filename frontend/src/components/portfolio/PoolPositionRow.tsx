@@ -403,7 +403,7 @@ export default function PoolPositionRow({
                     <Tooltip
                       title={`${formatToken(amount, { dp: coinMetadata.decimals })} ${coinMetadata.symbol}`}
                     >
-                      <p className="text-p2 text-foreground">
+                      <p className="text-p1 text-foreground">
                         {formatToken(amount, { exact: false })}{" "}
                         {coinMetadata.symbol}
                       </p>

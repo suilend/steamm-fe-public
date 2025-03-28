@@ -42,7 +42,7 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
 import { formatFeeTier, formatPair, formatTextInputValue } from "@/lib/format";
-import { ORACLE_INDEX_TYPE_COINTYPE_MAP } from "@/lib/oracles";
+import { COINTYPE_ORACLE_INDEX_MAP } from "@/lib/oracles";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
@@ -438,18 +438,18 @@ export default function CreatePoolCard() {
     try {
       setIsSubmitting(true);
 
-      const oracleIndexA = Object.entries(ORACLE_INDEX_TYPE_COINTYPE_MAP).find(
-        ([, value]) => value.coinType === coinTypes[0],
-      )?.[0];
-      const oracleIndexB = Object.entries(ORACLE_INDEX_TYPE_COINTYPE_MAP).find(
-        ([, value]) => value.coinType === coinTypes[1],
-      )?.[0];
+      const oracleIndexA = COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]];
+      const oracleIndexB = COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]];
 
       if (quoterId === QuoterId.ORACLE) {
         if (oracleIndexA === undefined)
-          throw new Error("coinType 0 not found in ORACLE_INDEX_MAP");
+          throw new Error(
+            "Base asset coinType not found in COINTYPE_ORACLE_INDEX_MAP",
+          );
         if (oracleIndexB === undefined)
-          throw new Error("coinType 1 not found in ORACLE_INDEX_MAP");
+          throw new Error(
+            "Quote asset coinType not found in COINTYPE_ORACLE_INDEX_MAP",
+          );
       }
 
       setIsSubmitting(true);

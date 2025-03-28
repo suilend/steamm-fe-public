@@ -35,7 +35,7 @@ interface UserContext {
   userData: UserData | undefined; // Depends on appData and poolsData
   refreshUserData: () => Promise<void>;
 
-  refresh: () => void; // Refreshes appData, banksData, poolsData, balances, and userData
+  refresh: () => void; // Refreshes appData, oraclesData, banksData, poolsData, balances, and userData
 }
 
 const UserContext = createContext<UserContext>({
@@ -61,8 +61,12 @@ const UserContext = createContext<UserContext>({
 export const useUserContext = () => useContext(UserContext);
 
 export function UserContextProvider({ children }: PropsWithChildren) {
-  const { refreshAppData, refreshBanksData, refreshPoolsData } =
-    useAppContext();
+  const {
+    refreshAppData,
+    refreshOraclesData,
+    refreshBanksData,
+    refreshPoolsData,
+  } = useAppContext();
 
   // Balances
   const { data: rawBalancesMap, mutateData: mutateRawBalancesMap } =
@@ -103,6 +107,7 @@ export function UserContextProvider({ children }: PropsWithChildren) {
   const refresh = useCallback(() => {
     (async () => {
       await refreshAppData();
+      await refreshOraclesData();
       await refreshBanksData();
       await refreshPoolsData();
       await refreshUserData();
@@ -110,6 +115,7 @@ export function UserContextProvider({ children }: PropsWithChildren) {
     refreshRawBalancesMap();
   }, [
     refreshAppData,
+    refreshOraclesData,
     refreshBanksData,
     refreshPoolsData,
     refreshUserData,

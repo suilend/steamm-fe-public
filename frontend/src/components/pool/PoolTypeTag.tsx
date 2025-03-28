@@ -12,17 +12,17 @@ interface PoolTypeTagProps {
 }
 
 export default function PoolTypeTag({ pool }: PoolTypeTagProps) {
-  const { poolsData } = useLoadedAppContext();
+  const { oraclesData, poolsData } = useLoadedAppContext();
 
   const isPyth = pool.coinTypes.some(
     (coinType) =>
-      poolsData?.coinTypeOracleInfoPriceMap[coinType]?.oracleInfo.oracleType ===
-      OracleType.PYTH,
+      oraclesData?.coinTypeOracleInfoPriceMap[coinType]?.oracleInfo
+        .oracleType === OracleType.PYTH,
   );
   const isSwitchboard = pool.coinTypes.some(
     (coinType) =>
-      poolsData?.coinTypeOracleInfoPriceMap[coinType]?.oracleInfo.oracleType ===
-      OracleType.SWITCHBOARD,
+      oraclesData?.coinTypeOracleInfoPriceMap[coinType]?.oracleInfo
+        .oracleType === OracleType.SWITCHBOARD,
   );
 
   return (

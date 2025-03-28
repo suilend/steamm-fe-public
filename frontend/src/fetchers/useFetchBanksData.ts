@@ -47,12 +47,6 @@ export default function useFetchBanksData(
             bank.fundsAvailable.value.toString(),
           ).div(10 ** coinMetadataMap[coinType].decimals);
           const fundsDeployed = totalFunds.minus(fundsAvailable);
-          console.log(
-            "XXX",
-            fundsAvailable.toString(),
-            fundsDeployed.toString(),
-            totalFunds.toString(),
-          );
 
           const utilizationPercent = totalFunds.gt(0)
             ? fundsDeployed.div(totalFunds).times(100)

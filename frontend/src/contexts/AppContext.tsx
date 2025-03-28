@@ -34,6 +34,7 @@ import {
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
 import useFetchBanksData from "@/fetchers/useFetchBanksData";
+import useFetchOraclesData from "@/fetchers/useFetchOraclesData";
 import useFetchPoolsData from "@/fetchers/useFetchPoolsData";
 import { ParsedBank, ParsedPool } from "@/lib/types";
 
@@ -63,6 +64,16 @@ export interface AppData {
   bankInfos: BankInfo[];
   poolInfos: PoolInfo[];
 }
+export interface OraclesData {
+  oracleIndexOracleInfoPriceMap: Record<
+    number,
+    { oracleInfo: OracleInfo; price: BigNumber }
+  >;
+  coinTypeOracleInfoPriceMap: Record<
+    string,
+    { oracleInfo: OracleInfo; price: BigNumber }
+  >;
+}
 export interface BanksData {
   bTokenTypeCoinTypeMap: Record<string, string>;
 
@@ -70,10 +81,6 @@ export interface BanksData {
   bankMap: Record<string, ParsedBank>;
 }
 export interface PoolsData {
-  coinTypeOracleInfoPriceMap: Record<
-    string,
-    { oracleInfo: OracleInfo; price: BigNumber }
-  >;
   lstAprPercentMap: Record<string, BigNumber>;
   rewardMap: RewardMap;
 
@@ -86,10 +93,13 @@ interface AppContext {
   appData: AppData | undefined;
   refreshAppData: () => Promise<void>;
 
+  oraclesData: OraclesData | undefined;
+  refreshOraclesData: () => Promise<void>;
+
   banksData: BanksData | undefined; // Depends on appData
   refreshBanksData: () => Promise<void>;
 
-  poolsData: PoolsData | undefined; // Depends on appData and banksData
+  poolsData: PoolsData | undefined; // Depends on appData, oraclesData, and banksData
   refreshPoolsData: () => Promise<void>;
 
   slippagePercent: number;
@@ -107,6 +117,11 @@ const AppContext = createContext<AppContext>({
   steammClient: undefined,
   appData: undefined,
   refreshAppData: async () => {
+    throw Error("AppContextProvider not initialized");
+  },
+
+  oraclesData: undefined,
+  refreshOraclesData: async () => {
     throw Error("AppContextProvider not initialized");
   },
 
@@ -158,7 +173,15 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     await mutateAppData();
   }, [mutateAppData]);
 
-  // Banks (non-blocking)
+  // Oracles (non-blocking)
+  const { data: oraclesData, mutateData: mutateOraclesData } =
+    useFetchOraclesData(steammClient);
+
+  const refreshOraclesData = useCallback(async () => {
+    await mutateOraclesData();
+  }, [mutateOraclesData]);
+
+  // Banks (non-blocking, depends on appData)
   const { data: banksData, mutateData: mutateBanksData } = useFetchBanksData(
     steammClient,
     appData,
@@ -168,10 +191,11 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     await mutateBanksData();
   }, [mutateBanksData]);
 
-  // Pools (non-blocking)
+  // Pools (non-blocking, depends on appData, oraclesData, and banksData)
   const { data: poolsData, mutateData: mutatePoolsData } = useFetchPoolsData(
     steammClient,
     appData,
+    oraclesData,
     banksData,
   );
 
@@ -200,6 +224,9 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       appData,
       refreshAppData,
 
+      oraclesData,
+      refreshOraclesData,
+
       banksData,
       refreshBanksData,
 
@@ -215,6 +242,8 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       steammClient,
       appData,
       refreshAppData,
+      oraclesData,
+      refreshOraclesData,
       banksData,
       refreshBanksData,
       poolsData,

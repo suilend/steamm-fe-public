@@ -1,106 +1,39 @@
-import { SuiPriceServiceConnection } from "@pythnetwork/pyth-sui-js";
 import BigNumber from "bignumber.js";
 import pLimit from "p-limit";
 import useSWR from "swr";
 
 import { showErrorToast, useSettingsContext } from "@suilend/frontend-sui-next";
-import { formatRewards, toHexString } from "@suilend/sdk";
+import { formatRewards } from "@suilend/sdk";
 import { LstClient } from "@suilend/springsui-sdk";
-import { OracleInfo, SteammSDK } from "@suilend/steamm-sdk";
+import { SteammSDK } from "@suilend/steamm-sdk";
 import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 
-import { AppData, BanksData, PoolsData } from "@/contexts/AppContext";
+import {
+  AppData,
+  BanksData,
+  OraclesData,
+  PoolsData,
+} from "@/contexts/AppContext";
 import { formatPair } from "@/lib/format";
 import { normalizeRewards } from "@/lib/liquidityMining";
-import { ORACLE_INDEX_TYPE_COINTYPE_MAP, OracleType } from "@/lib/oracles";
 import { ParsedPool, QuoterId } from "@/lib/types";
 
 export default function useFetchPoolsData(
   steammClient: SteammSDK,
   appData: AppData | undefined,
+  oraclesData: OraclesData | undefined,
   banksData: BanksData | undefined,
 ) {
   const { suiClient } = useSettingsContext();
 
   // Data
   const dataFetcher = async () => {
-    if (!appData || !banksData) return undefined as unknown as PoolsData; // In practice `dataFetcher` won't be called if `appData` or `banksData` is falsy
+    if (!appData || !oraclesData || !banksData)
+      return undefined as unknown as PoolsData; // In practice `dataFetcher` won't be called if `appData`, `oraclesData`, or `banksData` is falsy
 
     const { mainMarket, coinMetadataMap, poolInfos } = appData;
     const { bTokenTypeCoinTypeMap, bankMap } = banksData;
-    const limit3 = pLimit(3);
     const limit10 = pLimit(10);
-
-    // Oracles
-    const oracleInfos = await steammClient.getOracles();
-
-    const oracleIndexOracleInfoMap: Record<number, OracleInfo> =
-      oracleInfos.reduce(
-        (acc, oracleInfo, index) => ({ ...acc, [index]: oracleInfo }),
-        {} as Record<number, OracleInfo>,
-      );
-
-    const pythConnection = new SuiPriceServiceConnection(
-      "https://hermes.pyth.network",
-    );
-
-    const oracleIndexOracleInfoPriceEntries: [
-      number,
-      { oracleInfo: OracleInfo; price: BigNumber },
-    ][] = await Promise.all(
-      Object.entries(oracleIndexOracleInfoMap).map(([index, oracleInfo]) =>
-        limit3<[], [number, { oracleInfo: OracleInfo; price: BigNumber }]>(
-          async () => {
-            const priceIdentifier =
-              typeof oracleInfo.oracleIdentifier === "string"
-                ? oracleInfo.oracleIdentifier
-                : toHexString(oracleInfo.oracleIdentifier);
-
-            if (oracleInfo.oracleType === OracleType.PYTH) {
-              const pythPriceFeeds =
-                (await pythConnection.getLatestPriceFeeds([priceIdentifier])) ??
-                [];
-
-              return [
-                +index,
-                {
-                  oracleInfo,
-                  price: new BigNumber(
-                    pythPriceFeeds[0]
-                      .getPriceUnchecked()
-                      .getPriceAsNumberUnchecked(),
-                  ),
-                },
-              ];
-            } else if (oracleInfo.oracleType === OracleType.SWITCHBOARD) {
-              return [
-                +index,
-                {
-                  oracleInfo,
-                  price: new BigNumber(0.000001), // TODO: Fetch Switchboard price
-                },
-              ];
-            } else {
-              throw new Error(`Unknown oracle type: ${oracleInfo.oracleType}`);
-            }
-          },
-        ),
-      ),
-    );
-    const oracleIndexOracleInfoPriceMap = Object.fromEntries(
-      oracleIndexOracleInfoPriceEntries,
-    );
-
-    const coinTypeOracleInfoPriceMap: Record<
-      string,
-      { oracleInfo: OracleInfo; price: BigNumber }
-    > = oracleIndexOracleInfoPriceEntries.reduce(
-      (acc, [index, value]) => ({
-        ...acc,
-        [ORACLE_INDEX_TYPE_COINTYPE_MAP[index].coinType]: value,
-      }),
-      {} as Record<string, { oracleInfo: OracleInfo; price: BigNumber }>,
-    );
 
     // LSTs
     const lstAprPercentMapEntries: [string, BigNumber][] = await Promise.all(
@@ -189,18 +122,18 @@ export default function useFetchPoolsData(
 
             let priceA =
               quoterId === QuoterId.ORACLE
-                ? oracleIndexOracleInfoPriceMap[
+                ? oraclesData.oracleIndexOracleInfoPriceMap[
                     +(pool.quoter as OracleQuoter).oracleIndexA.toString()
                   ].price
-                : (coinTypeOracleInfoPriceMap[coinTypeA]?.price ??
+                : (oraclesData.coinTypeOracleInfoPriceMap[coinTypeA]?.price ??
                   mainMarket.reserveMap[coinTypeA]?.price ??
                   undefined);
             let priceB =
               quoterId === QuoterId.ORACLE
-                ? oracleIndexOracleInfoPriceMap[
+                ? oraclesData.oracleIndexOracleInfoPriceMap[
                     +(pool.quoter as OracleQuoter).oracleIndexB.toString()
                   ].price
-                : (coinTypeOracleInfoPriceMap[coinTypeB]?.price ??
+                : (oraclesData.coinTypeOracleInfoPriceMap[coinTypeB]?.price ??
                   mainMarket.reserveMap[coinTypeB]?.price ??
                   undefined);
 
@@ -305,7 +238,6 @@ export default function useFetchPoolsData(
     );
 
     return {
-      coinTypeOracleInfoPriceMap,
       lstAprPercentMap,
       rewardMap: lmMarket_rewardMap,
 
@@ -314,7 +246,7 @@ export default function useFetchPoolsData(
   };
 
   const { data, mutate } = useSWR<PoolsData>(
-    !appData || !banksData ? null : "poolsData",
+    !appData || !oraclesData || !banksData ? null : "poolsData",
     dataFetcher,
     {
       refreshInterval: 30 * 1000,

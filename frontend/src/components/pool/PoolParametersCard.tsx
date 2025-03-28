@@ -10,7 +10,7 @@ import { useSettingsContext } from "@suilend/frontend-sui-next";
 
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
-import OpenOnExplorerButton from "@/components/OpenOnExplorerButton";
+import OpenExternalUrlButton from "@/components/OpenExternalUrlButton";
 import Parameter from "@/components/Parameter";
 import SuilendLogo from "@/components/SuilendLogo";
 import Tag from "@/components/Tag";
@@ -38,11 +38,7 @@ export default function PoolParametersCard() {
               key={coinType}
               className="flex w-full flex-row items-center gap-2"
             >
-              <TokenLogo
-                className="bg-background"
-                token={getToken(coinType, coinMetadata)}
-                size={16}
-              />
+              <TokenLogo token={getToken(coinType, coinMetadata)} size={16} />
 
               <Tooltip
                 title={`${formatToken(pool.balances[index], {
@@ -57,7 +53,7 @@ export default function PoolParametersCard() {
 
               <div className="flex flex-row items-center gap-1">
                 <CopyToClipboardButton value={coinType} />
-                <OpenOnExplorerButton url={explorer.buildCoinUrl(coinType)} />
+                <OpenExternalUrlButton url={explorer.buildCoinUrl(coinType)} />
               </div>
 
               {appData.mainMarket.reserveMap[coinType] &&
@@ -125,7 +121,7 @@ export default function PoolParametersCard() {
 
           <div className="flex flex-row items-center gap-1">
             <CopyToClipboardButton value={pool.id} />
-            <OpenOnExplorerButton url={explorer.buildObjectUrl(pool.id)} />
+            <OpenExternalUrlButton url={explorer.buildObjectUrl(pool.id)} />
           </div>
         </div>
       </Parameter>

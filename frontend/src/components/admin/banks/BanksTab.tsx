@@ -22,8 +22,8 @@ export default function BanksTab() {
   return (
     <div className="grid w-full grid-cols-1 gap-1 md:grid-cols-2">
       {sortedBanks === undefined
-        ? Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-[336px] w-full rounded-md" />
+        ? Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-[428px] w-full rounded-md" />
           ))
         : sortedBanks.map((bank) => <BankCard key={bank.id} bank={bank} />)}
     </div>

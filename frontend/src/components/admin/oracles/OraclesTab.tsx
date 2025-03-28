@@ -1,3 +1,97 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import useCoinMetadataMap from "@suilend/frontend-sui-next/hooks/useCoinMetadataMap";
+
+import AddOracleCard from "@/components/admin/oracles/AddOracleCard";
+import OracleCard from "@/components/admin/oracles/OracleCard";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useLoadedAppContext } from "@/contexts/AppContext";
+
 export default function OraclesTab() {
-  return null;
+  const { appData, oraclesData } = useLoadedAppContext();
+
+  // CoinMetadata
+  const additionalCoinTypes = useMemo(
+    () =>
+      oraclesData === undefined
+        ? []
+        : Object.keys(oraclesData.coinTypeOracleInfoPriceMap).filter(
+            (coinType) =>
+              !Object.keys(appData.coinMetadataMap).includes(coinType),
+          ),
+    [oraclesData, appData.coinMetadataMap],
+  );
+  const additionalCoinMetadataMap = useCoinMetadataMap(additionalCoinTypes);
+
+  const coinMetadataMap = useMemo(
+    () => ({ ...appData.coinMetadataMap, ...additionalCoinMetadataMap }),
+    [appData.coinMetadataMap, additionalCoinMetadataMap],
+  );
+
+  // Pyth price identifier -> symbol map
+  const [pythPriceIdentifierSymbolMap, setPythPriceIdentifierSymbolMap] =
+    useState<Record<string, string> | undefined>(undefined);
+
+  const hasFetchedPythPriceIdentifierSymbolMapRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (hasFetchedPythPriceIdentifierSymbolMapRef.current) return;
+    hasFetchedPythPriceIdentifierSymbolMapRef.current = true;
+
+    (async () => {
+      try {
+        const res = await fetch(
+          "https://hermes.pyth.network/v2/price_feeds?asset_type=crypto",
+        );
+        const json: {
+          id: string;
+          attributes: {
+            symbol: string;
+          };
+        }[] = await res.json();
+
+        setPythPriceIdentifierSymbolMap(
+          json.reduce(
+            (acc, d) => ({ ...acc, [d.id]: d.attributes.symbol }),
+            {} as Record<string, string>,
+          ),
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+  }, []);
+
+  return (
+    <div className="grid w-full grid-cols-1 gap-1 md:grid-cols-2">
+      {oraclesData === undefined ? (
+        Array.from({ length: 4 }).map((_, index) => (
+          <Skeleton key={index} className="h-[180px] w-full rounded-md" />
+        ))
+      ) : (
+        <>
+          {Object.entries(oraclesData.oracleIndexOracleInfoPriceMap).map(
+            ([oracleIndex, { oracleInfo, price }]) => (
+              <OracleCard
+                key={oracleIndex}
+                pythPriceIdentifierSymbolMap={pythPriceIdentifierSymbolMap}
+                coinMetadataMap={coinMetadataMap}
+                coinTypes={Object.entries(
+                  oraclesData.coinTypeOracleInfoPriceMap,
+                )
+                  .filter(
+                    ([_, { oracleInfo }]) =>
+                      oracleInfo.oracleIndex === +oracleIndex,
+                  )
+                  .map(([coinType]) => coinType)}
+                oracleInfo={oracleInfo}
+                price={price}
+              />
+            ),
+          )}
+
+          <AddOracleCard />
+        </>
+      )}
+    </div>
+  );
 }

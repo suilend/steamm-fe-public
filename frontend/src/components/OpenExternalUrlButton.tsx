@@ -2,13 +2,13 @@ import Link from "next/link";
 
 import { ExternalLink } from "lucide-react";
 
-interface OpenOnExplorerButtonProps {
+interface OpenExternalUrlButtonProps {
   url: string;
 }
 
-export default function OpenOnExplorerButton({
+export default function OpenExternalUrlButton({
   url,
-}: OpenOnExplorerButtonProps) {
+}: OpenExternalUrlButtonProps) {
   return (
     <Link
       className="group block flex h-5 w-5 flex-row items-center justify-center text-secondary-foreground transition-colors hover:text-foreground"

@@ -223,10 +223,7 @@ export default function BankCard({ bank }: BankCardProps) {
   };
 
   return (
-    <div
-      key={bank.id}
-      className="flex min-h-10 w-full flex-col gap-3 rounded-md border p-4"
-    >
+    <div className="flex w-full flex-col gap-3 rounded-md border p-4">
       {/* Top */}
       <div className="flex flex-row items-center gap-2">
         <TokenLogo
@@ -326,6 +323,7 @@ export default function BankCard({ bank }: BankCardProps) {
               address !== ADMIN_ADDRESS ||
               !bank.bank.lending ||
               isSettingMinTokenBlockSize ||
+              +minTokenBlockSize === 0 ||
               +new BigNumber(bank.bank.minTokenBlockSize.toString())
                 .div(10 ** appData.coinMetadataMap[bank.coinType].decimals)
                 .toFixed(
