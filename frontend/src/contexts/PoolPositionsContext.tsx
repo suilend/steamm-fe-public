@@ -149,13 +149,18 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
   // Points
   const totalPoints: BigNumber | undefined = useMemo(
     () =>
-      poolPositions === undefined
+      poolsData === undefined || userData === undefined
         ? undefined
-        : poolPositions.reduce(
-            (acc, position) => acc.plus(position.totalPoints),
+        : poolsData.pools.reduce(
+            (acc, pool) =>
+              acc.plus(
+                userData.poolRewardMap[pool.id]?.[
+                  NORMALIZED_STEAMM_POINTS_COINTYPE
+                ] ?? new BigNumber(0),
+              ),
             new BigNumber(0),
           ),
-    [poolPositions],
+    [poolsData, userData],
   );
 
   const pointsPerDay: BigNumber | undefined = useMemo(
