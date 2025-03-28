@@ -17,7 +17,7 @@ import { useStatsContext } from "@/contexts/StatsContext";
 import { useUserContext } from "@/contexts/UserContext";
 import { getTotalAprPercent } from "@/lib/liquidityMining";
 import {
-  getIndexOfObligationWithDeposit,
+  getIndexesOfObligationsWithDeposit,
   getObligationDepositedAmount,
 } from "@/lib/obligation";
 import { PoolPosition } from "@/lib/types";
@@ -50,15 +50,21 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
         ? undefined
         : (poolsData.pools
             .map((pool) => {
-              const obligationIndex = getIndexOfObligationWithDeposit(
+              const obligationIndexes = getIndexesOfObligationsWithDeposit(
                 userData.obligations,
                 pool.lpTokenType,
-              ); // Assumes up to one obligation has deposits of the LP token type
+              );
 
               const lpTokenBalance = getBalance(pool.lpTokenType);
-              const lpTokenDepositedAmount = getObligationDepositedAmount(
-                userData.obligations[obligationIndex],
-                pool.lpTokenType,
+              const lpTokenDepositedAmount = obligationIndexes.reduce(
+                (acc, obligationIndex) =>
+                  acc.plus(
+                    getObligationDepositedAmount(
+                      userData.obligations[obligationIndex],
+                      pool.lpTokenType,
+                    ),
+                  ),
+                new BigNumber(0),
               );
               const lpTokenTotalAmount = lpTokenBalance.plus(
                 lpTokenDepositedAmount,

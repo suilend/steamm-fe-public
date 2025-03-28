@@ -14,10 +14,12 @@ export const getObligationDepositedAmount = (
   getObligationDepositPosition(obligation, coinType)?.depositedAmount ??
   new BigNumber(0);
 
-export const getIndexOfObligationWithDeposit = (
+export const getIndexesOfObligationsWithDeposit = (
   obligations: ParsedObligation[],
   coinType: string,
 ) =>
-  obligations.findIndex(
-    (obligation) => !!getObligationDepositPosition(obligation, coinType),
-  ); // Assumes up to one obligation has deposits of the LP token type
+  obligations
+    .map((obligation, index) =>
+      !!getObligationDepositPosition(obligation, coinType) ? index : undefined,
+    )
+    .filter((index) => index !== undefined);

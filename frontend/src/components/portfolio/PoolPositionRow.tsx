@@ -37,7 +37,7 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
-import { getIndexOfObligationWithDeposit } from "@/lib/obligation";
+import { getIndexesOfObligationsWithDeposit } from "@/lib/obligation";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { PoolPosition } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -86,22 +86,24 @@ export default function PoolPositionRow({
 
       const transaction = new Transaction();
 
-      let obligationIndex = getIndexOfObligationWithDeposit(
+      let obligationIndexes = getIndexesOfObligationsWithDeposit(
         userData.obligations,
         poolPosition.pool.lpTokenType,
-      ); // Assumes up to one obligation has deposits of the LP token type
-      if (obligationIndex === -1)
-        obligationIndex = userData.obligations.findIndex(
-          (obligation) => obligation.depositPositionCount < 5,
-        ); // Get obligation with less than 5 deposits (if any)
-      console.log("XXX obligationIndex:", obligationIndex);
+      );
+      if (obligationIndexes.length === 0)
+        obligationIndexes = [
+          userData.obligations.findIndex(
+            (obligation) => obligation.depositPositionCount < 5,
+          ),
+        ]; // Get first obligation with less than 5 deposits (if any)
+      console.log("XXX obligationIndexes:", obligationIndexes);
 
       const { obligationOwnerCapId, didCreate } = createObligationIfNoneExists(
         appData.lmMarket.suilendClient,
         transaction,
-        obligationIndex !== -1
-          ? userData.obligationOwnerCaps[obligationIndex]
-          : undefined, // Create new obligation
+        obligationIndexes[0] !== -1
+          ? userData.obligationOwnerCaps[obligationIndexes[0]] // Deposit into first obligation with deposits of the LP token type, or with less than 5 deposits
+          : undefined, // Create obligation (no obligations OR no obligations with less than 5 deposits)
       );
       await appData.lmMarket.suilendClient.depositIntoObligation(
         address,
@@ -170,21 +172,23 @@ export default function PoolPositionRow({
       const transaction = new Transaction();
 
       try {
-        const obligationIndex = getIndexOfObligationWithDeposit(
+        const obligationIndexes = getIndexesOfObligationsWithDeposit(
           userData.obligations,
           poolPosition.pool.lpTokenType,
-        ); // Assumes up to one obligation has deposits of the LP token type
-        if (obligationIndex === -1) throw Error("Obligation not found"); // Should never happen as you can't unstake if you don't have any staked
-        console.log("XXX obligationIndex:", obligationIndex);
-
-        await appData.lmMarket.suilendClient.withdrawAndSendToUser(
-          address,
-          userData.obligationOwnerCaps[obligationIndex].id,
-          userData.obligations[obligationIndex].id,
-          poolPosition.pool.lpTokenType,
-          submitAmount,
-          transaction,
         );
+        if (obligationIndexes.length === 0) throw Error("Obligation not found"); // Should never happen as you can't unstake if you don't have any staked
+        console.log("XXX obligationIndexes:", obligationIndexes);
+
+        for (const obligationIndex of obligationIndexes) {
+          await appData.lmMarket.suilendClient.withdrawAndSendToUser(
+            address,
+            userData.obligationOwnerCaps[obligationIndex].id,
+            userData.obligations[obligationIndex].id,
+            poolPosition.pool.lpTokenType,
+            submitAmount,
+            transaction,
+          );
+        }
       } catch (err) {
         Sentry.captureException(err);
         console.error(err);
