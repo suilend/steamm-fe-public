@@ -20,10 +20,6 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import {
-  createObligationIfNoneExists,
-  sendObligationToUser,
-} from "@suilend/sdk";
 
 import AprBreakdown from "@/components/AprBreakdown";
 import PoolTypeTag from "@/components/pool/PoolTypeTag";
@@ -35,6 +31,7 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
+import useStake from "@/hooks/useStake";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { getIndexesOfObligationsWithDeposit } from "@/lib/obligation";
@@ -52,8 +49,7 @@ export default function PoolPositionRow({
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { appData } = useLoadedAppContext();
-  const { refreshRawBalancesMap, getBalance, userData, refreshUserData } =
-    useUserContext();
+  const { refreshRawBalancesMap, userData, refreshUserData } = useUserContext();
 
   // Stake/unstake
   const [stakedPercentOverride, setStakedPercentOverride] = useState<
@@ -62,96 +58,10 @@ export default function PoolPositionRow({
   const stakedPercent = stakedPercentOverride ?? poolPosition.stakedPercent;
 
   // Stake
-  const [isStaking, setIsStaking] = useState<boolean>(false);
-
-  const onStakeClick = async (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-
-    if (userData === undefined) return;
-
-    try {
-      if (isStaking) return;
-      if (!address) throw Error("Wallet not connected");
-
-      setIsStaking(true);
-
-      const submitAmount = new BigNumber(
-        getBalance(poolPosition.pool.lpTokenType),
-      )
-        .times(
-          10 ** appData.coinMetadataMap[poolPosition.pool.lpTokenType].decimals,
-        )
-        .integerValue(BigNumber.ROUND_DOWN)
-        .toString();
-
-      const transaction = new Transaction();
-
-      let obligationIndexes = getIndexesOfObligationsWithDeposit(
-        userData.obligations,
-        poolPosition.pool.lpTokenType,
-      );
-      if (obligationIndexes.length === 0)
-        obligationIndexes = [
-          userData.obligations.findIndex(
-            (obligation) => obligation.depositPositionCount < 5,
-          ),
-        ]; // Get first obligation with less than 5 deposits (if any)
-      console.log("XXX obligationIndexes:", obligationIndexes);
-
-      const { obligationOwnerCapId, didCreate } = createObligationIfNoneExists(
-        appData.lmMarket.suilendClient,
-        transaction,
-        obligationIndexes[0] !== -1
-          ? userData.obligationOwnerCaps[obligationIndexes[0]] // Deposit into first obligation with deposits of the LP token type, or with less than 5 deposits
-          : undefined, // Create obligation (no obligations OR no obligations with less than 5 deposits)
-      );
-      await appData.lmMarket.suilendClient.depositIntoObligation(
-        address,
-        poolPosition.pool.lpTokenType,
-        submitAmount,
-        transaction,
-        obligationOwnerCapId,
-      );
-      if (didCreate)
-        sendObligationToUser(obligationOwnerCapId, address, transaction);
-
-      const res = await signExecuteAndWaitForTransaction(transaction);
-      const txUrl = explorer.buildTxUrl(res.digest);
-
-      showSuccessTxnToast(
-        [
-          "Staked",
-          formatPair(
-            poolPosition.pool.coinTypes.map(
-              (coinType) => appData.coinMetadataMap[coinType].symbol,
-            ),
-          ),
-          "LP tokens",
-        ].join(" "),
-        txUrl,
-      );
-
-      setStakedPercentOverride(new BigNumber(100)); // Override to prevent double-counting while refreshing
-      setTimeout(() => {
-        setStakedPercentOverride(undefined);
-      }, 5000);
-    } catch (err) {
-      showErrorToast(
-        "Failed to stake LP tokens",
-        err as Error,
-        undefined,
-        true,
-      );
-      console.error(err);
-      Sentry.captureException(err);
-    } finally {
-      setIsStaking(false);
-
-      // The order of these two calls is important (refreshRawBalancesMap must be called after refreshUserData so the pool position doesn't disappear while the new obligations are still being fetched)
-      await refreshUserData();
-      await refreshRawBalancesMap();
-    }
-  };
+  const { isStaking, onStakeClick } = useStake(
+    poolPosition,
+    setStakedPercentOverride,
+  );
 
   // Unstake
   const [isUnstaking, setIsUnstaking] = useState<boolean>(false);
