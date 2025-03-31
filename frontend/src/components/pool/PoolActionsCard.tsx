@@ -640,6 +640,13 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
             />
           </div>
 
+          <button
+            className="group flex h-10 flex-row items-center justify-center rounded-md bg-button-2 px-3 transition-colors hover:bg-button-2/80"
+            onClick={() => onSliderValueChange("100")}
+          >
+            <p className="text-p2 text-button-2-foreground">Max</p>
+          </button>
+
           <div className="w-20">
             <PercentInput
               inputClassName="!text-p1 text-right pl-0"
@@ -1131,6 +1138,13 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
             onChange={(e) => onValueChange(e.target.value)}
           />
         </div>
+
+        <button
+          className="group flex h-10 flex-row items-center justify-center rounded-md bg-button-2 px-3 transition-colors hover:bg-button-2/80"
+          onClick={() => onValueChange("100")}
+        >
+          <p className="text-p2 text-button-2-foreground">Max</p>
+        </button>
 
         <div className="w-20">
           <PercentInput

@@ -31,7 +31,9 @@ export default function PoolPositionCard() {
     <>
       {poolPosition !== undefined && poolPosition.stakedPercent.lt(100) && (
         <div className="flex w-full flex-row items-center justify-between gap-4 rounded-md border border-warning bg-warning/25 px-5 py-2">
-          <p>Your LP tokens are not staked. Stake to earn rewards.</p>
+          <p className="text-p2 text-foreground">
+            Your LP tokens are not staked. Stake to earn rewards.
+          </p>
 
           <button
             className="flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-foreground px-2 transition-colors hover:bg-foreground/80 disabled:pointer-events-none disabled:opacity-50"
