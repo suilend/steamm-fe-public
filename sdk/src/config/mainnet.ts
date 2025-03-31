@@ -21,7 +21,7 @@ export const STEAMM_SCRIPT_CONFIG = {
   package_id:
     "0x13bfc09cfc1bd922d3aa53fcf7b2cd510727ee65068ce136e2ebd5f3b213fdd2",
   published_at:
-    "0xaf8a9d331fa0c2362506803825bcb6092f8f7fbe553bad4423724159c5160a77",
+    "0xf61844d7e3313e920825308d2ce5e783e0a77b14d5c6f0f56170451c6e8c9088",
 };
 
 export const SUILEND_CONFIG = {
