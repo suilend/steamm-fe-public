@@ -65,6 +65,8 @@ export interface AppData {
   poolInfos: PoolInfo[];
 }
 export interface OraclesData {
+  COINTYPE_ORACLE_INDEX_MAP: Record<string, number>;
+
   oracleIndexOracleInfoPriceMap: Record<
     number,
     { oracleInfo: OracleInfo; price: BigNumber }

@@ -42,7 +42,6 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
 import { formatFeeTier, formatPair, formatTextInputValue } from "@/lib/format";
-import { COINTYPE_ORACLE_INDEX_MAP } from "@/lib/oracles";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
@@ -128,7 +127,8 @@ const LP_TOKEN_IMAGE_URL =
 export default function CreatePoolCard() {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, banksData, poolsData } = useLoadedAppContext();
+  const { steammClient, appData, oraclesData, banksData, poolsData } =
+    useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
   const flags = useFlags();
@@ -451,7 +451,7 @@ export default function CreatePoolCard() {
   type CreateCoinReturnType = Awaited<ReturnType<typeof createCoin>>;
 
   const onSubmitClick = async () => {
-    if (banksData === undefined) return;
+    if (oraclesData === undefined || banksData === undefined) return;
 
     if (submitButtonState.isDisabled) return;
     if (!address || !quoterId || !feeTierPercent) return;
@@ -459,8 +459,8 @@ export default function CreatePoolCard() {
     try {
       setIsSubmitting(true);
 
-      const oracleIndexA = COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]];
-      const oracleIndexB = COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]];
+      const oracleIndexA = oraclesData.COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]];
+      const oracleIndexB = oraclesData.COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]];
 
       if (quoterId === QuoterId.ORACLE) {
         if (oracleIndexA === undefined)

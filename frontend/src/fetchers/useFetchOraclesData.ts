@@ -8,7 +8,8 @@ import { toHexString } from "@suilend/sdk";
 import { OracleInfo, SteammSDK } from "@suilend/steamm-sdk";
 
 import { OraclesData } from "@/contexts/AppContext";
-import { COINTYPE_ORACLE_INDEX_MAP, OracleType } from "@/lib/oracles";
+import { ASSETS_URL } from "@/lib/constants";
+import { OracleType } from "@/lib/oracles";
 
 export default function useFetchOraclesData(steammClient: SteammSDK) {
   // Data
@@ -77,6 +78,17 @@ export default function useFetchOraclesData(steammClient: SteammSDK) {
       oracleIndexOracleInfoPriceEntries,
     );
 
+    let COINTYPE_ORACLE_INDEX_MAP: Record<string, number>;
+    try {
+      COINTYPE_ORACLE_INDEX_MAP = await (
+        await fetch(
+          `${ASSETS_URL}/cointype-oracle-index-map${process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true" ? "-beta" : ""}.json?timestamp=${Date.now()}`,
+        )
+      ).json();
+    } catch (err) {
+      COINTYPE_ORACLE_INDEX_MAP = {};
+    }
+
     const coinTypeOracleInfoPriceMap: Record<
       string,
       { oracleInfo: OracleInfo; price: BigNumber }
@@ -87,9 +99,10 @@ export default function useFetchOraclesData(steammClient: SteammSDK) {
       }),
       {} as Record<string, { oracleInfo: OracleInfo; price: BigNumber }>,
     );
-    console.log("XXXX", coinTypeOracleInfoPriceMap);
 
     return {
+      COINTYPE_ORACLE_INDEX_MAP,
+
       oracleIndexOracleInfoPriceMap,
       coinTypeOracleInfoPriceMap,
     };
