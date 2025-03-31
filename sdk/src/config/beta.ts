@@ -2,9 +2,9 @@ import { SdkOptions } from "../sdk";
 import { Package, SteammConfigs } from "../types";
 
 export const STEAMM_BETA_CONFIG: Package<SteammConfigs> = {
-  package_id:
+  packageId:
     "0xddaa7c8c1e74d4b0448c5a11fdbee779eaca26c40183d8791e315c8f62530d51",
-  published_at:
+  publishedAt:
     "0xa73893381457055cb4c1ba97dca9ad611acd84e2c9eada7a9fdff9d40a0b1591",
   config: {
     registryId:
@@ -19,16 +19,16 @@ export const STEAMM_BETA_CONFIG: Package<SteammConfigs> = {
 };
 
 export const STEAMM_SCRIPT_BETA_CONFIG = {
-  package_id:
+  packageId:
     "0xdfcac0610e134d98885744e0fb4b400c77b850abaf7ec4b372530e3661d9728e",
-  published_at:
+  publishedAt:
     "0x9caa34a479ff313e20b0be665540bf8b10192650a7886039fffdb449585c48f6",
 };
 
 export const SUILEND_BETA_CONFIG = {
-  package_id:
+  packageId:
     "0x1f54a9a2d71799553197e9ea24557797c6398d6a65f2d4d3818c9304b75d5e21",
-  published_at:
+  publishedAt:
     "0x5bb8cb3894945f523736f4f5059b1621056e8093b165ea56b20805d0ef2461a9",
   config: {
     lendingMarketId:
@@ -39,9 +39,9 @@ export const SUILEND_BETA_CONFIG = {
 };
 
 export const ORACLE_BETA_CONFIG = {
-  package_id:
+  packageId:
     "0xf9c6edde058291f5b630ee8e6710c7a2f8cda1730ff935f24c32a06c2fd68cca",
-  published_at:
+  publishedAt:
     "0xf9c6edde058291f5b630ee8e6710c7a2f8cda1730ff935f24c32a06c2fd68cca",
   config: {
     oracleRegistryId:
@@ -51,8 +51,8 @@ export const ORACLE_BETA_CONFIG = {
 
 export const BETA_CONFIG: SdkOptions = {
   fullRpcUrl: "https://fullnode.mainnet.sui.io:443",
-  suilend_config: SUILEND_BETA_CONFIG, // Use SUILEND_CONFIG to be able to create pools
-  steamm_config: STEAMM_BETA_CONFIG,
-  steamm_script_config: STEAMM_SCRIPT_BETA_CONFIG,
-  oracle_config: ORACLE_BETA_CONFIG,
+  suilendConfig: SUILEND_BETA_CONFIG, // Use SUILEND_CONFIG to be able to create pools
+  steammConfig: STEAMM_BETA_CONFIG,
+  steammScriptConfig: STEAMM_SCRIPT_BETA_CONFIG,
+  oracleConfig: ORACLE_BETA_CONFIG,
 };

@@ -1,1 +1,1 @@
-export * from "./IModule";
+export * from "./IManager";

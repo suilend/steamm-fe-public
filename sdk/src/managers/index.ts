@@ -12,10 +12,11 @@ import { CreateOraclePoolArgs } from "../base/quoters/oracleQuoter/args";
 import { BankInfo, PoolInfo } from "../types";
 import { SuiAddressType, SuiTypeName } from "../utils";
 
-export * from "./bankModule";
-export * from "./poolModule";
-export * from "./routerModule";
-export * from "./rpcModule";
+export * from "./bankManager";
+export * from "./poolManager";
+export * from "./router";
+export * from "./oracle";
+export * from "./client";
 
 export type DepositLiquidityParams = DepositLiquidityArgs &
   (

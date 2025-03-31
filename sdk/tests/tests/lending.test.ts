@@ -5,7 +5,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import { beforeAll, describe, expect, it } from "bun:test";
 import dotenv from "dotenv";
 
-import { PoolModule } from "../../src/modules/poolModule";
+import { PoolManager } from "../../src/managers/poolManager";
 import { SteammSDK } from "../../src/sdk";
 import { BankList, DataPage, PoolInfo } from "../../src/types";
 
@@ -91,7 +91,7 @@ export async function test() {
       await initLendingNoOp(sdk, `${STEAMM_PKG_ID}::usdc::USDC`);
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const poolModule = new PoolModule(sdk);
+      const poolModule = new PoolManager(sdk);
       const tx = new Transaction();
 
       const suiCoin = tx.moveCall({

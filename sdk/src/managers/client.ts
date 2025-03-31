@@ -40,7 +40,7 @@ import { extractGenerics } from "../utils";
 /**
  * Represents a module for making RPC (Remote Procedure Call) requests.
  */
-export class RpcModule extends SuiClient {
+export class FullClient extends SuiClient {
   /**
    * Get events for a given query criteria
    * @param query

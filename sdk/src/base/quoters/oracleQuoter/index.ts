@@ -184,7 +184,7 @@ export function shareOraclePool(
   pkgInfo: PackageInfo,
   sdkOptions: SdkOptions,
 ): TransactionResult {
-  const quoterType = `${sdkOptions.steamm_config.config!.quoterSourcePkgs.omm}::omm::OracleQuoter`;
+  const quoterType = `${sdkOptions.steammConfig.config!.quoterSourcePkgs.omm}::omm::OracleQuoter`;
 
   return tx.moveCall({
     target: `0x2::transfer::public_share_object`,

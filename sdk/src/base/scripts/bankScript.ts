@@ -1,11 +1,10 @@
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
-import { PoolScriptFunctions } from "../_codegen";
-import { ToMultiSwapRouteArgs } from "../_codegen/_generated/steamm_scripts/pool-script/functions";
-import { BankInfo, PackageInfo, SteammPackageInfo } from "../types";
-
-import { Bank } from "./bank";
+import { PoolScriptFunctions } from "../../_codegen";
+import { ToMultiSwapRouteArgs } from "../../_codegen/_generated/steamm_scripts/pool-script/functions";
+import { BankInfo, PackageInfo, SteammPackageInfo } from "../../types";
+import { Bank } from "../bank";
 
 export class BankScript {
   public sourcePkgId: string;

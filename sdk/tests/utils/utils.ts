@@ -32,9 +32,9 @@ export function testConfig(): SdkOptions {
   return {
     fullRpcUrl: "http://127.0.0.1:9000",
     enableTestMode: true,
-    steamm_config: {
-      package_id: STEAMM_PKG_ID,
-      published_at: STEAMM_PKG_ID,
+    steammConfig: {
+      packageId: STEAMM_PKG_ID,
+      publishedAt: STEAMM_PKG_ID,
       config: {
         registryId: REGISTRY_ID,
         globalAdmin: GLOBAL_ADMIN_ID,
@@ -44,21 +44,21 @@ export function testConfig(): SdkOptions {
         },
       },
     },
-    suilend_config: {
-      package_id: SUILEND_PKG_ID,
-      published_at: SUILEND_PKG_ID,
+    suilendConfig: {
+      packageId: SUILEND_PKG_ID,
+      publishedAt: SUILEND_PKG_ID,
       config: {
         lendingMarketId: LENDING_MARKET_ID,
         lendingMarketType: LENDING_MARKET_TYPE,
       },
     },
-    steamm_script_config: {
-      package_id: STEAMM_SCRIPT_PKG_ID,
-      published_at: STEAMM_SCRIPT_PKG_ID,
+    steammScriptConfig: {
+      packageId: STEAMM_SCRIPT_PKG_ID,
+      publishedAt: STEAMM_SCRIPT_PKG_ID,
     },
-    oracle_config: {
-      package_id: ORACLES_PKG_ID,
-      published_at: ORACLES_PKG_ID,
+    oracleConfig: {
+      packageId: ORACLES_PKG_ID,
+      publishedAt: ORACLES_PKG_ID,
       config: {
         oracleRegistryId: ORACLE_REGISTRY_ID,
       },
@@ -274,7 +274,7 @@ export function createPythPrice(
   },
 ) {
   return tx.moveCall({
-    target: `${sdk.sdkOptions.suilend_config.published_at}::setup::new_price_info_obj`,
+    target: `${sdk.sdkOptions.suilendConfig.publishedAt}::setup::new_price_info_obj`,
     arguments: [
       tx.pure.u64(args.price),
       tx.pure.u8(args.expo),
@@ -331,7 +331,7 @@ export async function createOraclePoolHelper(
   });
 
   newPoolTx.moveCall({
-    target: `${sdk.sdkOptions.oracle_config.published_at}::oracles::add_pyth_oracle`,
+    target: `${sdk.sdkOptions.oracleConfig.publishedAt}::oracles::add_pyth_oracle`,
     arguments: [
       newPoolTx.object(ORACLE_REGISTRY_ID),
       newPoolTx.object(ORACLE_ADMIN_CAP_ID),
@@ -340,7 +340,7 @@ export async function createOraclePoolHelper(
   });
 
   newPoolTx.moveCall({
-    target: `${sdk.sdkOptions.oracle_config.published_at}::oracles::add_pyth_oracle`,
+    target: `${sdk.sdkOptions.oracleConfig.publishedAt}::oracles::add_pyth_oracle`,
     arguments: [
       newPoolTx.object(ORACLE_REGISTRY_ID),
       newPoolTx.object(ORACLE_ADMIN_CAP_ID),

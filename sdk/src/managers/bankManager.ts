@@ -4,21 +4,15 @@ import { SUI_CLOCK_OBJECT_ID, normalizeSuiAddress } from "@mysten/sui/utils";
 import { BankScriptFunctions, EmitDryRun } from "../_codegen";
 import { InitLendingArgs, createBank } from "../base";
 import { castNeedsRebalance } from "../base/bank/bankTypes";
-import { IModule } from "../interfaces/IModule";
+import { IManager } from "../interfaces/IManager";
 import { SteammSDK } from "../sdk";
 import { BankInfo, SuiObjectIdType, getBankFromId } from "../types";
-import { SuiAddressType, zip } from "../utils";
-
-// Add chunk helper at the top of the file
-const chunk = <T>(arr: T[], size: number): T[][] =>
-  Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
-    arr.slice(i * size, i * size + size),
-  );
+import { SuiAddressType, chunk, zip } from "../utils";
 
 /**
  * Helper class to help interact with banks.
  */
-export class BankModule implements IModule {
+export class BankManager implements IManager {
   protected _sdk: SteammSDK;
 
   constructor(sdk: SteammSDK) {
@@ -38,7 +32,7 @@ export class BankModule implements IModule {
     const bank = this.sdk.getBank(bankInfo);
 
     bank.initLending(tx, {
-      globalAdmin: this.sdk.sdkOptions.steamm_config.config!.globalAdmin,
+      globalAdmin: this.sdk.sdkOptions.steammConfig.config!.globalAdmin,
       targetUtilisationBps: args.targetUtilisationBps,
       utilisationBufferBps: args.utilisationBufferBps,
     });
@@ -171,14 +165,14 @@ export class BankModule implements IModule {
 
     const callArgs = {
       lendingMarketType:
-        this.sdk.sdkOptions.suilend_config.config!.lendingMarketType,
+        this.sdk.sdkOptions.suilendConfig.config!.lendingMarketType,
       coinType: args.coinType,
       btokenType: args.bTokenTokenType,
-      registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
+      registry: this.sdk.sdkOptions.steammConfig.config!.registryId,
       coinMetaT: args.coinMetaT,
       coinMetaBToken: args.bTokenMetadataId,
       btokenTreasury: args.bTokenTreasuryId,
-      lendingMarket: this.sdk.sdkOptions.suilend_config.config!.lendingMarketId,
+      lendingMarket: this.sdk.sdkOptions.suilendConfig.config!.lendingMarketId,
     };
 
     createBank(tx, callArgs, this.sdk.packageInfo());
@@ -305,7 +299,7 @@ export class BankModule implements IModule {
 
     bank.setMinimumTokenBlockSize(tx, {
       minTokenBlockSize: args.minTokenBlockSize,
-      globalAdmin: this.sdk.sdkOptions.steamm_config.config!.globalAdmin,
+      globalAdmin: this.sdk.sdkOptions.steammConfig.config!.globalAdmin,
     });
   }
 
@@ -324,7 +318,7 @@ export class BankModule implements IModule {
     bank.setUtilisationBps(tx, {
       targetUtilisationBps: args.targetUtilisationBps,
       utilisationBufferBps: args.utilisationBufferBps,
-      globalAdmin: this.sdk.sdkOptions.steamm_config.config!.globalAdmin,
+      globalAdmin: this.sdk.sdkOptions.steammConfig.config!.globalAdmin,
     });
   }
 }

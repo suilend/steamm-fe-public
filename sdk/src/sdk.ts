@@ -5,10 +5,10 @@ import {
 } from "@pythnetwork/pyth-sui-js";
 
 import { Bank, BankScript, Pool, PoolScript } from "./base";
-import { RouterModule } from "./modules";
-import { BankModule } from "./modules/bankModule";
-import { PoolModule } from "./modules/poolModule";
-import { RpcModule } from "./modules/rpcModule";
+import { BankManager } from "./managers/bankManager";
+import { FullClient } from "./managers/client";
+import { PoolManager } from "./managers/poolManager";
+import { Router } from "./managers/router";
 import {
   BankInfo,
   BankList,
@@ -42,11 +42,11 @@ export const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET
 
 export type SdkOptions = {
   fullRpcUrl: string;
-  steamm_config: Package<SteammConfigs>;
-  oracle_config: Package<OracleConfigs>;
-  steamm_script_config: Package;
-  suilend_config: Package<SuilendConfigs>;
-  cache_refresh_ms?: number /* default: 5000 */;
+  steammConfig: Package<SteammConfigs>;
+  oracleConfig: Package<OracleConfigs>;
+  steammScriptConfig: Package;
+  suilendConfig: Package<SuilendConfigs>;
+  cacheRefreshMs?: number /* default: 5000 */;
   enableTestMode?: boolean;
 };
 
@@ -70,10 +70,10 @@ interface OracleCache {
 }
 
 export class SteammSDK {
-  protected _rpcModule: RpcModule;
-  protected _pool: PoolModule;
-  protected _router: RouterModule;
-  protected _bank: BankModule;
+  protected _rpcModule: FullClient;
+  protected _pool: PoolManager;
+  protected _router: Router;
+  protected _bank: BankManager;
   protected _sdkOptions: SdkOptions;
   protected _pools?: PoolCache;
   protected _banks?: BankCache;
@@ -88,15 +88,15 @@ export class SteammSDK {
   constructor(options: SdkOptions) {
     this._sdkOptions = {
       ...options,
-      cache_refresh_ms: options.cache_refresh_ms ?? 5000,
+      cacheRefreshMs: options.cacheRefreshMs ?? 5000,
     };
-    this._rpcModule = new RpcModule({
+    this._rpcModule = new FullClient({
       url: options.fullRpcUrl,
     });
 
-    this._pool = new PoolModule(this);
-    this._bank = new BankModule(this);
-    this._router = new RouterModule(this);
+    this._pool = new PoolManager(this);
+    this._bank = new BankManager(this);
+    this._router = new Router(this);
     this._pythClient = new SuiPythClient(
       this._rpcModule,
       PYTH_STATE_ID,
@@ -140,7 +140,7 @@ export class SteammSDK {
    * Getter for the fullClient property.
    * @returns {RpcModule} The fullClient property value.
    */
-  get fullClient(): RpcModule {
+  get fullClient(): FullClient {
     return this._rpcModule;
   }
 
@@ -154,21 +154,21 @@ export class SteammSDK {
 
   /**
    * Getter for the Pool property.
-   * @returns {PoolModule} The Pool property value.
+   * @returns {PoolManager} The Pool property value.
    */
-  get Pool(): PoolModule {
+  get Pool(): PoolManager {
     return this._pool;
   }
 
   /**
    * Getter for the Pool property.
-   * @returns {BankModule} The Pool property value.
+   * @returns {BankManager} The Pool property value.
    */
-  get Bank(): BankModule {
+  get Bank(): BankManager {
     return this._bank;
   }
 
-  get Router(): RouterModule {
+  get Router(): Router {
     return this._router;
   }
 
@@ -208,33 +208,33 @@ export class SteammSDK {
       sourcePkgId: this.sourcePkgId(),
       publishedAt: this.publishedAt(),
       quoterPkgs: {
-        cpmm: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.cpmm,
-        omm: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm,
+        cpmm: this.sdkOptions.steammConfig.config!.quoterSourcePkgs.cpmm,
+        omm: this.sdkOptions.steammConfig.config!.quoterSourcePkgs.omm,
       },
     };
   }
 
   public scriptPackageInfo(): PackageInfo {
     return {
-      sourcePkgId: this.sdkOptions.steamm_script_config.package_id,
-      publishedAt: this.sdkOptions.steamm_script_config.published_at,
+      sourcePkgId: this.sdkOptions.steammScriptConfig.packageId,
+      publishedAt: this.sdkOptions.steammScriptConfig.publishedAt,
     };
   }
 
   public sourcePkgId(): string {
-    return this.sdkOptions.steamm_config.package_id;
+    return this.sdkOptions.steammConfig.packageId;
   }
 
   public publishedAt(): string {
-    return this.sdkOptions.steamm_config.published_at;
+    return this.sdkOptions.steammConfig.publishedAt;
   }
 
   async getBanks(): Promise<BankList> {
     if (!this._banks) {
       await this.refreshBankCache();
     } else if (
-      this.sdkOptions.cache_refresh_ms &&
-      Date.now() > this._banks.updatedAt + this.sdkOptions.cache_refresh_ms
+      this.sdkOptions.cacheRefreshMs &&
+      Date.now() > this._banks.updatedAt + this.sdkOptions.cacheRefreshMs
     ) {
       await this.refreshBankCache();
     }
@@ -250,8 +250,8 @@ export class SteammSDK {
     if (!this._pools) {
       await this.refreshPoolCache();
     } else if (
-      this.sdkOptions.cache_refresh_ms &&
-      Date.now() > this._pools.updatedAt + this.sdkOptions.cache_refresh_ms
+      this.sdkOptions.cacheRefreshMs &&
+      Date.now() > this._pools.updatedAt + this.sdkOptions.cacheRefreshMs
     ) {
       await this.refreshPoolCache();
     }
@@ -283,9 +283,9 @@ export class SteammSDK {
     if (!this._oracleRegistry) {
       await this.refreshOracleCache();
     } else if (
-      this.sdkOptions.cache_refresh_ms &&
+      this.sdkOptions.cacheRefreshMs &&
       Date.now() >
-        this._oracleRegistry.updatedAt + this.sdkOptions.cache_refresh_ms
+        this._oracleRegistry.updatedAt + this.sdkOptions.cacheRefreshMs
     ) {
       await this.refreshOracleCache();
     }
@@ -299,7 +299,7 @@ export class SteammSDK {
 
   private async refreshOracleCache() {
     const oracleRegistry = await this.fullClient.fetchOracleRegistry(
-      this._sdkOptions.oracle_config.config!.oracleRegistryId,
+      this._sdkOptions.oracleConfig.config!.oracleRegistryId,
     );
 
     const oracles = oracleRegistry.oracles;
@@ -355,7 +355,7 @@ export class SteammSDK {
     eventData = res.data.reduce((acc, curr) => acc.concat(curr), []);
 
     const oracleQuoterPkgId =
-      this.sdkOptions.steamm_config.config?.quoterSourcePkgs.omm;
+      this.sdkOptions.steammConfig.config?.quoterSourcePkgs.omm;
 
     let quoterEventData: EventData<NewOracleQuoterEvent>[] = [];
     const res2: DataPage<EventData<NewOracleQuoterEvent>[]> =

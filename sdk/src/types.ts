@@ -308,11 +308,11 @@ export type Package<T = undefined> = {
   /**
    * The unique identifier of the package.
    */
-  package_id: string;
+  packageId: string;
   /**
    * the package was published.
    */
-  published_at: string;
+  publishedAt: string;
   /**
    * The version number of the package (optional).
    */

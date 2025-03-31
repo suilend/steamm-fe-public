@@ -9,7 +9,7 @@ import { PoolFunctions, QuoteFunctions } from "../_codegen";
 import { Bank, BankScript } from "../base";
 import { MultiSwapQuote, castMultiSwapQuote } from "../base/pool/poolTypes";
 import { OracleSwapExtraArgs } from "../base/quoters/oracleQuoter/args";
-import { IModule } from "../interfaces/IModule";
+import { IManager } from "../interfaces/IManager";
 import { SteammSDK } from "../sdk";
 import {
   BankInfo,
@@ -20,7 +20,7 @@ import {
 } from "../types";
 import { zip } from "../utils";
 
-import { getOracleArgs } from "./poolModule";
+import { getOracleArgs } from "./oracle";
 
 export interface CoinPair {
   coinIn: string;
@@ -40,7 +40,7 @@ export type Routes = Route[];
 /**
  * Helper class to help interact with pools.
  */
-export class RouterModule implements IModule {
+export class Router implements IManager {
   protected _sdk: SteammSDK;
 
   constructor(sdk: SteammSDK) {
@@ -98,7 +98,7 @@ export class RouterModule implements IModule {
           : PoolFunctions.swapResultAmountOut(
               tx,
               swapResults[i - 1],
-              this.sdk.sdkOptions.steamm_config.published_at,
+              this.sdk.sdkOptions.steammConfig.publishedAt,
             );
       // const minAmountOut = BigInt(0);
       const minAmountOut =
@@ -253,7 +253,7 @@ export class RouterModule implements IModule {
       const amountOut = QuoteFunctions.amountOut(
         tx,
         quote,
-        this.sdk.sdkOptions.steamm_config.published_at,
+        this.sdk.sdkOptions.steammConfig.publishedAt,
       );
 
       nextBTokenAmountIn = amountOut;

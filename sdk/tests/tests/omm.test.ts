@@ -15,7 +15,7 @@ import { BankList, DataPage, PoolInfo } from "../../src/types";
 
 import { STEAMM_PKG_ID } from "./../packages";
 import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
-import { PoolModule } from "../../src";
+import { PoolManager } from "../../src/managers/poolManager";
 import {
   createCoinAndBankHelper,
   createOraclePoolHelper,
@@ -144,7 +144,7 @@ export async function test() {
       );
 
       await sdk.refreshPoolCache();
-      const poolModule = new PoolModule(sdk);
+      const poolModule = new PoolManager(sdk);
 
       await poolModule.swap(swapTx, {
         pool: poolAB.poolId,

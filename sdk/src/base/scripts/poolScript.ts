@@ -5,10 +5,14 @@ import {
 } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
-import { PoolScriptFunctions } from "../_codegen";
-import { BankInfo, PackageInfo, PoolInfo, SteammPackageInfo } from "../types";
-
-import { Bank } from "./bank";
+import { PoolScriptFunctions } from "../../_codegen";
+import {
+  BankInfo,
+  PackageInfo,
+  PoolInfo,
+  SteammPackageInfo,
+} from "../../types";
+import { Bank } from "../bank";
 import {
   DepositLiquidityArgs,
   Pool,
@@ -17,7 +21,7 @@ import {
   QuoteSwapFullArgs,
   RedeemLiquidityArgs,
   SwapFullArgs,
-} from "./pool";
+} from "../pool";
 
 export class PoolScript {
   public pkgInfo: PackageInfo;

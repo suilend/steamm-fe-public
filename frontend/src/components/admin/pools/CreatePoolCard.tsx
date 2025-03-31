@@ -688,7 +688,7 @@ export default function CreatePoolCard() {
       })(transaction);
 
       const { lendingMarketId, lendingMarketType } =
-        steammClient.sdkOptions.suilend_config.config!;
+        steammClient.sdkOptions.suilendConfig.config!;
 
       const [lpCoin] = PoolScriptFunctions.depositLiquidity(
         transaction,
@@ -699,9 +699,9 @@ export default function CreatePoolCard() {
           bTokens[0].coinType,
           bTokens[1].coinType,
           {
-            [QuoterId.CPMM]: `${steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.cpmm}::cpmm::CpQuoter`,
+            [QuoterId.CPMM]: `${steammClient.sdkOptions.steammConfig.config!.quoterSourcePkgs.cpmm}::cpmm::CpQuoter`,
             [QuoterId.ORACLE]: `${
-              steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm
+              steammClient.sdkOptions.steammConfig.config!.quoterSourcePkgs.omm
             }::omm::OracleQuoter`,
             [QuoterId.STABLE]: "", // TODO
           }[quoterId],

@@ -3,7 +3,7 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 import dotenv from "dotenv";
 
-import { BETA_CONFIG, STEAMM_BETA_PKG_ID, SteammSDK } from "../../src";
+import { BETA_CONFIG, STEAMM_BETA_CONFIG, SteammSDK } from "../../src";
 
 dotenv.config();
 
@@ -34,8 +34,8 @@ async function redeemLiquidity(suiPrivateKey: string) {
 
   await sdk.Pool.redeemLiquidityEntry(tx, {
     pool: pool.poolId,
-    coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
-    coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
+    coinTypeA: `${STEAMM_BETA_CONFIG.packageId}::usdc::USDC`,
+    coinTypeB: `${STEAMM_BETA_CONFIG.packageId}::sui::SUI`,
     lpCoin: lpToken,
     minA: BigInt("0"),
     minB: BigInt("0"),

@@ -1,9 +1,9 @@
 import { SdkOptions } from "../sdk";
 
 export const STEAMM_CONFIG = {
-  package_id:
+  packageId:
     "0x4fb1cf45dffd6230305f1d269dd1816678cc8e3ba0b747a813a556921219f261",
-  published_at:
+  publishedAt:
     "0x67e4835cbe51818ce79af790f25ee7d8dfb03fc1556094ca5531cc399c687444",
   config: {
     registryId:
@@ -18,16 +18,16 @@ export const STEAMM_CONFIG = {
 };
 
 export const STEAMM_SCRIPT_CONFIG = {
-  package_id:
+  packageId:
     "0x13bfc09cfc1bd922d3aa53fcf7b2cd510727ee65068ce136e2ebd5f3b213fdd2",
-  published_at:
+  publishedAt:
     "0xaf8a9d331fa0c2362506803825bcb6092f8f7fbe553bad4423724159c5160a77",
 };
 
 export const SUILEND_CONFIG = {
-  package_id:
+  packageId:
     "0xf95b06141ed4a174f239417323bde3f209b972f5930d8521ea38a52aff3a6ddf",
-  published_at:
+  publishedAt:
     "0x21f544aff826a48e6bd5364498454d8487c4a90f84995604cd5c947c06b596c3",
   config: {
     lendingMarketId:
@@ -38,9 +38,9 @@ export const SUILEND_CONFIG = {
 };
 
 export const ORACLE_CONFIG = {
-  package_id:
+  packageId:
     "0xe84b649199654d18c38e727212f5d8dacfc3cf78d60d0a7fc85fd589f280eb2b",
-  published_at:
+  publishedAt:
     "0xe84b649199654d18c38e727212f5d8dacfc3cf78d60d0a7fc85fd589f280eb2b",
   config: {
     oracleRegistryId:
@@ -50,8 +50,8 @@ export const ORACLE_CONFIG = {
 
 export const MAINNET_CONFIG: SdkOptions = {
   fullRpcUrl: "https://fullnode.mainnet.sui.io:443",
-  suilend_config: SUILEND_CONFIG,
-  steamm_config: STEAMM_CONFIG,
-  steamm_script_config: STEAMM_SCRIPT_CONFIG,
-  oracle_config: ORACLE_CONFIG,
+  suilendConfig: SUILEND_CONFIG,
+  steammConfig: STEAMM_CONFIG,
+  steammScriptConfig: STEAMM_SCRIPT_CONFIG,
+  oracleConfig: ORACLE_CONFIG,
 };
