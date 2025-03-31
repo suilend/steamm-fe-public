@@ -547,13 +547,17 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
       const balanceChangeAFormatted = formatToken(
         balanceChangeA !== undefined
           ? balanceChangeA
-          : new BigNumber(quote.depositA.toString()),
+          : new BigNumber(quote.depositA.toString()).div(
+              10 ** coinMetadataA.decimals,
+            ),
         { dp: coinMetadataA.decimals, trimTrailingZeros: true },
       );
       const balanceChangeBFormatted = formatToken(
         balanceChangeB !== undefined
           ? balanceChangeB
-          : new BigNumber(quote.depositB.toString()),
+          : new BigNumber(quote.depositB.toString()).div(
+              10 ** coinMetadataB.decimals,
+            ),
         { dp: coinMetadataB.decimals, trimTrailingZeros: true },
       );
 
@@ -1533,7 +1537,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
               activeCoinIndex === 0
                 ? quote.amountIn.toString()
                 : quote.amountOut.toString(),
-            ),
+            ).div(10 ** coinMetadataA.decimals),
         { dp: coinMetadataA.decimals, trimTrailingZeros: true },
       );
       const balanceChangeBFormatted = formatToken(
@@ -1543,7 +1547,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
               activeCoinIndex === 0
                 ? quote.amountOut.toString()
                 : quote.amountIn.toString(),
-            ),
+            ).div(10 ** coinMetadataB.decimals),
         { dp: coinMetadataB.decimals, trimTrailingZeros: true },
       );
 

@@ -455,13 +455,17 @@ export default function SwapPage() {
       const balanceChangeInFormatted = formatToken(
         balanceChangeIn !== undefined
           ? balanceChangeIn
-          : new BigNumber(quote.amountIn.toString()),
+          : new BigNumber(quote.amountIn.toString()).div(
+              10 ** inCoinMetadata.decimals,
+            ),
         { dp: inCoinMetadata.decimals, trimTrailingZeros: true },
       );
       const balanceChangeOutFormatted = formatToken(
         balanceChangeOut !== undefined
           ? balanceChangeOut
-          : new BigNumber(quote.amountOut.toString()),
+          : new BigNumber(quote.amountOut.toString()).div(
+              10 ** outCoinMetadata.decimals,
+            ),
         { dp: outCoinMetadata.decimals, trimTrailingZeros: true },
       );
 
