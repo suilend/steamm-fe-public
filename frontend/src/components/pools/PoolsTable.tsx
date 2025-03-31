@@ -205,6 +205,7 @@ export default function PoolsTable({
                 ? toggleSortByColumn
                 : undefined
             }
+            titleEndDecorator="24H"
             style={columnStyleMap.aprPercent_24h}
           >
             APR

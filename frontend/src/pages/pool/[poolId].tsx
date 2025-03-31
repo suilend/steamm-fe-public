@@ -135,7 +135,7 @@ function PoolPage() {
                   <p className="text-p2 text-secondary-foreground">TVL</p>
 
                   <Tooltip title={formatUsd(pool.tvlUsd, { exact: true })}>
-                    <p className="text-p1 text-foreground">
+                    <p className="w-max text-p1 text-foreground">
                       {formatUsd(pool.tvlUsd)}
                     </p>
                   </Tooltip>
@@ -155,7 +155,7 @@ function PoolPage() {
                         exact: true,
                       })}
                     >
-                      <p className="text-p1 text-foreground">
+                      <p className="w-max text-p1 text-foreground">
                         {formatUsd(poolStats.volumeUsd_24h[pool.id])}
                       </p>
                     </Tooltip>
@@ -176,7 +176,7 @@ function PoolPage() {
                         exact: true,
                       })}
                     >
-                      <p className="text-p1 text-foreground">
+                      <p className="w-max text-p1 text-foreground">
                         {formatUsd(poolStats.feesUsd_24h[pool.id])}
                       </p>
                     </Tooltip>
@@ -184,7 +184,10 @@ function PoolPage() {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <p className="text-p2 text-secondary-foreground">APR</p>
+                  <div className="flex flex-row items-baseline gap-1.5">
+                    <p className="text-p2 text-secondary-foreground">APR</p>
+                    <p className="text-p3 text-tertiary-foreground">24H</p>
+                  </div>
 
                   <AprBreakdown pool={pool} />
                 </div>

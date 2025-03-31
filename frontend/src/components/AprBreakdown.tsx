@@ -135,7 +135,7 @@ export default function AprBreakdown({
                 {/* Total APR */}
                 <div className="flex flex-row items-center justify-between gap-4">
                   <p className="text-p2 text-foreground">Total APR</p>
-                  <p className="text-p2 text-foreground">
+                  <p className="text-p1 font-bold text-foreground">
                     {formatPercent(totalAprPercent)}
                   </p>
                 </div>
@@ -204,7 +204,7 @@ export default function AprBreakdown({
           ) : undefined
         }
       >
-        <div className="flex w-full flex-row items-center gap-2">
+        <div className="flex w-max flex-row items-center gap-2">
           <TokenLogos
             coinTypes={Array.from(
               new Set(
