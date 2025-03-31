@@ -40,6 +40,7 @@ export const COINTYPE_ORACLE_INDEX_MAP: Record<string, number> =
         [NORMALIZED_wUSDC_COINTYPE]: 1,
         [NORMALIZED_SEND_COINTYPE]: 2,
         [NORMALIZED_DEEP_COINTYPE]: 3,
+        [NORMALIZED_WAL_COINTYPE]: 4,
       };
 
 export const parseOraclePriceIdentifier = (oracleInfo: OracleInfo) =>

@@ -303,7 +303,7 @@ export class RpcModule extends SuiClient {
   }
 
   /**
-   * Get a pool object strate by its ID
+   * Get a pool object state by its ID
    * @param objectId - The ID of the pool
    * @returns Promise resolving to the pool state
    */
