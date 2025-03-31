@@ -1,3 +1,4 @@
+/* eslint-disable */
 export interface SteammPackageInfo {
   sourcePkgId: string;
   publishedAt: string;

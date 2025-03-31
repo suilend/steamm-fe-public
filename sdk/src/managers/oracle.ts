@@ -1,9 +1,8 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID, toHex } from "@mysten/sui/utils";
 
-import { OracleFunctions } from "../_codegen";
+import { oracleAbi } from "../_codegen";
 import { PriceInfoObject } from "../_codegen/_generated/_dependencies/source/0x8d97f1cd6ac663735be08d1d2b6d02a159e711586461306ce60a2b7a6a565a9e/price-info/structs";
-import { getPythPrice } from "../_codegen/oracleFunctions";
 import { OracleSwapExtraArgs } from "../base/quoters/oracleQuoter/args";
 import { SteammSDK } from "../sdk";
 import { OracleInfo, PoolInfo } from "../types";
@@ -14,7 +13,7 @@ export async function getOracleArgs(
   tx: Transaction,
   poolInfo: PoolInfo,
 ): Promise<OracleSwapExtraArgs> {
-  const oracleData: OracleInfo[] = await sdk.getOracles();
+  const oracleData: OracleInfo[] = await sdk.getOracleData();
 
   const oracleInfoA = oracleData.find(
     (oracle) => oracle.oracleIndex === poolInfo.quoterData?.oracleIndexA,
@@ -101,7 +100,7 @@ export async function getOracleArgs(
     );
   }
 
-  const oraclePriceA = getPythPrice(
+  const oraclePriceA = oracleAbi.getPythPrice(
     tx,
     {
       registry: tx.object(
@@ -114,7 +113,7 @@ export async function getOracleArgs(
     sdk.sdkOptions.oracleConfig.publishedAt,
   );
 
-  const oraclePriceB = getPythPrice(
+  const oraclePriceB = oracleAbi.getPythPrice(
     tx,
     {
       registry: tx.object(
@@ -147,7 +146,7 @@ export async function initOracleRegistry(
   const pubAt = sdk.sdkOptions.oracleConfig.publishedAt;
   const pkgId = sdk.sdkOptions.oracleConfig.packageId;
 
-  const config = OracleFunctions.newOracleRegistryConfig(
+  const config = oracleAbi.newOracleRegistryConfig(
     tx,
     {
       pythMaxStalenessThresholdS: BigInt(args.pythMaxStalenessThresholdS),
@@ -162,11 +161,7 @@ export async function initOracleRegistry(
     pubAt,
   );
 
-  const [oracleRegistry, adminCap] = OracleFunctions.newRegistry(
-    tx,
-    config,
-    pubAt,
-  );
+  const [oracleRegistry, adminCap] = oracleAbi.newRegistry(tx, config, pubAt);
 
   tx.transferObjects([adminCap], sdk.senderAddress);
 
@@ -196,7 +191,7 @@ export async function addOracleToRegistry(
 
   switch (args.type) {
     case "pyth":
-      OracleFunctions.addPythOracle(
+      oracleAbi.addPythOracle(
         tx,
         {
           registry: tx.object(

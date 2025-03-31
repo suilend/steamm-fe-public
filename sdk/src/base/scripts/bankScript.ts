@@ -1,7 +1,7 @@
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
-import { PoolScriptFunctions } from "../../_codegen";
+import { poolScriptV1Abi } from "../../_codegen";
 import { ToMultiSwapRouteArgs } from "../../_codegen/_generated/steamm_scripts/pool-script/functions";
 import { BankInfo, PackageInfo, SteammPackageInfo } from "../../types";
 import { Bank } from "../bank";
@@ -23,9 +23,8 @@ export class BankScript {
     this.sourcePkgId = scriptPkgInfo.sourcePkgId;
     this.publishedAt = scriptPkgInfo.publishedAt;
 
-    const [lendingMarketType, _coinTypeX, _bTokenXType] = this.bankX.typeArgs();
-    const [_lendingMarketType, _coinTypeY, _bTokenYType] =
-      this.bankX.typeArgs();
+    const lendingMarketType = this.bankX.typeArgs()[0];
+    const _lendingMarketType = this.bankX.typeArgs()[0];
 
     if (lendingMarketType !== _lendingMarketType) {
       throw new Error(
@@ -60,7 +59,7 @@ export class BankScript {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const quote = PoolScriptFunctions.toMultiSwapRoute(
+    const quote = poolScriptV1Abi.toMultiSwapRoute(
       tx,
       [lendingMarketType, coinTypeX, coinTypeY, bTokenXType, bTokenYType],
       callArgs,
@@ -71,7 +70,8 @@ export class BankScript {
 
   public bankScriptTypes(): [string, string, string, string, string] {
     const [lendingMarketType, coinTypeX, bTokenXType] = this.bankX.typeArgs();
-    const [_lendingMarketType, coinTypeY, bTokenYType] = this.bankY.typeArgs();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_, coinTypeY, bTokenYType] = this.bankY.typeArgs();
 
     return [lendingMarketType, coinTypeX, coinTypeY, bTokenXType, bTokenYType];
   }

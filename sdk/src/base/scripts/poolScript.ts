@@ -5,7 +5,8 @@ import {
 } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
-import { PoolScriptFunctions } from "../../_codegen";
+import { poolScriptV1Abi } from "../../_codegen";
+import { poolScriptV2Abi } from "../../_codegen";
 import {
   BankInfo,
   PackageInfo,
@@ -43,11 +44,14 @@ export class PoolScript {
     this.bankB = new Bank(pkgInfo, bankInfoB);
     this.pkgInfo = scriptPkgInfo;
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [bTokenAType, bTokenBType, _quoterType, _lpTokenType] =
       this.pool.poolTypes();
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [lendingMarketType, _coinTypeA, _bTokenAType] = this.bankA.typeArgs();
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_lendingMarketType, _coinTypeB, _bTokenBType] =
       this.bankB.typeArgs();
 
@@ -73,7 +77,7 @@ export class PoolScript {
   public swap(tx: Transaction, args: SwapFullArgs): TransactionResult {
     switch (args.type) {
       case "ConstantProduct":
-        return PoolScriptFunctions.cpmmSwap(
+        return poolScriptV2Abi.cpmmSwap(
           tx,
           this.poolScriptTypesNoQuoter(),
           {
@@ -91,7 +95,7 @@ export class PoolScript {
           this.pkgInfo.publishedAt,
         );
       case "Oracle":
-        return PoolScriptFunctions.ommSwap(
+        return poolScriptV2Abi.ommSwap(
           tx,
           this.poolScriptTypesNoQuoter(),
           {
@@ -122,7 +126,7 @@ export class PoolScript {
   ): TransactionResult {
     switch (args.type) {
       case "ConstantProduct":
-        return PoolScriptFunctions.quoteCpmmSwap(
+        return poolScriptV2Abi.quoteCpmmSwap(
           tx,
           this.poolScriptTypesNoQuoter(),
           {
@@ -137,7 +141,7 @@ export class PoolScript {
           this.pkgInfo.publishedAt,
         );
       case "Oracle":
-        return PoolScriptFunctions.quoteOmmSwap(
+        return poolScriptV2Abi.quoteOmmSwap(
           tx,
           this.poolScriptTypesNoQuoter(),
           {
@@ -174,7 +178,7 @@ export class PoolScript {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const [lpCoin, depositResult] = PoolScriptFunctions.depositLiquidity(
+    const [lpCoin, depositResult] = poolScriptV2Abi.depositLiquidity(
       tx,
       this.poolScriptTypes(),
       callArgs,
@@ -199,7 +203,7 @@ export class PoolScript {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const [coinA, coinB, redeemResult] = PoolScriptFunctions.redeemLiquidity(
+    const [coinA, coinB, redeemResult] = poolScriptV2Abi.redeemLiquidity(
       tx,
       this.poolScriptTypes(),
       callArgs,
@@ -224,7 +228,7 @@ export class PoolScript {
     };
 
     const [coinA, coinB, redeemResult] =
-      PoolScriptFunctions.redeemLiquidityWithProvision(
+      poolScriptV1Abi.redeemLiquidityWithProvision(
         tx,
         this.poolScriptTypes(),
         callArgs,
@@ -247,7 +251,7 @@ export class PoolScript {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const quote = PoolScriptFunctions.quoteDeposit(
+    const quote = poolScriptV2Abi.quoteDeposit(
       tx,
       this.poolScriptTypes(),
       callArgs,
@@ -269,7 +273,7 @@ export class PoolScript {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const quote = PoolScriptFunctions.quoteRedeem(
+    const quote = poolScriptV2Abi.quoteRedeem(
       tx,
       this.poolScriptTypes(),
       callArgs,
@@ -289,7 +293,9 @@ export class PoolScript {
   ] {
     const [bTokenAType, bTokenBType, quoterType, lpTokenType] =
       this.pool.poolTypes();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [lendingMarketType, coinTypeA, _bTokenAType] = this.bankA.typeArgs();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_lendingMarketType, coinTypeB, _bTokenBType] = this.bankB.typeArgs();
 
     return [
@@ -311,9 +317,12 @@ export class PoolScript {
     string,
     string,
   ] {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [bTokenAType, bTokenBType, quoterType, lpTokenType] =
       this.pool.poolTypes();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [lendingMarketType, coinTypeA, _bTokenAType] = this.bankA.typeArgs();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_lendingMarketType, coinTypeB, _bTokenBType] = this.bankB.typeArgs();
 
     return [

@@ -59,7 +59,8 @@ export class PoolManager implements IManager {
     tx: Transaction,
     args: DepositLiquidityParams,
   ) {
-    const [lpToken, _depositResult] = await this.depositLiquidity(tx, args);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [lpToken, _] = await this.depositLiquidity(tx, args);
 
     tx.transferObjects([lpToken], this.sdk.senderAddress);
   }
@@ -71,7 +72,7 @@ export class PoolManager implements IManager {
     const [poolInfo, bankInfoA, bankInfoB] =
       await this.getPoolAndBankInfos(args);
 
-    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+    const poolScript = this.sdk.poolScriptAbi(poolInfo, bankInfoA, bankInfoB);
 
     const [lpToken, depositResult] = poolScript.depositLiquidity(tx, {
       coinA: tx.object(args.coinA),
@@ -87,7 +88,8 @@ export class PoolManager implements IManager {
     tx: Transaction,
     args: RedeemLiquidityParams,
   ) {
-    const [coinA, coinB, _redeemResult] = await this.redeemLiquidity(tx, args);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [coinA, coinB, _] = await this.redeemLiquidity(tx, args);
 
     tx.transferObjects([coinA, coinB], this.sdk.senderAddress);
   }
@@ -99,7 +101,7 @@ export class PoolManager implements IManager {
     const [poolInfo, bankInfoA, bankInfoB] =
       await this.getPoolAndBankInfos(args);
 
-    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+    const poolScript = this.sdk.poolScriptAbi(poolInfo, bankInfoA, bankInfoB);
 
     const [coinA, coinB, redeemResult] = poolScript.redeemLiquidity(tx, {
       lpCoin: tx.object(args.lpCoin),
@@ -114,8 +116,8 @@ export class PoolManager implements IManager {
     tx: Transaction,
     args: RedeemLiquidityParams,
   ) {
-    const [coinA, coinB, _redeemResult] =
-      await this.redeemLiquidityWithProvision(tx, args);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [coinA, coinB, _] = await this.redeemLiquidityWithProvision(tx, args);
 
     tx.transferObjects([coinA, coinB], this.sdk.senderAddress);
   }
@@ -127,7 +129,7 @@ export class PoolManager implements IManager {
     const [poolInfo, bankInfoA, bankInfoB] =
       await this.getPoolAndBankInfos(args);
 
-    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+    const poolScript = this.sdk.poolScriptAbi(poolInfo, bankInfoA, bankInfoB);
 
     const [coinA, coinB, redeemResult] =
       poolScript.redeemLiquidityWithProvision(tx, {
@@ -146,7 +148,7 @@ export class PoolManager implements IManager {
     const [poolInfo, bankInfoA, bankInfoB] =
       await this.getPoolAndBankInfos(args);
 
-    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+    const poolScript = this.sdk.poolScriptAbi(poolInfo, bankInfoA, bankInfoB);
 
     const quoterType = getQuoterType(poolInfo.quoterType);
     const extraArgs: OracleSwapExtraArgs | { type: "ConstantProduct" } =
@@ -169,7 +171,7 @@ export class PoolManager implements IManager {
     const [poolInfo, bankInfoA, bankInfoB] =
       await this.getPoolAndBankInfosForQuote(args);
 
-    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+    const poolScript = this.sdk.poolScriptAbi(poolInfo, bankInfoA, bankInfoB);
 
     console.log("POOL INFO: ", poolInfo);
     const quoterType = getQuoterType(poolInfo.quoterType);
@@ -190,7 +192,7 @@ export class PoolManager implements IManager {
     const [poolInfo, bankInfoA, bankInfoB] =
       await this.getPoolAndBankInfosForQuote(args);
 
-    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+    const poolScript = this.sdk.poolScriptAbi(poolInfo, bankInfoA, bankInfoB);
 
     poolScript.quoteDeposit(tx, {
       maxA: args.maxA,
@@ -209,10 +211,10 @@ export class PoolManager implements IManager {
     const [poolInfo, bankInfoA, bankInfoB] =
       await this.getPoolAndBankInfosForQuote(args);
 
-    const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+    const poolScript = this.sdk.poolScriptAbi(poolInfo, bankInfoA, bankInfoB);
 
-    const bankA = this.sdk.getBank(bankInfoA);
-    const bankB = this.sdk.getBank(bankInfoB);
+    const bankA = this.sdk.bankAbi(bankInfoA);
+    const bankB = this.sdk.bankAbi(bankInfoB);
 
     bankA.compoundInterestIfAny(tx);
     bankB.compoundInterestIfAny(tx);
@@ -227,6 +229,7 @@ export class PoolManager implements IManager {
   }
 
   public async createLpToken(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     bytecode: any,
     sender: SuiAddressType,
   ): Promise<Transaction> {
@@ -249,7 +252,7 @@ export class PoolManager implements IManager {
     // wait until the sui rpc recognizes the treasuryCapId
     while (true) {
       const object = await this.sdk.fullClient.getObject({
-        id: args.lpTreasuryId as any, // TODO: Fix this
+        id: args.lpTreasuryId as string,
       });
       if (object.error) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -313,7 +316,7 @@ export class PoolManager implements IManager {
     // wait until the sui rpc recognizes the treasuryCapId
     while (true) {
       const object = await this.sdk.fullClient.getObject({
-        id: args.lpTreasuryId as any, // TODO: Fix this
+        id: args.lpTreasuryId as string,
       });
       if (object.error) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -378,11 +381,12 @@ export class PoolManager implements IManager {
       throw new Error("Quote event not found");
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const quoteResult = (quoteEvent.parsedJson as any).event as T;
     return quoteResult;
   }
 
-  private getBankInfoByBToken(bankList: BankList, btokenType: string) {
+  private bankAbiInfoByBToken(bankList: BankList, btokenType: string) {
     const bankInfo = Object.values(bankList).find(
       (bank) => bank.btokenType === btokenType,
     );
@@ -427,6 +431,7 @@ export class PoolManager implements IManager {
 
   //   return [coinA, coinB];
   // }
+
   async getPoolAndBankInfos(
     args:
       | {
@@ -445,8 +450,8 @@ export class PoolManager implements IManager {
     let bankInfoB: BankInfo;
 
     if ("pool" in args) {
-      const pools = await this.sdk.getPools();
-      const bankList = await this.sdk.getBanks();
+      const pools = await this.sdk.getPoolData();
+      const bankList = await this.sdk.getBankData();
 
       poolInfo = pools.find((pool) => pool.poolId === args.pool!)!;
       bankInfoA = bankList[args.coinTypeA!];
@@ -474,12 +479,12 @@ export class PoolManager implements IManager {
     let bankInfoB: BankInfo;
 
     if ("pool" in args) {
-      const pools = await this.sdk.getPools();
-      const bankList = await this.sdk.getBanks();
+      const pools = await this.sdk.getPoolData();
+      const bankList = await this.sdk.getBankData();
 
       poolInfo = pools.find((pool) => pool.poolId === args.pool!)!;
-      bankInfoA = this.getBankInfoByBToken(bankList, poolInfo.coinTypeA);
-      bankInfoB = this.getBankInfoByBToken(bankList, poolInfo.coinTypeB);
+      bankInfoA = this.bankAbiInfoByBToken(bankList, poolInfo.coinTypeA);
+      bankInfoB = this.bankAbiInfoByBToken(bankList, poolInfo.coinTypeB);
     } else {
       poolInfo = args.poolInfo!;
       bankInfoA = args.bankInfoA!;

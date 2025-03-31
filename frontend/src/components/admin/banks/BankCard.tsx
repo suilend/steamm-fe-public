@@ -83,7 +83,7 @@ export default function BankCard({ bank }: BankCardProps) {
       const transaction = new Transaction();
 
       if (!bank.bank.lending) {
-        await steammClient.Bank.initLending(transaction, {
+        await steammClient.BankManager.initLending(transaction, {
           bankId: bank.id,
           targetUtilisationBps: +new BigNumber(targetUtilizationPercent)
             .times(100)
@@ -93,7 +93,7 @@ export default function BankCard({ bank }: BankCardProps) {
             .toFixed(0),
         });
       } else {
-        await steammClient.Bank.setUtilisation(transaction, {
+        await steammClient.BankManager.setUtilisation(transaction, {
           bankId: bank.id,
           targetUtilisationBps: +new BigNumber(targetUtilizationPercent)
             .times(100)
@@ -169,7 +169,7 @@ export default function BankCard({ bank }: BankCardProps) {
 
       const transaction = new Transaction();
 
-      await steammClient.Bank.setMinTokenBlockSize(transaction, {
+      await steammClient.BankManager.setMinTokenBlockSize(transaction, {
         bankId: bank.id,
         minTokenBlockSize: +new BigNumber(minTokenBlockSize)
           .times(10 ** appData.coinMetadataMap[bank.coinType].decimals)
@@ -208,7 +208,7 @@ export default function BankCard({ bank }: BankCardProps) {
     try {
       setIsRebalancing(true);
 
-      const transactions = await steammClient.Bank.rebalance([bank.id]);
+      const transactions = await steammClient.BankManager.rebalance([bank.id]);
       for (const transaction of transactions) {
         const res = await signExecuteAndWaitForTransaction(transaction);
         const txUrl = explorer.buildTxUrl(res.digest);

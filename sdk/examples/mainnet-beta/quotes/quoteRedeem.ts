@@ -12,9 +12,9 @@ async function quoteRedeem(keypair: Ed25519Keypair) {
   const sdk = new SteammSDK(BETA_CONFIG);
 
   sdk.senderAddress = keypair.getPublicKey().toSuiAddress();
-  const pool = (await sdk.getPools([SUI_COIN_TYPE, USDC_COIN_TYPE]))[0];
+  const pool = (await sdk.getPoolData([SUI_COIN_TYPE, USDC_COIN_TYPE]))[0];
 
-  const quote = await sdk.Pool.quoteRedeem({
+  const quote = await sdk.PoolManager.quoteRedeem({
     pool: pool.poolId,
     lpTokens: BigInt("100"),
   });

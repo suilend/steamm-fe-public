@@ -1,7 +1,7 @@
 import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID, normalizeSuiAddress } from "@mysten/sui/utils";
 
-import { BankScriptFunctions, EmitDryRun } from "../_codegen";
+import { bankScriptAbi, eventScriptAbi } from "../_codegen";
 import { InitLendingArgs, createBank } from "../base";
 import { castNeedsRebalance } from "../base/bank/bankTypes";
 import { IManager } from "../interfaces/IManager";
@@ -27,9 +27,9 @@ export class BankManager implements IManager {
     tx: Transaction,
     args: Omit<InitLendingArgs, "globalAdmin"> & { bankId: SuiAddressType },
   ) {
-    const banks = await this.sdk.getBanks();
+    const banks = await this.sdk.getBankData();
     const bankInfo = getBankFromId(banks, args.bankId);
-    const bank = this.sdk.getBank(bankInfo);
+    const bank = this.sdk.bankAbi(bankInfo);
 
     bank.initLending(tx, {
       globalAdmin: this.sdk.sdkOptions.steammConfig.config!.globalAdmin,
@@ -53,7 +53,7 @@ export class BankManager implements IManager {
 
   public async getTotalFunds(bankInfo: BankInfo): Promise<bigint> {
     const tx = new Transaction();
-    const bank = this.sdk.getBank(bankInfo);
+    const bank = this.sdk.bankAbi(bankInfo);
 
     const bankObj = await this.sdk.fullClient.getObject({
       id: bankInfo.bankId,
@@ -67,6 +67,7 @@ export class BankManager implements IManager {
     // const bankState = await this.sdk.fullClient.fetchBank(bankId);
     // const btokenAmount = bankState.btokenSupply.value;
     const btokenAmount = BigInt(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (bankObj.data?.content as any).fields.btoken_supply.fields.value,
     );
 
@@ -77,7 +78,7 @@ export class BankManager implements IManager {
     bank.compoundInterestIfAny(tx);
     const totalFunds = bank.fromBtokens(tx, { btokenAmount });
 
-    EmitDryRun.emitEvent(
+    eventScriptAbi.emitEvent(
       tx,
       "u64",
       totalFunds,
@@ -99,6 +100,7 @@ export class BankManager implements IManager {
     });
 
     const fundsAvailable = BigInt(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (bankObj.data?.content as any).fields.funds_available,
     );
 
@@ -111,7 +113,7 @@ export class BankManager implements IManager {
   public async queryRebalance(
     batchSize: number = 20,
   ): Promise<SuiAddressType[]> {
-    const banks = Object.values(await this.sdk.getBanks());
+    const banks = Object.values(await this.sdk.getBankData());
 
     const batches = chunk(banks, batchSize);
     const batchResults = await Promise.all(
@@ -122,6 +124,7 @@ export class BankManager implements IManager {
   }
 
   public async createBToken(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     bytecode: any,
     sender: SuiAddressType,
   ): Promise<Transaction> {
@@ -182,11 +185,11 @@ export class BankManager implements IManager {
     bankIds: SuiObjectIdType[],
   ): Promise<Transaction> {
     const tx = new Transaction();
-    const banks = await this.sdk.getBanks();
+    const banks = await this.sdk.getBankData();
 
     for (const bankId of bankIds) {
       const bankInfo = getBankFromId(banks, bankId);
-      const bank = this.sdk.getBank(bankInfo);
+      const bank = this.sdk.bankAbi(bankInfo);
 
       bank.rebalance(tx);
     }
@@ -200,11 +203,11 @@ export class BankManager implements IManager {
 
     // Step 2: Check if any bank needs rebalancing
     for (const bankInfo of banks) {
-      const bank = this.sdk.getBank(bankInfo);
+      const bank = this.sdk.bankAbi(bankInfo);
 
       bank.compoundInterestIfAny(tx);
 
-      BankScriptFunctions.needsRebalance(
+      bankScriptAbi.needsRebalance(
         tx,
         bank.typeArgs(),
         {
@@ -252,6 +255,7 @@ export class BankManager implements IManager {
     }
 
     const quoteResults = quoteEvents.map((quoteEvent) =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       castNeedsRebalance((quoteEvent.parsedJson as any).event),
     );
 
@@ -282,6 +286,7 @@ export class BankManager implements IManager {
       throw new Error("Quote event not found");
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const quoteResult = (event.parsedJson as any).event as T;
     return quoteResult;
   }
@@ -293,9 +298,9 @@ export class BankManager implements IManager {
       minTokenBlockSize: number | TransactionArgument;
     },
   ) {
-    const banks = await this.sdk.getBanks();
+    const banks = await this.sdk.getBankData();
     const bankInfo = getBankFromId(banks, args.bankId);
-    const bank = this.sdk.getBank(bankInfo);
+    const bank = this.sdk.bankAbi(bankInfo);
 
     bank.setMinimumTokenBlockSize(tx, {
       minTokenBlockSize: args.minTokenBlockSize,
@@ -311,9 +316,9 @@ export class BankManager implements IManager {
       utilisationBufferBps: number | TransactionArgument;
     },
   ) {
-    const banks = await this.sdk.getBanks();
+    const banks = await this.sdk.getBankData();
     const bankInfo = getBankFromId(banks, args.bankId);
-    const bank = this.sdk.getBank(bankInfo);
+    const bank = this.sdk.bankAbi(bankInfo);
 
     bank.setUtilisationBps(tx, {
       targetUtilisationBps: args.targetUtilisationBps,

@@ -13,15 +13,7 @@ import dotenv from "dotenv";
 import { SteammSDK } from "../../src/sdk";
 import { BankList, DataPage, PoolInfo } from "../../src/types";
 
-import {
-  GLOBAL_ADMIN_ID,
-  LENDING_MARKET_ID,
-  LENDING_MARKET_TYPE,
-  REGISTRY_ID,
-  STEAMM_PKG_ID,
-  STEAMM_SCRIPT_PKG_ID,
-  SUILEND_PKG_ID,
-} from "./../packages";
+import { STEAMM_PKG_ID } from "./../packages";
 import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
 import { parseErrorCode } from "../../src";
 import {
@@ -61,8 +53,8 @@ export async function test() {
 
     beforeAll(async () => {
       sdk = new SteammSDK(testConfig());
-      pools = await sdk.getPools();
-      banks = await sdk.getBanks();
+      pools = await sdk.getPoolData();
+      banks = await sdk.getBankData();
 
       sdk.signer = keypair;
 
@@ -99,7 +91,7 @@ export async function test() {
       // const coinFData = await createCoinAndBankHelper(sdk, "F");
 
       // get banks
-      const banks = await sdk.getBanks();
+      const banks = await sdk.getBankData();
       const bankA = banks[coinAData.coinType];
       const bankB = banks[coinBData.coinType];
       const bankC = banks[coinCData.coinType];
@@ -119,14 +111,14 @@ export async function test() {
       // const lpFE = await createPoolHelper(sdk, coinFData, coinCData);
 
       // Seed the pools with liquidity
-      const pools = await sdk.getPools();
+      const pools = await sdk.getPoolData();
 
       const poolAB = (
-        await sdk.getPools([coinAData.coinType, coinBData.coinType])
+        await sdk.getPoolData([coinAData.coinType, coinBData.coinType])
       )[0];
 
       const poolBC = (
-        await sdk.getPools([coinBData.coinType, coinCData.coinType])
+        await sdk.getPoolData([coinBData.coinType, coinCData.coinType])
       )[0];
 
       const depositTx = new Transaction();
@@ -135,7 +127,7 @@ export async function test() {
       const coinB = mintCoin(depositTx, coinBData.coinType, coinBData.treasury);
       const coinC = mintCoin(depositTx, coinCData.coinType, coinCData.treasury);
 
-      await sdk.Pool.depositLiquidityEntry(depositTx, {
+      await sdk.PoolManager.depositLiquidityEntry(depositTx, {
         pool: poolAB.poolId,
         coinA: coinA,
         coinB: coinB,
@@ -145,7 +137,7 @@ export async function test() {
         maxB: BigInt("10000000"),
       });
 
-      await sdk.Pool.depositLiquidityEntry(depositTx, {
+      await sdk.PoolManager.depositLiquidityEntry(depositTx, {
         pool: poolBC.poolId,
         coinA: coinB,
         coinB: coinC,

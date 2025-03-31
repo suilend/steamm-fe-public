@@ -106,7 +106,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     // Banks
     const bankCoinTypes: string[] = [];
 
-    const bankInfos = Object.values(await steammClient.getBanks());
+    const bankInfos = Object.values(await steammClient.getBankData());
     for (const bankInfo of bankInfos) {
       bankCoinTypes.push(normalizeStructTag(bankInfo.coinType));
     }
@@ -123,7 +123,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     // Pools
     const poolCoinTypes: string[] = [];
 
-    const poolInfos = await steammClient.getPools();
+    const poolInfos = await steammClient.getPoolData();
     for (const poolInfo of poolInfos) {
       const coinTypes = [
         poolInfo.lpTokenType,

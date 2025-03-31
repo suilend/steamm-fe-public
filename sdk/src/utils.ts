@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { normalizeSuiObjectId } from "@mysten/sui/utils";
 
 export interface PoolTypes<A, B, Quoter, W, P> {

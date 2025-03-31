@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { ObjectOwner } from "@mysten/sui/client";
 import { Transaction, TransactionResult } from "@mysten/sui/transactions";
 import { normalizeSuiAddress, toHex } from "@mysten/sui/utils";
@@ -183,7 +184,7 @@ export async function createBTokenHelper(
 
   const newBankTx = new Transaction();
 
-  await sdk.Bank.createBank(newBankTx, {
+  await sdk.BankManager.createBank(newBankTx, {
     coinType: coinType,
     coinMetaT: coinMeta,
     bTokenTreasuryId,
@@ -232,7 +233,7 @@ export async function createPoolHelper(
 
   const newPoolTx = new Transaction();
 
-  await sdk.Pool.createPoolAndShare(newPoolTx, {
+  await sdk.PoolManager.createPoolAndShare(newPoolTx, {
     type: "ConstantProduct",
     lpTreasuryId,
     lpMetadataId,
@@ -359,7 +360,7 @@ export async function createOraclePoolHelper(
     arguments: [priceObjB],
   });
 
-  await sdk.Pool.createPoolAndShare(newPoolTx, {
+  await sdk.PoolManager.createPoolAndShare(newPoolTx, {
     type: "Oracle",
     oracleIndexA: BigInt(oracleIndexA),
     oracleIndexB: BigInt(oracleIndexB),
@@ -443,7 +444,7 @@ export function mintCoin(
 }
 
 export async function initLendingNoOp(sdk: SteammSDK, coinType: string) {
-  const banks = await sdk.getBanks();
+  const banks = await sdk.getBankData();
   const bankId = banks[coinType].bankId;
   const bankState = await sdk.fullClient.getObject({
     id: bankId,
@@ -458,7 +459,7 @@ export async function initLendingNoOp(sdk: SteammSDK, coinType: string) {
 
   if ((bankState.data?.content as any).fields.lending === null) {
     const initLendTx = new Transaction();
-    await sdk.Bank.initLending(initLendTx, {
+    await sdk.BankManager.initLending(initLendTx, {
       bankId,
       targetUtilisationBps: 8000,
       utilisationBufferBps: 1000,

@@ -9,18 +9,8 @@ import { PoolManager } from "../../src/managers/poolManager";
 import { SteammSDK } from "../../src/sdk";
 import { BankList, DataPage, PoolInfo } from "../../src/types";
 
-import {
-  GLOBAL_ADMIN_ID,
-  LENDING_MARKET_ID,
-  LENDING_MARKET_TYPE,
-  ORACLES_PKG_ID,
-  REGISTRY_ID,
-  STEAMM_PKG_ID,
-  STEAMM_SCRIPT_PKG_ID,
-  SUILEND_PKG_ID,
-} from "./../packages";
+import { STEAMM_PKG_ID } from "./../packages";
 import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
-import { parseErrorCode } from "../../src";
 import { initLendingNoOp, testConfig } from "../utils/utils";
 
 dotenv.config();
@@ -52,10 +42,10 @@ export async function test() {
 
     beforeAll(async () => {
       sdk = new SteammSDK(testConfig());
-      pools = await sdk.getPools();
-      bankInfos = await sdk.getBanks();
+      pools = await sdk.getPoolData();
+      bankInfos = await sdk.getBankData();
       pool = (
-        await sdk.getPools([
+        await sdk.getPoolData([
           `${STEAMM_PKG_ID}::usdc::USDC`,
           `${STEAMM_PKG_ID}::sui::SUI`,
         ])
@@ -157,11 +147,11 @@ export async function test() {
     it("Rebalances", async () => {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const bankIdsToRebalance = await sdk.Bank.queryRebalance();
+      const bankIdsToRebalance = await sdk.BankManager.queryRebalance();
       // console.log("bankIdsToRebalance: ", bankIdsToRebalance);
 
       expect(bankIdsToRebalance.length).toBe(2);
-      const rebalanceTxs = await sdk.Bank.rebalance(bankIdsToRebalance);
+      const rebalanceTxs = await sdk.BankManager.rebalance(bankIdsToRebalance);
 
       // Process each rebalance transaction
       for (const tx of rebalanceTxs) {
@@ -201,7 +191,8 @@ export async function test() {
       await new Promise((resolve) => setTimeout(resolve, 500));
       const bankInfo = Object.values(bankInfos)[0];
 
-      const utilisation = await sdk.Bank.getEffectiveUtilisation(bankInfo);
+      const utilisation =
+        await sdk.BankManager.getEffectiveUtilisation(bankInfo);
 
       console.log("bank effective utilisation: ", utilisation);
     });

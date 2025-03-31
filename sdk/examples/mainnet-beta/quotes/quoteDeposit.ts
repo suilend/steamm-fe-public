@@ -11,10 +11,10 @@ const USDC_COIN_TYPE =
 async function quoteDeposit(keypair: Ed25519Keypair) {
   const sdk = new SteammSDK(BETA_CONFIG);
 
-  const pool = (await sdk.getPools([SUI_COIN_TYPE, USDC_COIN_TYPE]))[0];
+  const pool = (await sdk.getPoolData([SUI_COIN_TYPE, USDC_COIN_TYPE]))[0];
   sdk.senderAddress = keypair.getPublicKey().toSuiAddress();
 
-  const quote = await sdk.Pool.quoteDeposit({
+  const quote = await sdk.PoolManager.quoteDeposit({
     pool: pool.poolId,
     maxA: BigInt("100000"),
     maxB: BigInt("100"),

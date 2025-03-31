@@ -5,7 +5,7 @@ import {
 } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
-import { OracleQuoterFunctions, SdkOptions } from "../../..";
+import { SdkOptions, oracleQuoterAbi } from "../../..";
 import { PackageInfo, PoolInfo } from "../../../types";
 import { MigrateArgs, SharePoolArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
@@ -30,9 +30,9 @@ export class OracleQuoter implements Quoter {
   public swap(tx: Transaction, args: OracleSwapArgs): TransactionResult {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
-      bankA: tx.object(args.bankA as any), // TODO: Fix this
-      bankB: tx.object(args.bankB as any), // TODO: Fix this
-      lendingMarket: tx.object(args.lendingMarket as any), // TODO: Fix this
+      bankA: tx.object(args.bankA!),
+      bankB: tx.object(args.bankB!),
+      lendingMarket: tx.object(args.lendingMarket!),
       oraclePriceUpdateA: tx.object(args.oraclePriceA),
       oraclePriceUpdateB: tx.object(args.oraclePriceB),
       coinA: args.coinA,
@@ -43,7 +43,7 @@ export class OracleQuoter implements Quoter {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const swapResult = OracleQuoterFunctions.swap(
+    const swapResult = oracleQuoterAbi.swap(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -59,9 +59,9 @@ export class OracleQuoter implements Quoter {
   ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
-      bankA: tx.object(args.bankA as any), // TODO: Fix this
-      bankB: tx.object(args.bankB as any), // TODO: Fix this
-      lendingMarket: tx.object(args.lendingMarket as any), // TODO: Fix this
+      bankA: tx.object(args.bankA!),
+      bankB: tx.object(args.bankB!),
+      lendingMarket: tx.object(args.lendingMarket!),
       oraclePriceUpdateA: tx.object(args.oraclePriceA),
       oraclePriceUpdateB: tx.object(args.oraclePriceB),
       amountIn: args.amountIn,
@@ -69,7 +69,7 @@ export class OracleQuoter implements Quoter {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const quote = OracleQuoterFunctions.quoteSwap(
+    const quote = oracleQuoterAbi.quoteSwap(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -113,7 +113,7 @@ export class OracleQuoter implements Quoter {
       admin: args.adminCap,
     };
 
-    const [coinA, coinB] = OracleQuoterFunctions.migrate(
+    const [coinA, coinB] = oracleQuoterAbi.migrate(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -150,7 +150,7 @@ export function createOraclePool(
     bTokenTypeB,
   } = args;
 
-  return OracleQuoterFunctions.new_(
+  return oracleQuoterAbi.new_(
     tx,
     [
       lendingMarketType,

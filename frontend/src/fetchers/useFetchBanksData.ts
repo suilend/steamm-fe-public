@@ -38,7 +38,8 @@ export default function useFetchBanksData(
 
           const bank = await steammClient.fullClient.fetchBank(id);
 
-          const totalFundsRaw = await steammClient.Bank.getTotalFunds(bankInfo);
+          const totalFundsRaw =
+            await steammClient.BankManager.getTotalFunds(bankInfo);
           const totalFunds = new BigNumber(totalFundsRaw.toString()).div(
             10 ** coinMetadataMap[coinType].decimals,
           );

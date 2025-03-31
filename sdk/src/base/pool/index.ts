@@ -4,7 +4,7 @@ import {
   TransactionResult,
 } from "@mysten/sui/transactions";
 
-import { OracleQuoter, PoolFunctions } from "../..";
+import { poolAbi } from "../..";
 import { PoolInfo, SteammPackageInfo } from "../../types";
 import { ConstantProductQuoter } from "../quoters/constantQuoter";
 import { Quoter } from "../quoters/quoter";
@@ -71,7 +71,7 @@ export class Pool {
       maxB: args.maxB,
     };
 
-    const [lpCoin, depositResult] = PoolFunctions.depositLiquidity(
+    const [lpCoin, depositResult] = poolAbi.depositLiquidity(
       tx,
       this.poolTypes(),
       callArgs,
@@ -91,7 +91,7 @@ export class Pool {
       minB: args.minB,
     };
 
-    const [coinA, coinB, redeemResult] = PoolFunctions.redeemLiquidity(
+    const [coinA, coinB, redeemResult] = poolAbi.redeemLiquidity(
       tx,
       this.poolTypes(),
       callArgs,
@@ -110,7 +110,7 @@ export class Pool {
       maxB: args.maxB,
     };
 
-    const quote = PoolFunctions.quoteDeposit(
+    const quote = poolAbi.quoteDeposit(
       tx,
       this.poolTypes(),
       callArgs,
@@ -128,7 +128,7 @@ export class Pool {
       lpTokens: args.lpTokens,
     };
 
-    const quote = PoolFunctions.quoteRedeem(
+    const quote = poolAbi.quoteRedeem(
       tx,
       this.poolTypes(),
       callArgs,
@@ -146,7 +146,7 @@ export class Pool {
       globalAdmin: args.globalAdmin,
     };
 
-    const [coinA, coinB] = PoolFunctions.collectProtocolFees(
+    const [coinA, coinB] = poolAbi.collectProtocolFees(
       tx,
       this.poolTypes(),
       callArgs,
@@ -165,7 +165,7 @@ export class Pool {
       admin: args.adminCap,
     };
 
-    const [coinA, coinB] = PoolFunctions.migratePool(
+    const [coinA, coinB] = poolAbi.migrate(
       tx,
       this.poolTypes(),
       callArgs,
@@ -187,7 +187,7 @@ export class Pool {
   // Getter functions
 
   public viewBalanceAmounts(tx: Transaction): TransactionArgument {
-    return PoolFunctions.balanceAmounts(
+    return poolAbi.balanceAmounts(
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
@@ -196,7 +196,7 @@ export class Pool {
   }
 
   public viewBalanceAmountA(tx: Transaction): TransactionArgument {
-    return PoolFunctions.balanceAmountA(
+    return poolAbi.balanceAmountA(
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
@@ -205,7 +205,7 @@ export class Pool {
   }
 
   public viewBalanceAmountB(tx: Transaction): TransactionArgument {
-    return PoolFunctions.balanceAmountB(
+    return poolAbi.balanceAmountB(
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
@@ -214,7 +214,7 @@ export class Pool {
   }
 
   public viewProtocolFees(tx: Transaction): TransactionArgument {
-    return PoolFunctions.protocolFees(
+    return poolAbi.protocolFees(
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
@@ -223,7 +223,7 @@ export class Pool {
   }
 
   public viewPoolFeeConfig(tx: Transaction): TransactionArgument {
-    return PoolFunctions.poolFeeConfig(
+    return poolAbi.poolFeeConfig(
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
@@ -232,7 +232,7 @@ export class Pool {
   }
 
   public viewLpSupplyVal(tx: Transaction): TransactionArgument {
-    return PoolFunctions.lpSupplyVal(
+    return poolAbi.lpSupplyVal(
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
@@ -241,7 +241,7 @@ export class Pool {
   }
 
   public viewTradingData(tx: Transaction): TransactionArgument {
-    return PoolFunctions.tradingData(
+    return poolAbi.tradingData(
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
@@ -250,7 +250,7 @@ export class Pool {
   }
 
   public viewQuoter(tx: Transaction): TransactionArgument {
-    return PoolFunctions.quoter(
+    return poolAbi.quoter(
       tx,
       this.poolTypes(),
       tx.object(this.poolInfo.poolId),
@@ -262,206 +262,178 @@ export class Pool {
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.totalSwapAInAmount(tx, tradeData, this.publishedAt);
+    return poolAbi.totalSwapAInAmount(tx, tradeData, this.publishedAt);
   }
 
   public viewTotalSwapBOutAmount(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.totalSwapBOutAmount(tx, tradeData, this.publishedAt);
+    return poolAbi.totalSwapBOutAmount(tx, tradeData, this.publishedAt);
   }
 
   public viewTotalSwapAOutAmount(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.totalSwapAOutAmount(tx, tradeData, this.publishedAt);
+    return poolAbi.totalSwapAOutAmount(tx, tradeData, this.publishedAt);
   }
 
   public viewTotalSwapBInAmount(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.totalSwapBInAmount(tx, tradeData, this.publishedAt);
+    return poolAbi.totalSwapBInAmount(tx, tradeData, this.publishedAt);
   }
 
   public viewProtocolFeesA(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.protocolFeesA(tx, tradeData, this.publishedAt);
+    return poolAbi.protocolFeesA(tx, tradeData, this.publishedAt);
   }
 
   public viewProtocolFeesB(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.protocolFeesB(tx, tradeData, this.publishedAt);
+    return poolAbi.protocolFeesB(tx, tradeData, this.publishedAt);
   }
 
   public viewPoolFeesA(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.poolFeesA(tx, tradeData, this.publishedAt);
+    return poolAbi.poolFeesA(tx, tradeData, this.publishedAt);
   }
 
   public viewPoolFeesB(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.poolFeesB(tx, tradeData, this.publishedAt);
+    return poolAbi.poolFeesB(tx, tradeData, this.publishedAt);
   }
 
   public viewMinimumLiquidity(tx: Transaction): TransactionArgument {
-    return PoolFunctions.minimumLiquidity(tx, this.publishedAt);
+    return poolAbi.minimumLiquidity(tx, this.publishedAt);
   }
 
   public viewSwapResultUser(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.swapResultUser(tx, swapResult, this.publishedAt);
+    return poolAbi.swapResultUser(tx, swapResult, this.publishedAt);
   }
 
   public viewSwapResultPoolId(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.swapResultPoolId(tx, swapResult, this.publishedAt);
+    return poolAbi.swapResultPoolId(tx, swapResult, this.publishedAt);
   }
 
   public viewSwapResultAmountIn(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.swapResultAmountIn(tx, swapResult, this.publishedAt);
+    return poolAbi.swapResultAmountIn(tx, swapResult, this.publishedAt);
   }
 
   public viewSwapResultAmountOut(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.swapResultAmountOut(tx, swapResult, this.publishedAt);
+    return poolAbi.swapResultAmountOut(tx, swapResult, this.publishedAt);
   }
 
   public viewSwapResultProtocolFees(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.swapResultProtocolFees(
-      tx,
-      swapResult,
-      this.publishedAt,
-    );
+    return poolAbi.swapResultProtocolFees(tx, swapResult, this.publishedAt);
   }
 
   public viewSwapResultPoolFees(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.swapResultPoolFees(tx, swapResult, this.publishedAt);
+    return poolAbi.swapResultPoolFees(tx, swapResult, this.publishedAt);
   }
 
   public viewSwapResultA2b(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.swapResultA2b(tx, swapResult, this.publishedAt);
+    return poolAbi.swapResultA2b(tx, swapResult, this.publishedAt);
   }
 
   public viewDepositResultUser(
     tx: Transaction,
     depositResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.depositResultUser(tx, depositResult, this.publishedAt);
+    return poolAbi.depositResultUser(tx, depositResult, this.publishedAt);
   }
 
   public viewDepositResultPoolId(
     tx: Transaction,
     depositResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.depositResultPoolId(
-      tx,
-      depositResult,
-      this.publishedAt,
-    );
+    return poolAbi.depositResultPoolId(tx, depositResult, this.publishedAt);
   }
 
   public viewDepositResultDepositA(
     tx: Transaction,
     depositResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.depositResultDepositA(
-      tx,
-      depositResult,
-      this.publishedAt,
-    );
+    return poolAbi.depositResultDepositA(tx, depositResult, this.publishedAt);
   }
 
   public viewDepositResultDepositB(
     tx: Transaction,
     depositResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.depositResultDepositB(
-      tx,
-      depositResult,
-      this.publishedAt,
-    );
+    return poolAbi.depositResultDepositB(tx, depositResult, this.publishedAt);
   }
 
   public viewDepositResultMintLp(
     tx: Transaction,
     depositResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.depositResultMintLp(
-      tx,
-      depositResult,
-      this.publishedAt,
-    );
+    return poolAbi.depositResultMintLp(tx, depositResult, this.publishedAt);
   }
 
   public viewRedeemResultUser(
     tx: Transaction,
     redeemResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.redeemResultUser(tx, redeemResult, this.publishedAt);
+    return poolAbi.redeemResultUser(tx, redeemResult, this.publishedAt);
   }
 
   public viewRedeemResultPoolId(
     tx: Transaction,
     redeemResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.redeemResultPoolId(tx, redeemResult, this.publishedAt);
+    return poolAbi.redeemResultPoolId(tx, redeemResult, this.publishedAt);
   }
 
   public viewRedeemResultWithdrawA(
     tx: Transaction,
     redeemResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.redeemResultWithdrawA(
-      tx,
-      redeemResult,
-      this.publishedAt,
-    );
+    return poolAbi.redeemResultWithdrawA(tx, redeemResult, this.publishedAt);
   }
 
   public viewRedeemResultWithdrawB(
     tx: Transaction,
     redeemResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.redeemResultWithdrawB(
-      tx,
-      redeemResult,
-      this.publishedAt,
-    );
+    return poolAbi.redeemResultWithdrawB(tx, redeemResult, this.publishedAt);
   }
 
   public viewRedeemResultBurnLp(
     tx: Transaction,
     redeemResult: TransactionArgument,
   ): TransactionArgument {
-    return PoolFunctions.redeemResultBurnLp(tx, redeemResult, this.publishedAt);
+    return poolAbi.redeemResultBurnLp(tx, redeemResult, this.publishedAt);
   }
 }

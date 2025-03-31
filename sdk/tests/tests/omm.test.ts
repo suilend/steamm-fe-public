@@ -19,7 +19,6 @@ import { PoolManager } from "../../src/managers/poolManager";
 import {
   createCoinAndBankHelper,
   createOraclePoolHelper,
-  createPoolHelper,
   mintCoin,
   testConfig,
 } from "../utils/utils";
@@ -56,8 +55,8 @@ export async function test() {
 
     beforeAll(async () => {
       sdk = new SteammSDK(testConfig());
-      pools = await sdk.getPools();
-      banks = await sdk.getBanks();
+      pools = await sdk.getPoolData();
+      banks = await sdk.getBankData();
 
       sdk.signer = keypair;
 
@@ -93,11 +92,11 @@ export async function test() {
 
       console.log(
         "pools: ",
-        await sdk.getPools([coinAData.coinType, coinBData.coinType]),
+        await sdk.getPoolData([coinAData.coinType, coinBData.coinType]),
       );
 
       const poolAB = (
-        await sdk.getPools([coinAData.coinType, coinBData.coinType])
+        await sdk.getPoolData([coinAData.coinType, coinBData.coinType])
       )[0];
 
       const depositTx = new Transaction();
@@ -105,7 +104,7 @@ export async function test() {
       const coinA = mintCoin(depositTx, coinAData.coinType, coinAData.treasury);
       const coinB = mintCoin(depositTx, coinBData.coinType, coinBData.treasury);
 
-      await sdk.Pool.depositLiquidityEntry(depositTx, {
+      await sdk.PoolManager.depositLiquidityEntry(depositTx, {
         pool: poolAB.poolId,
         coinA: coinA,
         coinB: coinB,

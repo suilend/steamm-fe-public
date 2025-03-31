@@ -30,7 +30,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { ADMIN_ADDRESS, PoolScriptFunctions } from "@suilend/steamm-sdk";
+import { ADMIN_ADDRESS, poolScriptV2Abi } from "@suilend/steamm-sdk";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import Divider from "@/components/Divider";
@@ -558,7 +558,7 @@ export default function CreatePoolCard() {
             "symbol:",
             tokens[index].symbol,
           );
-          await steammClient.Bank.createBank(createBanksTransaction, {
+          await steammClient.BankManager.createBank(createBanksTransaction, {
             coinType: tokens[index].coinType,
             coinMetaT: tokens[index].id!, // Checked above
             bTokenTreasuryId: createBTokenResults[index].treasuryCapId,
@@ -659,7 +659,7 @@ export default function CreatePoolCard() {
         throw new Error("Invalid quoterId");
       }
 
-      const pool = await steammClient.Pool.createPool(
+      const pool = await steammClient.PoolManager.createPool(
         transaction,
         poolArgs as any,
       );
@@ -690,7 +690,7 @@ export default function CreatePoolCard() {
       const { lendingMarketId, lendingMarketType } =
         steammClient.sdkOptions.suilendConfig.config!;
 
-      const [lpCoin] = PoolScriptFunctions.depositLiquidity(
+      const [lpCoin] = poolScriptV2Abi.depositLiquidity(
         transaction,
         [
           lendingMarketType,
@@ -731,7 +731,7 @@ export default function CreatePoolCard() {
         bTokenTypeB: bTokens[1].coinType,
       };
 
-      steammClient.Pool.sharePool(
+      steammClient.PoolManager.sharePool(
         {
           [QuoterId.CPMM]: {
             ...sharePoolBaseArgs,

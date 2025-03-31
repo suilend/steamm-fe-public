@@ -9,15 +9,7 @@ import { PoolManager } from "../../src/managers/poolManager";
 import { SteammSDK } from "../../src/sdk";
 import { BankList, DataPage, PoolInfo } from "../../src/types";
 
-import {
-  GLOBAL_ADMIN_ID,
-  LENDING_MARKET_ID,
-  LENDING_MARKET_TYPE,
-  REGISTRY_ID,
-  STEAMM_PKG_ID,
-  STEAMM_SCRIPT_PKG_ID,
-  SUILEND_PKG_ID,
-} from "./../packages";
+import { STEAMM_PKG_ID } from "./../packages";
 import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
 import { testConfig } from "../utils/utils";
 
@@ -50,10 +42,10 @@ export async function test() {
 
     beforeAll(async () => {
       sdk = new SteammSDK(testConfig());
-      pools = await sdk.getPools();
-      banks = await sdk.getBanks();
+      pools = await sdk.getPoolData();
+      banks = await sdk.getBankData();
       pool = (
-        await sdk.getPools([
+        await sdk.getPoolData([
           `${STEAMM_PKG_ID}::usdc::USDC`,
           `${STEAMM_PKG_ID}::sui::SUI`,
         ])
@@ -84,8 +76,8 @@ export async function test() {
     });
 
     it("setup && listen to pool/bank creation events", async () => {
-      const pools = await sdk.getPools();
-      const banks = await sdk.getBanks();
+      const pools = await sdk.getPoolData();
+      const banks = await sdk.getBankData();
 
       expect(pools.length).toBeGreaterThan(0);
       expect(Object.keys(banks).length).toBeGreaterThan(0);

@@ -6,7 +6,7 @@ import {
 } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
-import { BankFunctions } from "../..";
+import { bankAbi } from "../..";
 import { BankInfo, PackageInfo, SteammPackageInfo } from "../../types";
 
 import {
@@ -46,7 +46,7 @@ export class Bank {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const bToken = BankFunctions.mintBtoken(
+    const bToken = bankAbi.mintBtoken(
       tx,
       this.typeArgs(),
       callArgs,
@@ -67,7 +67,7 @@ export class Bank {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const coin = BankFunctions.burnBtoken(
+    const coin = bankAbi.burnBtoken(
       tx,
       this.typeArgs(),
       callArgs,
@@ -85,7 +85,7 @@ export class Bank {
       utilisationBufferBps: args.utilisationBufferBps,
     };
 
-    BankFunctions.initLending(tx, this.typeArgs(), callArgs, this.publishedAt);
+    bankAbi.initLending(tx, this.typeArgs(), callArgs, this.publishedAt);
   }
 
   public rebalance(tx: Transaction) {
@@ -95,7 +95,7 @@ export class Bank {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    BankFunctions.rebalance(tx, this.typeArgs(), callArgs, this.publishedAt);
+    bankAbi.rebalance(tx, this.typeArgs(), callArgs, this.publishedAt);
   }
 
   public compoundInterestIfAny(tx: Transaction) {
@@ -105,7 +105,7 @@ export class Bank {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    BankFunctions.compoundInterestIfAny(
+    bankAbi.compoundInterestIfAny(
       tx,
       this.typeArgs(),
       callArgs,
@@ -124,12 +124,7 @@ export class Bank {
       amount: args.amount,
     };
 
-    return BankFunctions.toBtokens(
-      tx,
-      this.typeArgs(),
-      callArgs,
-      this.publishedAt,
-    );
+    return bankAbi.toBtokens(tx, this.typeArgs(), callArgs, this.publishedAt);
   }
 
   public fromBtokens(
@@ -143,12 +138,7 @@ export class Bank {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    return BankFunctions.fromBtokens(
-      tx,
-      this.typeArgs(),
-      callArgs,
-      this.publishedAt,
-    );
+    return bankAbi.fromBtokens(tx, this.typeArgs(), callArgs, this.publishedAt);
   }
 
   public cTokenAmount(
@@ -161,7 +151,7 @@ export class Bank {
       amount: args.amount,
     };
 
-    return BankFunctions.ctokenAmount(
+    return bankAbi.ctokenAmount(
       tx,
       this.typeArgs(),
       callArgs,
@@ -177,12 +167,7 @@ export class Bank {
       utilisationBufferBps: args.utilisationBufferBps,
     };
 
-    BankFunctions.setUtilisationBps(
-      tx,
-      this.typeArgs(),
-      callArgs,
-      this.publishedAt,
-    );
+    bankAbi.setUtilisationBps(tx, this.typeArgs(), callArgs, this.publishedAt);
   }
 
   public setMinimumTokenBlockSize(
@@ -195,7 +180,7 @@ export class Bank {
       minTokenBlockSize: args.minTokenBlockSize,
     };
 
-    BankFunctions.setMinTokenBlockSize(
+    bankAbi.setMinTokenBlockSize(
       tx,
       this.typeArgs(),
       callArgs,
@@ -217,7 +202,7 @@ export class Bank {
       admin: args.admin,
     };
 
-    BankFunctions.migrate(tx, this.typeArgs(), callArgs);
+    bankAbi.migrate(tx, this.typeArgs(), callArgs);
   }
 
   // Client-side logic
@@ -229,13 +214,13 @@ export class Bank {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    return BankFunctions.needsRebalance(tx, this.typeArgs(), callArgs);
+    return bankAbi.needsRebalance(tx, this.typeArgs(), callArgs);
   }
 
   // Getters
 
   public viewLending(tx: Transaction): TransactionArgument {
-    return BankFunctions.lending(
+    return bankAbi.lending(
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
@@ -250,16 +235,11 @@ export class Bank {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    return BankFunctions.totalFunds(
-      tx,
-      this.typeArgs(),
-      callArgs,
-      this.publishedAt,
-    );
+    return bankAbi.totalFunds(tx, this.typeArgs(), callArgs, this.publishedAt);
   }
 
   public viewFundsAvailable(tx: Transaction): TransactionArgument {
-    return BankFunctions.fundsAvailable(
+    return bankAbi.fundsAvailable(
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
@@ -268,7 +248,7 @@ export class Bank {
   }
 
   public viewTargetUtilisationBps(tx: Transaction): TransactionArgument {
-    return BankFunctions.targetUtilisationBps(
+    return bankAbi.targetUtilisationBps(
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
@@ -277,7 +257,7 @@ export class Bank {
   }
 
   public viewUtilisationBufferBps(tx: Transaction): TransactionArgument {
-    return BankFunctions.utilisationBufferBps(
+    return bankAbi.utilisationBufferBps(
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
@@ -288,7 +268,7 @@ export class Bank {
   public viewTargetUtilisationBpsUnchecked(
     tx: Transaction,
   ): TransactionArgument {
-    return BankFunctions.targetUtilisationBpsUnchecked(
+    return bankAbi.targetUtilisationBpsUnchecked(
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
@@ -299,7 +279,7 @@ export class Bank {
   public viewUtilisationBufferBpsUnchecked(
     tx: Transaction,
   ): TransactionArgument {
-    return BankFunctions.utilisationBufferBpsUnchecked(
+    return bankAbi.utilisationBufferBpsUnchecked(
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
@@ -308,7 +288,7 @@ export class Bank {
   }
 
   public viewReserveArrayIndex(tx: Transaction): TransactionArgument {
-    return BankFunctions.reserveArrayIndex(
+    return bankAbi.reserveArrayIndex(
       tx,
       this.typeArgs(),
       tx.object(this.bankInfo.bankId),
@@ -331,7 +311,7 @@ export function createBank(
 ): TransactionArgument {
   const { lendingMarketType, coinType, btokenType } = args;
 
-  return BankFunctions.createBankAndShare(
+  return bankAbi.createBankAndShare(
     tx,
     [lendingMarketType, coinType, btokenType],
     {

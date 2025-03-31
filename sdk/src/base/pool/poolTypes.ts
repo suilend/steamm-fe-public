@@ -28,6 +28,7 @@ export interface SwapFee {
   poolFees: bigint;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function castDepositQuote(obj: any): DepositQuote {
   return {
     depositA: BigInt(obj.deposit_a),
@@ -37,6 +38,7 @@ export function castDepositQuote(obj: any): DepositQuote {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function castRedeemQuote(obj: any): RedeemQuote {
   return {
     burnLp: BigInt(obj.burn_lp),
@@ -45,6 +47,7 @@ export function castRedeemQuote(obj: any): RedeemQuote {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function castSwapQuote(obj: any): SwapQuote {
   return {
     a2b: obj.a2b,
@@ -54,6 +57,7 @@ export function castSwapQuote(obj: any): SwapQuote {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function castMultiSwapQuote(obj: any): MultiSwapQuote {
   return {
     amountIn: BigInt(obj.amount_in),
@@ -61,6 +65,7 @@ export function castMultiSwapQuote(obj: any): MultiSwapQuote {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function castSwapFee(obj: any): SwapFee {
   return {
     poolFees: BigInt(obj.pool_fees),

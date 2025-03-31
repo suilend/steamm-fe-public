@@ -50,7 +50,9 @@ export class FullClient extends SuiClient {
   async queryEventsByPage(
     query: SuiEventFilter,
     paginationArgs: PaginationArgs = "all",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<DataPage<any>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let result: any = [];
     let hasNextPage = true;
     const queryAll = paginationArgs === "all";
@@ -85,7 +87,9 @@ export class FullClient extends SuiClient {
     owner: string,
     query: SuiObjectResponseQuery,
     paginationArgs: PaginationArgs = "all",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<DataPage<any>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let result: any = [];
     let hasNextPage = true;
     const queryAll = paginationArgs === "all";
@@ -118,7 +122,9 @@ export class FullClient extends SuiClient {
   async getDynamicFieldsByPage(
     parentId: SuiObjectIdType,
     paginationArgs: PaginationArgs = "all",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<DataPage<any>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let result: any = [];
     let hasNextPage = true;
     const queryAll = paginationArgs === "all";
@@ -228,6 +234,7 @@ export class FullClient extends SuiClient {
     tx: Transaction,
   ): Promise<SuiTransactionBlockResponse | undefined> {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const resultTxn: any = await this.signAndExecuteTransaction({
         transaction: tx,
         signer: keypair,

@@ -5,7 +5,7 @@ import {
   TransactionResult,
 } from "@mysten/sui/transactions";
 
-import { PoolFunctions, QuoteFunctions } from "../_codegen";
+import { poolAbi, quoteAbi } from "../_codegen";
 import { Bank, BankScript } from "../base";
 import { MultiSwapQuote, castMultiSwapQuote } from "../base/pool/poolTypes";
 import { OracleSwapExtraArgs } from "../base/quoters/oracleQuoter/args";
@@ -59,8 +59,8 @@ export class Router implements IManager {
       quote: MultiSwapQuote;
     },
   ) {
-    const bankList = await this.sdk.getBanks();
-    const pools = await this.sdk.getPools();
+    const bankList = await this.sdk.getBankData();
+    const pools = await this.sdk.getPoolData();
 
     const [btokens, bankInfos] = this.mintBTokens(
       tx,
@@ -76,7 +76,7 @@ export class Router implements IManager {
     for (const hop of args.route) {
       const poolInfo = pools.find((pool) => pool.poolId === hop.poolId)!;
 
-      const pool = this.sdk.getPool(poolInfo);
+      const pool = this.sdk.poolAbi(poolInfo);
 
       const coinAIndex = bankInfos.findIndex(
         (bankInfo) => bankInfo.btokenType === poolInfo.coinTypeA,
@@ -95,7 +95,7 @@ export class Router implements IManager {
           ? hop.a2b
             ? this.sdk.fullClient.coinValue(tx, coinA, poolInfo.coinTypeA)
             : this.sdk.fullClient.coinValue(tx, coinB, poolInfo.coinTypeB)
-          : PoolFunctions.swapResultAmountOut(
+          : poolAbi.swapResultAmountOut(
               tx,
               swapResults[i - 1],
               this.sdk.sdkOptions.steammConfig.publishedAt,
@@ -145,8 +145,8 @@ export class Router implements IManager {
   }
 
   public async findSwapRoutes(coinPair: CoinPair): Promise<Routes> {
-    const pools = await this.sdk.getPools();
-    const bankList = await this.sdk.getBanks();
+    const pools = await this.sdk.getPoolData();
+    const bankList = await this.sdk.getBankData();
 
     const bTokenIn = getBankFromUnderlying(
       bankList,
@@ -210,8 +210,8 @@ export class Router implements IManager {
     route: Route,
     amountIn: bigint,
   ) {
-    const pools = await this.sdk.getPools();
-    const bankList = await this.sdk.getBanks();
+    const pools = await this.sdk.getPoolData();
+    const bankList = await this.sdk.getBankData();
 
     const bankInfoX = getBankFromUnderlying(bankList, coinTypeIn);
     const bankInfoY = getBankFromUnderlying(bankList, coinTypeOut);
@@ -235,7 +235,7 @@ export class Router implements IManager {
       const bankInfoA = getBankFromBToken(bankList, hop.coinTypeA);
       const bankInfoB = getBankFromBToken(bankList, hop.coinTypeB);
 
-      const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
+      const poolScript = this.sdk.poolScriptAbi(poolInfo, bankInfoA, bankInfoB);
 
       const quoterType = getQuoterType(poolInfo.quoterType);
       const extraArgs: OracleSwapExtraArgs | { type: "ConstantProduct" } =
@@ -250,7 +250,7 @@ export class Router implements IManager {
 
       const quote = poolScript.quoteSwap(tx, { ...args, ...extraArgs });
 
-      const amountOut = QuoteFunctions.amountOut(
+      const amountOut = quoteAbi.amountOut(
         tx,
         quote,
         this.sdk.sdkOptions.steammConfig.publishedAt,
@@ -295,6 +295,7 @@ export class Router implements IManager {
       throw new Error(`No quote events of type ${quoteType} found in events`);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return quoteEvents.map((event) => (event.parsedJson as any).event as T);
   }
 
@@ -324,6 +325,7 @@ export class Router implements IManager {
       throw new Error(`Quote event of type ${quoteType} not found in events`);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const quoteResult = (quoteEvent.parsedJson as any).event as T;
     return quoteResult;
   }

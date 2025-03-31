@@ -95,7 +95,7 @@ export default function useFetchPoolsData(
                   ? await steammClient.fullClient.fetchOraclePool(id)
                   : await steammClient.fullClient.fetchConstantProductPool(id); // Should never need to use the fallback
 
-            const redeemQuote = await steammClient.Pool.quoteRedeem({
+            const redeemQuote = await steammClient.PoolManager.quoteRedeem({
               lpTokens: pool.lpSupply.value,
               poolInfo,
               bankInfoA: bankMap[coinTypes[0]].bankInfo,

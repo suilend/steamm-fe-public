@@ -17,7 +17,7 @@ export default function useFetchOraclesData(steammClient: SteammSDK) {
     const limit3 = pLimit(3);
 
     // Oracles
-    const oracleInfos = await steammClient.getOracles();
+    const oracleInfos = await steammClient.getOracleData();
 
     const oracleIndexOracleInfoMap: Record<number, OracleInfo> =
       oracleInfos.reduce(

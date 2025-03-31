@@ -4,7 +4,7 @@ import {
   TransactionResult,
 } from "@mysten/sui/transactions";
 
-import { ConstantProductFunctions, SdkOptions } from "../../..";
+import { SdkOptions, cpQuoterAbi } from "../../..";
 import { PackageInfo, PoolInfo } from "../../../types";
 import { MigrateArgs, SharePoolArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
@@ -32,7 +32,7 @@ export class ConstantProductQuoter implements Quoter {
       minAmountOut: args.minAmountOut,
     };
 
-    const swapResult = ConstantProductFunctions.swap(
+    const swapResult = cpQuoterAbi.swap(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -52,7 +52,7 @@ export class ConstantProductQuoter implements Quoter {
       a2B: args.a2b,
     };
 
-    const quote = ConstantProductFunctions.quoteSwap(
+    const quote = cpQuoterAbi.quoteSwap(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -90,7 +90,7 @@ export class ConstantProductQuoter implements Quoter {
   // Getter functions
 
   public viewOffset(tx: Transaction = new Transaction()): TransactionArgument {
-    return ConstantProductFunctions.offset(
+    return cpQuoterAbi.offset(
       tx,
       this.quoterTypes(),
       tx.object(this.poolInfo.poolId),
@@ -99,7 +99,7 @@ export class ConstantProductQuoter implements Quoter {
   }
 
   public viewK(tx: Transaction = new Transaction()): TransactionArgument {
-    return ConstantProductFunctions.k(
+    return cpQuoterAbi.k(
       tx,
       this.quoterTypes(),
       tx.object(this.poolInfo.poolId),
@@ -116,7 +116,7 @@ export class ConstantProductQuoter implements Quoter {
       admin: args.adminCap,
     };
 
-    const [coinA, coinB] = ConstantProductFunctions.migrate(
+    const [coinA, coinB] = cpQuoterAbi.migrate(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -145,7 +145,7 @@ export function createConstantProductPool(
     registry,
   } = args;
 
-  const pool = ConstantProductFunctions.new_(
+  const pool = cpQuoterAbi.new_(
     tx,
     [bTokenTypeA, bTokenTypeB, lpTokenType],
     {

@@ -70,7 +70,7 @@ interface OracleCache {
 }
 
 export class SteammSDK {
-  protected _rpcModule: FullClient;
+  protected _client: FullClient;
   protected _pool: PoolManager;
   protected _router: Router;
   protected _bank: BankManager;
@@ -90,7 +90,7 @@ export class SteammSDK {
       ...options,
       cacheRefreshMs: options.cacheRefreshMs ?? 5000,
     };
-    this._rpcModule = new FullClient({
+    this._client = new FullClient({
       url: options.fullRpcUrl,
     });
 
@@ -98,7 +98,7 @@ export class SteammSDK {
     this._bank = new BankManager(this);
     this._router = new Router(this);
     this._pythClient = new SuiPythClient(
-      this._rpcModule,
+      this._client,
       PYTH_STATE_ID,
       WORMHOLE_STATE_ID,
     );
@@ -141,7 +141,7 @@ export class SteammSDK {
    * @returns {RpcModule} The fullClient property value.
    */
   get fullClient(): FullClient {
-    return this._rpcModule;
+    return this._client;
   }
 
   /**
@@ -156,7 +156,7 @@ export class SteammSDK {
    * Getter for the Pool property.
    * @returns {PoolManager} The Pool property value.
    */
-  get Pool(): PoolManager {
+  get PoolManager(): PoolManager {
     return this._pool;
   }
 
@@ -164,7 +164,7 @@ export class SteammSDK {
    * Getter for the Pool property.
    * @returns {BankManager} The Pool property value.
    */
-  get Bank(): BankManager {
+  get BankManager(): BankManager {
     return this._bank;
   }
 
@@ -172,15 +172,15 @@ export class SteammSDK {
     return this._router;
   }
 
-  getPool(poolInfo: PoolInfo): Pool {
+  poolAbi(poolInfo: PoolInfo): Pool {
     return new Pool(this.packageInfo(), poolInfo);
   }
 
-  getBank(bankInfo: BankInfo): Bank {
+  bankAbi(bankInfo: BankInfo): Bank {
     return new Bank(this.packageInfo(), bankInfo);
   }
 
-  getPoolScript(
+  poolScriptAbi(
     poolInfo: PoolInfo,
     bankInfoA: BankInfo,
     bankInfoB: BankInfo,
@@ -194,7 +194,7 @@ export class SteammSDK {
     );
   }
 
-  getBankScript(bankInfoX: BankInfo, bankInfoY: BankInfo): BankScript {
+  bankScriptAbi(bankInfoX: BankInfo, bankInfoY: BankInfo): BankScript {
     return new BankScript(
       this.packageInfo(),
       this.scriptPackageInfo(),
@@ -229,7 +229,7 @@ export class SteammSDK {
     return this.sdkOptions.steammConfig.publishedAt;
   }
 
-  async getBanks(): Promise<BankList> {
+  async getBankData(): Promise<BankList> {
     if (!this._banks) {
       await this.refreshBankCache();
     } else if (
@@ -246,7 +246,7 @@ export class SteammSDK {
     return this._banks.banks;
   }
 
-  async getPools(coinTypes?: [string, string]): Promise<PoolInfo[]> {
+  async getPoolData(coinTypes?: [string, string]): Promise<PoolInfo[]> {
     if (!this._pools) {
       await this.refreshPoolCache();
     } else if (
@@ -263,7 +263,7 @@ export class SteammSDK {
     if (!coinTypes) {
       return this._pools.pools;
     } else {
-      const banks = await this.getBanks();
+      const banks = await this.getBankData();
       const bcoinTypes = {
         coinType1: banks[coinTypes[0]].btokenType,
         coinType2: banks[coinTypes[1]].btokenType,
@@ -279,7 +279,7 @@ export class SteammSDK {
     }
   }
 
-  async getOracles(): Promise<OracleInfo[]> {
+  async getOracleData(): Promise<OracleInfo[]> {
     if (!this._oracleRegistry) {
       await this.refreshOracleCache();
     } else if (

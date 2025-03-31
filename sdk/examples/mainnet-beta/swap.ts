@@ -26,14 +26,14 @@ async function swap(suiPrivateKey: string) {
 
   const sdk = new SteammSDK(BETA_CONFIG);
 
-  const pool = (await sdk.getPools([SUI_COIN_TYPE, USDC_COIN_TYPE]))[0];
+  const pool = (await sdk.getPoolData([SUI_COIN_TYPE, USDC_COIN_TYPE]))[0];
   sdk.signer = keypair;
   const tx = new Transaction();
 
   const suiCoin = tx.object("<ADD_SUI_COIN_HERE>");
   const usdcCoin = tx.object("<ADD_USDC_COIN_HERE>");
 
-  await sdk.Pool.swap(tx, {
+  await sdk.PoolManager.swap(tx, {
     pool: pool.poolId,
     coinTypeA: `${STEAMM_BETA_CONFIG.packageId}::usdc::USDC`,
     coinTypeB: `${STEAMM_BETA_CONFIG.packageId}::sui::SUI`,

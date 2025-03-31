@@ -13,9 +13,9 @@ async function quoteSwap(keypair: Ed25519Keypair) {
 
   sdk.senderAddress = keypair.getPublicKey().toSuiAddress();
 
-  const pool = (await sdk.getPools([SUI_COIN_TYPE, USDC_COIN_TYPE]))[0];
+  const pool = (await sdk.getPoolData([SUI_COIN_TYPE, USDC_COIN_TYPE]))[0];
 
-  const quote = await sdk.Pool.quoteSwap({
+  const quote = await sdk.PoolManager.quoteSwap({
     pool: pool.poolId,
     a2b: false,
     amountIn: BigInt("100"),

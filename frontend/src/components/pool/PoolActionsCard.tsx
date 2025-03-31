@@ -184,7 +184,7 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
       } as DepositQuote;
 
       // TODO: add back after
-      // const quote = await _steammClient.Pool.quoteDeposit({
+      // const quote = await _steammClient.PoolManager.quoteDeposit({
       //   maxA: index === 0 ? BigInt(submitAmount) : BigInt(MAX_U64.toString()),
       //   maxB: index === 0 ? BigInt(MAX_U64.toString()) : BigInt(submitAmount),
       //   poolInfo: pool.poolInfo,
@@ -516,15 +516,18 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
         banksData.bankMap[coinTypeB],
       ];
 
-      const [lpCoin] = await steammClient.Pool.depositLiquidity(transaction, {
-        coinA,
-        coinB,
-        maxA: BigInt(submitAmountA),
-        maxB: BigInt(submitAmountB),
-        poolInfo: pool.poolInfo,
-        bankInfoA: banks[0].bankInfo,
-        bankInfoB: banks[1].bankInfo,
-      });
+      const [lpCoin] = await steammClient.PoolManager.depositLiquidity(
+        transaction,
+        {
+          coinA,
+          coinB,
+          maxA: BigInt(submitAmountA),
+          maxB: BigInt(submitAmountB),
+          poolInfo: pool.poolInfo,
+          bankInfoA: banks[0].bankInfo,
+          bankInfoB: banks[1].bankInfo,
+        },
+      );
       transaction.transferObjects([coinA, coinB], address);
 
       rebalanceBanksIfNeeded(banks, steammClient, transaction);
@@ -803,7 +806,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
         .times(10 ** appData.coinMetadataMap[pool.lpTokenType].decimals)
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
-      const quote = await _steammClient.Pool.quoteRedeem({
+      const quote = await _steammClient.PoolManager.quoteRedeem({
         lpTokens: BigInt(submitAmount),
         poolInfo: pool.poolInfo,
         bankInfoA: banksData.bankMap[pool.coinTypes[0]].bankInfo,
@@ -1028,9 +1031,9 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
 
     const redeemFunc = (
       withoutProvision
-        ? steammClient.Pool.redeemLiquidity
-        : steammClient.Pool.redeemLiquidityWithProvision
-    ).bind(steammClient.Pool);
+        ? steammClient.PoolManager.redeemLiquidity
+        : steammClient.PoolManager.redeemLiquidityWithProvision
+    ).bind(steammClient.PoolManager);
 
     const banks = [banksData.bankMap[coinTypeA], banksData.bankMap[coinTypeB]];
 
@@ -1332,7 +1335,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
           )
           .integerValue(BigNumber.ROUND_DOWN)
           .toString();
-        const quote = await _steammClient.Pool.quoteSwap({
+        const quote = await _steammClient.PoolManager.quoteSwap({
           a2b: _activeCoinIndex === 0,
           amountIn: BigInt(submitAmount),
           poolInfo: pool.poolInfo,
@@ -1551,7 +1554,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
         banksData.bankMap[coinTypeB],
       ];
 
-      await steammClient.Pool.swap(transaction, {
+      await steammClient.PoolManager.swap(transaction, {
         coinA,
         coinB,
         a2b: activeCoinIndex === 0,

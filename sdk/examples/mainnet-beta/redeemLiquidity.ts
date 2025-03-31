@@ -26,13 +26,13 @@ async function redeemLiquidity(suiPrivateKey: string) {
 
   const sdk = new SteammSDK(BETA_CONFIG);
 
-  const pool = (await sdk.getPools([SUI_COIN_TYPE, USDC_COIN_TYPE]))[0];
+  const pool = (await sdk.getPoolData([SUI_COIN_TYPE, USDC_COIN_TYPE]))[0];
   sdk.signer = keypair;
   const tx = new Transaction();
 
   const lpToken = tx.object("<ADD_LP_TOKNE_COIN_HERE>");
 
-  await sdk.Pool.redeemLiquidityEntry(tx, {
+  await sdk.PoolManager.redeemLiquidityEntry(tx, {
     pool: pool.poolId,
     coinTypeA: `${STEAMM_BETA_CONFIG.packageId}::usdc::USDC`,
     coinTypeB: `${STEAMM_BETA_CONFIG.packageId}::sui::SUI`,
