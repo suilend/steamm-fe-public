@@ -95,8 +95,8 @@ export default function SwapPage() {
     ? BigNumber.max(0, getBalance(inCoinType).minus(1))
     : getBalance(inCoinType);
 
+  const valueRef = useRef<string>("");
   const [value, setValue] = useState<string>("");
-  const valueRef = useRef<string>(value);
 
   const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false);
   const [quote, setQuote] = useState<MultiSwapQuote | undefined>(undefined);
@@ -476,6 +476,7 @@ export default function SwapPage() {
           `${balanceChangeOutFormatted} ${outCoinMetadata.symbol}`,
         ].join(" "),
       });
+      valueRef.current = "";
       setValue("");
       setQuote(undefined);
     } catch (err) {
