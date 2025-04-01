@@ -295,7 +295,6 @@ export class Router implements IManager {
       throw new Error(`No quote events of type ${quoteType} found in events`);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return quoteEvents.map((event) => (event.parsedJson as any).event as T);
   }
 
@@ -325,7 +324,6 @@ export class Router implements IManager {
       throw new Error(`Quote event of type ${quoteType} not found in events`);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const quoteResult = (quoteEvent.parsedJson as any).event as T;
     return quoteResult;
   }

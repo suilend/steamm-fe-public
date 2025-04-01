@@ -67,7 +67,6 @@ export class BankManager implements IManager {
     // const bankState = await this.sdk.fullClient.fetchBank(bankId);
     // const btokenAmount = bankState.btokenSupply.value;
     const btokenAmount = BigInt(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (bankObj.data?.content as any).fields.btoken_supply.fields.value,
     );
 
@@ -100,7 +99,6 @@ export class BankManager implements IManager {
     });
 
     const fundsAvailable = BigInt(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (bankObj.data?.content as any).fields.funds_available,
     );
 
@@ -124,7 +122,6 @@ export class BankManager implements IManager {
   }
 
   public async createBToken(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     bytecode: any,
     sender: SuiAddressType,
   ): Promise<Transaction> {
@@ -255,7 +252,6 @@ export class BankManager implements IManager {
     }
 
     const quoteResults = quoteEvents.map((quoteEvent) =>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       castNeedsRebalance((quoteEvent.parsedJson as any).event),
     );
 
@@ -286,7 +282,6 @@ export class BankManager implements IManager {
       throw new Error("Quote event not found");
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const quoteResult = (event.parsedJson as any).event as T;
     return quoteResult;
   }

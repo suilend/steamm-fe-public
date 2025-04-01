@@ -70,7 +70,6 @@ export class BankScript {
 
   public bankScriptTypes(): [string, string, string, string, string] {
     const [lendingMarketType, coinTypeX, bTokenXType] = this.bankX.typeArgs();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_, coinTypeY, bTokenYType] = this.bankY.typeArgs();
 
     return [lendingMarketType, coinTypeX, coinTypeY, bTokenXType, bTokenYType];

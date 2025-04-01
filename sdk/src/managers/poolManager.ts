@@ -59,7 +59,6 @@ export class PoolManager implements IManager {
     tx: Transaction,
     args: DepositLiquidityParams,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [lpToken, _] = await this.depositLiquidity(tx, args);
 
     tx.transferObjects([lpToken], this.sdk.senderAddress);
@@ -88,7 +87,6 @@ export class PoolManager implements IManager {
     tx: Transaction,
     args: RedeemLiquidityParams,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [coinA, coinB, _] = await this.redeemLiquidity(tx, args);
 
     tx.transferObjects([coinA, coinB], this.sdk.senderAddress);
@@ -116,7 +114,6 @@ export class PoolManager implements IManager {
     tx: Transaction,
     args: RedeemLiquidityParams,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [coinA, coinB, _] = await this.redeemLiquidityWithProvision(tx, args);
 
     tx.transferObjects([coinA, coinB], this.sdk.senderAddress);
@@ -229,7 +226,6 @@ export class PoolManager implements IManager {
   }
 
   public async createLpToken(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     bytecode: any,
     sender: SuiAddressType,
   ): Promise<Transaction> {
@@ -381,7 +377,6 @@ export class PoolManager implements IManager {
       throw new Error("Quote event not found");
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const quoteResult = (quoteEvent.parsedJson as any).event as T;
     return quoteResult;
   }

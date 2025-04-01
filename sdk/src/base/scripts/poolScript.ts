@@ -44,14 +44,10 @@ export class PoolScript {
     this.bankB = new Bank(pkgInfo, bankInfoB);
     this.pkgInfo = scriptPkgInfo;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [bTokenAType, bTokenBType, _quoterType, _lpTokenType] =
       this.pool.poolTypes();
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [lendingMarketType, _coinTypeA, _bTokenAType] = this.bankA.typeArgs();
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_lendingMarketType, _coinTypeB, _bTokenBType] =
       this.bankB.typeArgs();
 
@@ -293,9 +289,8 @@ export class PoolScript {
   ] {
     const [bTokenAType, bTokenBType, quoterType, lpTokenType] =
       this.pool.poolTypes();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     const [lendingMarketType, coinTypeA, _bTokenAType] = this.bankA.typeArgs();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_lendingMarketType, coinTypeB, _bTokenBType] = this.bankB.typeArgs();
 
     return [
@@ -317,12 +312,10 @@ export class PoolScript {
     string,
     string,
   ] {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [bTokenAType, bTokenBType, quoterType, lpTokenType] =
       this.pool.poolTypes();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     const [lendingMarketType, coinTypeA, _bTokenAType] = this.bankA.typeArgs();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_lendingMarketType, coinTypeB, _bTokenBType] = this.bankB.typeArgs();
 
     return [
