@@ -13,11 +13,10 @@ import {
   initializeSuilend,
   initializeSuilendRewards,
 } from "@suilend/sdk";
-import { LiquidStakingObjectInfo } from "@suilend/springsui-sdk";
+import { fetchRegistryLiquidStakingInfoMap } from "@suilend/springsui-sdk";
 import { BETA_CONFIG, MAINNET_CONFIG, SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
-import { SPRINGSUI_ASSETS_URL } from "@/lib/constants";
 
 export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
@@ -88,20 +87,10 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     coinMetadataMap = { ...coinMetadataMap, ...pointsCoinMetadataMap };
 
     // LSTs
-    let LIQUID_STAKING_INFO_MAP: Record<string, LiquidStakingObjectInfo>;
-    try {
-      LIQUID_STAKING_INFO_MAP = await (
-        await fetch(
-          `${SPRINGSUI_ASSETS_URL}/liquid-staking-info-map.json?timestamp=${Date.now()}`,
-        )
-      ).json();
-    } catch (err) {
-      LIQUID_STAKING_INFO_MAP = {};
-    }
+    const LIQUID_STAKING_INFO_MAP =
+      await fetchRegistryLiquidStakingInfoMap(suiClient);
 
-    const lstCoinTypes = Object.values(LIQUID_STAKING_INFO_MAP).map(
-      (LIQUID_STAKING_INFO) => LIQUID_STAKING_INFO.type,
-    );
+    const lstCoinTypes = Object.keys(LIQUID_STAKING_INFO_MAP);
 
     // Banks
     const bankCoinTypes: string[] = [];
