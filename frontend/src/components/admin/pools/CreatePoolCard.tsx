@@ -172,7 +172,6 @@ export default function CreatePoolCard() {
     setValues(newValues);
     setLastActiveInputIndex(index);
   };
-  console.log("XXX", lastActiveInputIndex);
 
   // Values - max
   const onBalanceClick = (index: number) => {
