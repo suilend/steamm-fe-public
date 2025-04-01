@@ -1,6 +1,6 @@
-/* eslint-disable */
 import { describe, expect, it } from "bun:test";
-import { findAllRoutes, PoolData } from "../../src";
+
+import { PoolData, findAllRoutes } from "../../src";
 
 export async function test() {
   describe("test swap route finder", async () => {

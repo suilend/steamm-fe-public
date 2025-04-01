@@ -1,6 +1,6 @@
-/* eslint-disable */
 import { describe, expect, it } from "bun:test";
-import { parseMoveAbortError, ParsedMoveAbort } from "../../src";
+
+import { ParsedMoveAbort, parseMoveAbortError } from "../../src";
 
 export async function test() {
   describe("test error handler", async () => {
