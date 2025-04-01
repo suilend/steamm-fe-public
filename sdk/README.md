@@ -2,7 +2,7 @@
 
 A TypeScript SDK for interacting with the STEAMM program published on npm as [`@suilend/steamm-sdk`](https://www.npmjs.com/package/@suilend/steamm-sdk).
 
-### Mainnet Beta actions
+### Beta actions
 
 To initiate the SDK:
 
@@ -12,7 +12,7 @@ const sdk = new SteammSDK(BETA_CONFIG);
 sdk.signer = keypair;
 ```
 
-Use `STEAMM_BETA_CONFIG.packageId` for the mainnet beta package.
+Use `STEAMM_BETA_CONFIG.packageId` for the beta package.
 
 To fetch the pools:
 
