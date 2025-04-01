@@ -2,88 +2,71 @@
 
 A TypeScript SDK for interacting with the STEAMM program published on npm as [`@suilend/steamm-sdk`](https://www.npmjs.com/package/@suilend/steamm-sdk).
 
-### Testnet & Mainnet Beta actions
+### Mainnet Beta actions
 
-Currently the protocol is only available on testnet and on mainnet beta. In order to bypass SUI faucet restrictions we deployed TEST coins with a dedicated faucet. To get coins for the purpose of interacting with the protocol:
-
-```ts
-const suiCoin = getTestSui(tx, 1000000000000000000);
-const usdcCoin = getTestUsdc(tx, 1000000000000000000);
-```
-
-To initiate the sdk:
+To initiate the SDK:
 
 ```ts
 const sdk = new SteammSDK(BETA_CONFIG);
-// const sdk = new SteammSDK(TESTNET_CONFIG);
 
 sdk.signer = keypair;
 ```
 
-Use `STEAMM_BETA_PKG_ID` for the mainnet beta package and `STEAMM_TESTNET_PKG_ID` for testnet.
+Use `STEAMM_BETA_CONFIG.packageId` for the mainnet beta package.
 
 To fetch the pools:
 
 ```ts
-const pools = await sdk.getPools();
+const pools = await sdk.getPoolData();
 ```
 
 Alternatively, one can fetch all pools for a dedicated pair:
 
 ```ts
 // Note: type1 and type2 do not correspond to the token type's position in the pool
-const pools = await sdk.getPoolsByType(coinType1, coinType2);
+const pools = await sdk.getPoolData([coinType1, coinType2]);
 ```
 
 To deposit liquidity:
 
 ```ts
-await sdk.Pool.depositLiquidityEntry(
-  {
-    pool: pools[0].poolId,
-    coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
-    coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
-    coinA: usdcCoin,
-    coinB: suiCoin,
-    maxA: BigInt("1000000000000000000"),
-    maxB: BigInt("1000000000000000000"),
-  },
-  tx,
-);
+await sdk.PoolManager.depositLiquidityEntry(tx, {
+  pool: pools[0].poolId,
+  coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
+  coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
+  coinA: usdcCoin,
+  coinB: suiCoin,
+  maxA: BigInt("1000000000000000000"),
+  maxB: BigInt("1000000000000000000"),
+});
 ```
 
 To perform a swap:
 
 ```ts
-await sdk.Pool.swapEntry(
-  {
-    pool: pools[0].poolId,
-    coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
-    coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
-    coinA: usdcCoin,
-    coinB: suiCoin,
-    a2b: false,
-    amountIn: BigInt("10000000000000"),
-    minAmountOut: BigInt("0"),
-  },
-  tx,
-);
+await sdk.Pool.swap(tx, {
+  pool: pools[0].poolId,
+  coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
+  coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
+  coinA: usdcCoin,
+  coinB: suiCoin,
+  a2b: false,
+  amountIn: BigInt("10000000000000"),
+  minAmountOut: BigInt("0"),
+});
 ```
 
 And to redeem liquidity:
 
 ```ts
-await sdk.Pool.redeemLiquidityEntry(
-  {
-    pool: pools[0].poolId,
-    coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
-    coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
-    lpCoin: lpToken,
-    minA: BigInt("0"),
-    minB: BigInt("0"),
-  },
-  tx,
-);
+await sdk.PoolManager.redeemLiquidityEntry(tx, {
+  pool: pools[0].poolId,
+  coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
+  coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
+  lpCoin: lpToken,
+  minA: BigInt("0"),
+  minB: BigInt("0"),
+});
 ```
 
 For quotations:
@@ -91,7 +74,7 @@ For quotations:
 Deposit:
 
 ```ts
-const quote = await sdk.Pool.quoteDeposit({
+const quote = await sdk.PoolManager.quoteDeposit({
   pool: pools[0].poolId,
   maxA: BigInt("1000000000000000000"),
   maxB: BigInt("1000000000000000000"),
@@ -101,7 +84,7 @@ const quote = await sdk.Pool.quoteDeposit({
 Redeem:
 
 ```ts
-const quote = await sdk.Pool.quoteRedeem({
+const quote = await sdk.PoolManager.quoteRedeem({
   pool: pools[0].poolId,
   lpTokens: BigInt("1000000000000000000"),
 });
@@ -110,7 +93,7 @@ const quote = await sdk.Pool.quoteRedeem({
 Swap:
 
 ```ts
-const quote = await sdk.Pool.quoteSwap({
+const quote = await sdk.PoolManager.quoteSwap({
   pool: pools[0].poolId,
   a2b: false,
   amountIn: BigInt("10000000000000"),
@@ -120,5 +103,3 @@ const quote = await sdk.Pool.quoteSwap({
 ---
 
 Got a suggestion, running into issues, or have a question? Join our [#dev-support](https://discord.com/channels/1202984617087598622/1238023733403193385) channel on Discord.
-
----

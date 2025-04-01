@@ -19,7 +19,6 @@ module.exports = [
     plugins: {
       prettier,
     },
-
     rules: {
       "react-hooks/exhaustive-deps": "error",
       "@typescript-eslint/no-explicit-any": "warn",
