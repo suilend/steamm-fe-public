@@ -530,7 +530,7 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
       rebalanceBanksIfNeeded(banks, steammClient, transaction);
 
       // Stake LP tokens (if reserve exists)
-      if (appData.lmMarket.reserveMap[pool.lpTokenType]) {
+      if (!!appData.lmMarket.reserveMap[pool.lpTokenType]) {
         let obligationIndexes = getIndexesOfObligationsWithDeposit(
           userData.obligations,
           pool.lpTokenType,
