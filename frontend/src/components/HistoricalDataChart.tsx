@@ -236,19 +236,19 @@ export default function HistoricalDataChart({
       <div className="flex flex-row items-start justify-between">
         {/* Top left */}
         <div className="flex flex-col gap-1">
-          <p className="text-p2 text-secondary-foreground">{title}</p>
+          <div className="flex flex-row items-baseline gap-1.5">
+            <p className="text-p2 text-secondary-foreground">{title}</p>
+            {valuePeriodDays !== undefined && (
+              <p className="text-p3 text-tertiary-foreground">
+                {valuePeriodDays === 1 ? "24H" : `${valuePeriodDays}D`}
+              </p>
+            )}
+          </div>
 
           {value === undefined ? (
             <Skeleton className="h-[36px] w-20" />
           ) : (
-            <div className="flex flex-row items-baseline gap-2">
-              <p className="text-h2 text-foreground">{value}</p>
-              {valuePeriodDays !== undefined && (
-                <p className="text-p1 text-tertiary-foreground">
-                  {valuePeriodDays === 1 ? "24H" : `${valuePeriodDays}D`}
-                </p>
-              )}
-            </div>
+            <p className="text-h2 text-foreground">{value}</p>
           )}
         </div>
 

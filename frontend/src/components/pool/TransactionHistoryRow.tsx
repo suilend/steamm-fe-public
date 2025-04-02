@@ -64,25 +64,29 @@ export default function TransactionHistoryRow({
         style={columnStyleMap.amounts}
       >
         {pool.coinTypes.map((coinType, index) => {
-          const coinMetadata = appData.coinMetadataMap[coinType];
-
           const amount =
             transaction.type === HistoryTransactionType.DEPOSIT
               ? new BigNumber(
                   index === 0 ? transaction.deposit_a : transaction.deposit_b,
-                ).div(10 ** coinMetadata.decimals)
+                ).div(10 ** appData.coinMetadataMap[coinType].decimals)
               : new BigNumber(
                   index === 0 ? transaction.withdraw_a : transaction.withdraw_b,
-                ).div(10 ** coinMetadata.decimals);
+                ).div(10 ** appData.coinMetadataMap[coinType].decimals);
 
           return (
             <Fragment key={coinType}>
-              <TokenLogo token={getToken(coinType, coinMetadata)} size={16} />
+              <TokenLogo
+                token={getToken(coinType, appData.coinMetadataMap[coinType])}
+                size={16}
+              />
               <Tooltip
-                title={formatToken(amount, { dp: coinMetadata.decimals })}
+                title={formatToken(amount, {
+                  dp: appData.coinMetadataMap[coinType].decimals,
+                })}
               >
                 <p className="text-p2 text-foreground">
-                  {formatToken(amount, { exact: false })} {coinMetadata.symbol}
+                  {formatToken(amount, { exact: false })}{" "}
+                  {appData.coinMetadataMap[coinType].symbol}
                 </p>
               </Tooltip>
 

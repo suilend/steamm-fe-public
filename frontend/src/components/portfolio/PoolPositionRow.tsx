@@ -302,29 +302,28 @@ export default function PoolPositionRow({
         {Object.keys(poolPosition.claimableRewards).length > 0 ? (
           <div className="flex flex-col items-end gap-1">
             {Object.entries(poolPosition.claimableRewards).map(
-              ([coinType, amount]) => {
-                const coinMetadata = appData.coinMetadataMap[coinType];
-
-                return (
-                  <div
-                    key={coinType}
-                    className="flex flex-row items-center gap-2"
+              ([coinType, amount]) => (
+                <div
+                  key={coinType}
+                  className="flex flex-row items-center gap-2"
+                >
+                  <TokenLogo
+                    token={getToken(
+                      coinType,
+                      appData.coinMetadataMap[coinType],
+                    )}
+                    size={16}
+                  />
+                  <Tooltip
+                    title={`${formatToken(amount, { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
                   >
-                    <TokenLogo
-                      token={getToken(coinType, coinMetadata)}
-                      size={16}
-                    />
-                    <Tooltip
-                      title={`${formatToken(amount, { dp: coinMetadata.decimals })} ${coinMetadata.symbol}`}
-                    >
-                      <p className="text-p1 text-foreground">
-                        {formatToken(amount, { exact: false })}{" "}
-                        {coinMetadata.symbol}
-                      </p>
-                    </Tooltip>
-                  </div>
-                );
-              },
+                    <p className="text-p1 text-foreground">
+                      {formatToken(amount, { exact: false })}{" "}
+                      {appData.coinMetadataMap[coinType].symbol}
+                    </p>
+                  </Tooltip>
+                </div>
+              ),
             )}
           </div>
         ) : (

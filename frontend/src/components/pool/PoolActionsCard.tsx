@@ -12,6 +12,7 @@ import {
   NORMALIZED_SUI_COINTYPE,
   SUI_GAS_MIN,
   formatToken,
+  formatUsd,
   getBalanceChange,
   getToken,
   isSui,
@@ -44,7 +45,7 @@ import PriceDifferenceLabel from "@/components/swap/PriceDifferenceLabel";
 import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
 import TokenLogo from "@/components/TokenLogo";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLoadedAppContext } from "@/contexts/AppContext";
+import { BanksData, useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
@@ -57,6 +58,7 @@ import {
 } from "@/lib/obligation";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
+import { ParsedPool } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 enum Action {
@@ -136,94 +138,93 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
   >(undefined);
   const [quote, setQuote] = useState<DepositQuote | undefined>(undefined);
 
-  const fetchQuote = async (
-    _steammClient: SteammSDK,
-    _value: string,
-    index: number,
-  ) => {
-    console.log(
-      "DepositTab.fetchQuote - _value(=formattedValue):",
-      _value,
-      "index:",
-      index,
-      "valuesRef.current[index]:",
-      valuesRef.current[index],
-    );
+  const fetchQuote = useCallback(
+    async (
+      _steammClient: SteammSDK,
+      _value: string,
+      _pool: ParsedPool,
+      _currentRatio: BigNumber,
+      index: number,
+    ) => {
+      console.log(
+        "DepositTab.fetchQuote - _value(=formattedValue):",
+        _value,
+        "_pool:",
+        _pool,
+        "_currentRatio:",
+        _currentRatio,
+        "index:",
+        index,
+        "valuesRef.current[index]:",
+        valuesRef.current[index],
+      );
 
-    const dps = [
-      appData.coinMetadataMap[pool.coinTypes[0]].decimals,
-      appData.coinMetadataMap[pool.coinTypes[1]].decimals,
-    ];
-
-    if (banksData === undefined) return;
-    if (valuesRef.current[index] !== _value) return;
-
-    try {
-      const submitAmount = new BigNumber(_value)
-        .times(10 ** dps[index])
-        .integerValue(BigNumber.ROUND_DOWN)
-        .toString();
-
-      const quote = {
-        depositA: BigInt(
-          index === 0
-            ? submitAmount
-            : new BigNumber(new BigNumber(_value).div(currentRatio))
-                .times(10 ** dps[1 - index])
-                .integerValue(BigNumber.ROUND_DOWN)
-                .toString(),
-        ),
-        depositB: BigInt(
-          index === 0
-            ? new BigNumber(new BigNumber(_value).times(currentRatio))
-                .times(10 ** dps[1 - index])
-                .integerValue(BigNumber.ROUND_DOWN)
-                .toString()
-            : submitAmount,
-        ),
-      } as DepositQuote;
-
-      // TODO: add back after
-      // const quote = await _steammClient.Pool.quoteDeposit({
-      //   maxA: index === 0 ? BigInt(submitAmount) : BigInt(MAX_U64.toString()),
-      //   maxB: index === 0 ? BigInt(MAX_U64.toString()) : BigInt(submitAmount),
-      //   poolInfo: pool.poolInfo,
-      //   bankInfoA: banksData.bankMap[pool.coinTypes[0]].bankInfo,
-      //   bankInfoB: banksData.bankMap[pool.coinTypes[1]].bankInfo,
-      // });
+      const dps = [
+        appData.coinMetadataMap[_pool.coinTypes[0]].decimals,
+        appData.coinMetadataMap[_pool.coinTypes[1]].decimals,
+      ];
 
       if (valuesRef.current[index] !== _value) return;
-      console.log("DepositTab.fetchQuote - quote:", quote);
 
-      setValues((prev) => [
-        index === 0
-          ? prev[0]
-          : formatTextInputValue(
-              new BigNumber(quote.depositA.toString())
-                .div(10 ** dps[0])
-                .toFixed(dps[0], BigNumber.ROUND_DOWN),
-              dps[0],
-            ),
-        index === 0
-          ? formatTextInputValue(
-              new BigNumber(quote.depositB.toString())
-                .div(10 ** dps[1])
-                .toFixed(dps[1], BigNumber.ROUND_DOWN),
-              dps[1],
-            )
-          : prev[1],
-      ]);
-      setLastActiveInputIndex(index);
-      // setSliderValue (no need, should match the existing value)
+      try {
+        const submitAmount = new BigNumber(_value)
+          .times(10 ** dps[index])
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString();
 
-      setFetchingQuoteForIndex(undefined);
-      setQuote(quote);
-    } catch (err) {
-      showErrorToast("Failed to fetch quote", err as Error);
-      console.error(err);
-      Sentry.captureException(err);
-    }
-  };
+        const quote = {
+          depositA: BigInt(
+            index === 0
+              ? submitAmount
+              : new BigNumber(new BigNumber(_value).div(_currentRatio))
+                  .times(10 ** dps[1 - index])
+                  .integerValue(BigNumber.ROUND_DOWN)
+                  .toString(),
+          ),
+          depositB: BigInt(
+            index === 0
+              ? new BigNumber(new BigNumber(_value).times(_currentRatio))
+                  .times(10 ** dps[1 - index])
+                  .integerValue(BigNumber.ROUND_DOWN)
+                  .toString()
+              : submitAmount,
+          ),
+        } as DepositQuote;
+
+        if (valuesRef.current[index] !== _value) return;
+        console.log("DepositTab.fetchQuote - quote:", quote);
+
+        setValues((prev) => [
+          index === 0
+            ? prev[0]
+            : formatTextInputValue(
+                new BigNumber(quote.depositA.toString())
+                  .div(10 ** dps[0])
+                  .toFixed(dps[0], BigNumber.ROUND_DOWN),
+                dps[0],
+              ),
+          index === 0
+            ? formatTextInputValue(
+                new BigNumber(quote.depositB.toString())
+                  .div(10 ** dps[1])
+                  .toFixed(dps[1], BigNumber.ROUND_DOWN),
+                dps[1],
+              )
+            : prev[1],
+        ]);
+        setLastActiveInputIndex(index);
+        // setSliderValue (no need, should match the existing value)
+
+        setFetchingQuoteForIndex(undefined);
+        setQuote(quote);
+      } catch (err) {
+        showErrorToast("Failed to fetch quote", err as Error);
+        console.error(err);
+        Sentry.captureException(err);
+      }
+    },
+    [appData.coinMetadataMap],
+  );
   const debouncedFetchQuote = useRef(debounce(fetchQuote, 100)).current;
 
   const onValueChange = (
@@ -231,7 +232,12 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
     index: number,
     isImmediate?: boolean,
   ) => {
-    console.log("DepositTab.onValueChange - _value:", _value);
+    console.log(
+      "DepositTab.onValueChange - _value:",
+      _value,
+      "isImmediate:",
+      isImmediate,
+    );
 
     const dps = [
       appData.coinMetadataMap[pool.coinTypes[0]].decimals,
@@ -323,6 +329,8 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
     (isImmediate ? fetchQuote : debouncedFetchQuote)(
       steammClient,
       formattedValue,
+      pool,
+      currentRatio,
       index,
     );
   };
@@ -330,11 +338,10 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
   // Value - max
   const onBalanceClick = (index: number) => {
     const coinType = pool.coinTypes[index];
-    const coinMetadata = appData.coinMetadataMap[coinType];
 
     onValueChange(
       smartMaxValues[index].toFixed(
-        coinMetadata.decimals,
+        appData.coinMetadataMap[coinType].decimals,
         BigNumber.ROUND_DOWN,
       ),
       index,
@@ -356,6 +363,7 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
           BigNumber.ROUND_DOWN,
         ),
       0,
+      true,
     );
 
     setSliderValue(formattedValue);
@@ -435,14 +443,13 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
 
       for (let i = 0; i < pool.coinTypes.length; i++) {
         const coinType = pool.coinTypes[i];
-        const coinMetadata = appData.coinMetadataMap[coinType];
 
         if (
           getBalance(coinType).lt(
             new BigNumber(
               (i === 0 ? quote.depositA : quote.depositB).toString(),
             )
-              .div(10 ** coinMetadata.decimals)
+              .div(10 ** appData.coinMetadataMap[coinType].decimals)
               .times(
                 i === lastActiveInputIndex || pool.tvlUsd.eq(0)
                   ? 1
@@ -452,7 +459,7 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
         )
           return {
             isDisabled: true,
-            title: `Insufficient ${coinMetadata.symbol}`,
+            title: `Insufficient ${appData.coinMetadataMap[coinType].symbol}`,
           };
       }
     }
@@ -636,7 +643,7 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
           )}
           value={fetchingQuoteForIndex === index ? undefined : values[index]}
           usdValue={usdValues[index]}
-          onChange={(value) => onValueChange(value, index)}
+          onChange={(_value) => onValueChange(_value, index, true)}
           onBalanceClick={() => onBalanceClick(index)}
         />
       ))}
@@ -700,19 +707,17 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
         onClick={onSubmitClick}
       />
 
-      {(fetchingQuoteForIndex !== undefined || quote) && (
-        <div className="flex w-full flex-col gap-2">
-          <Parameter label="Maximum outflow" isHorizontal>
-            <div className="flex flex-col items-end gap-1">
-              {pool.coinTypes.map((coinType, index) => {
-                const coinMetadata = appData.coinMetadataMap[coinType];
-
-                return (
-                  <Fragment key={coinType}>
-                    {fetchingQuoteForIndex !== undefined || !quote ? (
-                      <Skeleton className="h-[21px] w-24" />
-                    ) : (
-                      <p className="text-p2 text-foreground">
+      <div className="flex w-full flex-col gap-2">
+        <Parameter label="Maximum outflow" isHorizontal>
+          <div className="flex flex-col items-end gap-1">
+            {pool.coinTypes.map((coinType, index) => (
+              <Fragment key={coinType}>
+                {fetchingQuoteForIndex !== undefined ? (
+                  <Skeleton className="h-[21px] w-24" />
+                ) : (
+                  <p className="text-p2 text-foreground">
+                    {quote ? (
+                      <>
                         {formatToken(
                           new BigNumber(
                             (index === 0
@@ -726,19 +731,23 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
                                 ? 1
                                 : 1 + slippagePercent / 100,
                             )
-                            .div(10 ** coinMetadata.decimals),
-                          { dp: coinMetadata.decimals },
+                            .div(
+                              10 ** appData.coinMetadataMap[coinType].decimals,
+                            ),
+                          { dp: appData.coinMetadataMap[coinType].decimals },
                         )}{" "}
-                        {coinMetadata.symbol}
-                      </p>
+                        {appData.coinMetadataMap[coinType].symbol}
+                      </>
+                    ) : (
+                      "--"
                     )}
-                  </Fragment>
-                );
-              })}
-            </div>
-          </Parameter>
-        </div>
-      )}
+                  </p>
+                )}
+              </Fragment>
+            ))}
+          </div>
+        </Parameter>
+      </div>
     </>
   );
 }
@@ -785,46 +794,76 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
   const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false);
   const [quote, setQuote] = useState<RedeemQuote | undefined>(undefined);
 
-  const fetchQuote = async (_steammClient: SteammSDK, _value: string) => {
-    console.log(
-      "WithdrawTab.fetchQuote - _value:",
-      _value,
-      "valueRef.current:",
-      valueRef.current,
-    );
-
-    if (banksData === undefined) return;
-    if (valueRef.current !== _value) return;
-
-    try {
-      const submitAmount = new BigNumber(
-        new BigNumber(_value || "0").div(100).times(lpTokenTotalAmount),
-      )
-        .times(10 ** appData.coinMetadataMap[pool.lpTokenType].decimals)
-        .integerValue(BigNumber.ROUND_DOWN)
-        .toString();
-      const quote = await _steammClient.Pool.quoteRedeem({
-        lpTokens: BigInt(submitAmount),
-        poolInfo: pool.poolInfo,
-        bankInfoA: banksData.bankMap[pool.coinTypes[0]].bankInfo,
-        bankInfoB: banksData.bankMap[pool.coinTypes[1]].bankInfo,
-      });
+  const fetchQuote = useCallback(
+    async (
+      _steammClient: SteammSDK,
+      _value: string,
+      _pool: ParsedPool,
+      _lpTokenTotalAmount: BigNumber,
+    ) => {
+      console.log(
+        "WithdrawTab.fetchQuote - _value:",
+        _value,
+        "_lpTokenTotalAmount:",
+        +_lpTokenTotalAmount,
+        "_pool:",
+        _pool,
+        "valueRef.current:",
+        valueRef.current,
+      );
 
       if (valueRef.current !== _value) return;
-      console.log("WithdrawTab.fetchQuote - quote:", quote);
 
-      setIsFetchingQuote(false);
-      setQuote(quote);
-    } catch (err) {
-      showErrorToast("Failed to fetch quote", err as Error);
-      console.error(err);
-      Sentry.captureException(err);
-    }
-  };
+      try {
+        const quote = {
+          withdrawA: BigInt(
+            new BigNumber(
+              new BigNumber(_value || "0")
+                .div(100)
+                .times(_lpTokenTotalAmount)
+                .div(_pool.lpSupply),
+            )
+              .times(_pool.balances[0])
+              .times(10 ** appData.coinMetadataMap[_pool.coinTypes[0]].decimals)
+              .integerValue(BigNumber.ROUND_DOWN)
+              .toString(),
+          ),
+          withdrawB: BigInt(
+            new BigNumber(
+              new BigNumber(_value || "0")
+                .div(100)
+                .times(_lpTokenTotalAmount)
+                .div(_pool.lpSupply),
+            )
+              .times(_pool.balances[1])
+              .times(10 ** appData.coinMetadataMap[_pool.coinTypes[1]].decimals)
+              .integerValue(BigNumber.ROUND_DOWN)
+              .toString(),
+          ),
+        } as RedeemQuote;
+
+        if (valueRef.current !== _value) return;
+        console.log("WithdrawTab.fetchQuote - quote:", quote);
+
+        setIsFetchingQuote(false);
+        setQuote(quote);
+      } catch (err) {
+        showErrorToast("Failed to fetch quote", err as Error);
+        console.error(err);
+        Sentry.captureException(err);
+      }
+    },
+    [appData.coinMetadataMap],
+  );
   const debouncedFetchQuote = useRef(debounce(fetchQuote, 100)).current;
 
-  const onValueChange = async (_value: string, isImmediate?: boolean) => {
-    console.log("WithdrawTab.onValueChange - _value:", _value);
+  const onValueChange = (_value: string, isImmediate?: boolean) => {
+    console.log(
+      "WithdrawTab.onValueChange - _value:",
+      _value,
+      "isImmediate:",
+      isImmediate,
+    );
 
     const formattedValue = formatPercentInputValue(_value, 1);
 
@@ -836,6 +875,8 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
     (isImmediate ? fetchQuote : debouncedFetchQuote)(
       steammClient,
       formattedValue,
+      pool,
+      lpTokenTotalAmount,
     );
   };
 
@@ -1174,13 +1215,13 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
             max={100}
             step={1}
             value={value || "0"}
-            onChange={(e) => onValueChange(e.target.value)}
+            onChange={(e) => onValueChange(e.target.value, true)}
           />
         </div>
 
         <button
           className="group flex h-10 flex-row items-center justify-center rounded-md bg-button-2 px-3 transition-colors hover:bg-button-2/80"
-          onClick={() => onValueChange("100")}
+          onClick={() => onValueChange("100", true)}
         >
           <p className="text-p2 text-button-2-foreground">Max</p>
         </button>
@@ -1189,65 +1230,81 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
           <PercentInput
             inputClassName="!text-p1 text-right pl-0"
             value={value}
-            onChange={onValueChange}
+            onChange={(_value) => onValueChange(_value, true)}
           />
         </div>
       </div>
 
-      <div className="flex w-full flex-col gap-1">
-        {pool.coinTypes.map((coinType, index) => {
-          const coinMetadata = appData.coinMetadataMap[coinType];
+      {pool.coinTypes.map((coinType, index) => (
+        <div
+          key={coinType}
+          className="flex w-full flex-row items-start justify-between"
+        >
+          <div className="flex flex-row items-center gap-2">
+            <TokenLogo
+              token={getToken(coinType, appData.coinMetadataMap[coinType])}
+              size={20}
+            />
+            <p className="text-p1 text-foreground">
+              {appData.coinMetadataMap[coinType].symbol}
+            </p>
+          </div>
 
-          return (
-            <div
-              key={coinType}
-              className="flex w-full flex-row items-center justify-between"
-            >
-              <div className="flex flex-row items-center gap-2">
-                <TokenLogo token={getToken(coinType, coinMetadata)} size={16} />
-                <p className="text-p1 text-foreground">{coinMetadata.symbol}</p>
-              </div>
-
-              {isFetchingQuote ? (
-                <Skeleton className="h-[24px] w-24" />
-              ) : (
-                <p className="text-p1 text-foreground">
-                  {quote
-                    ? formatToken(
-                        new BigNumber(
-                          (index === 0
-                            ? quote.withdrawA
-                            : quote.withdrawB
-                          ).toString(),
-                        ).div(10 ** coinMetadata.decimals),
-                        { dp: coinMetadata.decimals },
-                      )
-                    : "--"}
-                </p>
-              )}
+          {isFetchingQuote ? (
+            <div className="flex flex-col items-end gap-1">
+              <Skeleton className="h-[24px] w-24" />
+              <Skeleton className="h-[21px] w-16" />
             </div>
-          );
-        })}
-      </div>
+          ) : (
+            <div className="flex flex-col items-end gap-1">
+              <p className="text-p1 text-foreground">
+                {quote
+                  ? formatToken(
+                      new BigNumber(
+                        (index === 0
+                          ? quote.withdrawA
+                          : quote.withdrawB
+                        ).toString(),
+                      ).div(10 ** appData.coinMetadataMap[coinType].decimals),
+                      { dp: appData.coinMetadataMap[coinType].decimals },
+                    )
+                  : "--"}
+              </p>
+              <p className="text-p2 text-secondary-foreground">
+                {quote
+                  ? formatUsd(
+                      new BigNumber(
+                        (index === 0
+                          ? quote.withdrawA
+                          : quote.withdrawB
+                        ).toString(),
+                      )
+                        .div(10 ** appData.coinMetadataMap[coinType].decimals)
+                        .times(pool.prices[index]),
+                    )
+                  : "--"}
+              </p>
+            </div>
+          )}
+        </div>
+      ))}
 
       <SubmitButton
         submitButtonState={submitButtonState}
         onClick={onSubmitClick}
       />
 
-      {(isFetchingQuote || quote) && (
-        <div className="flex w-full flex-col gap-2">
-          <Parameter label="Minimum inflow" isHorizontal>
-            <div className="flex flex-col items-end gap-1">
-              {pool.coinTypes.map((coinType, index) => {
-                const coinMetadata = appData.coinMetadataMap[coinType];
-
-                return (
-                  <Fragment key={coinType}>
-                    {isFetchingQuote || !quote ? (
-                      <Skeleton className="h-[21px] w-24" />
-                    ) : (
-                      <p className="text-p2 text-foreground">
+      <div className="flex w-full flex-col gap-2">
+        <Parameter label="Minimum inflow" isHorizontal>
+          <div className="flex flex-col items-end gap-1">
+            {pool.coinTypes.map((coinType, index) => (
+              <Fragment key={coinType}>
+                {isFetchingQuote ? (
+                  <Skeleton className="h-[21px] w-24" />
+                ) : (
+                  <p className="text-p2 text-foreground">
+                    {quote ? (
+                      <>
                         {formatToken(
                           new BigNumber(
                             (index === 0
@@ -1256,19 +1313,23 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
                             ).toString(),
                           )
                             .div(index === 0 ? 1 : 1 + slippagePercent / 100)
-                            .div(10 ** coinMetadata.decimals),
-                          { dp: coinMetadata.decimals },
+                            .div(
+                              10 ** appData.coinMetadataMap[coinType].decimals,
+                            ),
+                          { dp: appData.coinMetadataMap[coinType].decimals },
                         )}{" "}
-                        {coinMetadata.symbol}
-                      </p>
+                        {appData.coinMetadataMap[coinType].symbol}
+                      </>
+                    ) : (
+                      "--"
                     )}
-                  </Fragment>
-                );
-              })}
-            </div>
-          </Parameter>
-        </div>
-      )}
+                  </p>
+                )}
+              </Fragment>
+            ))}
+          </div>
+        </Parameter>
+      </div>
     </>
   );
 }
@@ -1309,25 +1370,31 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
     async (
       _steammClient: SteammSDK,
       _value: string,
+      _banksData: BanksData | undefined,
+      _pool: ParsedPool,
       _activeCoinIndex: number,
     ) => {
       console.log(
         "SwapTab.fetchQuote - _value(=formattedValue):",
         _value,
+        "_banksData:",
+        _banksData,
+        "_pool:",
+        _pool,
         "_activeCoinIndex:",
         _activeCoinIndex,
         "valueRef.current:",
         valueRef.current,
       );
 
-      if (banksData === undefined) return;
+      if (_banksData === undefined) return;
       if (valueRef.current !== _value) return;
 
       try {
         const submitAmount = new BigNumber(_value)
           .times(
             10 **
-              appData.coinMetadataMap[pool.coinTypes[_activeCoinIndex]]
+              appData.coinMetadataMap[_pool.coinTypes[_activeCoinIndex]]
                 .decimals,
           )
           .integerValue(BigNumber.ROUND_DOWN)
@@ -1335,9 +1402,9 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
         const quote = await _steammClient.Pool.quoteSwap({
           a2b: _activeCoinIndex === 0,
           amountIn: BigInt(submitAmount),
-          poolInfo: pool.poolInfo,
-          bankInfoA: banksData.bankMap[pool.coinTypes[0]].bankInfo,
-          bankInfoB: banksData.bankMap[pool.coinTypes[1]].bankInfo,
+          poolInfo: _pool.poolInfo,
+          bankInfoA: _banksData.bankMap[_pool.coinTypes[0]].bankInfo,
+          bankInfoB: _banksData.bankMap[_pool.coinTypes[1]].bankInfo,
         });
 
         if (valueRef.current !== _value) return;
@@ -1351,12 +1418,17 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
         Sentry.captureException(err);
       }
     },
-    [banksData, appData.coinMetadataMap, pool.coinTypes, pool.poolInfo],
+    [appData.coinMetadataMap],
   );
   const debouncedFetchQuote = useRef(debounce(fetchQuote, 100)).current;
 
   const onValueChange = (_value: string, isImmediate?: boolean) => {
-    console.log("SwapTab.onValueChange - _value:", _value);
+    console.log(
+      "SwapTab.onValueChange - _value:",
+      _value,
+      "isImmediate:",
+      isImmediate,
+    );
 
     const formattedValue = formatTextInputValue(
       _value,
@@ -1379,6 +1451,8 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
     (isImmediate ? fetchQuote : debouncedFetchQuote)(
       steammClient,
       formattedValue,
+      banksData,
+      pool,
       activeCoinIndex,
     );
   };
@@ -1449,7 +1523,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
 
     // value > 0
     setIsFetchingQuote(true);
-    fetchQuote(steammClient, value, newActiveCoinIndex);
+    fetchQuote(steammClient, value, banksData, pool, newActiveCoinIndex);
   };
 
   // Submit
@@ -1631,7 +1705,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
 
   return (
     <>
-      <div className="relative flex w-full min-w-0 flex-col items-center gap-2">
+      <div className="relative flex w-full min-w-0 flex-col items-center gap-1">
         <CoinInput
           className="relative z-[1]"
           token={getToken(activeCoinType, activeCoinMetadata)}

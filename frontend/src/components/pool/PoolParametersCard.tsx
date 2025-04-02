@@ -30,55 +30,54 @@ export default function PoolParametersCard() {
   return (
     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
       <Parameter label="Assets">
-        {pool.coinTypes.map((coinType, index) => {
-          const coinMetadata = appData.coinMetadataMap[coinType];
+        {pool.coinTypes.map((coinType, index) => (
+          <div
+            key={coinType}
+            className="flex w-full flex-row items-center gap-2"
+          >
+            <TokenLogo
+              token={getToken(coinType, appData.coinMetadataMap[coinType])}
+              size={16}
+            />
 
-          return (
-            <div
-              key={coinType}
-              className="flex w-full flex-row items-center gap-2"
+            <Tooltip
+              title={`${formatToken(pool.balances[index], {
+                dp: appData.coinMetadataMap[coinType].decimals,
+              })} ${appData.coinMetadataMap[coinType].symbol}`}
             >
-              <TokenLogo token={getToken(coinType, coinMetadata)} size={16} />
+              <p className="text-p2 text-foreground">
+                {formatToken(pool.balances[index], { exact: false })}{" "}
+                {appData.coinMetadataMap[coinType].symbol}
+              </p>
+            </Tooltip>
 
-              <Tooltip
-                title={`${formatToken(pool.balances[index], {
-                  dp: coinMetadata.decimals,
-                })} ${coinMetadata.symbol}`}
-              >
-                <p className="text-p2 text-foreground">
-                  {formatToken(pool.balances[index], { exact: false })}{" "}
-                  {coinMetadata.symbol}
-                </p>
-              </Tooltip>
-
-              <div className="flex flex-row items-center gap-1">
-                <CopyToClipboardButton value={coinType} />
-                <OpenExternalUrlButton url={explorer.buildCoinUrl(coinType)} />
-              </div>
-
-              {appData.mainMarket.reserveMap[coinType] &&
-                (banksData === undefined ? (
-                  <Skeleton className="h-5 w-20" />
-                ) : (
-                  <Tag
-                    labelClassName={cn(
-                      "text-foreground decoration-foreground/50",
-                      hoverUnderlineClassName,
-                    )}
-                    tooltip={`${formatPercent(banksData.bankMap[coinType].utilizationPercent)} of deposited ${coinMetadata.symbol} is earning ${formatPercent(banksData.bankMap[coinType].suilendDepositAprPercent)} APR on Suilend`}
-                    startDecorator={<SuilendLogo size={12} />}
-                  >
-                    {formatPercent(
-                      banksData.bankMap[coinType].suilendDepositAprPercent
-                        .times(banksData.bankMap[coinType].utilizationPercent)
-                        .div(100),
-                    )}{" "}
-                    APR
-                  </Tag>
-                ))}
+            <div className="flex flex-row items-center gap-1">
+              <CopyToClipboardButton value={coinType} />
+              <OpenExternalUrlButton url={explorer.buildCoinUrl(coinType)} />
             </div>
-          );
-        })}
+
+            {appData.mainMarket.reserveMap[coinType] &&
+              (banksData === undefined ? (
+                <Skeleton className="h-5 w-20" />
+              ) : (
+                <Tag
+                  labelClassName={cn(
+                    "text-foreground decoration-foreground/50",
+                    hoverUnderlineClassName,
+                  )}
+                  tooltip={`${formatPercent(banksData.bankMap[coinType].utilizationPercent)} of deposited ${appData.coinMetadataMap[coinType].symbol} is earning ${formatPercent(banksData.bankMap[coinType].suilendDepositAprPercent)} APR on Suilend`}
+                  startDecorator={<SuilendLogo size={12} />}
+                >
+                  {formatPercent(
+                    banksData.bankMap[coinType].suilendDepositAprPercent
+                      .times(banksData.bankMap[coinType].utilizationPercent)
+                      .div(100),
+                  )}{" "}
+                  APR
+                </Tag>
+              ))}
+          </div>
+        ))}
       </Parameter>
 
       <Parameter label="Fee tier">

@@ -147,13 +147,11 @@ export default function SwapPage() {
         valueRef.current,
       );
 
-      const _inCoinMetadata = appData.coinMetadataMap[_inCoinType];
-
       if (valueRef.current !== _value) return;
 
       try {
         const submitAmount = new BigNumber(_value)
-          .times(10 ** _inCoinMetadata.decimals)
+          .times(10 ** appData.coinMetadataMap[_inCoinType].decimals)
           .integerValue(BigNumber.ROUND_DOWN)
           .toString();
         const { quote, route } = await _steammClient.Router.getBestSwapRoute(
@@ -533,7 +531,7 @@ export default function SwapPage() {
           </div>
 
           <div className="flex w-full flex-col gap-4">
-            <div className="relative flex w-full min-w-0 flex-col items-center gap-2">
+            <div className="relative flex w-full min-w-0 flex-col items-center gap-1">
               <CoinInput
                 className="relative z-[1]"
                 autoFocus
