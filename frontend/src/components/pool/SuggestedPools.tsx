@@ -7,7 +7,9 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import PoolCard from "@/components/pool/PoolCard";
 import Tag from "@/components/Tag";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLoadedAppContext } from "@/contexts/AppContext";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
+import { getPoolSlug } from "@/lib/pools";
 import { ParsedPool } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +26,8 @@ export default function SuggestedPools({
   pools,
   collapsedPoolCount = 2,
 }: SuggestedPoolsProps) {
+  const { appData } = useLoadedAppContext();
+
   // State
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
@@ -78,7 +82,7 @@ export default function SuggestedPools({
                 <Link
                   key={_pool.id}
                   className="w-full"
-                  href={`${POOL_URL_PREFIX}/${_pool.id}`}
+                  href={`${POOL_URL_PREFIX}/${_pool.id}-${getPoolSlug(appData, _pool)}`}
                 >
                   <PoolCard pool={_pool} />
                 </Link>

@@ -25,7 +25,7 @@ export const usePoolContext = () => useContext(PoolContext);
 
 export function PoolContextProvider({ children }: PropsWithChildren) {
   const router = useRouter();
-  const poolId = router.query.poolId as string;
+  const poolIdWithSlug = router.query.poolId as string;
 
   const { poolsData } = useLoadedAppContext();
 
@@ -34,8 +34,10 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
     () =>
       poolsData === undefined
         ? undefined
-        : (poolsData?.pools.find((pool) => pool.id === poolId) ?? null),
-    [poolsData, poolId],
+        : (poolsData?.pools.find(
+            (pool) => pool.id === poolIdWithSlug?.split("-")?.[0],
+          ) ?? null),
+    [poolsData, poolIdWithSlug],
   );
 
   useEffect(() => {
