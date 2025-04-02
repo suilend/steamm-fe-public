@@ -9,8 +9,8 @@ import { clone, debounce } from "lodash";
 import { ArrowRight } from "lucide-react";
 
 import {
+  NORMALIZED_SEND_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
-  NORMALIZED_USDC_COINTYPE,
   SUI_GAS_MIN,
   Token,
   formatToken,
@@ -73,9 +73,9 @@ export default function SwapPage() {
         )
     ) {
       shallowReplaceQuery(router, {
-        slug: "SUI-USDC",
+        slug: "SUI-SEND",
       });
-      return [NORMALIZED_SUI_COINTYPE, NORMALIZED_USDC_COINTYPE];
+      return [NORMALIZED_SUI_COINTYPE, NORMALIZED_SEND_COINTYPE];
     }
 
     return slug[0].split("-").map((symbol) => {
