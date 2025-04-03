@@ -405,25 +405,18 @@ export class PoolModule implements IModule {
     return bankInfo;
   }
 
-  // TODO
+  public collectProtocolFees(
+    poolInfo: PoolInfo,
+    tx: Transaction = new Transaction(),
+  ): [TransactionArgument, TransactionArgument] {
+    const pool = this.sdk.getPool(poolInfo);
 
-  // public collectProtocolFees(
-  //   args: CollectProtocolFeesArgs,
-  //   tx: Transaction = new Transaction()
-  // ): [TransactionArgument, TransactionArgument] {
-  //   const callArgs = {
-  //     pool: tx.object(this.pool.id),
-  //     globalAdmin: args.globalAdmin,
-  //   };
+    const [coinA, coinB] = pool.collectProtocolFees(tx, {
+      globalAdmin: this.sdk.sdkOptions.steamm_config.config!.globalAdmin,
+    });
 
-  //   const [coinA, coinB] = PoolFunctions.collectProtocolFees(
-  //     tx,
-  //     this.typeArgs(),
-  //     callArgs
-  //   );
-
-  //   return [coinA, coinB];
-  // }
+    return [coinA, coinB];
+  }
 
   // public migrate(
   //   args: MigratePoolArgs,
@@ -438,6 +431,7 @@ export class PoolModule implements IModule {
 
   //   return [coinA, coinB];
   // }
+
   async getPoolAndBankInfos(
     args:
       | {
