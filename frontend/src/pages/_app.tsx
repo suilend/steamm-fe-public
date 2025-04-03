@@ -20,6 +20,7 @@ import Layout from "@/components/Layout";
 import Toaster from "@/components/Toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppContextProvider } from "@/contexts/AppContext";
+import { PointsContextProvider } from "@/contexts/PointsContext";
 import { PoolPositionsContextProvider } from "@/contexts/PoolPositionsContext";
 import { StatsContextProvider } from "@/contexts/StatsContext";
 import { UserContextProvider } from "@/contexts/UserContext";
@@ -86,12 +87,14 @@ export default function App({ Component, pageProps }: AppProps) {
                 <UserContextProvider>
                   <StatsContextProvider>
                     <PoolPositionsContextProvider>
-                      <TooltipProvider>
-                        <Layout>
-                          <Component {...pageProps} />
-                        </Layout>
-                        <Toaster />
-                      </TooltipProvider>
+                      <PointsContextProvider>
+                        <TooltipProvider>
+                          <Layout>
+                            <Component {...pageProps} />
+                          </Layout>
+                          <Toaster />
+                        </TooltipProvider>
+                      </PointsContextProvider>
                     </PoolPositionsContextProvider>
                   </StatsContextProvider>
                 </UserContextProvider>

@@ -33,7 +33,7 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
 };
 
-interface PoolsTableProps {
+interface TransactionHistoryTableProps {
   className?: ClassValue;
   transactionHistory?: (HistoryDeposit | HistoryRedeem)[];
 }
@@ -41,7 +41,7 @@ interface PoolsTableProps {
 export default function TransactionHistoryTable({
   className,
   transactionHistory,
-}: PoolsTableProps) {
+}: TransactionHistoryTableProps) {
   // Sort
   type SortState = { column: SortableColumn; direction: SortDirection };
 

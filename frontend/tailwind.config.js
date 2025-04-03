@@ -50,6 +50,10 @@ module.exports = {
       warning: "hsl(var(--warning))",
       error: "hsl(var(--error))",
 
+      gold: "hsl(var(--gold))",
+      silver: "hsl(var(--silver))",
+      bronze: "hsl(var(--bronze))",
+
       a1: "hsl(var(--a1))",
       "a1-active": "hsl(var(--a1-active))",
       "a1-disabled": "hsl(var(--a1-disabled))",
