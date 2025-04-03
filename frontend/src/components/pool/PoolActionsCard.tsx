@@ -49,7 +49,6 @@ import { BanksData, useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
-import { rebalanceBanksIfNeeded } from "@/lib/banks";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
 import {
   getIndexesOfObligationsWithDeposit,
@@ -534,7 +533,7 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
       });
       transaction.transferObjects([coinA, coinB], address);
 
-      rebalanceBanksIfNeeded(banks, steammClient, transaction);
+      // rebalanceBanksIfNeeded(banks, steammClient, transaction);
 
       // Stake LP tokens (if reserve exists)
       if (!!appData.lmMarket.reserveMap[pool.lpTokenType]) {
@@ -1085,7 +1084,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
     });
     transaction.transferObjects([coinA, coinB], address);
 
-    rebalanceBanksIfNeeded(banks, steammClient, transaction);
+    // rebalanceBanksIfNeeded(banks, steammClient, transaction);
 
     return transaction;
   };
@@ -1637,7 +1636,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
       });
       transaction.transferObjects([coinA, coinB], address);
 
-      rebalanceBanksIfNeeded(banks, steammClient, transaction);
+      // rebalanceBanksIfNeeded(banks, steammClient, transaction);
 
       const res = await signExecuteAndWaitForTransaction(transaction, {
         auction: true,
