@@ -39,9 +39,11 @@ interface StatsContext {
   globalHistoricalStats: {
     tvlUsd_7d: ChartData[] | undefined;
     volumeUsd_7d: ChartData[] | undefined;
+    feesUsd_7d: ChartData[] | undefined;
   };
   globalStats: {
     volumeUsd_7d: BigNumber | undefined;
+    feesUsd_7d: BigNumber | undefined;
   };
 }
 
@@ -62,9 +64,11 @@ const StatsContext = createContext<StatsContext>({
   globalHistoricalStats: {
     tvlUsd_7d: undefined,
     volumeUsd_7d: undefined,
+    feesUsd_7d: undefined,
   },
   globalStats: {
     volumeUsd_7d: undefined,
+    feesUsd_7d: undefined,
   },
 });
 
@@ -369,19 +373,23 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   const globalHistoricalStats: {
     tvlUsd_7d: ChartData[] | undefined;
     volumeUsd_7d: ChartData[] | undefined;
+    feesUsd_7d: ChartData[] | undefined;
   } = useMemo(() => {
     if (poolsData === undefined)
       return {
         tvlUsd_7d: undefined,
         volumeUsd_7d: undefined,
+        feesUsd_7d: undefined,
       };
 
     const result: {
       tvlUsd_7d: ChartData[] | undefined;
       volumeUsd_7d: ChartData[] | undefined;
+      feesUsd_7d: ChartData[] | undefined;
     } = {
       tvlUsd_7d: undefined,
       volumeUsd_7d: undefined,
+      feesUsd_7d: undefined,
     };
 
     // TVL
@@ -435,15 +443,42 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       );
     }
 
+    // Fees
+    if (
+      Object.keys(poolHistoricalStats.feesUsd_7d).length > 0 &&
+      Object.keys(poolHistoricalStats.feesUsd_7d).length ===
+        poolCountRef.current
+    ) {
+      const timestampsS = Object.values(poolHistoricalStats.feesUsd_7d)[0].map(
+        (d) => d.timestampS,
+      );
+
+      result.feesUsd_7d = timestampsS.reduce(
+        (acc, timestampS, i) => [
+          ...acc,
+          {
+            timestampS,
+            feesUsd_7d: +Object.values(poolHistoricalStats.feesUsd_7d).reduce(
+              (acc2, data) => acc2.plus(data[i].feesUsd_7d),
+              new BigNumber(0),
+            ),
+          },
+        ],
+        [] as ChartData[],
+      );
+    }
+
     return result;
   }, [
     poolsData,
     poolHistoricalStats.tvlUsd_7d,
     poolHistoricalStats.volumeUsd_7d,
+    poolHistoricalStats.feesUsd_7d,
   ]);
 
   const globalStats: {
     volumeUsd_7d: BigNumber | undefined;
+    feesUsd_7d: BigNumber | undefined;
   } = useMemo(
     () => ({
       volumeUsd_7d:
@@ -453,8 +488,15 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
               new BigNumber(0),
             )
           : undefined,
+      feesUsd_7d:
+        globalHistoricalStats.feesUsd_7d !== undefined
+          ? globalHistoricalStats.feesUsd_7d.reduce(
+              (acc, d) => acc.plus(d.feesUsd_7d),
+              new BigNumber(0),
+            )
+          : undefined,
     }),
-    [globalHistoricalStats.volumeUsd_7d],
+    [globalHistoricalStats.volumeUsd_7d, globalHistoricalStats.feesUsd_7d],
   );
 
   // Context

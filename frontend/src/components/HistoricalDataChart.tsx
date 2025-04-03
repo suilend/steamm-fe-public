@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  ChartConfig,
   ChartData,
   ChartType,
   OTHER_CATEGORY,
@@ -34,8 +35,8 @@ function ActiveBar({ ...props }) {
 
 interface TooltipContentProps {
   dataPeriodDays: 1 | 7 | 30;
-  formatCategory: (category: string) => string | undefined;
   formatValue: (value: number) => string;
+  formatCategory: (category: string) => string | undefined;
   sortedCategories: string[];
   d: ChartData;
   viewBox: ViewBox;
@@ -44,8 +45,8 @@ interface TooltipContentProps {
 
 function TooltipContent({
   dataPeriodDays,
-  formatCategory,
   formatValue,
+  formatCategory,
   sortedCategories,
   d,
   viewBox,
@@ -99,16 +100,9 @@ function TooltipContent({
   );
 }
 
-interface HistoricalDataChartProps {
+interface HistoricalDataChartProps extends ChartConfig {
   className?: ClassValue;
-  title: string;
-  value?: string;
-  valuePeriodDays?: 1 | 7 | 30;
-  chartType: ChartType;
-  data?: ChartData[];
-  dataPeriodDays: 1 | 7 | 30;
   formatCategory: (category: string) => string | undefined;
-  formatValue: (value: number) => string;
 }
 
 export default function HistoricalDataChart({
@@ -119,8 +113,8 @@ export default function HistoricalDataChart({
   chartType,
   data,
   dataPeriodDays,
-  formatCategory,
   formatValue,
+  formatCategory,
 }: HistoricalDataChartProps) {
   const gradientId = useRef<string>(uuidv4()).current;
 
@@ -335,8 +329,8 @@ export default function HistoricalDataChart({
                           return (
                             <TooltipContent
                               dataPeriodDays={dataPeriodDays}
-                              formatCategory={formatCategory}
                               formatValue={formatValue}
+                              formatCategory={formatCategory}
                               sortedCategories={sortedCategories}
                               d={payload[0].payload as ChartData}
                               viewBox={viewBox as ViewBox}
@@ -453,8 +447,8 @@ export default function HistoricalDataChart({
                         return (
                           <TooltipContent
                             dataPeriodDays={dataPeriodDays}
-                            formatCategory={formatCategory}
                             formatValue={formatValue}
+                            formatCategory={formatCategory}
                             sortedCategories={sortedCategories}
                             d={payload[0].payload as ChartData}
                             viewBox={viewBox as ViewBox}

@@ -1,10 +1,12 @@
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { v4 as uuidv4 } from "uuid";
 
 import { formatUsd } from "@suilend/frontend-sui";
+import { shallowPushQuery } from "@suilend/frontend-sui-next";
 import {
   Side,
   getFilteredRewards,
@@ -20,12 +22,29 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import useBreakpoint from "@/hooks/useBreakpoint";
-import { ChartType } from "@/lib/chart";
+import { ChartConfig, ChartType, chartStatNameMap } from "@/lib/chart";
 import { formatPair } from "@/lib/format";
 import { getTotalAprPercent } from "@/lib/liquidityMining";
 import { ParsedPool, PoolGroup } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+enum RhsChartStat {
+  VOLUME = "volume",
+  FEES = "fees",
+}
+
+enum QueryParams {
+  RHS_CHART_STAT = "rhs-chart",
+}
 
 export default function PoolsPage() {
+  const router = useRouter();
+  const queryParams = {
+    [QueryParams.RHS_CHART_STAT]: router.query[QueryParams.RHS_CHART_STAT] as
+      | RhsChartStat
+      | undefined,
+  };
+
   const { appData, poolsData, featuredPoolIds } = useLoadedAppContext();
   const { poolStats, globalHistoricalStats, globalStats } = useStatsContext();
 
@@ -41,6 +60,61 @@ export default function PoolsPage() {
             new BigNumber(0),
           ),
     [poolsData],
+  );
+
+  // RHS chart
+  const rhsChartConfigMap: Record<RhsChartStat, ChartConfig> = useMemo(
+    () => ({
+      [RhsChartStat.VOLUME]: {
+        title: chartStatNameMap[RhsChartStat.VOLUME],
+        value:
+          globalStats.volumeUsd_7d === undefined
+            ? undefined
+            : formatUsd(globalStats.volumeUsd_7d),
+        valuePeriodDays: 7,
+        chartType: ChartType.BAR,
+        data: globalHistoricalStats.volumeUsd_7d,
+        dataPeriodDays: 7,
+        formatValue: (value) => formatUsd(new BigNumber(value)),
+      },
+      [RhsChartStat.FEES]: {
+        title: chartStatNameMap[RhsChartStat.FEES],
+        value:
+          globalStats.feesUsd_7d === undefined
+            ? undefined
+            : formatUsd(globalStats.feesUsd_7d),
+        valuePeriodDays: 7,
+        chartType: ChartType.BAR,
+        dataPeriodDays: 7,
+        data: globalHistoricalStats.feesUsd_7d,
+        formatValue: (value) => formatUsd(new BigNumber(value)),
+      },
+    }),
+    [
+      globalStats.volumeUsd_7d,
+      globalHistoricalStats.volumeUsd_7d,
+      globalStats.feesUsd_7d,
+      globalHistoricalStats.feesUsd_7d,
+    ],
+  );
+
+  const selectedRhsChartStat =
+    queryParams[QueryParams.RHS_CHART_STAT] &&
+    Object.values(RhsChartStat).includes(
+      queryParams[QueryParams.RHS_CHART_STAT],
+    )
+      ? queryParams[QueryParams.RHS_CHART_STAT]
+      : RhsChartStat.VOLUME;
+  const onSelectedRhsChartStatChange = (rhsChartStat: RhsChartStat) => {
+    shallowPushQuery(router, {
+      ...router.query,
+      [QueryParams.RHS_CHART_STAT]: rhsChartStat,
+    });
+  };
+
+  const rhsChartConfig = useMemo(
+    () => rhsChartConfigMap[selectedRhsChartStat],
+    [rhsChartConfigMap, selectedRhsChartStat],
   );
 
   // Group pools by pair
@@ -185,8 +259,8 @@ export default function PoolsPage() {
                   chartType={ChartType.LINE}
                   data={globalHistoricalStats.tvlUsd_7d}
                   dataPeriodDays={7}
-                  formatCategory={(category) => category}
                   formatValue={(value) => formatUsd(new BigNumber(value))}
+                  formatCategory={(category) => category}
                 />
               </div>
             </div>
@@ -195,21 +269,44 @@ export default function PoolsPage() {
 
             {/* Volume */}
             <div className="flex-1">
-              <div className="w-full p-5">
+              <div className="relative w-full p-5">
                 <HistoricalDataChart
-                  title="Volume"
-                  value={
-                    globalStats.volumeUsd_7d === undefined
-                      ? undefined
-                      : formatUsd(globalStats.volumeUsd_7d)
-                  }
-                  valuePeriodDays={7}
-                  chartType={ChartType.BAR}
-                  data={globalHistoricalStats.volumeUsd_7d}
-                  dataPeriodDays={7}
+                  className="relative z-[1]"
+                  title={rhsChartConfig.title}
+                  value={rhsChartConfig.value}
+                  valuePeriodDays={rhsChartConfig.valuePeriodDays}
+                  chartType={rhsChartConfig.chartType}
+                  data={rhsChartConfig.data}
+                  dataPeriodDays={rhsChartConfig.dataPeriodDays}
+                  formatValue={rhsChartConfig.formatValue}
                   formatCategory={(category) => category}
-                  formatValue={(value) => formatUsd(new BigNumber(value))}
                 />
+
+                <div className="absolute right-5 top-5 z-[2] flex flex-row gap-1">
+                  {Object.values(RhsChartStat).map((rhsChartStat) => (
+                    <button
+                      key={rhsChartStat}
+                      className={cn(
+                        "group flex h-6 flex-row items-center rounded-md border px-2 transition-colors",
+                        selectedRhsChartStat === rhsChartStat
+                          ? "cursor-default bg-border"
+                          : "hover:bg-border/50",
+                      )}
+                      onClick={() => onSelectedRhsChartStatChange(rhsChartStat)}
+                    >
+                      <p
+                        className={cn(
+                          "!text-p3 transition-colors",
+                          selectedRhsChartStat === rhsChartStat
+                            ? "text-foreground"
+                            : "text-secondary-foreground group-hover:text-foreground",
+                        )}
+                      >
+                        {chartStatNameMap[rhsChartStat]}
+                      </p>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

@@ -34,6 +34,22 @@ export const getTooltipStyle = (width: number, viewBox: ViewBox, x: number) => {
   return { width, top, left, right };
 };
 
+export const chartStatNameMap: Record<string, string> = {
+  tvl: "TVL",
+  volume: "Volume",
+  fees: "Fees",
+};
+
+export type ChartConfig = {
+  title: string;
+  value?: string;
+  valuePeriodDays?: 1 | 7 | 30;
+  chartType: ChartType;
+  data?: ChartData[];
+  dataPeriodDays: 1 | 7 | 30;
+  formatValue: (value: number) => string;
+};
+
 export enum ChartType {
   LINE = "line",
   BAR = "bar",

@@ -9,7 +9,7 @@ import { shallowPushQuery } from "@suilend/frontend-sui-next";
 import HistoricalDataChart from "@/components/HistoricalDataChart";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
-import { ChartData, ChartType } from "@/lib/chart";
+import { ChartConfig, ChartType, chartStatNameMap } from "@/lib/chart";
 import { cn } from "@/lib/utils";
 
 enum ChartStat {
@@ -17,22 +17,6 @@ enum ChartStat {
   VOLUME = "volume",
   FEES = "fees",
 }
-
-const chartStatNameMap: Record<ChartStat, string> = {
-  [ChartStat.TVL]: "TVL",
-  [ChartStat.VOLUME]: "Volume",
-  [ChartStat.FEES]: "Fees",
-};
-
-type ChartConfig = {
-  title: string;
-  value?: string;
-  valuePeriodDays?: 1 | 7 | 30;
-  chartType: ChartType;
-  data?: ChartData[];
-  dataPeriodDays: 1 | 7 | 30;
-  formatValue: (value: number) => string;
-};
 
 enum QueryParams {
   CHART_STAT = "chart",
@@ -50,6 +34,7 @@ export default function PoolChartCard() {
 
   const { pool } = usePoolContext();
 
+  // Chart
   const chartConfigMap: Record<ChartStat, ChartConfig> = useMemo(
     () => ({
       [ChartStat.TVL]: {
@@ -123,8 +108,8 @@ export default function PoolChartCard() {
         chartType={chartConfig.chartType}
         data={chartConfig.data}
         dataPeriodDays={chartConfig.dataPeriodDays}
-        formatCategory={(category) => category}
         formatValue={chartConfig.formatValue}
+        formatCategory={(category) => category}
       />
 
       <div className="absolute right-5 top-5 z-[2] flex flex-row gap-1">
