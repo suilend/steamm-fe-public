@@ -17,6 +17,9 @@ export type ParsedBank = {
   fundsDeployed: BigNumber;
   totalFunds: BigNumber;
 
+  bTokenSupply: BigNumber;
+  bTokenExchangeRate: BigNumber;
+
   utilizationPercent: BigNumber;
   suilendDepositAprPercent: BigNumber;
 };

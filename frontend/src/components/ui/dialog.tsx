@@ -83,7 +83,7 @@ const DialogHeader = ({
   const { className: titleClassName, ...restTitleProps } = title;
 
   return (
-    <div className="flex w-full flex-col gap-1 p-4 pb-0">
+    <div className="flex w-full flex-col gap-1 p-5">
       {/* Title */}
       <div
         className={cn(
@@ -123,7 +123,7 @@ export interface DialogFooterProps extends PropsWithChildren {
 const DialogFooter = ({ className, children, ...props }: DialogFooterProps) => (
   <div
     className={cn(
-      "flex w-full flex-row items-center gap-2 p-4 pt-0",
+      "flex w-full flex-row items-center gap-2 p-5 pt-0",
       className,
     )}
     {...props}

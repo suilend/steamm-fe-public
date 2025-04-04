@@ -14,6 +14,7 @@ import {
 } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
+import { Plus } from "lucide-react";
 
 import {
   NORMALIZED_SUI_COINTYPE,
@@ -454,9 +455,11 @@ export default function CreatePoolCard() {
     if (oraclesData === undefined || banksData === undefined) return;
 
     if (submitButtonState.isDisabled) return;
-    if (!address || !quoterId || !feeTierPercent) return;
+    if (!quoterId || !feeTierPercent) return;
 
     try {
+      if (!address) throw new Error("Wallet not connected");
+
       setIsSubmitting(true);
 
       const oracleIndexA = oraclesData.COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]];
@@ -772,7 +775,11 @@ export default function CreatePoolCard() {
 
   return (
     <div className="flex w-full max-w-lg flex-col gap-4 rounded-md border p-5">
-      <p className="text-h3 text-foreground">Create pool</p>
+      <div className="flex flex-row items-center gap-2">
+        <Plus className="h-4 w-4 text-foreground" />
+        <p className="text-h3 text-foreground">Create pool</p>
+      </div>
+
       {/* Base asset */}
       <div className="flex w-full flex-col gap-3">
         <p className="text-p2 text-secondary-foreground">Base asset</p>
@@ -840,8 +847,8 @@ export default function CreatePoolCard() {
         </Parameter>
 
         {/* Market price */}
-        <div className="flex w-full flex-col items-end gap-1">
-          <Parameter label="Market price (Birdeye)" isHorizontal>
+        <Parameter label="Market price (Birdeye)" isHorizontal>
+          <div className="flex flex-col items-end gap-1.5">
             <p className="text-p2 text-foreground">
               {coinTypes.every((coinType) => coinType !== "") ? (
                 birdeyeRatio !== undefined ? (
@@ -856,22 +863,22 @@ export default function CreatePoolCard() {
                 "--"
               )}
             </p>
-          </Parameter>
 
-          {coinTypes.every((coinType) => coinType !== "") &&
-            (birdeyeRatio !== undefined ? (
-              <button
-                className="group flex h-6 flex-row items-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80"
-                onClick={onUseBirdeyePriceClick}
-              >
-                <p className="text-p3 text-button-2-foreground">
-                  Use market price
-                </p>
-              </button>
-            ) : (
-              <Skeleton className="h-[24px] w-16" />
-            ))}
-        </div>
+            {coinTypes.every((coinType) => coinType !== "") &&
+              (birdeyeRatio !== undefined ? (
+                <button
+                  className="group flex h-6 flex-row items-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80"
+                  onClick={onUseBirdeyePriceClick}
+                >
+                  <p className="text-p3 text-button-2-foreground">
+                    Use market price
+                  </p>
+                </button>
+              ) : (
+                <Skeleton className="h-[24px] w-16" />
+              ))}
+          </div>
+        </Parameter>
       </div>
 
       <Divider />

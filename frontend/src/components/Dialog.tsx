@@ -76,7 +76,7 @@ export default function Dialog({
             {headerProps && <DialogHeader {...headerProps} />}
             <div
               className={cn(
-                "relative flex flex-col gap-4 overflow-y-auto p-4",
+                "relative flex flex-col gap-4 overflow-y-auto p-5 pt-0",
                 dialogContentInnerChildrenWrapperClassName,
               )}
             >
@@ -105,7 +105,7 @@ export default function Dialog({
         )}
         <div
           className={cn(
-            "relative flex flex-col gap-4 overflow-y-auto p-4",
+            "relative flex flex-col gap-4 overflow-y-auto p-5 pt-0",
             dialogContentInnerChildrenWrapperClassName,
           )}
         >

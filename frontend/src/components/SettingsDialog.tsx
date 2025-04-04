@@ -45,7 +45,7 @@ export default function SettingsDialog() {
         </button>
       }
       headerProps={{
-        title: { children: "Settings" },
+        title: { icon: <Settings />, children: "Settings" },
       }}
       dialogContentInnerClassName="max-w-md"
     >

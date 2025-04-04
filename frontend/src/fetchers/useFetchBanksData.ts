@@ -48,6 +48,11 @@ export default function useFetchBanksData(
           ).div(10 ** coinMetadataMap[coinType].decimals);
           const fundsDeployed = totalFunds.minus(fundsAvailable);
 
+          const bTokenSupply = new BigNumber(
+            bank.btokenSupply.value.toString(),
+          ).div(10 ** coinMetadataMap[coinType].decimals);
+          const bTokenExchangeRate = totalFunds.div(bTokenSupply);
+
           const utilizationPercent = totalFunds.gt(0)
             ? fundsDeployed.div(totalFunds).times(100)
             : new BigNumber(0);
@@ -64,6 +69,9 @@ export default function useFetchBanksData(
             fundsAvailable,
             fundsDeployed,
             totalFunds,
+
+            bTokenSupply,
+            bTokenExchangeRate,
 
             utilizationPercent,
             suilendDepositAprPercent,

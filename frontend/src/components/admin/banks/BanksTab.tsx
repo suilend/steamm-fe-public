@@ -3,37 +3,38 @@ import { useMemo } from "react";
 import BankCard from "@/components/admin/banks/BankCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import { getBankPrice } from "@/lib/banks";
 
 export default function BanksTab() {
-  const { appData, banksData } = useLoadedAppContext();
+  const { appData, banksData, poolsData } = useLoadedAppContext();
 
   const sortedInitializableBanks = useMemo(() => {
-    if (banksData === undefined) return undefined;
+    if (banksData === undefined || poolsData === undefined) return undefined;
 
     return banksData.banks
       .filter((bank) => !!appData.mainMarket.reserveMap[bank.coinType])
-      .sort(
-        (a, b) =>
-          appData.coinMetadataMap[a.coinType].symbol.toLowerCase() <
-          appData.coinMetadataMap[b.coinType].symbol.toLowerCase()
-            ? -1
-            : 1, // Sort by symbol (ascending)
-      );
-  }, [appData, banksData]);
+      .sort((a, b) => {
+        const priceA = getBankPrice(a, poolsData);
+        const priceB = getBankPrice(b, poolsData);
+        if (priceA === undefined || priceB === undefined) return 0;
+
+        return +b.totalFunds.times(priceB) - +a.totalFunds.times(priceA);
+      });
+  }, [banksData, poolsData, appData]);
 
   const sortedNonInitializableBanks = useMemo(() => {
-    if (banksData === undefined) return undefined;
+    if (banksData === undefined || poolsData === undefined) return undefined;
 
     return banksData.banks
       .filter((bank) => !appData.mainMarket.reserveMap[bank.coinType])
-      .sort(
-        (a, b) =>
-          appData.coinMetadataMap[a.coinType].symbol.toLowerCase() <
-          appData.coinMetadataMap[b.coinType].symbol.toLowerCase()
-            ? -1
-            : 1, // Sort by symbol (ascending)
-      );
-  }, [appData, banksData]);
+      .sort((a, b) => {
+        const priceA = getBankPrice(a, poolsData);
+        const priceB = getBankPrice(b, poolsData);
+        if (priceA === undefined || priceB === undefined) return 0;
+
+        return +b.totalFunds.times(priceB) - +a.totalFunds.times(priceA);
+      });
+  }, [banksData, poolsData, appData]);
 
   return (
     <div className="flex w-full flex-col gap-1">

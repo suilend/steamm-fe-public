@@ -407,7 +407,7 @@ export class PoolModule implements IModule {
 
   public collectProtocolFees(
     poolInfo: PoolInfo,
-    tx: Transaction = new Transaction(),
+    tx: Transaction,
   ): [TransactionArgument, TransactionArgument] {
     const pool = this.sdk.getPool(poolInfo);
 
