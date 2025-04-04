@@ -8,7 +8,7 @@ import { useSettingsContext } from "@suilend/frontend-sui-next";
 import { OracleInfo } from "@suilend/steamm-sdk";
 
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
-import OpenExternalUrlButton from "@/components/OpenExternalUrlButton";
+import OpenUrlNewTab from "@/components/OpenUrlNewTab";
 import Parameter from "@/components/Parameter";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
@@ -74,7 +74,7 @@ export default function OracleCard({
           (pythPriceIdentifierSymbolMap?.[priceIdentifier] === undefined ? (
             <Skeleton className="h-5 w-5" />
           ) : (
-            <OpenExternalUrlButton
+            <OpenUrlNewTab
               url={getPythOracleUrl(
                 pythPriceIdentifierSymbolMap[priceIdentifier],
               )}
@@ -116,9 +116,7 @@ export default function OracleCard({
 
                 <div className="flex flex-row items-center gap-1">
                   <CopyToClipboardButton value={coinType} />
-                  <OpenExternalUrlButton
-                    url={explorer.buildCoinUrl(coinType)}
-                  />
+                  <OpenUrlNewTab url={explorer.buildCoinUrl(coinType)} />
                 </div>
               </div>
             ))}

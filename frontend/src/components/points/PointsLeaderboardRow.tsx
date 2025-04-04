@@ -11,7 +11,7 @@ import {
 import { useSettingsContext } from "@suilend/frontend-sui-next";
 
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
-import OpenExternalUrlButton from "@/components/OpenExternalUrlButton";
+import OpenUrlNewTab from "@/components/OpenUrlNewTab";
 import { columnStyleMap } from "@/components/points/PointsLeaderboardTable";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
@@ -72,8 +72,8 @@ export default function PointsLeaderboardRow({
 
         <div className="flex flex-row items-center gap-1">
           <CopyToClipboardButton value={row.address} />
-          <OpenExternalUrlButton url={explorer.buildAddressUrl(row.address)} />
-          <OpenExternalUrlButton
+          <OpenUrlNewTab url={explorer.buildAddressUrl(row.address)} />
+          <OpenUrlNewTab
             url={`${PORTFOLIO_URL}?wallet=${row.address}`}
             Icon={VenetianMask}
             tooltip="View Portfolio as this user"

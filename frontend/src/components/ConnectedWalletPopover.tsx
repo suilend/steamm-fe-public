@@ -10,7 +10,7 @@ import {
 } from "@suilend/frontend-sui-next";
 
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
-import OpenExternalUrlButton from "@/components/OpenExternalUrlButton";
+import OpenUrlNewTab from "@/components/OpenUrlNewTab";
 import Popover from "@/components/Popover";
 import Tooltip from "@/components/Tooltip";
 import { cn } from "@/lib/utils";
@@ -96,7 +96,7 @@ export default function ConnectedWalletPopover() {
 
             <div className="flex flex-row items-center gap-1">
               <CopyToClipboardButton value={address} />
-              <OpenExternalUrlButton url={explorer.buildAddressUrl(address)} />
+              <OpenUrlNewTab url={explorer.buildAddressUrl(address)} />
             </div>
           </div>
         </div>

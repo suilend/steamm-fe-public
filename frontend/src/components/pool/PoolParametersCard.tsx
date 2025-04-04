@@ -10,7 +10,7 @@ import { useSettingsContext } from "@suilend/frontend-sui-next";
 
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
-import OpenExternalUrlButton from "@/components/OpenExternalUrlButton";
+import OpenUrlNewTab from "@/components/OpenUrlNewTab";
 import Parameter from "@/components/Parameter";
 import SuilendLogo from "@/components/SuilendLogo";
 import Tag from "@/components/Tag";
@@ -53,7 +53,7 @@ export default function PoolParametersCard() {
 
             <div className="flex flex-row items-center gap-1">
               <CopyToClipboardButton value={coinType} />
-              <OpenExternalUrlButton url={explorer.buildCoinUrl(coinType)} />
+              <OpenUrlNewTab url={explorer.buildCoinUrl(coinType)} />
             </div>
 
             {appData.mainMarket.reserveMap[coinType] &&
@@ -120,7 +120,7 @@ export default function PoolParametersCard() {
 
           <div className="flex flex-row items-center gap-1">
             <CopyToClipboardButton value={pool.id} />
-            <OpenExternalUrlButton url={explorer.buildObjectUrl(pool.id)} />
+            <OpenUrlNewTab url={explorer.buildObjectUrl(pool.id)} />
           </div>
         </div>
       </Parameter>

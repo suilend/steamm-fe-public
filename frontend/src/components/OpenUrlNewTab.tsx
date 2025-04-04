@@ -4,17 +4,17 @@ import { ExternalLink, LucideIcon } from "lucide-react";
 
 import Tooltip from "@/components/Tooltip";
 
-interface OpenExternalUrlButtonProps {
+interface OpenUrlNewTabProps {
   url: string;
   Icon?: LucideIcon;
   tooltip?: string;
 }
 
-export default function OpenExternalUrlButton({
+export default function OpenUrlNewTab({
   url,
   Icon,
   tooltip,
-}: OpenExternalUrlButtonProps) {
+}: OpenUrlNewTabProps) {
   const Icon_ = Icon ?? ExternalLink;
 
   return (

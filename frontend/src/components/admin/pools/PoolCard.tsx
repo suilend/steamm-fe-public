@@ -13,6 +13,7 @@ import {
 import { Bank } from "@suilend/steamm-sdk";
 import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
 
+import OpenUrlNewTab from "@/components/OpenUrlNewTab";
 import Parameter from "@/components/Parameter";
 import PoolTypeTag from "@/components/pool/PoolTypeTag";
 import Tag from "@/components/Tag";
@@ -22,6 +23,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
+import { POOL_URL_PREFIX } from "@/lib/navigation";
+import { getPoolSlug } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedPool } from "@/lib/types";
 
@@ -86,20 +89,26 @@ export default function PoolCard({ pool }: PoolCardProps) {
   return (
     <div className="flex w-full flex-col gap-3 rounded-md border p-4">
       {/* Top */}
-      <div className="flex w-full flex-row items-center gap-2">
-        <TokenLogos coinTypes={pool.coinTypes} size={16} />
-        <p className="text-p1 text-foreground">
-          {formatPair(
-            pool.coinTypes.map(
-              (coinType) => appData.coinMetadataMap[coinType].symbol,
-            ),
-          )}
-        </p>
+      <div className="flex w-full flex-row items-center justify-between">
+        <div className="flex w-full flex-row items-center gap-2">
+          <TokenLogos coinTypes={pool.coinTypes} size={16} />
+          <p className="text-p1 text-foreground">
+            {formatPair(
+              pool.coinTypes.map(
+                (coinType) => appData.coinMetadataMap[coinType].symbol,
+              ),
+            )}
+          </p>
 
-        <div className="flex flex-row items-center gap-1">
-          <PoolTypeTag pool={pool} />
-          <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
+          <div className="flex flex-row items-center gap-1">
+            <PoolTypeTag pool={pool} />
+            <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
+          </div>
         </div>
+
+        <OpenUrlNewTab
+          url={`${POOL_URL_PREFIX}/${pool.id}-${getPoolSlug(appData, pool)}`}
+        />
       </div>
 
       <div className="flex w-full flex-col gap-6">
