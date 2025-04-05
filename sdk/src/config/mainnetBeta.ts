@@ -14,6 +14,7 @@ export const STEAMM_BETA_CONFIG: Package<SteammConfigs> = {
     quoterSourcePkgs: {
       cpmm: "0xddaa7c8c1e74d4b0448c5a11fdbee779eaca26c40183d8791e315c8f62530d51",
       omm: "0xa73893381457055cb4c1ba97dca9ad611acd84e2c9eada7a9fdff9d40a0b1591",
+      stable: "TODO",
     },
   },
 };

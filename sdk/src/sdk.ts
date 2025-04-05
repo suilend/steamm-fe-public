@@ -17,6 +17,7 @@ import {
   NewBankEvent,
   NewOracleQuoterEvent,
   NewPoolEvent,
+  NewStableQuoterEvent,
   OracleConfigs,
   OracleInfo,
   Package,
@@ -28,6 +29,7 @@ import {
   extractBankList,
   extractOracleQuoterInfo,
   extractPoolInfo,
+  extractStableQuoterInfo,
 } from "./types";
 import { SuiAddressType, patchFixSuiObjectId } from "./utils";
 
@@ -356,20 +358,44 @@ export class SteammSDK {
 
     const oracleQuoterPkgId =
       this.sdkOptions.steamm_config.config?.quoterSourcePkgs.omm;
+    const stableQuoterPkgId =
+      this.sdkOptions.steamm_config.config?.quoterSourcePkgs.stable;
 
-    let quoterEventData: EventData<NewOracleQuoterEvent>[] = [];
+    let oracleQuoterEventData: EventData<NewOracleQuoterEvent>[] = [];
     const res2: DataPage<EventData<NewOracleQuoterEvent>[]> =
       await this.fullClient.queryEventsByPage({
         MoveEventType: `${pkgAddy}::events::Event<${oracleQuoterPkgId}::omm::NewOracleQuoter>`,
       });
 
-    quoterEventData = res2.data.reduce((acc, curr) => acc.concat(curr), []);
+    oracleQuoterEventData = res2.data.reduce(
+      (acc, curr) => acc.concat(curr),
+      [],
+    );
+
+    let stableQuoterEventData: EventData<NewStableQuoterEvent>[] = [];
+    const res3: DataPage<EventData<NewStableQuoterEvent>[]> =
+      await this.fullClient.queryEventsByPage({
+        MoveEventType: `${pkgAddy}::events::Event<${stableQuoterPkgId}::stable::NewStableQuoter>`,
+      });
+
+    stableQuoterEventData = res3.data.reduce(
+      (acc, curr) => acc.concat(curr),
+      [],
+    );
+
     const pools = extractPoolInfo(eventData);
-    const oracleQuoterData = extractOracleQuoterInfo(quoterEventData);
+    const oracleQuoterData = extractOracleQuoterInfo(oracleQuoterEventData);
+    const stalbeQuoterData = extractStableQuoterInfo(stableQuoterEventData);
 
     pools.forEach((pool) => {
       if (oracleQuoterData[pool.poolId]) {
         pool.quoterData = oracleQuoterData[pool.poolId];
+      }
+    });
+
+    pools.forEach((pool) => {
+      if (stalbeQuoterData[pool.poolId]) {
+        pool.quoterData = stalbeQuoterData[pool.poolId];
       }
     });
 

@@ -28,7 +28,7 @@ export function swap(
   publishedAt: string = PUBLISHED_AT,
 ) {
   return tx.moveCall({
-    target: `${publishedAt}::omm::swap`,
+    target: `${publishedAt}::stable::swap`,
     typeArguments: typeArgs,
     arguments: [
       obj(tx, args.pool),
@@ -60,6 +60,7 @@ export interface NewArgs {
   metaBB: TransactionObjectInput;
   metaLp: TransactionObjectInput;
   lpTreasury: TransactionObjectInput;
+  amplifier: bigint | TransactionArgument;
 }
 
 export function new_(
@@ -69,7 +70,7 @@ export function new_(
   publishedAt: string = PUBLISHED_AT,
 ) {
   return tx.moveCall({
-    target: `${publishedAt}::omm::new`,
+    target: `${publishedAt}::stable::new`,
     typeArguments: typeArgs,
     arguments: [
       obj(tx, args.registry),
@@ -84,6 +85,7 @@ export function new_(
       pure(tx, args.oracleIndexA, `u64`),
       pure(tx, args.oracleIndexB, `u64`),
       pure(tx, args.swapFeeBps, `u64`),
+      pure(tx, args.amplifier, `u64`),
     ],
   });
 }
@@ -100,7 +102,7 @@ export function migrate(
   publishedAt: string = PUBLISHED_AT,
 ) {
   return tx.moveCall({
-    target: `${publishedAt}::omm::migrate`,
+    target: `${publishedAt}::stable::migrate`,
     typeArguments: typeArgs,
     arguments: [obj(tx, args.pool), obj(tx, args.admin)],
   });
@@ -125,7 +127,7 @@ export function quoteSwap(
   publishedAt: string = PUBLISHED_AT,
 ) {
   return tx.moveCall({
-    target: `${publishedAt}::omm::quote_swap`,
+    target: `${publishedAt}::stable::quote_swap`,
     typeArguments: typeArgs,
     arguments: [
       obj(tx, args.pool),

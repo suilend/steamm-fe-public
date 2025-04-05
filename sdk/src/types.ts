@@ -52,6 +52,14 @@ export type NewOracleQuoterEvent = {
   oracle_index_b: string;
 };
 
+export type NewStableQuoterEvent = {
+  pool_id: string;
+  oracle_registry_id: string;
+  oracle_index_a: string;
+  oracle_index_b: string;
+  amplifier: string;
+};
+
 export type NewBankEvent = {
   bank_id: string;
   btoken_type: { name: string };
@@ -144,12 +152,38 @@ export function extractOracleQuoterInfo(
   );
 }
 
+export function extractStableQuoterInfo(
+  events: EventData<NewStableQuoterEvent>[],
+): Record<string, QuoterData> {
+  return events.reduce(
+    (acc, event) => {
+      const {
+        pool_id,
+        oracle_registry_id,
+        oracle_index_a,
+        oracle_index_b,
+        amplifier,
+      } = event.parsedJson.event;
+      acc[pool_id] = {
+        type: "Stable",
+        oracleRegistryId: oracle_registry_id,
+        oracleIndexA: Number(oracle_index_a),
+        oracleIndexB: Number(oracle_index_b),
+        amplifier: BigInt(amplifier),
+      };
+      return acc;
+    },
+    {} as Record<string, QuoterData>,
+  );
+}
+
 export type SteammConfigs = {
   registryId: SuiObjectIdType;
   globalAdmin: SuiObjectIdType;
   quoterSourcePkgs: {
     cpmm: SuiObjectIdType;
     omm: SuiObjectIdType;
+    stable: SuiObjectIdType;
   };
 };
 
@@ -224,20 +258,30 @@ export type PoolInfo = {
   quoterData?: QuoterData;
 };
 
-export type QuoterData = {
-  type: "Oracle";
-  oracleIndexA: number;
-  oracleIndexB: number;
-  oracleRegistryId: SuiObjectIdType;
-};
+export type QuoterData =
+  | {
+      type: "Oracle";
+      oracleIndexA: number;
+      oracleIndexB: number;
+      oracleRegistryId: SuiObjectIdType;
+    }
+  | {
+      type: "Stable";
+      oracleIndexA: number;
+      oracleIndexB: number;
+      oracleRegistryId: SuiObjectIdType;
+      amplifier: bigint;
+    };
 
 export function getQuoterType(
   quoterType: string,
-): "ConstantProduct" | "Oracle" {
+): "ConstantProduct" | "Oracle" | "Stable" {
   if (quoterType.includes("::cpmm::CpQuoter")) {
     return "ConstantProduct";
   } else if (quoterType.includes("::omm::OracleQuoter")) {
     return "Oracle";
+  } else if (quoterType.includes("::stable::StableQuoter")) {
+    return "Stable";
   } else {
     throw new Error(`Unknown quoter type: ${quoterType}`);
   }

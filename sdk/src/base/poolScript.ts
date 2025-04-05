@@ -106,6 +106,26 @@ export class PoolScript {
           },
           this.pkgInfo.publishedAt,
         );
+      case "Stable":
+        return PoolScriptFunctions.stableSwap(
+          tx,
+          this.poolScriptTypesNoQuoter(),
+          {
+            pool: tx.object(this.pool.poolInfo.poolId),
+            bankA: tx.object(this.bankA.bankInfo.bankId),
+            bankB: tx.object(this.bankB.bankInfo.bankId),
+            lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
+            oraclePriceUpdateA: args.oraclePriceA,
+            oraclePriceUpdateB: args.oraclePriceB,
+            coinA: args.coinA,
+            coinB: args.coinB,
+            amountIn: args.amountIn,
+            a2B: args.a2b,
+            minAmountOut: args.minAmountOut,
+            clock: tx.object(SUI_CLOCK_OBJECT_ID),
+          },
+          this.pkgInfo.publishedAt,
+        );
       default:
         console.log("Args:", args);
         throw new Error("Unknown pool type");
@@ -134,6 +154,23 @@ export class PoolScript {
         );
       case "Oracle":
         return PoolScriptFunctions.quoteOmmSwap(
+          tx,
+          this.poolScriptTypesNoQuoter(),
+          {
+            pool: tx.object(this.pool.poolInfo.poolId),
+            bankA: tx.object(this.bankA.bankInfo.bankId),
+            bankB: tx.object(this.bankB.bankInfo.bankId),
+            lendingMarket: tx.object(this.bankA.bankInfo.lendingMarketId),
+            oraclePriceUpdateA: tx.object(args.oraclePriceA),
+            oraclePriceUpdateB: tx.object(args.oraclePriceB),
+            amountIn: args.amountIn,
+            a2B: args.a2b,
+            clock: tx.object(SUI_CLOCK_OBJECT_ID),
+          },
+          this.pkgInfo.publishedAt,
+        );
+      case "Stable":
+        return PoolScriptFunctions.quoteStableSwap(
           tx,
           this.poolScriptTypesNoQuoter(),
           {

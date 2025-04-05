@@ -9,6 +9,7 @@ import {
 } from "../base";
 import { CreateCpPoolArgs } from "../base/quoters/constantQuoter/args";
 import { CreateOraclePoolArgs } from "../base/quoters/oracleQuoter/args";
+import { CreateStablePoolArgs } from "../base/quoters/stableQuoter/args";
 import { BankInfo, PoolInfo } from "../types";
 import { SuiAddressType, SuiTypeName } from "../utils";
 
@@ -94,9 +95,16 @@ export type CreateOraclePoolParams = Omit<
   CreateOraclePoolArgs,
   "registry" | "oracleRegistry" | "lendingMarket" | "lendingMarketType"
 >;
+export type CreateStablePoolParams = Omit<
+  CreateStablePoolArgs,
+  "registry" | "oracleRegistry" | "lendingMarket" | "lendingMarketType"
+>;
 
-export type CreatePoolParams = CreateCpPoolParams | CreateOraclePoolParams;
+export type CreatePoolParams =
+  | CreateCpPoolParams
+  | CreateOraclePoolParams
+  | CreateStablePoolParams;
 
 export type SharePoolParams = SharePoolArgs & {
-  type: "ConstantProduct" | "Oracle";
+  type: "ConstantProduct" | "Oracle" | "Stable";
 };
