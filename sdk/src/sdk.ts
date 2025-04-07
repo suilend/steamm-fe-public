@@ -386,7 +386,7 @@ export class SteammSDK {
 
     const pools = extractPoolInfo(eventData);
     const oracleQuoterData = extractOracleQuoterInfo(oracleQuoterEventData);
-    const stalbeQuoterData = extractStableQuoterInfo(stableQuoterEventData);
+    const stableQuoterData = extractStableQuoterInfo(stableQuoterEventData);
 
     pools.forEach((pool) => {
       if (oracleQuoterData[pool.poolId]) {
@@ -395,8 +395,8 @@ export class SteammSDK {
     });
 
     pools.forEach((pool) => {
-      if (stalbeQuoterData[pool.poolId]) {
-        pool.quoterData = stalbeQuoterData[pool.poolId];
+      if (stableQuoterData[pool.poolId]) {
+        pool.quoterData = stableQuoterData[pool.poolId];
       }
     });
 

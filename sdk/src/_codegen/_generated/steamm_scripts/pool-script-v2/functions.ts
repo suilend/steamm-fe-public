@@ -281,6 +281,18 @@ export interface QuoteOmmSwapArgs {
   clock: TransactionObjectInput;
 }
 
+export interface QuoteStableSwapArgs {
+  pool: TransactionObjectInput;
+  bankA: TransactionObjectInput;
+  bankB: TransactionObjectInput;
+  lendingMarket: TransactionObjectInput;
+  oraclePriceUpdateA: TransactionObjectInput;
+  oraclePriceUpdateB: TransactionObjectInput;
+  a2B: boolean | TransactionArgument;
+  amountIn: bigint | TransactionArgument;
+  clock: TransactionObjectInput;
+}
+
 export function quoteOmmSwap(
   tx: Transaction,
   typeArgs: [string, string, string, string, string, string],
@@ -307,7 +319,7 @@ export function quoteOmmSwap(
 export function quoteStableSwap(
   tx: Transaction,
   typeArgs: [string, string, string, string, string, string],
-  args: QuoteOmmSwapArgs,
+  args: QuoteStableSwapArgs,
   publishedAt: string = PUBLISHED_AT,
 ) {
   return tx.moveCall({
