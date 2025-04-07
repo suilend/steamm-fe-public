@@ -6,13 +6,15 @@ import { test as lendingTest } from "./tests/lending.test";
 import { test as ommTest } from "./tests/omm.test";
 import { test as routerTest } from "./tests/router.test";
 import { test as routerUnitTest } from "./tests/routerUnit.test";
+import { test as stableTest } from "./tests/stable.test";
 
 describe("Test Suite", async () => {
   // Run all tests from teston.test.ts
-  // await baseTest();
-  // await routerUnitTest();
-  // await routerTest();
-  // await errTest();
-  // await lendingTest();
+  await baseTest();
+  await routerUnitTest();
+  await routerTest();
+  await errTest();
+  await lendingTest();
   await ommTest();
+  await stableTest();
 });

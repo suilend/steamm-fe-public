@@ -4,6 +4,7 @@ export interface SteammPackageInfo {
   quoterPkgs: {
     cpmm: string;
     omm: string;
+    stable: string;
   };
 }
 

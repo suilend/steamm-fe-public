@@ -8,6 +8,7 @@ import { OracleQuoter, PoolFunctions } from "../..";
 import { PoolInfo, SteammPackageInfo } from "../../types";
 import { ConstantProductQuoter } from "../quoters/constantQuoter";
 import { Quoter } from "../quoters/quoter";
+import { StableQuoter } from "../quoters/stableQuoter";
 
 import {
   CollectProtocolFeesArgs,
@@ -42,7 +43,9 @@ export class Pool {
       case `${pkgInfo.quoterPkgs.cpmm}::cpmm::CpQuoter`:
         return new ConstantProductQuoter(pkgInfo, poolInfo);
       case `${pkgInfo.quoterPkgs.omm}::omm::OracleQuoter`:
-        return new ConstantProductQuoter(pkgInfo, poolInfo);
+        return new OracleQuoter(pkgInfo, poolInfo);
+      case `${pkgInfo.quoterPkgs.stable}::stable::StableQuoter`:
+        return new StableQuoter(pkgInfo, poolInfo);
       default:
         throw new Error(`Unsupported quoter type: ${poolInfo.quoterType}`);
     }

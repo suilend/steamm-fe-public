@@ -212,6 +212,7 @@ export class SteammSDK {
       quoterPkgs: {
         cpmm: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.cpmm,
         omm: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm,
+        stable: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.stable,
       },
     };
   }
