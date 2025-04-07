@@ -17,10 +17,10 @@ const usePoolTransactionHistoryMap = (poolIds: string[] | undefined) => {
 
   const [poolTransactionHistoryMapMap, setPoolTransactionHistoryMapMap] =
     useState<
-      Record<string, Record<string, (HistoryDeposit | HistoryRedeem)[]>>
+      Record<string, Record<string, (HistoryDeposit | HistoryRedeem)[][]>>
     >({});
   const poolTransactionHistoryMap:
-    | Record<string, (HistoryDeposit | HistoryRedeem)[]>
+    | Record<string, (HistoryDeposit | HistoryRedeem)[][]>
     | undefined = useMemo(
     () => (!address ? {} : poolTransactionHistoryMapMap[address]),
     [address, poolTransactionHistoryMapMap],
@@ -56,13 +56,43 @@ const usePoolTransactionHistoryMap = (poolIds: string[] | undefined) => {
                   ...entry,
                   type: HistoryTransactionType.REDEEM,
                 })) as HistoryRedeem[]),
-              ].sort((a, b) => +b.timestamp - +a.timestamp);
+              ].sort((a, b) => +a.timestamp - +b.timestamp); // Sort by timestamp (asc)
+
+              // Split transaction history into separate positions
+              let positions: (HistoryDeposit | HistoryRedeem)[][] = [];
+              let currentPositionLpTokens = 0;
+
+              for (let i = 0; i < transactionHistory.length; i++) {
+                const transaction = transactionHistory[i];
+
+                if (transaction.type === HistoryTransactionType.DEPOSIT) {
+                  if (currentPositionLpTokens === 0)
+                    positions.push([transaction]);
+                  else positions[positions.length - 1].push(transaction);
+
+                  currentPositionLpTokens += +transaction.mint_lp;
+                } else {
+                  positions[positions.length - 1].push(transaction);
+
+                  currentPositionLpTokens -= +transaction.burn_lp;
+                }
+              }
+
+              positions = positions
+                .map(
+                  (position) =>
+                    position
+                      .slice()
+                      .sort((a, b) => +b.timestamp - +a.timestamp), // Sort individual position transactions by timestamp (asc)
+                )
+                .slice()
+                .reverse(); // Most recent positions first
 
               setPoolTransactionHistoryMapMap((prev) => ({
                 ...prev,
                 [address!]: {
                   ...prev[address!],
-                  [poolId]: transactionHistory,
+                  [poolId]: positions,
                 },
               }));
             }),

@@ -220,7 +220,7 @@ function PoolPage() {
               {poolTransactionHistory === undefined ? (
                 <Skeleton className="h-5 w-12" />
               ) : (
-                <Tag>{poolTransactionHistory.length}</Tag>
+                <Tag>{poolTransactionHistory.flat().length}</Tag>
               )}
             </div>
 
