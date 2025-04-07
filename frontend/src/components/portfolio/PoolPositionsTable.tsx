@@ -178,7 +178,7 @@ export default function PoolPositionsTable({
 
           <HeaderColumn<Column, SortableColumn>
             id="pnlPercent"
-            tooltip="The PnL takes into account the yield and the Suilend deposit interest for the underlying assets. It does not include any changes in the USD prices of the underlying assets."
+            tooltip="The PnL compares the current USD value of your balance and the current USD value of your deposits."
             sortState={sortState}
             toggleSortByColumn={
               !!(poolPositions ?? []).every(
