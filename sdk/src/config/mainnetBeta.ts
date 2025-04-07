@@ -3,18 +3,19 @@ import { Package, SteammConfigs } from "../types";
 
 export const STEAMM_BETA_CONFIG: Package<SteammConfigs> = {
   package_id:
-    "0xddaa7c8c1e74d4b0448c5a11fdbee779eaca26c40183d8791e315c8f62530d51",
+    "0xca434de5b4ef05a2ad059947b371f9c94ae8c7786fdb112fe83da50b76f5069f",
   published_at:
-    "0xa73893381457055cb4c1ba97dca9ad611acd84e2c9eada7a9fdff9d40a0b1591",
+    "0xca434de5b4ef05a2ad059947b371f9c94ae8c7786fdb112fe83da50b76f5069f",
   config: {
     registryId:
-      "0xe20d9d9d762b3f233e0f2769f8ac7fe1c8bedcb1a006c11abd1cf3f013ac6df6",
+      "0x459187246e094301d1a0b58780e5b1761e8551ac88ffc125684e9d5a3f7dcefc",
     globalAdmin:
-      "0xcebf107cba93173bd99837d0e267a8fedfbf43f127451af3fb61823373744868",
+      "0xf79576d0911a1631407d76788aa88b401d128f75d2f9edbd645f3aee3d3bc9fd",
     quoterSourcePkgs: {
-      cpmm: "0xddaa7c8c1e74d4b0448c5a11fdbee779eaca26c40183d8791e315c8f62530d51",
-      omm: "0xa73893381457055cb4c1ba97dca9ad611acd84e2c9eada7a9fdff9d40a0b1591",
-      stable: "TODO",
+      cpmm: "0xca434de5b4ef05a2ad059947b371f9c94ae8c7786fdb112fe83da50b76f5069f",
+      omm: "0xca434de5b4ef05a2ad059947b371f9c94ae8c7786fdb112fe83da50b76f5069f",
+      stable:
+        "0xca434de5b4ef05a2ad059947b371f9c94ae8c7786fdb112fe83da50b76f5069f",
     },
   },
 };
@@ -23,14 +24,14 @@ export const STEAMM_SCRIPT_BETA_CONFIG = {
   package_id:
     "0xdfcac0610e134d98885744e0fb4b400c77b850abaf7ec4b372530e3661d9728e",
   published_at:
-    "0x9caa34a479ff313e20b0be665540bf8b10192650a7886039fffdb449585c48f6",
+    "0xdfcac0610e134d98885744e0fb4b400c77b850abaf7ec4b372530e3661d9728e",
 };
 
 export const SUILEND_BETA_CONFIG = {
   package_id:
     "0x1f54a9a2d71799553197e9ea24557797c6398d6a65f2d4d3818c9304b75d5e21",
   published_at:
-    "0x5bb8cb3894945f523736f4f5059b1621056e8093b165ea56b20805d0ef2461a9",
+    "0xd1ad8c401da6933bb5a5ccde1420f35c45e6a42a79ea6003f3248fe3c510d418",
   config: {
     lendingMarketId:
       "0x12e46de3eafaf0308a2dd64f1158782ed19e6621835bf883a1dd6b3061115667", // Main market (beta)
