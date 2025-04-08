@@ -52,6 +52,7 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
 
 interface PoolsTableProps {
   className?: ClassValue;
+  isFeaturedPools?: boolean;
   tableId: string;
   poolGroups?: PoolGroup[];
   searchString?: string;
@@ -59,6 +60,7 @@ interface PoolsTableProps {
 
 export default function PoolsTable({
   className,
+  isFeaturedPools,
   tableId,
   poolGroups,
   searchString,
@@ -227,21 +229,28 @@ export default function PoolsTable({
             </p>
           </div>
         ) : (
-          sortedPoolGroups.map((poolGroup) =>
-            poolGroup.pools.length === 1 ? (
-              <PoolRow
-                key={poolGroup.id}
-                pool={poolGroup.pools[0]}
-                isLastPoolInGroup
-              />
+          <>
+            {isFeaturedPools ? (
+              sortedPoolGroups
+                .map((poolGroup) => poolGroup.pools)
+                .flat()
+                .map((pool) => <PoolRow key={pool.id} pool={pool} />)
             ) : (
-              <PoolGroupRow
-                key={poolGroup.id}
-                tableId={tableId}
-                poolGroup={poolGroup}
-              />
-            ),
-          )
+              <>
+                {sortedPoolGroups.map((poolGroup) =>
+                  poolGroup.pools.length === 1 ? (
+                    <PoolRow key={poolGroup.id} pool={poolGroup.pools[0]} />
+                  ) : (
+                    <PoolGroupRow
+                      key={poolGroup.id}
+                      tableId={tableId}
+                      poolGroup={poolGroup}
+                    />
+                  ),
+                )}
+              </>
+            )}
+          </>
         )}
       </div>
     </div>

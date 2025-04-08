@@ -333,6 +333,7 @@ export default function PoolsPage() {
             </div>
 
             <PoolsTable
+              isFeaturedPools
               tableId="featured-pools"
               poolGroups={featuredPoolGroups}
             />
