@@ -82,7 +82,7 @@ export default function useFetchOraclesData(steammClient: SteammSDK) {
     try {
       COINTYPE_ORACLE_INDEX_MAP = await (
         await fetch(
-          `${ASSETS_URL}/cointype-oracle-index-map${process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true" ? "-beta" : ""}.json?timestamp=${Date.now()}`,
+          `${ASSETS_URL}/cointype-oracle-index-map.json?timestamp=${Date.now()}`,
         )
       ).json();
     } catch (err) {
