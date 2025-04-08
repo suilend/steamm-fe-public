@@ -365,7 +365,7 @@ export class RpcModule extends SuiClient {
 
       return Pool.fromSuiParsedData(parsedTypes, parsedData);
     } catch (error) {
-      console.error("Error fetching shared object:", error);
+      console.error("Error fetching CPMM pool:", error);
       throw error;
     }
   }
@@ -424,7 +424,7 @@ export class RpcModule extends SuiClient {
 
       return Pool.fromSuiParsedData(parsedTypes, parsedData);
     } catch (error) {
-      console.error("Error fetching shared object:", error);
+      console.error("Error fetching oracle pool:", error);
       throw error;
     }
   }
@@ -483,7 +483,7 @@ export class RpcModule extends SuiClient {
 
       return Pool.fromSuiParsedData(parsedTypes, parsedData);
     } catch (error) {
-      console.error("Error fetching shared object:", error);
+      console.error("Error fetching stable pool:", error);
       throw error;
     }
   }
@@ -549,7 +549,7 @@ export class RpcModule extends SuiClient {
 
       return Bank.fromSuiParsedData(parsedTypes, parsedData);
     } catch (error) {
-      console.error("Error fetching shared object:", error);
+      console.error("Error fetching bank:", error);
       throw error;
     }
   }
@@ -598,7 +598,7 @@ export class RpcModule extends SuiClient {
 
       return OracleRegistry.fromSuiParsedData(parsedData);
     } catch (error) {
-      console.error("Error fetching shared object:", error);
+      console.error("Error fetching oracle registry:", error);
       throw error;
     }
   }
