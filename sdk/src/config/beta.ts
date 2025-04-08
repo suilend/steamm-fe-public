@@ -24,9 +24,9 @@ export const STEAMM_BETA_CONFIG: Package<SteammConfigs> = {
 
 export const STEAMM_SCRIPT_BETA_CONFIG = {
   package_id:
-    "0xdfcac0610e134d98885744e0fb4b400c77b850abaf7ec4b372530e3661d9728e",
+    "0x3dd4aabf6eab35209df26932781ab3e4edaa0cdbfcba92585725e463dfb41b40",
   published_at:
-    "0xdfcac0610e134d98885744e0fb4b400c77b850abaf7ec4b372530e3661d9728e",
+    "0x3dd4aabf6eab35209df26932781ab3e4edaa0cdbfcba92585725e463dfb41b40",
 };
 
 export const SUILEND_BETA_CONFIG = {

@@ -663,7 +663,7 @@ export default function CreatePoolCard() {
           coinMetaA: tokens[0].id!, // Checked above
           coinTypeB: tokens[1].coinType,
           coinMetaB: tokens[1].id!, // Checked above
-          amplifier: BigInt(0), // TODO
+          amplifier: BigInt(100),
         };
       } else {
         throw new Error("Invalid quoterId");
