@@ -69,11 +69,11 @@ export default function useFetchPoolsData(
         poolInfos.map((poolInfo) =>
           limit10(async () => {
             const id = poolInfo.poolId;
-            const quoterId = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
-              ? QuoterId.CPMM
-              : poolInfo.quoterType.endsWith("omm::OracleQuoter")
-                ? QuoterId.ORACLE
-                : QuoterId.CPMM; // Should never need to use the fallback
+            const quoterId = poolInfo.quoterType.endsWith("omm::OracleQuoter")
+              ? QuoterId.ORACLE
+              : poolInfo.quoterType.endsWith("stable::StableQuoter")
+                ? QuoterId.STABLE
+                : QuoterId.CPMM;
 
             const bTokenTypeA = poolInfo.coinTypeA;
             const bTokenTypeB = poolInfo.coinTypeB;
@@ -89,11 +89,11 @@ export default function useFetchPoolsData(
             const coinTypes: [string, string] = [coinTypeA, coinTypeB];
 
             const pool =
-              quoterId === QuoterId.CPMM
-                ? await steammClient.fullClient.fetchConstantProductPool(id)
-                : quoterId === QuoterId.ORACLE
-                  ? await steammClient.fullClient.fetchOraclePool(id)
-                  : await steammClient.fullClient.fetchConstantProductPool(id); // Should never need to use the fallback
+              quoterId === QuoterId.ORACLE
+                ? await steammClient.fullClient.fetchOraclePool(id)
+                : quoterId === QuoterId.STABLE
+                  ? await steammClient.fullClient.fetchStablePool(id)
+                  : await steammClient.fullClient.fetchConstantProductPool(id);
 
             const redeemQuote = await steammClient.Pool.quoteRedeem({
               lpTokens: pool.lpSupply.value,
@@ -120,22 +120,20 @@ export default function useFetchPoolsData(
 
             const balances: [BigNumber, BigNumber] = [balanceA, balanceB];
 
-            let priceA =
-              quoterId === QuoterId.ORACLE
-                ? oraclesData.oracleIndexOracleInfoPriceMap[
-                    +(pool.quoter as OracleQuoter).oracleIndexA.toString()
-                  ].price
-                : (oraclesData.coinTypeOracleInfoPriceMap[coinTypeA]?.price ??
-                  mainMarket.reserveMap[coinTypeA]?.price ??
-                  undefined);
-            let priceB =
-              quoterId === QuoterId.ORACLE
-                ? oraclesData.oracleIndexOracleInfoPriceMap[
-                    +(pool.quoter as OracleQuoter).oracleIndexB.toString()
-                  ].price
-                : (oraclesData.coinTypeOracleInfoPriceMap[coinTypeB]?.price ??
-                  mainMarket.reserveMap[coinTypeB]?.price ??
-                  undefined);
+            let priceA = [QuoterId.ORACLE, QuoterId.STABLE].includes(quoterId)
+              ? oraclesData.oracleIndexOracleInfoPriceMap[
+                  +(pool.quoter as OracleQuoter).oracleIndexA.toString()
+                ].price
+              : (oraclesData.coinTypeOracleInfoPriceMap[coinTypeA]?.price ??
+                mainMarket.reserveMap[coinTypeA]?.price ??
+                undefined);
+            let priceB = [QuoterId.ORACLE, QuoterId.STABLE].includes(quoterId)
+              ? oraclesData.oracleIndexOracleInfoPriceMap[
+                  +(pool.quoter as OracleQuoter).oracleIndexB.toString()
+                ].price
+              : (oraclesData.coinTypeOracleInfoPriceMap[coinTypeB]?.price ??
+                mainMarket.reserveMap[coinTypeB]?.price ??
+                undefined);
 
             if (priceA === undefined && priceB === undefined) {
               console.error(

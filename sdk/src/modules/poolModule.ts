@@ -12,15 +12,7 @@ import {
 import { OracleFunctions } from "../_codegen";
 import { PriceInfoObject } from "../_codegen/_generated/_dependencies/source/0x8d97f1cd6ac663735be08d1d2b6d02a159e711586461306ce60a2b7a6a565a9e/price-info/structs";
 import { getPythPrice } from "../_codegen/oracleFunctions";
-import {
-  SwapQuote,
-  createConstantProductPool,
-  createConstantProductPoolAndShare,
-  createOraclePool,
-  createOraclePoolAndShare,
-  shareConstantProductPool,
-  shareOraclePool,
-} from "../base";
+import { SwapQuote } from "../base";
 import {
   DepositQuote,
   RedeemQuote,
@@ -28,6 +20,16 @@ import {
   castRedeemQuote,
   castSwapQuote,
 } from "../base/pool/poolTypes";
+import {
+  createConstantProductPool,
+  createConstantProductPoolAndShare,
+  shareConstantProductPool,
+} from "../base/quoters/constantQuoter";
+import {
+  createOraclePool,
+  createOraclePoolAndShare,
+  shareOraclePool,
+} from "../base/quoters/oracleQuoter";
 import { OracleSwapExtraArgs } from "../base/quoters/oracleQuoter/args";
 import {
   createStablePool,

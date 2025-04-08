@@ -44,7 +44,7 @@ export const SUILEND_BETA_CONFIG = {
 
 export const BETA_CONFIG: SdkOptions = {
   fullRpcUrl: "https://fullnode.mainnet.sui.io:443",
-  suilend_config: SUILEND_BETA_CONFIG, // Use SUILEND_CONFIG to be able to create pools
+  suilend_config: SUILEND_BETA_CONFIG,
   steamm_config: STEAMM_BETA_CONFIG,
   steamm_script_config: STEAMM_SCRIPT_BETA_CONFIG,
   oracle_config: ORACLE_CONFIG,

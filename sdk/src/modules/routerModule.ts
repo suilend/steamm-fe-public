@@ -15,7 +15,6 @@ import { SteammSDK } from "../sdk";
 import {
   BankInfo,
   BankList,
-  PoolInfo,
   getBankFromBToken,
   getBankFromUnderlying,
   getQuoterType,

@@ -29,10 +29,10 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     // Suilend - Main market
     const mainMarket_suilendClient = await SuilendClient.initialize(
       process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-        ? BETA_CONFIG.suilend_config.config!.lendingMarketId // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true (may not match bank config)
+        ? BETA_CONFIG.suilend_config.config!.lendingMarketId // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
         : MAINNET_CONFIG.suilend_config.config!.lendingMarketId,
       process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-        ? BETA_CONFIG.suilend_config.config!.lendingMarketType // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true (may not match bank config)
+        ? BETA_CONFIG.suilend_config.config!.lendingMarketType // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
         : MAINNET_CONFIG.suilend_config.config!.lendingMarketType,
       suiClient,
     );
