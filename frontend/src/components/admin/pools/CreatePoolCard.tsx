@@ -465,7 +465,7 @@ export default function CreatePoolCard() {
       const oracleIndexA = oraclesData.COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]];
       const oracleIndexB = oraclesData.COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]];
 
-      if (quoterId === QuoterId.ORACLE) {
+      if ([QuoterId.ORACLE, QuoterId.STABLE].includes(quoterId)) {
         if (oracleIndexA === undefined)
           throw new Error(
             "Base asset coinType not found in COINTYPE_ORACLE_INDEX_MAP",
@@ -656,16 +656,20 @@ export default function CreatePoolCard() {
       } else if (quoterId === QuoterId.STABLE) {
         poolArgs = {
           ...createPoolBaseArgs,
-          // TODO
+          type: "Stable" as const,
+          oracleIndexA: BigInt(oracleIndexA!), // Checked above
+          oracleIndexB: BigInt(oracleIndexB!), // Checked above
+          coinTypeA: tokens[0].coinType,
+          coinMetaA: tokens[0].id!, // Checked above
+          coinTypeB: tokens[1].coinType,
+          coinMetaB: tokens[1].id!, // Checked above
+          amplifier: BigInt(0), // TODO
         };
       } else {
         throw new Error("Invalid quoterId");
       }
 
-      const pool = await steammClient.Pool.createPool(
-        transaction,
-        poolArgs as any,
-      );
+      const pool = await steammClient.Pool.createPool(transaction, poolArgs);
 
       // Step 4.2: Deposit
       console.log("xxx step 4.2: deposit - pool:", pool);
@@ -706,7 +710,10 @@ export default function CreatePoolCard() {
             [QuoterId.ORACLE]: `${
               steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm
             }::omm::OracleQuoter`,
-            [QuoterId.STABLE]: "", // TODO
+            [QuoterId.STABLE]: `${
+              steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs
+                .stable
+            }::stable::StableQuoter`,
           }[quoterId],
           createLpTokenResult.coinType,
         ],
@@ -744,7 +751,10 @@ export default function CreatePoolCard() {
             ...sharePoolBaseArgs,
             type: "Oracle" as const,
           },
-          [QuoterId.STABLE]: {} as any, // TODO
+          [QuoterId.STABLE]: {
+            ...sharePoolBaseArgs,
+            type: "Stable" as const,
+          },
         }[quoterId],
         transaction,
       );
@@ -897,13 +907,7 @@ export default function CreatePoolCard() {
             return (
               <div key={_quoterId} className="w-max">
                 <Tooltip
-                  title={
-                    [QuoterId.STABLE].includes(_quoterId)
-                      ? "Coming soon"
-                      : hasExistingPool
-                        ? existingPoolTooltip
-                        : undefined
-                  }
+                  title={hasExistingPool ? existingPoolTooltip : undefined}
                 >
                   <div className="w-max">
                     <button
@@ -915,9 +919,7 @@ export default function CreatePoolCard() {
                           : "hover:bg-border/50",
                       )}
                       onClick={() => setQuoterId(_quoterId)}
-                      disabled={
-                        [QuoterId.STABLE].includes(_quoterId) || hasExistingPool
-                      }
+                      disabled={hasExistingPool}
                     >
                       <p
                         className={cn(

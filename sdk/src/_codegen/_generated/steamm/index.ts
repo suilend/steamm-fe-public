@@ -1,14 +1,3 @@
-// import {
-//   STEAMM_ORACLE_QUOTER_PKG_ID,
-//   STEAMM_PKG_ID,
-//   STEAMM_PUBLISHED_AT,
-// } from "../../../config/mainnet";
-// import {
-//   STEAMM_BETA_ORACLE_QUOTER_PKG_ID,
-//   STEAMM_BETA_PKG_ID,
-//   STEAMM_BETA_PUBLISHED_AT,
-// } from "../../../config/mainnetBeta";
-
 import { STEAMM_BETA_CONFIG, STEAMM_CONFIG } from "../../../config";
 
 export const PACKAGE_ID =

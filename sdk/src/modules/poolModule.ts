@@ -12,15 +12,7 @@ import {
 import { OracleFunctions } from "../_codegen";
 import { PriceInfoObject } from "../_codegen/_generated/_dependencies/source/0x8d97f1cd6ac663735be08d1d2b6d02a159e711586461306ce60a2b7a6a565a9e/price-info/structs";
 import { getPythPrice } from "../_codegen/oracleFunctions";
-import {
-  SwapQuote,
-  createConstantProductPool,
-  createConstantProductPoolAndShare,
-  createOraclePool,
-  createOraclePoolAndShare,
-  shareConstantProductPool,
-  shareOraclePool,
-} from "../base";
+import { SwapQuote } from "../base";
 import {
   DepositQuote,
   RedeemQuote,
@@ -28,10 +20,21 @@ import {
   castRedeemQuote,
   castSwapQuote,
 } from "../base/pool/poolTypes";
+import {
+  createConstantProductPool,
+  createConstantProductPoolAndShare,
+  shareConstantProductPool,
+} from "../base/quoters/constantQuoter";
+import {
+  createOraclePool,
+  createOraclePoolAndShare,
+  shareOraclePool,
+} from "../base/quoters/oracleQuoter";
 import { OracleSwapExtraArgs } from "../base/quoters/oracleQuoter/args";
 import {
   createStablePool,
   createStablePoolAndShare,
+  shareStablePool,
 } from "../base/quoters/stableQuoter";
 import { StableSwapExtraArgs } from "../base/quoters/stableQuoter/args";
 import { IModule } from "../interfaces/IModule";
@@ -341,6 +344,9 @@ export class PoolModule implements IModule {
         break;
       case "Oracle":
         shareOraclePool(tx, args, this.sdk.packageInfo(), this.sdk.sdkOptions);
+        break;
+      case "Stable":
+        shareStablePool(tx, args, this.sdk.packageInfo(), this.sdk.sdkOptions);
         break;
       default:
         throw new Error("Unknown pool type");
