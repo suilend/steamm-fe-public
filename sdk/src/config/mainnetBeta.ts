@@ -1,6 +1,8 @@
 import { SdkOptions } from "../sdk";
 import { Package, SteammConfigs } from "../types";
 
+import { ORACLE_CONFIG } from "./mainnet";
+
 export const STEAMM_BETA_CONFIG: Package<SteammConfigs> = {
   package_id:
     "0xca434de5b4ef05a2ad059947b371f9c94ae8c7786fdb112fe83da50b76f5069f",
@@ -40,21 +42,10 @@ export const SUILEND_BETA_CONFIG = {
   },
 };
 
-export const ORACLE_BETA_CONFIG = {
-  package_id:
-    "0xf9c6edde058291f5b630ee8e6710c7a2f8cda1730ff935f24c32a06c2fd68cca",
-  published_at:
-    "0xf9c6edde058291f5b630ee8e6710c7a2f8cda1730ff935f24c32a06c2fd68cca",
-  config: {
-    oracleRegistryId:
-      "0x25dabc7f6d5d2e18b98ba780dd68e3af138d0a3bbe1d18ebc35a25d9354d378a",
-  },
-};
-
 export const BETA_CONFIG: SdkOptions = {
   fullRpcUrl: "https://fullnode.mainnet.sui.io:443",
   suilend_config: SUILEND_BETA_CONFIG, // Use SUILEND_CONFIG to be able to create pools
   steamm_config: STEAMM_BETA_CONFIG,
   steamm_script_config: STEAMM_SCRIPT_BETA_CONFIG,
-  oracle_config: ORACLE_BETA_CONFIG,
+  oracle_config: ORACLE_CONFIG,
 };
