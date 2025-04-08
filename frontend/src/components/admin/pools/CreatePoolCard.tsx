@@ -706,7 +706,7 @@ export default function CreatePoolCard() {
             [QuoterId.ORACLE]: `${
               steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm
             }::omm::OracleQuoter`,
-            [QuoterId.STABLE]: "", // TODO
+            [QuoterId.STABLE]: `${steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.stable}::stable::StableQuoter`,
           }[quoterId],
           createLpTokenResult.coinType,
         ],
@@ -744,7 +744,10 @@ export default function CreatePoolCard() {
             ...sharePoolBaseArgs,
             type: "Oracle" as const,
           },
-          [QuoterId.STABLE]: {} as any, // TODO
+          [QuoterId.STABLE]: {
+            ...sharePoolBaseArgs,
+            type: "Stable" as const,
+          },
         }[quoterId],
         transaction,
       );

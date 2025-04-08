@@ -32,6 +32,7 @@ import { OracleSwapExtraArgs } from "../base/quoters/oracleQuoter/args";
 import {
   createStablePool,
   createStablePoolAndShare,
+  shareStablePool,
 } from "../base/quoters/stableQuoter";
 import { StableSwapExtraArgs } from "../base/quoters/stableQuoter/args";
 import { IModule } from "../interfaces/IModule";
@@ -341,6 +342,9 @@ export class PoolModule implements IModule {
         break;
       case "Oracle":
         shareOraclePool(tx, args, this.sdk.packageInfo(), this.sdk.sdkOptions);
+        break;
+      case "Stable":
+        shareStablePool(tx, args, this.sdk.packageInfo(), this.sdk.sdkOptions);
         break;
       default:
         throw new Error("Unknown pool type");
