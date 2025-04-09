@@ -37,10 +37,25 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       suiClient,
     );
 
-    const { reserveMap: mainMarket_reserveMap } = await initializeSuilend(
-      suiClient,
-      mainMarket_suilendClient,
-    );
+    const {
+      refreshedRawReserves: mainMarket_refreshedRawReserves,
+      lendingMarket: mainMarket_lendingMarket,
+
+      reserveMap: mainMarket_reserveMap,
+
+      activeRewardCoinTypes: mainMarket_activeRewardCoinTypes,
+      rewardCoinMetadataMap: mainMarket_rewardCoinMetadataMap,
+    } = await initializeSuilend(suiClient, mainMarket_suilendClient);
+    coinMetadataMap = {
+      ...coinMetadataMap,
+      ...mainMarket_rewardCoinMetadataMap,
+    };
+
+    const { rewardPriceMap: mainMarket_rewardPriceMap } =
+      await initializeSuilendRewards(
+        mainMarket_reserveMap,
+        mainMarket_activeRewardCoinTypes,
+      );
 
     const mainMarket_reserveDepositAprPercentMap: Record<string, BigNumber> =
       Object.fromEntries(
@@ -133,7 +148,15 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
     return {
       mainMarket: {
+        suilendClient: mainMarket_suilendClient,
+
+        lendingMarket: mainMarket_lendingMarket,
+
+        refreshedRawReserves: mainMarket_refreshedRawReserves,
         reserveMap: mainMarket_reserveMap,
+
+        rewardPriceMap: mainMarket_rewardPriceMap,
+        rewardCoinMetadataMap: mainMarket_rewardCoinMetadataMap,
 
         depositAprPercentMap: mainMarket_reserveDepositAprPercentMap,
       },

@@ -319,28 +319,27 @@ export default function PortfolioPage() {
                           content={
                             <div className="flex flex-col gap-1">
                               {Object.entries(claimableRewards).map(
-                                ([coinType, amount]) => {
-                                  const coinMetadata =
-                                    appData.coinMetadataMap[coinType];
-
-                                  return (
-                                    <div
-                                      key={coinType}
-                                      className="flex flex-row items-center gap-2"
-                                    >
-                                      <TokenLogo
-                                        token={getToken(coinType, coinMetadata)}
-                                        size={16}
-                                      />
-                                      <p className="text-p2 text-foreground">
-                                        {formatToken(amount, {
-                                          dp: coinMetadata.decimals,
-                                        })}{" "}
-                                        {coinMetadata.symbol}
-                                      </p>
-                                    </div>
-                                  );
-                                },
+                                ([coinType, amount]) => (
+                                  <div
+                                    key={coinType}
+                                    className="flex flex-row items-center gap-2"
+                                  >
+                                    <TokenLogo
+                                      token={getToken(
+                                        coinType,
+                                        appData.coinMetadataMap[coinType],
+                                      )}
+                                      size={16}
+                                    />
+                                    <p className="text-p2 text-foreground">
+                                      {formatToken(amount, {
+                                        dp: appData.coinMetadataMap[coinType]
+                                          .decimals,
+                                      })}{" "}
+                                      {appData.coinMetadataMap[coinType].symbol}
+                                    </p>
+                                  </div>
+                                ),
                               )}
                             </div>
                           }
