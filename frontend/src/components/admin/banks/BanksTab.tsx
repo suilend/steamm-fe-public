@@ -41,7 +41,7 @@ export default function BanksTab() {
       <div className="grid w-full grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3">
         {sortedInitializableBanks === undefined
           ? Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={index} className="h-[428px] w-full rounded-md" />
+              <Skeleton key={index} className="h-[534px] w-full rounded-md" />
             ))
           : sortedInitializableBanks.map((bank) => (
               <BankCard key={bank.id} bank={bank} />
@@ -51,7 +51,7 @@ export default function BanksTab() {
       <div className="grid w-full grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3">
         {sortedNonInitializableBanks === undefined
           ? Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={index} className="h-[428px] w-full rounded-md" />
+              <Skeleton key={index} className="h-[534px] w-full rounded-md" />
             ))
           : sortedNonInitializableBanks.map((bank) => (
               <BankCard key={bank.id} bank={bank} />

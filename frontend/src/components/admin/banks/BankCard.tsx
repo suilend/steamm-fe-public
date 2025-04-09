@@ -29,6 +29,7 @@ import { ADMIN_ADDRESS, Bank } from "@suilend/steamm-sdk";
 
 import Parameter from "@/components/Parameter";
 import PercentInput from "@/components/PercentInput";
+import Tag from "@/components/Tag";
 import TextInput from "@/components/TextInput";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
@@ -363,21 +364,30 @@ export default function BankCard({ bank }: BankCardProps) {
         "flex w-full flex-col gap-3 rounded-md border p-4",
         !!appData.mainMarket.reserveMap[bank.coinType] &&
           !bank.bank.lending &&
-          "border-button-1",
+          "border-warning",
       )}
     >
       {/* Top */}
-      <div className="flex flex-row items-center gap-2">
-        <TokenLogo
-          token={getToken(
-            bank.coinType,
-            appData.coinMetadataMap[bank.coinType],
+      <div className="flex w-full flex-row items-center justify-between">
+        <div className="flex flex-row items-center gap-2">
+          <TokenLogo
+            token={getToken(
+              bank.coinType,
+              appData.coinMetadataMap[bank.coinType],
+            )}
+            size={24}
+          />
+          <p className="text-h3 text-foreground">
+            {appData.coinMetadataMap[bank.coinType].symbol}
+          </p>
+        </div>
+
+        {!!appData.mainMarket.reserveMap[bank.coinType] &&
+          !bank.bank.lending && (
+            <Tag className="bg-warning/10" labelClassName="text-warning">
+              Not initialized
+            </Tag>
           )}
-          size={24}
-        />
-        <p className="text-h3 text-foreground">
-          {appData.coinMetadataMap[bank.coinType].symbol}
-        </p>
       </div>
 
       <div className="flex w-full flex-col gap-6">
