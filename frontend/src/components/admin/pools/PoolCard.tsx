@@ -115,7 +115,11 @@ export default function PoolCard({ pool }: PoolCardProps) {
         {/* Parameters */}
         <div className="flex w-full flex-col gap-2">
           <Parameter label="TVL" isHorizontal>
-            <p className="text-p2 text-foreground">{formatUsd(pool.tvlUsd)}</p>
+            <Tooltip title={formatUsd(pool.tvlUsd, { exact: true })}>
+              <p className="text-p2 text-foreground">
+                {formatUsd(pool.tvlUsd)}
+              </p>
+            </Tooltip>
           </Parameter>
         </div>
 
@@ -139,7 +143,7 @@ export default function PoolCard({ pool }: PoolCardProps) {
                 return (
                   <div
                     key={coinType}
-                    className="flex flex-row items-baseline gap-2"
+                    className="flex flex-row items-center gap-2"
                   >
                     <Tooltip
                       title={`${formatToken(feeAmount, {
@@ -152,23 +156,29 @@ export default function PoolCard({ pool }: PoolCardProps) {
                       </p>
                     </Tooltip>
 
-                    <p className="text-p2 text-secondary-foreground">
-                      {formatUsd(feeAmount.times(pool.prices[index]))}
-                    </p>
+                    <Tooltip
+                      title={formatUsd(feeAmount.times(pool.prices[index]), {
+                        exact: true,
+                      })}
+                    >
+                      <p className="text-p2 text-secondary-foreground">
+                        {formatUsd(feeAmount.times(pool.prices[index]))}
+                      </p>
+                    </Tooltip>
                   </div>
                 );
               })}
             </div>
 
             <button
-              className="group flex h-6 w-[74px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
+              className="group flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
               onClick={() => claimFees(pool)}
               disabled={address !== ADMIN_ADDRESS}
             >
               {isClaimingFees ? (
                 <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
               ) : (
-                <p className="text-p3 text-button-2-foreground">Claim fees</p>
+                <p className="text-p3 text-button-2-foreground">Claim</p>
               )}
             </button>
           </div>

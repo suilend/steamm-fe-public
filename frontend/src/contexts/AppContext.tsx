@@ -40,7 +40,15 @@ import { ParsedBank, ParsedPool } from "@/lib/types";
 
 export interface AppData {
   mainMarket: {
+    suilendClient: SuilendClient;
+
+    lendingMarket: ParsedLendingMarket;
+
+    refreshedRawReserves: Reserve<string>[];
     reserveMap: Record<string, ParsedReserve>;
+
+    rewardPriceMap: Record<string, BigNumber | undefined>;
+    rewardCoinMetadataMap: Record<string, CoinMetadata>;
 
     depositAprPercentMap: Record<string, BigNumber>;
   };
