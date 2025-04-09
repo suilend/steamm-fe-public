@@ -32,6 +32,8 @@ import {
   useWalletContext,
 } from "@suilend/frontend-sui-next";
 import { ADMIN_ADDRESS, PoolScriptFunctions } from "@suilend/steamm-sdk";
+import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
+import { StableQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/stable/structs";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import Divider from "@/components/Divider";
@@ -42,12 +44,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
-import { formatFeeTier, formatPair, formatTextInputValue } from "@/lib/format";
+import {
+  formatAmplifier,
+  formatFeeTier,
+  formatPair,
+  formatTextInputValue,
+} from "@/lib/format";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+const AMPLIFIERS: number[] = [1, 5, 30, 100];
 const FEE_TIER_PERCENTS: number[] = [0.01, 0.05, 0.3, 1, 2];
 
 const generate_bytecode = (
@@ -301,6 +309,9 @@ export default function CreatePoolCard() {
   // Quoter
   const [quoterId, setQuoterId] = useState<QuoterId | undefined>(undefined);
 
+  // Amplifier
+  const [amplifier, setAmplifier] = useState<number | undefined>(undefined);
+
   // Fee tier
   const [feeTierPercent, setFeeTierPercent] = useState<number | undefined>(
     undefined,
@@ -317,17 +328,24 @@ export default function CreatePoolCard() {
     );
   }, [poolsData, coinTypes]);
 
-  const hasExistingPoolForQuoterAndFeeTier = (
+  const hasExistingPoolForQuoterFeeTierAndAmplifier = (
     _quoterId?: QuoterId,
     _feeTierPercent?: number,
+    _amplifier?: number,
   ) =>
     !!(existingPools ?? []).find(
       (pool) =>
-        pool.quoterId === _quoterId && +pool.feeTierPercent === _feeTierPercent,
+        pool.quoterId === _quoterId &&
+        +pool.feeTierPercent === _feeTierPercent &&
+        (_quoterId === QuoterId.STABLE
+          ? +(
+              pool.pool as Pool<string, string, StableQuoter, string>
+            ).quoter.amp.toString() === _amplifier
+          : true),
     );
 
   const existingPoolTooltip = coinTypes.every((coinType) => coinType !== "")
-    ? `${formatPair(coinTypes.map((coinType) => balancesCoinMetadataMap![coinType].symbol))} pool with this quoter and fee tier already exists`
+    ? `${formatPair(coinTypes.map((coinType) => balancesCoinMetadataMap![coinType].symbol))} pool with this quoter${quoterId === QuoterId.STABLE ? ", fee tier, and amplifier" : " and fee tier"} already exists`
     : undefined;
 
   // Submit
@@ -349,10 +367,20 @@ export default function CreatePoolCard() {
       return { isDisabled: true, title: "Enter a non-zero amounts" };
     if (quoterId === undefined)
       return { isDisabled: true, title: "Select a quoter" };
+    if (quoterId === QuoterId.STABLE) {
+      if (amplifier === undefined)
+        return { isDisabled: true, title: "Select an amplifier" };
+    }
     if (feeTierPercent === undefined)
       return { isDisabled: true, title: "Select a fee tier" };
 
-    if (hasExistingPoolForQuoterAndFeeTier(quoterId, feeTierPercent))
+    if (
+      hasExistingPoolForQuoterFeeTierAndAmplifier(
+        quoterId,
+        feeTierPercent,
+        amplifier,
+      )
+    )
       return {
         isDisabled: true,
         title: "Pool already exists",
@@ -663,7 +691,7 @@ export default function CreatePoolCard() {
           coinMetaA: tokens[0].id!, // Checked above
           coinTypeB: tokens[1].coinType,
           coinMetaB: tokens[1].id!, // Checked above
-          amplifier: BigInt(100),
+          amplifier: BigInt(amplifier!), // Checked above
         };
       } else {
         throw new Error("Invalid quoterId");
@@ -899,9 +927,10 @@ export default function CreatePoolCard() {
 
         <div className="flex flex-row gap-1">
           {Object.values(QuoterId).map((_quoterId) => {
-            const hasExistingPool = hasExistingPoolForQuoterAndFeeTier(
+            const hasExistingPool = hasExistingPoolForQuoterFeeTierAndAmplifier(
               _quoterId,
               feeTierPercent,
+              amplifier,
             );
 
             return (
@@ -940,15 +969,66 @@ export default function CreatePoolCard() {
         </div>
       </div>
 
+      {/* Amplifier */}
+      {quoterId === QuoterId.STABLE && (
+        <div className="flex flex-row items-center justify-between">
+          <p className="text-p2 text-secondary-foreground">Amplifier</p>
+
+          <div className="flex flex-row gap-1">
+            {AMPLIFIERS.map((_amplifier) => {
+              const hasExistingPool =
+                hasExistingPoolForQuoterFeeTierAndAmplifier(
+                  quoterId,
+                  feeTierPercent,
+                  _amplifier,
+                );
+
+              return (
+                <div key={_amplifier} className="w-max">
+                  <Tooltip
+                    title={hasExistingPool ? existingPoolTooltip : undefined}
+                  >
+                    <div className="w-max">
+                      <button
+                        className={cn(
+                          "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
+                          amplifier === _amplifier
+                            ? "cursor-default bg-button-1"
+                            : "hover:bg-border/50",
+                        )}
+                        onClick={() => setAmplifier(_amplifier)}
+                        disabled={hasExistingPool}
+                      >
+                        <p
+                          className={cn(
+                            "!text-p2 transition-colors",
+                            amplifier === _amplifier
+                              ? "text-button-1-foreground"
+                              : "text-secondary-foreground group-hover:text-foreground",
+                          )}
+                        >
+                          {formatAmplifier(new BigNumber(_amplifier))}
+                        </p>
+                      </button>
+                    </div>
+                  </Tooltip>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Fee tier */}
       <div className="flex flex-row items-center justify-between">
         <p className="text-p2 text-secondary-foreground">Fee tier</p>
 
         <div className="flex flex-row gap-1">
           {FEE_TIER_PERCENTS.map((_feeTierPercent) => {
-            const hasExistingPool = hasExistingPoolForQuoterAndFeeTier(
+            const hasExistingPool = hasExistingPoolForQuoterFeeTierAndAmplifier(
               quoterId,
               _feeTierPercent,
+              amplifier,
             );
 
             return (

@@ -61,7 +61,8 @@ export default function PortfolioPage() {
                 if (!pool) return acc;
 
                 const depositedAmounts = [0, 1].map((index) =>
-                  transactionHistory[0].reduce(
+                  // transactionHistory[0] is undefined on beta
+                  (transactionHistory[0] ?? []).reduce(
                     (acc, entry) =>
                       entry.type === HistoryTransactionType.DEPOSIT
                         ? acc.plus(

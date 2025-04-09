@@ -4,6 +4,9 @@ import { formatInteger, formatNumber } from "@suilend/frontend-sui";
 
 export const formatPair = (symbols: string[]) => symbols.join("-");
 
+export const formatAmplifier = (amplifier: BigNumber) =>
+  `${formatNumber(amplifier, { exact: true, trimTrailingZeros: true })}`;
+
 export const formatFeeTier = (feeTierPercent: BigNumber) =>
   `${formatNumber(feeTierPercent, { exact: true, trimTrailingZeros: true })}%`;
 

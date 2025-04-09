@@ -43,12 +43,12 @@ export type StableQuoterReified = Reified<StableQuoter, StableQuoterFields>;
 export class StableQuoter implements StructClass {
   __StructClass = true as const;
 
-  static readonly $typeName = `${STABLE_PKG_V1}::stable:StableQuoter`;
+  static readonly $typeName = `${STABLE_PKG_V1}::stable::StableQuoter`; 
   static readonly $numTypeParams = 0;
   static readonly $isPhantom = [] as const;
 
   readonly $typeName = StableQuoter.$typeName;
-  readonly $fullTypeName: `${typeof STABLE_PKG_V1}::stable:StableQuoter`;
+  readonly $fullTypeName: `${typeof STABLE_PKG_V1}::stable::StableQuoter`;
   readonly $typeArgs: [];
   readonly $isPhantom = StableQuoter.$isPhantom;
 
@@ -64,7 +64,7 @@ export class StableQuoter implements StructClass {
     this.$fullTypeName = composeSuiType(
       StableQuoter.$typeName,
       ...typeArgs,
-    ) as `${typeof STABLE_PKG_V1}::stable:StableQuoter`;
+    ) as `${typeof STABLE_PKG_V1}::stable::StableQuoter`;
     this.$typeArgs = typeArgs;
 
     this.version = fields.version;
@@ -82,7 +82,7 @@ export class StableQuoter implements StructClass {
       fullTypeName: composeSuiType(
         StableQuoter.$typeName,
         ...[],
-      ) as `${typeof STABLE_PKG_V1}::stable:StableQuoter`,
+      ) as `${typeof STABLE_PKG_V1}::stable::StableQuoter`,
       typeArgs: [] as [],
       isPhantom: StableQuoter.$isPhantom,
       reifiedTypeArgs: [],
