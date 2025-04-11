@@ -10,6 +10,7 @@ import { debounce } from "lodash";
 import {
   MAX_U64,
   NORMALIZED_SUI_COINTYPE,
+  NORMALIZED_WAL_COINTYPE,
   SUI_GAS_MIN,
   formatToken,
   formatUsd,
@@ -49,6 +50,7 @@ import { BanksData, useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
+import { rebalanceBanks } from "@/lib/banks";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
 import {
   getIndexesOfObligationsWithDeposit,
@@ -533,7 +535,11 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
       });
       transaction.transferObjects([coinA, coinB], address);
 
-      // rebalanceBanksIfNeeded(banks, steammClient, transaction);
+      rebalanceBanks(
+        banks.filter((bank) => bank.coinType !== NORMALIZED_WAL_COINTYPE), // TODO
+        steammClient,
+        transaction,
+      );
 
       // Stake LP tokens (if reserve exists)
       if (!!appData.lmMarket.reserveMap[pool.lpTokenType]) {
@@ -1084,7 +1090,11 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
     });
     transaction.transferObjects([coinA, coinB], address);
 
-    // rebalanceBanksIfNeeded(banks, steammClient, transaction);
+    rebalanceBanks(
+      banks.filter((bank) => bank.coinType !== NORMALIZED_WAL_COINTYPE), // TODO
+      steammClient,
+      transaction,
+    );
 
     return transaction;
   };
@@ -1636,7 +1646,11 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
       });
       transaction.transferObjects([coinA, coinB], address);
 
-      // rebalanceBanksIfNeeded(banks, steammClient, transaction);
+      rebalanceBanks(
+        banks.filter((bank) => bank.coinType !== NORMALIZED_WAL_COINTYPE), // TODO
+        steammClient,
+        transaction,
+      );
 
       const res = await signExecuteAndWaitForTransaction(transaction, {
         auction: true,

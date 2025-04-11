@@ -25,7 +25,7 @@ import {
   parseObligation,
 } from "@suilend/sdk";
 import * as simulate from "@suilend/sdk/utils/simulate";
-import { ADMIN_ADDRESS, Bank } from "@suilend/steamm-sdk";
+import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
 
 import Parameter from "@/components/Parameter";
 import PercentInput from "@/components/PercentInput";
@@ -36,7 +36,7 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
-import { getBankPrice } from "@/lib/banks";
+import { getBankPrice, rebalanceBanks } from "@/lib/banks";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedBank } from "@/lib/types";
@@ -124,9 +124,7 @@ export default function BankCard({ bank }: BankCardProps) {
             .toFixed(0),
         });
       }
-      new Bank(steammClient.packageInfo(), bank.bankInfo).rebalance(
-        transaction,
-      );
+      rebalanceBanks([bank], steammClient, transaction);
 
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
@@ -199,9 +197,7 @@ export default function BankCard({ bank }: BankCardProps) {
           .integerValue(BigNumber.ROUND_DOWN)
           .toString(),
       });
-      new Bank(steammClient.packageInfo(), bank.bankInfo).rebalance(
-        transaction,
-      );
+      rebalanceBanks([bank], steammClient, transaction);
 
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
@@ -231,16 +227,17 @@ export default function BankCard({ bank }: BankCardProps) {
     try {
       setIsRebalancing(true);
 
-      const transactions = await steammClient.Bank.rebalance([bank.id]);
-      for (const transaction of transactions) {
-        const res = await signExecuteAndWaitForTransaction(transaction);
-        const txUrl = explorer.buildTxUrl(res.digest);
+      const transaction = new Transaction();
 
-        showSuccessTxnToast(
-          `Rebalanced ${appData.coinMetadataMap[bank.coinType].symbol} bank`,
-          txUrl,
-        );
-      }
+      rebalanceBanks([bank], steammClient, transaction);
+
+      const res = await signExecuteAndWaitForTransaction(transaction);
+      const txUrl = explorer.buildTxUrl(res.digest);
+
+      showSuccessTxnToast(
+        `Rebalanced ${appData.coinMetadataMap[bank.coinType].symbol} bank`,
+        txUrl,
+      );
     } catch (err) {
       showErrorToast("Failed to rebalance bank", err as Error, undefined, true);
       console.error(err);
