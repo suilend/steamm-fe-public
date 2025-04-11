@@ -420,8 +420,9 @@ export class SteammSDK {
       poolId: string;
       coinTypeA: string;
       coinTypeB: string;
-      balanceA: BigNumber; // In MIST
-      balanceB: BigNumber; // In MIST
+      lpTokenBalance: BigNumber;
+      balanceA: BigNumber;
+      balanceB: BigNumber;
       claimableRewards: Record<string, BigNumber>;
       totalPoints: BigNumber;
     }[]
@@ -568,8 +569,9 @@ export class SteammSDK {
       poolId: string;
       coinTypeA: string;
       coinTypeB: string;
-      balanceA: BigNumber; // In MIST
-      balanceB: BigNumber; // In MIST
+      lpTokenBalance: BigNumber;
+      balanceA: BigNumber;
+      balanceB: BigNumber;
       claimableRewards: Record<string, BigNumber>;
       totalPoints: BigNumber;
     }[] = [];
@@ -643,6 +645,7 @@ export class SteammSDK {
             poolId: poolInfo.poolId,
             coinTypeA,
             coinTypeB,
+            lpTokenBalance,
             balanceA: new BigNumber(lpTokenTotalAmount.div(lpSupply)).times(
               balanceA,
             ),
