@@ -607,11 +607,11 @@ export class SteammSDK {
     await Promise.all(
       poolInfos.map((poolInfo) =>
         limit10(async () => {
-          const pool = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
-            ? await this.fullClient.fetchConstantProductPool(poolInfo.poolId)
-            : poolInfo.quoterType.endsWith("omm::OracleQuoter")
-              ? await this.fullClient.fetchOraclePool(poolInfo.poolId)
-              : await this.fullClient.fetchConstantProductPool(poolInfo.poolId); // Should never need to use the fallback
+          const pool = poolInfo.quoterType.endsWith("omm::OracleQuoter")
+            ? await this.fullClient.fetchOraclePool(poolInfo.poolId)
+            : poolInfo.quoterType.endsWith("stable::StableQuoter")
+              ? await this.fullClient.fetchStablePool(poolInfo.poolId)
+              : await this.fullClient.fetchConstantProductPool(poolInfo.poolId);
 
           const bTokenTypeA = poolInfo.coinTypeA;
           const bTokenTypeB = poolInfo.coinTypeB;
