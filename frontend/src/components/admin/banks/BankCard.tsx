@@ -32,6 +32,7 @@ import PercentInput from "@/components/PercentInput";
 import Tag from "@/components/Tag";
 import TextInput from "@/components/TextInput";
 import TokenLogo from "@/components/TokenLogo";
+import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
@@ -601,19 +602,38 @@ export default function BankCard({ bank }: BankCardProps) {
         </div>
 
         {/* Rewards */}
-        <div className="flex w-full flex-col items-end gap-2">
-          <Parameter label="Claimable rewards" isHorizontal>
-            <div className="flex flex-col items-end gap-1.5">
-              <div className="flex flex-col items-end gap-1">
-                {bankClaimableRewardsMap === undefined ? (
-                  <Skeleton className="h-[21px] w-12" />
-                ) : Object.keys(bankClaimableRewardsMap).length > 0 ? (
-                  Object.entries(bankClaimableRewardsMap).map(
-                    ([coinType, amount]) => {
-                      const rewardPrice =
-                        appData.mainMarket.rewardPriceMap[coinType];
-
-                      return (
+        <Parameter label="Rewards" isHorizontal>
+          <div className="flex flex-col items-end gap-1.5">
+            {bankClaimableRewardsMap === undefined ||
+            bankPointsMap === undefined ? (
+              <Skeleton className="h-[21px] w-16" />
+            ) : Object.keys(bankClaimableRewardsMap).length > 0 ||
+              Object.keys(bankPointsMap).length > 0 ? (
+              <Tooltip
+                content={
+                  <div className="flex flex-col gap-1">
+                    {Object.entries(bankPointsMap).map(([coinType, amount]) => (
+                      <div
+                        key={coinType}
+                        className="flex flex-row items-center gap-2"
+                      >
+                        <TokenLogo
+                          token={getToken(
+                            coinType,
+                            appData.coinMetadataMap[coinType],
+                          )}
+                          size={16}
+                        />
+                        <p className="text-p2 text-foreground">
+                          {formatPoints(amount, {
+                            dp: appData.coinMetadataMap[coinType].decimals,
+                          })}{" "}
+                          {appData.coinMetadataMap[coinType].symbol}
+                        </p>
+                      </div>
+                    ))}
+                    {Object.entries(bankClaimableRewardsMap).map(
+                      ([coinType, amount]) => (
                         <div
                           key={coinType}
                           className="flex flex-row items-center gap-2"
@@ -625,90 +645,50 @@ export default function BankCard({ bank }: BankCardProps) {
                             )}
                             size={16}
                           />
-                          <Tooltip
-                            title={`${formatToken(amount, { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
-                          >
-                            <p className="text-p2 text-foreground">
-                              {formatToken(amount, { exact: false })}{" "}
-                              {appData.coinMetadataMap[coinType].symbol}
-                            </p>
-                          </Tooltip>
-
-                          {rewardPrice ? (
-                            <Tooltip
-                              title={formatUsd(amount.times(rewardPrice), {
-                                exact: true,
-                              })}
-                            >
-                              <p className="text-p2 text-secondary-foreground">
-                                {formatUsd(amount.times(rewardPrice))}
-                              </p>
-                            </Tooltip>
-                          ) : (
-                            <p className="text-p2 text-secondary-foreground">
-                              --
-                            </p>
-                          )}
+                          <p className="text-p2 text-foreground">
+                            {formatToken(amount, {
+                              dp: appData.coinMetadataMap[coinType].decimals,
+                            })}{" "}
+                            {appData.coinMetadataMap[coinType].symbol}
+                          </p>
                         </div>
-                      );
-                    },
-                  )
-                ) : (
-                  <p className="text-p2 text-foreground">--</p>
-                )}
-              </div>
-
-              <button
-                className="group flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
-                disabled={
-                  bankClaimableRewardsMap === undefined ||
-                  Object.keys(bankClaimableRewardsMap).length === 0 ||
-                  isClaiming ||
-                  true // TODO
-                }
-                onClick={undefined}
-              >
-                {isClaiming ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
-                ) : (
-                  <p className="text-p3 text-button-2-foreground">Claim</p>
-                )}
-              </button>
-            </div>
-          </Parameter>
-
-          <Parameter label="Points" isHorizontal>
-            <div className="flex flex-col items-end gap-1">
-              {bankPointsMap === undefined ? (
-                <Skeleton className="h-[21px] w-12" />
-              ) : Object.keys(bankPointsMap).length > 0 ? (
-                Object.entries(bankPointsMap).map(([coinType, amount]) => (
-                  <div
-                    key={coinType}
-                    className="flex flex-row items-center gap-2"
-                  >
-                    <TokenLogo
-                      token={getToken(
-                        coinType,
-                        appData.coinMetadataMap[coinType],
-                      )}
-                      size={16}
-                    />
-                    <Tooltip
-                      title={`${formatPoints(amount, { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
-                    >
-                      <p className="text-p2 text-foreground">
-                        {formatPoints(amount)}
-                      </p>
-                    </Tooltip>
+                      ),
+                    )}
                   </div>
-                ))
+                }
+              >
+                <div className="flex h-[21px] w-max flex-row items-center">
+                  <TokenLogos
+                    coinTypes={[
+                      ...Object.keys(bankPointsMap),
+                      ...Object.keys(bankClaimableRewardsMap),
+                    ]}
+                    size={16}
+                  />
+                </div>
+              </Tooltip>
+            ) : (
+              <p className="text-p2 text-secondary-foreground">--</p>
+            )}
+
+            <button
+              className="group flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
+              disabled={
+                bankClaimableRewardsMap === undefined ||
+                Object.keys(bankClaimableRewardsMap).length === 0 ||
+                isClaiming ||
+                true // TODO
+              }
+              onClick={undefined}
+            >
+              {isClaiming ? (
+                <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
               ) : (
-                <p className="text-p2 text-foreground">--</p>
+                <p className="text-p3 text-button-2-foreground">Claim</p>
               )}
-            </div>
-          </Parameter>
-        </div>
+            </button>
+          </div>
+        </Parameter>
       </div>
     </div>
   );
