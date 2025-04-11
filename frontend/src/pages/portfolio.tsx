@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
@@ -23,6 +23,7 @@ import {
 import { ClaimRewardsReward, RewardSummary, Side } from "@suilend/sdk";
 
 import Divider from "@/components/Divider";
+import TransactionHistoryTable from "@/components/pool/TransactionHistoryTable";
 import PoolPositionsTable from "@/components/portfolio/PoolPositionsTable";
 import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
@@ -43,13 +44,14 @@ export default function PortfolioPage() {
   const { userData, refresh } = useUserContext();
   const { poolPositions, totalPoints } = usePoolPositionsContext();
 
-  // Pool positions - Deposited USD for PnL calc. (BE)
+  // Transaction history
   const { poolTransactionHistoryMap } = usePoolTransactionHistoryMap(
-    poolPositions === undefined
+    poolsData === undefined
       ? undefined
-      : poolPositions.map((position) => position.pool.id),
+      : poolsData.pools.map((pool) => pool.id),
   );
 
+  // Pool positions - Deposited USD for PnL calc. (BE)
   const poolDepositedUsdMap: Record<string, BigNumber> | undefined =
     useMemo(() => {
       return poolsData === undefined || poolTransactionHistoryMap === undefined
@@ -58,7 +60,9 @@ export default function PortfolioPage() {
             Object.entries(poolTransactionHistoryMap).reduce(
               (acc, [poolId, transactionHistory]) => {
                 const pool = poolsData.pools.find((p) => p.id === poolId);
-                if (!pool) return acc;
+                if (!pool) return acc; // Should not happen
+
+                if (transactionHistory.length === 0) return acc; // The transaction history includes transactions for positions that have since been fully closed
 
                 const depositedAmounts = [0, 1].map((index) =>
                   transactionHistory[0].reduce(
@@ -254,6 +258,33 @@ export default function PortfolioPage() {
     }
   };
 
+  // Transaction history
+  const poolCountRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (poolsData === undefined) return;
+
+    if (poolCountRef.current !== undefined) return;
+    poolCountRef.current = poolsData.pools.length;
+  }, [poolsData]);
+
+  const completeTransactionHistory = useMemo(() => {
+    if (
+      poolsData === undefined ||
+      poolTransactionHistoryMap === undefined ||
+      Object.keys(poolTransactionHistoryMap).length < poolsData.pools.length
+    )
+      return undefined;
+
+    return [
+      Object.values(poolTransactionHistoryMap)
+        .flat()
+        .flat()
+        .sort((a, b) => +b.timestamp - +a.timestamp), // Sort by timestamp (desc)
+    ];
+  }, [poolsData, poolTransactionHistoryMap]);
+
+  console.log("XXX", poolTransactionHistoryMap, completeTransactionHistory);
+
   return (
     <>
       <Head>
@@ -429,6 +460,22 @@ export default function PortfolioPage() {
           </div>
 
           <PoolPositionsTable poolPositions={poolPositionsWithExtraData} />
+        </div>
+
+        {/* Transaction history */}
+        <div className="flex w-full flex-col gap-6">
+          <div className="flex flex-row items-center gap-3">
+            <p className="text-h3 text-foreground">Transaction history</p>
+            {completeTransactionHistory === undefined ? (
+              <Skeleton className="h-5 w-12" />
+            ) : (
+              <Tag>{completeTransactionHistory.flat().length}</Tag>
+            )}
+          </div>
+
+          <TransactionHistoryTable
+            transactionHistory={completeTransactionHistory}
+          />
         </div>
       </div>
     </>

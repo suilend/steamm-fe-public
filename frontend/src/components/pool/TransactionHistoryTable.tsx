@@ -90,9 +90,9 @@ export default function TransactionHistoryTable({
             <p className="text-p2 text-tertiary-foreground">No transactions</p>
           </div>
         ) : (
-          transactionHistory.map((positionTransactionHistory, index) => (
+          transactionHistory.map((poolTransactionHistory, index) => (
             <Fragment key={index}>
-              {positionTransactionHistory.map((transaction) => (
+              {poolTransactionHistory.map((transaction) => (
                 <TransactionHistoryRow
                   key={transaction.id}
                   transaction={transaction}

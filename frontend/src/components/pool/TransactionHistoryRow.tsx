@@ -12,7 +12,6 @@ import { columnStyleMap } from "@/components/pool/TransactionHistoryTable";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { usePoolContext } from "@/contexts/PoolContext";
 import {
   HistoryDeposit,
   HistoryRedeem,
@@ -27,10 +26,14 @@ export default function TransactionHistoryRow({
   transaction,
 }: TransactionHistoryRowProps) {
   const { explorer } = useSettingsContext();
-  const { appData } = useLoadedAppContext();
+  const { appData, poolsData } = useLoadedAppContext();
 
-  const { pool } = usePoolContext();
+  const pool =
+    poolsData === undefined
+      ? undefined
+      : poolsData.pools.find((_pool) => _pool.id === transaction.pool_id);
 
+  if (!pool) return null; // Should not happen
   return (
     <div className="relative z-[1] flex min-h-[calc(44px+1px)] w-full min-w-max shrink-0 flex-row items-center border-x border-b bg-background">
       {/* Date */}
