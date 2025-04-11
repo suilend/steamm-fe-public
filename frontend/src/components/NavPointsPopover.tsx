@@ -39,7 +39,7 @@ export default function NavPointsPopover() {
       trigger={
         <button
           className={cn(
-            "group flex h-8 flex-row items-center justify-center gap-2 rounded-md border px-2 transition-colors",
+            "group flex h-10 flex-row items-center justify-center gap-2 rounded-md border px-3 transition-colors",
             isOpen ? "bg-border/50" : "hover:bg-border/50",
           )}
         >
@@ -111,7 +111,7 @@ export default function NavPointsPopover() {
                   {[1, 2, 3].includes(addressRow.rank) && (
                     <Trophy
                       className={cn(
-                        "h-4 w-4",
+                        "h-3 w-3",
                         addressRow.rank === 1 && "text-gold",
                         addressRow.rank === 2 && "text-silver",
                         addressRow.rank === 3 && "text-bronze",

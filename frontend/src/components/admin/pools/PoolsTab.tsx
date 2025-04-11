@@ -18,7 +18,7 @@ export default function PoolsTab() {
     <>
       <CreatePoolCard />
 
-      <div className="grid w-full grid-cols-1 gap-1 md:grid-cols-2">
+      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
         {sortedPools === undefined ? (
           Array.from({ length: 4 }).map((_, index) => (
             <Skeleton key={index} className="h-[189px] w-full rounded-md" />

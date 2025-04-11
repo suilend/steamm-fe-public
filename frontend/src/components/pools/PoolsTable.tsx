@@ -27,7 +27,8 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   feeTier: {
     width: 100, // px
-    justifyContent: "end",
+    justifyContent: "center",
+    paddingLeft: 4 * 5, // px
     paddingRight: 4 * 5, // px
   },
   tvlUsd: {

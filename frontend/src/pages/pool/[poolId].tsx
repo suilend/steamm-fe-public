@@ -194,15 +194,15 @@ function PoolPage() {
               </div>
             </div>
 
-            <div className="flex w-full flex-col gap-1 md:flex-row">
+            <div className="flex w-full flex-col gap-4 md:flex-row">
               {/* Left */}
-              <div className="flex flex-col gap-1 max-md:w-full md:flex-1 lg:flex-[3]">
+              <div className="flex flex-col gap-4 max-md:w-full md:flex-1 lg:flex-[3]">
                 <PoolChartCard />
                 <PoolParametersCard />
               </div>
 
               {/* Right */}
-              <div className="flex flex-col gap-1 max-md:w-full md:flex-1 lg:flex-[2]">
+              <div className="flex flex-col gap-4 max-md:w-full md:flex-1 lg:flex-[2]">
                 <PoolPositionCard />
                 <PoolActionsCard
                   key={pool.id}

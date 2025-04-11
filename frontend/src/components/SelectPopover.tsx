@@ -58,7 +58,7 @@ export default function SelectPopover({
             className={cn(
               "group flex h-10 w-full flex-row items-center rounded-md border px-3 transition-colors",
               option.id === value
-                ? "cursor-default bg-button-1"
+                ? "cursor-default border-button-1 bg-button-1/25"
                 : "hover:bg-border",
             )}
             onClick={() => {
@@ -70,7 +70,7 @@ export default function SelectPopover({
               className={cn(
                 "!text-p2 transition-colors",
                 option.id === value
-                  ? "text-button-1-foreground"
+                  ? "text-foreground"
                   : "text-secondary-foreground group-hover:text-foreground",
               )}
             >

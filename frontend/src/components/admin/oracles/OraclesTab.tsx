@@ -62,7 +62,7 @@ export default function OraclesTab() {
   }, []);
 
   return (
-    <div className="grid w-full grid-cols-1 gap-1 md:grid-cols-2">
+    <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
       {oraclesData === undefined ? (
         Array.from({ length: 4 }).map((_, index) => (
           <Skeleton key={index} className="h-[180px] w-full rounded-md" />
