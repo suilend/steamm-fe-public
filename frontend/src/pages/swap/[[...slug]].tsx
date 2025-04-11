@@ -11,6 +11,7 @@ import { ArrowRight } from "lucide-react";
 import {
   NORMALIZED_SEND_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
+  NORMALIZED_WAL_COINTYPE,
   SUI_GAS_MIN,
   Token,
   formatToken,
@@ -40,6 +41,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
+import { rebalanceBanks } from "@/lib/banks";
 import { formatTextInputValue } from "@/lib/format";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
@@ -429,7 +431,11 @@ export default function SwapPage() {
         banksData.bankMap[inCoinType],
         banksData.bankMap[outCoinType],
       ];
-      // rebalanceBanksIfNeeded(banks, steammClient, transaction);
+      rebalanceBanks(
+        banks.filter((bank) => bank.coinType !== NORMALIZED_WAL_COINTYPE), // TODO
+        steammClient,
+        transaction,
+      );
 
       const res = await signExecuteAndWaitForTransaction(transaction, {
         auction: true,
