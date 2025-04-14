@@ -26,7 +26,7 @@ function ActiveBar({ ...props }) {
         {...props.background}
         width={1}
         x={props.x + props.width / 2}
-        fill="hsla(var(--foreground) / 25%)"
+        fill="hsl(var(--foreground))"
       />
       <Recharts.Rectangle {...props} fill="transparent" />
     </>
@@ -34,7 +34,7 @@ function ActiveBar({ ...props }) {
 }
 
 interface TooltipContentProps {
-  dataPeriodDays: 1 | 7 | 30;
+  dataPeriodDays: ChartConfig["dataPeriodDays"];
   formatValue: (value: number) => string;
   formatCategory: (category: string) => string | undefined;
   sortedCategories: string[];
@@ -425,7 +425,7 @@ export default function HistoricalDataChart({
                     <Recharts.Tooltip
                       isAnimationActive={false}
                       cursor={{
-                        stroke: "hsla(var(--foreground) / 25%)",
+                        stroke: "hsl(var(--foreground))",
                         strokeWidth: 1,
                       }}
                       trigger="hover"

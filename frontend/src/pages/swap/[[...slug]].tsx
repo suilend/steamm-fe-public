@@ -493,27 +493,21 @@ export default function SwapPage() {
     if (poolsData === undefined) return undefined;
 
     return [
-      ...poolsData.pools
-        .filter(
-          (_pool) =>
-            _pool.coinTypes[0] === inCoinType &&
-            _pool.coinTypes[1] === outCoinType,
-        )
-        .sort((a, b) => +b.tvlUsd - +a.tvlUsd),
-      ...poolsData.pools
-        .filter(
-          (_pool) =>
-            _pool.coinTypes[0] === inCoinType &&
-            _pool.coinTypes[1] !== outCoinType,
-        )
-        .sort((a, b) => +b.tvlUsd - +a.tvlUsd),
-      ...poolsData.pools
-        .filter(
-          (_pool) =>
-            _pool.coinTypes[0] !== inCoinType &&
-            _pool.coinTypes[1] === outCoinType,
-        )
-        .sort((a, b) => +b.tvlUsd - +a.tvlUsd),
+      ...poolsData.pools.filter(
+        (_pool) =>
+          _pool.coinTypes[0] === inCoinType &&
+          _pool.coinTypes[1] === outCoinType,
+      ),
+      ...poolsData.pools.filter(
+        (_pool) =>
+          _pool.coinTypes[0] === inCoinType &&
+          _pool.coinTypes[1] !== outCoinType,
+      ),
+      ...poolsData.pools.filter(
+        (_pool) =>
+          _pool.coinTypes[0] !== inCoinType &&
+          _pool.coinTypes[1] === outCoinType,
+      ),
     ];
   }, [poolsData, inCoinType, outCoinType]);
 
@@ -666,10 +660,10 @@ export default function SwapPage() {
         </div>
 
         <SuggestedPools
-          containerClassName="grid-cols-1"
+          id="swap"
           title="Suggested pools"
           pools={suggestedPools}
-          collapsedPoolCount={2}
+          tvlOnly
         />
       </div>
     </>

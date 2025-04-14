@@ -43,10 +43,10 @@ export const chartStatNameMap: Record<string, string> = {
 export type ChartConfig = {
   title: string;
   value?: string;
-  valuePeriodDays?: 1 | 7 | 30;
+  valuePeriodDays?: 1 | 7 | 14 | 30;
   chartType: ChartType;
   data?: ChartData[];
-  dataPeriodDays: 1 | 7 | 30;
+  dataPeriodDays: 1 | 7 | 14 | 30;
   formatValue: (value: number) => string;
 };
 

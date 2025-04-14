@@ -57,23 +57,19 @@ function PoolPage() {
   const otherBaseAssetPools: ParsedPool[] | undefined = useMemo(() => {
     if (poolsData === undefined) return undefined;
 
-    return poolsData.pools
-      .filter(
-        (_pool) =>
-          _pool.id !== pool.id && _pool.coinTypes[0] === pool.coinTypes[0],
-      )
-      .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
+    return poolsData.pools.filter(
+      (_pool) =>
+        _pool.id !== pool.id && _pool.coinTypes[0] === pool.coinTypes[0],
+    );
   }, [poolsData, pool]);
 
   const otherQuoteAssetPools: ParsedPool[] | undefined = useMemo(() => {
     if (poolsData === undefined) return undefined;
 
-    return poolsData.pools
-      .filter(
-        (_pool) =>
-          _pool.id !== pool.id && _pool.coinTypes[1] === pool.coinTypes[1],
-      )
-      .sort((a, b) => +b.tvlUsd - +a.tvlUsd);
+    return poolsData.pools.filter(
+      (_pool) =>
+        _pool.id !== pool.id && _pool.coinTypes[1] === pool.coinTypes[1],
+    );
   }, [poolsData, pool]);
 
   // Actions
@@ -196,53 +192,59 @@ function PoolPage() {
 
             <div className="flex w-full flex-col gap-4 md:flex-row">
               {/* Left */}
-              <div className="flex flex-col gap-4 max-md:w-full md:flex-1 lg:flex-[3]">
-                <PoolChartCard />
-                <PoolParametersCard />
+              <div className="flex flex-col gap-6 max-md:w-full md:flex-1 lg:flex-[3]">
+                {/* Cards */}
+                <div className="flex w-full flex-col gap-4">
+                  <PoolChartCard />
+                  <PoolParametersCard />
+                </div>
+
+                {/* Transaction history */}
+                <div className="flex w-full flex-col gap-4">
+                  <div className="flex flex-row items-center gap-3">
+                    <p className="text-h3 text-foreground">
+                      Transaction history
+                    </p>
+                    {poolTransactionHistory === undefined ? (
+                      <Skeleton className="h-5 w-12" />
+                    ) : (
+                      <Tag>{poolTransactionHistory.flat().length}</Tag>
+                    )}
+                  </div>
+
+                  <TransactionHistoryTable
+                    transactionHistory={poolTransactionHistory}
+                  />
+                </div>
+
+                {/* Suggested pools */}
+                <SuggestedPools
+                  id={appData.coinMetadataMap[pool.coinTypes[0]].symbol}
+                  title={`Other ${appData.coinMetadataMap[pool.coinTypes[0]].symbol} pools`}
+                  pools={otherBaseAssetPools}
+                />
+
+                <SuggestedPools
+                  id={appData.coinMetadataMap[pool.coinTypes[1]].symbol}
+                  title={`Other ${appData.coinMetadataMap[pool.coinTypes[1]].symbol} pools`}
+                  pools={otherQuoteAssetPools}
+                />
               </div>
 
               {/* Right */}
-              <div className="flex flex-col gap-4 max-md:w-full md:flex-1 lg:flex-[2]">
-                <PoolPositionCard />
-                <PoolActionsCard
-                  key={pool.id}
-                  onDeposit={onDeposit}
-                  onWithdraw={onWithdraw}
-                />
+              <div className="flex flex-col gap-6 max-md:w-full md:flex-1 lg:flex-[2]">
+                {/* Cards */}
+                <div className="flex w-full flex-col gap-4">
+                  <PoolPositionCard />
+                  <PoolActionsCard
+                    key={pool.id}
+                    onDeposit={onDeposit}
+                    onWithdraw={onWithdraw}
+                  />
+                </div>
               </div>
             </div>
           </div>
-
-          {/* Transaction history */}
-          <div className="flex w-full flex-col gap-4">
-            <div className="flex flex-row items-center gap-3">
-              <p className="text-h3 text-foreground">Transaction history</p>
-              {poolTransactionHistory === undefined ? (
-                <Skeleton className="h-5 w-12" />
-              ) : (
-                <Tag>{poolTransactionHistory.flat().length}</Tag>
-              )}
-            </div>
-
-            <TransactionHistoryTable
-              transactionHistory={poolTransactionHistory}
-            />
-          </div>
-
-          {/* Suggested pools */}
-          <SuggestedPools
-            containerClassName="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-            title={`Other ${appData.coinMetadataMap[pool.coinTypes[0]].symbol} pools`}
-            pools={otherBaseAssetPools}
-            collapsedPoolCount={lg ? 3 : md ? 2 : 1}
-          />
-
-          <SuggestedPools
-            containerClassName="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-            title={`Other ${appData.coinMetadataMap[pool.coinTypes[1]].symbol} pools`}
-            pools={otherQuoteAssetPools}
-            collapsedPoolCount={lg ? 3 : md ? 2 : 1}
-          />
         </div>
       </div>
     </>
