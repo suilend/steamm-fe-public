@@ -10,7 +10,6 @@ import { debounce } from "lodash";
 import {
   MAX_U64,
   NORMALIZED_SUI_COINTYPE,
-  NORMALIZED_WAL_COINTYPE,
   SUI_GAS_MIN,
   formatToken,
   formatUsd,
@@ -535,11 +534,7 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
       });
       transaction.transferObjects([coinA, coinB], address);
 
-      rebalanceBanks(
-        banks.filter((bank) => bank.coinType !== NORMALIZED_WAL_COINTYPE), // TODO
-        steammClient,
-        transaction,
-      );
+      rebalanceBanks(banks, steammClient, transaction);
 
       // Stake LP tokens (if reserve exists)
       if (!!appData.lmMarket.reserveMap[pool.lpTokenType]) {
@@ -1055,11 +1050,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
     });
     transaction.transferObjects([coinA, coinB], address);
 
-    rebalanceBanks(
-      banks.filter((bank) => bank.coinType !== NORMALIZED_WAL_COINTYPE), // TODO
-      steammClient,
-      transaction,
-    );
+    rebalanceBanks(banks, steammClient, transaction);
 
     return transaction;
   };
@@ -1578,11 +1569,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
       });
       transaction.transferObjects([coinA, coinB], address);
 
-      rebalanceBanks(
-        banks.filter((bank) => bank.coinType !== NORMALIZED_WAL_COINTYPE), // TODO
-        steammClient,
-        transaction,
-      );
+      rebalanceBanks(banks, steammClient, transaction);
 
       const res = await signExecuteAndWaitForTransaction(transaction, {
         auction: true,

@@ -11,7 +11,6 @@ import { ArrowRight } from "lucide-react";
 import {
   NORMALIZED_SEND_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
-  NORMALIZED_WAL_COINTYPE,
   SUI_GAS_MIN,
   Token,
   formatToken,
@@ -431,11 +430,7 @@ export default function SwapPage() {
         banksData.bankMap[inCoinType],
         banksData.bankMap[outCoinType],
       ];
-      rebalanceBanks(
-        banks.filter((bank) => bank.coinType !== NORMALIZED_WAL_COINTYPE), // TODO
-        steammClient,
-        transaction,
-      );
+      rebalanceBanks(banks, steammClient, transaction);
 
       const res = await signExecuteAndWaitForTransaction(transaction, {
         auction: true,
