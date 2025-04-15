@@ -28,7 +28,7 @@
     "@sentry/nextjs": "^8.38.0",
     "@suilend/frontend-sui": "^0.2.56",
     "@suilend/frontend-sui-next": "^0.1.24",
-    "@suilend/sdk": "^1.1.49",
+    "@suilend/sdk": "^1.1.50",
     "@suilend/springsui-sdk": "^1.0.21",
     "@tanstack/react-table": "^8.20.5",
     "@vercel/analytics": "^1.4.0",

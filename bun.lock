@@ -34,7 +34,7 @@
         "@sentry/nextjs": "^8.38.0",
         "@suilend/frontend-sui": "^0.2.56",
         "@suilend/frontend-sui-next": "^0.1.24",
-        "@suilend/sdk": "^1.1.49",
+        "@suilend/sdk": "^1.1.50",
         "@suilend/springsui-sdk": "^1.0.21",
         "@tanstack/react-table": "^8.20.5",
         "@vercel/analytics": "^1.4.0",
@@ -81,11 +81,11 @@
     },
     "sdk": {
       "name": "@suilend/steamm-sdk-local",
-      "version": "0.0.18",
+      "version": "0.0.19",
       "dependencies": {
         "@pythnetwork/pyth-sui-js": "^2.1.0",
         "@suilend/frontend-sui": "^0.2.56",
-        "@suilend/sdk": "^1.1.49",
+        "@suilend/sdk": "^1.1.50",
         "bignumber.js": "^9.1.2",
         "dotenv": "^16.4.7",
         "p-limit": "^6.2.0",
@@ -617,7 +617,7 @@
 
     "@suilend/frontend-sui-next": ["@suilend/frontend-sui-next@0.1.24", "", { "dependencies": { "@sentry/nextjs": "^8.38.0", "@tanstack/react-query": "^5.60.2", "bignumber.js": "^9.1.2", "launchdarkly-react-client-sdk": "^3.6.0", "lodash": "^4.17.21", "mixpanel-browser": "^2.56.0", "next": "^15.0.3", "react": "18.3.1", "react-dom": "18.3.1", "react-responsive": "^10.0.0", "shio-sdk": "^1.0.8", "sonner": "1.4.41", "swr": "^2.2.5", "tailwind-merge": "^2.5.4", "usehooks-ts": "^3.1.0" }, "peerDependencies": { "@mysten/dapp-kit": "0.14.47", "@mysten/sui": "1.20.0", "@mysten/wallet-standard": "0.13.23", "@suilend/frontend-sui": "^0.2.56" } }, "sha512-rSi6wQT8NGxjmwYGY67JDdZE6ieSkjf4/rJXGXaxhB06wFRPXe5tptQqOeabFCdFDkY45pOTILm2Azb7neHMwg=="],
 
-    "@suilend/sdk": ["@suilend/sdk@1.1.49", "", { "dependencies": { "@pythnetwork/pyth-sui-js": "^2.1.0", "bignumber.js": "^9.1.2", "p-limit": "3.1.0", "uuid": "^11.0.3" }, "peerDependencies": { "@mysten/bcs": "1.2.1", "@mysten/sui": "1.20.0", "@suilend/frontend-sui": "^0.2.38" } }, "sha512-Jd4zisFboUrtdkPxM+4BaZvOvEqJp1wJN0iQk5TDvTi+a4kwVU4PYndR/3XscJXcGzaZK4FsdcfFcFmXCA0G7Q=="],
+    "@suilend/sdk": ["@suilend/sdk@1.1.50", "", { "dependencies": { "@pythnetwork/pyth-sui-js": "^2.1.0", "bignumber.js": "^9.1.2", "p-limit": "3.1.0", "uuid": "^11.0.3" }, "peerDependencies": { "@mysten/bcs": "1.2.1", "@mysten/sui": "1.20.0", "@suilend/frontend-sui": "^0.2.54" } }, "sha512-JDIWPc3xwsSLXqvZh1EU18bMZu9HrXvo3xneorBxDmdKZ/D8RvcQVnKPK0A1fL5zCLFOcMfEgy9Fy5CKtafgBg=="],
 
     "@suilend/springsui-sdk": ["@suilend/springsui-sdk@1.0.21", "", { "dependencies": { "bignumber.js": "^9.1.2" }, "peerDependencies": { "@mysten/bcs": "1.2.1", "@mysten/sui": "1.20.0" } }, "sha512-l7y7iTmyVA4KHnppaBC4/cPCIjwNrqRiMwi1Uuy+Q8CI1kLtYffgJ87fH5nAQGKpR7aY0IAvzVJ4dXw02LyXrg=="],
 
