@@ -19,7 +19,7 @@ if [ "$CI" = false ]; then
 
     # Create suilend directory if it doesn't exist and cd into it
     mkdir -p temp &&
-    git clone --branch develop git@github.com:solendprotocol/steamm.git temp/git
+    git clone --branch oracle-liquidity-fee git@github.com:solendprotocol/steamm.git temp/git
 else
     ./bin/unpublocal.sh --ci
 fi
