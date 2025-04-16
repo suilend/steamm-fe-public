@@ -11,7 +11,6 @@ import { ArrowRight } from "lucide-react";
 import {
   NORMALIZED_SEND_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
-  NORMALIZED_WAL_COINTYPE,
   SUI_GAS_MIN,
   Token,
   formatToken,
@@ -431,11 +430,7 @@ export default function SwapPage() {
         banksData.bankMap[inCoinType],
         banksData.bankMap[outCoinType],
       ];
-      rebalanceBanks(
-        banks.filter((bank) => bank.coinType !== NORMALIZED_WAL_COINTYPE), // TODO
-        steammClient,
-        transaction,
-      );
+      rebalanceBanks(banks, steammClient, transaction);
 
       const res = await signExecuteAndWaitForTransaction(transaction, {
         auction: true,
@@ -498,27 +493,21 @@ export default function SwapPage() {
     if (poolsData === undefined) return undefined;
 
     return [
-      ...poolsData.pools
-        .filter(
-          (_pool) =>
-            _pool.coinTypes[0] === inCoinType &&
-            _pool.coinTypes[1] === outCoinType,
-        )
-        .sort((a, b) => +b.tvlUsd - +a.tvlUsd),
-      ...poolsData.pools
-        .filter(
-          (_pool) =>
-            _pool.coinTypes[0] === inCoinType &&
-            _pool.coinTypes[1] !== outCoinType,
-        )
-        .sort((a, b) => +b.tvlUsd - +a.tvlUsd),
-      ...poolsData.pools
-        .filter(
-          (_pool) =>
-            _pool.coinTypes[0] !== inCoinType &&
-            _pool.coinTypes[1] === outCoinType,
-        )
-        .sort((a, b) => +b.tvlUsd - +a.tvlUsd),
+      ...poolsData.pools.filter(
+        (_pool) =>
+          _pool.coinTypes[0] === inCoinType &&
+          _pool.coinTypes[1] === outCoinType,
+      ),
+      ...poolsData.pools.filter(
+        (_pool) =>
+          _pool.coinTypes[0] === inCoinType &&
+          _pool.coinTypes[1] !== outCoinType,
+      ),
+      ...poolsData.pools.filter(
+        (_pool) =>
+          _pool.coinTypes[0] !== inCoinType &&
+          _pool.coinTypes[1] === outCoinType,
+      ),
     ];
   }, [poolsData, inCoinType, outCoinType]);
 
@@ -671,10 +660,10 @@ export default function SwapPage() {
         </div>
 
         <SuggestedPools
-          containerClassName="grid-cols-1"
+          id="swap"
           title="Suggested pools"
           pools={suggestedPools}
-          collapsedPoolCount={2}
+          tvlOnly
         />
       </div>
     </>

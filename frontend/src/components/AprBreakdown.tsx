@@ -98,7 +98,7 @@ export default function AprBreakdown({
               {/* Rewards - per day */}
               {perDayRewards.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <p className="text-p2 text-foreground">Points</p>
+                  <p className="text-p1 text-foreground">Points</p>
 
                   {perDayRewards.map((r, index) => (
                     <AprBreakdownRow
@@ -134,7 +134,7 @@ export default function AprBreakdown({
               <div className="flex flex-col gap-2">
                 {/* Total APR */}
                 <div className="flex flex-row items-center justify-between gap-4">
-                  <p className="text-p2 text-foreground">Total APR</p>
+                  <p className="text-p1 text-foreground">Total APR</p>
                   <p className="text-p1 font-bold text-foreground">
                     {formatPercent(totalAprPercent)}
                   </p>

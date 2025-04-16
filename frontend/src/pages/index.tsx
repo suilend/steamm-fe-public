@@ -1,8 +1,9 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
+import { Search, X } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
 import { formatUsd } from "@suilend/frontend-sui";
@@ -206,6 +207,7 @@ export default function PoolsPage() {
   );
 
   // Search
+  const inputRef = useRef<HTMLInputElement>(null);
   const [searchString, setSearchString] = useState<string>("");
 
   const filteredPoolGroups = useMemo(() => {
@@ -360,8 +362,24 @@ export default function PoolsPage() {
             <div className="flex flex-row items-center justify-end gap-2 max-md:flex-1">
               {/* Filter */}
               <div className="relative z-[1] h-10 max-w-[180px] rounded-md bg-card transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))] max-md:flex-1 md:w-[180px]">
+                <Search className="pointer-events-none absolute left-3 top-3 z-[2] h-4 w-4 text-secondary-foreground" />
+                {searchString !== "" && (
+                  <button
+                    className="group absolute right-1 top-1 z-[2] flex h-8 w-8 flex-row items-center justify-center"
+                    onClick={() => {
+                      setSearchString("");
+                      inputRef.current?.focus();
+                    }}
+                  >
+                    <X className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
+                  </button>
+                )}
                 <input
-                  className="h-full w-full min-w-0 !border-0 !bg-[transparent] px-3 text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  ref={inputRef}
+                  className={cn(
+                    "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] pl-9 text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground",
+                    searchString !== "" ? "pr-9" : "pr-3",
+                  )}
                   type="text"
                   placeholder={sm ? "Search pools..." : "Search..."}
                   value={searchString}

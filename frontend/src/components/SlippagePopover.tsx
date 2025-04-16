@@ -40,7 +40,7 @@ export default function SlippagePopover() {
       rootProps={{ open: isOpen, onOpenChange: setIsOpen }}
       contentProps={{
         align: "end",
-        maxWidth: 280,
+        maxWidth: 240,
       }}
       trigger={
         <button
@@ -81,7 +81,7 @@ export default function SlippagePopover() {
               className={cn(
                 "group flex h-10 flex-1 flex-row items-center justify-center rounded-md border px-3 transition-colors",
                 slippagePercent === sp
-                  ? "cursor-default bg-button-1"
+                  ? "cursor-default border-button-1 bg-button-1/25"
                   : "hover:bg-border/50",
               )}
               onClick={() => {
@@ -93,7 +93,7 @@ export default function SlippagePopover() {
                 className={cn(
                   "!text-p2 transition-colors",
                   slippagePercent === sp
-                    ? "text-button-1-foreground"
+                    ? "text-foreground"
                     : "text-secondary-foreground group-hover:text-foreground",
                 )}
               >
@@ -107,6 +107,7 @@ export default function SlippagePopover() {
           <p className="text-p2 text-secondary-foreground">Custom</p>
 
           <PercentInput
+            className="border bg-background focus-within:border-focus focus-within:bg-background focus-within:shadow-none"
             placeholder={
               slippagePercent.toFixed(2).at(-1)! === "0"
                 ? slippagePercent.toFixed(1)

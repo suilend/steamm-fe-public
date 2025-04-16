@@ -27,7 +27,8 @@ export const columnStyleMap: Record<Column, CSSProperties> = {
   },
   feeTier: {
     width: 100, // px
-    justifyContent: "end",
+    justifyContent: "center",
+    paddingLeft: 4 * 5, // px
     paddingRight: 4 * 5, // px
   },
   tvlUsd: {
@@ -146,8 +147,8 @@ export default function PoolsTable({
   }, [poolGroups, sortState]);
 
   return (
-    <div className="relative w-full">
-      <div className="pointer-events-none absolute inset-0 z-[2] border" />
+    <div className="relative w-full overflow-hidden rounded-md">
+      <div className="pointer-events-none absolute inset-0 z-[2] rounded-md border" />
 
       <div className={cn("relative z-[1] w-full overflow-auto", className)}>
         {/* Header */}

@@ -65,6 +65,7 @@ export default function SettingsDialog() {
 
             {rpc.id === RpcId.CUSTOM && (
               <TextInput
+                className="border bg-background focus-within:border-focus focus-within:bg-background focus-within:shadow-none"
                 autoFocus
                 value={customRpcUrl}
                 onChange={setCustomRpcUrl}
@@ -98,7 +99,7 @@ export default function SettingsDialog() {
         </div>
 
         <div className="relative flex-1">
-          <div className="relative z-[1] h-10 w-full rounded-md bg-card transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]">
+          <div className="relative z-[1] h-10 w-full rounded-md border bg-background transition-colors focus-within:border-focus">
             <input
               className="h-full w-full min-w-0 !border-0 !bg-[transparent] px-3 text-p1 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               type="number"

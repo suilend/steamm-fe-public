@@ -4,7 +4,7 @@ export const STEAMM_CONFIG = {
   package_id:
     "0x4fb1cf45dffd6230305f1d269dd1816678cc8e3ba0b747a813a556921219f261",
   published_at:
-    "0x67e4835cbe51818ce79af790f25ee7d8dfb03fc1556094ca5531cc399c687444",
+    "0xf0e2245d9351b94a6aca77c91a9a4b310508fee953a97667b4dee5f9d59ad025",
   config: {
     registryId:
       "0x8584948e8c0a2809ec192ede7e030b0a32bd602e5ca6c91bde8dc35fb8b0068d",
@@ -22,7 +22,7 @@ export const STEAMM_SCRIPT_CONFIG = {
   package_id:
     "0x13bfc09cfc1bd922d3aa53fcf7b2cd510727ee65068ce136e2ebd5f3b213fdd2",
   published_at:
-    "0xf61844d7e3313e920825308d2ce5e783e0a77b14d5c6f0f56170451c6e8c9088",
+    "0x93ebee2837c208631bd49eb0ee16af9381ae3175589302a5183175540b9e4cc3",
 };
 
 export const SUILEND_CONFIG = {

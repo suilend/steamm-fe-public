@@ -10,7 +10,6 @@ import { debounce } from "lodash";
 import {
   MAX_U64,
   NORMALIZED_SUI_COINTYPE,
-  NORMALIZED_WAL_COINTYPE,
   SUI_GAS_MIN,
   formatToken,
   formatUsd,
@@ -535,11 +534,7 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
       });
       transaction.transferObjects([coinA, coinB], address);
 
-      rebalanceBanks(
-        banks.filter((bank) => bank.coinType !== NORMALIZED_WAL_COINTYPE), // TODO
-        steammClient,
-        transaction,
-      );
+      rebalanceBanks(banks, steammClient, transaction);
 
       // Stake LP tokens (if reserve exists)
       if (!!appData.lmMarket.reserveMap[pool.lpTokenType]) {
@@ -659,7 +654,14 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
           <div className="relative flex h-4 flex-1 flex-row items-center">
             <div className="absolute inset-0 z-[1] rounded-[calc(16px/2)] bg-card/50" />
 
-            <div className="absolute inset-x-[calc(16px/2)] inset-y-0 z-[2]">
+            <div
+              className="absolute inset-y-0 left-0 z-[2] rounded-l-[calc(16px/2)] bg-button-2"
+              style={{
+                width: `calc(${16 / 2}px + ${sliderValue || "0"}% - ${((16 / 2) * 2 * +(sliderValue || "0")) / 100}px)`,
+              }}
+            />
+
+            <div className="absolute inset-x-[calc(16px/2)] inset-y-0 z-[3]">
               {Array.from({ length: 5 }).map((_, detentIndex, array) => (
                 <div
                   key={detentIndex}
@@ -678,7 +680,7 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
 
             <input
               className={cn(
-                "relative z-[3] h-6 w-full min-w-0 appearance-none bg-[transparent] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground",
+                "relative z-[4] h-6 w-full min-w-0 appearance-none bg-[transparent] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground",
                 +sliderValue === Infinity && "opacity-0",
               )}
               type="range"
@@ -711,48 +713,6 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
         submitButtonState={submitButtonState}
         onClick={onSubmitClick}
       />
-
-      <div className="flex w-full flex-col gap-2">
-        <Parameter label="Maximum outflow" isHorizontal>
-          <div className="flex flex-col items-end gap-1">
-            {pool.coinTypes.map((coinType, index) => (
-              <Fragment key={coinType}>
-                {fetchingQuoteForIndex !== undefined ? (
-                  <Skeleton className="h-[21px] w-24" />
-                ) : (
-                  <p className="text-p2 text-foreground">
-                    {quote ? (
-                      <>
-                        {formatToken(
-                          new BigNumber(
-                            (index === 0
-                              ? quote.depositA
-                              : quote.depositB
-                            ).toString(),
-                          )
-                            .times(
-                              index === lastActiveInputIndex ||
-                                pool.tvlUsd.eq(0)
-                                ? 1
-                                : 1 + slippagePercent / 100,
-                            )
-                            .div(
-                              10 ** appData.coinMetadataMap[coinType].decimals,
-                            ),
-                          { dp: appData.coinMetadataMap[coinType].decimals },
-                        )}{" "}
-                        {appData.coinMetadataMap[coinType].symbol}
-                      </>
-                    ) : (
-                      "--"
-                    )}
-                  </p>
-                )}
-              </Fragment>
-            ))}
-          </div>
-        </Parameter>
-      </div>
     </>
   );
 }
@@ -1090,11 +1050,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
     });
     transaction.transferObjects([coinA, coinB], address);
 
-    rebalanceBanks(
-      banks.filter((bank) => bank.coinType !== NORMALIZED_WAL_COINTYPE), // TODO
-      steammClient,
-      transaction,
-    );
+    rebalanceBanks(banks, steammClient, transaction);
 
     return transaction;
   };
@@ -1200,7 +1156,14 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
         <div className="relative flex h-4 flex-1 flex-row items-center">
           <div className="absolute inset-0 z-[1] rounded-[calc(16px/2)] bg-card/50" />
 
-          <div className="absolute inset-x-[calc(16px/2)] inset-y-0 z-[2]">
+          <div
+            className="absolute inset-y-0 left-0 z-[2] rounded-l-[calc(16px/2)] bg-button-2"
+            style={{
+              width: `calc(${16 / 2}px + ${value || "0"}% - ${((16 / 2) * 2 * +(value || "0")) / 100}px)`,
+            }}
+          />
+
+          <div className="absolute inset-x-[calc(16px/2)] inset-y-0 z-[3]">
             {Array.from({ length: 5 }).map((_, detentIndex, array) => (
               <div
                 key={detentIndex}
@@ -1218,7 +1181,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
           </div>
 
           <input
-            className="relative z-[3] h-6 w-full min-w-0 appearance-none bg-[transparent] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground"
+            className="relative z-[4] h-6 w-full min-w-0 appearance-none bg-[transparent] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground"
             type="range"
             min={0}
             max={100}
@@ -1244,101 +1207,61 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
         </div>
       </div>
 
-      {pool.coinTypes.map((coinType, index) => (
-        <div
-          key={coinType}
-          className="flex w-full flex-row items-start justify-between"
-        >
-          <div className="flex flex-row items-center gap-2">
-            <TokenLogo
-              token={getToken(coinType, appData.coinMetadataMap[coinType])}
-              size={20}
-            />
-            <p className="text-p1 text-foreground">
-              {appData.coinMetadataMap[coinType].symbol}
-            </p>
-          </div>
-
-          {isFetchingQuote ? (
-            <div className="flex flex-col items-end gap-1">
-              <Skeleton className="h-[24px] w-24" />
-              <Skeleton className="h-[21px] w-16" />
-            </div>
-          ) : (
-            <div className="flex flex-col items-end gap-1">
-              <p className="text-p1 text-foreground">
-                {quote
-                  ? formatToken(
-                      new BigNumber(
-                        (index === 0
-                          ? quote.withdrawA
-                          : quote.withdrawB
-                        ).toString(),
-                      ).div(10 ** appData.coinMetadataMap[coinType].decimals),
-                      { dp: appData.coinMetadataMap[coinType].decimals },
-                    )
-                  : "--"}
-              </p>
-              <p className="text-p2 text-secondary-foreground">
-                {quote
-                  ? formatUsd(
-                      new BigNumber(
-                        (index === 0
-                          ? quote.withdrawA
-                          : quote.withdrawB
-                        ).toString(),
-                      )
-                        .div(10 ** appData.coinMetadataMap[coinType].decimals)
-                        .times(pool.prices[index]),
-                    )
-                  : "--"}
-              </p>
-            </div>
-          )}
-        </div>
-      ))}
-
-      <SubmitButton
-        submitButtonState={submitButtonState}
-        onClick={onSubmitClick}
-      />
-
       <div className="flex w-full flex-col gap-2">
-        <Parameter label="Minimum inflow" isHorizontal>
+        <Parameter label="Withdrawing" isHorizontal>
           <div className="flex flex-col items-end gap-1">
             {pool.coinTypes.map((coinType, index) => (
               <Fragment key={coinType}>
                 {isFetchingQuote ? (
                   <Skeleton className="h-[21px] w-24" />
+                ) : quote ? (
+                  <div className="flex flex-row items-center gap-2">
+                    <TokenLogo
+                      token={getToken(
+                        coinType,
+                        appData.coinMetadataMap[coinType],
+                      )}
+                      size={16}
+                    />
+
+                    <p className="text-p2 text-foreground">
+                      {formatToken(
+                        new BigNumber(
+                          (index === 0
+                            ? quote.withdrawA
+                            : quote.withdrawB
+                          ).toString(),
+                        ).div(10 ** appData.coinMetadataMap[coinType].decimals),
+                        { dp: appData.coinMetadataMap[coinType].decimals },
+                      )}{" "}
+                      {appData.coinMetadataMap[coinType].symbol}
+                    </p>
+                    <p className="text-p2 text-secondary-foreground">
+                      {formatUsd(
+                        new BigNumber(
+                          (index === 0
+                            ? quote.withdrawA
+                            : quote.withdrawB
+                          ).toString(),
+                        )
+                          .div(10 ** appData.coinMetadataMap[coinType].decimals)
+                          .times(pool.prices[index]),
+                      )}
+                    </p>
+                  </div>
                 ) : (
-                  <p className="text-p2 text-foreground">
-                    {quote ? (
-                      <>
-                        {formatToken(
-                          new BigNumber(
-                            (index === 0
-                              ? quote.withdrawA
-                              : quote.withdrawB
-                            ).toString(),
-                          )
-                            .div(index === 0 ? 1 : 1 + slippagePercent / 100)
-                            .div(
-                              10 ** appData.coinMetadataMap[coinType].decimals,
-                            ),
-                          { dp: appData.coinMetadataMap[coinType].decimals },
-                        )}{" "}
-                        {appData.coinMetadataMap[coinType].symbol}
-                      </>
-                    ) : (
-                      "--"
-                    )}
-                  </p>
+                  <p className="text-p2 text-foreground">--</p>
                 )}
               </Fragment>
             ))}
           </div>
         </Parameter>
       </div>
+
+      <SubmitButton
+        submitButtonState={submitButtonState}
+        onClick={onSubmitClick}
+      />
     </>
   );
 }
@@ -1646,11 +1569,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
       });
       transaction.transferObjects([coinA, coinB], address);
 
-      rebalanceBanks(
-        banks.filter((bank) => bank.coinType !== NORMALIZED_WAL_COINTYPE), // TODO
-        steammClient,
-        transaction,
-      );
+      rebalanceBanks(banks, steammClient, transaction);
 
       const res = await signExecuteAndWaitForTransaction(transaction, {
         auction: true,
@@ -1784,17 +1703,24 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
             {isFetchingQuote || !quote ? (
               <Skeleton className="h-[21px] w-24" />
             ) : (
-              <p className="text-p2 text-foreground">
-                {formatToken(
-                  new BigNumber(
-                    (
-                      quote.outputFees.poolFees + quote.outputFees.protocolFees
-                    ).toString(),
-                  ).div(10 ** inactiveCoinMetadata.decimals),
-                  { dp: inactiveCoinMetadata.decimals },
-                )}{" "}
-                {inactiveCoinMetadata.symbol}
-              </p>
+              <div className="flex flex-row items-center gap-2">
+                <TokenLogo
+                  token={getToken(inactiveCoinType, inactiveCoinMetadata)}
+                  size={16}
+                />
+                <p className="text-p2 text-foreground">
+                  {formatToken(
+                    new BigNumber(
+                      (
+                        quote.outputFees.poolFees +
+                        quote.outputFees.protocolFees
+                      ).toString(),
+                    ).div(10 ** inactiveCoinMetadata.decimals),
+                    { dp: inactiveCoinMetadata.decimals },
+                  )}{" "}
+                  {inactiveCoinMetadata.symbol}
+                </p>
+              </div>
             )}
           </Parameter>
 
@@ -1802,15 +1728,21 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
             {isFetchingQuote || !quote ? (
               <Skeleton className="h-[21px] w-24" />
             ) : (
-              <p className="text-p2 text-foreground">
-                {formatToken(
-                  new BigNumber(quote.amountOut.toString())
-                    .div(1 + slippagePercent / 100)
-                    .div(10 ** inactiveCoinMetadata.decimals),
-                  { dp: inactiveCoinMetadata.decimals },
-                )}{" "}
-                {inactiveCoinMetadata.symbol}
-              </p>
+              <div className="flex flex-row items-center gap-2">
+                <TokenLogo
+                  token={getToken(inactiveCoinType, inactiveCoinMetadata)}
+                  size={16}
+                />
+                <p className="text-p2 text-foreground">
+                  {formatToken(
+                    new BigNumber(quote.amountOut.toString())
+                      .div(1 + slippagePercent / 100)
+                      .div(10 ** inactiveCoinMetadata.decimals),
+                    { dp: inactiveCoinMetadata.decimals },
+                  )}{" "}
+                  {inactiveCoinMetadata.symbol}
+                </p>
+              </div>
             )}
           </Parameter>
         </div>
@@ -1866,7 +1798,7 @@ export default function PoolActionsCard({
               <button
                 key={action}
                 className={cn(
-                  "group relative flex h-8 flex-row px-2 transition-colors",
+                  "group relative flex h-8 flex-row px-3 transition-colors",
                   action === selectedAction ? "cursor-default" : "",
                 )}
                 onClick={() => onSelectedActionChange(action)}

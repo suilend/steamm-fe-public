@@ -37,8 +37,8 @@ export default function BanksTab() {
   }, [banksData, poolsData, appData]);
 
   return (
-    <div className="flex w-full flex-col gap-1">
-      <div className="grid w-full grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3">
+    <div className="flex w-full flex-col gap-4">
+      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {sortedInitializableBanks === undefined
           ? Array.from({ length: 6 }).map((_, index) => (
               <Skeleton key={index} className="h-[534px] w-full rounded-md" />
@@ -48,7 +48,7 @@ export default function BanksTab() {
             ))}
       </div>
 
-      <div className="grid w-full grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {sortedNonInitializableBanks === undefined
           ? Array.from({ length: 6 }).map((_, index) => (
               <Skeleton key={index} className="h-[534px] w-full rounded-md" />

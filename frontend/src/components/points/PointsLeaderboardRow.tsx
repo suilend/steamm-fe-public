@@ -50,7 +50,7 @@ export default function PointsLeaderboardRow({
         {[1, 2, 3].includes(row.rank) && (
           <Trophy
             className={cn(
-              "h-4 w-4",
+              "h-3 w-3",
               row.rank === 1 && "text-gold",
               row.rank === 2 && "text-silver",
               row.rank === 3 && "text-bronze",

@@ -130,7 +130,7 @@ export default function PoolGroupRow({
           className="flex h-full flex-row items-center"
           style={columnStyleMap.tvlUsd}
         >
-          <div className="flex flex-row items-baseline gap-2">
+          <div className="flex flex-row items-center gap-2">
             <p className="text-p3 text-tertiary-foreground">Total</p>
 
             <Tooltip title={formatUsd(totalTvlUsd, { exact: true })}>
@@ -146,7 +146,7 @@ export default function PoolGroupRow({
           className="flex h-full flex-row items-center"
           style={columnStyleMap.volumeUsd_24h}
         >
-          <div className="flex flex-row items-baseline gap-2">
+          <div className="flex flex-row items-center gap-2">
             <p className="text-p3 text-tertiary-foreground">Total</p>
 
             {totalVolumeUsd_24h === undefined ? (
