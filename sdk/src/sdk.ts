@@ -1,3 +1,4 @@
+import { CoinBalance } from "@mysten/sui/client";
 import { Signer } from "@mysten/sui/cryptography";
 import { normalizeStructTag } from "@mysten/sui/utils";
 import {
@@ -312,6 +313,40 @@ export class SteammSDK {
     }
 
     return this._oracleRegistry.oracles;
+  }
+
+  async fetchLpTokenTypes(): Promise<Set<string>> {
+    const poolData = await this.getPools();
+
+    const lpTokenTypesArray: string[] = [];
+
+    poolData.forEach((pool) => {
+      lpTokenTypesArray.push(pool.lpTokenType);
+    });
+
+    return new Set(lpTokenTypesArray);
+  }
+
+  async fetchLpTokenBalances(
+    address: SuiAddressType,
+    lpCoinTypes?: Set<string>,
+  ): Promise<CoinBalance[]> {
+    const coinTypes = lpCoinTypes ?? (await this.fetchLpTokenTypes());
+    try {
+      const balances = await this.fullClient.getAllBalances({
+        owner: address,
+      });
+      const lpBalances = [];
+
+      for (const balance of balances) {
+        if (coinTypes.has(balance.coinType)) {
+          lpBalances.push(balance);
+        }
+      }
+      return lpBalances;
+    } catch (error) {
+      throw error;
+    }
   }
 
   private async refreshOracleCache() {
