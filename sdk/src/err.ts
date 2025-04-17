@@ -182,6 +182,20 @@ export const ERROR_MAPS: ErrorMaps = {
       msg: "Product of reserves plus offset equals zero",
     },
   },
+  omm: {
+    0: {
+      tag: "EInvalidBankType",
+      msg: "Bank's bToken type does not correspond to pool bToken type",
+    },
+    1: {
+      tag: "EInvalidOracleIndex",
+      msg: "Oracle Price object does not correspond to correct Oracle Index",
+    },
+    2: {
+      tag: "EInvalidOracleRegistry",
+      msg: "Incorrect Oracle Registry",
+    },
+  },
   version: {
     0: {
       tag: "EIncorrectVersion",
