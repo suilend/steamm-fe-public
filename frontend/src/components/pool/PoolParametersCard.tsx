@@ -32,35 +32,40 @@ export default function PoolParametersCard() {
   const { pool } = usePoolContext();
 
   // Current price
-  const [quote, setQuote] = useState<SwapQuote | undefined>(undefined);
+  const [quoteMap, setQuoteMap] = useState<Record<string, SwapQuote>>({});
 
-  const isFetchingQuoteRef = useRef<boolean>(false);
+  const isFetchingQuoteMapRef = useRef<Record<string, boolean>>({});
   useEffect(() => {
     if (banksData === undefined) return;
 
-    if (isFetchingQuoteRef.current) return;
-    isFetchingQuoteRef.current = true;
+    if (isFetchingQuoteMapRef.current[pool.id]) return;
+    isFetchingQuoteMapRef.current = {
+      ...isFetchingQuoteMapRef.current,
+      [pool.id]: true,
+    };
 
     (async () => {
       try {
-        const submitAmount = new BigNumber(pool.balances[0].times(0.01)) // 1% of pool balanceA
+        const submitAmountA = new BigNumber(pool.balances[0].times(0.1 / 100)) // 0.1% of pool balanceA
           .times(10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals)
           .integerValue(BigNumber.ROUND_DOWN)
           .toString();
-        const _quote = await steammClient.Pool.quoteSwap({
+
+        const quote = await steammClient.Pool.quoteSwap({
           a2b: true,
-          amountIn: BigInt(submitAmount),
+          amountIn: BigInt(submitAmountA),
           poolInfo: pool.poolInfo,
           bankInfoA: banksData.bankMap[pool.coinTypes[0]].bankInfo,
           bankInfoB: banksData.bankMap[pool.coinTypes[1]].bankInfo,
         });
-        setQuote(_quote);
+        setQuoteMap((prev) => ({ ...prev, [pool.id]: quote }));
       } catch (err) {
         console.error(err);
       }
     })();
   }, [
     banksData,
+    pool.id,
     pool.balances,
     appData.coinMetadataMap,
     pool.coinTypes,
@@ -136,7 +141,7 @@ export default function PoolParametersCard() {
           pool.coinTypes[1],
           appData.coinMetadataMap[pool.coinTypes[1]],
         )}
-        quote={quote}
+        quote={quoteMap[pool.id]}
         label="Current price"
       />
 
