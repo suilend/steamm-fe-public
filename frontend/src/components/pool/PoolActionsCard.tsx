@@ -1331,6 +1331,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
           )
           .integerValue(BigNumber.ROUND_DOWN)
           .toString();
+
         const quote = await _steammClient.Pool.quoteSwap({
           a2b: _activeCoinIndex === 0,
           amountIn: BigInt(submitAmount),

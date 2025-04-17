@@ -1,4 +1,7 @@
+import { useEffect, useRef, useState } from "react";
+
 import BigNumber from "bignumber.js";
+import { useBoolean } from "usehooks-ts";
 
 import {
   formatAddress,
@@ -7,6 +10,7 @@ import {
   getToken,
 } from "@suilend/frontend-sui";
 import { useSettingsContext } from "@suilend/frontend-sui-next";
+import { SwapQuote } from "@suilend/steamm-sdk";
 
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
@@ -24,8 +28,45 @@ import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 export default function PoolParametersCard() {
   const { explorer } = useSettingsContext();
-  const { appData, banksData } = useLoadedAppContext();
+  const { steammClient, appData, banksData } = useLoadedAppContext();
   const { pool } = usePoolContext();
+
+  // Current price
+  const [quote, setQuote] = useState<SwapQuote | undefined>(undefined);
+
+  const isFetchingQuoteRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (banksData === undefined) return;
+
+    if (isFetchingQuoteRef.current) return;
+    isFetchingQuoteRef.current = true;
+
+    (async () => {
+      try {
+        const submitAmount = new BigNumber(pool.balances[0].times(0.01)) // 1% of pool balanceA
+          .times(10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals)
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString();
+        const _quote = await steammClient.Pool.quoteSwap({
+          a2b: true,
+          amountIn: BigInt(submitAmount),
+          poolInfo: pool.poolInfo,
+          bankInfoA: banksData.bankMap[pool.coinTypes[0]].bankInfo,
+          bankInfoB: banksData.bankMap[pool.coinTypes[1]].bankInfo,
+        });
+        setQuote(_quote);
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+  }, [
+    banksData,
+    pool.balances,
+    appData.coinMetadataMap,
+    pool.coinTypes,
+    steammClient.Pool,
+    pool.poolInfo,
+  ]);
 
   return (
     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
@@ -95,20 +136,7 @@ export default function PoolParametersCard() {
           pool.coinTypes[1],
           appData.coinMetadataMap[pool.coinTypes[1]],
         )}
-        quote={{
-          amountIn: BigInt(
-            pool.balances[0]
-              .times(10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals)
-              .integerValue(BigNumber.ROUND_DOWN)
-              .toString(),
-          ),
-          amountOut: BigInt(
-            pool.balances[1]
-              .times(10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals)
-              .integerValue(BigNumber.ROUND_DOWN)
-              .toString(),
-          ),
-        }}
+        quote={quote}
         label="Current price"
       />
 
