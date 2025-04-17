@@ -189,7 +189,7 @@ function PoolPage() {
 
             <div className="flex w-full flex-col gap-4 md:flex-row">
               {/* Left */}
-              <div className="flex flex-col gap-6 max-md:w-full md:flex-1 lg:flex-[3]">
+              <div className="flex min-w-0 flex-col gap-6 max-md:w-full md:flex-1 lg:flex-[3]">
                 {/* Cards */}
                 <div className="flex w-full flex-col gap-4">
                   <PoolChartCard />
