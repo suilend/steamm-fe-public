@@ -8,11 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { formatUsd } from "@suilend/frontend-sui";
 import { shallowPushQuery } from "@suilend/frontend-sui-next";
-import {
-  Side,
-  getFilteredRewards,
-  getStakingYieldAprPercent,
-} from "@suilend/sdk";
+import { Side, getFilteredRewards } from "@suilend/sdk";
 
 import Divider from "@/components/Divider";
 import HistoricalDataChart from "@/components/HistoricalDataChart";
@@ -25,7 +21,10 @@ import { useStatsContext } from "@/contexts/StatsContext";
 import useBreakpoint from "@/hooks/useBreakpoint";
 import { ChartConfig, ChartType, chartStatNameMap } from "@/lib/chart";
 import { formatPair } from "@/lib/format";
-import { getTotalAprPercent } from "@/lib/liquidityMining";
+import {
+  getPoolStakingYieldAprPercent,
+  getPoolTotalAprPercent,
+} from "@/lib/liquidityMining";
 import { ParsedPool, PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -145,48 +144,28 @@ export default function PoolsPage() {
             const filteredRewards = getFilteredRewards(rewards);
 
             const stakingYieldAprPercent: BigNumber | undefined =
-              pool.tvlUsd.gt(0)
-                ? pool.coinTypes
-                    .reduce(
-                      (acc, coinType, index) =>
-                        acc.plus(
-                          new BigNumber(
-                            getStakingYieldAprPercent(
-                              Side.DEPOSIT,
-                              coinType,
-                              poolsData.lstAprPercentMap,
-                            ) ?? 0,
-                          ).times(
-                            pool.prices[index].times(pool.balances[index]),
-                          ),
-                        ),
-                      new BigNumber(0),
-                    )
-                    .div(pool.tvlUsd)
-                : new BigNumber(0);
-
-            const totalAprPercent: BigNumber | undefined =
-              poolStats.aprPercent_24h[pool.id] !== undefined &&
-              stakingYieldAprPercent !== undefined
-                ? getTotalAprPercent(
-                    poolStats.aprPercent_24h[pool.id].feesAprPercent,
-                    pool.suilendWeightedAverageDepositAprPercent,
-                    filteredRewards,
-                    stakingYieldAprPercent,
-                  )
-                : undefined;
+              getPoolStakingYieldAprPercent(pool, poolsData.lstAprPercentMap);
 
             return {
               ...pool,
               volumeUsd_24h: poolStats.volumeUsd_24h[pool.id],
-              aprPercent_24h: totalAprPercent,
+              aprPercent_24h:
+                poolStats.aprPercent_24h[pool.id] !== undefined &&
+                stakingYieldAprPercent !== undefined
+                  ? getPoolTotalAprPercent(
+                      poolStats.aprPercent_24h[pool.id].feesAprPercent,
+                      pool.suilendWeightedAverageDepositAprPercent,
+                      filteredRewards,
+                      stakingYieldAprPercent,
+                    )
+                  : undefined,
             };
           }),
         },
       ],
       [] as PoolGroup[],
     );
-  }, [poolsData, poolStats.aprPercent_24h, poolStats.volumeUsd_24h]);
+  }, [poolsData, poolStats.volumeUsd_24h, poolStats.aprPercent_24h]);
 
   // Featured pools
   const featuredPoolGroups = useMemo(
