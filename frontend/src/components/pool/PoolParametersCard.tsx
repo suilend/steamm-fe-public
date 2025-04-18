@@ -24,18 +24,56 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { formatFeeTier } from "@/lib/format";
+import { QuoterId } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 export default function PoolParametersCard() {
   const { explorer } = useSettingsContext();
-  const { steammClient, appData, banksData } = useLoadedAppContext();
+  const { steammClient, appData, banksData, oraclesData } =
+    useLoadedAppContext();
   const { pool } = usePoolContext();
 
   // Current price
   const [quoteMap, setQuoteMap] = useState<Record<string, SwapQuote>>({});
+  const quote =
+    pool.quoterId === QuoterId.CPMM
+      ? quoteMap[pool.id]
+      : oraclesData === undefined
+        ? undefined
+        : ({
+            a2b: true,
+            amountIn: BigInt(
+              new BigNumber(1)
+                .times(
+                  10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+                )
+                .integerValue(BigNumber.ROUND_DOWN)
+                .toString(),
+            ),
+            amountOut: BigInt(
+              new BigNumber(
+                oraclesData.coinTypeOracleInfoPriceMap[
+                  pool.coinTypes[0]
+                ].price.div(
+                  oraclesData.coinTypeOracleInfoPriceMap[pool.coinTypes[1]]
+                    .price,
+                ),
+              )
+                .times(
+                  10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals,
+                )
+                .integerValue(BigNumber.ROUND_DOWN)
+                .toString(),
+            ),
+            outputFees: {
+              poolFees: BigInt(0),
+              protocolFees: BigInt(0),
+            },
+          } as SwapQuote);
 
   const isFetchingQuoteMapRef = useRef<Record<string, boolean>>({});
   useEffect(() => {
+    if (pool.quoterId !== QuoterId.CPMM) return;
     if (banksData === undefined) return;
 
     if (isFetchingQuoteMapRef.current[pool.id]) return;
@@ -64,6 +102,7 @@ export default function PoolParametersCard() {
       }
     })();
   }, [
+    pool.quoterId,
     banksData,
     pool.id,
     pool.balances,
@@ -141,7 +180,7 @@ export default function PoolParametersCard() {
           pool.coinTypes[1],
           appData.coinMetadataMap[pool.coinTypes[1]],
         )}
-        quote={quoteMap[pool.id]}
+        quote={quote}
         label="Current price"
       />
 
