@@ -23,7 +23,6 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { PoolContextProvider, usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { useUserContext } from "@/contexts/UserContext";
-import useBreakpoint from "@/hooks/useBreakpoint";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { ROOT_URL } from "@/lib/navigation";
@@ -36,8 +35,6 @@ function PoolPage() {
   const { refresh } = useUserContext();
 
   const { pool } = usePoolContext();
-
-  const { md, lg } = useBreakpoint();
 
   // Pair
   const formattedPair = formatPair(
@@ -192,7 +189,7 @@ function PoolPage() {
 
             <div className="flex w-full flex-col gap-4 md:flex-row">
               {/* Left */}
-              <div className="flex flex-col gap-6 max-md:w-full md:flex-1 lg:flex-[3]">
+              <div className="flex min-w-0 flex-col gap-6 max-md:w-full md:flex-1 lg:flex-[3]">
                 {/* Cards */}
                 <div className="flex w-full flex-col gap-4">
                   <PoolChartCard />

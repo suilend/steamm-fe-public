@@ -832,7 +832,7 @@ export default function CreatePoolCard() {
           onChange={
             coinTypes[0] !== "" ? (value) => onValueChange(value, 0) : undefined
           }
-          onBalanceClick={
+          onMaxAmountClick={
             coinTypes[0] !== "" ? () => onBalanceClick(0) : undefined
           }
           tokens={baseTokens}
@@ -860,7 +860,7 @@ export default function CreatePoolCard() {
           onChange={
             coinTypes[1] !== "" ? (value) => onValueChange(value, 1) : undefined
           }
-          onBalanceClick={
+          onMaxAmountClick={
             coinTypes[1] !== "" ? () => onBalanceClick(1) : undefined
           }
           tokens={quoteTokens}

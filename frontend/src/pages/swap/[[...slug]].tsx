@@ -525,7 +525,7 @@ export default function SwapPage() {
           </div>
 
           <div className="flex w-full flex-col gap-4">
-            <div className="relative flex w-full min-w-0 flex-col items-center gap-1">
+            <div className="relative flex w-full min-w-0 flex-col items-center gap-2">
               <CoinInput
                 className="relative z-[1]"
                 autoFocus
@@ -533,7 +533,7 @@ export default function SwapPage() {
                 value={value}
                 usdValue={inUsdValue}
                 onChange={(value) => onValueChange(value)}
-                onBalanceClick={() => onBalanceClick()}
+                onMaxAmountClick={() => onBalanceClick()}
                 tokens={tokens}
                 onSelectToken={(token) =>
                   onSelectToken(token, TokenDirection.IN)
