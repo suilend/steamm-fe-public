@@ -3,26 +3,26 @@ import { Package, SteammConfigs } from "../types";
 
 export const STEAMM_BETA_CONFIG: Package<SteammConfigs> = {
   package_id:
-    "0xddaa7c8c1e74d4b0448c5a11fdbee779eaca26c40183d8791e315c8f62530d51",
+    "0xb41402e33ca9c00b610ae96a0780de7ba0caaa10f50b11b8d54ad6f1f4e50ce5",
   published_at:
-    "0xa73893381457055cb4c1ba97dca9ad611acd84e2c9eada7a9fdff9d40a0b1591",
+    "0x27b4732a24c2ff79f49de10d11317701b6196365c213f97f225b52caba5c73a3",
   config: {
     registryId:
-      "0xe20d9d9d762b3f233e0f2769f8ac7fe1c8bedcb1a006c11abd1cf3f013ac6df6",
+      "0x62986f83e2a4a3724460cfe5ddee54e9de14e4f680b7f66b00cbb9096fd9da60",
     globalAdmin:
-      "0xcebf107cba93173bd99837d0e267a8fedfbf43f127451af3fb61823373744868",
+      "0x2fafd49a9549c36a84f1ea725f0c19fe54419a677b0a7f78241ce78715e8a82e",
     quoterSourcePkgs: {
-      cpmm: "0xddaa7c8c1e74d4b0448c5a11fdbee779eaca26c40183d8791e315c8f62530d51",
-      omm: "0xa73893381457055cb4c1ba97dca9ad611acd84e2c9eada7a9fdff9d40a0b1591",
+      cpmm: "0xb41402e33ca9c00b610ae96a0780de7ba0caaa10f50b11b8d54ad6f1f4e50ce5",
+      omm: "0xb41402e33ca9c00b610ae96a0780de7ba0caaa10f50b11b8d54ad6f1f4e50ce5",
     },
   },
 };
 
 export const STEAMM_SCRIPT_BETA_CONFIG = {
   package_id:
-    "0xdfcac0610e134d98885744e0fb4b400c77b850abaf7ec4b372530e3661d9728e",
+    "0xa4544b52b40e44e41d3ec2d13a9b112b6d0b199641ba98b4664da2f841168ce5",
   published_at:
-    "0x9caa34a479ff313e20b0be665540bf8b10192650a7886039fffdb449585c48f6",
+    "0x3eec6d02cc5f2bc56afc3ac386212ca70360bc54a1703a1e8e3d303f9ac75faf",
 };
 
 export const SUILEND_BETA_CONFIG = {
