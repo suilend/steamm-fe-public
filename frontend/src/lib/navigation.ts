@@ -4,6 +4,7 @@ export const PORTFOLIO_URL = "/portfolio";
 export const SWAP_URL = "/swap";
 export const POINTS_URL = "/points";
 export const ADMIN_URL = "/admin";
+export const LAUNCH_URL = "/launch";
 
 export const SUILEND_URL = "https://suilend.fi";
 
