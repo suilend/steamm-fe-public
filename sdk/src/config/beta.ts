@@ -5,28 +5,28 @@ import { ORACLE_CONFIG } from "./mainnet";
 
 export const STEAMM_BETA_CONFIG: Package<SteammConfigs> = {
   package_id:
-    "0xca434de5b4ef05a2ad059947b371f9c94ae8c7786fdb112fe83da50b76f5069f",
+    "0xb41402e33ca9c00b610ae96a0780de7ba0caaa10f50b11b8d54ad6f1f4e50ce5",
   published_at:
-    "0xca434de5b4ef05a2ad059947b371f9c94ae8c7786fdb112fe83da50b76f5069f",
+    "0x27b4732a24c2ff79f49de10d11317701b6196365c213f97f225b52caba5c73a3",
   config: {
     registryId:
-      "0x459187246e094301d1a0b58780e5b1761e8551ac88ffc125684e9d5a3f7dcefc",
+      "0x62986f83e2a4a3724460cfe5ddee54e9de14e4f680b7f66b00cbb9096fd9da60",
     globalAdmin:
-      "0xf79576d0911a1631407d76788aa88b401d128f75d2f9edbd645f3aee3d3bc9fd",
+      "0x2fafd49a9549c36a84f1ea725f0c19fe54419a677b0a7f78241ce78715e8a82e",
     quoterSourcePkgs: {
-      cpmm: "0xca434de5b4ef05a2ad059947b371f9c94ae8c7786fdb112fe83da50b76f5069f",
-      omm: "0xca434de5b4ef05a2ad059947b371f9c94ae8c7786fdb112fe83da50b76f5069f",
+      cpmm: "0xb41402e33ca9c00b610ae96a0780de7ba0caaa10f50b11b8d54ad6f1f4e50ce5",
+      omm: "0xb41402e33ca9c00b610ae96a0780de7ba0caaa10f50b11b8d54ad6f1f4e50ce5",
       stable:
-        "0xca434de5b4ef05a2ad059947b371f9c94ae8c7786fdb112fe83da50b76f5069f",
+        "0x27b4732a24c2ff79f49de10d11317701b6196365c213f97f225b52caba5c73a3",
     },
   },
 };
 
 export const STEAMM_SCRIPT_BETA_CONFIG = {
   package_id:
-    "0x3dd4aabf6eab35209df26932781ab3e4edaa0cdbfcba92585725e463dfb41b40",
+    "0xa4544b52b40e44e41d3ec2d13a9b112b6d0b199641ba98b4664da2f841168ce5",
   published_at:
-    "0x3dd4aabf6eab35209df26932781ab3e4edaa0cdbfcba92585725e463dfb41b40",
+    "0x3eec6d02cc5f2bc56afc3ac386212ca70360bc54a1703a1e8e3d303f9ac75faf",
 };
 
 export const SUILEND_BETA_CONFIG = {
