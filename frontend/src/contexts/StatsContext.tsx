@@ -336,37 +336,33 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         }),
         {} as Record<string, BigNumber>,
       ),
-      aprPercent_24h: poolsData
-        ? Object.entries(poolHistoricalStats.feesUsd_7d).reduce(
-            (acc, [poolId, data]) => {
-              const pool = poolsData.pools.find((_pool) => _pool.id === poolId);
-              if (!pool) return acc; // `pool` should always be defined
+      aprPercent_24h: Object.entries(poolHistoricalStats.feesUsd_7d).reduce(
+        (acc, [poolId, data]) => {
+          const tvlUsd_24hData = (
+            poolHistoricalStats.tvlUsd_7d[poolId] ?? []
+          ).filter(
+            (d) => d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,
+          );
 
-              const feesAprPercent = (
-                !pool.tvlUsd.eq(0)
-                  ? data
-                      .filter(
-                        (d) =>
-                          d.timestampS >=
-                          referenceTimestampSRef.current - ONE_DAY_S,
-                      )
-                      .reduce(
-                        (acc2, d) => acc2.plus(d.feesUsd_7d),
-                        new BigNumber(0),
-                      )
-                      .div(pool.tvlUsd)
-                  : new BigNumber(0)
-              )
-                .times(365)
-                .times(100);
+          const avgTvlUsd_24h = tvlUsd_24hData
+            .reduce((acc, d) => acc.plus(d.tvlUsd_7d), new BigNumber(0))
+            .div(tvlUsd_24hData.length);
 
-              return { ...acc, [poolId]: { feesAprPercent } };
-            },
-            {} as Record<string, { feesAprPercent: BigNumber }>,
-          )
-        : {},
+          const feesAprPercent = data
+            .filter(
+              (d) => d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,
+            )
+            .reduce((acc2, d) => acc2.plus(d.feesUsd_7d), new BigNumber(0))
+            .div(avgTvlUsd_24h)
+            .times(365)
+            .times(100);
+
+          return { ...acc, [poolId]: { feesAprPercent } };
+        },
+        {} as Record<string, { feesAprPercent: BigNumber }>,
+      ),
     }),
-    [poolHistoricalStats, poolsData],
+    [poolHistoricalStats],
   );
 
   // Total
