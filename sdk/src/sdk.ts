@@ -408,6 +408,7 @@ export class SteammSDK {
       });
 
     eventData = res.data.reduce((acc, curr) => acc.concat(curr), []);
+    const pools = extractPoolInfo(eventData);
 
     const oracleQuoterPkgId =
       this.sdkOptions.steamm_config.config?.quoterSourcePkgs.omm;
@@ -425,20 +426,7 @@ export class SteammSDK {
       [],
     );
 
-    let stableQuoterEventData: EventData<NewStableQuoterEvent>[] = [];
-    const res3: DataPage<EventData<NewStableQuoterEvent>[]> =
-      await this.fullClient.queryEventsByPage({
-        MoveEventType: `${pkgAddy}::events::Event<${stableQuoterPkgId}::stable::NewStableQuoter>`,
-      });
-
-    stableQuoterEventData = res3.data.reduce(
-      (acc, curr) => acc.concat(curr),
-      [],
-    );
-
-    const pools = extractPoolInfo(eventData);
     const oracleQuoterData = extractOracleQuoterInfo(oracleQuoterEventData);
-    const stableQuoterData = extractStableQuoterInfo(stableQuoterEventData);
 
     pools.forEach((pool) => {
       if (oracleQuoterData[pool.poolId]) {
@@ -446,11 +434,26 @@ export class SteammSDK {
       }
     });
 
-    pools.forEach((pool) => {
-      if (stableQuoterData[pool.poolId]) {
-        pool.quoterData = stableQuoterData[pool.poolId];
-      }
-    });
+    if (stableQuoterPkgId !== "0x0") {
+      let stableQuoterEventData: EventData<NewStableQuoterEvent>[] = [];
+      const res3: DataPage<EventData<NewStableQuoterEvent>[]> =
+        await this.fullClient.queryEventsByPage({
+          MoveEventType: `${pkgAddy}::events::Event<${stableQuoterPkgId}::stable::NewStableQuoter>`,
+        });
+
+      stableQuoterEventData = res3.data.reduce(
+        (acc, curr) => acc.concat(curr),
+        [],
+      );
+
+      const stableQuoterData = extractStableQuoterInfo(stableQuoterEventData);
+
+      pools.forEach((pool) => {
+        if (stableQuoterData[pool.poolId]) {
+          pool.quoterData = stableQuoterData[pool.poolId];
+        }
+      });
+    }
 
     this._pools = { pools, updatedAt: Date.now() };
   }
