@@ -578,6 +578,7 @@ export default function SwapPage() {
                     outToken={getToken(outCoinType, outCoinMetadata)}
                     isFetchingQuote={isFetchingQuote}
                     quote={quote}
+                    isInverted
                     label=""
                   />
 
