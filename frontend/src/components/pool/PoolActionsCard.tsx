@@ -1530,6 +1530,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
             outToken={getToken(inactiveCoinType, inactiveCoinMetadata)}
             isFetchingQuote={isFetchingQuote}
             quote={quote}
+            isInverted
             label=""
           />
 

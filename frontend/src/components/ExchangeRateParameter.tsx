@@ -18,6 +18,7 @@ interface ExchangeRateParameterProps {
   outToken: Token;
   isFetchingQuote?: boolean;
   quote?: SwapQuote | MultiSwapQuote;
+  isInverted?: boolean;
   label?: string;
   isHorizontal?: boolean;
 }
@@ -29,6 +30,7 @@ export default function ExchangeRateParameter({
   outToken,
   isFetchingQuote,
   quote,
+  isInverted: _isInverted,
   label,
   isHorizontal,
 }: ExchangeRateParameterProps) {
@@ -41,8 +43,7 @@ export default function ExchangeRateParameter({
     quoteRatio !== undefined && reversedQuoteRatio !== undefined;
 
   // State
-  const [isShowingReversedQuoteRatio, setIsShowingReversedQuoteRatio] =
-    useState<boolean>(false);
+  const [isInverted, setIsInverted] = useState<boolean>(!!_isInverted);
 
   return (
     <Parameter
@@ -55,12 +56,12 @@ export default function ExchangeRateParameter({
       ) : (
         <button
           className="group flex w-max flex-row items-center gap-2"
-          onClick={() => setIsShowingReversedQuoteRatio((prev) => !prev)}
+          onClick={() => setIsInverted((prev) => !prev)}
           disabled={!isDefined}
         >
           <p className={cn("!text-p2 text-foreground", labelClassName)}>
             {isDefined ? (
-              !isShowingReversedQuoteRatio ? (
+              !isInverted ? (
                 <>
                   1 {inToken.symbol}
                   {" ≈ "}
