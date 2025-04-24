@@ -97,7 +97,7 @@ export default function TokenCreationForm({
   // Show content based on status
   if (status !== "idle") {
     return (
-      <div className={cn("flex w-full flex-col items-center justify-center", className)}>
+      <div className={cn("flex w-full flex-col items-center justify-center my-4 sm:my-8", className)}>
         <TokenCreationStatus
           status={status}
           txDigest={txDigest}

@@ -24,7 +24,7 @@ export default function LaunchStepper({
     <div className={cn("flex w-full flex-col gap-4", className)}>
       {/* Mobile view: Only show progress bars with numbers */}
       <div className="flex w-full md:hidden">
-        <div className="flex w-full items-center gap-2">
+        <div className="flex w-full items-center gap-1 sm:gap-2">
           {steps.map((_, index) => (
             <div 
               key={`mobile-step-${index}`}
@@ -37,7 +37,7 @@ export default function LaunchStepper({
                     "h-1 w-full rounded-full transition-colors",
                     index <= currentStep
                       ? "bg-foreground"
-                      : "bg-border cursor-pointer hover:bg-border/80",
+                      : "bg-border hover:bg-border/80",
                   )}
                 />
                 {/* Small indicator showing current step */}
@@ -53,11 +53,11 @@ export default function LaunchStepper({
       </div>
       
       {/* Mobile view: Show only current step title and description */}
-      <div className="block pb-2 md:hidden">
-        <p className="text-center text-p2 font-medium text-foreground">
+      <div className="block mt-5 pb-2 md:hidden">
+        <p className="text-center text-sm sm:text-base font-medium text-foreground">
           {steps[currentStep].title}
         </p>
-        <p className="text-center text-p3 text-secondary-foreground">
+        <p className="text-center text-xs sm:text-sm text-secondary-foreground">
           {steps[currentStep].description}
         </p>
       </div>

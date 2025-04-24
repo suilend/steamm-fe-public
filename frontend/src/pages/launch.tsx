@@ -4,12 +4,10 @@ import Container from "@/components/Container";
 import LaunchStepper from "@/components/launch/LaunchStepper";
 import TokenBasicInfo from "@/components/launch/TokenBasicInfo";
 import TokenAdvancedOptions from "@/components/launch/TokenAdvancedOptions/index";
-import { useLoadedAppContext } from "@/contexts/AppContext";
 import TokenCreationForm from "@/components/launch/TokenCreationForm";
 import { CreateTokenParams } from "@/hooks/useCreateToken";
 
 export default function LaunchPage() {
-  const { appData } = useLoadedAppContext();
   const [currentStep, setCurrentStep] = useState(0);
   
   // Basic Info State
@@ -72,7 +70,7 @@ export default function LaunchPage() {
   };
 
   return (
-    <Container className="flex w-full flex-col gap-6">
+    <Container className="flex w-full flex-col gap-6 py-4 sm:py-6">
       <div className="flex w-full flex-col gap-2">
         <h1 className="text-h1 text-foreground">Launch</h1>
         <p className="text-p1 text-secondary-foreground">
@@ -119,8 +117,8 @@ export default function LaunchPage() {
             tokenParams={tokenParams}
             onSuccess={handleTokenCreationSuccess}
           >
-            <div className="rounded-md border border-border bg-card p-6">
-              <h2 className="mb-4 text-xl font-semibold">Token Creation</h2>
+            <div className="rounded-md border border-border bg-card p-4 sm:p-6">
+              <h2 className="mb-4 text-lg sm:text-xl font-semibold">Token Creation</h2>
               
               <div className="mb-4 space-y-2">
                 <p className="text-sm text-muted-foreground">
@@ -128,15 +126,18 @@ export default function LaunchPage() {
                 </p>
                 
                 <ul className="space-y-1 text-sm">
-                  <li><strong>Name:</strong> {tokenName}</li>
-                  <li><strong>Symbol:</strong> {tokenSymbol}</li>
-                  <li><strong>Initial Supply:</strong> {initialSupply}</li>
-                  <li><strong>Features:</strong> {[
-                    isMintable && "Mintable",
-                    isBurnable && "Burnable",
-                    isPausable && "Pausable",
-                    isUpgradeable && "Upgradeable"
-                  ].filter(Boolean).join(", ") || "None"}</li>
+                  <li className="flex flex-wrap gap-1"><strong>Name:</strong> <span>{tokenName}</span></li>
+                  <li className="flex flex-wrap gap-1"><strong>Symbol:</strong> <span>{tokenSymbol}</span></li>
+                  <li className="flex flex-wrap gap-1"><strong>Initial Supply:</strong> <span>{initialSupply}</span></li>
+                  <li className="flex flex-wrap gap-1">
+                    <strong>Features:</strong> 
+                    <span>{[
+                      isMintable && "Mintable",
+                      isBurnable && "Burnable",
+                      isPausable && "Pausable",
+                      isUpgradeable && "Upgradeable"
+                    ].filter(Boolean).join(", ") || "None"}</span>
+                  </li>
                 </ul>
               </div>
               
