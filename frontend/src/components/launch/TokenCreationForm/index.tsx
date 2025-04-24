@@ -119,12 +119,12 @@ export default function TokenCreationForm({
         {children}
         
         <div className="mt-6 flex justify-end">
-          <Button
-            onClick={() => setIsConfirmDialogOpen(true)}
-            className="min-w-[120px]"
-          >
-            Create Token
-          </Button>
+        <button
+          className="flex h-14 w-full flex-row items-center justify-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
+          onClick={() => setIsConfirmDialogOpen(true)}
+        >
+            <p className="text-p2 text-button-1-foreground">Create Token</p>
+          </button>
         </div>
       </div>
       

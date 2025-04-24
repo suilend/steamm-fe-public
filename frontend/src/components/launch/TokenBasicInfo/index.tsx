@@ -124,10 +124,10 @@ export default function TokenBasicInfo({
             onChange={(e) => onNameChange(e)}
             placeholder="Enter token name"
             onBlur={() => handleBlur("name")}
-            className={errors.name && touched.name ? "border-red-500" : ""}
+            className={errors.name && touched.name ? "border-error" : ""}
           />
           {errors.name && touched.name && (
-            <p className="text-sm text-red-500">{errors.name}</p>
+            <p className="text-sm text-error">{errors.name}</p>
           )}
         </div>
       </Parameter>
@@ -139,12 +139,12 @@ export default function TokenBasicInfo({
             onChange={(e) => onSymbolChange(e.toUpperCase())}
             placeholder="Enter token symbol"
             onBlur={() => handleBlur("symbol")}
-            className={errors.symbol && touched.symbol ? "border-red-500" : ""}
+            className={errors.symbol && touched.symbol ? "border-error" : ""}
           />
           {errors.symbol && touched.symbol && (
-            <p className="text-sm text-red-500">{errors.symbol}</p>
+            <p className="text-sm text-error">{errors.symbol}</p>
           )}
-          <p className="text-xs text-gray-500">2-6 characters, uppercase letters, numbers, and $ only</p>
+          <p className="text-xs text-secondary-foreground">2-6 characters, uppercase letters, numbers, and $ only</p>
         </div>
       </Parameter>
 
@@ -155,10 +155,10 @@ export default function TokenBasicInfo({
             onChange={(e) => onDescriptionChange(e)}
             placeholder="Enter token description"
             onBlur={() => handleBlur("description")}
-            className={errors.description && touched.description ? "border-red-500" : ""}
+            className={errors.description && touched.description ? "border-error" : ""}
           />
           {errors.description && touched.description && (
-            <p className="text-sm text-red-500">{errors.description}</p>
+            <p className="text-sm text-error">{errors.description}</p>
           )}
         </div>
       </Parameter>
@@ -170,19 +170,19 @@ export default function TokenBasicInfo({
             onChange={handleSupplyChange}
             placeholder="Enter initial supply"
             onBlur={() => handleBlur("initialSupply")}
-            className={errors.initialSupply && touched.initialSupply ? "border-red-500" : ""}
+            className={errors.initialSupply && touched.initialSupply ? "border-error" : ""}
           />
           {errors.initialSupply && touched.initialSupply && (
-            <p className="text-sm text-red-500">{errors.initialSupply}</p>
+            <p className="text-sm text-error">{errors.initialSupply}</p>
           )}
         </div>
       </Parameter>
 
       <button
         type="submit"
-        className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+        className="flex h-14 w-full flex-row items-center justify-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
       >
-        Next
+        <p className="text-p2 text-button-1-foreground">Next</p>
       </button>
     </form>
   );

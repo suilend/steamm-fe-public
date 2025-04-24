@@ -81,12 +81,12 @@ export default function TokenAdvancedOptions({
             onChange={handleMaxSupplyChange}
             placeholder="Enter maximum supply (optional)"
             onBlur={handleMaxSupplyBlur}
-            className={maxSupplyError && isTouched ? "border-red-500" : ""}
+            className={maxSupplyError && isTouched ? "border-error" : ""}
           />
           {maxSupplyError && isTouched && (
-            <p className="text-sm text-red-500">{maxSupplyError}</p>
+            <p className="text-sm text-error">{maxSupplyError}</p>
           )}
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-secondary-foreground">
             {isMintable 
               ? "Maximum tokens that can ever exist (leave empty for unlimited)"
               : "When 'Mintable' is off, max supply equals initial supply"}
@@ -155,15 +155,15 @@ export default function TokenAdvancedOptions({
         <button
           type="button"
           onClick={onBack}
-          className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
+          className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary"
         >
           Back
         </button>
         <button
           type="submit"
-          className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+          className="flex h-14 w-full flex-row items-center justify-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
         >
-          Next
+          <p className="text-p2 text-button-1-foreground">Next</p>
         </button>
       </div>
     </form>

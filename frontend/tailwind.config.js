@@ -74,7 +74,7 @@ module.exports = {
       "a5-active": "hsl(var(--a5-active))",
       "a5-disabled": "hsl(var(--a5-disabled))",
     },
-    borderRadius: { sm: "4px", md: "8px", lg: "12px" },
+    borderRadius: { sm: "4px", md: "8px", lg: "12px", full: "calc(infinity * 1px)" },
   },
   plugins: [require("tailwindcss-animate")],
 };

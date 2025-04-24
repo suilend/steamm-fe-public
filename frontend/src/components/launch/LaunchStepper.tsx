@@ -22,7 +22,48 @@ export default function LaunchStepper({
 
   return (
     <div className={cn("flex w-full flex-col gap-4", className)}>
-      <div className="flex w-full flex-row items-center gap-4">
+      {/* Mobile view: Only show progress bars with numbers */}
+      <div className="flex w-full md:hidden">
+        <div className="flex w-full items-center gap-2">
+          {steps.map((_, index) => (
+            <div 
+              key={`mobile-step-${index}`}
+              className="flex flex-1 flex-col cursor-pointer"
+              onClick={() => onStepChange(index)}
+            >
+              <div className="relative">
+                <div
+                  className={cn(
+                    "h-1 w-full rounded-full transition-colors",
+                    index <= currentStep
+                      ? "bg-foreground"
+                      : "bg-border cursor-pointer hover:bg-border/80",
+                  )}
+                />
+                {/* Small indicator showing current step */}
+                {index === currentStep && (
+                  <div className="absolute -bottom-4 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full bg-foreground text-[10px] text-background">
+                    {index + 1}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Mobile view: Show only current step title and description */}
+      <div className="block pb-2 md:hidden">
+        <p className="text-center text-p2 font-medium text-foreground">
+          {steps[currentStep].title}
+        </p>
+        <p className="text-center text-p3 text-secondary-foreground">
+          {steps[currentStep].description}
+        </p>
+      </div>
+
+      {/* Desktop view: Original stepper with full text */}
+      <div className="hidden md:flex w-full flex-row items-center gap-4 cursor-pointer">
         {steps.map((step, index) => (
           <div
             key={step.title}
