@@ -898,7 +898,6 @@ function WithdrawTab({ tokenUsdPricesMap, onWithdraw }: WithdrawTabProps) {
       .div(1 + slippagePercent / 100)
       .integerValue(BigNumber.ROUND_DOWN)
       .toString();
-
     const submitAmountB = new BigNumber(quote.withdrawB.toString())
       .div(1 + slippagePercent / 100)
       .integerValue(BigNumber.ROUND_DOWN)
