@@ -14,21 +14,21 @@ import {
   composeSuiType,
   compressSuiType,
 } from "../../_framework/util";
-import { STABLE_PKG_V1 } from "../index";
+import { ORACLE_V2_PKG_V1 } from "../index";
 import { ID, UID } from "../../_dependencies/source/0x2/object/structs";
 import { Version } from "../version/structs";
 import { bcs } from "@mysten/sui/bcs";
 import { SuiClient, SuiObjectData, SuiParsedData } from "@mysten/sui/client";
 import { fromB64 } from "@mysten/sui/utils";
 
-/* ============================== StableQuoter =============================== */
+/* ============================== OracleQuoterV2 =============================== */
 
-export function isStableQuoter(type: string): boolean {
+export function isOracleQuoterV2(type: string): boolean {
   type = compressSuiType(type);
-  return type === `${STABLE_PKG_V1}::stable::StableQuoter`;
+  return type === `${ORACLE_V2_PKG_V1}::omm_v2::OracleQuoterV2`;
 }
 
-export interface StableQuoterFields {
+export interface OracleQuoterV2Fields {
   version: ToField<Version>;
   oracleRegistryId: ToField<ID>;
   oracleIndexA: ToField<"u64">;
@@ -38,19 +38,22 @@ export interface StableQuoterFields {
   amp: ToField<"u64">;
 }
 
-export type StableQuoterReified = Reified<StableQuoter, StableQuoterFields>;
+export type OracleQuoterV2Reified = Reified<
+  OracleQuoterV2,
+  OracleQuoterV2Fields
+>;
 
-export class StableQuoter implements StructClass {
+export class OracleQuoterV2 implements StructClass {
   __StructClass = true as const;
 
-  static readonly $typeName = `${STABLE_PKG_V1}::stable::StableQuoter`; 
+  static readonly $typeName = `${ORACLE_V2_PKG_V1}::omm_v2::OracleQuoterV2`;
   static readonly $numTypeParams = 0;
   static readonly $isPhantom = [] as const;
 
-  readonly $typeName = StableQuoter.$typeName;
-  readonly $fullTypeName: `${typeof STABLE_PKG_V1}::stable::StableQuoter`;
+  readonly $typeName = OracleQuoterV2.$typeName;
+  readonly $fullTypeName: `${typeof ORACLE_V2_PKG_V1}::omm_v2::OracleQuoterV2`;
   readonly $typeArgs: [];
-  readonly $isPhantom = StableQuoter.$isPhantom;
+  readonly $isPhantom = OracleQuoterV2.$isPhantom;
 
   readonly version: ToField<Version>;
   readonly oracleRegistryId: ToField<ID>;
@@ -60,11 +63,11 @@ export class StableQuoter implements StructClass {
   readonly decimalsB: ToField<"u8">;
   readonly amp: ToField<"u64">;
 
-  private constructor(typeArgs: [], fields: StableQuoterFields) {
+  private constructor(typeArgs: [], fields: OracleQuoterV2Fields) {
     this.$fullTypeName = composeSuiType(
-      StableQuoter.$typeName,
+      OracleQuoterV2.$typeName,
       ...typeArgs,
-    ) as `${typeof STABLE_PKG_V1}::stable::StableQuoter`;
+    ) as `${typeof ORACLE_V2_PKG_V1}::omm_v2::OracleQuoterV2`;
     this.$typeArgs = typeArgs;
 
     this.version = fields.version;
@@ -76,51 +79,51 @@ export class StableQuoter implements StructClass {
     this.amp = fields.amp;
   }
 
-  static reified(): StableQuoterReified {
+  static reified(): OracleQuoterV2Reified {
     return {
-      typeName: StableQuoter.$typeName,
+      typeName: OracleQuoterV2.$typeName,
       fullTypeName: composeSuiType(
-        StableQuoter.$typeName,
+        OracleQuoterV2.$typeName,
         ...[],
-      ) as `${typeof STABLE_PKG_V1}::stable::StableQuoter`,
+      ) as `${typeof ORACLE_V2_PKG_V1}::omm_v2::OracleQuoterV2`,
       typeArgs: [] as [],
-      isPhantom: StableQuoter.$isPhantom,
+      isPhantom: OracleQuoterV2.$isPhantom,
       reifiedTypeArgs: [],
       fromFields: (fields: Record<string, any>) =>
-        StableQuoter.fromFields(fields),
+        OracleQuoterV2.fromFields(fields),
       fromFieldsWithTypes: (item: FieldsWithTypes) =>
-        StableQuoter.fromFieldsWithTypes(item),
-      fromBcs: (data: Uint8Array) => StableQuoter.fromBcs(data),
-      bcs: StableQuoter.bcs,
-      fromJSONField: (field: any) => StableQuoter.fromJSONField(field),
-      fromJSON: (json: Record<string, any>) => StableQuoter.fromJSON(json),
+        OracleQuoterV2.fromFieldsWithTypes(item),
+      fromBcs: (data: Uint8Array) => OracleQuoterV2.fromBcs(data),
+      bcs: OracleQuoterV2.bcs,
+      fromJSONField: (field: any) => OracleQuoterV2.fromJSONField(field),
+      fromJSON: (json: Record<string, any>) => OracleQuoterV2.fromJSON(json),
       fromSuiParsedData: (content: SuiParsedData) =>
-        StableQuoter.fromSuiParsedData(content),
+        OracleQuoterV2.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) =>
-        StableQuoter.fromSuiObjectData(content),
+        OracleQuoterV2.fromSuiObjectData(content),
       fetch: async (client: SuiClient, id: string) =>
-        StableQuoter.fetch(client, id),
-      new: (fields: StableQuoterFields) => {
-        return new StableQuoter([], fields);
+        OracleQuoterV2.fetch(client, id),
+      new: (fields: OracleQuoterV2Fields) => {
+        return new OracleQuoterV2([], fields);
       },
       kind: "StructClassReified",
     };
   }
 
   static get r() {
-    return StableQuoter.reified();
+    return OracleQuoterV2.reified();
   }
 
-  static phantom(): PhantomReified<ToTypeStr<StableQuoter>> {
-    return phantom(StableQuoter.reified());
+  static phantom(): PhantomReified<ToTypeStr<OracleQuoterV2>> {
+    return phantom(OracleQuoterV2.reified());
   }
 
   static get p() {
-    return StableQuoter.phantom();
+    return OracleQuoterV2.phantom();
   }
 
   static get bcs() {
-    return bcs.struct("StableQuoter", {
+    return bcs.struct("OracleQuoterV2", {
       version: Version.bcs,
       oracle_registry_id: ID.bcs,
       oracle_index_a: bcs.u64(),
@@ -131,8 +134,8 @@ export class StableQuoter implements StructClass {
     });
   }
 
-  static fromFields(fields: Record<string, any>): StableQuoter {
-    return StableQuoter.reified().new({
+  static fromFields(fields: Record<string, any>): OracleQuoterV2 {
+    return OracleQuoterV2.reified().new({
       version: decodeFromFields(Version.reified(), fields.version),
       oracleRegistryId: decodeFromFields(
         ID.reified(),
@@ -146,12 +149,12 @@ export class StableQuoter implements StructClass {
     });
   }
 
-  static fromFieldsWithTypes(item: FieldsWithTypes): StableQuoter {
-    if (!isStableQuoter(item.type)) {
-      throw new Error("not a StableQuoter type");
+  static fromFieldsWithTypes(item: FieldsWithTypes): OracleQuoterV2 {
+    if (!isOracleQuoterV2(item.type)) {
+      throw new Error("not a OracleQuoterV2 type");
     }
 
-    return StableQuoter.reified().new({
+    return OracleQuoterV2.reified().new({
       version: decodeFromFieldsWithTypes(
         Version.reified(),
         item.fields.version,
@@ -168,8 +171,8 @@ export class StableQuoter implements StructClass {
     });
   }
 
-  static fromBcs(data: Uint8Array): StableQuoter {
-    return StableQuoter.fromFields(StableQuoter.bcs.parse(data));
+  static fromBcs(data: Uint8Array): OracleQuoterV2 {
+    return OracleQuoterV2.fromFields(OracleQuoterV2.bcs.parse(data));
   }
 
   toJSONField() {
@@ -192,9 +195,9 @@ export class StableQuoter implements StructClass {
     };
   }
 
-  static fromJSONField(field: any): StableQuoter {
+  static fromJSONField(field: any): OracleQuoterV2 {
     // {user: decodeFromJSONField("address", field.user), poolId: decodeFromJSONField(ID.reified(), field.poolId), depositA: decodeFromJSONField("u64", field.depositA), depositB: decodeFromJSONField("u64", field.depositB), mintLp: decodeFromJSONField("u64", field.mintLp), balanceA: decodeFromJSONField("u64", field.balanceA), balanceB: decodeFromJSONField("u64", field.balanceB)}
-    return StableQuoter.reified().new({
+    return OracleQuoterV2.reified().new({
       version: decodeFromJSONField(Version.reified(), field.version),
       oracleRegistryId: decodeFromJSONField(
         ID.reified(),
@@ -208,39 +211,39 @@ export class StableQuoter implements StructClass {
     });
   }
 
-  static fromJSON(json: Record<string, any>): StableQuoter {
-    if (json.$typeName !== StableQuoter.$typeName) {
+  static fromJSON(json: Record<string, any>): OracleQuoterV2 {
+    if (json.$typeName !== OracleQuoterV2.$typeName) {
       throw new Error("not a WithTwoGenerics json object");
     }
 
-    return StableQuoter.fromJSONField(json);
+    return OracleQuoterV2.fromJSONField(json);
   }
 
-  static fromSuiParsedData(content: SuiParsedData): StableQuoter {
+  static fromSuiParsedData(content: SuiParsedData): OracleQuoterV2 {
     if (content.dataType !== "moveObject") {
       throw new Error("not an object");
     }
-    if (!isStableQuoter(content.type)) {
+    if (!isOracleQuoterV2(content.type)) {
       throw new Error(
-        `object at ${(content.fields as any).id} is not a StableQuoter object`,
+        `object at ${(content.fields as any).id} is not a OracleQuoterV2 object`,
       );
     }
-    return StableQuoter.fromFieldsWithTypes(content);
+    return OracleQuoterV2.fromFieldsWithTypes(content);
   }
 
-  static fromSuiObjectData(data: SuiObjectData): StableQuoter {
+  static fromSuiObjectData(data: SuiObjectData): OracleQuoterV2 {
     if (data.bcs) {
       if (
         data.bcs.dataType !== "moveObject" ||
-        !isStableQuoter(data.bcs.type)
+        !isOracleQuoterV2(data.bcs.type)
       ) {
-        throw new Error(`object at is not a StableQuoter object`);
+        throw new Error(`object at is not a OracleQuoterV2 object`);
       }
 
-      return StableQuoter.fromBcs(fromB64(data.bcs.bcsBytes));
+      return OracleQuoterV2.fromBcs(fromB64(data.bcs.bcsBytes));
     }
     if (data.content) {
-      return StableQuoter.fromSuiParsedData(data.content);
+      return OracleQuoterV2.fromSuiParsedData(data.content);
     }
 
     throw new Error(
@@ -248,7 +251,7 @@ export class StableQuoter implements StructClass {
     );
   }
 
-  static async fetch(client: SuiClient, id: string): Promise<StableQuoter> {
+  static async fetch(client: SuiClient, id: string): Promise<OracleQuoterV2> {
     const res = await client.getObject({
       id,
       options: {
@@ -257,16 +260,16 @@ export class StableQuoter implements StructClass {
     });
     if (res.error) {
       throw new Error(
-        `error fetching StableQuoter object at id ${id}: ${res.error.code}`,
+        `error fetching OracleQuoterV2 object at id ${id}: ${res.error.code}`,
       );
     }
     if (
       res.data?.bcs?.dataType !== "moveObject" ||
-      !isStableQuoter(res.data.bcs.type)
+      !isOracleQuoterV2(res.data.bcs.type)
     ) {
-      throw new Error(`object at id ${id} is not a StableQuoter object`);
+      throw new Error(`object at id ${id} is not a OracleQuoterV2 object`);
     }
 
-    return StableQuoter.fromSuiObjectData(res.data);
+    return OracleQuoterV2.fromSuiObjectData(res.data);
   }
 }

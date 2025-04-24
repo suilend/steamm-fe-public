@@ -32,8 +32,8 @@ import {
   useWalletContext,
 } from "@suilend/frontend-sui-next";
 import { ADMIN_ADDRESS, PoolScriptFunctions } from "@suilend/steamm-sdk";
+import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
-import { StableQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/stable/structs";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import Divider from "@/components/Divider";
@@ -55,7 +55,7 @@ import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const AMPLIFIERS: number[] = [1, 5, 30, 100];
+const AMPLIFIERS: number[] = [1, 5, 30, 100, 1000];
 const FEE_TIER_PERCENTS: number[] = [0.01, 0.05, 0.3, 1, 2];
 
 const generate_bytecode = (
@@ -337,15 +337,15 @@ export default function CreatePoolCard() {
       (pool) =>
         pool.quoterId === _quoterId &&
         +pool.feeTierPercent === _feeTierPercent &&
-        (_quoterId === QuoterId.STABLE
+        (_quoterId === QuoterId.ORACLE_V2
           ? +(
-              pool.pool as Pool<string, string, StableQuoter, string>
+              pool.pool as Pool<string, string, OracleQuoterV2, string>
             ).quoter.amp.toString() === _amplifier
           : true),
     );
 
   const existingPoolTooltip = coinTypes.every((coinType) => coinType !== "")
-    ? `${formatPair(coinTypes.map((coinType) => balancesCoinMetadataMap![coinType].symbol))} pool with this quoter${quoterId === QuoterId.STABLE ? ", fee tier, and amplifier" : " and fee tier"} already exists`
+    ? `${formatPair(coinTypes.map((coinType) => balancesCoinMetadataMap![coinType].symbol))} pool with this quoter${quoterId === QuoterId.ORACLE_V2 ? ", fee tier, and amplifier" : " and fee tier"} already exists`
     : undefined;
 
   // Submit
@@ -367,7 +367,7 @@ export default function CreatePoolCard() {
       return { isDisabled: true, title: "Enter a non-zero amounts" };
     if (quoterId === undefined)
       return { isDisabled: true, title: "Select a quoter" };
-    if (quoterId === QuoterId.STABLE) {
+    if (quoterId === QuoterId.ORACLE_V2) {
       if (amplifier === undefined)
         return { isDisabled: true, title: "Select an amplifier" };
     }
@@ -493,7 +493,7 @@ export default function CreatePoolCard() {
       const oracleIndexA = oraclesData.COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]];
       const oracleIndexB = oraclesData.COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]];
 
-      if ([QuoterId.ORACLE, QuoterId.STABLE].includes(quoterId)) {
+      if ([QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)) {
         if (oracleIndexA === undefined)
           throw new Error(
             "Base asset coinType not found in COINTYPE_ORACLE_INDEX_MAP",
@@ -681,10 +681,10 @@ export default function CreatePoolCard() {
           coinTypeB: tokens[1].coinType,
           coinMetaB: tokens[1].id!, // Checked above
         };
-      } else if (quoterId === QuoterId.STABLE) {
+      } else if (quoterId === QuoterId.ORACLE_V2) {
         poolArgs = {
           ...createPoolBaseArgs,
-          type: "Stable" as const,
+          type: "OracleV2" as const,
           oracleIndexA: BigInt(oracleIndexA!), // Checked above
           oracleIndexB: BigInt(oracleIndexB!), // Checked above
           coinTypeA: tokens[0].coinType,
@@ -738,10 +738,10 @@ export default function CreatePoolCard() {
             [QuoterId.ORACLE]: `${
               steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm
             }::omm::OracleQuoter`,
-            [QuoterId.STABLE]: `${
+            [QuoterId.ORACLE_V2]: `${
               steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs
-                .stable
-            }::stable::StableQuoter`,
+                .omm_v2
+            }::omm_v2::OracleQuoterV2`,
           }[quoterId],
           createLpTokenResult.coinType,
         ],
@@ -779,9 +779,9 @@ export default function CreatePoolCard() {
             ...sharePoolBaseArgs,
             type: "Oracle" as const,
           },
-          [QuoterId.STABLE]: {
+          [QuoterId.ORACLE_V2]: {
             ...sharePoolBaseArgs,
-            type: "Stable" as const,
+            type: "OracleV2" as const,
           },
         }[quoterId],
         transaction,
@@ -970,7 +970,7 @@ export default function CreatePoolCard() {
       </div>
 
       {/* Amplifier */}
-      {quoterId === QuoterId.STABLE && (
+      {quoterId === QuoterId.ORACLE_V2 && (
         <div className="flex flex-row items-center justify-between">
           <p className="text-p2 text-secondary-foreground">Amplifier</p>
 

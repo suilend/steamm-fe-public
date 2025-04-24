@@ -3,4 +3,4 @@ export {
   swap,
   quoteSwap,
   migrate,
-} from "./_generated/steamm/stable/functions";
+} from "./_generated/steamm/omm_v2/functions";

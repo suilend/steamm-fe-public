@@ -28,7 +28,7 @@ export default function PoolTypeTag({ pool }: PoolTypeTagProps) {
   return (
     <Tag
       tooltip={
-        [QuoterId.ORACLE, QuoterId.STABLE].includes(pool.quoterId)
+        [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId)
           ? poolsData === undefined
             ? undefined
             : [
@@ -40,7 +40,7 @@ export default function PoolTypeTag({ pool }: PoolTypeTagProps) {
           : undefined
       }
       endDecorator={
-        [QuoterId.ORACLE, QuoterId.STABLE].includes(pool.quoterId) ? (
+        [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId) ? (
           poolsData === undefined ? (
             <Skeleton className="h-3 w-3 bg-tertiary-foreground" />
           ) : (

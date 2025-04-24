@@ -3,12 +3,12 @@ export {
   quoteRedeem,
   quoteCpmmSwap,
   quoteOmmSwap,
-  quoteStableSwap,
+  quoteOmmV2Swap,
   depositLiquidity,
   redeemLiquidity,
   cpmmSwap,
   ommSwap,
-  stableSwap,
+  ommV2Swap,
 } from "./_generated/steamm_scripts/pool-script-v2/functions";
 export {
   destroyOrTransfer,

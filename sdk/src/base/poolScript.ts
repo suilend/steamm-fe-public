@@ -106,8 +106,8 @@ export class PoolScript {
           },
           this.pkgInfo.publishedAt,
         );
-      case "Stable":
-        return PoolScriptFunctions.stableSwap(
+      case "OracleV2":
+        return PoolScriptFunctions.ommV2Swap(
           tx,
           this.poolScriptTypesNoQuoter(),
           {
@@ -169,8 +169,8 @@ export class PoolScript {
           },
           this.pkgInfo.publishedAt,
         );
-      case "Stable":
-        return PoolScriptFunctions.quoteStableSwap(
+      case "OracleV2":
+        return PoolScriptFunctions.quoteOmmV2Swap(
           tx,
           this.poolScriptTypesNoQuoter(),
           {

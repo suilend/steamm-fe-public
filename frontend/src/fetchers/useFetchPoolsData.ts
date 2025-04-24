@@ -71,8 +71,8 @@ export default function useFetchPoolsData(
             const id = poolInfo.poolId;
             const quoterId = poolInfo.quoterType.endsWith("omm::OracleQuoter")
               ? QuoterId.ORACLE
-              : poolInfo.quoterType.endsWith("stable::StableQuoter")
-                ? QuoterId.STABLE
+              : poolInfo.quoterType.endsWith("omm_v2::OracleQuoterV2")
+                ? QuoterId.ORACLE_V2
                 : QuoterId.CPMM;
 
             const bTokenTypeA = poolInfo.coinTypeA;
@@ -91,8 +91,8 @@ export default function useFetchPoolsData(
             const pool =
               quoterId === QuoterId.ORACLE
                 ? await steammClient.fullClient.fetchOraclePool(id)
-                : quoterId === QuoterId.STABLE
-                  ? await steammClient.fullClient.fetchStablePool(id)
+                : quoterId === QuoterId.ORACLE_V2
+                  ? await steammClient.fullClient.fetchOracleV2Pool(id)
                   : await steammClient.fullClient.fetchConstantProductPool(id);
 
             const redeemQuote = await steammClient.Pool.quoteRedeem({
@@ -111,14 +111,18 @@ export default function useFetchPoolsData(
 
             const balances: [BigNumber, BigNumber] = [balanceA, balanceB];
 
-            let priceA = [QuoterId.ORACLE, QuoterId.STABLE].includes(quoterId)
+            let priceA = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(
+              quoterId,
+            )
               ? oraclesData.oracleIndexOracleInfoPriceMap[
                   +(pool.quoter as OracleQuoter).oracleIndexA.toString()
                 ].price
               : (oraclesData.coinTypeOracleInfoPriceMap[coinTypeA]?.price ??
                 mainMarket.reserveMap[coinTypeA]?.price ??
                 undefined);
-            let priceB = [QuoterId.ORACLE, QuoterId.STABLE].includes(quoterId)
+            let priceB = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(
+              quoterId,
+            )
               ? oraclesData.oracleIndexOracleInfoPriceMap[
                   +(pool.quoter as OracleQuoter).oracleIndexB.toString()
                 ].price

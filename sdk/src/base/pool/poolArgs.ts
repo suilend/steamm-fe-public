@@ -15,20 +15,20 @@ import {
   OracleSwapArgs,
 } from "../quoters/oracleQuoter/args";
 import {
-  CreateStablePoolArgs,
-  StableQuoteSwapArgs,
-  StableSwapArgs,
-} from "../quoters/stableQuoter/args";
+  CreateOracleV2PoolArgs,
+  OracleV2QuoteSwapArgs,
+  OracleV2SwapArgs,
+} from "../quoters/oracleV2Quoter/args";
 
-export type SwapFullArgs = CpSwapArgs | OracleSwapArgs | StableSwapArgs;
+export type SwapFullArgs = CpSwapArgs | OracleSwapArgs | OracleV2SwapArgs;
 export type QuoteSwapFullArgs =
   | CpQuoteSwapArgs
   | OracleQuoteSwapArgs
-  | StableQuoteSwapArgs;
+  | OracleV2QuoteSwapArgs;
 export type CreatePoolArgs =
   | CreateCpPoolArgs
   | CreateOraclePoolArgs
-  | CreateStablePoolArgs;
+  | CreateOracleV2PoolArgs;
 
 export interface CreatePoolBaseArgs {
   bTokenTypeA: string;
