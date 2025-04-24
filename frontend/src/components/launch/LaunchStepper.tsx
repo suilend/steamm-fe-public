@@ -14,7 +14,9 @@ export default function LaunchStepper({
   onStepChange,
 }: LaunchStepperProps) {
   const steps = [
-    { title: "Create Token", description: "Configure your token" },
+    { title: "Token Basics", description: "Configure basic token info" },
+    { title: "Token Options", description: "Configure token features" },
+    { title: "Create Token", description: "Deploy to blockchain" },
     { title: "Create Pool", description: "Set up liquidity pool" },
   ];
 

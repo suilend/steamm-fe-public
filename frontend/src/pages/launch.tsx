@@ -5,6 +5,8 @@ import LaunchStepper from "@/components/launch/LaunchStepper";
 import TokenBasicInfo from "@/components/launch/TokenBasicInfo";
 import TokenAdvancedOptions from "@/components/launch/TokenAdvancedOptions/index";
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import TokenCreationForm from "@/components/launch/TokenCreationForm";
+import { CreateTokenParams } from "@/hooks/useCreateToken";
 
 export default function LaunchPage() {
   const { appData } = useLoadedAppContext();
@@ -23,6 +25,10 @@ export default function LaunchPage() {
   const [isPausable, setIsPausable] = useState(false);
   const [isUpgradeable, setIsUpgradeable] = useState(false);
 
+  // Token creation result
+  const [tokenType, setTokenType] = useState<string | null>(null);
+  const [treasuryCapId, setTreasuryCapId] = useState<string | null>(null);
+
   const handleBasicInfoSubmit = () => {
     // Form validation is now handled within the TokenBasicInfo component
     setCurrentStep(1);
@@ -30,34 +36,39 @@ export default function LaunchPage() {
 
   const handleAdvancedOptionsSubmit = () => {
     // Form validation is now handled within the TokenAdvancedOptions component
-    
-    // Build final token data
-    const tokenData = {
-      name: tokenName,
-      symbol: tokenSymbol,
-      description: tokenDescription,
-      initialSupply,
-      maxSupply: isMintable ? maxSupply : initialSupply, // If not mintable, max = initial
-      isBurnable,
-      isMintable,
-      isPausable,
-      isUpgradeable,
-    };
-    
-    console.log("Final token data:", tokenData);
-    
-    // Here you would typically:
-    // 1. Show a confirmation dialog
-    // 2. Build and submit the transaction
-    // 3. Handle transaction status and feedback
+    setCurrentStep(2); // Move to token creation step
   };
 
   const handleBack = () => {
-    setCurrentStep(0);
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
   };
 
   const handleStepChange = (step: number) => {
-    setCurrentStep(step);
+    // Only allow going back or to the next step if current step is complete
+    if (step < currentStep || step === currentStep + 1) {
+      setCurrentStep(step);
+    }
+  };
+
+  const handleTokenCreationSuccess = (tokenType: string, treasuryCapId: string) => {
+    setTokenType(tokenType);
+    setTreasuryCapId(treasuryCapId);
+    // In a real implementation, you would move to the next step after this
+  };
+
+  // Prepare token parameters for creation
+  const tokenParams: CreateTokenParams = {
+    name: tokenName,
+    symbol: tokenSymbol,
+    description: tokenDescription,
+    initialSupply: initialSupply,
+    decimals: 9, // Default decimals for most tokens
+    isMintable,
+    isBurnable,
+    isPausable,
+    isUpgradeable,
   };
 
   return (
@@ -87,7 +98,7 @@ export default function LaunchPage() {
             onInitialSupplyChange={setInitialSupply}
             onSubmit={handleBasicInfoSubmit}
           />
-        ) : (
+        ) : currentStep === 1 ? (
           <TokenAdvancedOptions
             maxSupply={maxSupply}
             onMaxSupplyChange={setMaxSupply}
@@ -103,6 +114,37 @@ export default function LaunchPage() {
             onSubmit={handleAdvancedOptionsSubmit}
             initialSupply={initialSupply}
           />
+        ) : (
+          <TokenCreationForm
+            tokenParams={tokenParams}
+            onSuccess={handleTokenCreationSuccess}
+          >
+            <div className="rounded-md border border-border bg-card p-6">
+              <h2 className="mb-4 text-xl font-semibold">Token Creation</h2>
+              
+              <div className="mb-4 space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  You are about to create a new token with the following details:
+                </p>
+                
+                <ul className="space-y-1 text-sm">
+                  <li><strong>Name:</strong> {tokenName}</li>
+                  <li><strong>Symbol:</strong> {tokenSymbol}</li>
+                  <li><strong>Initial Supply:</strong> {initialSupply}</li>
+                  <li><strong>Features:</strong> {[
+                    isMintable && "Mintable",
+                    isBurnable && "Burnable",
+                    isPausable && "Pausable",
+                    isUpgradeable && "Upgradeable"
+                  ].filter(Boolean).join(", ") || "None"}</li>
+                </ul>
+              </div>
+              
+              <p className="text-sm text-muted-foreground">
+                Click the button below to review and confirm the token creation transaction.
+              </p>
+            </div>
+          </TokenCreationForm>
         )}
       </div>
     </Container>

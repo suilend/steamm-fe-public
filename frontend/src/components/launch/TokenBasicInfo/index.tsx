@@ -154,7 +154,6 @@ export default function TokenBasicInfo({
             value={description}
             onChange={(e) => onDescriptionChange(e)}
             placeholder="Enter token description"
-            multiline
             onBlur={() => handleBlur("description")}
             className={errors.description && touched.description ? "border-red-500" : ""}
           />
