@@ -27,8 +27,8 @@
   },
   "dependencies": {
     "@pythnetwork/pyth-sui-js": "^2.1.0",
-    "@suilend/frontend-sui": "^0.2.56",
-    "@suilend/sdk": "^1.1.50",
+    "@suilend/frontend-sui": "^0.2.57",
+    "@suilend/sdk": "^1.1.51",
     "bignumber.js": "^9.1.2",
     "dotenv": "^16.4.7",
     "p-limit": "^6.2.0"

@@ -196,7 +196,7 @@ export default function PoolsPage() {
     return poolGroups
       .filter((poolGroup) =>
         poolGroup.coinTypes.some((coinType) =>
-          `${coinType}${appData.coinMetadataMap[coinType].symbol}`
+          `${poolGroup.pools.map((pool) => pool.id).join("__")}__${coinType}__${appData.coinMetadataMap[coinType].symbol}`
             .toLowerCase()
             .includes(searchString.toLowerCase()),
         ),
@@ -205,7 +205,7 @@ export default function PoolsPage() {
         ...poolGroup,
         pools: poolGroup.pools.filter((pool) =>
           pool.coinTypes.some((coinType) =>
-            `${coinType}${appData.coinMetadataMap[coinType].symbol}`
+            `${pool.id}__${coinType}__${appData.coinMetadataMap[coinType].symbol}`
               .toLowerCase()
               .includes(searchString.toLowerCase()),
           ),

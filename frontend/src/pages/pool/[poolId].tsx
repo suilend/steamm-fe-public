@@ -195,7 +195,25 @@ function PoolPage() {
                   <PoolChartCard />
                   <PoolParametersCard />
                 </div>
+              </div>
 
+              {/* Right */}
+              <div className="flex flex-col gap-6 max-md:w-full md:flex-1 lg:flex-[2]">
+                {/* Cards */}
+                <div className="flex w-full flex-col gap-4">
+                  <PoolPositionCard />
+                  <PoolActionsCard
+                    key={pool.id}
+                    onDeposit={onDeposit}
+                    onWithdraw={onWithdraw}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex w-full flex-col gap-4 md:flex-row">
+              {/* Left */}
+              <div className="flex min-w-0 flex-col gap-6 max-md:w-full md:flex-1 lg:flex-[3]">
                 {/* Transaction history */}
                 <div className="flex w-full flex-col gap-4">
                   <div className="flex flex-row items-center gap-3">
@@ -229,17 +247,7 @@ function PoolPage() {
               </div>
 
               {/* Right */}
-              <div className="flex flex-col gap-6 max-md:w-full md:flex-1 lg:flex-[2]">
-                {/* Cards */}
-                <div className="flex w-full flex-col gap-4">
-                  <PoolPositionCard />
-                  <PoolActionsCard
-                    key={pool.id}
-                    onDeposit={onDeposit}
-                    onWithdraw={onWithdraw}
-                  />
-                </div>
-              </div>
+              <div className="flex flex-col gap-6 max-md:hidden md:flex-1 lg:flex-[2]"></div>
             </div>
           </div>
         </div>
