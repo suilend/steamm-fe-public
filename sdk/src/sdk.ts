@@ -34,8 +34,8 @@ import {
   EventData,
   NewBankEvent,
   NewOracleQuoterEvent,
+  NewOracleV2QuoterEvent,
   NewPoolEvent,
-  NewStableQuoterEvent,
   OracleConfigs,
   OracleInfo,
   Package,
@@ -46,8 +46,8 @@ import {
   SuilendConfigs,
   extractBankList,
   extractOracleQuoterInfo,
+  extractOracleV2QuoterInfo,
   extractPoolInfo,
-  extractStableQuoterInfo,
 } from "./types";
 import { SuiAddressType, patchFixSuiObjectId } from "./utils";
 
@@ -230,7 +230,7 @@ export class SteammSDK {
       quoterPkgs: {
         cpmm: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.cpmm,
         omm: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm,
-        stable: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.stable,
+        omm_v2: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm_v2,
       },
     };
   }
@@ -412,8 +412,8 @@ export class SteammSDK {
 
     const oracleQuoterPkgId =
       this.sdkOptions.steamm_config.config?.quoterSourcePkgs.omm;
-    const stableQuoterPkgId =
-      this.sdkOptions.steamm_config.config?.quoterSourcePkgs.stable;
+    const oracleV2QuoterPkgId =
+      this.sdkOptions.steamm_config.config?.quoterSourcePkgs.omm_v2;
 
     let oracleQuoterEventData: EventData<NewOracleQuoterEvent>[] = [];
     const res2: DataPage<EventData<NewOracleQuoterEvent>[]> =
@@ -434,23 +434,25 @@ export class SteammSDK {
       }
     });
 
-    if (stableQuoterPkgId !== "0x0") {
-      let stableQuoterEventData: EventData<NewStableQuoterEvent>[] = [];
-      const res3: DataPage<EventData<NewStableQuoterEvent>[]> =
+    if (oracleV2QuoterPkgId !== "0x0") {
+      let oracleV2QuoterEventData: EventData<NewOracleV2QuoterEvent>[] = [];
+      const res3: DataPage<EventData<NewOracleV2QuoterEvent>[]> =
         await this.fullClient.queryEventsByPage({
-          MoveEventType: `${pkgAddy}::events::Event<${stableQuoterPkgId}::stable::NewStableQuoter>`,
+          MoveEventType: `${pkgAddy}::events::Event<${oracleV2QuoterPkgId}::omm_v2::NewOracleQuoterV2>`,
         });
 
-      stableQuoterEventData = res3.data.reduce(
+      oracleV2QuoterEventData = res3.data.reduce(
         (acc, curr) => acc.concat(curr),
         [],
       );
 
-      const stableQuoterData = extractStableQuoterInfo(stableQuoterEventData);
+      const oracleV2QuoterData = extractOracleV2QuoterInfo(
+        oracleV2QuoterEventData,
+      );
 
       pools.forEach((pool) => {
-        if (stableQuoterData[pool.poolId]) {
-          pool.quoterData = stableQuoterData[pool.poolId];
+        if (oracleV2QuoterData[pool.poolId]) {
+          pool.quoterData = oracleV2QuoterData[pool.poolId];
         }
       });
     }
@@ -647,8 +649,8 @@ export class SteammSDK {
         limit10(async () => {
           const pool = poolInfo.quoterType.endsWith("omm::OracleQuoter")
             ? await this.fullClient.fetchOraclePool(poolInfo.poolId)
-            : poolInfo.quoterType.endsWith("stable::StableQuoter")
-              ? await this.fullClient.fetchStablePool(poolInfo.poolId)
+            : poolInfo.quoterType.endsWith("omm_v2::OracleQuoterV2")
+              ? await this.fullClient.fetchOracleV2Pool(poolInfo.poolId)
               : await this.fullClient.fetchConstantProductPool(poolInfo.poolId);
 
           const bTokenTypeA = poolInfo.coinTypeA;

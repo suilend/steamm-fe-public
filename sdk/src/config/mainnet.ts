@@ -13,7 +13,7 @@ export const STEAMM_CONFIG = {
     quoterSourcePkgs: {
       cpmm: "0x4fb1cf45dffd6230305f1d269dd1816678cc8e3ba0b747a813a556921219f261",
       omm: "0x67e4835cbe51818ce79af790f25ee7d8dfb03fc1556094ca5531cc399c687444",
-      stable: "0x0", // TODO
+      omm_v2: "0x0", // TODO
     },
   },
 };

@@ -32,11 +32,11 @@ import {
 } from "../base/quoters/oracleQuoter";
 import { OracleSwapExtraArgs } from "../base/quoters/oracleQuoter/args";
 import {
-  createStablePool,
-  createStablePoolAndShare,
-  shareStablePool,
-} from "../base/quoters/stableQuoter";
-import { StableSwapExtraArgs } from "../base/quoters/stableQuoter/args";
+  createOracleV2Pool,
+  createOracleV2PoolAndShare,
+  shareOracleV2Pool,
+} from "../base/quoters/oracleV2Quoter";
+import { OracleV2SwapExtraArgs } from "../base/quoters/oracleV2Quoter/args";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
 import {
@@ -170,12 +170,12 @@ export class PoolModule implements IModule {
     const quoterType = getQuoterType(poolInfo.quoterType);
     const extraArgs:
       | OracleSwapExtraArgs
-      | StableSwapExtraArgs
+      | OracleV2SwapExtraArgs
       | { type: "ConstantProduct" } =
       quoterType === "Oracle"
         ? await getOracleArgs(this.sdk, tx, poolInfo)
-        : quoterType === "Stable"
-          ? await getStableArgs(this.sdk, tx, poolInfo)
+        : quoterType === "OracleV2"
+          ? await getOracleV2Args(this.sdk, tx, poolInfo)
           : { type: "ConstantProduct" };
 
     const swapResult = poolScript.swap(tx, {
@@ -199,12 +199,12 @@ export class PoolModule implements IModule {
     const quoterType = getQuoterType(poolInfo.quoterType);
     const extraArgs:
       | OracleSwapExtraArgs
-      | StableSwapExtraArgs
+      | OracleV2SwapExtraArgs
       | { type: "ConstantProduct" } =
       quoterType === "Oracle"
         ? await getOracleArgs(this.sdk, tx, poolInfo)
-        : quoterType === "Stable"
-          ? await getStableArgs(this.sdk, tx, poolInfo)
+        : quoterType === "OracleV2"
+          ? await getOracleV2Args(this.sdk, tx, poolInfo)
           : { type: "ConstantProduct" };
 
     poolScript.quoteSwap(tx, { ...args, ...extraArgs });
@@ -312,8 +312,8 @@ export class PoolModule implements IModule {
           },
           this.sdk.packageInfo(),
         );
-      case "Stable":
-        return createStablePool(
+      case "OracleV2":
+        return createOracleV2Pool(
           tx,
           {
             ...args,
@@ -345,8 +345,13 @@ export class PoolModule implements IModule {
       case "Oracle":
         shareOraclePool(tx, args, this.sdk.packageInfo(), this.sdk.sdkOptions);
         break;
-      case "Stable":
-        shareStablePool(tx, args, this.sdk.packageInfo(), this.sdk.sdkOptions);
+      case "OracleV2":
+        shareOracleV2Pool(
+          tx,
+          args,
+          this.sdk.packageInfo(),
+          this.sdk.sdkOptions,
+        );
         break;
       default:
         throw new Error("Unknown pool type");
@@ -396,8 +401,8 @@ export class PoolModule implements IModule {
           this.sdk.packageInfo(),
           this.sdk.sdkOptions,
         );
-      case "Stable":
-        return createStablePoolAndShare(
+      case "OracleV2":
+        return createOracleV2PoolAndShare(
           tx,
           {
             ...args,
@@ -670,11 +675,11 @@ export async function getOracleArgs(
   };
 }
 
-export async function getStableArgs(
+export async function getOracleV2Args(
   sdk: SteammSDK,
   tx: Transaction,
   poolInfo: PoolInfo,
-): Promise<StableSwapExtraArgs> {
+): Promise<OracleV2SwapExtraArgs> {
   const oracleData: OracleInfo[] = await sdk.getOracles();
 
   const oracleInfoA = oracleData.find(
@@ -787,7 +792,7 @@ export async function getStableArgs(
   );
 
   return {
-    type: "Stable",
+    type: "OracleV2",
     oraclePriceA,
     oraclePriceB,
   };

@@ -9,7 +9,7 @@ import { PoolFunctions, QuoteFunctions } from "../_codegen";
 import { Bank, BankScript } from "../base";
 import { MultiSwapQuote, castMultiSwapQuote } from "../base/pool/poolTypes";
 import { OracleSwapExtraArgs } from "../base/quoters/oracleQuoter/args";
-import { StableSwapExtraArgs } from "../base/quoters/stableQuoter/args";
+import { OracleV2SwapExtraArgs } from "../base/quoters/oracleV2Quoter/args";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
 import {
@@ -21,7 +21,7 @@ import {
 } from "../types";
 import { zip } from "../utils";
 
-import { getOracleArgs, getStableArgs } from "./poolModule";
+import { getOracleArgs, getOracleV2Args } from "./poolModule";
 
 export interface CoinPair {
   coinIn: string;
@@ -116,12 +116,12 @@ export class RouterModule implements IModule {
       const quoterType = getQuoterType(poolInfo.quoterType);
       const extraArgs:
         | OracleSwapExtraArgs
-        | StableSwapExtraArgs
+        | OracleV2SwapExtraArgs
         | { type: "ConstantProduct" } =
         quoterType === "Oracle"
           ? await getOracleArgs(this.sdk, tx, poolInfo)
-          : quoterType === "Stable"
-            ? await getStableArgs(this.sdk, tx, poolInfo)
+          : quoterType === "OracleV2"
+            ? await getOracleV2Args(this.sdk, tx, poolInfo)
             : { type: "ConstantProduct" };
 
       const swapResult = pool.swap(tx, {
@@ -246,12 +246,12 @@ export class RouterModule implements IModule {
       const quoterType = getQuoterType(poolInfo.quoterType);
       const extraArgs:
         | OracleSwapExtraArgs
-        | StableSwapExtraArgs
+        | OracleV2SwapExtraArgs
         | { type: "ConstantProduct" } =
         quoterType === "Oracle"
           ? await getOracleArgs(this.sdk, tx, poolInfo)
-          : quoterType === "Stable"
-            ? await getStableArgs(this.sdk, tx, poolInfo)
+          : quoterType === "OracleV2"
+            ? await getOracleV2Args(this.sdk, tx, poolInfo)
             : { type: "ConstantProduct" };
 
       const args = {

@@ -41,7 +41,7 @@ export function testConfig(): SdkOptions {
         quoterSourcePkgs: {
           cpmm: STEAMM_PKG_ID,
           omm: STEAMM_PKG_ID,
-          stable: STEAMM_PKG_ID,
+          omm_v2: STEAMM_PKG_ID,
         },
       },
     },
@@ -427,7 +427,7 @@ export async function createOraclePoolHelper(
   };
 }
 
-export async function createStablePoolHelper(
+export async function createOraclev2PoolHelper(
   sdk: SteammSDK,
   coinAData: CoinData,
   coinBData: CoinData,
@@ -503,7 +503,7 @@ export async function createStablePoolHelper(
   });
 
   await sdk.Pool.createPoolAndShare(newPoolTx, {
-    type: "Stable",
+    type: "OracleV2",
     oracleIndexA: BigInt(oracleIndexA),
     oracleIndexB: BigInt(oracleIndexB),
     bTokenMetaA: coinAData.bTokenmeta,

@@ -33,11 +33,11 @@ import {
   OracleQuoter,
   OracleQuoterFields,
 } from "../_codegen/_generated/steamm/omm/structs";
-import { Pool } from "../_codegen/_generated/steamm/pool/structs";
 import {
-  StableQuoter,
-  StableQuoterFields,
-} from "../_codegen/_generated/steamm/stable/structs";
+  OracleQuoterV2,
+  OracleQuoterV2Fields,
+} from "../_codegen/_generated/steamm/omm_v2/structs";
+import { Pool } from "../_codegen/_generated/steamm/pool/structs";
 import { DataPage, PaginationArgs, SuiObjectIdType } from "../types";
 import { extractGenerics } from "../utils";
 
@@ -429,9 +429,9 @@ export class RpcModule extends SuiClient {
     }
   }
 
-  async fetchStablePool(
+  async fetchOracleV2Pool(
     objectId: SuiObjectIdType,
-  ): Promise<Pool<string, string, StableQuoter, string>> {
+  ): Promise<Pool<string, string, OracleQuoterV2, string>> {
     try {
       const object = await this.getObject({
         id: objectId,
@@ -463,7 +463,7 @@ export class RpcModule extends SuiClient {
       const parsedTypes: [
         PhantomReified<string>,
         PhantomReified<string>,
-        Reified<StableQuoter, StableQuoterFields>,
+        Reified<OracleQuoterV2, OracleQuoterV2Fields>,
         PhantomReified<string>,
       ] = [
         {
@@ -474,7 +474,7 @@ export class RpcModule extends SuiClient {
           phantomType: poolTypes[1],
           kind: "PhantomReified",
         },
-        StableQuoter.reified(),
+        OracleQuoterV2.reified(),
         {
           phantomType: poolTypes[3],
           kind: "PhantomReified",
@@ -483,7 +483,7 @@ export class RpcModule extends SuiClient {
 
       return Pool.fromSuiParsedData(parsedTypes, parsedData);
     } catch (error) {
-      console.error("Error fetching stable pool:", error);
+      console.error("Error fetching oracle V2 pool:", error);
       throw error;
     }
   }

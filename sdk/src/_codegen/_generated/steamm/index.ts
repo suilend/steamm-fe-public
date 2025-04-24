@@ -16,10 +16,10 @@ export const ORACLE_PKG_V1 =
   process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
     ? STEAMM_BETA_CONFIG.config!.quoterSourcePkgs.omm
     : STEAMM_CONFIG.config!.quoterSourcePkgs.omm;
-export const STABLE_PKG_V1 =
+export const ORACLE_V2_PKG_V1 =
   process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-    ? STEAMM_BETA_CONFIG.config!.quoterSourcePkgs.stable
-    : STEAMM_CONFIG.config!.quoterSourcePkgs.stable;
+    ? STEAMM_BETA_CONFIG.config!.quoterSourcePkgs.omm_v2
+    : STEAMM_CONFIG.config!.quoterSourcePkgs.omm_v2;
 
 export function setPublishedAt(publishedAt: string) {
   PUBLISHED_AT = publishedAt;

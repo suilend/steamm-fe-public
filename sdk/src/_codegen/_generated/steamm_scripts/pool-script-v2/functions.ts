@@ -243,14 +243,14 @@ export function ommSwap(
   });
 }
 
-export function stableSwap(
+export function ommV2Swap(
   tx: Transaction,
   typeArgs: [string, string, string, string, string, string],
   args: OmmSwapArgs,
   publishedAt: string = PUBLISHED_AT,
 ) {
   return tx.moveCall({
-    target: `${publishedAt}::pool_script_v2::stable_swap`,
+    target: `${publishedAt}::pool_script_v2::omm_v2_swap`,
     typeArguments: typeArgs,
     arguments: [
       obj(tx, args.pool),
@@ -281,7 +281,7 @@ export interface QuoteOmmSwapArgs {
   clock: TransactionObjectInput;
 }
 
-export interface QuoteStableSwapArgs {
+export interface QuoteOracleV2SwapArgs {
   pool: TransactionObjectInput;
   bankA: TransactionObjectInput;
   bankB: TransactionObjectInput;
@@ -316,14 +316,14 @@ export function quoteOmmSwap(
   });
 }
 
-export function quoteStableSwap(
+export function quoteOmmV2Swap(
   tx: Transaction,
   typeArgs: [string, string, string, string, string, string],
-  args: QuoteStableSwapArgs,
+  args: QuoteOracleV2SwapArgs,
   publishedAt: string = PUBLISHED_AT,
 ) {
   return tx.moveCall({
-    target: `${publishedAt}::pool_script_v2::quote_stable_swap`,
+    target: `${publishedAt}::pool_script_v2::quote_omm_v2_swap`,
     typeArguments: typeArgs,
     arguments: [
       obj(tx, args.pool),

@@ -10,11 +10,11 @@ import {
   SwapArgs,
 } from "../../pool/poolArgs";
 
-export type StableSwapArgs = SwapArgs & StableSwapExtraArgs;
-export type StableQuoteSwapArgs = QuoteSwapArgs & StableSwapExtraArgs;
+export type OracleV2SwapArgs = SwapArgs & OracleV2SwapExtraArgs;
+export type OracleV2QuoteSwapArgs = QuoteSwapArgs & OracleV2SwapExtraArgs;
 
-export interface StableSwapExtraArgs {
-  type: "Stable";
+export interface OracleV2SwapExtraArgs {
+  type: "OracleV2";
   oraclePriceA: TransactionArgument;
   oraclePriceB: TransactionArgument;
   // TODO: Remove these after refactor
@@ -23,8 +23,8 @@ export interface StableSwapExtraArgs {
   lendingMarket?: SuiAddressType;
 }
 
-export type CreateStablePoolArgs = CreatePoolBaseArgs & {
-  type: "Stable";
+export type CreateOracleV2PoolArgs = CreatePoolBaseArgs & {
+  type: "OracleV2";
   lendingMarket: SuiAddressType;
   oracleRegistry: SuiAddressType;
   oracleIndexA: bigint | TransactionArgument;

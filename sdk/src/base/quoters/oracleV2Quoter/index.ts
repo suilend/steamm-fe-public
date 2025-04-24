@@ -5,18 +5,18 @@ import {
 } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 
-import { SdkOptions, StableQuoterFunctions } from "../../..";
+import { OracleV2QuoterFunctions, SdkOptions } from "../../..";
 import { PackageInfo, PoolInfo } from "../../../types";
 import { MigrateArgs, SharePoolArgs } from "../../pool/poolArgs";
 import { Quoter } from "../quoter";
 
 import {
-  CreateStablePoolArgs,
-  StableQuoteSwapArgs,
-  StableSwapArgs,
+  CreateOracleV2PoolArgs,
+  OracleV2QuoteSwapArgs,
+  OracleV2SwapArgs,
 } from "./args";
 
-export class StableQuoter implements Quoter {
+export class OracleV2Quoter implements Quoter {
   public sourcePkgId: string;
   public publishedAt: string;
   public poolInfo: PoolInfo;
@@ -27,7 +27,7 @@ export class StableQuoter implements Quoter {
     this.poolInfo = poolInfo;
   }
 
-  public swap(tx: Transaction, args: StableSwapArgs): TransactionResult {
+  public swap(tx: Transaction, args: OracleV2SwapArgs): TransactionResult {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
       bankA: tx.object(args.bankA as any), // TODO: Fix this
@@ -43,7 +43,7 @@ export class StableQuoter implements Quoter {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const swapResult = StableQuoterFunctions.swap(
+    const swapResult = OracleV2QuoterFunctions.swap(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -55,7 +55,7 @@ export class StableQuoter implements Quoter {
 
   public quoteSwap(
     tx: Transaction,
-    args: StableQuoteSwapArgs,
+    args: OracleV2QuoteSwapArgs,
   ): TransactionArgument {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
@@ -69,7 +69,7 @@ export class StableQuoter implements Quoter {
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
     };
 
-    const quote = StableQuoterFunctions.quoteSwap(
+    const quote = OracleV2QuoterFunctions.quoteSwap(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -113,7 +113,7 @@ export class StableQuoter implements Quoter {
       admin: args.adminCap,
     };
 
-    const [coinA, coinB] = StableQuoterFunctions.migrate(
+    const [coinA, coinB] = OracleV2QuoterFunctions.migrate(
       tx,
       this.quoterTypes(),
       callArgs,
@@ -124,9 +124,9 @@ export class StableQuoter implements Quoter {
   }
 }
 
-export function createStablePool(
+export function createOracleV2Pool(
   tx: Transaction,
-  args: CreateStablePoolArgs,
+  args: CreateOracleV2PoolArgs,
   pkgInfo: PackageInfo,
 ): TransactionResult {
   const {
@@ -151,7 +151,7 @@ export function createStablePool(
     amplifier,
   } = args;
 
-  return StableQuoterFunctions.new_(
+  return OracleV2QuoterFunctions.new_(
     tx,
     [
       lendingMarketType,
@@ -180,13 +180,13 @@ export function createStablePool(
   );
 }
 
-export function shareStablePool(
+export function shareOracleV2Pool(
   tx: Transaction,
   args: SharePoolArgs,
   pkgInfo: PackageInfo,
   sdkOptions: SdkOptions,
 ): TransactionResult {
-  const quoterType = `${sdkOptions.steamm_config.config!.quoterSourcePkgs.stable}::stable::StableQuoter`;
+  const quoterType = `${sdkOptions.steamm_config.config!.quoterSourcePkgs.omm_v2}::omm_v2::OracleQuoterV2`;
 
   return tx.moveCall({
     target: `0x2::transfer::public_share_object`,
@@ -197,15 +197,15 @@ export function shareStablePool(
   });
 }
 
-export function createStablePoolAndShare(
+export function createOracleV2PoolAndShare(
   tx: Transaction,
-  args: CreateStablePoolArgs,
+  args: CreateOracleV2PoolArgs,
   pkgInfo: PackageInfo,
   sdkOptions: SdkOptions,
 ) {
-  const pool = createStablePool(tx, args, pkgInfo);
+  const pool = createOracleV2Pool(tx, args, pkgInfo);
 
-  return shareStablePool(
+  return shareOracleV2Pool(
     tx,
     {
       pool,

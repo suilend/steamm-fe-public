@@ -20,7 +20,7 @@ import {
   createCoinAndBankHelper,
   createOraclePoolHelper,
   createPoolHelper,
-  createStablePoolHelper,
+  createOraclev2PoolHelper,
   mintCoin,
   testConfig,
 } from "../utils/utils";
@@ -28,7 +28,7 @@ import {
 dotenv.config();
 
 export async function test() {
-  describe("test stable pool", async () => {
+  describe("test oracle V2 pool", async () => {
     let keypair: Ed25519Keypair;
     let suiTreasuryCap: string;
     let usdcTreasuryCap: string;
@@ -86,11 +86,11 @@ export async function test() {
       await new Promise((resolve) => setTimeout(resolve, 500));
     });
 
-    it("Stable quoter", async () => {
+    it("OracleV2 quoter", async () => {
       const coinAData = await createCoinAndBankHelper(sdk, "A");
       const coinBData = await createCoinAndBankHelper(sdk, "B");
 
-      const lpAB = await createStablePoolHelper(sdk, coinAData, coinBData);
+      const lpAB = await createOraclev2PoolHelper(sdk, coinAData, coinBData);
 
       console.log(
         "pools: ",

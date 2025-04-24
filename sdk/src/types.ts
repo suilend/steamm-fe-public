@@ -4,7 +4,7 @@ export interface SteammPackageInfo {
   quoterPkgs: {
     cpmm: string;
     omm: string;
-    stable: string;
+    omm_v2: string;
   };
 }
 
@@ -53,7 +53,7 @@ export type NewOracleQuoterEvent = {
   oracle_index_b: string;
 };
 
-export type NewStableQuoterEvent = {
+export type NewOracleV2QuoterEvent = {
   pool_id: string;
   oracle_registry_id: string;
   oracle_index_a: string;
@@ -153,8 +153,8 @@ export function extractOracleQuoterInfo(
   );
 }
 
-export function extractStableQuoterInfo(
-  events: EventData<NewStableQuoterEvent>[],
+export function extractOracleV2QuoterInfo(
+  events: EventData<NewOracleV2QuoterEvent>[],
 ): Record<string, QuoterData> {
   return events.reduce(
     (acc, event) => {
@@ -166,7 +166,7 @@ export function extractStableQuoterInfo(
         amplifier,
       } = event.parsedJson.event;
       acc[pool_id] = {
-        type: "Stable",
+        type: "OracleV2",
         oracleRegistryId: oracle_registry_id,
         oracleIndexA: Number(oracle_index_a),
         oracleIndexB: Number(oracle_index_b),
@@ -184,7 +184,7 @@ export type SteammConfigs = {
   quoterSourcePkgs: {
     cpmm: SuiObjectIdType;
     omm: SuiObjectIdType;
-    stable: SuiObjectIdType;
+    omm_v2: SuiObjectIdType;
   };
 };
 
@@ -267,7 +267,7 @@ export type QuoterData =
       oracleRegistryId: SuiObjectIdType;
     }
   | {
-      type: "Stable";
+      type: "OracleV2";
       oracleIndexA: number;
       oracleIndexB: number;
       oracleRegistryId: SuiObjectIdType;
@@ -276,13 +276,13 @@ export type QuoterData =
 
 export function getQuoterType(
   quoterType: string,
-): "ConstantProduct" | "Oracle" | "Stable" {
+): "ConstantProduct" | "Oracle" | "OracleV2" {
   if (quoterType.includes("::cpmm::CpQuoter")) {
     return "ConstantProduct";
   } else if (quoterType.includes("::omm::OracleQuoter")) {
     return "Oracle";
-  } else if (quoterType.includes("::stable::StableQuoter")) {
-    return "Stable";
+  } else if (quoterType.includes("::omm_v2::OracleQuoterV2")) {
+    return "OracleV2";
   } else {
     throw new Error(`Unknown quoter type: ${quoterType}`);
   }
