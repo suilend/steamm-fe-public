@@ -23,15 +23,22 @@ export default function TokenCreationForm({
   onNext
 }: TokenCreationFormProps) {
   const router = useRouter();
-  const { createToken, isCreating, error } = useCreateToken();
+  const { createToken, isCreating, error, status: hookStatus } = useCreateToken();
   
   // Dialog state
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   
-  // Transaction status state
+  // Transaction status state - now synchronized with the hook's status
   const [status, setStatus] = useState<Status>("idle");
   const [formError, setFormError] = useState<Error | undefined>(undefined);
   const [txDigest, setTxDigest] = useState<string | null>(null);
+  
+  // Monitor for status updates from the hook
+  useEffect(() => {
+    if (hookStatus && hookStatus !== "idle") {
+      setStatus(hookStatus);
+    }
+  }, [hookStatus]);
   
   // Monitor for error updates from the hook
   useEffect(() => {
@@ -50,7 +57,7 @@ export default function TokenCreationForm({
       
       if (result) {
         setTxDigest(result.digest);
-        setStatus("success");
+        // Status is now handled by the hook's status updates
         
         // Call onSuccess if provided
         if (onSuccess) {
@@ -88,7 +95,7 @@ export default function TokenCreationForm({
   const isContractDeploymentError = formError && formError.message?.includes("requires deploying");
   
   // Show content based on status
-  if (status === "pending" || status === "success" || status === "error") {
+  if (status !== "idle") {
     return (
       <div className={cn("flex w-full flex-col items-center justify-center", className)}>
         <TokenCreationStatus
@@ -100,7 +107,7 @@ export default function TokenCreationForm({
           onRetry={isContractDeploymentError ? undefined : handleRetry}
           onContinue={isContractDeploymentError ? handleContinue : status === "success" ? handleContinue : undefined}
           actionButtonLabel={isContractDeploymentError ? "Continue Anyway" : undefined}
-          showAdminMessage={isContractDeploymentError}
+          initialSupply={tokenParams.initialSupply}
         />
       </div>
     );
