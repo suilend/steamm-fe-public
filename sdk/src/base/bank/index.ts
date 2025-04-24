@@ -331,6 +331,13 @@ export function createBank(
 ): TransactionArgument {
   const { lendingMarketType, coinType, btokenType } = args;
 
+  console.log("Bank creation parameters:", {
+    lendingMarketType: args.lendingMarketType,
+    coinType: args.coinType,
+    registry: args.registry,
+    coinMetaT: args.coinMetaT,
+    lendingMarket: args.lendingMarket
+  });
   return BankFunctions.createBankAndShare(
     tx,
     [lendingMarketType, coinType, btokenType],

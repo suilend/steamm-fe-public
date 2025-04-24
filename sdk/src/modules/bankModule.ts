@@ -169,6 +169,12 @@ export class BankModule implements IModule {
       }
     }
 
+    console.log(
+      'bankModule',
+      this.sdk.sdkOptions.suilend_config.config?.lendingMarketType, 
+      this.sdk.sdkOptions.suilend_config.config?.lendingMarketId
+    );
+
     const callArgs = {
       lendingMarketType:
         this.sdk.sdkOptions.suilend_config.config!.lendingMarketType,

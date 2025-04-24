@@ -5,12 +5,14 @@ import { cn } from "@/lib/utils";
 interface LaunchStepperProps {
   className?: ClassValue;
   currentStep: number;
+  completedSteps: number[];
   onStepChange: (step: number) => void;
 }
 
 export default function LaunchStepper({
   className,
   currentStep,
+  completedSteps,
   onStepChange,
 }: LaunchStepperProps) {
   const steps = [
@@ -28,24 +30,38 @@ export default function LaunchStepper({
           {steps.map((_, index) => (
             <div 
               key={`mobile-step-${index}`}
-              className="flex flex-1 flex-col cursor-pointer"
-              onClick={() => onStepChange(index)}
+              className={cn(
+                "flex flex-1 flex-col cursor-pointer",
+                (index > currentStep && !completedSteps.includes(index)) && "cursor-not-allowed opacity-60"
+              )}
+              onClick={() => {
+                // Only allow navigation to completed steps or current+1
+                if (completedSteps.includes(index) || index <= currentStep || index === currentStep + 1) {
+                  onStepChange(index);
+                }
+              }}
             >
               <div className="relative">
                 <div
                   className={cn(
                     "h-1 w-full rounded-full transition-colors",
-                    index <= currentStep
-                      ? "bg-foreground"
-                      : "bg-border hover:bg-border/80",
+                    completedSteps.includes(index)
+                      ? "bg-success"
+                      : index <= currentStep
+                        ? "bg-foreground"
+                        : "bg-border hover:bg-border/80",
                   )}
                 />
-                {/* Small indicator showing current step */}
-                {index === currentStep && (
+                {/* Small indicator showing current step or checkmark for completed */}
+                {index === currentStep ? (
                   <div className="absolute -bottom-4 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full bg-foreground text-[10px] text-background">
                     {index + 1}
                   </div>
-                )}
+                ) : completedSteps.includes(index) ? (
+                  <div className="absolute -bottom-4 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full bg-success text-[10px] text-background">
+                    ✓
+                  </div>
+                ) : null}
               </div>
             </div>
           ))}
@@ -67,19 +83,34 @@ export default function LaunchStepper({
         {steps.map((step, index) => (
           <div
             key={step.title}
-            className="flex flex-1 flex-col gap-2"
-            onClick={() => onStepChange(index)}
+            className={cn(
+              "flex flex-1 flex-col gap-2",
+              (index > currentStep && !completedSteps.includes(index)) && "cursor-not-allowed opacity-60"
+            )}
+            onClick={() => {
+              // Only allow navigation to completed steps or current+1
+              if (completedSteps.includes(index) || index <= currentStep || index === currentStep + 1) {
+                onStepChange(index);
+              }
+            }}
           >
             <div
               className={cn(
                 "flex h-1 w-full rounded-full transition-colors",
-                index <= currentStep
-                  ? "bg-foreground"
-                  : "bg-border cursor-pointer hover:bg-border/80",
+                completedSteps.includes(index)
+                  ? "bg-success"
+                  : index <= currentStep
+                    ? "bg-foreground"
+                    : "bg-border cursor-pointer hover:bg-border/80",
               )}
             />
             <div className="flex flex-col">
-              <p className="text-p2 text-foreground">{step.title}</p>
+              <div className="flex items-center gap-1">
+                <p className="text-p2 text-foreground">{step.title}</p>
+                {completedSteps.includes(index) && (
+                  <span className="text-xs font-medium text-success">✓</span>
+                )}
+              </div>
               <p className="text-p3 text-secondary-foreground">
                 {step.description}
               </p>

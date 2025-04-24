@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 import init, {
   update_constants,
@@ -15,6 +15,7 @@ import {
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   NORMALIZED_SUI_COINTYPE,
@@ -125,7 +126,7 @@ const LP_TOKEN_DESCRIPTION = "STEAMM LP Token";
 const LP_TOKEN_IMAGE_URL =
   "https://suilend-assets.s3.us-east-2.amazonaws.com/steamm/STEAMM+LP+Token.svg";
 
-export default function CreatePoolCard() {
+export default function CreatePoolCard({isLauncherFlow = false}: {isLauncherFlow?: boolean}) {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, oraclesData, banksData, poolsData } =
@@ -137,8 +138,8 @@ export default function CreatePoolCard() {
     () =>
       !!address &&
       (address === ADMIN_ADDRESS ||
-        (flags?.steammCreatePoolWhitelist ?? []).includes(address)),
-    [address, flags?.steammCreatePoolWhitelist],
+        (flags?.steammCreatePoolWhitelist ?? []).includes(address) || isLauncherFlow),
+    [address, flags?.steammCreatePoolWhitelist, isLauncherFlow],
   );
 
   // CoinTypes
@@ -157,6 +158,80 @@ export default function CreatePoolCard() {
   const [lastActiveInputIndex, setLastActiveInputIndex] = useState<
     number | undefined
   >(undefined);
+
+  // Quoter
+  const [quoterId, setQuoterId] = useState<QuoterId | undefined>(undefined);
+
+  // Fee tier
+  const [feeTierPercent, setFeeTierPercent] = useState<number | undefined>(
+    undefined,
+  );
+
+  // Auto-prefill token data for launcher flow
+  useEffect(() => {
+    if (!isLauncherFlow || !balancesCoinMetadataMap) return;
+    
+    // Try to get token data from session storage
+    const tokenType = typeof window !== 'undefined' ? sessionStorage.getItem("launchTokenType") : null;
+    const initialSupply = typeof window !== 'undefined' ? sessionStorage.getItem("launchInitialSupply") : null;
+    
+    if (!tokenType || !initialSupply) return;
+    
+    // Find SUI coinType in balancesMetadataMap
+    const suiCoinType = Object.keys(balancesCoinMetadataMap).find(type => isSui(type));
+    
+    if (!suiCoinType) return;
+    
+    // Only prefill if we haven't already set values
+    if (coinTypes[0] === "" && coinTypes[1] === "") {
+      // Set the base asset to the created token and quote asset to SUI
+      // The created token should be base asset (0), SUI should be quote asset (1)
+      const newCoinTypes: [string, string] = [tokenType, suiCoinType];
+      setCoinTypes(newCoinTypes);
+      
+      // Set the token value to the initial supply
+      const tokenDecimals = balancesCoinMetadataMap[tokenType]?.decimals || 9;
+      const suiDecimals = balancesCoinMetadataMap[suiCoinType]?.decimals || 9;
+      
+      // Format initial values
+      const formattedTokenValue = formatTextInputValue(initialSupply, tokenDecimals);
+      const formattedSuiValue = formatTextInputValue("10", suiDecimals); // Default to 10 SUI
+      
+      setValues([formattedTokenValue, formattedSuiValue]);
+      
+      // Prefill quoter and fee tier with defaults for a better user experience
+      setQuoterId(QuoterId.CPMM);
+      setFeeTierPercent(0.3); // Default to 0.3% fee tier
+      
+      // Try to fetch token USD prices for both tokens
+      if (tokenUsdPricesMap[tokenType] === undefined) {
+        fetchTokenUsdPrice(tokenType);
+      }
+      
+      if (tokenUsdPricesMap[suiCoinType] === undefined) {
+        fetchTokenUsdPrice(suiCoinType);
+      }
+      
+      // Save the prefilled state to session storage to persist across remounts
+      sessionStorage.setItem("poolPrefilled", "true");
+      
+      // Show a toast to inform the user that their token has been prefilled
+      toast("Token Prefilled", {
+        description: "Your newly created token has been prefilled as the base asset with SUI as the quote asset.",
+      });
+    }
+  }, [isLauncherFlow, balancesCoinMetadataMap]);
+  
+  // Save user selections to session storage when in launcher flow
+  useEffect(() => {
+    if (!isLauncherFlow || !coinTypes[0] || !coinTypes[1] || !values[0] || !values[1]) return;
+    
+    // Save selected values to session storage
+    sessionStorage.setItem("poolCoinTypes", JSON.stringify(coinTypes));
+    sessionStorage.setItem("poolValues", JSON.stringify(values));
+    sessionStorage.setItem("poolQuoterId", quoterId || "");
+    sessionStorage.setItem("poolFeeTier", feeTierPercent?.toString() || "");
+  }, [isLauncherFlow, coinTypes, values, quoterId, feeTierPercent]);
 
   const onValueChange = (_value: string, index: number) => {
     console.log("onValueChange - _value:", _value, "index:", index);
@@ -298,14 +373,6 @@ export default function CreatePoolCard() {
     );
   };
 
-  // Quoter
-  const [quoterId, setQuoterId] = useState<QuoterId | undefined>(undefined);
-
-  // Fee tier
-  const [feeTierPercent, setFeeTierPercent] = useState<number | undefined>(
-    undefined,
-  );
-
   // Existing pools
   const existingPools: ParsedPool[] | undefined = useMemo(() => {
     if (poolsData === undefined) return undefined;
@@ -327,7 +394,7 @@ export default function CreatePoolCard() {
     );
 
   const existingPoolTooltip = coinTypes.every((coinType) => coinType !== "")
-    ? `${formatPair(coinTypes.map((coinType) => balancesCoinMetadataMap![coinType].symbol))} pool with this quoter and fee tier already exists`
+    ? `${formatPair(coinTypes.map((coinType) => balancesCoinMetadataMap?.[coinType]?.symbol ?? ""))} pool with this quoter and fee tier already exists`
     : undefined;
 
   // Submit
@@ -561,6 +628,7 @@ export default function CreatePoolCard() {
             "symbol:",
             tokens[index].symbol,
           );
+
           await steammClient.Bank.createBank(createBanksTransaction, {
             coinType: tokens[index].coinType,
             coinMetaT: tokens[index].id!, // Checked above
@@ -570,6 +638,21 @@ export default function CreatePoolCard() {
           });
         }
 
+        console.log(steammClient.sdkOptions.suilend_config.config?.lendingMarketId, 
+          steammClient.sdkOptions.suilend_config.config?.lendingMarketType
+        );
+        const objExists = await steammClient.fullClient.getObject({id: steammClient.sdkOptions.suilend_config.config?.lendingMarketId!});
+        console.log("Object exists check:", objExists);
+        debugger;
+   const inspectResults = await steammClient.fullClient.devInspectTransactionBlock({
+     sender: steammClient.senderAddress,
+     transactionBlock: createBanksTransaction,
+     additionalArgs: { showRawTxnDataAndEffects: true }
+   });
+   
+   if (inspectResults.effects.status.error) {
+     console.error("Parameter error:", inspectResults.effects.status.error);
+   }
         const banksRes = await signExecuteAndWaitForTransaction(
           createBanksTransaction,
         );
@@ -764,6 +847,25 @@ export default function CreatePoolCard() {
       setValues(["", ""]);
       setQuoterId(undefined);
       setFeeTierPercent(undefined);
+
+      // On success, if this is launcher flow, save pool address to session storage
+      if (isLauncherFlow && pool) {
+        try {
+          const poolId = pool.toString(); // Convert pool object ID to string
+          // Save pool address for next step in launcher flow
+          sessionStorage.setItem("launchPoolAddress", poolId);
+          sessionStorage.setItem("launchPoolName", `${tokens[0].symbol}-${tokens[1].symbol}`);
+          
+          // Dispatch event to notify parent components that pool was created
+          const event = new CustomEvent("pool-created", {
+            detail: { poolId, poolName: `${tokens[0].symbol}-${tokens[1].symbol}` }
+          });
+          window.dispatchEvent(event);
+        } catch (error) {
+          console.error("Failed to save pool data to session storage:", error);
+          // Non-critical error, don't show to user
+        }
+      }
     } catch (err) {
       showErrorToast("Failed to create pool", err as Error, undefined, true);
       console.error(err);
