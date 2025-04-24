@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
-import { useBoolean } from "usehooks-ts";
 
 import {
   formatAddress,
@@ -84,7 +83,9 @@ export default function PoolParametersCard() {
 
     (async () => {
       try {
-        const submitAmountA = new BigNumber(pool.balances[0].times(0.1 / 100)) // 0.1% of pool balanceA
+        const submitAmountA = new BigNumber(
+          new BigNumber(1).div(pool.prices[0]),
+        ) // $1 of asset A (assuming the pool is arb'd, in practice it should be very close to arb'd)
           .times(10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals)
           .integerValue(BigNumber.ROUND_DOWN)
           .toString();
@@ -105,7 +106,7 @@ export default function PoolParametersCard() {
     pool.quoterId,
     banksData,
     pool.id,
-    pool.balances,
+    pool.prices,
     appData.coinMetadataMap,
     pool.coinTypes,
     steammClient.Pool,
