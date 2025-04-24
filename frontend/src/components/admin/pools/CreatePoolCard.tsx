@@ -126,7 +126,7 @@ const LP_TOKEN_DESCRIPTION = "STEAMM LP Token";
 const LP_TOKEN_IMAGE_URL =
   "https://suilend-assets.s3.us-east-2.amazonaws.com/steamm/STEAMM+LP+Token.svg";
 
-export default function CreatePoolCard({isLauncherFlow = false}: {isLauncherFlow?: boolean}) {
+export default function CreatePoolCard({isLauncherFlow = true}: {isLauncherFlow?: boolean}) {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, oraclesData, banksData, poolsData } =
