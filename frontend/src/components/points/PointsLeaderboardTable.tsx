@@ -140,8 +140,8 @@ export default function PointsLeaderboardTable({
   return (
     <>
       {/* Table */}
-      <div className="relative w-full">
-        <div className="pointer-events-none absolute inset-0 z-[2] border" />
+      <div className="relative w-full overflow-hidden rounded-md">
+        <div className="pointer-events-none absolute inset-0 z-[2] rounded-md border" />
 
         <div className={cn("relative z-[1] w-full overflow-auto", className)}>
           {/* Header */}
@@ -212,7 +212,7 @@ export default function PointsLeaderboardTable({
               className={cn(
                 "flex h-10 w-10 flex-row items-center justify-center rounded-md border transition-colors",
                 _pageIndex === pageIndex
-                  ? "cursor-default bg-button-1"
+                  ? "cursor-default border-button-1 bg-button-1/25"
                   : "hover:bg-border/50",
               )}
               onClick={
@@ -221,16 +221,7 @@ export default function PointsLeaderboardTable({
                   : () => setPageIndex(_pageIndex)
               }
             >
-              <p
-                className={cn(
-                  "!text-p2 transition-colors",
-                  _pageIndex === pageIndex
-                    ? "text-button-1-foreground"
-                    : "text-foreground",
-                )}
-              >
-                {_pageIndex + 1}
-              </p>
+              <p className="text-p2 text-foreground">{_pageIndex + 1}</p>
             </button>
           ))}
         </div>

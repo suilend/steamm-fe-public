@@ -15,7 +15,7 @@ import {
 import { useAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { useUserContext } from "@/contexts/UserContext";
-import { getTotalAprPercent } from "@/lib/liquidityMining";
+import { getPoolTotalAprPercent } from "@/lib/liquidityMining";
 import {
   getIndexesOfObligationsWithDeposit,
   getObligationDepositedAmount,
@@ -110,21 +110,19 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
                       .div(pool.tvlUsd)
                   : new BigNumber(0);
 
-              const totalAprPercent: BigNumber | undefined =
-                poolStats.aprPercent_24h[pool.id] !== undefined &&
-                stakingYieldAprPercent !== undefined
-                  ? getTotalAprPercent(
-                      poolStats.aprPercent_24h[pool.id].feesAprPercent,
-                      pool.suilendWeightedAverageDepositAprPercent,
-                      filteredRewards,
-                      stakingYieldAprPercent,
-                    )
-                  : undefined;
-
               return {
                 pool: {
                   ...pool,
-                  aprPercent_24h: totalAprPercent,
+                  aprPercent_24h:
+                    poolStats.aprPercent_24h[pool.id] !== undefined &&
+                    stakingYieldAprPercent !== undefined
+                      ? getPoolTotalAprPercent(
+                          poolStats.aprPercent_24h[pool.id].feesAprPercent,
+                          pool.suilendWeightedAverageDepositAprPercent,
+                          filteredRewards,
+                          stakingYieldAprPercent,
+                        )
+                      : undefined,
                 },
                 balances,
                 balanceUsd,

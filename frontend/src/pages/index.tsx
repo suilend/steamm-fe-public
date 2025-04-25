@@ -1,17 +1,14 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
+import { Search, X } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
 import { formatUsd } from "@suilend/frontend-sui";
 import { shallowPushQuery } from "@suilend/frontend-sui-next";
-import {
-  Side,
-  getFilteredRewards,
-  getStakingYieldAprPercent,
-} from "@suilend/sdk";
+import { Side, getFilteredRewards } from "@suilend/sdk";
 
 import Divider from "@/components/Divider";
 import HistoricalDataChart from "@/components/HistoricalDataChart";
@@ -24,7 +21,10 @@ import { useStatsContext } from "@/contexts/StatsContext";
 import useBreakpoint from "@/hooks/useBreakpoint";
 import { ChartConfig, ChartType, chartStatNameMap } from "@/lib/chart";
 import { formatPair } from "@/lib/format";
-import { getTotalAprPercent } from "@/lib/liquidityMining";
+import {
+  getPoolStakingYieldAprPercent,
+  getPoolTotalAprPercent,
+} from "@/lib/liquidityMining";
 import { ParsedPool, PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -144,48 +144,28 @@ export default function PoolsPage() {
             const filteredRewards = getFilteredRewards(rewards);
 
             const stakingYieldAprPercent: BigNumber | undefined =
-              pool.tvlUsd.gt(0)
-                ? pool.coinTypes
-                    .reduce(
-                      (acc, coinType, index) =>
-                        acc.plus(
-                          new BigNumber(
-                            getStakingYieldAprPercent(
-                              Side.DEPOSIT,
-                              coinType,
-                              poolsData.lstAprPercentMap,
-                            ) ?? 0,
-                          ).times(
-                            pool.prices[index].times(pool.balances[index]),
-                          ),
-                        ),
-                      new BigNumber(0),
-                    )
-                    .div(pool.tvlUsd)
-                : new BigNumber(0);
-
-            const totalAprPercent: BigNumber | undefined =
-              poolStats.aprPercent_24h[pool.id] !== undefined &&
-              stakingYieldAprPercent !== undefined
-                ? getTotalAprPercent(
-                    poolStats.aprPercent_24h[pool.id].feesAprPercent,
-                    pool.suilendWeightedAverageDepositAprPercent,
-                    filteredRewards,
-                    stakingYieldAprPercent,
-                  )
-                : undefined;
+              getPoolStakingYieldAprPercent(pool, poolsData.lstAprPercentMap);
 
             return {
               ...pool,
               volumeUsd_24h: poolStats.volumeUsd_24h[pool.id],
-              aprPercent_24h: totalAprPercent,
+              aprPercent_24h:
+                poolStats.aprPercent_24h[pool.id] !== undefined &&
+                stakingYieldAprPercent !== undefined
+                  ? getPoolTotalAprPercent(
+                      poolStats.aprPercent_24h[pool.id].feesAprPercent,
+                      pool.suilendWeightedAverageDepositAprPercent,
+                      filteredRewards,
+                      stakingYieldAprPercent,
+                    )
+                  : undefined,
             };
           }),
         },
       ],
       [] as PoolGroup[],
     );
-  }, [poolsData, poolStats.aprPercent_24h, poolStats.volumeUsd_24h]);
+  }, [poolsData, poolStats.volumeUsd_24h, poolStats.aprPercent_24h]);
 
   // Featured pools
   const featuredPoolGroups = useMemo(
@@ -206,6 +186,7 @@ export default function PoolsPage() {
   );
 
   // Search
+  const inputRef = useRef<HTMLInputElement>(null);
   const [searchString, setSearchString] = useState<string>("");
 
   const filteredPoolGroups = useMemo(() => {
@@ -215,7 +196,7 @@ export default function PoolsPage() {
     return poolGroups
       .filter((poolGroup) =>
         poolGroup.coinTypes.some((coinType) =>
-          `${coinType}${appData.coinMetadataMap[coinType].symbol}`
+          `${poolGroup.pools.map((pool) => pool.id).join("__")}__${coinType}__${appData.coinMetadataMap[coinType].symbol}`
             .toLowerCase()
             .includes(searchString.toLowerCase()),
         ),
@@ -224,7 +205,7 @@ export default function PoolsPage() {
         ...poolGroup,
         pools: poolGroup.pools.filter((pool) =>
           pool.coinTypes.some((coinType) =>
-            `${coinType}${appData.coinMetadataMap[coinType].symbol}`
+            `${pool.id}__${coinType}__${appData.coinMetadataMap[coinType].symbol}`
               .toLowerCase()
               .includes(searchString.toLowerCase()),
           ),
@@ -360,8 +341,24 @@ export default function PoolsPage() {
             <div className="flex flex-row items-center justify-end gap-2 max-md:flex-1">
               {/* Filter */}
               <div className="relative z-[1] h-10 max-w-[180px] rounded-md bg-card transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))] max-md:flex-1 md:w-[180px]">
+                <Search className="pointer-events-none absolute left-3 top-3 z-[2] h-4 w-4 text-secondary-foreground" />
+                {searchString !== "" && (
+                  <button
+                    className="group absolute right-1 top-1 z-[2] flex h-8 w-8 flex-row items-center justify-center"
+                    onClick={() => {
+                      setSearchString("");
+                      inputRef.current?.focus();
+                    }}
+                  >
+                    <X className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
+                  </button>
+                )}
                 <input
-                  className="h-full w-full min-w-0 !border-0 !bg-[transparent] px-3 text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  ref={inputRef}
+                  className={cn(
+                    "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] pl-9 text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground",
+                    searchString !== "" ? "pr-9" : "pr-3",
+                  )}
                   type="text"
                   placeholder={sm ? "Search pools..." : "Search..."}
                   value={searchString}

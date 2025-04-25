@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
-import { ChevronDown, Search, Wallet } from "lucide-react";
+import { ChevronDown, Search, Wallet, X } from "lucide-react";
 
 import {
   NORMALIZED_SEND_COINTYPE,
@@ -35,69 +35,40 @@ function TokenRow({ token, isSelected, onClick }: TokenRowProps) {
     <div
       className={cn(
         "group relative z-[1] flex w-full cursor-pointer flex-row items-center gap-3 rounded-md border px-3 py-2 transition-colors",
-        isSelected ? "bg-button-1" : "hover:bg-border/50",
+        isSelected ? "border-button-1 bg-button-1/25" : "hover:bg-border/50",
       )}
       onClick={onClick}
     >
       <TokenLogo className="shrink-0" token={token} size={24} />
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        {/* Top */}
-        <div className="flex w-full flex-row items-center justify-between gap-4">
-          {/* Top left */}
-          <div className="flex min-w-0 flex-row items-center gap-2">
-            <p
-              className={cn(
-                "overflow-hidden text-ellipsis text-nowrap !text-p2 transition-colors",
-                isSelected ? "text-button-1-foreground" : "text-foreground",
-              )}
-            >
-              {token.symbol}
-            </p>
+        {/* Top left */}
+        <div className="flex w-full min-w-0 flex-row items-center gap-2">
+          <p className="overflow-hidden text-ellipsis text-nowrap !text-p2 text-foreground">
+            {token.symbol}
+          </p>
 
-            <div className="w-max shrink-0">
-              <CopyToClipboardButton
-                iconClassName={cn(
-                  isSelected &&
-                    "text-button-1-foreground/75 group-hover/copy-to-clipboard:text-button-1-foreground",
-                )}
-                value={isSui(token.coinType) ? SUI_COINTYPE : token.coinType}
-              />
-            </div>
-          </div>
-
-          {/* Top right */}
-          <div className="flex shrink-0 flex-row items-center gap-2">
-            <Wallet
-              className={cn(
-                "h-4 w-4 transition-colors",
-                isSelected ? "text-button-1-foreground" : "text-foreground",
-              )}
+          <div className="w-max shrink-0">
+            <CopyToClipboardButton
+              value={isSui(token.coinType) ? SUI_COINTYPE : token.coinType}
             />
-            <p
-              className={cn(
-                "!text-p2 transition-colors",
-                isSelected ? "text-button-1-foreground" : "text-foreground",
-              )}
-            >
-              {formatToken(getBalance(token.coinType), { exact: false })}
-            </p>
           </div>
         </div>
 
-        {/* Bottom */}
+        {/* Bottom left */}
         {token.name && (
-          <p
-            className={cn(
-              "overflow-hidden text-ellipsis text-nowrap !text-p2 transition-colors",
-              isSelected
-                ? "text-button-1-foreground/75"
-                : "text-secondary-foreground",
-            )}
-          >
+          <p className="overflow-hidden text-ellipsis text-nowrap !text-p2 text-secondary-foreground">
             {token.name}
           </p>
         )}
+      </div>
+
+      {/* Right */}
+      <div className="flex shrink-0 flex-row items-center gap-2">
+        <Wallet className="h-4 w-4 text-foreground" />
+        <p className="text-p2 text-foreground">
+          {formatToken(getBalance(token.coinType), { exact: false })}
+        </p>
       </div>
     </div>
   );
@@ -158,6 +129,7 @@ export default function TokenSelectionDialog({
   );
 
   // Filter
+  const inputRef = useRef<HTMLInputElement>(null);
   const [searchString, setSearchString] = useState<string>("");
 
   const filterTokens = useCallback(
@@ -238,18 +210,31 @@ export default function TokenSelectionDialog({
       dialogContentInnerClassName="max-w-lg h-[800px]"
     >
       {/* Search */}
-      <div className="flex h-10 w-full shrink-0 flex-row items-center gap-2 rounded-md bg-card/50 pl-4 transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]">
-        <Search className="h-4 w-4 text-secondary-foreground" />
-        <div className="flex-1">
-          <input
-            autoFocus={!isTouchscreen}
-            className="h-10 w-full min-w-0 !border-0 !bg-[transparent] pr-4 !text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground"
-            type="text"
-            placeholder="Search by token symbol, name or address"
-            value={searchString}
-            onChange={(e) => setSearchString(e.target.value)}
-          />
-        </div>
+      <div className="relative z-[1] h-10 w-full shrink-0 rounded-md border bg-background transition-colors focus-within:border-focus">
+        <Search className="pointer-events-none absolute left-4 top-3 z-[2] -mt-px h-4 w-4 text-secondary-foreground" />
+        {searchString !== "" && (
+          <button
+            className="group absolute right-2 top-1 z-[2] -mt-px flex h-8 w-8 flex-row items-center justify-center"
+            onClick={() => {
+              setSearchString("");
+              inputRef.current?.focus();
+            }}
+          >
+            <X className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
+          </button>
+        )}
+        <input
+          ref={inputRef}
+          autoFocus={!isTouchscreen}
+          className={cn(
+            "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] pl-10 text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground",
+            searchString !== "" ? "pr-10" : "pr-4",
+          )}
+          type="text"
+          placeholder="Search by token symbol, name or address"
+          value={searchString}
+          onChange={(e) => setSearchString(e.target.value)}
+        />
       </div>
 
       {/* Top tokens */}
@@ -263,20 +248,15 @@ export default function TokenSelectionDialog({
                 key={t.coinType}
                 className={cn(
                   "group flex h-10 flex-row items-center gap-2 rounded-[20px] border pl-2 pr-3 transition-colors",
-                  isSelected ? "bg-button-1" : "hover:bg-border/50",
+                  isSelected
+                    ? "border-button-1 bg-button-1/25"
+                    : "hover:bg-border/50",
                 )}
                 onClick={() => onTokenClick(t)}
               >
                 {/* TODO: Truncate symbol if the list of top tokens includes non-reserves */}
                 <TokenLogo token={t} size={24} />
-                <p
-                  className={cn(
-                    "!text-p2 transition-colors",
-                    isSelected ? "text-button-1-foreground" : "text-foreground",
-                  )}
-                >
-                  {t.symbol}
-                </p>
+                <p className="text-p2 text-foreground">{t.symbol}</p>
               </button>
             );
           })}

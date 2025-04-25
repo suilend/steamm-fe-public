@@ -119,7 +119,7 @@ export default function ConnectedWalletPopover() {
                 className={cn(
                   "group flex h-10 w-full flex-row items-center justify-between rounded-md border px-3 transition-colors",
                   a.address === address
-                    ? "cursor-default bg-button-1"
+                    ? "cursor-default border-button-1 bg-button-1/25"
                     : "hover:bg-border/50",
                 )}
                 onClick={
@@ -130,7 +130,7 @@ export default function ConnectedWalletPopover() {
                   className={cn(
                     "shrink-0 !text-p2 transition-colors",
                     a.address === address
-                      ? "text-button-1-foreground"
+                      ? "text-foreground"
                       : "text-secondary-foreground group-hover:text-foreground",
                   )}
                 >
@@ -142,7 +142,7 @@ export default function ConnectedWalletPopover() {
                     className={cn(
                       "overflow-hidden text-ellipsis text-nowrap !text-p3 transition-colors",
                       a.address === address
-                        ? "text-button-1-foreground/75"
+                        ? "text-foreground/75"
                         : "text-tertiary-foreground group-hover:text-foreground/75",
                     )}
                   >

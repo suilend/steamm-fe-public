@@ -102,21 +102,12 @@ export default function useFetchPoolsData(
               bankInfoB: bankMap[coinTypes[1]].bankInfo,
             });
 
-            const withdrawA = new BigNumber(
+            const balanceA = new BigNumber(
               redeemQuote.withdrawA.toString(),
             ).div(10 ** coinMetadataMap[coinTypes[0]].decimals);
-            const withdrawB = new BigNumber(
+            const balanceB = new BigNumber(
               redeemQuote.withdrawB.toString(),
             ).div(10 ** coinMetadataMap[coinTypes[1]].decimals);
-
-            let balanceA = new BigNumber(pool.balanceA.value.toString()).div(
-              10 ** coinMetadataMap[coinTypeA].decimals,
-            );
-            let balanceB = new BigNumber(pool.balanceB.value.toString()).div(
-              10 ** coinMetadataMap[coinTypeB].decimals,
-            );
-            balanceA = balanceA.times(withdrawA.div(balanceA));
-            balanceB = balanceB.times(withdrawB.div(balanceB));
 
             const balances: [BigNumber, BigNumber] = [balanceA, balanceB];
 

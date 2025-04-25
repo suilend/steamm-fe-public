@@ -13,7 +13,6 @@ import {
   getDedupedAprRewards,
   getDedupedPerDayRewards,
   getFilteredRewards,
-  getStakingYieldAprPercent,
 } from "@suilend/sdk";
 
 import AprBreakdownRow from "@/components/AprBreakdownRow";
@@ -23,7 +22,10 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
-import { getTotalAprPercent } from "@/lib/liquidityMining";
+import {
+  getPoolStakingYieldAprPercent,
+  getPoolTotalAprPercent,
+} from "@/lib/liquidityMining";
 import { ParsedPool } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
@@ -50,23 +52,7 @@ export default function AprBreakdown({
   // LST staking yield APR
   const stakingYieldAprPercent: BigNumber | undefined =
     poolsData !== undefined
-      ? pool.tvlUsd.gt(0)
-        ? pool.coinTypes
-            .reduce(
-              (acc, coinType, index) =>
-                acc.plus(
-                  new BigNumber(
-                    getStakingYieldAprPercent(
-                      Side.DEPOSIT,
-                      coinType,
-                      poolsData.lstAprPercentMap,
-                    ) ?? 0,
-                  ).times(pool.prices[index].times(pool.balances[index])),
-                ),
-              new BigNumber(0),
-            )
-            .div(pool.tvlUsd)
-        : new BigNumber(0)
+      ? getPoolStakingYieldAprPercent(pool, poolsData.lstAprPercentMap)
       : undefined;
 
   // Rewards - APR
@@ -76,7 +62,7 @@ export default function AprBreakdown({
   const totalAprPercent: BigNumber | undefined =
     poolStats.aprPercent_24h[pool.id] !== undefined &&
     stakingYieldAprPercent !== undefined
-      ? getTotalAprPercent(
+      ? getPoolTotalAprPercent(
           poolStats.aprPercent_24h[pool.id].feesAprPercent,
           pool.suilendWeightedAverageDepositAprPercent,
           filteredRewards,
@@ -98,7 +84,7 @@ export default function AprBreakdown({
               {/* Rewards - per day */}
               {perDayRewards.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <p className="text-p2 text-foreground">Points</p>
+                  <p className="text-p1 text-foreground">Points</p>
 
                   {perDayRewards.map((r, index) => (
                     <AprBreakdownRow
@@ -134,7 +120,7 @@ export default function AprBreakdown({
               <div className="flex flex-col gap-2">
                 {/* Total APR */}
                 <div className="flex flex-row items-center justify-between gap-4">
-                  <p className="text-p2 text-foreground">Total APR</p>
+                  <p className="text-p1 text-foreground">Total APR</p>
                   <p className="text-p1 font-bold text-foreground">
                     {formatPercent(totalAprPercent)}
                   </p>

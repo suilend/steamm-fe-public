@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { Wallet } from "lucide-react";
@@ -19,7 +21,9 @@ interface CoinInputProps {
   value?: string;
   usdValue?: BigNumber | "";
   onChange?: (value: string) => void;
-  onBalanceClick?: () => void;
+  maxAmountDecorator?: ReactNode;
+  maxAmount?: BigNumber;
+  onMaxAmountClick?: () => void;
   tokens?: Token[];
   onSelectToken?: (token: Token) => void;
 }
@@ -31,7 +35,9 @@ export default function CoinInput({
   value,
   usdValue,
   onChange,
-  onBalanceClick,
+  maxAmountDecorator,
+  maxAmount,
+  onMaxAmountClick,
   tokens,
   onSelectToken,
 }: CoinInputProps) {
@@ -39,8 +45,10 @@ export default function CoinInput({
 
   const isReadOnly = onChange === undefined;
 
-  const isBalanceClickable =
-    token !== undefined && value !== undefined && onBalanceClick !== undefined;
+  const isMaxAmountClickable =
+    token !== undefined &&
+    value !== undefined &&
+    onMaxAmountClick !== undefined;
   const hasDialog = tokens !== undefined && onSelectToken !== undefined;
 
   return (
@@ -97,26 +105,21 @@ export default function CoinInput({
         )}
 
         <button
-          className="group flex w-max flex-row items-center gap-2"
-          onClick={onBalanceClick}
-          disabled={!isBalanceClickable}
+          className={cn(
+            "flex w-max flex-row items-center gap-2",
+            isMaxAmountClickable && "group",
+          )}
+          onClick={onMaxAmountClick}
+          disabled={!isMaxAmountClickable}
         >
-          <Wallet
-            className={cn(
-              "h-4 w-4 text-secondary-foreground",
-              isBalanceClickable &&
-                "transition-colors group-hover:text-foreground",
-            )}
-          />
-          <p
-            className={cn(
-              "!text-p2 text-secondary-foreground",
-              isBalanceClickable &&
-                "transition-colors group-hover:text-foreground",
-            )}
-          >
+          {maxAmountDecorator ?? (
+            <Wallet className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
+          )}
+          <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
             {token
-              ? formatToken(getBalance(token.coinType), { exact: false })
+              ? formatToken(maxAmount ?? getBalance(token.coinType), {
+                  exact: false,
+                })
               : "--"}
           </p>
         </button>

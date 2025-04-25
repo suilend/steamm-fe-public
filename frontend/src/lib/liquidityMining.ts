@@ -7,11 +7,35 @@ import {
   Side,
   getDepositShare,
   getRewardsAprPercent,
+  getStakingYieldAprPercent,
 } from "@suilend/sdk";
 
 import { AppData, PoolsData } from "@/contexts/AppContext";
+import { ParsedPool } from "@/lib/types";
 
-export const getTotalAprPercent = (
+export const getPoolStakingYieldAprPercent = (
+  pool: ParsedPool,
+  lstAprPercentMap: PoolsData["lstAprPercentMap"],
+) =>
+  pool.tvlUsd.gt(0)
+    ? pool.coinTypes
+        .reduce(
+          (acc, coinType, index) =>
+            acc.plus(
+              new BigNumber(
+                getStakingYieldAprPercent(
+                  Side.DEPOSIT,
+                  coinType,
+                  lstAprPercentMap,
+                ) ?? 0,
+              ).times(pool.prices[index].times(pool.balances[index])),
+            ),
+          new BigNumber(0),
+        )
+        .div(pool.tvlUsd)
+    : new BigNumber(0);
+
+export const getPoolTotalAprPercent = (
   feesAprPercent: BigNumber,
   suilendWeightedAverageDepositAprPercent: BigNumber,
   filteredRewards: RewardSummary[],
