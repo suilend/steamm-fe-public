@@ -1,3 +1,5 @@
+import { CSSProperties } from "react";
+
 import BigNumber from "bignumber.js";
 import { Trophy, VenetianMask } from "lucide-react";
 
@@ -12,7 +14,7 @@ import { useSettingsContext } from "@suilend/frontend-sui-next";
 
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import OpenUrlNewTab from "@/components/OpenUrlNewTab";
-import { columnStyleMap } from "@/components/points/PointsLeaderboardTable";
+import { Column } from "@/components/points/PointsLeaderboardTable";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
@@ -21,10 +23,12 @@ import { PORTFOLIO_URL } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 interface PointsLeaderboardRowProps {
+  columnStyleMap: Record<Column, CSSProperties>;
   row: LeaderboardRowData;
 }
 
 export default function PointsLeaderboardRow({
+  columnStyleMap,
   row,
 }: PointsLeaderboardRowProps) {
   const { explorer } = useSettingsContext();

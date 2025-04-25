@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
@@ -23,6 +23,7 @@ import {
 import { ClaimRewardsReward, RewardSummary, Side } from "@suilend/sdk";
 
 import Divider from "@/components/Divider";
+import TransactionHistoryTable from "@/components/pool/TransactionHistoryTable";
 import PoolPositionsTable from "@/components/portfolio/PoolPositionsTable";
 import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
@@ -32,6 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolPositionsContext } from "@/contexts/PoolPositionsContext";
 import { useUserContext } from "@/contexts/UserContext";
+import useGlobalTransactionHistory from "@/hooks/useGlobalTransactionHistory";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { HistoryTransactionType, PoolPosition } from "@/lib/types";
@@ -58,7 +60,7 @@ export default function PortfolioPage() {
             Object.entries(poolTransactionHistoryMap).reduce(
               (acc, [poolId, transactionHistory]) => {
                 const pool = poolsData.pools.find((p) => p.id === poolId);
-                if (!pool) return acc;
+                if (!pool) return acc; // Should not happen
 
                 const depositedAmounts = [0, 1].map((index) =>
                   transactionHistory[0].reduce(
@@ -254,6 +256,14 @@ export default function PortfolioPage() {
     }
   };
 
+  // Global transaction history
+  const { globalTransactionHistory } = useGlobalTransactionHistory();
+
+  const addressGlobalTransactionHistory = useMemo(
+    () => (address ? globalTransactionHistory : []),
+    [address, globalTransactionHistory],
+  );
+
   return (
     <>
       <Head>
@@ -429,6 +439,31 @@ export default function PortfolioPage() {
           </div>
 
           <PoolPositionsTable poolPositions={poolPositionsWithExtraData} />
+        </div>
+
+        {/* Global transaction history */}
+        <div className="flex w-full flex-col gap-6">
+          <div className="flex flex-row items-center gap-3">
+            <p className="text-h3 text-foreground">Transaction history</p>
+            {poolsData === undefined ||
+            addressGlobalTransactionHistory === undefined ? (
+              <Skeleton className="h-5 w-12" />
+            ) : (
+              <Tag>{addressGlobalTransactionHistory.length}</Tag>
+            )}
+          </div>
+
+          <TransactionHistoryTable
+            transactionHistory={
+              poolsData === undefined ||
+              addressGlobalTransactionHistory === undefined
+                ? undefined
+                : addressGlobalTransactionHistory.length === 0
+                  ? []
+                  : [addressGlobalTransactionHistory]
+            }
+            hasPoolColumn
+          />
         </div>
       </div>
     </>

@@ -1,4 +1,4 @@
-import { CSSProperties, Fragment } from "react";
+import { CSSProperties, Fragment, useMemo } from "react";
 
 import { ClassValue } from "clsx";
 
@@ -8,39 +8,50 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HistoryDeposit, HistoryRedeem } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Column = "date" | "type" | "amounts" | "digest";
+export type Column = "date" | "type" | "pool" | "amounts" | "digest";
 type SortableColumn = "";
-
-export const columnStyleMap: Record<Column, CSSProperties> = {
-  date: {
-    width: 200, // px
-    paddingLeft: 4 * 5, // px
-  },
-  type: {
-    width: 125, // px
-    paddingLeft: 4 * 5, // px
-  },
-  amounts: {
-    flex: 1,
-    minWidth: 300, // px
-    paddingLeft: 4 * 5, // px
-  },
-  digest: {
-    width: 50, // px
-    justifyContent: "end",
-    paddingRight: 4 * 5, // px
-  },
-};
 
 interface TransactionHistoryTableProps {
   className?: ClassValue;
   transactionHistory?: (HistoryDeposit | HistoryRedeem)[][];
+  hasPoolColumn?: boolean;
 }
 
 export default function TransactionHistoryTable({
   className,
   transactionHistory,
+  hasPoolColumn,
 }: TransactionHistoryTableProps) {
+  // Columns
+  const columnStyleMap: Record<Column, CSSProperties> = useMemo(
+    () => ({
+      date: {
+        width: 175, // px
+        paddingLeft: 4 * 5, // px
+      },
+      type: {
+        width: 150, // px
+        paddingLeft: 4 * 5, // px
+      },
+      pool: {
+        flex: 1,
+        minWidth: 350, // px
+        paddingLeft: 4 * 5, // px
+      },
+      amounts: {
+        flex: 1,
+        minWidth: 250, // px
+        paddingLeft: 4 * 5, // px
+      },
+      digest: {
+        width: 50, // px
+        justifyContent: "end",
+        paddingRight: 4 * 5, // px
+      },
+    }),
+    [],
+  );
+
   return (
     <div className="relative w-full overflow-hidden rounded-md">
       <div className="pointer-events-none absolute inset-0 z-[2] rounded-md border" />
@@ -61,6 +72,15 @@ export default function TransactionHistoryTable({
           >
             Action
           </HeaderColumn>
+
+          {hasPoolColumn && (
+            <HeaderColumn<Column, SortableColumn>
+              id="pool"
+              style={columnStyleMap.pool}
+            >
+              Pool
+            </HeaderColumn>
+          )}
 
           <HeaderColumn<Column, SortableColumn>
             id="amounts"
@@ -90,12 +110,14 @@ export default function TransactionHistoryTable({
             <p className="text-p2 text-tertiary-foreground">No transactions</p>
           </div>
         ) : (
-          transactionHistory.map((positionTransactionHistory, index) => (
+          transactionHistory.map((poolTransactionHistory, index) => (
             <Fragment key={index}>
-              {positionTransactionHistory.map((transaction) => (
+              {poolTransactionHistory.map((transaction) => (
                 <TransactionHistoryRow
-                  key={transaction.id}
+                  key={transaction.timestamp}
+                  columnStyleMap={columnStyleMap}
                   transaction={transaction}
+                  hasPoolColumn={hasPoolColumn}
                 />
               ))}
               {index !== transactionHistory.length - 1 && (

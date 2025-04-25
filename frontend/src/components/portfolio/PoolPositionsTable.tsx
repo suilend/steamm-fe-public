@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PoolPosition } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Column =
+export type Column =
   | "pool"
   | "aprPercent_24h"
   | "balance"
@@ -19,50 +19,6 @@ type Column =
   | "claimableRewards"
   | "points";
 type SortableColumn = "aprPercent_24h" | "balance" | "pnlPercent";
-
-export const columnStyleMap: Record<Column, CSSProperties> = {
-  pool: {
-    flex: 2,
-    minWidth: 350, // px
-    paddingLeft: 4 * 5, // px
-  },
-  aprPercent_24h: {
-    flex: 1,
-    minWidth: 150, // px
-    justifyContent: "end",
-    paddingRight: 4 * 5, // px
-  },
-  balance: {
-    flex: 1,
-    minWidth: 250, // px
-    justifyContent: "end",
-    paddingRight: 4 * 5, // px
-  },
-  pnlPercent: {
-    flex: 1,
-    minWidth: 150, // px
-    justifyContent: "end",
-    paddingRight: 4 * 5, // px
-  },
-  stakedPercent: {
-    flex: 1,
-    minWidth: 150, // px
-    justifyContent: "end",
-    paddingRight: 4 * 5, // px
-  },
-  claimableRewards: {
-    flex: 1,
-    minWidth: 150, // px
-    justifyContent: "end",
-    paddingRight: 4 * 5, // px
-  },
-  points: {
-    flex: 1,
-    minWidth: 150, // px
-    justifyContent: "end",
-    paddingRight: 4 * 5, // px
-  },
-};
 
 interface PoolPositionsTableProps {
   className?: ClassValue;
@@ -73,6 +29,48 @@ export default function PoolPositionsTable({
   className,
   poolPositions,
 }: PoolPositionsTableProps) {
+  // Columns
+  const columnStyleMap: Record<Column, CSSProperties> = useMemo(
+    () => ({
+      pool: {
+        flex: 1,
+        minWidth: 350, // px
+        paddingLeft: 4 * 5, // px
+      },
+      aprPercent_24h: {
+        width: 150, // px
+        justifyContent: "end",
+        paddingRight: 4 * 5, // px
+      },
+      balance: {
+        width: 250, // px
+        justifyContent: "end",
+        paddingRight: 4 * 5, // px
+      },
+      pnlPercent: {
+        width: 150, // px
+        justifyContent: "end",
+        paddingRight: 4 * 5, // px
+      },
+      stakedPercent: {
+        width: 150, // px
+        justifyContent: "end",
+        paddingRight: 4 * 5, // px
+      },
+      claimableRewards: {
+        width: 150, // px
+        justifyContent: "end",
+        paddingRight: 4 * 5, // px
+      },
+      points: {
+        width: 150, // px
+        justifyContent: "end",
+        paddingRight: 4 * 5, // px
+      },
+    }),
+    [],
+  );
+
   // Sort
   type SortState = { column: SortableColumn; direction: SortDirection };
   const [sortState, setSortState] = useLocalStorage<SortState | undefined>(
@@ -228,7 +226,11 @@ export default function PoolPositionsTable({
           </div>
         ) : (
           sortedPoolPositions.map((position) => (
-            <PoolPositionRow key={position.pool.id} poolPosition={position} />
+            <PoolPositionRow
+              key={position.pool.id}
+              columnStyleMap={columnStyleMap}
+              poolPosition={position}
+            />
           ))
         )}
       </div>

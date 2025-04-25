@@ -117,27 +117,12 @@ export default function PoolsPage() {
     [rhsChartConfigMap, selectedRhsChartStat],
   );
 
-  // Group pools by pair
-  const poolGroups: PoolGroup[] | undefined = useMemo(() => {
-    if (poolsData === undefined) return undefined;
-
-    const poolGroupsByPair: Record<string, ParsedPool[]> = {};
-
-    for (const pool of poolsData.pools) {
-      const formattedPair = formatPair(pool.coinTypes);
-
-      if (!poolGroupsByPair[formattedPair])
-        poolGroupsByPair[formattedPair] = [pool];
-      else poolGroupsByPair[formattedPair].push(pool);
-    }
-
-    return Object.values(poolGroupsByPair).reduce(
-      (acc, pools) => [
-        ...acc,
-        {
-          id: uuidv4(),
-          coinTypes: pools[0].coinTypes,
-          pools: pools.map((pool) => {
+  // Pools
+  const poolsWithExtraData = useMemo(
+    () =>
+      poolsData === undefined
+        ? undefined
+        : poolsData.pools.map((pool) => {
             // Same code as in frontend/src/components/AprBreakdown.tsx
             const rewards =
               poolsData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
@@ -161,28 +146,43 @@ export default function PoolsPage() {
                   : undefined,
             };
           }),
-        },
-      ],
-      [] as PoolGroup[],
-    );
-  }, [poolsData, poolStats.volumeUsd_24h, poolStats.aprPercent_24h]);
+    [poolsData, poolStats.volumeUsd_24h, poolStats.aprPercent_24h],
+  );
+
+  // Group pools by pair
+  const poolGroups: PoolGroup[] | undefined = useMemo(() => {
+    if (poolsWithExtraData === undefined) return undefined;
+
+    const poolGroupsByPair: Record<string, ParsedPool[]> = {};
+
+    for (const pool of poolsWithExtraData) {
+      const formattedPair = formatPair(pool.coinTypes);
+
+      if (!poolGroupsByPair[formattedPair])
+        poolGroupsByPair[formattedPair] = [pool];
+      else poolGroupsByPair[formattedPair].push(pool);
+    }
+
+    return Object.values(poolGroupsByPair).map((pools) => ({
+      id: uuidv4(),
+      coinTypes: pools[0].coinTypes,
+      pools,
+    }));
+  }, [poolsWithExtraData]);
 
   // Featured pools
   const featuredPoolGroups = useMemo(
     () =>
-      poolGroups === undefined || featuredPoolIds === undefined
+      featuredPoolIds === undefined || poolsWithExtraData === undefined
         ? undefined
-        : poolGroups
-            .filter((poolGroup) =>
-              poolGroup.pools.some((pool) => featuredPoolIds.includes(pool.id)),
-            )
-            .map((poolGroup) => ({
-              ...poolGroup,
-              pools: poolGroup.pools.filter((pool) =>
-                featuredPoolIds.includes(pool.id),
-              ),
+        : poolsWithExtraData
+            .filter((pool) => featuredPoolIds.includes(pool.id))
+            .map((pool) => ({
+              id: uuidv4(),
+              coinTypes: pool.coinTypes,
+              pools: [pool],
             })),
-    [poolGroups, featuredPoolIds],
+    [featuredPoolIds, poolsWithExtraData],
   );
 
   // Search
@@ -300,23 +300,19 @@ export default function PoolsPage() {
             <div className="flex h-[30px] w-full flex-row items-center justify-between gap-4">
               <div className="flex flex-row items-center gap-3">
                 <h2 className="text-h3 text-foreground">Featured pools</h2>
+
                 {featuredPoolGroups === undefined ? (
                   <Skeleton className="h-5 w-12" />
                 ) : (
-                  <Tag>
-                    {featuredPoolGroups.reduce(
-                      (acc, poolGroup) => acc + poolGroup.pools.length,
-                      0,
-                    )}
-                  </Tag>
+                  <Tag>{featuredPoolGroups.length}</Tag>
                 )}
               </div>
             </div>
 
             <PoolsTable
-              isFeaturedPools
               tableId="featured-pools"
               poolGroups={featuredPoolGroups}
+              isFlat
             />
           </div>
         )}
@@ -326,6 +322,7 @@ export default function PoolsPage() {
           <div className="flex h-[30px] w-full flex-row items-center justify-between gap-4">
             <div className="flex flex-row items-center gap-3">
               <h2 className="text-h3 text-foreground">All pools</h2>
+
               {filteredPoolGroups === undefined ? (
                 <Skeleton className="h-5 w-12" />
               ) : (

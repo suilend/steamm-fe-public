@@ -1,3 +1,5 @@
+import { CSSProperties } from "react";
+
 import BigNumber from "bignumber.js";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useLocalStorage } from "usehooks-ts";
@@ -12,7 +14,7 @@ import {
 } from "@suilend/sdk";
 
 import PoolRow from "@/components/pools/PoolRow";
-import { columnStyleMap } from "@/components/pools/PoolsTable";
+import { Column } from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
@@ -23,13 +25,17 @@ import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolGroupRowProps {
+  columnStyleMap: Record<Column, CSSProperties>;
   tableId: string;
   poolGroup: PoolGroup;
+  isTvlOnly?: boolean;
 }
 
 export default function PoolGroupRow({
+  columnStyleMap,
   tableId,
   poolGroup,
+  isTvlOnly,
 }: PoolGroupRowProps) {
   const { appData, poolsData } = useLoadedAppContext();
 
@@ -87,10 +93,10 @@ export default function PoolGroupRow({
         )}
         onClick={() => setIsExpanded((prev) => !prev)}
       >
-        {/* Pair */}
+        {/* Pool */}
         <div
           className="flex h-full flex-row items-center gap-3"
-          style={columnStyleMap.pair}
+          style={columnStyleMap.pool}
         >
           <Tag
             className={cn("min-w-[50px]", isExpanded && "bg-border")}
@@ -109,8 +115,8 @@ export default function PoolGroupRow({
             {poolGroup.pools.length}
           </Tag>
 
-          <TokenLogos coinTypes={poolGroup.coinTypes} size={24} />
-          <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
+          <TokenLogos coinTypes={poolGroup.coinTypes} size={20} />
+          <p className="text-p1 text-foreground">
             {formatPair(
               poolGroup.coinTypes.map(
                 (coinType) => appData.coinMetadataMap[coinType].symbol,
@@ -118,12 +124,6 @@ export default function PoolGroupRow({
             )}
           </p>
         </div>
-
-        {/* Fee tier */}
-        <div
-          className="flex h-full flex-row items-center"
-          style={columnStyleMap.feeTier}
-        ></div>
 
         {/* TVL */}
         <div
@@ -142,67 +142,73 @@ export default function PoolGroupRow({
         </div>
 
         {/* Volume */}
-        <div
-          className="flex h-full flex-row items-center"
-          style={columnStyleMap.volumeUsd_24h}
-        >
-          <div className="flex flex-row items-center gap-2">
-            <p className="text-p3 text-tertiary-foreground">Total</p>
+        {!isTvlOnly && (
+          <div
+            className="flex h-full flex-row items-center"
+            style={columnStyleMap.volumeUsd_24h}
+          >
+            <div className="flex flex-row items-center gap-2">
+              <p className="text-p3 text-tertiary-foreground">Total</p>
 
-            {totalVolumeUsd_24h === undefined ? (
-              <Skeleton className="h-[24px] w-16" />
-            ) : (
-              <Tooltip title={formatUsd(totalVolumeUsd_24h, { exact: true })}>
-                <p className="text-p1 text-foreground">
-                  {formatUsd(totalVolumeUsd_24h)}
-                </p>
-              </Tooltip>
-            )}
+              {totalVolumeUsd_24h === undefined ? (
+                <Skeleton className="h-[24px] w-16" />
+              ) : (
+                <Tooltip title={formatUsd(totalVolumeUsd_24h, { exact: true })}>
+                  <p className="text-p1 text-foreground">
+                    {formatUsd(totalVolumeUsd_24h)}
+                  </p>
+                </Tooltip>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* APR */}
-        <div
-          className="flex h-full flex-row items-center"
-          style={columnStyleMap.aprPercent_24h}
-        >
-          <div className="flex flex-row items-center gap-2">
-            <p className="w-max text-p3 text-tertiary-foreground">Up to</p>
+        {!isTvlOnly && (
+          <div
+            className="flex h-full flex-row items-center"
+            style={columnStyleMap.aprPercent_24h}
+          >
+            <div className="flex flex-row items-center gap-2">
+              <p className="w-max text-p3 text-tertiary-foreground">Up to</p>
 
-            <TokenLogos
-              coinTypes={Array.from(
-                new Set(
-                  [...perDayRewards, ...aprRewards].map(
-                    (r) => r.stats.rewardCoinType,
+              <TokenLogos
+                coinTypes={Array.from(
+                  new Set(
+                    [...perDayRewards, ...aprRewards].map(
+                      (r) => r.stats.rewardCoinType,
+                    ),
                   ),
-                ),
-              )}
-              size={16}
-            />
-
-            {maxAprPercent_24h === undefined ? (
-              <Skeleton className="h-[24px] w-16" />
-            ) : (
-              <p
-                className={cn(
-                  "!text-p1",
-                  [...perDayRewards, ...aprRewards].length > 0
-                    ? "text-button-2-foreground"
-                    : "text-foreground",
                 )}
-              >
-                {formatPercent(maxAprPercent_24h)}
-              </p>
-            )}
+                size={16}
+              />
+
+              {maxAprPercent_24h === undefined ? (
+                <Skeleton className="h-[24px] w-16" />
+              ) : (
+                <p
+                  className={cn(
+                    "!text-p1",
+                    [...perDayRewards, ...aprRewards].length > 0
+                      ? "text-button-2-foreground"
+                      : "text-foreground",
+                  )}
+                >
+                  {formatPercent(maxAprPercent_24h)}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {isExpanded &&
         poolGroup.pools.map((pool, index) => (
           <PoolRow
             key={pool.id}
+            columnStyleMap={columnStyleMap}
             pool={pool}
+            isTvlOnly={isTvlOnly}
             isInsideGroup
             isLastPoolInGroup={index === poolGroup.pools.length - 1}
           />

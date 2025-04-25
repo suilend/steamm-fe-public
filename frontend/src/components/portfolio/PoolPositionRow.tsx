@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Fragment, MouseEvent, useState } from "react";
+import { CSSProperties, Fragment, MouseEvent, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
@@ -23,7 +23,7 @@ import {
 
 import AprBreakdown from "@/components/AprBreakdown";
 import PoolTypeTag from "@/components/pool/PoolTypeTag";
-import { columnStyleMap } from "@/components/portfolio/PoolPositionsTable";
+import { Column } from "@/components/portfolio/PoolPositionsTable";
 import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
 import TokenLogos from "@/components/TokenLogos";
@@ -41,10 +41,12 @@ import { PoolPosition } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolPositionRowProps {
+  columnStyleMap: Record<Column, CSSProperties>;
   poolPosition: PoolPosition;
 }
 
 export default function PoolPositionRow({
+  columnStyleMap,
   poolPosition,
 }: PoolPositionRowProps) {
   const { explorer } = useSettingsContext();
@@ -154,8 +156,8 @@ export default function PoolPositionRow({
         className="flex h-full flex-row items-center gap-3"
         style={columnStyleMap.pool}
       >
-        <TokenLogos coinTypes={poolPosition.pool.coinTypes} size={24} />
-        <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
+        <TokenLogos coinTypes={poolPosition.pool.coinTypes} size={20} />
+        <p className="text-p1 text-foreground">
           {formatPair(
             poolPosition.pool.coinTypes.map(
               (coinType) => appData.coinMetadataMap[coinType].symbol,
@@ -163,9 +165,14 @@ export default function PoolPositionRow({
           )}
         </p>
 
-        <div className="flex flex-row items-center gap-1">
-          <PoolTypeTag pool={poolPosition.pool} />
-          <Tag>{formatFeeTier(poolPosition.pool.feeTierPercent)}</Tag>
+        <div className="flex flex-row items-center gap-px">
+          <PoolTypeTag
+            className="rounded-r-[0] pr-2"
+            pool={poolPosition.pool}
+          />
+          <Tag className="rounded-l-[0] pl-2">
+            {formatFeeTier(poolPosition.pool.feeTierPercent)}
+          </Tag>
         </div>
       </div>
 
@@ -318,7 +325,7 @@ export default function PoolPositionRow({
                   <Tooltip
                     title={`${formatToken(amount, { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
                   >
-                    <p className="text-p1 text-foreground">
+                    <p className="text-p2 text-foreground">
                       {formatToken(amount, { exact: false })}{" "}
                       {appData.coinMetadataMap[coinType].symbol}
                     </p>
@@ -354,7 +361,7 @@ export default function PoolPositionRow({
                     .decimals,
                 })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
               >
-                <p className="text-p1 text-foreground">
+                <p className="text-p2 text-foreground">
                   {formatPoints(poolPosition.totalPoints)}
                 </p>
               </Tooltip>
