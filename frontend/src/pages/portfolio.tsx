@@ -52,7 +52,7 @@ export default function PortfolioPage() {
       : poolPositions.map((position) => position.pool.id),
   );
 
-  const poolDepositedUsdMap: Record<string, BigNumber> | undefined =
+  const poolDepositedAmountUsdMap: Record<string, BigNumber> | undefined =
     useMemo(() => {
       return poolsData === undefined || poolTransactionHistoryMap === undefined
         ? undefined
@@ -62,37 +62,49 @@ export default function PortfolioPage() {
                 const pool = poolsData.pools.find((p) => p.id === poolId);
                 if (!pool) return acc; // Should not happen
 
-                const depositedAmounts = [0, 1].map((index) =>
+                const depositedAmountsUsd = [0, 1].map((index) =>
                   transactionHistory[0].reduce(
                     (acc, entry) =>
                       entry.type === HistoryTransactionType.DEPOSIT
                         ? acc.plus(
                             new BigNumber(
                               index === 0 ? entry.deposit_a : entry.deposit_b,
-                            ).div(
-                              10 **
-                                appData.coinMetadataMap[pool.coinTypes[index]]
-                                  .decimals,
-                            ),
+                            )
+                              .div(
+                                10 **
+                                  appData.coinMetadataMap[pool.coinTypes[index]]
+                                    .decimals,
+                              )
+                              .times(
+                                index === 0
+                                  ? entry.coin_a_price
+                                  : entry.coin_b_price,
+                              ),
                           )
                         : acc.minus(
                             new BigNumber(
                               index === 0 ? entry.withdraw_a : entry.withdraw_b,
-                            ).div(
-                              10 **
-                                appData.coinMetadataMap[pool.coinTypes[index]]
-                                  .decimals,
-                            ),
+                            )
+                              .div(
+                                10 **
+                                  appData.coinMetadataMap[pool.coinTypes[index]]
+                                    .decimals,
+                              )
+                              .times(
+                                index === 0
+                                  ? entry.coin_a_price
+                                  : entry.coin_b_price,
+                              ),
                           ),
                     new BigNumber(0),
                   ),
                 );
 
-                const result = new BigNumber(
-                  depositedAmounts[0].times(pool.prices[0]),
-                ).plus(depositedAmounts[1].times(pool.prices[1]));
+                const depositedAmountUsd = depositedAmountsUsd[0].plus(
+                  depositedAmountsUsd[1],
+                );
 
-                return [...acc, [poolId, result]];
+                return [...acc, [poolId, depositedAmountUsd]];
               },
               [] as [string, BigNumber][],
             ),
@@ -107,17 +119,17 @@ export default function PortfolioPage() {
         : poolPositions.map((position) => ({
             ...position,
             pnlPercent:
-              poolDepositedUsdMap?.[position.pool.id] !== undefined
+              poolDepositedAmountUsdMap?.[position.pool.id] !== undefined
                 ? new BigNumber(
                     position.balanceUsd.minus(
-                      poolDepositedUsdMap[position.pool.id],
+                      poolDepositedAmountUsdMap[position.pool.id],
                     ),
                   )
-                    .div(poolDepositedUsdMap[position.pool.id])
+                    .div(poolDepositedAmountUsdMap[position.pool.id])
                     .times(100)
                 : undefined,
           })),
-    [poolPositions, poolDepositedUsdMap],
+    [poolPositions, poolDepositedAmountUsdMap],
   );
 
   // Summary

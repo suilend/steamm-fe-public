@@ -176,7 +176,7 @@ export default function PoolPositionsTable({
 
           <HeaderColumn<Column, SortableColumn>
             id="pnlPercent"
-            tooltip="The PnL compares the current USD value of your balance and the current USD value of your deposits."
+            tooltip="PnL is the difference between your current balance and the net amount deposited."
             sortState={sortState}
             toggleSortByColumn={
               !!(poolPositions ?? []).every(
