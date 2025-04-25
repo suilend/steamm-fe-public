@@ -41,6 +41,7 @@ export function testConfig(): SdkOptions {
         quoterSourcePkgs: {
           cpmm: STEAMM_PKG_ID,
           omm: STEAMM_PKG_ID,
+          omm_v2: STEAMM_PKG_ID,
         },
       },
     },
@@ -375,6 +376,149 @@ export async function createOraclePoolHelper(
     swapFeeBps: BigInt("100"),
     coinMetaA: coinAData.coinMeta,
     coinMetaB: coinBData.coinMeta,
+  });
+
+  const newPoolTxResponse = await sdk.fullClient.signAndExecuteTransaction({
+    transaction: newPoolTx,
+    signer: sdk.signer!,
+    options: {
+      showEvents: true,
+      showEffects: true,
+      showObjectChanges: true,
+    },
+  });
+
+  const priceInfoObjects = newPoolTxResponse.objectChanges!.filter((change) => {
+    if (change.type === "created") {
+      return change.objectType.includes("price_info::PriceInfoObject");
+    }
+    return false;
+  }) as {
+    digest: string;
+    objectId: string;
+    objectType: string;
+    owner: ObjectOwner;
+    sender: string;
+    type: "created";
+    version: string;
+  }[];
+
+  if (priceInfoObjects.length !== 2) {
+    throw new Error(
+      `Expected 2 price info objects, got ${priceInfoObjects.length}`,
+    );
+  }
+
+  sdk.mockOracleObjectForTesting(
+    toHex(new Uint8Array(oracleIndexAByteArray as number[])),
+    priceInfoObjects[0].objectId,
+  );
+  sdk.mockOracleObjectForTesting(
+    toHex(new Uint8Array(oracleIndexBByteArray as number[])),
+    priceInfoObjects[1].objectId,
+  );
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  return {
+    lpTreasuryId,
+    lpMetadataId,
+    lpTokenType,
+  };
+}
+
+export async function createOraclev2PoolHelper(
+  sdk: SteammSDK,
+  coinAData: CoinData,
+  coinBData: CoinData,
+): Promise<LpData> {
+  const tx = await createLpToken2(
+    coinAData.bTokenSymbol,
+    coinBData.bTokenSymbol,
+    sdk.senderAddress,
+  );
+
+  const coinTxResponse = await sdk.fullClient.signAndExecuteTransaction({
+    transaction: tx,
+    signer: sdk.signer!,
+    options: {
+      showEvents: true,
+      showEffects: true,
+      showObjectChanges: true,
+    },
+  });
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const [lpTreasuryId, lpMetadataId, lpTokenType] =
+    getTreasuryAndCoinMeta(coinTxResponse);
+
+  const newPoolTx = new Transaction();
+
+  const oracleIndexA = feedIdCounter++;
+  const oracleIndexB = feedIdCounter++;
+  const priceObjA = createPythPrice(sdk, newPoolTx, {
+    price: BigInt("1"),
+    expo: 1,
+    idx: oracleIndexA,
+  });
+
+  // Note: its u8 so only works until 255
+  const oracleIndexAByteArray = [oracleIndexA, ...Array(31).fill(0)];
+  const oracleIndexBByteArray = [oracleIndexB, ...Array(31).fill(0)];
+
+  const priceObjB = createPythPrice(sdk, newPoolTx, {
+    price: BigInt("1"),
+    expo: 1,
+    idx: oracleIndexB,
+  });
+
+  newPoolTx.moveCall({
+    target: `${sdk.sdkOptions.oracle_config.published_at}::oracles::add_pyth_oracle`,
+    arguments: [
+      newPoolTx.object(ORACLE_REGISTRY_ID),
+      newPoolTx.object(ORACLE_ADMIN_CAP_ID),
+      priceObjA,
+    ],
+  });
+
+  newPoolTx.moveCall({
+    target: `${sdk.sdkOptions.oracle_config.published_at}::oracles::add_pyth_oracle`,
+    arguments: [
+      newPoolTx.object(ORACLE_REGISTRY_ID),
+      newPoolTx.object(ORACLE_ADMIN_CAP_ID),
+      priceObjB,
+    ],
+  });
+
+  newPoolTx.moveCall({
+    target: `0x2::transfer::public_share_object`,
+    typeArguments: [`${PYTH_PKG_ID}::price_info::PriceInfoObject`],
+    arguments: [priceObjA],
+  });
+  newPoolTx.moveCall({
+    target: `0x2::transfer::public_share_object`,
+    typeArguments: [`${PYTH_PKG_ID}::price_info::PriceInfoObject`],
+    arguments: [priceObjB],
+  });
+
+  await sdk.Pool.createPoolAndShare(newPoolTx, {
+    type: "OracleV2",
+    oracleIndexA: BigInt(oracleIndexA),
+    oracleIndexB: BigInt(oracleIndexB),
+    bTokenMetaA: coinAData.bTokenmeta,
+    bTokenMetaB: coinBData.bTokenmeta,
+    bTokenTypeA: coinAData.btokenType,
+    bTokenTypeB: coinBData.btokenType,
+    lpTreasuryId,
+    lpMetadataId,
+    lpTokenType,
+    coinTypeA: coinAData.coinType,
+    coinTypeB: coinBData.coinType,
+    swapFeeBps: BigInt("100"),
+    coinMetaA: coinAData.coinMeta,
+    coinMetaB: coinBData.coinMeta,
+    amplifier: BigInt("100"),
   });
 
   const newPoolTxResponse = await sdk.fullClient.signAndExecuteTransaction({

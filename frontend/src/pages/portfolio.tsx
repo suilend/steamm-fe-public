@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
@@ -63,7 +63,8 @@ export default function PortfolioPage() {
                 if (!pool) return acc; // Should not happen
 
                 const depositedAmountsUsd = [0, 1].map((index) =>
-                  transactionHistory[0].reduce(
+                  // transactionHistory[0] is undefined on beta
+                  (transactionHistory[0] ?? []).reduce(
                     (acc, entry) =>
                       entry.type === HistoryTransactionType.DEPOSIT
                         ? acc.plus(

@@ -243,7 +243,45 @@ export function ommSwap(
   });
 }
 
+export function ommV2Swap(
+  tx: Transaction,
+  typeArgs: [string, string, string, string, string, string],
+  args: OmmSwapArgs,
+  publishedAt: string = PUBLISHED_AT,
+) {
+  return tx.moveCall({
+    target: `${publishedAt}::pool_script_v2::omm_v2_swap`,
+    typeArguments: typeArgs,
+    arguments: [
+      obj(tx, args.pool),
+      obj(tx, args.bankA),
+      obj(tx, args.bankB),
+      obj(tx, args.lendingMarket),
+      obj(tx, args.oraclePriceUpdateA),
+      obj(tx, args.oraclePriceUpdateB),
+      obj(tx, args.coinA),
+      obj(tx, args.coinB),
+      pure(tx, args.a2B, `bool`),
+      pure(tx, args.amountIn, `u64`),
+      pure(tx, args.minAmountOut, `u64`),
+      obj(tx, args.clock),
+    ],
+  });
+}
+
 export interface QuoteOmmSwapArgs {
+  pool: TransactionObjectInput;
+  bankA: TransactionObjectInput;
+  bankB: TransactionObjectInput;
+  lendingMarket: TransactionObjectInput;
+  oraclePriceUpdateA: TransactionObjectInput;
+  oraclePriceUpdateB: TransactionObjectInput;
+  a2B: boolean | TransactionArgument;
+  amountIn: bigint | TransactionArgument;
+  clock: TransactionObjectInput;
+}
+
+export interface QuoteOracleV2SwapArgs {
   pool: TransactionObjectInput;
   bankA: TransactionObjectInput;
   bankB: TransactionObjectInput;
@@ -272,7 +310,30 @@ export function quoteOmmSwap(
       obj(tx, args.oraclePriceUpdateA),
       obj(tx, args.oraclePriceUpdateB),
       pure(tx, args.amountIn, `u64`),
-      pure(tx, args.a2B, `bool`), // TODO: fix this... it should be above amountIn
+      pure(tx, args.a2B, `bool`),
+      obj(tx, args.clock),
+    ],
+  });
+}
+
+export function quoteOmmV2Swap(
+  tx: Transaction,
+  typeArgs: [string, string, string, string, string, string],
+  args: QuoteOracleV2SwapArgs,
+  publishedAt: string = PUBLISHED_AT,
+) {
+  return tx.moveCall({
+    target: `${publishedAt}::pool_script_v2::quote_omm_v2_swap`,
+    typeArguments: typeArgs,
+    arguments: [
+      obj(tx, args.pool),
+      obj(tx, args.bankA),
+      obj(tx, args.bankB),
+      obj(tx, args.lendingMarket),
+      obj(tx, args.oraclePriceUpdateA),
+      obj(tx, args.oraclePriceUpdateB),
+      pure(tx, args.amountIn, `u64`),
+      pure(tx, args.a2B, `bool`),
       obj(tx, args.clock),
     ],
   });

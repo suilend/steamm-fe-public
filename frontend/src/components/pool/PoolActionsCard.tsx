@@ -735,7 +735,7 @@ function WithdrawTab({ tokenUsdPricesMap, onWithdraw }: WithdrawTabProps) {
     if (new BigNumber(sliderValue).gt(100))
       return {
         isDisabled: true,
-        title: "Insufficient LP tokens",
+        title: "Insufficient balance",
       };
 
     return {
@@ -894,7 +894,10 @@ function WithdrawTab({ tokenUsdPricesMap, onWithdraw }: WithdrawTabProps) {
     }
 
     // Withdraw from pool
-    const submitAmountA = quote.withdrawA.toString();
+    const submitAmountA = new BigNumber(quote.withdrawA.toString())
+      .div(1 + slippagePercent / 100)
+      .integerValue(BigNumber.ROUND_DOWN)
+      .toString();
     const submitAmountB = new BigNumber(quote.withdrawB.toString())
       .div(1 + slippagePercent / 100)
       .integerValue(BigNumber.ROUND_DOWN)

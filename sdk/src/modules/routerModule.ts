@@ -9,6 +9,7 @@ import { PoolFunctions, QuoteFunctions } from "../_codegen";
 import { Bank, BankScript } from "../base";
 import { MultiSwapQuote, castMultiSwapQuote } from "../base/pool/poolTypes";
 import { OracleSwapExtraArgs } from "../base/quoters/oracleQuoter/args";
+import { OracleV2SwapExtraArgs } from "../base/quoters/oracleV2Quoter/args";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
 import {
@@ -20,7 +21,7 @@ import {
 } from "../types";
 import { zip } from "../utils";
 
-import { getOracleArgs } from "./poolModule";
+import { getOracleArgs, getOracleV2Args } from "./poolModule";
 
 export interface CoinPair {
   coinIn: string;
@@ -113,10 +114,15 @@ export class RouterModule implements IModule {
           : BigInt(0);
 
       const quoterType = getQuoterType(poolInfo.quoterType);
-      const extraArgs: OracleSwapExtraArgs | { type: "ConstantProduct" } =
+      const extraArgs:
+        | OracleSwapExtraArgs
+        | OracleV2SwapExtraArgs
+        | { type: "ConstantProduct" } =
         quoterType === "Oracle"
           ? await getOracleArgs(this.sdk, tx, poolInfo)
-          : { type: "ConstantProduct" };
+          : quoterType === "OracleV2"
+            ? await getOracleV2Args(this.sdk, tx, poolInfo)
+            : { type: "ConstantProduct" };
 
       const swapResult = pool.swap(tx, {
         coinA,
@@ -238,10 +244,15 @@ export class RouterModule implements IModule {
       const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
       const quoterType = getQuoterType(poolInfo.quoterType);
-      const extraArgs: OracleSwapExtraArgs | { type: "ConstantProduct" } =
+      const extraArgs:
+        | OracleSwapExtraArgs
+        | OracleV2SwapExtraArgs
+        | { type: "ConstantProduct" } =
         quoterType === "Oracle"
           ? await getOracleArgs(this.sdk, tx, poolInfo)
-          : { type: "ConstantProduct" };
+          : quoterType === "OracleV2"
+            ? await getOracleV2Args(this.sdk, tx, poolInfo)
+            : { type: "ConstantProduct" };
 
       const args = {
         a2b: hop.a2b,

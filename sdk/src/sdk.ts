@@ -34,6 +34,7 @@ import {
   EventData,
   NewBankEvent,
   NewOracleQuoterEvent,
+  NewOracleV2QuoterEvent,
   NewPoolEvent,
   OracleConfigs,
   OracleInfo,
@@ -45,6 +46,7 @@ import {
   SuilendConfigs,
   extractBankList,
   extractOracleQuoterInfo,
+  extractOracleV2QuoterInfo,
   extractPoolInfo,
 } from "./types";
 import { SuiAddressType, patchFixSuiObjectId } from "./utils";
@@ -228,6 +230,7 @@ export class SteammSDK {
       quoterPkgs: {
         cpmm: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.cpmm,
         omm: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm,
+        omm_v2: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm_v2,
       },
     };
   }
@@ -405,25 +408,54 @@ export class SteammSDK {
       });
 
     eventData = res.data.reduce((acc, curr) => acc.concat(curr), []);
+    const pools = extractPoolInfo(eventData);
 
     const oracleQuoterPkgId =
       this.sdkOptions.steamm_config.config?.quoterSourcePkgs.omm;
+    const oracleV2QuoterPkgId =
+      this.sdkOptions.steamm_config.config?.quoterSourcePkgs.omm_v2;
 
-    let quoterEventData: EventData<NewOracleQuoterEvent>[] = [];
+    let oracleQuoterEventData: EventData<NewOracleQuoterEvent>[] = [];
     const res2: DataPage<EventData<NewOracleQuoterEvent>[]> =
       await this.fullClient.queryEventsByPage({
         MoveEventType: `${pkgAddy}::events::Event<${oracleQuoterPkgId}::omm::NewOracleQuoter>`,
       });
 
-    quoterEventData = res2.data.reduce((acc, curr) => acc.concat(curr), []);
-    const pools = extractPoolInfo(eventData);
-    const oracleQuoterData = extractOracleQuoterInfo(quoterEventData);
+    oracleQuoterEventData = res2.data.reduce(
+      (acc, curr) => acc.concat(curr),
+      [],
+    );
+
+    const oracleQuoterData = extractOracleQuoterInfo(oracleQuoterEventData);
 
     pools.forEach((pool) => {
       if (oracleQuoterData[pool.poolId]) {
         pool.quoterData = oracleQuoterData[pool.poolId];
       }
     });
+
+    if (oracleV2QuoterPkgId !== "0x0") {
+      let oracleV2QuoterEventData: EventData<NewOracleV2QuoterEvent>[] = [];
+      const res3: DataPage<EventData<NewOracleV2QuoterEvent>[]> =
+        await this.fullClient.queryEventsByPage({
+          MoveEventType: `${pkgAddy}::events::Event<${oracleV2QuoterPkgId}::omm_v2::NewOracleQuoterV2>`,
+        });
+
+      oracleV2QuoterEventData = res3.data.reduce(
+        (acc, curr) => acc.concat(curr),
+        [],
+      );
+
+      const oracleV2QuoterData = extractOracleV2QuoterInfo(
+        oracleV2QuoterEventData,
+      );
+
+      pools.forEach((pool) => {
+        if (oracleV2QuoterData[pool.poolId]) {
+          pool.quoterData = oracleV2QuoterData[pool.poolId];
+        }
+      });
+    }
 
     this._pools = { pools, updatedAt: Date.now() };
   }
@@ -615,11 +647,11 @@ export class SteammSDK {
     await Promise.all(
       poolInfos.map((poolInfo) =>
         limit10(async () => {
-          const pool = poolInfo.quoterType.endsWith("cpmm::CpQuoter")
-            ? await this.fullClient.fetchConstantProductPool(poolInfo.poolId)
-            : poolInfo.quoterType.endsWith("omm::OracleQuoter")
-              ? await this.fullClient.fetchOraclePool(poolInfo.poolId)
-              : await this.fullClient.fetchConstantProductPool(poolInfo.poolId); // Should never need to use the fallback
+          const pool = poolInfo.quoterType.endsWith("omm::OracleQuoter")
+            ? await this.fullClient.fetchOraclePool(poolInfo.poolId)
+            : poolInfo.quoterType.endsWith("omm_v2::OracleQuoterV2")
+              ? await this.fullClient.fetchOracleV2Pool(poolInfo.poolId)
+              : await this.fullClient.fetchConstantProductPool(poolInfo.poolId);
 
           const bTokenTypeA = poolInfo.coinTypeA;
           const bTokenTypeB = poolInfo.coinTypeB;

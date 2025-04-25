@@ -33,6 +33,10 @@ import {
   OracleQuoter,
   OracleQuoterFields,
 } from "../_codegen/_generated/steamm/omm/structs";
+import {
+  OracleQuoterV2,
+  OracleQuoterV2Fields,
+} from "../_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "../_codegen/_generated/steamm/pool/structs";
 import { DataPage, PaginationArgs, SuiObjectIdType } from "../types";
 import { extractGenerics } from "../utils";
@@ -361,7 +365,7 @@ export class RpcModule extends SuiClient {
 
       return Pool.fromSuiParsedData(parsedTypes, parsedData);
     } catch (error) {
-      console.error("Error fetching shared object:", error);
+      console.error("Error fetching CPMM pool:", error);
       throw error;
     }
   }
@@ -420,7 +424,66 @@ export class RpcModule extends SuiClient {
 
       return Pool.fromSuiParsedData(parsedTypes, parsedData);
     } catch (error) {
-      console.error("Error fetching shared object:", error);
+      console.error("Error fetching oracle pool:", error);
+      throw error;
+    }
+  }
+
+  async fetchOracleV2Pool(
+    objectId: SuiObjectIdType,
+  ): Promise<Pool<string, string, OracleQuoterV2, string>> {
+    try {
+      const object = await this.getObject({
+        id: objectId,
+        options: {
+          showContent: true,
+          showType: true,
+        },
+      });
+
+      if (!object.data) {
+        throw new Error(`Pool with ID ${objectId} not found or has no data`);
+      }
+
+      if (object.error) {
+        throw new Error(`Error fetching pool: ${object.error}`);
+      }
+
+      if (!object.data.content) {
+        throw new Error(`Unable to parse data for Pool with ID ${objectId}`);
+      }
+
+      if (!object.data.type) {
+        throw new Error(`Unable to parse type for Pool with ID ${objectId}`);
+      }
+
+      const parsedData: SuiParsedData = object.data.content as SuiParsedData;
+      const poolTypes = extractGenerics(object.data.type);
+
+      const parsedTypes: [
+        PhantomReified<string>,
+        PhantomReified<string>,
+        Reified<OracleQuoterV2, OracleQuoterV2Fields>,
+        PhantomReified<string>,
+      ] = [
+        {
+          phantomType: poolTypes[0],
+          kind: "PhantomReified",
+        },
+        {
+          phantomType: poolTypes[1],
+          kind: "PhantomReified",
+        },
+        OracleQuoterV2.reified(),
+        {
+          phantomType: poolTypes[3],
+          kind: "PhantomReified",
+        },
+      ];
+
+      return Pool.fromSuiParsedData(parsedTypes, parsedData);
+    } catch (error) {
+      console.error("Error fetching oracle V2 pool:", error);
       throw error;
     }
   }
@@ -486,7 +549,7 @@ export class RpcModule extends SuiClient {
 
       return Bank.fromSuiParsedData(parsedTypes, parsedData);
     } catch (error) {
-      console.error("Error fetching shared object:", error);
+      console.error("Error fetching bank:", error);
       throw error;
     }
   }
@@ -535,7 +598,7 @@ export class RpcModule extends SuiClient {
 
       return OracleRegistry.fromSuiParsedData(parsedData);
     } catch (error) {
-      console.error("Error fetching shared object:", error);
+      console.error("Error fetching oracle registry:", error);
       throw error;
     }
   }

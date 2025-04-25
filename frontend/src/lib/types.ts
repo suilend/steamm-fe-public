@@ -4,6 +4,7 @@ import { BankInfo, PoolInfo } from "@suilend/steamm-sdk";
 import { Bank } from "@suilend/steamm-sdk/_codegen/_generated/steamm/bank/structs";
 import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
 import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
+import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
 export type ParsedBank = {
@@ -27,19 +28,20 @@ export type ParsedBank = {
 export enum QuoterId {
   CPMM = "cpmm",
   ORACLE = "oracle",
-  STABLE = "stable",
+  ORACLE_V2 = "oracle_v2",
 }
 export const QUOTER_ID_NAME_MAP: Record<QuoterId, string> = {
   [QuoterId.CPMM]: "CPMM",
   [QuoterId.ORACLE]: "Oracle",
-  [QuoterId.STABLE]: "Stable",
+  [QuoterId.ORACLE_V2]: "OracleV2",
 };
 
 export type ParsedPool = {
   id: string;
   pool:
     | Pool<string, string, CpQuoter, string>
-    | Pool<string, string, OracleQuoter, string>;
+    | Pool<string, string, OracleQuoter, string>
+    | Pool<string, string, OracleQuoterV2, string>;
   poolInfo: PoolInfo;
   quoterId: QuoterId;
 

@@ -12,15 +12,7 @@ import {
 import { OracleFunctions } from "../_codegen";
 import { PriceInfoObject } from "../_codegen/_generated/_dependencies/source/0x8d97f1cd6ac663735be08d1d2b6d02a159e711586461306ce60a2b7a6a565a9e/price-info/structs";
 import { getPythPrice } from "../_codegen/oracleFunctions";
-import {
-  SwapQuote,
-  createConstantProductPool,
-  createConstantProductPoolAndShare,
-  createOraclePool,
-  createOraclePoolAndShare,
-  shareConstantProductPool,
-  shareOraclePool,
-} from "../base";
+import { SwapQuote } from "../base";
 import {
   DepositQuote,
   RedeemQuote,
@@ -28,7 +20,23 @@ import {
   castRedeemQuote,
   castSwapQuote,
 } from "../base/pool/poolTypes";
+import {
+  createConstantProductPool,
+  createConstantProductPoolAndShare,
+  shareConstantProductPool,
+} from "../base/quoters/constantQuoter";
+import {
+  createOraclePool,
+  createOraclePoolAndShare,
+  shareOraclePool,
+} from "../base/quoters/oracleQuoter";
 import { OracleSwapExtraArgs } from "../base/quoters/oracleQuoter/args";
+import {
+  createOracleV2Pool,
+  createOracleV2PoolAndShare,
+  shareOracleV2Pool,
+} from "../base/quoters/oracleV2Quoter";
+import { OracleV2SwapExtraArgs } from "../base/quoters/oracleV2Quoter/args";
 import { IModule } from "../interfaces/IModule";
 import { SteammSDK } from "../sdk";
 import {
@@ -160,10 +168,15 @@ export class PoolModule implements IModule {
     const poolScript = this.sdk.getPoolScript(poolInfo, bankInfoA, bankInfoB);
 
     const quoterType = getQuoterType(poolInfo.quoterType);
-    const extraArgs: OracleSwapExtraArgs | { type: "ConstantProduct" } =
+    const extraArgs:
+      | OracleSwapExtraArgs
+      | OracleV2SwapExtraArgs
+      | { type: "ConstantProduct" } =
       quoterType === "Oracle"
         ? await getOracleArgs(this.sdk, tx, poolInfo)
-        : { type: "ConstantProduct" };
+        : quoterType === "OracleV2"
+          ? await getOracleV2Args(this.sdk, tx, poolInfo)
+          : { type: "ConstantProduct" };
 
     const swapResult = poolScript.swap(tx, {
       ...args,
@@ -184,10 +197,15 @@ export class PoolModule implements IModule {
 
     console.log("POOL INFO: ", poolInfo);
     const quoterType = getQuoterType(poolInfo.quoterType);
-    const extraArgs: OracleSwapExtraArgs | { type: "ConstantProduct" } =
+    const extraArgs:
+      | OracleSwapExtraArgs
+      | OracleV2SwapExtraArgs
+      | { type: "ConstantProduct" } =
       quoterType === "Oracle"
         ? await getOracleArgs(this.sdk, tx, poolInfo)
-        : { type: "ConstantProduct" };
+        : quoterType === "OracleV2"
+          ? await getOracleV2Args(this.sdk, tx, poolInfo)
+          : { type: "ConstantProduct" };
 
     poolScript.quoteSwap(tx, { ...args, ...extraArgs });
 
@@ -294,6 +312,21 @@ export class PoolModule implements IModule {
           },
           this.sdk.packageInfo(),
         );
+      case "OracleV2":
+        return createOracleV2Pool(
+          tx,
+          {
+            ...args,
+            registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
+            lendingMarket:
+              this.sdk.sdkOptions.suilend_config.config!.lendingMarketId,
+            oracleRegistry:
+              this.sdk.sdkOptions.oracle_config.config!.oracleRegistryId,
+            lendingMarketType:
+              this.sdk.sdkOptions.suilend_config.config!.lendingMarketType,
+          },
+          this.sdk.packageInfo(),
+        );
       default:
         throw new Error("Unknown pool type");
     }
@@ -311,6 +344,14 @@ export class PoolModule implements IModule {
         break;
       case "Oracle":
         shareOraclePool(tx, args, this.sdk.packageInfo(), this.sdk.sdkOptions);
+        break;
+      case "OracleV2":
+        shareOracleV2Pool(
+          tx,
+          args,
+          this.sdk.packageInfo(),
+          this.sdk.sdkOptions,
+        );
         break;
       default:
         throw new Error("Unknown pool type");
@@ -346,6 +387,22 @@ export class PoolModule implements IModule {
         );
       case "Oracle":
         return createOraclePoolAndShare(
+          tx,
+          {
+            ...args,
+            registry: this.sdk.sdkOptions.steamm_config.config!.registryId,
+            lendingMarket:
+              this.sdk.sdkOptions.suilend_config.config!.lendingMarketId,
+            oracleRegistry:
+              this.sdk.sdkOptions.oracle_config.config!.oracleRegistryId,
+            lendingMarketType:
+              this.sdk.sdkOptions.suilend_config.config!.lendingMarketType,
+          },
+          this.sdk.packageInfo(),
+          this.sdk.sdkOptions,
+        );
+      case "OracleV2":
+        return createOracleV2PoolAndShare(
           tx,
           {
             ...args,
@@ -613,6 +670,129 @@ export async function getOracleArgs(
 
   return {
     type: "Oracle",
+    oraclePriceA,
+    oraclePriceB,
+  };
+}
+
+export async function getOracleV2Args(
+  sdk: SteammSDK,
+  tx: Transaction,
+  poolInfo: PoolInfo,
+): Promise<OracleV2SwapExtraArgs> {
+  const oracleData: OracleInfo[] = await sdk.getOracles();
+
+  const oracleInfoA = oracleData.find(
+    (oracle) => oracle.oracleIndex === poolInfo.quoterData?.oracleIndexA,
+  );
+
+  if (!oracleInfoA) {
+    throw new Error("Oracle info A not found");
+  }
+
+  const oracleInfoB = oracleData.find(
+    (oracle) => oracle.oracleIndex === poolInfo.quoterData?.oracleIndexB,
+  ) as OracleInfo;
+
+  if (!oracleInfoB) {
+    throw new Error("Oracle info B not found");
+  }
+
+  // assuming oracles are of type pyth
+  if (oracleInfoA.oracleType !== "pyth" || oracleInfoB.oracleType !== "pyth") {
+    throw new Error("unimplemented: switchboard");
+  }
+
+  let priceInfoObjectIdA;
+  let priceInfoObjectIdB;
+  if (sdk.sdkOptions.enableTestMode) {
+    priceInfoObjectIdA = sdk.getMockOraclePriceObject(
+      toHex(new Uint8Array(oracleInfoA.oracleIdentifier as number[])),
+    );
+    priceInfoObjectIdB = sdk.getMockOraclePriceObject(
+      toHex(new Uint8Array(oracleInfoB.oracleIdentifier as number[])),
+    );
+  } else {
+    priceInfoObjectIdA = (await sdk.pythClient.getPriceFeedObjectId(
+      toHex(new Uint8Array(oracleInfoA.oracleIdentifier as number[])),
+    )) as string;
+    priceInfoObjectIdB = (await sdk.pythClient.getPriceFeedObjectId(
+      toHex(new Uint8Array(oracleInfoB.oracleIdentifier as number[])),
+    )) as string;
+
+    console.log("price id from feedA: ", priceInfoObjectIdA);
+    console.log("price id from feedB: ", priceInfoObjectIdB);
+  }
+
+  const feedIdentifiers: Record<string, string> = {};
+  const priceInfoObjectIds: string[] = [];
+  const stalePriceIdentifiers: string[] = [];
+  priceInfoObjectIds.push(priceInfoObjectIdA);
+  priceInfoObjectIds.push(priceInfoObjectIdB);
+  feedIdentifiers[priceInfoObjectIdA] = toHex(
+    new Uint8Array(oracleInfoA.oracleIdentifier as number[]),
+  );
+  feedIdentifiers[priceInfoObjectIdB] = toHex(
+    new Uint8Array(oracleInfoB.oracleIdentifier as number[]),
+  );
+
+  for (const priceInfoObjectId of priceInfoObjectIds) {
+    const priceInfoObject = await PriceInfoObject.fetch(
+      sdk.fullClient,
+      priceInfoObjectId,
+    );
+
+    const publishTime = priceInfoObject.priceInfo.priceFeed.price.timestamp;
+    const stalenessSeconds = Date.now() / 1000 - Number(publishTime);
+
+    console.log("Date now: ", Date.now() / 1000);
+    console.log("Publish time: ", publishTime);
+    console.log("Staleness: ", stalenessSeconds);
+    if (stalenessSeconds > 15) {
+      stalePriceIdentifiers.push(feedIdentifiers[priceInfoObjectId]);
+    }
+  }
+
+  if (stalePriceIdentifiers.length > 0) {
+    console.log("PRICE STALE...");
+    console.log("identifiers: ", stalePriceIdentifiers);
+    const stalePriceUpdateData =
+      await sdk.pythConnection.getPriceFeedsUpdateData(stalePriceIdentifiers);
+    await sdk.pythClient.updatePriceFeeds(
+      tx,
+      stalePriceUpdateData,
+      stalePriceIdentifiers,
+    );
+  }
+
+  const oraclePriceA = getPythPrice(
+    tx,
+    {
+      registry: tx.object(
+        sdk.sdkOptions.oracle_config.config?.oracleRegistryId as string,
+      ),
+      priceInfoObj: tx.object(priceInfoObjectIdA),
+      oracleIndex: tx.pure.u64(oracleInfoA.oracleIndex),
+      clock: tx.object(SUI_CLOCK_OBJECT_ID),
+    },
+    sdk.sdkOptions.oracle_config.published_at,
+  );
+
+  const oraclePriceB = getPythPrice(
+    tx,
+    {
+      registry: tx.object(
+        sdk.sdkOptions.oracle_config.config?.oracleRegistryId as string,
+      ),
+      priceInfoObj: tx.object(priceInfoObjectIdB),
+      oracleIndex: tx.pure.u64(oracleInfoB.oracleIndex),
+      clock: tx.object(SUI_CLOCK_OBJECT_ID),
+    },
+    sdk.sdkOptions.oracle_config.published_at,
+  );
+
+  return {
+    type: "OracleV2",
     oraclePriceA,
     oraclePriceB,
   };

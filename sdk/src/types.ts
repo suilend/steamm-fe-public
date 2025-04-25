@@ -4,6 +4,7 @@ export interface SteammPackageInfo {
   quoterPkgs: {
     cpmm: string;
     omm: string;
+    omm_v2: string;
   };
 }
 
@@ -50,6 +51,14 @@ export type NewOracleQuoterEvent = {
   oracle_registry_id: string;
   oracle_index_a: string;
   oracle_index_b: string;
+};
+
+export type NewOracleV2QuoterEvent = {
+  pool_id: string;
+  oracle_registry_id: string;
+  oracle_index_a: string;
+  oracle_index_b: string;
+  amplifier: string;
 };
 
 export type NewBankEvent = {
@@ -144,12 +153,38 @@ export function extractOracleQuoterInfo(
   );
 }
 
+export function extractOracleV2QuoterInfo(
+  events: EventData<NewOracleV2QuoterEvent>[],
+): Record<string, QuoterData> {
+  return events.reduce(
+    (acc, event) => {
+      const {
+        pool_id,
+        oracle_registry_id,
+        oracle_index_a,
+        oracle_index_b,
+        amplifier,
+      } = event.parsedJson.event;
+      acc[pool_id] = {
+        type: "OracleV2",
+        oracleRegistryId: oracle_registry_id,
+        oracleIndexA: Number(oracle_index_a),
+        oracleIndexB: Number(oracle_index_b),
+        amplifier: BigInt(amplifier),
+      };
+      return acc;
+    },
+    {} as Record<string, QuoterData>,
+  );
+}
+
 export type SteammConfigs = {
   registryId: SuiObjectIdType;
   globalAdmin: SuiObjectIdType;
   quoterSourcePkgs: {
     cpmm: SuiObjectIdType;
     omm: SuiObjectIdType;
+    omm_v2: SuiObjectIdType;
   };
 };
 
@@ -224,20 +259,30 @@ export type PoolInfo = {
   quoterData?: QuoterData;
 };
 
-export type QuoterData = {
-  type: "Oracle";
-  oracleIndexA: number;
-  oracleIndexB: number;
-  oracleRegistryId: SuiObjectIdType;
-};
+export type QuoterData =
+  | {
+      type: "Oracle";
+      oracleIndexA: number;
+      oracleIndexB: number;
+      oracleRegistryId: SuiObjectIdType;
+    }
+  | {
+      type: "OracleV2";
+      oracleIndexA: number;
+      oracleIndexB: number;
+      oracleRegistryId: SuiObjectIdType;
+      amplifier: bigint;
+    };
 
 export function getQuoterType(
   quoterType: string,
-): "ConstantProduct" | "Oracle" {
+): "ConstantProduct" | "Oracle" | "OracleV2" {
   if (quoterType.includes("::cpmm::CpQuoter")) {
     return "ConstantProduct";
   } else if (quoterType.includes("::omm::OracleQuoter")) {
     return "Oracle";
+  } else if (quoterType.includes("::omm_v2::OracleQuoterV2")) {
+    return "OracleV2";
   } else {
     throw new Error(`Unknown quoter type: ${quoterType}`);
   }
