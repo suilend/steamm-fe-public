@@ -14,12 +14,13 @@ import {
   initializeSuilendRewards,
 } from "@suilend/sdk";
 import { fetchRegistryLiquidStakingInfoMap } from "@suilend/springsui-sdk";
-import { BETA_CONFIG, MAINNET_CONFIG } from "@suilend/steamm-sdk";
+import { BETA_CONFIG, MAINNET_CONFIG, SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
 import { API_URL } from "@/lib/navigation";
+import { QuoterId } from "@/lib/types";
 
-export default function useFetchAppData() {
+export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
 
   // Data
@@ -109,13 +110,27 @@ export default function useFetchAppData() {
     const lstCoinTypes = Object.keys(LIQUID_STAKING_INFO_MAP);
 
     // Banks
-    const banksRes = await fetch(`${API_URL}/steamm/banks/all`);
-    const banksJson: AppData["bankObjs"] = await banksRes.json();
-    if ((banksJson as any)?.statusCode === 500)
-      throw new Error("Failed to fetch banks");
+    const bankObjs: AppData["bankObjs"] = [];
+    if (process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true") {
+      const bankInfos = Object.values(await steammClient.getBanks());
+
+      for (const bankInfo of bankInfos) {
+        const bank = await steammClient.fullClient.fetchBank(bankInfo.bankId);
+        const totalFunds = await steammClient.Bank.getTotalFunds(bankInfo);
+
+        bankObjs.push({ bankInfo, bank, totalFunds: +totalFunds.toString() });
+      }
+    } else {
+      const banksRes = await fetch(`${API_URL}/steamm/banks/all`);
+      const banksJson: AppData["bankObjs"] = await banksRes.json();
+      if ((banksJson as any)?.statusCode === 500)
+        throw new Error("Failed to fetch banks");
+
+      bankObjs.push(...banksJson);
+    }
 
     const bankCoinTypes: string[] = [];
-    for (const bankObj of banksJson) {
+    for (const bankObj of bankObjs) {
       bankCoinTypes.push(normalizeStructTag(bankObj.bankInfo.coinType));
     }
     const uniqueBankCoinTypes = Array.from(new Set(bankCoinTypes));
@@ -129,13 +144,39 @@ export default function useFetchAppData() {
     coinMetadataMap = { ...coinMetadataMap, ...bankCoinMetadataMap };
 
     // Pools
-    const poolsRes = await fetch(`${API_URL}/steamm/pools/all`);
-    const poolsJson: AppData["poolObjs"] = await poolsRes.json();
-    if ((poolsJson as any)?.statusCode === 500)
-      throw new Error("Failed to fetch pools");
+    const poolObjs: AppData["poolObjs"] = [];
+    if (process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true") {
+      const poolInfos = await steammClient.getPools();
+
+      for (const poolInfo of poolInfos) {
+        const quoterId = poolInfo.quoterType.endsWith("omm::OracleQuoter")
+          ? QuoterId.ORACLE
+          : poolInfo.quoterType.endsWith("omm_v2::OracleQuoterV2")
+            ? QuoterId.ORACLE_V2
+            : QuoterId.CPMM;
+
+        const pool =
+          quoterId === QuoterId.ORACLE
+            ? await steammClient.fullClient.fetchOraclePool(poolInfo.poolId)
+            : quoterId === QuoterId.ORACLE_V2
+              ? await steammClient.fullClient.fetchOracleV2Pool(poolInfo.poolId)
+              : await steammClient.fullClient.fetchConstantProductPool(
+                  poolInfo.poolId,
+                );
+
+        poolObjs.push({ poolInfo, pool });
+      }
+    } else {
+      const poolsRes = await fetch(`${API_URL}/steamm/pools/all`);
+      const poolsJson: AppData["poolObjs"] = await poolsRes.json();
+      if ((poolsJson as any)?.statusCode === 500)
+        throw new Error("Failed to fetch pools");
+
+      poolObjs.push(...poolsJson);
+    }
 
     const poolCoinTypes: string[] = [];
-    for (const poolObj of poolsJson) {
+    for (const poolObj of poolObjs) {
       const coinTypes = [
         poolObj.poolInfo.lpTokenType,
         // bTokenTypeCoinTypeMap[poolInfo.coinTypeA], // Already included in bankCoinTypes
@@ -184,7 +225,7 @@ export default function useFetchAppData() {
       LIQUID_STAKING_INFO_MAP,
       lstCoinTypes,
 
-      bankObjs: banksJson.filter(
+      bankObjs: bankObjs.filter(
         (bankObj) =>
           ![
             "0x02242e71c54b389c5e4001c2635c598469c5900020cc873e21d01a542124b260::zxcv::ZXCV",
@@ -192,7 +233,7 @@ export default function useFetchAppData() {
             "0xfaccf97bcd174fdd11c9f540085a2dfe5a1aa1d861713b2887271a41c6fe9556::bzbz::BZBZ",
           ].includes(bankObj.bankInfo.coinType), // Filter out test banks
       ),
-      poolObjs: poolsJson.filter(
+      poolObjs: poolObjs.filter(
         (poolObj) =>
           ![
             "0x9bac3b28b5960f791e0526b3c5bcea889c2bce56a8dd37fc39a532fe8d49baec",

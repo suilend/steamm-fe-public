@@ -34,6 +34,7 @@ import {
 import { Bank } from "@suilend/steamm-sdk/_codegen/_generated/steamm/bank/structs";
 import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
 import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
+import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
@@ -82,7 +83,8 @@ export interface AppData {
     poolInfo: PoolInfo;
     pool:
       | Pool<string, string, CpQuoter, string>
-      | Pool<string, string, OracleQuoter, string>;
+      | Pool<string, string, OracleQuoter, string>
+      | Pool<string, string, OracleQuoterV2, string>;
   }[];
 }
 export interface OraclesData {
@@ -189,7 +191,8 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   }, [rpc.url, address]);
 
   // App data (blocking)
-  const { data: appData, mutateData: mutateAppData } = useFetchAppData();
+  const { data: appData, mutateData: mutateAppData } =
+    useFetchAppData(steammClient);
 
   const refreshAppData = useCallback(async () => {
     await mutateAppData();

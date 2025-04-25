@@ -735,7 +735,7 @@ function WithdrawTab({ tokenUsdPricesMap, onWithdraw }: WithdrawTabProps) {
     if (new BigNumber(sliderValue).gt(100))
       return {
         isDisabled: true,
-        title: "Insufficient LP tokens",
+        title: "Insufficient balance",
       };
 
     return {
