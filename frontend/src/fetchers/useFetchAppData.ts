@@ -14,11 +14,12 @@ import {
   initializeSuilendRewards,
 } from "@suilend/sdk";
 import { fetchRegistryLiquidStakingInfoMap } from "@suilend/springsui-sdk";
-import { BETA_CONFIG, MAINNET_CONFIG, SteammSDK } from "@suilend/steamm-sdk";
+import { BETA_CONFIG, MAINNET_CONFIG } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
+import { API_URL } from "@/lib/navigation";
 
-export default function useFetchAppData(steammClient: SteammSDK) {
+export default function useFetchAppData() {
   const { suiClient } = useSettingsContext();
 
   // Data
@@ -108,11 +109,14 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const lstCoinTypes = Object.keys(LIQUID_STAKING_INFO_MAP);
 
     // Banks
-    const bankCoinTypes: string[] = [];
+    const banksRes = await fetch(`${API_URL}/steamm/banks/all`);
+    const banksJson: AppData["bankObjs"] = await banksRes.json();
+    if ((banksJson as any)?.statusCode === 500)
+      throw new Error("Failed to fetch banks");
 
-    const bankInfos = Object.values(await steammClient.getBanks());
-    for (const bankInfo of bankInfos) {
-      bankCoinTypes.push(normalizeStructTag(bankInfo.coinType));
+    const bankCoinTypes: string[] = [];
+    for (const bankObj of banksJson) {
+      bankCoinTypes.push(normalizeStructTag(bankObj.bankInfo.coinType));
     }
     const uniqueBankCoinTypes = Array.from(new Set(bankCoinTypes));
 
@@ -125,19 +129,15 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     coinMetadataMap = { ...coinMetadataMap, ...bankCoinMetadataMap };
 
     // Pools
-    const poolCoinTypes: string[] = [];
+    const poolsRes = await fetch(`${API_URL}/steamm/pools/all`);
+    const poolsJson: AppData["poolObjs"] = await poolsRes.json();
+    if ((poolsJson as any)?.statusCode === 500)
+      throw new Error("Failed to fetch pools");
 
-    const poolInfos = (await steammClient.getPools()).filter(
-      (poolInfo) =>
-        ![
-          "0x9bac3b28b5960f791e0526b3c5bcea889c2bce56a8dd37fc39a532fe8d49baec",
-          "0x56d3919cdbdf22c0a4d60471c045e07fd0ba37d0b8fe2577b22408c17141f692",
-          "0x2c76690cd6ef9607212b4e72aa3292bcf74843586ffbef61f781d1afecc19a37",
-        ].includes(poolInfo.poolId), // Filter out test pools
-    );
-    for (const poolInfo of poolInfos) {
+    const poolCoinTypes: string[] = [];
+    for (const poolObj of poolsJson) {
       const coinTypes = [
-        poolInfo.lpTokenType,
+        poolObj.poolInfo.lpTokenType,
         // bTokenTypeCoinTypeMap[poolInfo.coinTypeA], // Already included in bankCoinTypes
         // bTokenTypeCoinTypeMap[poolInfo.coinTypeB], // Already included in bankCoinTypes
       ];
@@ -184,8 +184,15 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       LIQUID_STAKING_INFO_MAP,
       lstCoinTypes,
 
-      bankInfos,
-      poolInfos,
+      bankObjs: banksJson,
+      poolObjs: poolsJson.filter(
+        (poolObj) =>
+          ![
+            "0x9bac3b28b5960f791e0526b3c5bcea889c2bce56a8dd37fc39a532fe8d49baec",
+            "0x56d3919cdbdf22c0a4d60471c045e07fd0ba37d0b8fe2577b22408c17141f692",
+            "0x2c76690cd6ef9607212b4e72aa3292bcf74843586ffbef61f781d1afecc19a37",
+          ].includes(poolObj.poolInfo.poolId), // Filter out test pools
+      ),
     };
   };
 

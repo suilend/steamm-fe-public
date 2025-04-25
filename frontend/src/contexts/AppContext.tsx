@@ -31,6 +31,10 @@ import {
   PoolInfo,
   SteammSDK,
 } from "@suilend/steamm-sdk";
+import { Bank } from "@suilend/steamm-sdk/_codegen/_generated/steamm/bank/structs";
+import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
+import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
+import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
 import useFetchBanksData from "@/fetchers/useFetchBanksData";
@@ -69,8 +73,17 @@ export interface AppData {
   LIQUID_STAKING_INFO_MAP: Record<string, LiquidStakingObjectInfo>;
   lstCoinTypes: string[];
 
-  bankInfos: BankInfo[];
-  poolInfos: PoolInfo[];
+  bankObjs: {
+    bankInfo: BankInfo;
+    bank: Bank<string, string, string>;
+    totalFunds: number;
+  }[];
+  poolObjs: {
+    poolInfo: PoolInfo;
+    pool:
+      | Pool<string, string, CpQuoter, string>
+      | Pool<string, string, OracleQuoter, string>;
+  }[];
 }
 export interface OraclesData {
   COINTYPE_ORACLE_INDEX_MAP: Record<string, number>;
@@ -176,8 +189,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   }, [rpc.url, address]);
 
   // App data (blocking)
-  const { data: appData, mutateData: mutateAppData } =
-    useFetchAppData(steammClient);
+  const { data: appData, mutateData: mutateAppData } = useFetchAppData();
 
   const refreshAppData = useCallback(async () => {
     await mutateAppData();
@@ -192,10 +204,8 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   }, [mutateOraclesData]);
 
   // Banks (non-blocking, depends on appData)
-  const { data: banksData, mutateData: mutateBanksData } = useFetchBanksData(
-    steammClient,
-    appData,
-  );
+  const { data: banksData, mutateData: mutateBanksData } =
+    useFetchBanksData(appData);
 
   const refreshBanksData = useCallback(async () => {
     await mutateBanksData();
