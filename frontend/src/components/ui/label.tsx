@@ -1,10 +1,12 @@
-import * as React from "react"
-import { ClassValue } from "clsx"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+
+import { ClassValue } from "clsx";
+
+import { cn } from "@/lib/utils";
 
 export interface LabelProps
   extends React.LabelHTMLAttributes<HTMLLabelElement> {
-  className?: ClassValue
+  className?: ClassValue;
 }
 
 const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
@@ -13,14 +15,14 @@ const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
       <label
         className={cn(
           "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-          className
+          className,
         )}
         ref={ref}
         {...props}
       />
-    )
-  }
-)
-Label.displayName = "Label"
+    );
+  },
+);
+Label.displayName = "Label";
 
-export { Label } 
+export { Label };

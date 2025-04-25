@@ -39,6 +39,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "framer-motion": "^12.9.1",
     "launchdarkly-react-client-sdk": "^3.6.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.456.0",

@@ -1,58 +1,78 @@
-import { ClassValue } from "clsx";
 import { useState } from "react";
+
+import { ClassValue } from "clsx";
 
 import Parameter from "@/components/Parameter";
 import TextInput from "@/components/TextInput";
-import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { validateMaxSupply, formatTokenAmount, parseFormattedAmount } from "../TokenCreationForm/validation";
+import { cn } from "@/lib/utils";
+
+import {
+  formatTokenAmount,
+  parseFormattedAmount,
+  validateMaxSupply,
+} from "../TokenCreationForm/validation";
+
+// Import useLaunchStorage hook
+import useLaunchStorage from "@/hooks/useLaunchStorage";
 
 interface TokenAdvancedOptionsProps {
   className?: ClassValue;
   maxSupply: string;
-  onMaxSupplyChange: (value: string) => void;
+  setMaxSupply: (value: string) => void;
   isBurnable: boolean;
-  onBurnableChange: (value: boolean) => void;
+  setIsBurnable: (value: boolean) => void;
   isMintable: boolean;
-  onMintableChange: (value: boolean) => void;
+  setIsMintable: (value: boolean) => void;
   isPausable: boolean;
-  onPausableChange: (value: boolean) => void;
+  setIsPausable: (value: boolean) => void;
   isUpgradeable: boolean;
-  onUpgradeableChange: (value: boolean) => void;
+  setIsUpgradeable: (value: boolean) => void;
   onBack: () => void;
   onSubmit: () => void;
-  initialSupply: string; // For validation against max supply
+  isLoading?: boolean;
 }
 
 export default function TokenAdvancedOptions({
   className,
   maxSupply,
-  onMaxSupplyChange,
+  setMaxSupply,
   isBurnable,
-  onBurnableChange,
+  setIsBurnable,
   isMintable,
-  onMintableChange,
+  setIsMintable,
   isPausable,
-  onPausableChange,
+  setIsPausable,
   isUpgradeable,
-  onUpgradeableChange,
+  setIsUpgradeable,
   onBack,
   onSubmit,
-  initialSupply,
+  isLoading = false,
 }: TokenAdvancedOptionsProps) {
+  // Add the hook
+  const { data: launchData } = useLaunchStorage();
+
   // Validation state
   const [maxSupplyError, setMaxSupplyError] = useState("");
   const [isTouched, setIsTouched] = useState(false);
 
+  // Replace direct sessionStorage usage with hook data
+  const getInitialSupply = () => {
+    return launchData.initialSupply || "0";
+  };
+
+  const initialSupply = getInitialSupply();
+
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate max supply before submitting
     const error = validateMaxSupply(maxSupply, initialSupply);
     setMaxSupplyError(error || "");
     setIsTouched(true);
-    
+
     if (!error) {
       onSubmit();
     }
@@ -69,103 +89,216 @@ export default function TokenAdvancedOptions({
   const handleMaxSupplyChange = (value: string) => {
     // Parse the input to remove formatting
     const parsedValue = parseFormattedAmount(value);
-    onMaxSupplyChange(parsedValue);
+    setMaxSupply(parsedValue);
   };
 
+  // Display skeleton loader during loading state
+  if (isLoading) {
+    return (
+      <div className={cn("flex w-full flex-col gap-4", className)}>
+        {/* Max Supply Skeleton */}
+        <div className="flex w-full flex-col gap-2">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-10 w-full rounded-md" />
+          <Skeleton className="h-4 w-56" />
+        </div>
+
+        {/* Burnable Toggle Skeleton */}
+        <div className="flex w-full flex-col gap-2">
+          <Skeleton className="h-5 w-24" />
+          <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <Skeleton className="h-6 w-60" />
+            <Skeleton className="h-5 w-10 rounded-full" />
+          </div>
+        </div>
+
+        {/* Mintable Toggle Skeleton */}
+        <div className="flex w-full flex-col gap-2">
+          <Skeleton className="h-5 w-24" />
+          <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <Skeleton className="w-70 h-6" />
+            <Skeleton className="h-5 w-10 rounded-full" />
+          </div>
+        </div>
+
+        {/* Pausable Toggle Skeleton */}
+        <div className="flex w-full flex-col gap-2">
+          <Skeleton className="h-5 w-24" />
+          <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <Skeleton className="h-6 w-80" />
+            <Skeleton className="h-5 w-10 rounded-full" />
+          </div>
+        </div>
+
+        {/* Upgradeable Toggle Skeleton */}
+        <div className="flex w-full flex-col gap-2">
+          <Skeleton className="h-5 w-28" />
+          <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <Skeleton className="w-75 h-6" />
+            <Skeleton className="h-5 w-10 rounded-full" />
+          </div>
+        </div>
+
+        {/* Buttons Skeleton */}
+        <div className="flex gap-4">
+          <Skeleton className="h-14 w-full rounded-md" />
+          <Skeleton className="h-14 w-full rounded-md" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className={cn("flex w-full flex-col gap-4", className)}>
+    <form
+      onSubmit={handleSubmit}
+      className={cn("mt-1 flex w-full flex-col gap-5", className)}
+    >
       <Parameter label="Maximum Supply">
-        <div className="flex flex-col gap-1 w-full">
+        <div className="flex w-full flex-col gap-1">
           <TextInput
             value={maxSupply ? formatTokenAmount(maxSupply) : ""}
             onChange={handleMaxSupplyChange}
             placeholder="Enter maximum supply (optional)"
             onBlur={handleMaxSupplyBlur}
-            className={maxSupplyError && isTouched ? "border-error" : ""}
+            className={cn(
+              "h-12 sm:h-10",
+              maxSupplyError && isTouched ? "border-error" : "",
+            )}
+            inputClassName="text-base sm:text-sm"
           />
           {maxSupplyError && isTouched && (
-            <p className="text-sm text-error">{maxSupplyError}</p>
+            <p className="text-sm mt-1 text-error">{maxSupplyError}</p>
           )}
-          <p className="text-xs text-secondary-foreground">
-            {isMintable 
+          <p className="text-xs mt-1 text-secondary-foreground">
+            {isMintable
               ? "Maximum tokens that can ever exist (leave empty for unlimited)"
               : "When 'Mintable' is off, max supply equals initial supply"}
           </p>
         </div>
       </Parameter>
 
-      <Parameter label="Burnable">
-        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-          <div className="space-y-0.5">
-            <p className="text-base">Allow tokens to be burned (destroyed)</p>
+      {/* Toggle options with better touch targets */}
+      <div className="space-y-4">
+        <Parameter label="Burnable">
+          <div
+            className="flex cursor-pointer flex-col justify-between gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:gap-0 sm:p-4"
+            onClick={() => setIsBurnable(!isBurnable)}
+          >
+            <div className="space-y-1">
+              <p className="text-sm sm:text-base leading-tight">
+                Allow tokens to be burned (destroyed)
+              </p>
+              <p className="text-xs text-muted-foreground sm:hidden">
+                Enable this to allow token destruction
+              </p>
+            </div>
+            <Switch
+              checked={isBurnable}
+              onCheckedChange={setIsBurnable}
+              className="h-6 w-11 data-[state=checked]:bg-success"
+            />
           </div>
-          <Switch
-            checked={isBurnable}
-            onCheckedChange={onBurnableChange}
-          />
-        </div>
-      </Parameter>
+        </Parameter>
 
-      <Parameter label="Mintable">
-        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-          <div className="space-y-0.5">
-            <p className="text-base">Allow new tokens to be minted after initial creation</p>
-          </div>
-          <Switch
-            checked={isMintable}
-            onCheckedChange={(checked) => {
-              onMintableChange(checked);
+        <Parameter label="Mintable">
+          <div
+            className="flex cursor-pointer flex-col justify-between gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:gap-0 sm:p-4"
+            onClick={() => {
+              const newValue = !isMintable;
+              setIsMintable(newValue);
               // When turning off mintable, clear any max supply error since it equals initial supply
-              if (!checked) {
+              if (!newValue) {
                 setMaxSupplyError("");
               } else {
                 // Revalidate when turning on
                 handleMaxSupplyBlur();
               }
             }}
-          />
-        </div>
-      </Parameter>
-
-      <Parameter label="Pausable">
-        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-          <div className="space-y-0.5">
-            <p className="text-base">Allow token transfers to be paused in emergency situations</p>
+          >
+            <div className="space-y-1">
+              <p className="text-sm sm:text-base leading-tight">
+                Allow new tokens to be minted after initial creation
+              </p>
+              <p className="text-xs text-muted-foreground sm:hidden">
+                Create additional tokens after launch
+              </p>
+            </div>
+            <Switch
+              checked={isMintable}
+              onCheckedChange={(checked) => {
+                setIsMintable(checked);
+                // When turning off mintable, clear any max supply error since it equals initial supply
+                if (!checked) {
+                  setMaxSupplyError("");
+                } else {
+                  // Revalidate when turning on
+                  handleMaxSupplyBlur();
+                }
+              }}
+              className="h-6 w-11 data-[state=checked]:bg-success"
+            />
           </div>
-          <Switch
-            checked={isPausable}
-            onCheckedChange={onPausableChange}
-          />
-        </div>
-      </Parameter>
+        </Parameter>
 
-      <Parameter label="Upgradeable">
-        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-          <div className="space-y-0.5">
-            <p className="text-base">Allow the token contract to be upgraded in the future</p>
+        <Parameter label="Pausable">
+          <div
+            className="flex cursor-pointer flex-col justify-between gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:gap-0 sm:p-4"
+            onClick={() => setIsPausable(!isPausable)}
+          >
+            <div className="space-y-1">
+              <p className="text-sm sm:text-base leading-tight">
+                Allow token transfers to be paused in emergency situations
+              </p>
+              <p className="text-xs text-muted-foreground sm:hidden">
+                Emergency pause functionality for security
+              </p>
+            </div>
+            <Switch
+              checked={isPausable}
+              onCheckedChange={setIsPausable}
+              className="h-6 w-11 data-[state=checked]:bg-success"
+            />
           </div>
-          <Switch
-            checked={isUpgradeable}
-            onCheckedChange={onUpgradeableChange}
-          />
-        </div>
-      </Parameter>
+        </Parameter>
 
-      <div className="flex gap-4">
+        <Parameter label="Upgradeable">
+          <div
+            className="flex cursor-pointer flex-col justify-between gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:gap-0 sm:p-4"
+            onClick={() => setIsUpgradeable(!isUpgradeable)}
+          >
+            <div className="space-y-1">
+              <p className="text-sm sm:text-base leading-tight">
+                Allow the token contract to be upgraded in the future
+              </p>
+              <p className="text-xs text-muted-foreground sm:hidden">
+                Enable future contract improvements
+              </p>
+            </div>
+            <Switch
+              checked={isUpgradeable}
+              onCheckedChange={setIsUpgradeable}
+              className="h-6 w-11 data-[state=checked]:bg-success"
+            />
+          </div>
+        </Parameter>
+      </div>
+
+      {/* Button row with larger touch targets for mobile */}
+      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:gap-4">
         <button
           type="button"
           onClick={onBack}
-          className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+          className="text-sm min-h-[48px] w-full rounded-lg border border-border bg-background px-4 py-2 font-medium text-foreground hover:bg-secondary sm:min-h-[44px]"
         >
           Back
         </button>
         <button
           type="submit"
-          className="flex h-14 w-full flex-row items-center justify-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
+          className="flex h-14 w-full flex-row items-center justify-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50 sm:h-12"
         >
           <p className="text-p2 text-button-1-foreground">Next</p>
         </button>
       </div>
     </form>
   );
-} 
+}

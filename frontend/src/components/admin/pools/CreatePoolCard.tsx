@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import init, {
   update_constants,
@@ -14,7 +14,7 @@ import {
 } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
-import { Plus } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -43,6 +43,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
+import useLaunchStorage from "@/hooks/useLaunchStorage";
 import { formatFeeTier, formatPair, formatTextInputValue } from "@/lib/format";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
@@ -126,19 +127,25 @@ const LP_TOKEN_DESCRIPTION = "STEAMM LP Token";
 const LP_TOKEN_IMAGE_URL =
   "https://suilend-assets.s3.us-east-2.amazonaws.com/steamm/STEAMM+LP+Token.svg";
 
-export default function CreatePoolCard({isLauncherFlow = true}: {isLauncherFlow?: boolean}) {
+export default function CreatePoolCard({
+  isLauncherFlow = true,
+}: {
+  isLauncherFlow?: boolean;
+}) {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, oraclesData, banksData, poolsData } =
     useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
+  const { data: launchData, updateValue } = useLaunchStorage();
 
   const flags = useFlags();
   const isWhitelisted = useMemo(
     () =>
       !!address &&
       (address === ADMIN_ADDRESS ||
-        (flags?.steammCreatePoolWhitelist ?? []).includes(address) || isLauncherFlow),
+        (flags?.steammCreatePoolWhitelist ?? []).includes(address) ||
+        isLauncherFlow),
     [address, flags?.steammCreatePoolWhitelist, isLauncherFlow],
   );
 
@@ -167,71 +174,87 @@ export default function CreatePoolCard({isLauncherFlow = true}: {isLauncherFlow?
     undefined,
   );
 
+  // USD prices - current
+  const { tokenUsdPricesMap, fetchTokenUsdPrice } = useTokenUsdPrices([]);
+
   // Auto-prefill token data for launcher flow
   useEffect(() => {
     if (!isLauncherFlow || !balancesCoinMetadataMap) return;
-    
-    // Try to get token data from session storage
-    const tokenType = typeof window !== 'undefined' ? sessionStorage.getItem("launchTokenType") : null;
-    const initialSupply = typeof window !== 'undefined' ? sessionStorage.getItem("launchInitialSupply") : null;
-    
+
+    // Try to get token data from the launch storage hook
+    const tokenType = launchData.tokenType;
+    const initialSupply = launchData.initialSupply;
+
     if (!tokenType || !initialSupply) return;
-    
+
     // Find SUI coinType in balancesMetadataMap
-    const suiCoinType = Object.keys(balancesCoinMetadataMap).find(type => isSui(type));
-    
+    const suiCoinType = Object.keys(balancesCoinMetadataMap).find((type) =>
+      isSui(type),
+    );
+
     if (!suiCoinType) return;
-    
+
     // Only prefill if we haven't already set values
     if (coinTypes[0] === "" && coinTypes[1] === "") {
       // Set the base asset to the created token and quote asset to SUI
       // The created token should be base asset (0), SUI should be quote asset (1)
       const newCoinTypes: [string, string] = [tokenType, suiCoinType];
       setCoinTypes(newCoinTypes);
-      
+
       // Set the token value to the initial supply
       const tokenDecimals = balancesCoinMetadataMap[tokenType]?.decimals || 9;
       const suiDecimals = balancesCoinMetadataMap[suiCoinType]?.decimals || 9;
-      
+
       // Format initial values
-      const formattedTokenValue = formatTextInputValue(initialSupply, tokenDecimals);
+      const formattedTokenValue = formatTextInputValue(
+        initialSupply,
+        tokenDecimals,
+      );
       const formattedSuiValue = formatTextInputValue("10", suiDecimals); // Default to 10 SUI
-      
+
       setValues([formattedTokenValue, formattedSuiValue]);
-      
+
       // Prefill quoter and fee tier with defaults for a better user experience
       setQuoterId(QuoterId.CPMM);
       setFeeTierPercent(0.3); // Default to 0.3% fee tier
-      
+
       // Try to fetch token USD prices for both tokens
       if (tokenUsdPricesMap[tokenType] === undefined) {
         fetchTokenUsdPrice(tokenType);
       }
-      
+
       if (tokenUsdPricesMap[suiCoinType] === undefined) {
         fetchTokenUsdPrice(suiCoinType);
       }
-      
-      // Save the prefilled state to session storage to persist across remounts
-      sessionStorage.setItem("poolPrefilled", "true");
-      
+
+      // Save the prefilled state to the launch storage
+      updateValue('poolPrefilled', true);
+
       // Show a toast to inform the user that their token has been prefilled
       toast("Token Prefilled", {
-        description: "Your newly created token has been prefilled as the base asset with SUI as the quote asset.",
+        description:
+          "Your newly created token has been prefilled as the base asset with SUI as the quote asset.",
       });
     }
-  }, [isLauncherFlow, balancesCoinMetadataMap]);
-  
-  // Save user selections to session storage when in launcher flow
+  }, [isLauncherFlow, balancesCoinMetadataMap, launchData, tokenUsdPricesMap, updateValue, fetchTokenUsdPrice]);
+
+  // Save user selections to launch storage when in launcher flow
   useEffect(() => {
-    if (!isLauncherFlow || !coinTypes[0] || !coinTypes[1] || !values[0] || !values[1]) return;
-    
-    // Save selected values to session storage
-    sessionStorage.setItem("poolCoinTypes", JSON.stringify(coinTypes));
-    sessionStorage.setItem("poolValues", JSON.stringify(values));
-    sessionStorage.setItem("poolQuoterId", quoterId || "");
-    sessionStorage.setItem("poolFeeTier", feeTierPercent?.toString() || "");
-  }, [isLauncherFlow, coinTypes, values, quoterId, feeTierPercent]);
+    if (
+      !isLauncherFlow ||
+      !coinTypes[0] ||
+      !coinTypes[1] ||
+      !values[0] ||
+      !values[1]
+    )
+      return;
+
+    // Save selected values to launch storage
+    updateValue('poolCoinTypes', coinTypes);
+    updateValue('poolValues', values);
+    if (quoterId) updateValue('poolQuoterId', quoterId);
+    if (feeTierPercent) updateValue('poolFeeTier', feeTierPercent.toString());
+  }, [isLauncherFlow, coinTypes, values, quoterId, feeTierPercent, updateValue]);
 
   const onValueChange = (_value: string, index: number) => {
     console.log("onValueChange - _value:", _value, "index:", index);
@@ -261,9 +284,6 @@ export default function CreatePoolCard({isLauncherFlow = true}: {isLauncherFlow?
     );
     document.getElementById(getCoinInputId(coinType))?.focus();
   };
-
-  // USD prices - current
-  const { tokenUsdPricesMap, fetchTokenUsdPrice } = useTokenUsdPrices([]);
 
   const usdPrices = useMemo(
     () => coinTypes.map((coinType) => tokenUsdPricesMap[coinType]),
@@ -638,21 +658,27 @@ export default function CreatePoolCard({isLauncherFlow = true}: {isLauncherFlow?
           });
         }
 
-        console.log(steammClient.sdkOptions.suilend_config.config?.lendingMarketId, 
-          steammClient.sdkOptions.suilend_config.config?.lendingMarketType
+        console.log(
+          steammClient.sdkOptions.suilend_config.config?.lendingMarketId,
+          steammClient.sdkOptions.suilend_config.config?.lendingMarketType,
         );
-        const objExists = await steammClient.fullClient.getObject({id: steammClient.sdkOptions.suilend_config.config?.lendingMarketId!});
+        const objExists = await steammClient.fullClient.getObject({
+          id: steammClient.sdkOptions.suilend_config.config?.lendingMarketId!,
+        });
         console.log("Object exists check:", objExists);
-        debugger;
-   const inspectResults = await steammClient.fullClient.devInspectTransactionBlock({
-     sender: steammClient.senderAddress,
-     transactionBlock: createBanksTransaction,
-     additionalArgs: { showRawTxnDataAndEffects: true }
-   });
-   
-   if (inspectResults.effects.status.error) {
-     console.error("Parameter error:", inspectResults.effects.status.error);
-   }
+        const inspectResults =
+          await steammClient.fullClient.devInspectTransactionBlock({
+            sender: steammClient.senderAddress,
+            transactionBlock: createBanksTransaction,
+            additionalArgs: { showRawTxnDataAndEffects: true },
+          });
+
+        if (inspectResults.effects.status.error) {
+          console.error(
+            "Parameter error:",
+            inspectResults.effects.status.error,
+          );
+        }
         const banksRes = await signExecuteAndWaitForTransaction(
           createBanksTransaction,
         );
@@ -848,21 +874,24 @@ export default function CreatePoolCard({isLauncherFlow = true}: {isLauncherFlow?
       setQuoterId(undefined);
       setFeeTierPercent(undefined);
 
-      // On success, if this is launcher flow, save pool address to session storage
+      // On success, if this is launcher flow, save pool address to launch storage
       if (isLauncherFlow && pool) {
         try {
           const poolId = pool.toString(); // Convert pool object ID to string
           // Save pool address for next step in launcher flow
-          sessionStorage.setItem("launchPoolAddress", poolId);
-          sessionStorage.setItem("launchPoolName", `${tokens[0].symbol}-${tokens[1].symbol}`);
-          
+          updateValue('poolAddress', poolId);
+          updateValue('poolName', `${tokens[0].symbol}-${tokens[1].symbol}`);
+
           // Dispatch event to notify parent components that pool was created
           const event = new CustomEvent("pool-created", {
-            detail: { poolId, poolName: `${tokens[0].symbol}-${tokens[1].symbol}` }
+            detail: {
+              poolId,
+              poolName: `${tokens[0].symbol}-${tokens[1].symbol}`,
+            },
           });
           window.dispatchEvent(event);
         } catch (error) {
-          console.error("Failed to save pool data to session storage:", error);
+          console.error("Failed to save pool data to launch storage:", error);
           // Non-critical error, don't show to user
         }
       }

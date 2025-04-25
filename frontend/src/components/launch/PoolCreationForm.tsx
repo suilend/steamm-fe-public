@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import CreatePoolCard from "@/components/admin/pools/CreatePoolCard";
 import { cn } from "@/lib/utils";
+import useLaunchStorage from "@/hooks/useLaunchStorage";
 
 interface PoolCreationFormProps {
   className?: string;
@@ -34,47 +35,52 @@ export default function PoolCreationForm({
   const router = useRouter();
   const [poolCreated, setPoolCreated] = useState(false);
   const [poolAddress, setPoolAddress] = useState<string | null>(null);
-
-  // Use session storage to persist the token type between navigation
-  const savedTokenType = tokenType || (typeof window !== 'undefined' ? sessionStorage.getItem("launchTokenType") : null);
   
-  // Store token type in session storage when it's available
-  if (typeof window !== 'undefined' && tokenType) {
-    sessionStorage.setItem("launchTokenType", tokenType);
-  }
+  // Use the launch storage hook
+  const { data: launchData, updateValue } = useLaunchStorage();
+
+  // Get token type from either props or storage
+  const savedTokenType = tokenType || launchData.tokenType;
+
+  // Store token type in launch storage when it's available
+  useEffect(() => {
+    if (tokenType) {
+      updateValue('tokenType', tokenType);
+    }
+  }, [tokenType, updateValue]);
 
   // Listen for pool creation
   useEffect(() => {
-    // Check if pool address is already in session storage
-    const storedPoolAddress = typeof window !== 'undefined' ? sessionStorage.getItem("launchPoolAddress") : null;
-    const storedPoolName = typeof window !== 'undefined' ? sessionStorage.getItem("launchPoolName") : null;
+    // Check if pool address is already in launch storage
+    const storedPoolAddress = launchData.poolAddress;
     
     if (storedPoolAddress) {
       setPoolAddress(storedPoolAddress);
     }
-    
+
     // Function to handle pool creation success
     const handlePoolCreated = (event: any) => {
-      const newPoolAddress = sessionStorage.getItem("launchPoolAddress");
-      const poolName = event.detail?.poolName || sessionStorage.getItem("launchPoolName") || "";
-      
+      // Get latest pool data from storage after event
+      const newPoolAddress = launchData.poolAddress;
+      const poolName = event.detail?.poolName || launchData.poolName || "";
+
       if (newPoolAddress) {
         setPoolAddress(newPoolAddress);
-        
+
         // Also call onSuccess callback if provided
         if (onSuccess) {
           onSuccess(newPoolAddress);
         }
       }
     };
-    
+
     // Listen for the pool creation success event
     window.addEventListener("pool-created", handlePoolCreated);
-    
+
     return () => {
       window.removeEventListener("pool-created", handlePoolCreated);
     };
-  }, [onSuccess]);
+  }, [launchData.poolAddress, launchData.poolName, onSuccess]);
 
   // Listen for pool creation success event
   useEffect(() => {
@@ -83,17 +89,15 @@ export default function PoolCreationForm({
         // Extract pool ID from the event detail
         const message = event.detail?.message || "";
         const poolIdMatch = message.match(/\/pool\/([^-]+)/);
-        
+
         if (poolIdMatch && poolIdMatch[1]) {
           const poolId = poolIdMatch[1];
-          
-          // Store in session storage
-          if (typeof window !== 'undefined') {
-            sessionStorage.setItem("launchPoolId", poolId);
-          }
-          
+
+          // Store in launch storage
+          updateValue('poolId', poolId);
+
           setPoolCreated(true);
-          
+
           // Call onSuccess callback if provided
           if (onSuccess) {
             onSuccess(poolId);
@@ -106,30 +110,28 @@ export default function PoolCreationForm({
 
     // Add event listener for custom success toast event
     document.addEventListener('successToast', handlePoolSuccess);
-    
-    // Check if we already have a poolId in session storage
+
+    // Check if we already have a poolId in launch storage
     const checkExistingPool = () => {
-      if (typeof window !== 'undefined') {
-        const savedPoolId = sessionStorage.getItem("launchPoolId");
-        if (savedPoolId && onSuccess && !poolCreated) {
-          setPoolCreated(true);
-          onSuccess(savedPoolId);
-        }
+      const savedPoolId = launchData.poolId;
+      if (savedPoolId && onSuccess && !poolCreated) {
+        setPoolCreated(true);
+        onSuccess(savedPoolId);
       }
     };
-    
+
     checkExistingPool();
-    
+
     // Cleanup
     return () => {
       document.removeEventListener('successToast', handlePoolSuccess);
     };
-  }, [onSuccess, poolCreated]);
+  }, [launchData.poolId, onSuccess, poolCreated, updateValue]);
 
   // If pool has been created, show success message
   if (poolAddress) {
-    const poolName = typeof window !== 'undefined' ? sessionStorage.getItem("launchPoolName") : null;
-    
+    const poolName = launchData.poolName;
+
     return (
       <Card className="w-full">
         <CardHeader>
@@ -164,7 +166,7 @@ export default function PoolCreationForm({
       </Card>
     );
   }
-  
+
   // Show pool creation form
   return (
     <Card className={cn("w-full max-w-lg mx-auto", className)}>
@@ -183,7 +185,7 @@ export default function PoolCreationForm({
         <CardDescription className="mt-2">
           Create a new liquidity pool by selecting tokens and parameters
         </CardDescription>
-        
+
         {savedTokenType && (
           <div className="mt-4 rounded-md bg-muted p-3">
             <p className="text-sm text-secondary-foreground">
@@ -192,7 +194,7 @@ export default function PoolCreationForm({
           </div>
         )}
       </CardHeader>
-      
+
       <CardContent className="pt-2">
         <CreatePoolCard isLauncherFlow />
       </CardContent>

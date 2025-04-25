@@ -160,9 +160,12 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   const { rpc } = useSettingsContext();
   const { address } = useWalletContext();
 
-  console.log((process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-    ? BETA_CONFIG
-    : MAINNET_CONFIG).suilend_config.config?.lendingMarketId)
+  console.log(
+    (process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+      ? BETA_CONFIG
+      : MAINNET_CONFIG
+    ).suilend_config.config?.lendingMarketId,
+  );
   // STEAMM client
   const steammClient = useMemo(() => {
     const sdk = new SteammSDK({
