@@ -201,7 +201,17 @@ function PoolPage() {
               </div>
 
               {/* Right */}
-              <div className="flex flex-col gap-6 max-md:hidden md:flex-1 lg:flex-[2]"></div>
+              <div className="flex flex-col gap-6 max-md:w-full md:flex-1 lg:flex-[2]">
+                {/* Cards */}
+                <div className="flex w-full flex-col gap-4">
+                  <PoolPositionCard />
+                  <PoolActionsCard
+                    key={pool.id}
+                    onDeposit={onDeposit}
+                    onWithdraw={onWithdraw}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Transaction history */}

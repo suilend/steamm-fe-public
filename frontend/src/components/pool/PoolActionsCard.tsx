@@ -913,8 +913,6 @@ function WithdrawTab({ tokenUsdPricesMap, onWithdraw }: WithdrawTabProps) {
 
     const [coinA, coinB] = await redeemFunc(transaction, {
       lpCoin: transaction.object(lpCoin),
-      // minA: BigInt(Math.floor(Number(submitAmountA) * 0.9)),
-      // minB: BigInt(submitAmountB),
       minA: BigInt(submitAmountA),
       minB: BigInt(submitAmountB),
       poolInfo: pool.poolInfo,
