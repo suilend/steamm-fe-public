@@ -184,7 +184,14 @@ export default function useFetchAppData() {
       LIQUID_STAKING_INFO_MAP,
       lstCoinTypes,
 
-      bankObjs: banksJson,
+      bankObjs: banksJson.filter(
+        (bankObj) =>
+          ![
+            "0x02242e71c54b389c5e4001c2635c598469c5900020cc873e21d01a542124b260::zxcv::ZXCV",
+            "0x990988b4d1297c9d9bad49a43717bd46b37c6fe5546d789274e94a6bfa8e4632::asdd::ASDD",
+            "0xfaccf97bcd174fdd11c9f540085a2dfe5a1aa1d861713b2887271a41c6fe9556::bzbz::BZBZ",
+          ].includes(bankObj.bankInfo.coinType), // Filter out test banks
+      ),
       poolObjs: poolsJson.filter(
         (poolObj) =>
           ![
