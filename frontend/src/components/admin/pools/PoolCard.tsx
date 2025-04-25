@@ -100,9 +100,11 @@ export default function PoolCard({ pool }: PoolCardProps) {
             )}
           </p>
 
-          <div className="flex flex-row items-center gap-1">
-            <PoolTypeTag pool={pool} />
-            <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
+          <div className="flex flex-row items-center gap-px">
+            <PoolTypeTag className="rounded-r-[0] pr-2" pool={pool} />
+            <Tag className="rounded-l-[0] pl-2">
+              {formatFeeTier(pool.feeTierPercent)}
+            </Tag>
           </div>
         </div>
 

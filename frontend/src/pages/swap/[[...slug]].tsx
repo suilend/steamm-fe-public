@@ -661,10 +661,10 @@ export default function SwapPage() {
         </div>
 
         <SuggestedPools
-          id="swap"
+          tableId="swap"
           title="Suggested pools"
           pools={suggestedPools}
-          tvlOnly
+          isTvlOnly
         />
       </div>
     </>

@@ -33,6 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolPositionsContext } from "@/contexts/PoolPositionsContext";
 import { useUserContext } from "@/contexts/UserContext";
+import useGlobalTransactionHistory from "@/hooks/useGlobalTransactionHistory";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { HistoryTransactionType, PoolPosition } from "@/lib/types";
@@ -44,14 +45,13 @@ export default function PortfolioPage() {
   const { userData, refresh } = useUserContext();
   const { poolPositions, totalPoints } = usePoolPositionsContext();
 
-  // Transaction history
+  // Pool positions - Deposited USD for PnL calc. (BE)
   const { poolTransactionHistoryMap } = usePoolTransactionHistoryMap(
-    poolsData === undefined
+    poolPositions === undefined
       ? undefined
-      : poolsData.pools.map((pool) => pool.id),
+      : poolPositions.map((position) => position.pool.id),
   );
 
-  // Pool positions - Deposited USD for PnL calc. (BE)
   const poolDepositedUsdMap: Record<string, BigNumber> | undefined =
     useMemo(() => {
       return poolsData === undefined || poolTransactionHistoryMap === undefined
@@ -61,8 +61,6 @@ export default function PortfolioPage() {
               (acc, [poolId, transactionHistory]) => {
                 const pool = poolsData.pools.find((p) => p.id === poolId);
                 if (!pool) return acc; // Should not happen
-
-                if (transactionHistory.length === 0) return acc; // The transaction history includes transactions for positions that have since been fully closed
 
                 const depositedAmounts = [0, 1].map((index) =>
                   transactionHistory[0].reduce(
@@ -258,32 +256,13 @@ export default function PortfolioPage() {
     }
   };
 
-  // Transaction history
-  const poolCountRef = useRef<number | undefined>(undefined);
-  useEffect(() => {
-    if (poolsData === undefined) return;
+  // Global transaction history
+  const { globalTransactionHistory } = useGlobalTransactionHistory();
 
-    if (poolCountRef.current !== undefined) return;
-    poolCountRef.current = poolsData.pools.length;
-  }, [poolsData]);
-
-  const completeTransactionHistory = useMemo(() => {
-    if (
-      poolsData === undefined ||
-      poolTransactionHistoryMap === undefined ||
-      Object.keys(poolTransactionHistoryMap).length < poolsData.pools.length
-    )
-      return undefined;
-
-    return [
-      Object.values(poolTransactionHistoryMap)
-        .flat()
-        .flat()
-        .sort((a, b) => +b.timestamp - +a.timestamp), // Sort by timestamp (desc)
-    ];
-  }, [poolsData, poolTransactionHistoryMap]);
-
-  console.log("XXX", poolTransactionHistoryMap, completeTransactionHistory);
+  const addressGlobalTransactionHistory = useMemo(
+    () => (address ? globalTransactionHistory : []),
+    [address, globalTransactionHistory],
+  );
 
   return (
     <>
@@ -462,19 +441,28 @@ export default function PortfolioPage() {
           <PoolPositionsTable poolPositions={poolPositionsWithExtraData} />
         </div>
 
-        {/* Transaction history */}
+        {/* Global transaction history */}
         <div className="flex w-full flex-col gap-6">
           <div className="flex flex-row items-center gap-3">
             <p className="text-h3 text-foreground">Transaction history</p>
-            {completeTransactionHistory === undefined ? (
+            {poolsData === undefined ||
+            addressGlobalTransactionHistory === undefined ? (
               <Skeleton className="h-5 w-12" />
             ) : (
-              <Tag>{completeTransactionHistory.flat().length}</Tag>
+              <Tag>{addressGlobalTransactionHistory.length}</Tag>
             )}
           </div>
 
           <TransactionHistoryTable
-            transactionHistory={completeTransactionHistory}
+            transactionHistory={
+              poolsData === undefined ||
+              addressGlobalTransactionHistory === undefined
+                ? undefined
+                : addressGlobalTransactionHistory.length === 0
+                  ? []
+                  : [addressGlobalTransactionHistory]
+            }
+            hasPoolColumn
           />
         </div>
       </div>

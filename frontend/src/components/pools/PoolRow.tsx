@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { CSSProperties } from "react";
 
 import { formatUsd } from "@suilend/frontend-sui";
 
 import AprBreakdown from "@/components/AprBreakdown";
 import PoolTypeTag from "@/components/pool/PoolTypeTag";
-import { columnStyleMap } from "@/components/pools/PoolsTable";
+import { Column } from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
@@ -17,13 +18,17 @@ import { ParsedPool } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolRowProps {
+  columnStyleMap: Record<Column, CSSProperties>;
   pool: ParsedPool;
+  isTvlOnly?: boolean;
   isInsideGroup?: boolean;
   isLastPoolInGroup?: boolean;
 }
 
 export default function PoolRow({
+  columnStyleMap,
   pool,
+  isTvlOnly,
   isInsideGroup,
   isLastPoolInGroup,
 }: PoolRowProps) {
@@ -39,10 +44,10 @@ export default function PoolRow({
       )}
       href={`${POOL_URL_PREFIX}/${pool.id}-${getPoolSlug(appData, pool)}`}
     >
-      {/* Pair */}
+      {/* Pool */}
       <div
         className="flex h-full flex-row items-center gap-3"
-        style={columnStyleMap.pair}
+        style={columnStyleMap.pool}
       >
         {isInsideGroup && (
           <div className="h-full w-[50px] shrink-0 pl-4">
@@ -58,8 +63,8 @@ export default function PoolRow({
           </div>
         )}
 
-        <TokenLogos coinTypes={pool.coinTypes} size={24} />
-        <p className="overflow-hidden text-ellipsis text-nowrap text-p1 text-foreground">
+        <TokenLogos coinTypes={pool.coinTypes} size={20} />
+        <p className="text-p1 text-foreground">
           {formatPair(
             pool.coinTypes.map(
               (coinType) => appData.coinMetadataMap[coinType].symbol,
@@ -67,15 +72,12 @@ export default function PoolRow({
           )}
         </p>
 
-        <PoolTypeTag pool={pool} />
-      </div>
-
-      {/* Fee tier */}
-      <div
-        className="flex h-full flex-row items-center"
-        style={columnStyleMap.feeTier}
-      >
-        <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
+        <div className="flex flex-row items-center gap-px">
+          <PoolTypeTag className="rounded-r-[0] pr-2" pool={pool} />
+          <Tag className="rounded-l-[0] pl-2">
+            {formatFeeTier(pool.feeTierPercent)}
+          </Tag>
+        </div>
       </div>
 
       {/* TVL */}
@@ -89,28 +91,32 @@ export default function PoolRow({
       </div>
 
       {/* Volume */}
-      <div
-        className="flex h-full flex-row items-center"
-        style={columnStyleMap.volumeUsd_24h}
-      >
-        {pool.volumeUsd_24h === undefined ? (
-          <Skeleton className="h-[24px] w-16" />
-        ) : (
-          <Tooltip title={formatUsd(pool.volumeUsd_24h, { exact: true })}>
-            <p className="text-p1 text-foreground">
-              {formatUsd(pool.volumeUsd_24h)}
-            </p>
-          </Tooltip>
-        )}
-      </div>
+      {!isTvlOnly && (
+        <div
+          className="flex h-full flex-row items-center"
+          style={columnStyleMap.volumeUsd_24h}
+        >
+          {pool.volumeUsd_24h === undefined ? (
+            <Skeleton className="h-[24px] w-16" />
+          ) : (
+            <Tooltip title={formatUsd(pool.volumeUsd_24h, { exact: true })}>
+              <p className="text-p1 text-foreground">
+                {formatUsd(pool.volumeUsd_24h)}
+              </p>
+            </Tooltip>
+          )}
+        </div>
+      )}
 
       {/* APR */}
-      <div
-        className="flex h-full flex-row items-center"
-        style={columnStyleMap.aprPercent_24h}
-      >
-        <AprBreakdown pool={pool} />
-      </div>
+      {!isTvlOnly && (
+        <div
+          className="flex h-full flex-row items-center"
+          style={columnStyleMap.aprPercent_24h}
+        >
+          <AprBreakdown pool={pool} />
+        </div>
+      )}
     </Link>
   );
 }

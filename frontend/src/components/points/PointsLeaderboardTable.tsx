@@ -9,30 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LeaderboardRowData } from "@/contexts/PointsContext";
 import { cn } from "@/lib/utils";
 
-type Column = "rank" | "address" | "totalPoints" | "pointsPerDay";
+export type Column = "rank" | "address" | "totalPoints" | "pointsPerDay";
 type SortableColumn = "totalPoints" | "pointsPerDay";
-
-export const columnStyleMap: Record<Column, CSSProperties> = {
-  rank: {
-    width: 100, // px
-    paddingLeft: 4 * 5, // px
-  },
-  address: {
-    flex: 1,
-    minWidth: 350, // px
-    paddingLeft: 4 * 5, // px
-  },
-  totalPoints: {
-    width: 150, // px
-    justifyContent: "end",
-    paddingRight: 4 * 5, // px
-  },
-  pointsPerDay: {
-    width: 150, // px
-    justifyContent: "end",
-    paddingRight: 4 * 5, // px
-  },
-};
 
 interface PointsLeaderboardTableProps {
   className?: ClassValue;
@@ -49,6 +27,32 @@ export default function PointsLeaderboardTable({
   skeletonRows,
   disableSorting,
 }: PointsLeaderboardTableProps) {
+  // Columns
+  const columnStyleMap: Record<Column, CSSProperties> = useMemo(
+    () => ({
+      rank: {
+        width: 100, // px
+        paddingLeft: 4 * 5, // px
+      },
+      address: {
+        flex: 1,
+        minWidth: 350, // px
+        paddingLeft: 4 * 5, // px
+      },
+      totalPoints: {
+        width: 150, // px
+        justifyContent: "end",
+        paddingRight: 4 * 5, // px
+      },
+      pointsPerDay: {
+        width: 150, // px
+        justifyContent: "end",
+        paddingRight: 4 * 5, // px
+      },
+    }),
+    [],
+  );
+
   // Sort
   type SortState = { column: SortableColumn; direction: SortDirection };
 
@@ -197,7 +201,11 @@ export default function PointsLeaderboardTable({
             </div>
           ) : (
             pageRows.map((row) => (
-              <PointsLeaderboardRow key={row.address} row={row} />
+              <PointsLeaderboardRow
+                key={row.address}
+                columnStyleMap={columnStyleMap}
+                row={row}
+              />
             ))
           )}
         </div>
