@@ -127,7 +127,14 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     // Pools
     const poolCoinTypes: string[] = [];
 
-    const poolInfos = await steammClient.getPools();
+    const poolInfos = (await steammClient.getPools()).filter(
+      (poolInfo) =>
+        ![
+          "0x9bac3b28b5960f791e0526b3c5bcea889c2bce56a8dd37fc39a532fe8d49baec",
+          "0x56d3919cdbdf22c0a4d60471c045e07fd0ba37d0b8fe2577b22408c17141f692",
+          "0x2c76690cd6ef9607212b4e72aa3292bcf74843586ffbef61f781d1afecc19a37",
+        ].includes(poolInfo.poolId), // Filter out test pools
+    );
     for (const poolInfo of poolInfos) {
       const coinTypes = [
         poolInfo.lpTokenType,
