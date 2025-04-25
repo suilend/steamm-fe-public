@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+import { ClassValue } from "clsx";
+
 import Tag from "@/components/Tag";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
@@ -8,10 +10,11 @@ import { OracleType } from "@/lib/oracles";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 
 interface PoolTypeTagProps {
+  className?: ClassValue;
   pool: ParsedPool;
 }
 
-export default function PoolTypeTag({ pool }: PoolTypeTagProps) {
+export default function PoolTypeTag({ className, pool }: PoolTypeTagProps) {
   const { oraclesData, poolsData } = useLoadedAppContext();
 
   const isPyth = pool.coinTypes.some(
@@ -27,6 +30,7 @@ export default function PoolTypeTag({ pool }: PoolTypeTagProps) {
 
   return (
     <Tag
+      className={className}
       tooltip={
         [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId)
           ? poolsData === undefined

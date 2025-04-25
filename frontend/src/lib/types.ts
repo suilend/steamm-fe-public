@@ -98,6 +98,10 @@ export type HistoryDeposit = {
   mint_lp: string;
   balance_a: string;
   balance_b: string;
+  coin_a_exchange_rate: number;
+  coin_b_exchange_rate: number;
+  coin_a_price: number;
+  coin_b_price: number;
 
   // Custom
   type: HistoryTransactionType.DEPOSIT;
@@ -117,6 +121,10 @@ export type HistoryRedeem = {
   burn_lp: string;
   balance_a: string;
   balance_b: string;
+  coin_a_exchange_rate: number;
+  coin_b_exchange_rate: number;
+  coin_a_price: number;
+  coin_b_price: number;
 
   // Custom
   type: HistoryTransactionType.REDEEM;

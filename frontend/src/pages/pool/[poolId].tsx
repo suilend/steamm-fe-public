@@ -116,9 +116,11 @@ function PoolPage() {
                 <TokenLogos coinTypes={pool.coinTypes} size={32} />
                 <h1 className="text-h2 text-foreground">{formattedPair}</h1>
 
-                <div className="flex flex-row items-center gap-1">
-                  <PoolTypeTag pool={pool} />
-                  <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
+                <div className="flex flex-row items-center gap-px">
+                  <PoolTypeTag className="rounded-r-[0] pr-2" pool={pool} />
+                  <Tag className="rounded-l-[0] pl-2">
+                    {formatFeeTier(pool.feeTierPercent)}
+                  </Tag>
                 </div>
               </div>
 
@@ -187,6 +189,7 @@ function PoolPage() {
               </div>
             </div>
 
+            {/* Chart, params, and actions */}
             <div className="flex w-full flex-col gap-4 md:flex-row">
               {/* Left */}
               <div className="flex min-w-0 flex-col gap-6 max-md:w-full md:flex-1 lg:flex-[3]">
@@ -198,57 +201,37 @@ function PoolPage() {
               </div>
 
               {/* Right */}
-              <div className="flex flex-col gap-6 max-md:w-full md:flex-1 lg:flex-[2]">
-                {/* Cards */}
-                <div className="flex w-full flex-col gap-4">
-                  <PoolPositionCard />
-                  <PoolActionsCard
-                    key={pool.id}
-                    onDeposit={onDeposit}
-                    onWithdraw={onWithdraw}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex w-full flex-col gap-4 md:flex-row">
-              {/* Left */}
-              <div className="flex min-w-0 flex-col gap-6 max-md:w-full md:flex-1 lg:flex-[3]">
-                {/* Transaction history */}
-                <div className="flex w-full flex-col gap-4">
-                  <div className="flex flex-row items-center gap-3">
-                    <p className="text-h3 text-foreground">
-                      Transaction history
-                    </p>
-                    {poolTransactionHistory === undefined ? (
-                      <Skeleton className="h-5 w-12" />
-                    ) : (
-                      <Tag>{poolTransactionHistory.flat().length}</Tag>
-                    )}
-                  </div>
-
-                  <TransactionHistoryTable
-                    transactionHistory={poolTransactionHistory}
-                  />
-                </div>
-
-                {/* Suggested pools */}
-                <SuggestedPools
-                  id={appData.coinMetadataMap[pool.coinTypes[0]].symbol}
-                  title={`Other ${appData.coinMetadataMap[pool.coinTypes[0]].symbol} pools`}
-                  pools={otherBaseAssetPools}
-                />
-
-                <SuggestedPools
-                  id={appData.coinMetadataMap[pool.coinTypes[1]].symbol}
-                  title={`Other ${appData.coinMetadataMap[pool.coinTypes[1]].symbol} pools`}
-                  pools={otherQuoteAssetPools}
-                />
-              </div>
-
-              {/* Right */}
               <div className="flex flex-col gap-6 max-md:hidden md:flex-1 lg:flex-[2]"></div>
             </div>
+
+            {/* Transaction history */}
+            <div className="flex w-full flex-col gap-4">
+              <div className="flex flex-row items-center gap-3">
+                <p className="text-h3 text-foreground">Transaction history</p>
+                {poolTransactionHistory === undefined ? (
+                  <Skeleton className="h-5 w-12" />
+                ) : (
+                  <Tag>{poolTransactionHistory.flat().length}</Tag>
+                )}
+              </div>
+
+              <TransactionHistoryTable
+                transactionHistory={poolTransactionHistory}
+              />
+            </div>
+
+            {/* Suggested pools */}
+            <SuggestedPools
+              tableId={appData.coinMetadataMap[pool.coinTypes[0]].symbol}
+              title={`Other ${appData.coinMetadataMap[pool.coinTypes[0]].symbol} pools`}
+              pools={otherBaseAssetPools}
+            />
+
+            <SuggestedPools
+              tableId={appData.coinMetadataMap[pool.coinTypes[1]].symbol}
+              title={`Other ${appData.coinMetadataMap[pool.coinTypes[1]].symbol} pools`}
+              pools={otherQuoteAssetPools}
+            />
           </div>
         </div>
       </div>

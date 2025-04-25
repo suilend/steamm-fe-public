@@ -31,7 +31,7 @@ export default function useFetchPoolsData(
     if (!appData || !oraclesData || !banksData)
       return undefined as unknown as PoolsData; // In practice `dataFetcher` won't be called if `appData`, `oraclesData`, or `banksData` is falsy
 
-    const { mainMarket, coinMetadataMap, poolInfos } = appData;
+    const { mainMarket, coinMetadataMap, bankObjs, poolObjs } = appData;
     const { bTokenTypeCoinTypeMap, bankMap } = banksData;
     const limit10 = pLimit(10);
 
@@ -39,11 +39,11 @@ export default function useFetchPoolsData(
     const lstAprPercentMapEntries: [string, BigNumber][] = await Promise.all(
       Object.values(appData.LIQUID_STAKING_INFO_MAP)
         .filter((LIQUID_STAKING_INFO) =>
-          poolInfos.some(
-            (poolInfo) =>
-              bTokenTypeCoinTypeMap[poolInfo.coinTypeA] ===
+          poolObjs.some(
+            (poolObj) =>
+              bTokenTypeCoinTypeMap[poolObj.poolInfo.coinTypeA] ===
                 LIQUID_STAKING_INFO.type ||
-              bTokenTypeCoinTypeMap[poolInfo.coinTypeB] ===
+              bTokenTypeCoinTypeMap[poolObj.poolInfo.coinTypeB] ===
                 LIQUID_STAKING_INFO.type,
           ),
         )
@@ -66,8 +66,10 @@ export default function useFetchPoolsData(
     // Pools
     const pools: ParsedPool[] = (
       await Promise.all(
-        poolInfos.map((poolInfo) =>
+        poolObjs.map((poolObj) =>
           limit10(async () => {
+            const { poolInfo, pool: pool_ } = poolObj;
+
             const id = poolInfo.poolId;
             const quoterId = poolInfo.quoterType.endsWith("omm::OracleQuoter")
               ? QuoterId.ORACLE
@@ -78,28 +80,25 @@ export default function useFetchPoolsData(
             const bTokenTypeA = poolInfo.coinTypeA;
             const bTokenTypeB = poolInfo.coinTypeB;
             const bTokenTypes: [string, string] = [bTokenTypeA, bTokenTypeB];
-            if (
-              bTokenTypeA.startsWith("0x10e03a93cf1e3d") ||
-              bTokenTypeB.startsWith("0x10e03a93cf1e3d")
-            )
-              return undefined; // Skip pools with test bTokens
 
             const coinTypeA = bTokenTypeCoinTypeMap[bTokenTypeA];
             const coinTypeB = bTokenTypeCoinTypeMap[bTokenTypeB];
             const coinTypes: [string, string] = [coinTypeA, coinTypeB];
 
             const pool =
-              quoterId === QuoterId.ORACLE
-                ? await steammClient.fullClient.fetchOraclePool(id)
-                : quoterId === QuoterId.ORACLE_V2
-                  ? await steammClient.fullClient.fetchOracleV2Pool(id)
-                  : await steammClient.fullClient.fetchConstantProductPool(id);
+              quoterId === QuoterId.ORACLE_V2
+                ? await steammClient.fullClient.fetchOracleV2Pool(id)
+                : pool_;
 
             const redeemQuote = await steammClient.Pool.quoteRedeem({
               lpTokens: pool.lpSupply.value,
               poolInfo,
-              bankInfoA: bankMap[coinTypes[0]].bankInfo,
-              bankInfoB: bankMap[coinTypes[1]].bankInfo,
+              bankInfoA: bankObjs.find(
+                (bankObj) => bankObj.bankInfo.btokenType === poolInfo.coinTypeA,
+              )!.bankInfo,
+              bankInfoB: bankObjs.find(
+                (bankObj) => bankObj.bankInfo.btokenType === poolInfo.coinTypeB,
+              )!.bankInfo,
             });
 
             const balanceA = new BigNumber(

@@ -1,84 +1,73 @@
 import { normalizeStructTag } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
-import pLimit from "p-limit";
 import useSWR from "swr";
 
 import { showErrorToast } from "@suilend/frontend-sui-next";
-import { SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData, BanksData } from "@/contexts/AppContext";
 import { ParsedBank } from "@/lib/types";
 
-export default function useFetchBanksData(
-  steammClient: SteammSDK,
-  appData: AppData | undefined,
-) {
+export default function useFetchBanksData(appData: AppData | undefined) {
   // Data
   const dataFetcher = async () => {
     if (!appData) return undefined as unknown as BanksData; // In practice `dataFetcher` won't be called if `appData` is falsy
 
-    const { mainMarket, coinMetadataMap, bankInfos } = appData;
-    const limit10 = pLimit(10);
+    const { mainMarket, coinMetadataMap, bankObjs } = appData;
 
     // Banks
     const bTokenTypeCoinTypeMap: Record<string, string> = {};
 
-    for (const bankInfo of bankInfos) {
-      bTokenTypeCoinTypeMap[bankInfo.btokenType] = normalizeStructTag(
-        bankInfo.coinType,
+    for (const bankObj of bankObjs) {
+      bTokenTypeCoinTypeMap[bankObj.bankInfo.btokenType] = normalizeStructTag(
+        bankObj.bankInfo.coinType,
       );
     }
 
-    const banks: ParsedBank[] = await Promise.all(
-      bankInfos.map((bankInfo) =>
-        limit10(async () => {
-          const id = bankInfo.bankId;
-          const coinType = bankInfo.coinType;
-          const bTokenType = bankInfo.btokenType;
+    const banks: ParsedBank[] = bankObjs.map((bankObj) => {
+      const { bankInfo, bank, totalFunds: totalFundsRaw } = bankObj;
 
-          const bank = await steammClient.fullClient.fetchBank(id);
+      const id = bankInfo.bankId;
+      const coinType = bankInfo.coinType;
+      const bTokenType = bankInfo.btokenType;
 
-          const totalFundsRaw = await steammClient.Bank.getTotalFunds(bankInfo);
-          const totalFunds = new BigNumber(totalFundsRaw.toString()).div(
-            10 ** coinMetadataMap[coinType].decimals,
-          );
+      const totalFunds = new BigNumber(totalFundsRaw.toString()).div(
+        10 ** coinMetadataMap[coinType].decimals,
+      );
 
-          const fundsAvailable = new BigNumber(
-            bank.fundsAvailable.value.toString(),
-          ).div(10 ** coinMetadataMap[coinType].decimals);
-          const fundsDeployed = totalFunds.minus(fundsAvailable);
+      const fundsAvailable = new BigNumber(
+        bank.fundsAvailable.value.toString(),
+      ).div(10 ** coinMetadataMap[coinType].decimals);
+      const fundsDeployed = totalFunds.minus(fundsAvailable);
 
-          const bTokenSupply = new BigNumber(
-            bank.btokenSupply.value.toString(),
-          ).div(10 ** coinMetadataMap[coinType].decimals);
-          const bTokenExchangeRate = totalFunds.div(bTokenSupply);
+      const bTokenSupply = new BigNumber(
+        bank.btokenSupply.value.toString(),
+      ).div(10 ** coinMetadataMap[coinType].decimals);
+      const bTokenExchangeRate = totalFunds.div(bTokenSupply);
 
-          const utilizationPercent = totalFunds.gt(0)
-            ? fundsDeployed.div(totalFunds).times(100)
-            : new BigNumber(0);
-          const suilendDepositAprPercent =
-            mainMarket.depositAprPercentMap[coinType] ?? new BigNumber(0);
+      const utilizationPercent = totalFunds.gt(0)
+        ? fundsDeployed.div(totalFunds).times(100)
+        : new BigNumber(0);
+      const suilendDepositAprPercent =
+        mainMarket.depositAprPercentMap[coinType] ?? new BigNumber(0);
 
-          return {
-            id,
-            bank,
-            bankInfo,
-            coinType,
-            bTokenType,
+      return {
+        id,
+        bank,
+        bankInfo,
+        coinType,
+        bTokenType,
 
-            fundsAvailable,
-            fundsDeployed,
-            totalFunds,
+        fundsAvailable,
+        fundsDeployed,
+        totalFunds,
 
-            bTokenSupply,
-            bTokenExchangeRate,
+        bTokenSupply,
+        bTokenExchangeRate,
 
-            utilizationPercent,
-            suilendDepositAprPercent,
-          };
-        }),
-      ),
-    );
+        utilizationPercent,
+        suilendDepositAprPercent,
+      };
+    });
     const bankMap = Object.fromEntries(
       banks.map((bank) => [bank.coinType, bank]),
     );

@@ -20,7 +20,7 @@ export default function PoolCard({ pool }: PoolCardProps) {
     <div className="group flex w-full flex-col gap-2 rounded-md border p-4 transition-colors hover:bg-border/50">
       {/* Top */}
       <div className="flex w-full flex-row items-center gap-2">
-        <TokenLogos coinTypes={pool.coinTypes} size={16} />
+        <TokenLogos coinTypes={pool.coinTypes} size={20} />
         <p className="text-p1 text-foreground">
           {formatPair(
             pool.coinTypes.map(
@@ -29,9 +29,11 @@ export default function PoolCard({ pool }: PoolCardProps) {
           )}
         </p>
 
-        <div className="flex flex-row items-center gap-1">
-          <PoolTypeTag pool={pool} />
-          <Tag>{formatFeeTier(pool.feeTierPercent)}</Tag>
+        <div className="flex flex-row items-center gap-px">
+          <PoolTypeTag className="rounded-r-[0] pr-2" pool={pool} />
+          <Tag className="rounded-l-[0] pl-2">
+            {formatFeeTier(pool.feeTierPercent)}
+          </Tag>
         </div>
       </div>
 

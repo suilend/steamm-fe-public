@@ -100,7 +100,7 @@ const usePoolTransactionHistoryMap = (poolIds: string[] | undefined) => {
         );
       } catch (err) {
         showErrorToast(
-          "Failed to fetch pool transaction history",
+          "Failed to fetch pool transaction history map",
           err as Error,
         );
         console.error(err);
