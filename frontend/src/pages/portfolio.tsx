@@ -77,8 +77,8 @@ export default function PortfolioPage() {
                               )
                               .times(
                                 index === 0
-                                  ? entry.coin_a_price
-                                  : entry.coin_b_price,
+                                  ? (entry.coin_a_price ?? pool.prices[0])
+                                  : (entry.coin_b_price ?? pool.prices[1]),
                               ),
                           )
                         : acc.minus(
@@ -92,8 +92,8 @@ export default function PortfolioPage() {
                               )
                               .times(
                                 index === 0
-                                  ? entry.coin_a_price
-                                  : entry.coin_b_price,
+                                  ? (entry.coin_a_price ?? pool.prices[0])
+                                  : (entry.coin_b_price ?? pool.prices[1]),
                               ),
                           ),
                     new BigNumber(0),
