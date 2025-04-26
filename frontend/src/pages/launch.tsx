@@ -88,7 +88,6 @@ export default function LaunchPage() {
     setCurrentStep(LaunchStep.Complete);
   };
 
-  console.log("xxx config:", config);
   return (
     <Container className="flex w-full flex-col gap-6 py-4 sm:py-6">
       {isResumed && (

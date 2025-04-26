@@ -48,7 +48,6 @@ export default function TokenBasicInfo({
     tokenDescription,
     initialSupply,
     tokenDecimals,
-    iconUrl,
   } = config;
 
   // State for icon upload
@@ -168,23 +167,6 @@ export default function TokenBasicInfo({
     e.preventDefault();
 
     if (validateAll()) {
-      // If an icon file was uploaded, convert it to base64 and update the config
-      if (iconFile) {
-        try {
-          const base64Icon = await fileToBase64(iconFile);
-          setConfig({
-            ...config,
-            iconUrl: `data:${iconFile.type};base64,${base64Icon}`,
-          });
-        } catch (error) {
-          console.error("Failed to convert icon to base64:", error);
-          setErrors((prev) => ({
-            ...prev,
-            icon: "Failed to process image file",
-          }));
-          return;
-        }
-      }
       onSubmit();
     }
   };
@@ -234,9 +216,28 @@ export default function TokenBasicInfo({
   };
 
   // Handle icon file selection
-  const handleIconChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleIconChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
+
     setIconFile(file);
+
+    // If an icon file was uploaded, convert it to base64 and update the config
+    if (file) {
+      try {
+        const base64Icon = await fileToBase64(file);
+        setConfig({
+          ...config,
+          iconUrl: `data:${file.type};base64,${base64Icon}`,
+        });
+      } catch (error) {
+        console.error("Failed to convert icon to base64:", error);
+        setErrors((prev) => ({
+          ...prev,
+          icon: "Failed to process image file",
+        }));
+        return;
+      }
+    }
 
     // Validate the selected file
     setTouched((prev) => ({ ...prev, icon: true }));
