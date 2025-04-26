@@ -12,6 +12,7 @@ interface TextInputProps {
   value: string;
   onChange: (value: string) => void;
   onBlur?: FocusEventHandler<HTMLInputElement>;
+  onFocus?: FocusEventHandler<HTMLInputElement>;
 }
 
 export default function TextInput({
@@ -22,6 +23,7 @@ export default function TextInput({
   value,
   onChange,
   onBlur,
+  onFocus,
 }: TextInputProps) {
   return (
     <div
@@ -42,6 +44,7 @@ export default function TextInput({
         onChange={(e) => onChange(e.target.value)}
         onWheel={(e) => e.currentTarget.blur()}
         onBlur={onBlur}
+        onFocus={onFocus}
       />
     </div>
   );

@@ -9,7 +9,7 @@ const compat = new FlatCompat({
 });
 
 module.exports = [
-  { ignores: ["**/_generated"] },
+  { ignores: ["**/_generated", "src/fonts/*"] },
   ...compat.extends(
     "prettier",
     "next/core-web-vitals",
