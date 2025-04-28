@@ -78,8 +78,8 @@ export default function PortfolioPage() {
                               )
                               .times(
                                 index === 0
-                                  ? (entry.coin_a_price ?? pool.prices[0])
-                                  : (entry.coin_b_price ?? pool.prices[1]),
+                                  ? entry.coin_a_price || pool.prices[0] // Use current price if coin_a_price is missing or 0
+                                  : entry.coin_b_price || pool.prices[1], // Use current price if coin_b_price is missing or 0
                               ),
                           )
                         : acc.minus(
@@ -93,14 +93,21 @@ export default function PortfolioPage() {
                               )
                               .times(
                                 index === 0
-                                  ? (entry.coin_a_price ?? pool.prices[0])
-                                  : (entry.coin_b_price ?? pool.prices[1]),
+                                  ? entry.coin_a_price || pool.prices[0] // Use current price if coin_a_price is missing or 0
+                                  : entry.coin_b_price || pool.prices[1], // Use current price if coin_b_price is missing or 0
                               ),
                           ),
                     new BigNumber(0),
                   ),
                 );
 
+                console.log(
+                  "XXX2",
+                  pool.id,
+                  transactionHistory[0],
+                  +depositedAmountsUsd[0],
+                  +depositedAmountsUsd[1],
+                );
                 const depositedAmountUsd = depositedAmountsUsd[0].plus(
                   depositedAmountsUsd[1],
                 );
@@ -117,19 +124,27 @@ export default function PortfolioPage() {
     () =>
       poolPositions === undefined
         ? undefined
-        : poolPositions.map((position) => ({
-            ...position,
-            pnlPercent:
-              poolDepositedAmountUsdMap?.[position.pool.id] !== undefined
-                ? new BigNumber(
-                    position.balanceUsd.minus(
-                      poolDepositedAmountUsdMap[position.pool.id],
-                    ),
-                  )
-                    .div(poolDepositedAmountUsdMap[position.pool.id])
-                    .times(100)
-                : undefined,
-          })),
+        : poolPositions.map((position) => {
+            console.log(
+              "XXX",
+              +position.balanceUsd,
+              +poolDepositedAmountUsdMap?.[position.pool.id],
+            );
+
+            return {
+              ...position,
+              pnlPercent:
+                poolDepositedAmountUsdMap?.[position.pool.id] !== undefined
+                  ? new BigNumber(
+                      position.balanceUsd.minus(
+                        poolDepositedAmountUsdMap[position.pool.id],
+                      ),
+                    )
+                      .div(poolDepositedAmountUsdMap[position.pool.id])
+                      .times(100)
+                  : undefined,
+            };
+          }),
     [poolPositions, poolDepositedAmountUsdMap],
   );
 
