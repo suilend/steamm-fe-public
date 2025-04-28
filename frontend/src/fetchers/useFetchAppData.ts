@@ -18,7 +18,7 @@ import { BETA_CONFIG, MAINNET_CONFIG, SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
 import { API_URL } from "@/lib/navigation";
-import { QuoterId } from "@/lib/types";
+import { fetchPool } from "@/lib/pools";
 
 export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
@@ -149,21 +149,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       const poolInfos = await steammClient.getPools();
 
       for (const poolInfo of poolInfos) {
-        const quoterId = poolInfo.quoterType.endsWith("omm::OracleQuoter")
-          ? QuoterId.ORACLE
-          : poolInfo.quoterType.endsWith("omm_v2::OracleQuoterV2")
-            ? QuoterId.ORACLE_V2
-            : QuoterId.CPMM;
-
-        const pool =
-          quoterId === QuoterId.ORACLE
-            ? await steammClient.fullClient.fetchOraclePool(poolInfo.poolId)
-            : quoterId === QuoterId.ORACLE_V2
-              ? await steammClient.fullClient.fetchOracleV2Pool(poolInfo.poolId)
-              : await steammClient.fullClient.fetchConstantProductPool(
-                  poolInfo.poolId,
-                );
-
+        const pool = await fetchPool(steammClient, poolInfo);
         poolObjs.push({ poolInfo, pool });
       }
     } else {
