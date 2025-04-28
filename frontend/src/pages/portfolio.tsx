@@ -101,13 +101,6 @@ export default function PortfolioPage() {
                   ),
                 );
 
-                console.log(
-                  "XXX2",
-                  pool.id,
-                  transactionHistory[0],
-                  +depositedAmountsUsd[0],
-                  +depositedAmountsUsd[1],
-                );
                 const depositedAmountUsd = depositedAmountsUsd[0].plus(
                   depositedAmountsUsd[1],
                 );
@@ -124,27 +117,19 @@ export default function PortfolioPage() {
     () =>
       poolPositions === undefined
         ? undefined
-        : poolPositions.map((position) => {
-            console.log(
-              "XXX",
-              +position.balanceUsd,
-              +poolDepositedAmountUsdMap?.[position.pool.id],
-            );
-
-            return {
-              ...position,
-              pnlPercent:
-                poolDepositedAmountUsdMap?.[position.pool.id] !== undefined
-                  ? new BigNumber(
-                      position.balanceUsd.minus(
-                        poolDepositedAmountUsdMap[position.pool.id],
-                      ),
-                    )
-                      .div(poolDepositedAmountUsdMap[position.pool.id])
-                      .times(100)
-                  : undefined,
-            };
-          }),
+        : poolPositions.map((position) => ({
+            ...position,
+            pnlPercent:
+              poolDepositedAmountUsdMap?.[position.pool.id] !== undefined
+                ? new BigNumber(
+                    position.balanceUsd.minus(
+                      poolDepositedAmountUsdMap[position.pool.id],
+                    ),
+                  )
+                    .div(poolDepositedAmountUsdMap[position.pool.id])
+                    .times(100)
+                : undefined,
+          })),
     [poolPositions, poolDepositedAmountUsdMap],
   );
 
