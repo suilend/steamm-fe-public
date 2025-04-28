@@ -651,6 +651,15 @@ export default function BankCard({ bank }: BankCardProps) {
                             })}{" "}
                             {appData.coinMetadataMap[coinType].symbol}
                           </p>
+
+                          <p className="text-p2 text-secondary-foreground">
+                            {formatUsd(
+                              amount.times(
+                                appData.mainMarket.rewardPriceMap[coinType] ??
+                                  0,
+                              ),
+                            )}
+                          </p>
                         </div>
                       ),
                     )}

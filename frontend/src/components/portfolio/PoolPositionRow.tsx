@@ -205,9 +205,12 @@ export default function PoolPositionRow({
           {poolPosition.balances === undefined ? (
             <Skeleton className="h-[21px] w-40" />
           ) : (
-            <div className="flex flex-row items-center gap-2">
+            <div className="flex flex-row items-center gap-3">
               {poolPosition.pool.coinTypes.map((coinType, index) => (
-                <Fragment key={coinType}>
+                <div
+                  key={coinType}
+                  className="flex flex-row items-center gap-2"
+                >
                   <TokenLogo
                     token={getToken(
                       coinType,
@@ -225,11 +228,7 @@ export default function PoolPositionRow({
                       {appData.coinMetadataMap[coinType].symbol}
                     </p>
                   </Tooltip>
-
-                  {index === 0 && (
-                    <p className="text-p2 text-secondary-foreground">+</p>
-                  )}
-                </Fragment>
+                </div>
               ))}
             </div>
           )}
@@ -330,6 +329,23 @@ export default function PoolPositionRow({
                       {appData.coinMetadataMap[coinType].symbol}
                     </p>
                   </Tooltip>
+
+                  <Tooltip
+                    title={formatUsd(
+                      amount.times(
+                        appData.lmMarket.rewardPriceMap[coinType] ?? 0,
+                      ),
+                      { exact: true },
+                    )}
+                  >
+                    <p className="text-p2 text-secondary-foreground">
+                      {formatUsd(
+                        amount.times(
+                          appData.lmMarket.rewardPriceMap[coinType] ?? 0,
+                        ),
+                      )}
+                    </p>
+                  </Tooltip>
                 </div>
               ),
             )}
@@ -361,7 +377,7 @@ export default function PoolPositionRow({
                     .decimals,
                 })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
               >
-                <p className="text-p2 text-foreground">
+                <p className="text-p1 text-foreground">
                   {formatPoints(poolPosition.totalPoints)}
                 </p>
               </Tooltip>

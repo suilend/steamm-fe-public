@@ -65,9 +65,9 @@ export default function PoolPositionCard() {
         {poolPosition === undefined ? (
           <Skeleton className="h-[21px] w-40" />
         ) : (
-          <div className="flex flex-row items-center gap-2">
+          <div className="flex flex-row items-center gap-3">
             {pool.coinTypes.map((coinType, index) => (
-              <Fragment key={coinType}>
+              <div key={coinType} className="flex flex-row items-center gap-2">
                 <TokenLogo
                   token={getToken(coinType, appData.coinMetadataMap[coinType])}
                   size={16}
@@ -82,11 +82,7 @@ export default function PoolPositionCard() {
                     {appData.coinMetadataMap[coinType].symbol}
                   </p>
                 </Tooltip>
-
-                {index === 0 && (
-                  <p className="text-p2 text-secondary-foreground">+</p>
-                )}
-              </Fragment>
+              </div>
             ))}
           </div>
         )}

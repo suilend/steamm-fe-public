@@ -361,6 +361,15 @@ export default function PortfolioPage() {
                                       })}{" "}
                                       {appData.coinMetadataMap[coinType].symbol}
                                     </p>
+                                    <p className="text-p2 text-secondary-foreground">
+                                      {formatUsd(
+                                        amount.times(
+                                          appData.lmMarket.rewardPriceMap[
+                                            coinType
+                                          ] ?? 0,
+                                        ),
+                                      )}
+                                    </p>
                                   </div>
                                 ),
                               )}
