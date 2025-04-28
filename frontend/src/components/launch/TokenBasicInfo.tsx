@@ -1,18 +1,14 @@
 import { ChangeEvent, useState } from "react";
-
-import { ClassValue } from "clsx";
 import { ChevronDown, ChevronUp, InfoIcon, Upload } from "lucide-react";
-
 import Parameter from "@/components/Parameter";
 import TextInput from "@/components/TextInput";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { LaunchConfig } from "@/hooks/useCreateToken";
+import { LaunchConfig } from "@/contexts/LaunchContext";
 import { cn } from "@/lib/utils";
 
 import {
@@ -228,6 +224,7 @@ export default function TokenBasicInfo({
         setConfig({
           ...config,
           iconUrl: `data:${file.type};base64,${base64Icon}`,
+          iconFileName: file.name,
         });
       } catch (error) {
         console.error("Failed to convert icon to base64:", error);
@@ -266,6 +263,8 @@ export default function TokenBasicInfo({
   const toggleAdvancedOptions = () => {
     setShowAdvancedOptions(!showAdvancedOptions);
   };
+
+  console.log('config', config);
 
   return (
     <form onSubmit={handleSubmit}>
@@ -374,7 +373,7 @@ export default function TokenBasicInfo({
               className={cn(
                 "flex h-20 w-full cursor-pointer items-center justify-center rounded-md border-2 border-dashed hover:bg-background/50",
                 touched.icon && errors.icon ? "border-error" : "border-border",
-                touched.icon && isValid.icon && iconFile
+                ((touched.icon && isValid.icon && iconFile) || config.iconUrl)
                   ? "border-success"
                   : "",
               )}
@@ -390,15 +389,15 @@ export default function TokenBasicInfo({
                 htmlFor="icon-upload"
                 className="flex h-full w-full cursor-pointer flex-col items-center justify-center"
               >
-                {iconFile ? (
+                {(config.iconUrl || iconFile) ? (
                   <div className="flex items-center space-x-2">
                     <img
-                      src={URL.createObjectURL(iconFile)}
+                      src={config.iconUrl ?? URL.createObjectURL(iconFile!)}
                       alt="Token icon preview"
                       className="h-10 w-10 object-contain"
                     />
                     <span className="text-sm text-foreground">
-                      {iconFile.name}
+                      {config.iconFileName ?? iconFile?.name}
                     </span>
                   </div>
                 ) : (
@@ -543,7 +542,7 @@ export default function TokenBasicInfo({
             </div>
           </Parameter>
 
-          <Parameter label="Initial Supply">
+          <Parameter label="Token Supply">
             <div className="flex w-full flex-col gap-2">
               <div className="relative">
                 <TextInput

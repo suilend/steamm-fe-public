@@ -16,7 +16,7 @@ export const showSuccessTxnToast = (
       ...(data ?? {}),
       action: (
         <Link
-          className="actionButton block flex flex-col justify-center text-secondary-foreground transition-colors hover:text-foreground"
+          className="actionButton flex flex-col justify-center text-secondary-foreground transition-colors hover:text-foreground"
           href={txUrl}
           target="_blank"
         >

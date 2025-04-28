@@ -1,47 +1,17 @@
 import { useEffect, useState } from "react";
-
 import { CheckCircle2 } from "lucide-react";
-import { useLocalStorage } from "usehooks-ts";
-
 import { useWalletContext } from "@suilend/frontend-sui-next";
-
 import Container from "@/components/Container";
 import LaunchStepper from "@/components/launch/LaunchStepper";
 import TokenBasicInfo from "@/components/launch/TokenBasicInfo";
 import TokenCreationForm from "@/components/launch/TokenCreationForm";
 import { Button } from "@/components/ui/button";
-import { LaunchConfig, LaunchStep } from "@/hooks/useCreateToken";
 import { Alert, AlertDescription, AlertTitle } from "@/lib/alert";
+import LaunchContextProvider, { DEFAULT_CONFIG, LaunchStep, useLaunch } from "@/contexts/LaunchContext";
 
-const DEFAULT_CONFIG: LaunchConfig = {
-  step: LaunchStep.Config,
-  lastCompletedStep: LaunchStep.Start,
-  tokenName: "",
-  tokenSymbol: "",
-  tokenDescription: "",
-  tokenDecimals: 9,
-  initialSupply: "1000000000",
-  maxSupply: "1000000000",
-  isBurnable: false,
-  isMintable: false,
-  isPausable: false,
-  isUpgradeable: false,
-  iconUrl: "https://steamm-assets.s3.amazonaws.com/token-icon.png",
-
-  // Token creation results
-  tokenType: null,
-  treasuryCapId: null,
-
-  // Pool creation results
-  poolId: null,
-};
-
-export default function LaunchPage() {
+function LaunchPage() {
+  const { config, setConfig } = useLaunch();
   const { address } = useWalletContext();
-  const [config, setConfig] = useLocalStorage<LaunchConfig>(
-    "launch-config",
-    DEFAULT_CONFIG,
-  );
   const [isResumed, setIsResumed] = useState(false);
 
   useEffect(() => {
@@ -50,14 +20,13 @@ export default function LaunchPage() {
   }, []);
 
   const setCurrentStep = (step: LaunchStep) => {
-    setConfig({ ...config, step });
+    setConfig({ ...config, step, lastCompletedStep: Math.max(step - 1, config.lastCompletedStep) });
   };
 
-  // Handle step changes from the stepper
   const handleStepChange = (step: number) => {
     // Only allow going back, to the current step, to the next step, or to a completed step
     if (
-      step <= config.step ||
+      step <= config.step ||  
       step === config.step + 1 ||
       config.lastCompletedStep === step
     ) {
@@ -69,23 +38,6 @@ export default function LaunchPage() {
   const handleStartOver = () => {
     setConfig(DEFAULT_CONFIG);
     setIsResumed(false);
-  };
-
-  // Handle successful token creation
-  const handleTokenCreationSuccess = (
-    tokenType: string,
-    treasuryCapId: string,
-    poolId: string,
-  ) => {
-    // Update token creation result data
-    setConfig({
-      ...config,
-      tokenType,
-      treasuryCapId,
-      poolId,
-    });
-
-    setCurrentStep(LaunchStep.Complete);
   };
 
   return (
@@ -110,8 +62,6 @@ export default function LaunchPage() {
 
       <div className="w-full">
         <LaunchStepper
-          currentStep={config.step}
-          completedSteps={config.lastCompletedStep}
           onStepChange={handleStepChange}
         />
       </div>
@@ -127,8 +77,7 @@ export default function LaunchPage() {
 
         {config.step === LaunchStep.Deploy && (
           <TokenCreationForm
-            tokenParams={config}
-            onSuccess={handleTokenCreationSuccess}
+            onSubmit={() => handleStepChange(LaunchStep.Complete)}
           />
         )}
 
@@ -159,5 +108,13 @@ export default function LaunchPage() {
         )}
       </div>
     </Container>
+  );
+}
+
+export default function LaunchPageWrapper() {
+  return (
+    <LaunchContextProvider>
+      <LaunchPage />
+    </LaunchContextProvider>
   );
 }

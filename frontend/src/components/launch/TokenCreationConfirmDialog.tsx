@@ -40,7 +40,7 @@ export default function TokenCreationConfirmDialog({
       headerProps={{
         title: {},
         description:
-          "Review the details of your token before creating it on the blockchain.",
+          "Review the details of your token before creating it on the blockchain. The token will be created as well as the initial supply. 10% of the supply will be used to bootstrap the liquidity pool on Steamm",
       }}
       footerProps={{
         className:
@@ -103,7 +103,7 @@ export default function TokenCreationConfirmDialog({
 
           <div className="flex flex-col justify-between gap-1 pb-1 sm:flex-row sm:items-center sm:gap-2">
             <span className="text-muted-foreground text-sm font-medium">
-              Initial Supply
+              Token Supply
             </span>
             <span className="text-foreground">{formattedSupply}</span>
           </div>

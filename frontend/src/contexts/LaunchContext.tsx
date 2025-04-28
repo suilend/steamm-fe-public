@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
 
 import { bcs } from "@mysten/bcs";
 import init, * as template from "@mysten/move-bytecode-template";
-import { SuiObjectChange } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 import * as Sentry from "@sentry/nextjs";
@@ -18,6 +17,7 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { QuoterId } from "@/lib/types";
+import { useLocalStorage } from "usehooks-ts";
 
 export enum LaunchStep {
   Start = -1,
@@ -26,7 +26,17 @@ export enum LaunchStep {
   Complete = 2,
 }
 
+export enum TokenCreationStatus {
+  Pending = 0,
+  Publishing = 1,
+  Minting = 2,
+  Pooling = 3,
+  Success = 4,
+  Error = 5,
+}
+
 export type LaunchConfig = {
+  // Wizard config date
   step: LaunchStep;
   lastCompletedStep: LaunchStep;
   tokenName: string;
@@ -41,12 +51,25 @@ export type LaunchConfig = {
   isUpgradeable: boolean;
   iconUrl: string | null;
 
+  iconFileName: string | null;
+
+  // Token creation status
+  status: TokenCreationStatus;
+
   // Token creation results
   tokenType: string | null;
   treasuryCapId: string | null;
 
   // Pool creation results
   poolId: string | null;
+
+  // Error
+  error: Error | null;
+
+  // Transaction digest
+  transactionDigests: {
+    [key: string]: string;
+  };
 };
 
 // Initialize the WebAssembly module
@@ -164,24 +187,70 @@ const generateTokenBytecode = async (
   }
 };
 
-const useCreateToken = () => {
+export const DEFAULT_CONFIG: LaunchConfig = {
+  status: TokenCreationStatus.Pending,
+  step: LaunchStep.Config,
+  lastCompletedStep: LaunchStep.Start,
+  tokenName: "",
+  tokenSymbol: "",
+  tokenDescription: "",
+  tokenDecimals: 9,
+  initialSupply: "1000000000",
+  maxSupply: "1000000000",
+  isBurnable: false,
+  isMintable: false,
+  isPausable: false,
+  isUpgradeable: false,
+  iconUrl: null,
+  iconFileName: null,
+
+  // Token creation results
+  tokenType: null,
+  treasuryCapId: null,
+
+  // Pool creation results
+  poolId: null,
+
+  // Error
+  error: null,
+
+  // Transaction digest
+  transactionDigests: {},
+};
+
+type LaunchContextType = {
+  config: LaunchConfig;
+  setConfig: (config: LaunchConfig) => void;
+  launchToken: () => Promise<CreateTokenResult | null>;
+};
+
+export const LaunchContext = createContext<LaunchContextType>({
+  config: DEFAULT_CONFIG,
+  setConfig: () => {},
+  launchToken: async () => null,
+});
+export const useLaunch = () => useContext(LaunchContext);
+
+const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
+  const [config, setConfig] = useLocalStorage<LaunchConfig>(
+    "launch-config",
+    DEFAULT_CONFIG,
+  );
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, oraclesData, banksData, poolsData } =
-    useLoadedAppContext();
-  const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
-  const [isCreating, setIsCreating] = useState<boolean>(false);
-  const [transactionDigest, setTransactionDigest] = useState<string | null>(
-    null,
-  );
-  const [createError, setCreateError] = useState<Error | null>(null);
-  const [creationStatus, setCreationStatus] = useState<
-    "idle" | "publishing" | "minting" | "success" | "error"
-  >("idle");
+  const { steammClient, banksData } = useLoadedAppContext();
+  const { balancesCoinMetadataMap } = useUserContext();
+  const setCreationStatus = (status: TokenCreationStatus) => {
+    setConfig({ ...config, status });
+  };
+  const setCreateError = (error: Error | null) => {
+    setConfig({ ...config, error });
+  };
+  const setTransactionDigest = (key: string, digest: string) => {
+    setConfig({ ...config, transactionDigests: { ...config.transactionDigests, [key]: digest } });
+  };
 
-  const createToken = async (
-    params: LaunchConfig,
-  ): Promise<CreateTokenResult | null> => {
+  const launchToken = async (): Promise<CreateTokenResult | null> => {
     if (!address) {
       showErrorToast(
         "Wallet not connected",
@@ -192,18 +261,16 @@ const useCreateToken = () => {
       return null;
     }
 
-    if (isCreating) return null;
     setCreateError(null);
 
     try {
-      setIsCreating(true);
-      setCreationStatus("publishing");
+      setCreationStatus(TokenCreationStatus.Publishing);
 
       // Preemptively initialize the WASM module at the start of the function
       await ensureModuleInitialized();
 
       // Generate token bytecode using our template
-      const bytecode = await generateTokenBytecode(params);
+      const bytecode = await generateTokenBytecode(config);
 
       // Create the transaction to publish the module
       const transaction = new Transaction();
@@ -222,6 +289,7 @@ const useCreateToken = () => {
 
       // Execute the transaction
       const res = await signExecuteAndWaitForTransaction(transaction);
+      setTransactionDigest("publish", res.digest);
 
       // Extract the TreasuryCap and CoinMetadata IDs from the transaction results
       const treasuryCapChange = res.objectChanges?.find(
@@ -251,14 +319,11 @@ const useCreateToken = () => {
       const tokenType =
         treasuryCapChange.objectType.split("<")[1]?.split(">")[0] || "";
 
-      console.log("Full token type:", tokenType);
-      console.log("TreasuryCap objectType:", treasuryCapChange.objectType);
-
       // Mint initial supply if specified
-      if (params.initialSupply && parseFloat(params.initialSupply) > 0) {
+      if (config.initialSupply && parseFloat(config.initialSupply) > 0) {
         try {
           // Update status to minting
-          setCreationStatus("minting");
+          setCreationStatus(TokenCreationStatus.Minting);
 
           // Create a new transaction for minting initial supply
           const mintTransaction = new Transaction();
@@ -266,14 +331,10 @@ const useCreateToken = () => {
           // Convert initialSupply to the smallest denomination based on decimals
           const initialSupplyAmount = BigInt(
             Math.floor(
-              parseFloat(params.initialSupply) *
-                Math.pow(10, params.tokenDecimals),
+              parseFloat(config.initialSupply) *
+                Math.pow(10, config.tokenDecimals),
             ),
           );
-
-          console.log("Minting amount:", initialSupplyAmount.toString());
-          console.log("Recipient address:", address);
-          console.log("Treasury cap ID:", treasuryCapChange.objectId);
 
           // Create mint transaction using the standard coin::mint function
           // and providing our token type as a type argument
@@ -294,18 +355,18 @@ const useCreateToken = () => {
             await signExecuteAndWaitForTransaction(mintTransaction);
 
           // Update transaction digest to the latest transaction
-          setTransactionDigest(mintRes.digest);
+          setTransactionDigest("mint", mintRes.digest);
 
           // Update status to success
-          setCreationStatus("success");
+          setCreationStatus(TokenCreationStatus.Success);
 
           // Show success toast with updated information
           const txUrl = explorer.buildTxUrl(mintRes.digest);
           showSuccessTxnToast(
-            `Token ${params.tokenName} (${params.tokenSymbol}) created and ${params.initialSupply} tokens minted`,
+            `Token ${config.tokenName} (${config.tokenSymbol}) created and ${config.initialSupply} tokens minted`,
             txUrl,
             {
-              description: `Created with ${params.tokenDecimals} decimals`,
+              description: `Created with ${config.tokenDecimals} decimals`,
             },
           );
 
@@ -317,7 +378,6 @@ const useCreateToken = () => {
             poolId: "pending", // Will be updated later
           };
         } catch (mintErr) {
-          console.error("Failed to mint initial supply:", mintErr);
           // If minting fails, we still return the token creation result
           // but show a warning toast
           showErrorToast(
@@ -327,43 +387,32 @@ const useCreateToken = () => {
             true,
           );
 
-          // Set the transaction digest to the original creation transaction
-          setTransactionDigest(res.digest);
-
           // Update status to error
-          setCreationStatus("error");
+          setCreationStatus(TokenCreationStatus.Error);
           setCreateError(mintErr as Error);
 
           // Show partial success toast
           const txUrl = explorer.buildTxUrl(res.digest);
           showSuccessTxnToast(
-            `Token ${params.tokenName} (${params.tokenSymbol}) created successfully`,
+            `Token ${config.tokenName} (${config.tokenSymbol}) created successfully`,
             txUrl,
             {
-              description: `Created with ${params.tokenDecimals} decimals, but initial supply minting failed`,
+              description: `Created with ${config.tokenDecimals} decimals, but initial supply minting failed`,
             },
           );
         }
       } else {
-        // Set the transaction digest for reference
-        setTransactionDigest(res.digest);
-
-        // Update status to success
-        setCreationStatus("success");
-
         // Show success toast
         const txUrl = explorer.buildTxUrl(res.digest);
         showSuccessTxnToast(
-          `Token ${params.tokenName} (${params.tokenSymbol}) created successfully`,
+          `Token ${config.tokenName} (${config.tokenSymbol}) created successfully`,
           txUrl,
           {
-            description: `Created with ${params.tokenDecimals} decimals`,
+            description: `Created with ${config.tokenDecimals} decimals`,
           },
         );
       }
 
-      // TODO: Create pool logic will be implemented properly
-      let poolId = "no-pool";
       try {
         await createPool(
           banksData!,
@@ -379,9 +428,6 @@ const useCreateToken = () => {
           ["1_000_000_000", "1"],
         );
 
-        // For now, we're just setting a placeholder. In a future implementation,
-        // we'll properly capture the returned poolId
-        poolId = "pool-created";
       } catch (error) {
         console.error("Error creating pool:", error);
         // Pool creation error isn't critical, so we continue
@@ -393,7 +439,7 @@ const useCreateToken = () => {
         tokenType,
         treasuryCapId: treasuryCapChange.objectId,
         coinMetadataId: coinMetadataChange.objectId,
-        poolId,
+        poolId: "pending", // Will be updated later
       };
     } catch (err) {
       const error = err as Error;
@@ -401,20 +447,22 @@ const useCreateToken = () => {
       console.error(err);
       Sentry.captureException(err);
       setCreateError(error);
-      setCreationStatus("error");
+      setCreationStatus(TokenCreationStatus.Error);
       return null;
-    } finally {
-      setIsCreating(false);
     }
   };
 
-  return {
-    createToken,
-    isCreating,
-    transactionDigest,
-    error: createError,
-    status: creationStatus,
+  const contextValue: LaunchContextType = {
+    config,
+    setConfig,
+    launchToken,
   };
+
+  return (
+    <LaunchContext.Provider value={contextValue}>
+      {children}
+    </LaunchContext.Provider>
+  );
 };
 
-export default useCreateToken;
+export default LaunchContextProvider;
