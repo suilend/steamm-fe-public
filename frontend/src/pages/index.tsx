@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useMemo, useRef, useState } from "react";
 
@@ -14,7 +15,6 @@ import Divider from "@/components/Divider";
 import HistoricalDataChart from "@/components/HistoricalDataChart";
 import PoolsTable from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
-import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
@@ -25,6 +25,7 @@ import {
   getPoolStakingYieldAprPercent,
   getPoolTotalAprPercent,
 } from "@/lib/liquidityMining";
+import { CREATE_URL } from "@/lib/navigation";
 import { ParsedPool, PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -383,19 +384,13 @@ export default function PoolsPage() {
                 )}
               </div>
 
-              {/* Create pool */}
-              <Tooltip title="Coming soon">
-                <div className="w-max">
-                  <button
-                    className="flex h-10 flex-row items-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
-                    disabled
-                  >
-                    <p className="text-p2 text-button-1-foreground">
-                      Create pool
-                    </p>
-                  </button>
+              <Link href={CREATE_URL}>
+                <div className="flex h-10 flex-row items-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80">
+                  <p className="text-p2 text-button-1-foreground">
+                    Create pool
+                  </p>
                 </div>
-              </Tooltip>
+              </Link>
             </div>
 
             <PoolsTable

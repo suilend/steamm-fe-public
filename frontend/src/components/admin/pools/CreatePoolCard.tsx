@@ -14,7 +14,6 @@ import {
 } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
-import { Plus } from "lucide-react";
 
 import {
   NORMALIZED_SUI_COINTYPE,
@@ -134,11 +133,15 @@ const LP_TOKEN_IMAGE_URL =
   "https://suilend-assets.s3.us-east-2.amazonaws.com/steamm/STEAMM+LP+Token.svg";
 
 interface CreatePoolCardProps {
+  noWhitelist?: boolean;
   quoterId?: QuoterId;
+  onCreate?: (poolId: string) => void;
 }
 
 export default function CreatePoolCard({
+  noWhitelist,
   quoterId: hardcodedQuoterId,
+  onCreate,
 }: CreatePoolCardProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
@@ -150,9 +153,10 @@ export default function CreatePoolCard({
   const isWhitelisted = useMemo(
     () =>
       !!address &&
-      (address === ADMIN_ADDRESS ||
+      (noWhitelist ||
+        address === ADMIN_ADDRESS ||
         (flags?.steammCreatePoolWhitelist ?? []).includes(address)),
-    [address, flags?.steammCreatePoolWhitelist],
+    [address, noWhitelist, flags?.steammCreatePoolWhitelist],
   );
 
   // CoinTypes
@@ -827,6 +831,20 @@ export default function CreatePoolCard({
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
 
+      if (onCreate) {
+        const poolObjectChange: SuiObjectChange | undefined =
+          res.objectChanges?.find(
+            (change) =>
+              change.type === "created" &&
+              change.objectType.includes("::pool::Pool<"),
+          );
+        if (!poolObjectChange) throw new Error("Pool object change not found");
+        if (poolObjectChange.type !== "created")
+          throw new Error("Pool object change is not of type 'created'");
+
+        const poolId = poolObjectChange.objectId;
+        onCreate(poolId);
+      }
       showSuccessTxnToast(
         `Created ${formatPair(tokens.map((token) => token.symbol))} pool`,
         txUrl,
@@ -849,12 +867,7 @@ export default function CreatePoolCard({
   };
 
   return (
-    <div className="flex w-full max-w-lg flex-col gap-4 rounded-md border p-5">
-      <div className="flex flex-row items-center gap-2">
-        <Plus className="h-4 w-4 text-foreground" />
-        <p className="text-h3 text-foreground">Create pool</p>
-      </div>
-
+    <div className="flex w-full flex-col gap-4">
       {/* Base asset */}
       <div className="flex w-full flex-col gap-3">
         <p className="text-p2 text-secondary-foreground">Base asset</p>

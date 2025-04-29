@@ -59,7 +59,7 @@ export default function Nav() {
               </Link>
 
               {/* Items */}
-              <div className="flex flex-row items-center gap-8 max-md:hidden">
+              <div className="flex flex-row items-center gap-8 max-lg:hidden">
                 {navItems.map((item) => {
                   const isSelected =
                     router.asPath.split("?")[0] === item.url ||
@@ -110,7 +110,7 @@ export default function Nav() {
                 <ConnectWalletButton />
               </div>
 
-              <div className="md:hidden">
+              <div className="lg:hidden">
                 <NavPopover />
               </div>
             </div>
