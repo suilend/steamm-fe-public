@@ -100,9 +100,9 @@ export default function PoolChartCard() {
   );
 
   if (
-    Object.values(chartConfigMap).some(
-      (_chartConfig) => _chartConfig.data === undefined,
-    )
+    poolHistoricalStats.tvlUsd_7d[pool.id] === undefined ||
+    poolHistoricalStats.volumeUsd_7d[pool.id] === undefined ||
+    poolHistoricalStats.feesUsd_7d[pool.id] === undefined
   )
     return <Skeleton className="h-[265px] w-full md:h-[325px]" />;
   if (
