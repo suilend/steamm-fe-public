@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2 } from "lucide-react";
+
 import { useWalletContext } from "@suilend/frontend-sui-next";
+
 import Container from "@/components/Container";
-import LaunchStepper from "@/components/launch/LaunchStepper";
 import TokenBasicInfo from "@/components/launch/TokenBasicInfo";
 import TokenCreationForm from "@/components/launch/TokenCreationForm";
 import { Button } from "@/components/ui/button";
+import LaunchContextProvider, {
+  DEFAULT_CONFIG,
+  LaunchStep,
+  useLaunch,
+} from "@/contexts/LaunchContext";
 import { Alert, AlertDescription, AlertTitle } from "@/lib/alert";
-import LaunchContextProvider, { DEFAULT_CONFIG, LaunchConfig, LaunchStep, useLaunch } from "@/contexts/LaunchContext";
 
 function LaunchPage() {
   const { config, setConfig } = useLaunch();
@@ -20,13 +24,17 @@ function LaunchPage() {
   }, []);
 
   const setCurrentStep = (step: LaunchStep) => {
-    setConfig({ ...config, step, lastCompletedStep: Math.max(step - 1, config.lastCompletedStep) });
+    setConfig({
+      ...config,
+      step,
+      lastCompletedStep: Math.max(step - 1, config.lastCompletedStep),
+    });
   };
 
   const handleStepChange = (step: number) => {
     // Only allow going back, to the current step, to the next step, or to a completed step
     if (
-      step <= config.step ||  
+      step <= config.step ||
       step === config.step + 1 ||
       config.lastCompletedStep === step
     ) {
@@ -70,9 +78,7 @@ function LaunchPage() {
         )}
 
         {[LaunchStep.Deploy, LaunchStep.Complete].includes(config.step) && (
-          <TokenCreationForm
-            onStepChange={handleStepChange}
-          />
+          <TokenCreationForm onStepChange={handleStepChange} />
         )}
       </div>
     </Container>

@@ -17,6 +17,7 @@ import {
   normalizeSuiAddress,
 } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
+
 import {
   Explorer,
   Token,
@@ -24,21 +25,13 @@ import {
   getToken,
   isSui,
 } from "@suilend/frontend-sui";
-import {
-  PoolScriptFunctions,
-  SteammSDK,
-} from "@suilend/steamm-sdk";
-import {
-  BanksData,
-  OraclesData,
-} from "@/contexts/AppContext";
-import {
-  formatFeeTier,
-  formatPair,
-} from "@/lib/format";
+import { PoolScriptFunctions, SteammSDK } from "@suilend/steamm-sdk";
+
+import { BanksData, OraclesData } from "@/contexts/AppContext";
+import { formatFeeTier, formatPair } from "@/lib/format";
+import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
-import { POOL_URL_PREFIX } from "@/lib/navigation";
 
 const generate_bytecode = (
   module: string,
@@ -302,7 +295,7 @@ export const createPool = async (
         index,
         "symbol:",
         tokens[index].symbol,
-        tokens
+        tokens,
       );
       await steammClient.Bank.createBank(createBanksTransaction, {
         coinType: tokens[index].coinType,
@@ -505,8 +498,13 @@ export const createPool = async (
 
   const res = await signExecuteAndWaitForTransaction(transaction);
 
-  const poolObject = res.objectChanges?.find(o => o.type === "created" && o.objectType.includes("Pool"));
-  const poolUrl = poolObject?.type === 'created' ? `${POOL_URL_PREFIX}/${poolObject.objectId}-${tokens[0].symbol}-${tokens[1].symbol}-${QUOTER_ID_NAME_MAP[quoterId]}-${feeTierPercent * 100}` : null;
+  const poolObject = res.objectChanges?.find(
+    (o) => o.type === "created" && o.objectType.includes("Pool"),
+  );
+  const poolUrl =
+    poolObject?.type === "created"
+      ? `${POOL_URL_PREFIX}/${poolObject.objectId}-${tokens[0].symbol}-${tokens[1].symbol}-${QUOTER_ID_NAME_MAP[quoterId]}-${feeTierPercent * 100}`
+      : null;
   const txUrl = explorer.buildTxUrl(res.digest);
 
   showSuccessTxnToast(
@@ -520,10 +518,11 @@ export const createPool = async (
   return {
     poolUrl,
     txnDigests: [
-    createBTokenResults[0]?.digest,
-    createBTokenResults[1]?.digest,
-    ...bankDigests,
-    createLpTokenResult?.digest,
-    res.digest,
-    ].filter(Boolean) as string[]};
+      createBTokenResults[0]?.digest,
+      createBTokenResults[1]?.digest,
+      ...bankDigests,
+      createLpTokenResult?.digest,
+      res.digest,
+    ].filter(Boolean) as string[],
+  };
 };

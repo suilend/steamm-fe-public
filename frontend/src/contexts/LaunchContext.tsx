@@ -1,10 +1,17 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 import { bcs } from "@mysten/bcs";
 import init, * as template from "@mysten/move-bytecode-template";
 import { Transaction } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 import * as Sentry from "@sentry/nextjs";
+import { useLocalStorage } from "usehooks-ts";
 
 import {
   showErrorToast,
@@ -16,8 +23,6 @@ import { createPool } from "@/components/launch/launch";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import { QuoterId } from "@/lib/types";
-import { useLocalStorage } from "usehooks-ts";
-
 
 const SUI_COIN_TYPE =
   "0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI";
@@ -250,16 +255,19 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
     "launch-config",
     DEFAULT_CONFIG,
   );
-  const [ tempConfig, setTempConfig ] = useState<LaunchConfig | null>(null);
+  const [tempConfig, setTempConfig] = useState<LaunchConfig | null>(null);
   const config = tempConfig ?? configRaw;
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, banksData } = useLoadedAppContext();
   const [txnInProgress, setTxnInProgress] = useState(false);
   const { balancesCoinMetadataMap, refreshRawBalancesMap } = useUserContext();
-  const setConfigWrap = useCallback((update: Partial<LaunchConfig>) => {
-    setConfig(prev => ({...prev, ...update}));
-  }, [setConfig]);
+  const setConfigWrap = useCallback(
+    (update: Partial<LaunchConfig>) => {
+      setConfig((prev) => ({ ...prev, ...update }));
+    },
+    [setConfig],
+  );
 
   useEffect(() => {
     if (config.lastCompletedStep === LaunchStep.Complete) {
@@ -268,8 +276,8 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       setTempConfig(null);
     }
-  }, [config.lastCompletedStep]);
-  
+  }, [config.lastCompletedStep, configRaw, setConfig]);
+
   const launchToken = async (): Promise<LaunchConfig | null> => {
     const pendingUpdates: Partial<LaunchConfig> = {
       error: null,
@@ -284,15 +292,19 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
       );
       return null;
     }
-    
+
     const mergedConfig = {
       ...config,
       ...pendingUpdates,
     };
     // Publish Step
     try {
-      if (!mergedConfig.tokenType || !mergedConfig.treasuryCapChange || !mergedConfig.coinMetadataChange) {
-        setConfigWrap({status: TokenCreationStatus.Publishing});
+      if (
+        !mergedConfig.tokenType ||
+        !mergedConfig.treasuryCapChange ||
+        !mergedConfig.coinMetadataChange
+      ) {
+        setConfigWrap({ status: TokenCreationStatus.Publishing });
 
         // Preemptively initialize the WASM module at the start of the function
         await ensureModuleInitialized();
@@ -306,7 +318,10 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
         // Publish the module
         const [upgradeCap] = transaction.publish({
           modules: [[...bytecode]],
-          dependencies: [normalizeSuiAddress("0x1"), normalizeSuiAddress("0x2")],
+          dependencies: [
+            normalizeSuiAddress("0x1"),
+            normalizeSuiAddress("0x2"),
+          ],
         });
 
         // Transfer the upgrade cap to the sender
@@ -354,70 +369,77 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
           [TokenCreationStatus.Publishing]: [res.digest],
         };
         setConfigWrap({
-            status: TokenCreationStatus.Minting,
-            transactionDigests: {
-              ...mergedConfig.transactionDigests,
-              [TokenCreationStatus.Publishing]: [res.digest],
-            },
-            tokenType: tokenType,
-            treasuryCapChange: treasuryCapChange,
-            coinMetadataChange: coinMetadataChange,
-          });
+          status: TokenCreationStatus.Minting,
+          transactionDigests: {
+            ...mergedConfig.transactionDigests,
+            [TokenCreationStatus.Publishing]: [res.digest],
+          },
+          tokenType: tokenType,
+          treasuryCapChange: treasuryCapChange,
+          coinMetadataChange: coinMetadataChange,
+        });
       }
       // Mint Step
 
       // Mint initial supply if specified
-      if (config.initialSupply && parseFloat(config.initialSupply) > 0 && mergedConfig.tokenType && mergedConfig.treasuryCapChange && mergedConfig.coinMetadataChange && mergedConfig.status <= TokenCreationStatus.Minting) {
+      if (
+        config.initialSupply &&
+        parseFloat(config.initialSupply) > 0 &&
+        mergedConfig.tokenType &&
+        mergedConfig.treasuryCapChange &&
+        mergedConfig.coinMetadataChange &&
+        mergedConfig.status <= TokenCreationStatus.Minting
+      ) {
+        // Create a new transaction for minting initial supply
+        const mintTransaction = new Transaction();
 
-          // Create a new transaction for minting initial supply
-          const mintTransaction = new Transaction();
+        // Convert initialSupply to the smallest denomination based on decimals
+        const initialSupplyAmount = BigInt(
+          Math.floor(
+            parseFloat(config.initialSupply) *
+              Math.pow(10, config.tokenDecimals),
+          ),
+        );
 
-          // Convert initialSupply to the smallest denomination based on decimals
-          const initialSupplyAmount = BigInt(
-            Math.floor(
-              parseFloat(config.initialSupply) *
-                Math.pow(10, config.tokenDecimals),
-            ),
-          );
+        // Create mint transaction using the standard coin::mint function
+        // and providing our token type as a type argument
+        const mintedCoin = mintTransaction.moveCall({
+          target: `0x2::coin::mint`,
+          arguments: [
+            mintTransaction.object(mergedConfig.treasuryCapChange.objectId),
+            mintTransaction.pure.u64(initialSupplyAmount.toString()),
+          ],
+          typeArguments: [mergedConfig.tokenType],
+        });
 
-          // Create mint transaction using the standard coin::mint function
-          // and providing our token type as a type argument
-          const mintedCoin = mintTransaction.moveCall({
-            target: `0x2::coin::mint`,
-            arguments: [
-              mintTransaction.object(mergedConfig.treasuryCapChange.objectId),
-              mintTransaction.pure.u64(initialSupplyAmount.toString()),
-            ],
-            typeArguments: [mergedConfig.tokenType],
-          });
+        // Transfer the minted coins to the creator's address
+        mintTransaction.transferObjects([mintedCoin], address);
 
-          // Transfer the minted coins to the creator's address
-          mintTransaction.transferObjects([mintedCoin], address);
+        // Execute the mint transaction
+        const mintRes = await signExecuteAndWaitForTransaction(mintTransaction);
 
-          // Execute the mint transaction
-          const mintRes =
-            await signExecuteAndWaitForTransaction(mintTransaction);
-
-          mergedConfig.status = TokenCreationStatus.Publishing;
-          mergedConfig.transactionDigests = {
+        mergedConfig.status = TokenCreationStatus.Publishing;
+        mergedConfig.transactionDigests = {
+          ...mergedConfig.transactionDigests,
+          [TokenCreationStatus.Minting]: [mintRes.digest],
+        };
+        setConfigWrap({
+          status: TokenCreationStatus.Pooling,
+          transactionDigests: {
             ...mergedConfig.transactionDigests,
             [TokenCreationStatus.Minting]: [mintRes.digest],
-          };
-          setConfigWrap({
-            status: TokenCreationStatus.Pooling,
-            transactionDigests: {
-              ...mergedConfig.transactionDigests,
-              [TokenCreationStatus.Minting]: [mintRes.digest],
-            },
-          });
+          },
+        });
       }
 
-
       // After minting and before calling createPool
-      let newTokenMetadata = balancesCoinMetadataMap?.[mergedConfig.tokenType] ?? null;
+      let newTokenMetadata =
+        balancesCoinMetadataMap?.[mergedConfig.tokenType] ?? null;
       if (!newTokenMetadata) {
         // Fetch from chain if not present
-        newTokenMetadata = await suiClient.getCoinMetadata({ coinType: mergedConfig.tokenType });
+        newTokenMetadata = await suiClient.getCoinMetadata({
+          coinType: mergedConfig.tokenType,
+        });
         // Optionally, update your balancesCoinMetadataMap here if needed
       }
 
@@ -440,7 +462,10 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
           },
           suiClient,
           steammClient,
-          [(Math.floor(Number(mergedConfig.initialSupply) * 0.1)).toString(), (10 ** -9).toString()],
+          [
+            Math.floor(Number(mergedConfig.initialSupply) * 0.1).toString(),
+            (10 ** -9).toString(),
+          ],
         );
 
         mergedConfig.status = TokenCreationStatus.Success;
@@ -468,7 +493,12 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (err) {
       const error = err as any;
       console.error(error);
-      showErrorToast("Failed to create token", new Error(error?.shape?.message ?? error), undefined, true);
+      showErrorToast(
+        "Failed to create token",
+        new Error(error?.shape?.message ?? error),
+        undefined,
+        true,
+      );
       console.error(err);
       Sentry.captureException(err);
       mergedConfig.error = error?.shape?.message ?? error?.message ?? error;

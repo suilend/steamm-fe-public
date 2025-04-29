@@ -1,5 +1,7 @@
 import { ChangeEvent, useState } from "react";
+
 import { ChevronDown, ChevronUp, InfoIcon, Upload } from "lucide-react";
+
 import Parameter from "@/components/Parameter";
 import TextInput from "@/components/TextInput";
 import {
@@ -264,11 +266,11 @@ export default function TokenBasicInfo({
     setShowAdvancedOptions(!showAdvancedOptions);
   };
 
-  console.log('config', config);
+  console.log("config", config);
 
   return (
     <form onSubmit={handleSubmit}>
-      <h1 className="text-h1 text-foreground mb-4">Configure your token</h1>
+      <h1 className="mb-4 text-h1 text-foreground">Configure your token</h1>
       <Parameter label="Token Name">
         <div className="flex w-full flex-col gap-2">
           <div className="relative">
@@ -374,7 +376,7 @@ export default function TokenBasicInfo({
               className={cn(
                 "flex h-20 w-full cursor-pointer items-center justify-center rounded-md border-2 border-dashed hover:bg-background/50",
                 touched.icon && errors.icon ? "border-error" : "border-border",
-                ((touched.icon && isValid.icon && iconFile) || config.iconUrl)
+                (touched.icon && isValid.icon && iconFile) || config.iconUrl
                   ? "border-success"
                   : "",
               )}
@@ -390,12 +392,12 @@ export default function TokenBasicInfo({
                 htmlFor="icon-upload"
                 className="flex h-full w-full cursor-pointer flex-col items-center justify-center"
               >
-                {(config.iconUrl || iconFile) ? (
+                {config.iconUrl || iconFile ? (
                   <div className="flex items-center space-x-2">
                     <img
                       src={config.iconUrl ?? URL.createObjectURL(iconFile!)}
                       alt="Token icon preview"
-                      className="h-10 w-10 object-contain rounded-full overflow-hidden"
+                      className="h-10 w-10 overflow-hidden rounded-full object-contain"
                     />
                     <span className="text-sm text-foreground">
                       {config.iconFileName ?? iconFile?.name}
