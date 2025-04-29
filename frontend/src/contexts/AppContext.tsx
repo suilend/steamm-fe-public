@@ -133,6 +133,7 @@ interface AppContext {
   setSlippagePercent: (slippagePercent: number) => void;
 
   featuredPoolIds: string[] | undefined;
+  verifiedPoolIds: string[] | undefined;
 }
 type LoadedAppContext = AppContext & {
   steammClient: SteammSDK;
@@ -168,6 +169,7 @@ const AppContext = createContext<AppContext>({
   },
 
   featuredPoolIds: undefined,
+  verifiedPoolIds: undefined,
 });
 
 export const useAppContext = () => useContext(AppContext);
@@ -241,6 +243,12 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     [flags?.steammFeaturedPoolIds],
   );
 
+  // Verified pools
+  const verifiedPoolIds: string[] | undefined = useMemo(
+    () => flags?.steammVerifiedPoolIds ?? [],
+    [flags?.steammVerifiedPoolIds],
+  );
+
   // Context
   const contextValue: AppContext = useMemo(
     () => ({
@@ -262,6 +270,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       setSlippagePercent,
 
       featuredPoolIds,
+      verifiedPoolIds,
     }),
     [
       steammClient,
@@ -276,6 +285,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       slippagePercent,
       setSlippagePercent,
       featuredPoolIds,
+      verifiedPoolIds,
     ],
   );
 

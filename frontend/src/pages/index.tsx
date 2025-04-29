@@ -1,6 +1,6 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { Search, X } from "lucide-react";
@@ -28,6 +28,50 @@ import {
 import { ParsedPool, PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+interface PoolsSearchInputProps {
+  placeholder?: string;
+  value: string;
+  onChange: (searchString: string) => void;
+}
+
+function PoolsSearchInput({
+  placeholder,
+  value,
+  onChange,
+}: PoolsSearchInputProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const { md } = useBreakpoint();
+
+  return (
+    <div className="relative z-[1] h-10 rounded-md bg-card transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))] max-md:max-w-[180px] max-md:flex-1 md:w-[240px]">
+      <Search className="pointer-events-none absolute left-3 top-3 z-[2] h-4 w-4 text-secondary-foreground" />
+      {value !== "" && (
+        <button
+          className="group absolute right-1 top-1 z-[2] flex h-8 w-8 flex-row items-center justify-center"
+          onClick={() => {
+            onChange("");
+            inputRef.current?.focus();
+          }}
+        >
+          <X className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
+        </button>
+      )}
+      <input
+        ref={inputRef}
+        className={cn(
+          "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] pl-9 text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground",
+          value !== "" ? "pr-9" : "pr-3",
+        )}
+        type="text"
+        placeholder={md ? placeholder : "Search..."}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
 enum RhsChartStat {
   VOLUME = "volume",
   FEES = "fees",
@@ -45,7 +89,8 @@ export default function PoolsPage() {
       | undefined,
   };
 
-  const { appData, poolsData, featuredPoolIds } = useLoadedAppContext();
+  const { appData, poolsData, featuredPoolIds, verifiedPoolIds } =
+    useLoadedAppContext();
   const { poolStats, globalHistoricalStats, globalStats } = useStatsContext();
 
   const { sm } = useBreakpoint();
@@ -170,7 +215,7 @@ export default function PoolsPage() {
     }));
   }, [poolsWithExtraData]);
 
-  // Featured pools
+  // Featured pools (flat)
   const featuredPoolGroups = useMemo(
     () =>
       featuredPoolIds === undefined || poolsWithExtraData === undefined
@@ -185,33 +230,63 @@ export default function PoolsPage() {
     [featuredPoolIds, poolsWithExtraData],
   );
 
+  // Verified pools (groups)
+  const verifiedPoolGroups = useMemo(
+    () =>
+      verifiedPoolIds === undefined || poolGroups === undefined
+        ? undefined
+        : poolGroups
+            .filter((poolGroup) =>
+              poolGroup.pools.some((pool) => verifiedPoolIds.includes(pool.id)),
+            )
+            .map((poolGroup) => ({
+              ...poolGroup,
+              pools: poolGroup.pools.filter((pool) =>
+                verifiedPoolIds.includes(pool.id),
+              ),
+            })),
+    [verifiedPoolIds, poolGroups],
+  );
+
   // Search
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [searchString, setSearchString] = useState<string>("");
+  const getFilteredPoolGroups = useCallback(
+    (_searchString: string, _poolGroups: PoolGroup[] | undefined) => {
+      if (_poolGroups === undefined) return undefined;
+      if (_searchString === "") return _poolGroups;
 
-  const filteredPoolGroups = useMemo(() => {
-    if (poolGroups === undefined) return undefined;
-    if (searchString === "") return poolGroups;
-
-    return poolGroups
-      .filter((poolGroup) =>
-        poolGroup.coinTypes.some((coinType) =>
-          `${poolGroup.pools.map((pool) => pool.id).join("__")}__${coinType}__${appData.coinMetadataMap[coinType].symbol}`
-            .toLowerCase()
-            .includes(searchString.toLowerCase()),
-        ),
-      )
-      .map((poolGroup) => ({
-        ...poolGroup,
-        pools: poolGroup.pools.filter((pool) =>
-          pool.coinTypes.some((coinType) =>
-            `${pool.id}__${coinType}__${appData.coinMetadataMap[coinType].symbol}`
+      return _poolGroups
+        .filter((poolGroup) =>
+          poolGroup.coinTypes.some((coinType) =>
+            `${poolGroup.pools.map((pool) => pool.id).join("__")}__${coinType}__${appData.coinMetadataMap[coinType].symbol}`
               .toLowerCase()
-              .includes(searchString.toLowerCase()),
+              .includes(_searchString.toLowerCase()),
           ),
-        ),
-      }));
-  }, [poolGroups, searchString, appData.coinMetadataMap]);
+        )
+        .map((poolGroup) => ({
+          ...poolGroup,
+          pools: poolGroup.pools.filter((pool) =>
+            pool.coinTypes.some((coinType) =>
+              `${pool.id}__${coinType}__${appData.coinMetadataMap[coinType].symbol}`
+                .toLowerCase()
+                .includes(_searchString.toLowerCase()),
+            ),
+          ),
+        }));
+    },
+    [appData.coinMetadataMap],
+  );
+
+  // Search - verified pools
+  const [verifiedPoolsSearchString, setVerifiedPoolsSearchString] =
+    useState<string>("");
+  const filteredVerifiedPoolGroups = getFilteredPoolGroups(
+    verifiedPoolsSearchString,
+    verifiedPoolGroups,
+  );
+
+  // Search - all pools
+  const [searchString, setSearchString] = useState<string>("");
+  const filteredPoolGroups = getFilteredPoolGroups(searchString, poolGroups);
 
   return (
     <>
@@ -307,6 +382,20 @@ export default function PoolsPage() {
                   <Tag>{featuredPoolGroups.length}</Tag>
                 )}
               </div>
+
+              {/* Create pool */}
+              <Tooltip title="Coming soon">
+                <div className="w-max">
+                  <button
+                    className="flex h-10 flex-row items-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
+                    disabled
+                  >
+                    <p className="text-p2 text-button-1-foreground">
+                      Create pool
+                    </p>
+                  </button>
+                </div>
+              </Tooltip>
             </div>
 
             <PoolsTable
@@ -316,6 +405,38 @@ export default function PoolsPage() {
             />
           </div>
         )}
+
+        {/* Verified pools */}
+        <div className="flex w-full flex-col gap-6">
+          <div className="flex h-[30px] w-full flex-row items-center justify-between gap-4">
+            <div className="flex flex-row items-center gap-3">
+              <h2 className="text-h3 text-foreground">Verified pools</h2>
+
+              {filteredVerifiedPoolGroups === undefined ? (
+                <Skeleton className="h-5 w-12" />
+              ) : (
+                <Tag>
+                  {filteredVerifiedPoolGroups.reduce(
+                    (acc, poolGroup) => acc + poolGroup.pools.length,
+                    0,
+                  )}
+                </Tag>
+              )}
+            </div>
+
+            <PoolsSearchInput
+              placeholder="Search verified pools..."
+              value={verifiedPoolsSearchString}
+              onChange={setVerifiedPoolsSearchString}
+            />
+          </div>
+
+          <PoolsTable
+            tableId="verified-pools"
+            poolGroups={filteredVerifiedPoolGroups}
+            searchString={verifiedPoolsSearchString}
+          />
+        </div>
 
         {/* All pools */}
         <div className="flex w-full flex-col gap-6">
@@ -335,48 +456,11 @@ export default function PoolsPage() {
               )}
             </div>
 
-            <div className="flex flex-row items-center justify-end gap-2 max-md:flex-1">
-              {/* Filter */}
-              <div className="relative z-[1] h-10 max-w-[180px] rounded-md bg-card transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))] max-md:flex-1 md:w-[180px]">
-                <Search className="pointer-events-none absolute left-3 top-3 z-[2] h-4 w-4 text-secondary-foreground" />
-                {searchString !== "" && (
-                  <button
-                    className="group absolute right-1 top-1 z-[2] flex h-8 w-8 flex-row items-center justify-center"
-                    onClick={() => {
-                      setSearchString("");
-                      inputRef.current?.focus();
-                    }}
-                  >
-                    <X className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
-                  </button>
-                )}
-                <input
-                  ref={inputRef}
-                  className={cn(
-                    "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] pl-9 text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground",
-                    searchString !== "" ? "pr-9" : "pr-3",
-                  )}
-                  type="text"
-                  placeholder={sm ? "Search pools..." : "Search..."}
-                  value={searchString}
-                  onChange={(e) => setSearchString(e.target.value)}
-                />
-              </div>
-
-              {/* Create pool */}
-              <Tooltip title="Coming soon">
-                <div className="w-max">
-                  <button
-                    className="flex h-10 flex-row items-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
-                    disabled
-                  >
-                    <p className="text-p2 text-button-1-foreground">
-                      Create pool
-                    </p>
-                  </button>
-                </div>
-              </Tooltip>
-            </div>
+            <PoolsSearchInput
+              placeholder="Search pools..."
+              value={searchString}
+              onChange={setSearchString}
+            />
           </div>
 
           <PoolsTable
