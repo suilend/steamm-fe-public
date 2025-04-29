@@ -7,6 +7,11 @@ import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
+export enum TokenDirection {
+  IN = "in",
+  OUT = "out",
+}
+
 export type ParsedBank = {
   id: string;
   bank: Bank<string, string, string>;
@@ -82,13 +87,14 @@ export type PoolPosition = {
 };
 
 export enum HistoryTransactionType {
-  DEPOSIT = "DEPOSIT",
-  REDEEM = "REDEEM",
+  DEPOSIT = "deposit",
+  WITHDRAW = "withdraw",
+  SWAP = "swap",
 }
 
 export type HistoryDeposit = {
   id: number;
-  timestamp: string;
+  timestamp: number;
   digest: string;
   eventIndex: number;
   user: string;
@@ -107,9 +113,9 @@ export type HistoryDeposit = {
   type: HistoryTransactionType.DEPOSIT;
 };
 
-export type HistoryRedeem = {
+export type HistoryWithdraw = {
   id: number;
-  timestamp: string;
+  timestamp: number;
   digest: string;
   eventIndex: number;
   user: string;
@@ -127,10 +133,24 @@ export type HistoryRedeem = {
   coin_b_price: number;
 
   // Custom
-  type: HistoryTransactionType.REDEEM;
+  type: HistoryTransactionType.WITHDRAW;
 };
 
-export enum TokenDirection {
-  IN = "in",
-  OUT = "out",
-}
+export type HistorySwap = {
+  id: number;
+  timestamp: number;
+  digest: string;
+  eventIndex: number;
+  user: string;
+  pool_id: string;
+  amount_in: string;
+  amount_out: string;
+  a_to_b: boolean;
+  protocol_fees: string;
+  pool_fees: string;
+  balance_a: string;
+  balance_b: string;
+
+  // Custom
+  type: HistoryTransactionType.SWAP;
+};

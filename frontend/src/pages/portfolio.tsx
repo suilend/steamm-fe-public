@@ -82,21 +82,26 @@ export default function PortfolioPage() {
                                   : entry.coin_b_price || pool.prices[1], // Use current price if coin_b_price is missing or 0
                               ),
                           )
-                        : acc.minus(
-                            new BigNumber(
-                              index === 0 ? entry.withdraw_a : entry.withdraw_b,
-                            )
-                              .div(
-                                10 **
-                                  appData.coinMetadataMap[pool.coinTypes[index]]
-                                    .decimals,
-                              )
-                              .times(
+                        : entry.type === HistoryTransactionType.WITHDRAW
+                          ? acc.minus(
+                              new BigNumber(
                                 index === 0
-                                  ? entry.coin_a_price || pool.prices[0] // Use current price if coin_a_price is missing or 0
-                                  : entry.coin_b_price || pool.prices[1], // Use current price if coin_b_price is missing or 0
-                              ),
-                          ),
+                                  ? entry.withdraw_a
+                                  : entry.withdraw_b,
+                              )
+                                .div(
+                                  10 **
+                                    appData.coinMetadataMap[
+                                      pool.coinTypes[index]
+                                    ].decimals,
+                                )
+                                .times(
+                                  index === 0
+                                    ? entry.coin_a_price || pool.prices[0] // Use current price if coin_a_price is missing or 0
+                                    : entry.coin_b_price || pool.prices[1], // Use current price if coin_b_price is missing or 0
+                                ),
+                            )
+                          : acc, // Swap transactions have no effect on the deposited amount
                     new BigNumber(0),
                   ),
                 );
@@ -471,7 +476,17 @@ export default function PortfolioPage() {
             addressGlobalTransactionHistory === undefined ? (
               <Skeleton className="h-5 w-12" />
             ) : (
-              <Tag>{addressGlobalTransactionHistory.length}</Tag>
+              <Tag>
+                {
+                  addressGlobalTransactionHistory.filter(
+                    (transaction) =>
+                      !addressGlobalTransactionHistory.some(
+                        (transaction2) =>
+                          transaction.digest === transaction2.digest,
+                      ),
+                  ).length
+                }
+              </Tag>
             )}
           </div>
 

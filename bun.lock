@@ -32,9 +32,9 @@
         "@radix-ui/react-popover": "^1.1.2",
         "@radix-ui/react-tooltip": "^1.1.4",
         "@sentry/nextjs": "^8.38.0",
-        "@suilend/frontend-sui": "^0.2.59",
+        "@suilend/frontend-sui": "^0.2.60",
         "@suilend/frontend-sui-next": "^0.1.28",
-        "@suilend/sdk": "^1.1.52",
+        "@suilend/sdk": "^1.1.53",
         "@suilend/springsui-sdk": "^1.0.22",
         "@tanstack/react-table": "^8.20.5",
         "@vercel/analytics": "^1.4.0",
@@ -81,11 +81,11 @@
     },
     "sdk": {
       "name": "@suilend/steamm-sdk-local",
-      "version": "0.0.21",
+      "version": "0.0.22",
       "dependencies": {
         "@pythnetwork/pyth-sui-js": "^2.1.0",
-        "@suilend/frontend-sui": "^0.2.59",
-        "@suilend/sdk": "^1.1.52",
+        "@suilend/frontend-sui": "^0.2.60",
+        "@suilend/sdk": "^1.1.53",
         "bignumber.js": "^9.1.2",
         "dotenv": "^16.4.7",
         "p-limit": "3.1.0",
@@ -617,11 +617,11 @@
 
     "@sinonjs/fake-timers": ["@sinonjs/fake-timers@10.3.0", "", { "dependencies": { "@sinonjs/commons": "^3.0.0" } }, "sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA=="],
 
-    "@suilend/frontend-sui": ["@suilend/frontend-sui@0.2.59", "", { "dependencies": { "@pythnetwork/pyth-sui-js": "^2.1.0", "bignumber.js": "^9.1.2", "lodash": "^4.17.21", "mixpanel-browser": "^2.56.0", "next": "^15.0.3" }, "peerDependencies": { "@mysten/sui": "1.28.2", "date-fns": "^4.1.0" } }, "sha512-HvymFnmF72CVuJt5QETRf+R5nF2peCKlPX12KrnyuWQ1Di5NLk/qbCB7VEMFN04GmiizpyvzNucJPQZHi8Ifqw=="],
+    "@suilend/frontend-sui": ["@suilend/frontend-sui@0.2.60", "", { "dependencies": { "@pythnetwork/pyth-sui-js": "^2.1.0", "bignumber.js": "^9.1.2", "lodash": "^4.17.21", "mixpanel-browser": "^2.56.0", "next": "^15.0.3" }, "peerDependencies": { "@mysten/sui": "1.28.2", "date-fns": "^4.1.0" } }, "sha512-BecPHBgHV9mhCMw2npTmowaH1o4bIEiZnB8u9PiYWknO6LWAmKFmQJkpHmaobmqtN4G6YS6uJspNJKEFg/lb3w=="],
 
     "@suilend/frontend-sui-next": ["@suilend/frontend-sui-next@0.1.28", "", { "dependencies": { "@sentry/nextjs": "^8.38.0", "@tanstack/react-query": "^5.60.2", "bignumber.js": "^9.1.2", "launchdarkly-react-client-sdk": "^3.6.0", "lodash": "^4.17.21", "mixpanel-browser": "^2.56.0", "next": "^15.0.3", "react": "18.3.1", "react-dom": "18.3.1", "react-responsive": "^10.0.0", "shio-sdk": "^1.0.8", "sonner": "1.4.41", "swr": "^2.2.5", "tailwind-merge": "^2.5.4", "usehooks-ts": "^3.1.0" }, "peerDependencies": { "@mysten/dapp-kit": "0.16.0", "@mysten/sui": "1.28.2", "@mysten/wallet-standard": "0.14.7", "@suilend/frontend-sui": "^0.2.59" } }, "sha512-X1J60uF/FXXitH7Ma0eaunLCTE3eIEv3V9Pcou/N38buf26yTCLKN0zgt/FaTeE7/Sdnrww4Rwzv1T7/gnfFNA=="],
 
-    "@suilend/sdk": ["@suilend/sdk@1.1.52", "", { "dependencies": { "@pythnetwork/pyth-sui-js": "^2.1.0", "bignumber.js": "^9.1.2", "p-limit": "3.1.0", "uuid": "^11.0.3" }, "peerDependencies": { "@mysten/bcs": "1.6.0", "@mysten/sui": "1.28.2", "@suilend/frontend-sui": "^0.2.58" } }, "sha512-b6AieEba70GPJIkG1FzLraqC8N9woz2iNsscUDouDqMMWcbAodQSfoLX/N1XCgIp3DH9oTaiPsDMDpwU4PFdwQ=="],
+    "@suilend/sdk": ["@suilend/sdk@1.1.53", "", { "dependencies": { "@pythnetwork/pyth-sui-js": "^2.1.0", "bignumber.js": "^9.1.2", "p-limit": "3.1.0", "uuid": "^11.0.3" }, "peerDependencies": { "@mysten/bcs": "1.6.0", "@mysten/sui": "1.28.2", "@suilend/frontend-sui": "^0.2.60" } }, "sha512-/oTxNfeNcz9VYocjuIG1/ehrSh9LaVZbohoHJ4f/w9yDwiBBdzEAJDYGip1CrcyWXu4neuuajdPQQHa7HJOG1w=="],
 
     "@suilend/springsui-sdk": ["@suilend/springsui-sdk@1.0.22", "", { "dependencies": { "bignumber.js": "^9.1.2" }, "peerDependencies": { "@mysten/bcs": "1.6.0", "@mysten/sui": "1.28.2" } }, "sha512-i/TY/dDcSjigTGmchNJcg986VjoTqtpcOQGPIMaHrxqIQj6hJap5emETtGVoTywB5Y5OeMVVS35yycAhhqvctQ=="],
 

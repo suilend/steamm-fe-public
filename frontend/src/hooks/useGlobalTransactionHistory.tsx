@@ -4,20 +4,19 @@ import * as Sentry from "@sentry/nextjs";
 
 import { showErrorToast, useWalletContext } from "@suilend/frontend-sui-next";
 
-import { API_URL } from "@/lib/navigation";
-import {
-  HistoryDeposit,
-  HistoryRedeem,
-  HistoryTransactionType,
-} from "@/lib/types";
+import { fetchHistoricalLpTransactions } from "@/lib/lp";
+import { fetchHistoricalSwapTransactions } from "@/lib/swap";
+import { HistoryDeposit, HistorySwap, HistoryWithdraw } from "@/lib/types";
 
 const useGlobalTransactionHistory = () => {
   const { address } = useWalletContext();
 
   const [globalTransactionHistoryMap, setGlobalTransactionHistoryMap] =
-    useState<Record<string, (HistoryDeposit | HistoryRedeem)[]>>({});
+    useState<
+      Record<string, (HistoryDeposit | HistoryWithdraw | HistorySwap)[]>
+    >({});
   const globalTransactionHistory:
-    | (HistoryDeposit | HistoryRedeem)[]
+    | (HistoryDeposit | HistoryWithdraw | HistorySwap)[]
     | undefined = useMemo(
     () => (!address ? [] : globalTransactionHistoryMap[address]),
     [address, globalTransactionHistoryMap],
@@ -27,27 +26,26 @@ const useGlobalTransactionHistory = () => {
     console.log("fetchGlobalTransactionHistory");
 
     try {
-      const res = await fetch(
-        `${API_URL}/steamm/historical/lp?${new URLSearchParams({
-          user: address!, // Checked in useEffect below
-        })}`,
-      );
-      const json: {
-        deposits: Omit<HistoryDeposit, "type">[];
-        redeems: Omit<HistoryRedeem, "type">[];
-      } = await res.json();
-      if ((json as any)?.statusCode === 500) return;
+      const [lpTransactionHistory, swapTransactionHistory] = await Promise.all([
+        fetchHistoricalLpTransactions(
+          address!, // Checked in useEffect below
+        ),
+        fetchHistoricalSwapTransactions(
+          address!, // Checked in useEffect below
+        ),
+      ]);
 
       const transactionHistory = [
-        ...(json.deposits.map((entry) => ({
-          ...entry,
-          type: HistoryTransactionType.DEPOSIT,
-        })) as HistoryDeposit[]),
-        ...(json.redeems.map((entry) => ({
-          ...entry,
-          type: HistoryTransactionType.REDEEM,
-        })) as HistoryRedeem[]),
-      ].sort((a, b) => +b.timestamp - +a.timestamp); // Sort by timestamp (desc)
+        ...lpTransactionHistory,
+        ...swapTransactionHistory,
+      ]
+        .slice()
+        .sort(
+          (a, b) =>
+            a.timestamp === b.timestamp
+              ? a.eventIndex - b.eventIndex // Sort by eventIndex (asc) if timestamps are the same
+              : b.timestamp - a.timestamp, // Sort by timestamp (desc)
+        );
 
       setGlobalTransactionHistoryMap((prev) => ({
         ...prev,
