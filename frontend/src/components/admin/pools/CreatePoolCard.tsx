@@ -133,7 +133,13 @@ const LP_TOKEN_DESCRIPTION = "STEAMM LP Token";
 const LP_TOKEN_IMAGE_URL =
   "https://suilend-assets.s3.us-east-2.amazonaws.com/steamm/STEAMM+LP+Token.svg";
 
-export default function CreatePoolCard() {
+interface CreatePoolCardProps {
+  quoterId?: QuoterId;
+}
+
+export default function CreatePoolCard({
+  quoterId: hardcodedQuoterId,
+}: CreatePoolCardProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, oraclesData, banksData, poolsData } =
@@ -151,6 +157,27 @@ export default function CreatePoolCard() {
 
   // CoinTypes
   const [coinTypes, setCoinTypes] = useState<[string, string]>(["", ""]);
+
+  // Quoter
+  const [quoterId, setQuoterId] = useState<QuoterId | undefined>(
+    hardcodedQuoterId,
+  );
+
+  const onSelectQuoter = (newQuoterId: QuoterId) => {
+    if (oraclesData === undefined) return;
+    setQuoterId(newQuoterId);
+
+    if ([QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(newQuoterId)) {
+      setCoinTypes(
+        (prev) =>
+          prev.map((coinType) =>
+            oraclesData.COINTYPE_ORACLE_INDEX_MAP[coinType] === undefined
+              ? ""
+              : coinType,
+          ) as [string, string],
+      );
+    }
+  };
 
   // Values
   const maxValues = coinTypes.map((coinType) =>
@@ -181,7 +208,6 @@ export default function CreatePoolCard() {
     setValues(newValues);
     setLastActiveInputIndex(index);
   };
-  console.log("XXX", lastActiveInputIndex);
 
   // Values - max
   const onBalanceClick = (index: number) => {
@@ -260,14 +286,25 @@ export default function CreatePoolCard() {
   // Select
   const baseTokens = useMemo(
     () =>
-      Object.entries(balancesCoinMetadataMap ?? {})
-        .sort(
-          ([, a], [, b]) =>
-            a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1, // Sort by symbol (ascending)
-        )
-        .filter(([coinType]) => getBalance(coinType).gt(0))
-        .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata)),
-    [balancesCoinMetadataMap, getBalance],
+      oraclesData === undefined
+        ? []
+        : Object.entries(balancesCoinMetadataMap ?? {})
+            .sort(
+              ([, a], [, b]) =>
+                a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1, // Sort by symbol (ascending)
+            )
+            .filter(([coinType]) => getBalance(coinType).gt(0))
+            .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
+            .filter(
+              (token) =>
+                quoterId === undefined ||
+                !(
+                  [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId) &&
+                  oraclesData.COINTYPE_ORACLE_INDEX_MAP[token.coinType] ===
+                    undefined
+                ),
+            ),
+    [oraclesData, balancesCoinMetadataMap, quoterId, getBalance],
   );
 
   const quoteTokens = useMemo(
@@ -309,9 +346,6 @@ export default function CreatePoolCard() {
       250,
     );
   };
-
-  // Quoter
-  const [quoterId, setQuoterId] = useState<QuoterId | undefined>(undefined);
 
   // Amplifier
   const [amplifier, setAmplifier] = useState<number | undefined>(undefined);
@@ -492,12 +526,12 @@ export default function CreatePoolCard() {
     try {
       if (!address) throw new Error("Wallet not connected");
 
-      setIsSubmitting(true);
-
       const oracleIndexA = oraclesData.COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]];
       const oracleIndexB = oraclesData.COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]];
 
       if ([QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)) {
+        // Won't happen in practice, as we don't allow the user to select tokens that
+        // don't have an oracle index if the oracle/oracle V2 quoter is selected
         if (oracleIndexA === undefined)
           throw new Error(
             "Base asset coinType not found in COINTYPE_ORACLE_INDEX_MAP",
@@ -803,7 +837,7 @@ export default function CreatePoolCard() {
 
       setCoinTypes(["", ""]);
       setValues(["", ""]);
-      setQuoterId(undefined);
+      if (!hardcodedQuoterId) setQuoterId(undefined);
       setFeeTierPercent(undefined);
     } catch (err) {
       showErrorToast("Failed to create pool", err as Error, undefined, true);
@@ -925,52 +959,55 @@ export default function CreatePoolCard() {
       <Divider />
 
       {/* Quoter */}
-      <div className="flex flex-row items-center justify-between">
-        <p className="text-p2 text-secondary-foreground">Quoter</p>
+      {!hardcodedQuoterId && (
+        <div className="flex flex-row items-center justify-between">
+          <p className="text-p2 text-secondary-foreground">Quoter</p>
 
-        <div className="flex flex-row gap-1">
-          {Object.values(QuoterId).map((_quoterId) => {
-            const hasExistingPool = hasExistingPoolForQuoterFeeTierAndAmplifier(
-              _quoterId,
-              feeTierPercent,
-              amplifier,
-            );
+          <div className="flex flex-row gap-1">
+            {Object.values(QuoterId).map((_quoterId) => {
+              const hasExistingPool =
+                hasExistingPoolForQuoterFeeTierAndAmplifier(
+                  _quoterId,
+                  feeTierPercent,
+                  amplifier,
+                );
 
-            return (
-              <div key={_quoterId} className="w-max">
-                <Tooltip
-                  title={hasExistingPool ? existingPoolTooltip : undefined}
-                >
-                  <div className="w-max">
-                    <button
-                      key={_quoterId}
-                      className={cn(
-                        "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
-                        _quoterId === quoterId
-                          ? "cursor-default bg-button-1"
-                          : "hover:bg-border/50",
-                      )}
-                      onClick={() => setQuoterId(_quoterId)}
-                      disabled={hasExistingPool}
-                    >
-                      <p
+              return (
+                <div key={_quoterId} className="w-max">
+                  <Tooltip
+                    title={hasExistingPool ? existingPoolTooltip : undefined}
+                  >
+                    <div className="w-max">
+                      <button
+                        key={_quoterId}
                         className={cn(
-                          "!text-p2 transition-colors",
+                          "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
                           _quoterId === quoterId
-                            ? "text-button-1-foreground"
-                            : "text-secondary-foreground group-hover:text-foreground",
+                            ? "cursor-default bg-button-1"
+                            : "hover:bg-border/50",
                         )}
+                        onClick={() => onSelectQuoter(_quoterId)}
+                        disabled={hasExistingPool}
                       >
-                        {QUOTER_ID_NAME_MAP[_quoterId]}
-                      </p>
-                    </button>
-                  </div>
-                </Tooltip>
-              </div>
-            );
-          })}
+                        <p
+                          className={cn(
+                            "!text-p2 transition-colors",
+                            _quoterId === quoterId
+                              ? "text-button-1-foreground"
+                              : "text-secondary-foreground group-hover:text-foreground",
+                          )}
+                        >
+                          {QUOTER_ID_NAME_MAP[_quoterId]}
+                        </p>
+                      </button>
+                    </div>
+                  </Tooltip>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Amplifier */}
       {quoterId === QuoterId.ORACLE_V2 && (

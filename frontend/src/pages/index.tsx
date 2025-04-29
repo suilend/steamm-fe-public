@@ -457,7 +457,7 @@ export default function PoolsPage() {
             </div>
 
             <PoolsSearchInput
-              placeholder="Search pools..."
+              placeholder="Search all pools..."
               value={searchString}
               onChange={setSearchString}
             />
