@@ -7,7 +7,7 @@ import TokenBasicInfo from "@/components/launch/TokenBasicInfo";
 import TokenCreationForm from "@/components/launch/TokenCreationForm";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/lib/alert";
-import LaunchContextProvider, { DEFAULT_CONFIG, LaunchStep, useLaunch } from "@/contexts/LaunchContext";
+import LaunchContextProvider, { DEFAULT_CONFIG, LaunchConfig, LaunchStep, useLaunch } from "@/contexts/LaunchContext";
 
 function LaunchPage() {
   const { config, setConfig } = useLaunch();
@@ -42,7 +42,7 @@ function LaunchPage() {
 
   return (
     <Container className="flex w-full flex-col gap-6 py-4 sm:py-6">
-      {isResumed && (
+      {isResumed && config.lastCompletedStep !== LaunchStep.Complete && (
         <div className="border-info bg-info/10 mb-2 flex w-full items-center justify-between rounded-md border p-3">
           <p className="text-sm text-info">Resuming your previous session</p>
           <Button variant="outline" size="sm" onClick={handleStartOver}>
@@ -60,12 +60,6 @@ function LaunchPage() {
         </Alert>
       )}
 
-      <div className="w-full">
-        <LaunchStepper
-          onStepChange={handleStepChange}
-        />
-      </div>
-
       <div className="mt-4 w-full md:mx-auto md:max-w-2xl">
         {config.step === LaunchStep.Config && (
           <TokenBasicInfo
@@ -75,36 +69,10 @@ function LaunchPage() {
           />
         )}
 
-        {config.step === LaunchStep.Deploy && (
+        {[LaunchStep.Deploy, LaunchStep.Complete].includes(config.step) && (
           <TokenCreationForm
-            onSubmit={() => handleStepChange(LaunchStep.Complete)}
+            onStepChange={handleStepChange}
           />
-        )}
-
-        {config.step === LaunchStep.Complete && (
-          <div className="mx-auto flex max-w-md flex-col items-center space-y-6 rounded-lg border p-6 text-center">
-            <div className="rounded-full flex h-16 w-16 items-center justify-center bg-success/20">
-              <CheckCircle2 className="h-8 w-8 text-success" />
-            </div>
-
-            <div>
-              <h2 className="text-xl mb-2 font-semibold">Congratulations!</h2>
-              <p className="text-secondary-foreground">
-                You&apos;ve successfully created a token and liquidity pool.
-              </p>
-            </div>
-
-            <Button
-              variant="default"
-              size="lg"
-              onClick={() => {
-                window.location.href = "/";
-              }}
-              className="px-6"
-            >
-              Go to Dashboard
-            </Button>
-          </div>
         )}
       </div>
     </Container>

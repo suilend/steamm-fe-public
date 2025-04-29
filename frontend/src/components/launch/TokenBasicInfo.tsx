@@ -268,6 +268,7 @@ export default function TokenBasicInfo({
 
   return (
     <form onSubmit={handleSubmit}>
+      <h1 className="text-h1 text-foreground mb-4">Configure your token</h1>
       <Parameter label="Token Name">
         <div className="flex w-full flex-col gap-2">
           <div className="relative">
@@ -394,7 +395,7 @@ export default function TokenBasicInfo({
                     <img
                       src={config.iconUrl ?? URL.createObjectURL(iconFile!)}
                       alt="Token icon preview"
-                      className="h-10 w-10 object-contain"
+                      className="h-10 w-10 object-contain rounded-full overflow-hidden"
                     />
                     <span className="text-sm text-foreground">
                       {config.iconFileName ?? iconFile?.name}
@@ -588,7 +589,7 @@ export default function TokenBasicInfo({
                 <p className="text-xs text-secondary-foreground">
                   The total number of tokens that will be created initially
                 </p>
-                <InfoTooltip content="The total number of tokens to create initially. All will be sent to your wallet. You can mint more later if you enable the Mintable option." />
+                <InfoTooltip content="The total number of tokens to create initially. All will be sent to your wallet." />
               </div>
             </div>
           </Parameter>

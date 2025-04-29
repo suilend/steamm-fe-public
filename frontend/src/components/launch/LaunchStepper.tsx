@@ -1,6 +1,4 @@
 import { ClassValue } from "clsx";
-
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { TokenCreationStatus, useLaunch, LaunchStep } from "@/contexts/LaunchContext";
 
@@ -15,15 +13,23 @@ export default function LaunchStepper({
 }: LaunchStepperProps) {
   const { config } = useLaunch();
   const steps = [
-    { title: "Token Config", description: "Configure basic token info" },
-    { title: "Preview Launch", description: "Preview token details" },
-    { title: "Completed", description: "Token and pool created!" },
-  ].map((step, index) => ({
+    { title: "Token Config", description: "Configure basic token info", stepEnum: LaunchStep.Config },
+    { title: "Preview Launch", description: "Preview token details" , stepEnum: LaunchStep.Deploy},
+    { title: "Completed", description: "Token and pool created!", stepEnum: LaunchStep.Complete },
+  ].map((step) => {
+    let status = 'pending';
+    if (config.lastCompletedStep >= step.stepEnum) {
+      status = 'complete';
+    } else if (config.lastCompletedStep + 1 === step.stepEnum) {
+      status = 'current';
+    } else if ((step.stepEnum > Math.max(config.lastCompletedStep, config.step)) || (config.status > TokenCreationStatus.Publishing)) {
+      status = 'disabled';
+    };
+
+    return ({
     ...step,
-    currentStep: config.step === index,
-    complete: config.lastCompletedStep >= index,
-    disabled: (index > Math.max(config.lastCompletedStep, config.step)) || (config.status > TokenCreationStatus.Publishing),
-  }));
+    status,
+  })});
 
   return (
     <div className={cn("flex w-full flex-col gap-4", className)}>
@@ -35,11 +41,11 @@ export default function LaunchStepper({
               key={`mobile-step-${index}`}
               className={cn(
                 "flex flex-1 cursor-pointer flex-col",
-                step.disabled &&
+                step.status === 'disabled' &&
                   "cursor-not-allowed opacity-60",
               )}
               onClick={() => {
-                if (step.disabled) {
+                if (step.status === 'disabled') {
                   return;
                 }
                 onStepChange(index);
@@ -49,19 +55,19 @@ export default function LaunchStepper({
                 <div
                   className={cn(
                     "rounded-full h-1 w-full transition-colors",
-                    step.complete
+                    step.status === 'complete'
                       ? "bg-success"
-                      : step.currentStep
+                      : step.status === 'current'
                         ? "bg-foreground"
                         : "bg-border hover:bg-border/80",
                   )}
                 />
                 {/* Small indicator showing current step or checkmark for completed */}
-                {step.complete ? (
+                {step.status === 'complete' ? (
                   <div className="rounded-full absolute -bottom-4 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center bg-success text-[10px] text-background">
                     ✓
                   </div>
-                ) : step.currentStep ? (
+                ) : step.status === 'current' ? (
                   <div className="rounded-full absolute -bottom-4 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center bg-foreground text-[10px] text-background">
                     {index + 1}
                   </div>
@@ -88,12 +94,12 @@ export default function LaunchStepper({
           <div
             key={step.title}
             className={cn(
-              "flex flex-1 flex-col gap-2",
-              step.disabled &&
+              "flex flex-1 flex-col gap-2 cursor-pointer",
+              step.status === 'disabled' &&
                 "cursor-not-allowed opacity-60",
             )}
             onClick={() => {
-              if (step.disabled) {
+              if (step.status === 'disabled') {
                 return;
               }
               onStepChange(index);
@@ -102,9 +108,9 @@ export default function LaunchStepper({
             <div
               className={cn(
                 "rounded-full flex h-1 w-full transition-colors",
-                step.complete
+                step.status === 'complete'
                   ? "bg-success"
-                  : step.currentStep
+                  : step.status === 'current'
                     ? "bg-foreground"
                     : "cursor-pointer bg-border hover:bg-border/80",
               )}
@@ -112,7 +118,7 @@ export default function LaunchStepper({
             <div className="flex flex-col">
               <div className="flex items-center gap-1">
                 <p className="text-p2 text-foreground">{step.title}</p>
-                {step.complete && (
+                {step.status === 'complete' && (
                   <span className="text-xs font-medium text-success">✓</span>
                 )}
               </div>

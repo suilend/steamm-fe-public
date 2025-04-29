@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 import { bcs } from "@mysten/bcs";
 import init, * as template from "@mysten/move-bytecode-template";
@@ -12,12 +12,15 @@ import {
   useWalletContext,
 } from "@suilend/frontend-sui-next";
 
-import { createPool } from "@/components/admin/pools/CreatePoolCard";
+import { createPool } from "@/components/launch/launch";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
-import { showSuccessTxnToast } from "@/lib/toasts";
 import { QuoterId } from "@/lib/types";
 import { useLocalStorage } from "usehooks-ts";
+
+
+const SUI_COIN_TYPE =
+  "0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI";
 
 export enum LaunchStep {
   Start = -1,
@@ -32,7 +35,6 @@ export enum TokenCreationStatus {
   Minting = 2,
   Pooling = 3,
   Success = 4,
-  Error = 5,
 }
 
 export type LaunchConfig = {
@@ -56,19 +58,26 @@ export type LaunchConfig = {
   // Token creation status
   status: TokenCreationStatus;
 
-  // Token creation results
-  tokenType: string | null;
-  treasuryCapId: string | null;
-
   // Pool creation results
-  poolId: string | null;
+  poolUrl: string | null;
 
   // Error
-  error: Error | null;
+  error: string | null;
+
+  // Transaction data
+  tokenType: string | null;
+  treasuryCapChange: {
+    objectId: string;
+    objectType: string;
+  } | null;
+  coinMetadataChange: {
+    objectId: string;
+    objectType: string;
+  } | null;
 
   // Transaction digest
   transactionDigests: {
-    [key: string]: string;
+    [key: string]: string[];
   };
 };
 
@@ -194,7 +203,7 @@ export const DEFAULT_CONFIG: LaunchConfig = {
   tokenName: "",
   tokenSymbol: "",
   tokenDescription: "",
-  tokenDecimals: 9,
+  tokenDecimals: 6,
   initialSupply: "1000000000",
   maxSupply: "1000000000",
   isBurnable: false,
@@ -206,10 +215,11 @@ export const DEFAULT_CONFIG: LaunchConfig = {
 
   // Token creation results
   tokenType: null,
-  treasuryCapId: null,
+  treasuryCapChange: null,
+  coinMetadataChange: null,
 
   // Pool creation results
-  poolId: null,
+  poolUrl: null,
 
   // Error
   error: null,
@@ -221,36 +231,50 @@ export const DEFAULT_CONFIG: LaunchConfig = {
 type LaunchContextType = {
   config: LaunchConfig;
   setConfig: (config: LaunchConfig) => void;
-  launchToken: () => Promise<CreateTokenResult | null>;
+  launchToken: () => Promise<LaunchConfig | null>;
+  txnInProgress: boolean;
+  setTxnInProgress: (txnInProgress: boolean) => void;
 };
 
 export const LaunchContext = createContext<LaunchContextType>({
   config: DEFAULT_CONFIG,
   setConfig: () => {},
   launchToken: async () => null,
+  txnInProgress: false,
+  setTxnInProgress: () => {},
 });
 export const useLaunch = () => useContext(LaunchContext);
 
 const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const [config, setConfig] = useLocalStorage<LaunchConfig>(
+  const [configRaw, setConfig] = useLocalStorage<LaunchConfig>(
     "launch-config",
     DEFAULT_CONFIG,
   );
+  const [ tempConfig, setTempConfig ] = useState<LaunchConfig | null>(null);
+  const config = tempConfig ?? configRaw;
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, banksData } = useLoadedAppContext();
-  const { balancesCoinMetadataMap } = useUserContext();
-  const setCreationStatus = (status: TokenCreationStatus) => {
-    setConfig({ ...config, status });
-  };
-  const setCreateError = (error: Error | null) => {
-    setConfig({ ...config, error });
-  };
-  const setTransactionDigest = (key: string, digest: string) => {
-    setConfig({ ...config, transactionDigests: { ...config.transactionDigests, [key]: digest } });
-  };
+  const [txnInProgress, setTxnInProgress] = useState(false);
+  const { balancesCoinMetadataMap, refreshRawBalancesMap } = useUserContext();
+  const setConfigWrap = useCallback((update: Partial<LaunchConfig>) => {
+    setConfig(prev => ({...prev, ...update}));
+  }, [setConfig]);
 
-  const launchToken = async (): Promise<CreateTokenResult | null> => {
+  useEffect(() => {
+    if (config.lastCompletedStep === LaunchStep.Complete) {
+      setTempConfig(configRaw);
+      setConfig(DEFAULT_CONFIG);
+    } else {
+      setTempConfig(null);
+    }
+  }, [config.lastCompletedStep]);
+  
+  const launchToken = async (): Promise<LaunchConfig | null> => {
+    const pendingUpdates: Partial<LaunchConfig> = {
+      error: null,
+    };
+    setTxnInProgress(true);
     if (!address) {
       showErrorToast(
         "Wallet not connected",
@@ -260,70 +284,90 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
       );
       return null;
     }
-
-    setCreateError(null);
-
+    
+    const mergedConfig = {
+      ...config,
+      ...pendingUpdates,
+    };
+    // Publish Step
     try {
-      setCreationStatus(TokenCreationStatus.Publishing);
+      if (!mergedConfig.tokenType || !mergedConfig.treasuryCapChange || !mergedConfig.coinMetadataChange) {
+        setConfigWrap({status: TokenCreationStatus.Publishing});
 
-      // Preemptively initialize the WASM module at the start of the function
-      await ensureModuleInitialized();
+        // Preemptively initialize the WASM module at the start of the function
+        await ensureModuleInitialized();
 
-      // Generate token bytecode using our template
-      const bytecode = await generateTokenBytecode(config);
+        // Generate token bytecode using our template
+        const bytecode = await generateTokenBytecode(config);
 
-      // Create the transaction to publish the module
-      const transaction = new Transaction();
+        // Create the transaction to publish the module
+        const transaction = new Transaction();
 
-      // Publish the module
-      const [upgradeCap] = transaction.publish({
-        modules: [[...bytecode]],
-        dependencies: [normalizeSuiAddress("0x1"), normalizeSuiAddress("0x2")],
-      });
+        // Publish the module
+        const [upgradeCap] = transaction.publish({
+          modules: [[...bytecode]],
+          dependencies: [normalizeSuiAddress("0x1"), normalizeSuiAddress("0x2")],
+        });
 
-      // Transfer the upgrade cap to the sender
-      transaction.transferObjects(
-        [upgradeCap],
-        transaction.pure.address(address),
-      );
-
-      // Execute the transaction
-      const res = await signExecuteAndWaitForTransaction(transaction);
-      setTransactionDigest("publish", res.digest);
-
-      // Extract the TreasuryCap and CoinMetadata IDs from the transaction results
-      const treasuryCapChange = res.objectChanges?.find(
-        (change) =>
-          change.type === "created" &&
-          change.objectType.includes("TreasuryCap"),
-      );
-
-      const coinMetadataChange = res.objectChanges?.find(
-        (change) =>
-          change.type === "created" &&
-          change.objectType.includes("CoinMetadata"),
-      );
-
-      if (
-        !treasuryCapChange ||
-        treasuryCapChange.type !== "created" ||
-        !coinMetadataChange ||
-        coinMetadataChange.type !== "created"
-      ) {
-        throw new Error(
-          "Failed to find created token objects in transaction results",
+        // Transfer the upgrade cap to the sender
+        transaction.transferObjects(
+          [upgradeCap],
+          transaction.pure.address(address),
         );
-      }
 
-      // Extract the token type from the TreasuryCap object type
-      const tokenType =
-        treasuryCapChange.objectType.split("<")[1]?.split(">")[0] || "";
+        // Execute the transaction
+        const res = await signExecuteAndWaitForTransaction(transaction);
+
+        // Extract the TreasuryCap and CoinMetadata IDs from the transaction results
+        const treasuryCapChange = res.objectChanges?.find(
+          (change) =>
+            change.type === "created" &&
+            change.objectType.includes("TreasuryCap"),
+        );
+
+        const coinMetadataChange = res.objectChanges?.find(
+          (change) =>
+            change.type === "created" &&
+            change.objectType.includes("CoinMetadata"),
+        );
+
+        if (
+          !treasuryCapChange ||
+          treasuryCapChange.type !== "created" ||
+          !coinMetadataChange ||
+          coinMetadataChange.type !== "created"
+        ) {
+          throw new Error(
+            "Failed to find created token objects in transaction results",
+          );
+        }
+
+        // Extract the token type from the TreasuryCap object type
+        const tokenType =
+          treasuryCapChange.objectType.split("<")[1]?.split(">")[0] || "";
+        mergedConfig.tokenType = tokenType;
+        mergedConfig.treasuryCapChange = treasuryCapChange;
+        mergedConfig.coinMetadataChange = coinMetadataChange;
+        mergedConfig.status = TokenCreationStatus.Minting;
+        mergedConfig.transactionDigests = {
+          ...mergedConfig.transactionDigests,
+          [TokenCreationStatus.Publishing]: [res.digest],
+        };
+        setConfigWrap({
+            status: TokenCreationStatus.Minting,
+            transactionDigests: {
+              ...mergedConfig.transactionDigests,
+              [TokenCreationStatus.Publishing]: [res.digest],
+            },
+            tokenType: tokenType,
+            treasuryCapChange: treasuryCapChange,
+            coinMetadataChange: coinMetadataChange,
+          });
+      }
+      // Mint Step
 
       // Mint initial supply if specified
-      if (config.initialSupply && parseFloat(config.initialSupply) > 0) {
-        try {
-          // Update status to minting
-          setCreationStatus(TokenCreationStatus.Minting);
+      if (config.initialSupply && parseFloat(config.initialSupply) > 0 && mergedConfig.tokenType && mergedConfig.treasuryCapChange && mergedConfig.coinMetadataChange && mergedConfig.status <= TokenCreationStatus.Minting) {
 
           // Create a new transaction for minting initial supply
           const mintTransaction = new Transaction();
@@ -341,10 +385,10 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
           const mintedCoin = mintTransaction.moveCall({
             target: `0x2::coin::mint`,
             arguments: [
-              mintTransaction.object(treasuryCapChange.objectId),
+              mintTransaction.object(mergedConfig.treasuryCapChange.objectId),
               mintTransaction.pure.u64(initialSupplyAmount.toString()),
             ],
-            typeArguments: [tokenType],
+            typeArguments: [mergedConfig.tokenType],
           });
 
           // Transfer the minted coins to the creator's address
@@ -354,101 +398,86 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
           const mintRes =
             await signExecuteAndWaitForTransaction(mintTransaction);
 
-          // Update transaction digest to the latest transaction
-          setTransactionDigest("mint", mintRes.digest);
-
-          // Update status to success
-          setCreationStatus(TokenCreationStatus.Success);
-
-          // Show success toast with updated information
-          const txUrl = explorer.buildTxUrl(mintRes.digest);
-          showSuccessTxnToast(
-            `Token ${config.tokenName} (${config.tokenSymbol}) created and ${config.initialSupply} tokens minted`,
-            txUrl,
-            {
-              description: `Created with ${config.tokenDecimals} decimals`,
-            },
-          );
-
-          return {
-            digest: mintRes.digest,
-            tokenType,
-            treasuryCapId: treasuryCapChange.objectId,
-            coinMetadataId: coinMetadataChange.objectId,
-            poolId: "pending", // Will be updated later
+          mergedConfig.status = TokenCreationStatus.Publishing;
+          mergedConfig.transactionDigests = {
+            ...mergedConfig.transactionDigests,
+            [TokenCreationStatus.Minting]: [mintRes.digest],
           };
-        } catch (mintErr) {
-          // If minting fails, we still return the token creation result
-          // but show a warning toast
-          showErrorToast(
-            "Token created but failed to mint initial supply",
-            mintErr as Error,
-            undefined,
-            true,
-          );
-
-          // Update status to error
-          setCreationStatus(TokenCreationStatus.Error);
-          setCreateError(mintErr as Error);
-
-          // Show partial success toast
-          const txUrl = explorer.buildTxUrl(res.digest);
-          showSuccessTxnToast(
-            `Token ${config.tokenName} (${config.tokenSymbol}) created successfully`,
-            txUrl,
-            {
-              description: `Created with ${config.tokenDecimals} decimals, but initial supply minting failed`,
+          setConfigWrap({
+            status: TokenCreationStatus.Pooling,
+            transactionDigests: {
+              ...mergedConfig.transactionDigests,
+              [TokenCreationStatus.Minting]: [mintRes.digest],
             },
-          );
-        }
-      } else {
-        // Show success toast
-        const txUrl = explorer.buildTxUrl(res.digest);
-        showSuccessTxnToast(
-          `Token ${config.tokenName} (${config.tokenSymbol}) created successfully`,
-          txUrl,
-          {
-            description: `Created with ${config.tokenDecimals} decimals`,
-          },
-        );
+          });
       }
 
-      try {
-        await createPool(
+
+      // After minting and before calling createPool
+      let newTokenMetadata = balancesCoinMetadataMap?.[mergedConfig.tokenType] ?? null;
+      if (!newTokenMetadata) {
+        // Fetch from chain if not present
+        newTokenMetadata = await suiClient.getCoinMetadata({ coinType: mergedConfig.tokenType });
+        // Optionally, update your balancesCoinMetadataMap here if needed
+      }
+
+      if (!newTokenMetadata) {
+        throw new Error("Failed to fetch token metadata");
+      }
+
+      if (mergedConfig.coinMetadataChange) {
+        const res = await createPool(
           banksData!,
           QuoterId.CPMM,
           0.3,
-          [coinMetadataChange.objectId, coinMetadataChange.objectId],
+          [mergedConfig.tokenType, SUI_COIN_TYPE],
           address!,
           signExecuteAndWaitForTransaction,
           explorer,
-          balancesCoinMetadataMap!,
+          {
+            ...balancesCoinMetadataMap,
+            [mergedConfig.tokenType]: newTokenMetadata,
+          },
           suiClient,
           steammClient,
-          ["1_000_000_000", "1"],
+          [(Math.floor(Number(mergedConfig.initialSupply) * 0.1)).toString(), (10 ** -9).toString()],
         );
 
-      } catch (error) {
-        console.error("Error creating pool:", error);
-        // Pool creation error isn't critical, so we continue
+        mergedConfig.status = TokenCreationStatus.Success;
+        mergedConfig.transactionDigests = {
+          ...mergedConfig.transactionDigests,
+          [TokenCreationStatus.Pooling]: res.txnDigests,
+        };
+        mergedConfig.step = LaunchStep.Complete;
+        mergedConfig.lastCompletedStep = LaunchStep.Complete;
+        mergedConfig.poolUrl = res.poolUrl;
+        setConfigWrap({
+          status: TokenCreationStatus.Success,
+          step: LaunchStep.Complete,
+          lastCompletedStep: LaunchStep.Complete,
+          poolUrl: res.poolUrl,
+          transactionDigests: {
+            ...mergedConfig.transactionDigests,
+            [TokenCreationStatus.Pooling]: res.txnDigests,
+          },
+        });
       }
 
       // Return the result with token information
-      return {
-        digest: res.digest,
-        tokenType,
-        treasuryCapId: treasuryCapChange.objectId,
-        coinMetadataId: coinMetadataChange.objectId,
-        poolId: "pending", // Will be updated later
-      };
+      return mergedConfig;
     } catch (err) {
-      const error = err as Error;
-      showErrorToast("Failed to create token", error, undefined, true);
+      const error = err as any;
+      console.error(error);
+      showErrorToast("Failed to create token", new Error(error?.shape?.message ?? error), undefined, true);
       console.error(err);
       Sentry.captureException(err);
-      setCreateError(error);
-      setCreationStatus(TokenCreationStatus.Error);
+      mergedConfig.error = error?.shape?.message ?? error?.message ?? error;
+      setConfigWrap({
+        error: error?.shape?.message ?? error?.message ?? error,
+      });
       return null;
+    } finally {
+      setTxnInProgress(false);
     }
   };
 
@@ -456,6 +485,8 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
     config,
     setConfig,
     launchToken,
+    txnInProgress,
+    setTxnInProgress,
   };
 
   return (
