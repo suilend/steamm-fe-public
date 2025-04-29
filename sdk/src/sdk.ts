@@ -510,7 +510,6 @@ export class SteammSDK {
 
     // CoinMetadata
     const coinMetadataMap = await getCoinMetadataMap(
-      this.fullClient,
       Array.from(
         new Set(
           poolInfos

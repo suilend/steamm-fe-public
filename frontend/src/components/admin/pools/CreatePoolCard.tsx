@@ -516,7 +516,6 @@ export default function CreatePoolCard() {
       await init();
 
       const existingBTokenTypeCoinMetadataMap = await getCoinMetadataMap(
-        suiClient,
         Object.keys(banksData.bTokenTypeCoinTypeMap),
       );
       console.log(

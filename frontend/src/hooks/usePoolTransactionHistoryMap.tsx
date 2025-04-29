@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import * as Sentry from "@sentry/nextjs";
-import pLimit, { LimitFunction } from "p-limit";
+import pLimit from "p-limit";
 
 import { showErrorToast, useWalletContext } from "@suilend/frontend-sui-next";
 
@@ -26,7 +26,7 @@ const usePoolTransactionHistoryMap = (poolIds: string[] | undefined) => {
     [address, poolTransactionHistoryMapMap],
   );
 
-  const limitRef = useRef<LimitFunction>(pLimit(3));
+  const limitRef = useRef<pLimit.Limit>(pLimit(3));
   const fetchPoolTransactionHistoryMap = useCallback(
     async (_poolIds: string[]) => {
       console.log("fetchPoolTransactionHistoryMap", _poolIds);

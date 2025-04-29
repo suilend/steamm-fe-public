@@ -96,7 +96,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       );
 
     const pointsCoinMetadataMap = await getCoinMetadataMap(
-      suiClient,
       [NORMALIZED_STEAMM_POINTS_COINTYPE].filter(
         (coinType) => !Object.keys(coinMetadataMap).includes(coinType),
       ),
@@ -136,7 +135,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const uniqueBankCoinTypes = Array.from(new Set(bankCoinTypes));
 
     const bankCoinMetadataMap = await getCoinMetadataMap(
-      suiClient,
       uniqueBankCoinTypes.filter(
         (coinType) => !Object.keys(coinMetadataMap).includes(coinType),
       ),
@@ -184,7 +182,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const uniquePoolCoinTypes = Array.from(new Set(poolCoinTypes));
 
     const poolCoinMetadataMap = await getCoinMetadataMap(
-      suiClient,
       uniquePoolCoinTypes.filter(
         (coinType) => !Object.keys(coinMetadataMap).includes(coinType),
       ),
