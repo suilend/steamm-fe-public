@@ -376,15 +376,20 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           ).filter(
             (d) => d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,
           );
+          if (tvlUsd_24hData.length === 0)
+            return { ...acc, [poolId]: { feesAprPercent: new BigNumber(0) } };
 
           const avgTvlUsd_24h = tvlUsd_24hData
             .reduce((acc, d) => acc.plus(d.tvlUsd_7d), new BigNumber(0))
-            .div(tvlUsd_24hData.length);
+            .div(tvlUsd_24hData.length); // Fallback for no data
 
-          const feesAprPercent = data
-            .filter(
-              (d) => d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,
-            )
+          const feesUsd_7dData = data.filter(
+            (d) => d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,
+          );
+          if (feesUsd_7dData.length === 0)
+            return { ...acc, [poolId]: { feesAprPercent: new BigNumber(0) } };
+
+          const feesAprPercent = feesUsd_7dData
             .reduce((acc2, d) => acc2.plus(d.feesUsd_7d), new BigNumber(0))
             .div(avgTvlUsd_24h)
             .times(365)
