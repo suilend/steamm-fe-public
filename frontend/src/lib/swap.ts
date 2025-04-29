@@ -27,8 +27,10 @@ export const getBirdeyeRatio = (
   inUsdPrice: BigNumber | undefined,
   outUsdPrice: BigNumber | undefined,
 ) =>
-  inUsdPrice !== undefined && outUsdPrice !== undefined && !outUsdPrice.eq(0)
-    ? inUsdPrice.div(outUsdPrice)
+  inUsdPrice !== undefined && outUsdPrice !== undefined
+    ? !inUsdPrice.eq(0) && !outUsdPrice.eq(0)
+      ? inUsdPrice.div(outUsdPrice)
+      : null
     : undefined;
 
 export const fetchHistoricalSwapTransactions = async (

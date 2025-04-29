@@ -129,7 +129,10 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             tvl: Record<string, string>;
             usdValue: string;
           }[] = await res.json();
-          if ((json as any)?.statusCode === 500) return;
+          if ((json as any)?.statusCode === 500)
+            throw new Error(
+              `Failed to fetch historical TVL for pool with id ${pool.id}`,
+            );
 
           setPoolHistoricalStats((prev) => ({
             ...prev,
@@ -163,6 +166,14 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           }));
         } catch (err) {
           console.error(err);
+
+          setPoolHistoricalStats((prev) => ({
+            ...prev,
+            tvlUsd_7d: {
+              ...prev.tvlUsd_7d,
+              [pool.id]: [{ timestampS: 0, tvlUsd_7d: 0 }],
+            },
+          }));
         }
       })();
 
@@ -183,7 +194,10 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             volume: Record<string, string>;
             usdValue: string;
           }[] = await res.json();
-          if ((json as any)?.statusCode === 500) return;
+          if ((json as any)?.statusCode === 500)
+            throw new Error(
+              `Failed to fetch historical volume for pool with id ${pool.id}`,
+            );
 
           setPoolHistoricalStats((prev) => ({
             ...prev,
@@ -217,6 +231,14 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           }));
         } catch (err) {
           console.error(err);
+
+          setPoolHistoricalStats((prev) => ({
+            ...prev,
+            volumeUsd_7d: {
+              ...prev.volumeUsd_7d,
+              [pool.id]: [{ timestampS: 0, volumeUsd_7d: 0 }],
+            },
+          }));
         }
       })();
 
@@ -237,7 +259,10 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             fees: Record<string, string>;
             usdValue: string;
           }[] = await res.json();
-          if ((json as any)?.statusCode === 500) return;
+          if ((json as any)?.statusCode === 500)
+            throw new Error(
+              `Failed to fetch historical fees for pool with id ${pool.id}`,
+            );
 
           setPoolHistoricalStats((prev) => ({
             ...prev,
@@ -271,6 +296,14 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           }));
         } catch (err) {
           console.error(err);
+
+          setPoolHistoricalStats((prev) => ({
+            ...prev,
+            feesUsd_7d: {
+              ...prev.feesUsd_7d,
+              [pool.id]: [{ timestampS: 0, feesUsd_7d: 0 }],
+            },
+          }));
         }
       })();
     }

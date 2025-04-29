@@ -86,6 +86,14 @@ function PoolPage() {
     }, 1000);
   };
 
+  const onSwap = async () => {
+    refresh();
+
+    setTimeout(() => {
+      fetchPoolTransactionHistoryMap([pool.id]);
+    }, 1000);
+  };
+
   return (
     <>
       <Head>
@@ -209,6 +217,7 @@ function PoolPage() {
                     key={pool.id}
                     onDeposit={onDeposit}
                     onWithdraw={onWithdraw}
+                    onSwap={onSwap}
                   />
                 </div>
               </div>

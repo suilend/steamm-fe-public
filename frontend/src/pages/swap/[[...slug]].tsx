@@ -39,7 +39,7 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
-import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
+import useBirdeyeUsdPrices from "@/hooks/useBirdeyeUsdPrices";
 import { rebalanceBanks } from "@/lib/banks";
 import { formatTextInputValue } from "@/lib/format";
 import { getBirdeyeRatio } from "@/lib/swap";
@@ -203,48 +203,69 @@ export default function SwapPage() {
       outCoinType,
     );
   };
-
   // USD prices - current
-  const { tokenUsdPricesMap, fetchTokenUsdPrice } = useTokenUsdPrices([
-    inCoinType,
-    outCoinType,
-  ]);
+  const getAvgPoolPrice = useCallback(
+    (coinType: string) => {
+      if (poolsData === undefined) return undefined;
 
-  const inUsdPrice = useMemo(
-    () => tokenUsdPricesMap[inCoinType],
-    [tokenUsdPricesMap, inCoinType],
+      const poolPrices = [
+        ...poolsData.pools
+          .filter((pool) => pool.coinTypes[0] === coinType)
+          .map((pool) => pool.prices[0]),
+        ...poolsData.pools
+          .filter((pool) => pool.coinTypes[1] === coinType)
+          .map((pool) => pool.prices[1]),
+      ];
+
+      return poolPrices
+        .reduce((acc, poolPrice) => acc.plus(poolPrice), new BigNumber(0))
+        .div(poolPrices.length);
+    },
+    [poolsData],
   );
-  const outUsdPrice = useMemo(
-    () => tokenUsdPricesMap[outCoinType],
-    [tokenUsdPricesMap, outCoinType],
-  );
+
+  const inPoolPrice = getAvgPoolPrice(inCoinType);
+  const outPoolPrice = getAvgPoolPrice(outCoinType);
 
   const inUsdValue = useMemo(
     () =>
-      isFetchingQuote || inUsdPrice === undefined
+      isFetchingQuote || inPoolPrice === undefined
         ? undefined
         : quote
           ? new BigNumber(quote.amountIn.toString())
               .div(10 ** inCoinMetadata.decimals)
-              .times(inUsdPrice)
+              .times(inPoolPrice)
           : "",
-    [isFetchingQuote, inUsdPrice, quote, inCoinMetadata],
+    [isFetchingQuote, inPoolPrice, quote, inCoinMetadata],
   );
   const outUsdValue = useMemo(
     () =>
-      isFetchingQuote || outUsdPrice === undefined
+      isFetchingQuote || outPoolPrice === undefined
         ? undefined
         : quote
           ? new BigNumber(quote.amountOut.toString())
               .div(10 ** outCoinMetadata.decimals)
-              .times(outUsdPrice)
+              .times(outPoolPrice)
           : "",
-    [isFetchingQuote, outUsdPrice, quote, outCoinMetadata],
+    [isFetchingQuote, outPoolPrice, quote, outCoinMetadata],
   );
 
+  // Birdeye USD prices - current
+  const { birdeyeUsdPricesMap, fetchBirdeyeUsdPrice } = useBirdeyeUsdPrices([
+    inCoinType,
+    outCoinType,
+  ]);
+
   // Ratios
-  const birdeyeRatio = getBirdeyeRatio(inUsdPrice, outUsdPrice);
-  console.log("SwapPage - birdeyeRatio:", birdeyeRatio?.toString());
+  const birdeyeRatio = useMemo(
+    () =>
+      getBirdeyeRatio(
+        birdeyeUsdPricesMap[inCoinType],
+        birdeyeUsdPricesMap[outCoinType],
+      ),
+    [birdeyeUsdPricesMap, inCoinType, outCoinType],
+  );
+  console.log("SwapPage - birdeyeRatio:", birdeyeRatio, birdeyeUsdPricesMap);
 
   // Value - max
   const onBalanceClick = () => {
@@ -290,10 +311,10 @@ export default function SwapPage() {
         : token.coinType;
     const newOutCoinMetadata = appData.coinMetadataMap[newOutCoinType];
 
-    if (tokenUsdPricesMap[newInCoinType] === undefined)
-      fetchTokenUsdPrice(newInCoinType);
-    if (tokenUsdPricesMap[newOutCoinType] === undefined)
-      fetchTokenUsdPrice(newOutCoinType);
+    if (birdeyeUsdPricesMap[newInCoinType] === undefined)
+      fetchBirdeyeUsdPrice(newInCoinType);
+    if (birdeyeUsdPricesMap[newOutCoinType] === undefined)
+      fetchBirdeyeUsdPrice(newOutCoinType);
 
     shallowPushQuery(router, {
       slug: `${newInCoinMetadata.symbol}-${newOutCoinMetadata.symbol}`,

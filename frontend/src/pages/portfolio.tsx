@@ -78,8 +78,8 @@ export default function PortfolioPage() {
                               )
                               .times(
                                 index === 0
-                                  ? entry.coin_a_price || pool.prices[0] // Use current price if coin_a_price is missing or 0
-                                  : entry.coin_b_price || pool.prices[1], // Use current price if coin_b_price is missing or 0
+                                  ? (entry.coin_a_price ?? pool.prices[0]) // Use current price if coin_a_price is missing or 0
+                                  : (entry.coin_b_price ?? pool.prices[1]), // Use current price if coin_b_price is missing or 0
                               ),
                           )
                         : entry.type === HistoryTransactionType.WITHDRAW
@@ -97,8 +97,8 @@ export default function PortfolioPage() {
                                 )
                                 .times(
                                   index === 0
-                                    ? entry.coin_a_price || pool.prices[0] // Use current price if coin_a_price is missing or 0
-                                    : entry.coin_b_price || pool.prices[1], // Use current price if coin_b_price is missing or 0
+                                    ? (entry.coin_a_price ?? pool.prices[0]) // Use current price if coin_a_price is missing or 0
+                                    : (entry.coin_b_price ?? pool.prices[1]), // Use current price if coin_b_price is missing or 0
                                 ),
                             )
                           : acc, // Swap transactions have no effect on the deposited amount

@@ -47,7 +47,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BanksData, useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useUserContext } from "@/contexts/UserContext";
-import useTokenUsdPrices from "@/hooks/useTokenUsdPrices";
+import useBirdeyeUsdPrices from "@/hooks/useBirdeyeUsdPrices";
 import { rebalanceBanks } from "@/lib/banks";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
 import {
@@ -77,11 +77,10 @@ enum QueryParams {
 }
 
 interface DepositTabProps {
-  tokenUsdPricesMap: Record<string, BigNumber>;
   onDeposit: () => void;
 }
 
-function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
+function DepositTab({ onDeposit }: DepositTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, banksData, slippagePercent } =
@@ -220,19 +219,17 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
   const usdValues = useMemo(
     () =>
       [0, 1].map((index) =>
-        tokenUsdPricesMap[pool.coinTypes[index]] === undefined
-          ? undefined
-          : quote
-            ? new BigNumber(
-                (index === 0 ? quote.depositA : quote.depositB).toString(),
+        quote
+          ? new BigNumber(
+              (index === 0 ? quote.depositA : quote.depositB).toString(),
+            )
+              .div(
+                10 ** appData.coinMetadataMap[pool.coinTypes[index]].decimals,
               )
-                .div(
-                  10 ** appData.coinMetadataMap[pool.coinTypes[index]].decimals,
-                )
-                .times(tokenUsdPricesMap[pool.coinTypes[index]])
-            : "",
+              .times(pool.prices[index])
+          : "",
       ),
-    [tokenUsdPricesMap, pool.coinTypes, quote, appData.coinMetadataMap],
+    [quote, appData.coinMetadataMap, pool.coinTypes, pool.prices],
   );
 
   // Submit
@@ -562,11 +559,10 @@ function DepositTab({ tokenUsdPricesMap, onDeposit }: DepositTabProps) {
 }
 
 interface WithdrawTabProps {
-  tokenUsdPricesMap: Record<string, BigNumber>;
   onWithdraw: () => void;
 }
 
-function WithdrawTab({ tokenUsdPricesMap, onWithdraw }: WithdrawTabProps) {
+function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
   const { explorer } = useSettingsContext();
   const { address, dryRunTransaction, signExecuteAndWaitForTransaction } =
     useWalletContext();
@@ -693,19 +689,17 @@ function WithdrawTab({ tokenUsdPricesMap, onWithdraw }: WithdrawTabProps) {
   const usdValues = useMemo(
     () =>
       [0, 1].map((index) =>
-        tokenUsdPricesMap[pool.coinTypes[index]] === undefined
-          ? undefined
-          : quote
-            ? new BigNumber(
-                (index === 0 ? quote.withdrawA : quote.withdrawB).toString(),
+        quote
+          ? new BigNumber(
+              (index === 0 ? quote.withdrawA : quote.withdrawB).toString(),
+            )
+              .div(
+                10 ** appData.coinMetadataMap[pool.coinTypes[index]].decimals,
               )
-                .div(
-                  10 ** appData.coinMetadataMap[pool.coinTypes[index]].decimals,
-                )
-                .times(tokenUsdPricesMap[pool.coinTypes[index]])
-            : "",
+              .times(pool.prices[index])
+          : "",
       ),
-    [tokenUsdPricesMap, pool.coinTypes, quote, appData.coinMetadataMap],
+    [quote, appData.coinMetadataMap, pool.coinTypes, pool.prices],
   );
 
   // Submit
@@ -1118,10 +1112,10 @@ function WithdrawTab({ tokenUsdPricesMap, onWithdraw }: WithdrawTabProps) {
 }
 
 interface SwapTabProps {
-  tokenUsdPricesMap: Record<string, BigNumber>;
+  onSwap: () => void;
 }
 
-function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
+function SwapTab({ onSwap }: SwapTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, banksData, slippagePercent } =
@@ -1134,8 +1128,8 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
   const activeCoinType = pool.coinTypes[activeCoinIndex];
   const activeCoinMetadata = appData.coinMetadataMap[activeCoinType];
 
-  const inactiveIndex = (1 - activeCoinIndex) as 0 | 1;
-  const inactiveCoinType = pool.coinTypes[inactiveIndex];
+  const inactiveCoinIndex = (1 - activeCoinIndex) as 0 | 1;
+  const inactiveCoinType = pool.coinTypes[inactiveCoinIndex];
   const inactiveCoinMetadata = appData.coinMetadataMap[inactiveCoinType];
 
   // Value
@@ -1242,41 +1236,48 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
   };
 
   // USD prices - current
-  const activeUsdPrice = useMemo(
-    () => tokenUsdPricesMap[activeCoinType],
-    [tokenUsdPricesMap, activeCoinType],
-  );
-  const inactiveUsdPrice = useMemo(
-    () => tokenUsdPricesMap[inactiveCoinType],
-    [tokenUsdPricesMap, inactiveCoinType],
-  );
-
   const activeUsdValue = useMemo(
     () =>
-      isFetchingQuote || activeUsdPrice === undefined
+      isFetchingQuote
         ? undefined
         : quote
           ? new BigNumber(quote.amountIn.toString())
               .div(10 ** activeCoinMetadata.decimals)
-              .times(activeUsdPrice)
+              .times(pool.prices[activeCoinIndex])
           : "",
-    [isFetchingQuote, activeUsdPrice, quote, activeCoinMetadata],
+    [isFetchingQuote, quote, activeCoinMetadata, pool.prices, activeCoinIndex],
   );
   const inactiveUsdValue = useMemo(
     () =>
-      isFetchingQuote || inactiveUsdPrice === undefined
+      isFetchingQuote
         ? undefined
         : quote
           ? new BigNumber(quote.amountOut.toString())
               .div(10 ** inactiveCoinMetadata.decimals)
-              .times(inactiveUsdPrice)
+              .times(pool.prices[inactiveCoinIndex])
           : "",
-    [isFetchingQuote, inactiveUsdPrice, quote, inactiveCoinMetadata],
+    [
+      isFetchingQuote,
+      quote,
+      inactiveCoinMetadata,
+      pool.prices,
+      inactiveCoinIndex,
+    ],
   );
 
+  // Birdeye USD prices - current
+  const { birdeyeUsdPricesMap } = useBirdeyeUsdPrices(pool.coinTypes);
+
   // Ratios
-  const birdeyeRatio = getBirdeyeRatio(activeUsdPrice, inactiveUsdPrice);
-  console.log("SwapTab - birdeyeRatio:", birdeyeRatio?.toString());
+  const birdeyeRatio = useMemo(
+    () =>
+      getBirdeyeRatio(
+        birdeyeUsdPricesMap[activeCoinType],
+        birdeyeUsdPricesMap[inactiveCoinType],
+      ),
+    [birdeyeUsdPricesMap, activeCoinType, inactiveCoinType],
+  );
+  console.log("SwapTab - birdeyeRatio:", birdeyeRatio);
 
   // Value - max
   const onBalanceClick = () => {
@@ -1462,6 +1463,7 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
         { dp: coinMetadataB.decimals, trimTrailingZeros: true },
       );
 
+      onSwap();
       showSuccessTxnToast("Swapped", txUrl, {
         description: [
           activeCoinIndex === 0
@@ -1609,11 +1611,13 @@ function SwapTab({ tokenUsdPricesMap }: SwapTabProps) {
 interface PoolActionsCardProps {
   onDeposit: () => void;
   onWithdraw: () => void;
+  onSwap: () => void;
 }
 
 export default function PoolActionsCard({
   onDeposit,
   onWithdraw,
+  onSwap,
 }: PoolActionsCardProps) {
   const router = useRouter();
   const queryParams = {
@@ -1633,9 +1637,6 @@ export default function PoolActionsCard({
   const onSelectedActionChange = (action: Action) => {
     shallowPushQuery(router, { ...router.query, [QueryParams.ACTION]: action });
   };
-
-  // USD prices - current
-  const { tokenUsdPricesMap } = useTokenUsdPrices(pool.coinTypes);
 
   return (
     <div className="flex w-full flex-col gap-4 rounded-md border p-5">
@@ -1685,20 +1686,12 @@ export default function PoolActionsCard({
       </div>
 
       {selectedAction === Action.DEPOSIT && (
-        <DepositTab
-          tokenUsdPricesMap={tokenUsdPricesMap}
-          onDeposit={onDeposit}
-        />
+        <DepositTab onDeposit={onDeposit} />
       )}
       {selectedAction === Action.WITHDRAW && (
-        <WithdrawTab
-          tokenUsdPricesMap={tokenUsdPricesMap}
-          onWithdraw={onWithdraw}
-        />
+        <WithdrawTab onWithdraw={onWithdraw} />
       )}
-      {selectedAction === Action.SWAP && (
-        <SwapTab tokenUsdPricesMap={tokenUsdPricesMap} />
-      )}
+      {selectedAction === Action.SWAP && <SwapTab onSwap={onSwap} />}
     </div>
   );
 }
