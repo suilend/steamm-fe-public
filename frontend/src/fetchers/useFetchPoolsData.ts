@@ -15,8 +15,8 @@ import {
 } from "@/contexts/AppContext";
 import { formatPair } from "@/lib/format";
 import { normalizeRewards } from "@/lib/liquidityMining";
-import { getParsedPool, getQuoterId } from "@/lib/pools";
-import { ParsedPool, QuoterId } from "@/lib/types";
+import { getParsedPool } from "@/lib/pools";
+import { ParsedPool } from "@/lib/types";
 
 export default function useFetchPoolsData(
   steammClient: SteammSDK,
@@ -68,23 +68,15 @@ export default function useFetchPoolsData(
       await Promise.all(
         poolObjs.map((poolObj) =>
           limit10(async () => {
-            const { poolInfo, pool: pool_ } = poolObj;
-
-            const id = poolInfo.poolId;
-            const quoterId = getQuoterId(poolInfo);
-
-            const pool =
-              quoterId === QuoterId.ORACLE_V2
-                ? await steammClient.fullClient.fetchOracleV2Pool(id)
-                : pool_;
+            const { poolInfo, pool, redeemQuote } = poolObj;
 
             return getParsedPool(
-              steammClient,
               appData,
               oraclesData,
               banksData,
               poolInfo,
               pool,
+              redeemQuote,
             );
           }),
         ),

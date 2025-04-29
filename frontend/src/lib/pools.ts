@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 
-import { PoolInfo, SteammSDK } from "@suilend/steamm-sdk";
+import { PoolInfo, RedeemQuote, SteammSDK } from "@suilend/steamm-sdk";
 import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 
 import { AppData, BanksData, OraclesData } from "@/contexts/AppContext";
@@ -31,15 +31,15 @@ export const fetchPool = (steammClient: SteammSDK, poolInfo: PoolInfo) => {
 };
 
 export const getParsedPool = async (
-  steammClient: SteammSDK,
   appData: AppData,
   oraclesData: OraclesData,
   banksData: BanksData,
   poolInfo: PoolInfo,
   pool: ParsedPool["pool"],
+  redeemQuote: RedeemQuote,
 ): Promise<ParsedPool | undefined> => {
   {
-    const { mainMarket, coinMetadataMap, bankObjs } = appData;
+    const { mainMarket, coinMetadataMap } = appData;
     const { bTokenTypeCoinTypeMap, bankMap } = banksData;
 
     const id = poolInfo.poolId;
@@ -56,17 +56,6 @@ export const getParsedPool = async (
     const coinTypeA = bTokenTypeCoinTypeMap[bTokenTypeA];
     const coinTypeB = bTokenTypeCoinTypeMap[bTokenTypeB];
     const coinTypes: [string, string] = [coinTypeA, coinTypeB];
-
-    const redeemQuote = await steammClient.Pool.quoteRedeem({
-      lpTokens: pool.lpSupply.value,
-      poolInfo,
-      bankInfoA: bankObjs.find(
-        (bankObj) => bankObj.bankInfo.btokenType === poolInfo.coinTypeA,
-      )!.bankInfo,
-      bankInfoB: bankObjs.find(
-        (bankObj) => bankObj.bankInfo.btokenType === poolInfo.coinTypeB,
-      )!.bankInfo,
-    });
 
     const balanceA = new BigNumber(redeemQuote.withdrawA.toString()).div(
       10 ** coinMetadataMap[coinTypes[0]].decimals,

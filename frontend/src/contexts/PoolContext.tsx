@@ -62,20 +62,32 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
       isFetchingRefreshedPoolMapRef.current[poolInfo.poolId] = true;
 
       try {
-        const id = poolInfo.poolId;
         const pool = await fetchPool(steammClient, poolInfo);
+        const redeemQuote = await steammClient.Pool.quoteRedeem({
+          lpTokens: pool.lpSupply.value,
+          poolInfo,
+          bankInfoA: appData.bankObjs.find(
+            (bankObj) => bankObj.bankInfo.btokenType === poolInfo.coinTypeA,
+          )!.bankInfo,
+          bankInfoB: appData.bankObjs.find(
+            (bankObj) => bankObj.bankInfo.btokenType === poolInfo.coinTypeB,
+          )!.bankInfo,
+        });
 
         const parsedPool = await getParsedPool(
-          steammClient,
           appData,
           oraclesData,
           banksData,
           poolInfo,
           pool,
+          redeemQuote,
         );
         if (parsedPool === undefined) return;
 
-        setRefreshedPoolMap((prev) => ({ ...prev, [id]: parsedPool }));
+        setRefreshedPoolMap((prev) => ({
+          ...prev,
+          [poolInfo.poolId]: parsedPool,
+        }));
       } catch (err) {
         console.error(err);
       }

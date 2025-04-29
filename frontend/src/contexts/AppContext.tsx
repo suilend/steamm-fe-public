@@ -29,6 +29,7 @@ import {
   MAINNET_CONFIG,
   OracleInfo,
   PoolInfo,
+  RedeemQuote,
   SteammSDK,
 } from "@suilend/steamm-sdk";
 import { Bank } from "@suilend/steamm-sdk/_codegen/_generated/steamm/bank/structs";
@@ -85,6 +86,7 @@ export interface AppData {
       | Pool<string, string, CpQuoter, string>
       | Pool<string, string, OracleQuoter, string>
       | Pool<string, string, OracleQuoterV2, string>;
+    redeemQuote: RedeemQuote;
   }[];
 }
 export interface OraclesData {

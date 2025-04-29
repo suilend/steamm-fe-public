@@ -150,7 +150,18 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
       for (const poolInfo of poolInfos) {
         const pool = await fetchPool(steammClient, poolInfo);
-        poolObjs.push({ poolInfo, pool });
+        const redeemQuote = await steammClient.Pool.quoteRedeem({
+          lpTokens: pool.lpSupply.value,
+          poolInfo,
+          bankInfoA: bankObjs.find(
+            (bankObj) => bankObj.bankInfo.btokenType === poolInfo.coinTypeA,
+          )!.bankInfo,
+          bankInfoB: bankObjs.find(
+            (bankObj) => bankObj.bankInfo.btokenType === poolInfo.coinTypeB,
+          )!.bankInfo,
+        });
+
+        poolObjs.push({ poolInfo, pool, redeemQuote });
       }
     } else {
       const poolsRes = await fetch(`${API_URL}/steamm/pools/all`);
