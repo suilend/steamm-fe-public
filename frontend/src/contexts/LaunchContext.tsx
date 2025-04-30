@@ -48,10 +48,6 @@ export type LaunchConfig = {
   tokenDecimals: number;
   initialSupply: string;
   maxSupply: string;
-  isBurnable: boolean;
-  isMintable: boolean;
-  isPausable: boolean;
-  isUpgradeable: boolean;
   iconUrl: string | null;
 
   iconFileName: string | null;
@@ -75,6 +71,7 @@ export type LaunchConfig = {
     objectId: string;
     objectType: string;
   } | null;
+  upgradeCapId: string | null;
 
   // Transaction digest
   transactionDigests: {
@@ -153,6 +150,7 @@ export interface CreateTokenResult {
   treasuryCapId: string;
   coinMetadataId: string;
   poolId: string;
+  upgradeCapId: string;
 }
 
 // Helper function to generate a token bytecode using a template
@@ -249,10 +247,6 @@ export const DEFAULT_CONFIG: LaunchConfig = {
   tokenDecimals: 6,
   initialSupply: "1000000000",
   maxSupply: "1000000000",
-  isBurnable: false,
-  isMintable: false,
-  isPausable: false,
-  isUpgradeable: false,
   iconUrl: null,
   iconFileName: null,
 
@@ -260,6 +254,7 @@ export const DEFAULT_CONFIG: LaunchConfig = {
   tokenType: null,
   treasuryCapChange: null,
   coinMetadataChange: null,
+  upgradeCapId: null,
 
   // Pool creation results
   poolId: null,
@@ -286,6 +281,7 @@ type LaunchContextType = {
   launchToken: () => Promise<LaunchConfig | null>;
   txnInProgress: boolean;
   setTxnInProgress: (txnInProgress: boolean) => void;
+  setTempConfig: (config: LaunchConfig | null) => void;
 };
 
 export const LaunchContext = createContext<LaunchContextType>({
@@ -294,6 +290,7 @@ export const LaunchContext = createContext<LaunchContextType>({
   launchToken: async () => null,
   txnInProgress: false,
   setTxnInProgress: () => {},
+  setTempConfig: () => {},
 });
 export const useLaunch = () => useContext(LaunchContext);
 
@@ -308,7 +305,7 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, banksData } = useLoadedAppContext();
   const [txnInProgress, setTxnInProgress] = useState(false);
-  const { balancesCoinMetadataMap, refreshRawBalancesMap } = useUserContext();
+  const { balancesCoinMetadataMap } = useUserContext();
   const setConfigWrap = useCallback(
     (update: Partial<LaunchConfig>) => {
       setConfig((prev) => ({ ...prev, ...update }));
@@ -370,7 +367,6 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
           ],
         });
 
-        // Transfer the upgrade cap to the sender
         transaction.transferObjects(
           [upgradeCap],
           transaction.pure.address(address),
@@ -386,6 +382,12 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
             change.objectType.includes("TreasuryCap"),
         );
 
+        const upgradeCapChange = res.objectChanges?.find(
+          (change) =>
+            change.type === "created" &&
+            change.objectType.includes("UpgradeCap"),
+        );
+
         const coinMetadataChange = res.objectChanges?.find(
           (change) =>
             change.type === "created" &&
@@ -396,7 +398,9 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
           !treasuryCapChange ||
           treasuryCapChange.type !== "created" ||
           !coinMetadataChange ||
-          coinMetadataChange.type !== "created"
+          coinMetadataChange.type !== "created" ||
+          !upgradeCapChange ||
+          upgradeCapChange.type !== "created"
         ) {
           throw new Error(
             "Failed to find created token objects in transaction results",
@@ -408,6 +412,7 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
           treasuryCapChange.objectType.split("<")[1]?.split(">")[0] || "";
         mergedConfig.tokenType = tokenType;
         mergedConfig.treasuryCapChange = treasuryCapChange;
+        mergedConfig.upgradeCapId = upgradeCapChange.objectId;
         mergedConfig.coinMetadataChange = coinMetadataChange;
         mergedConfig.status = TokenCreationStatus.Minting;
         mergedConfig.transactionDigests = {
@@ -434,6 +439,7 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
         mergedConfig.tokenType &&
         mergedConfig.treasuryCapChange &&
         mergedConfig.coinMetadataChange &&
+        mergedConfig.upgradeCapId &&
         mergedConfig.status <= TokenCreationStatus.Minting
       ) {
         // Create a new transaction for minting initial supply
@@ -460,6 +466,16 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
 
         // Transfer the minted coins to the creator's address
         mintTransaction.transferObjects([mintedCoin], address);
+
+        // If we should make the token non-mintable, send treasuryCap to burn address
+        // Send to burn address (0x0)
+        mintTransaction.transferObjects(
+          [
+            mintTransaction.object(mergedConfig.treasuryCapChange.objectId),
+            mintTransaction.object(mergedConfig.upgradeCapId),
+          ],
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+        );
 
         // Execute the mint transaction
         const mintRes = await signExecuteAndWaitForTransaction(mintTransaction);
@@ -493,8 +509,6 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
       if (!newTokenMetadata) {
         throw new Error("Failed to fetch token metadata");
       }
-
-      console.log("newTokenMetadata", newTokenMetadata);
 
       if (
         mergedConfig.coinMetadataChange &&
@@ -552,6 +566,7 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
     launchToken,
     txnInProgress,
     setTxnInProgress,
+    setTempConfig,
   };
 
   return (

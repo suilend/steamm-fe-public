@@ -54,7 +54,7 @@ export default function TokenCreationProgress() {
               let circle = <span className="text-p3">{index + 1}</span>;
               if (step.status === status && txnInProgress)
                 circle = (
-                  <div className="rounded-full absolute inset-0 h-full w-full animate-spin border-2 border-border border-t-foreground" />
+                  <div className="absolute inset-0 h-full w-full animate-spin rounded-full border-2 border-border border-t-foreground" />
                 );
               else if (step.status < status)
                 circle = <CheckCircle className="h-5 w-5" />;
@@ -68,7 +68,7 @@ export default function TokenCreationProgress() {
                 >
                   <div
                     className={cn(
-                      "rounded-full relative z-10 flex h-10 w-10 items-center justify-center border-2",
+                      "relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2",
                       {
                         "border-border": step.status >= status,
                         "border-success bg-success text-background":

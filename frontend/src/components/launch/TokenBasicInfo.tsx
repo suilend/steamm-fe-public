@@ -38,6 +38,44 @@ interface TokenBasicInfoProps {
   setConfig: (value: LaunchConfig) => void;
   errors: FormErrors;
   setErrors: Dispatch<SetStateAction<FormErrors>>;
+  touched: {
+    name: boolean;
+    symbol: boolean;
+    description: boolean;
+    initialSupply: boolean;
+    decimals: boolean;
+    icon: boolean;
+  };
+  isValid: {
+    name: boolean;
+    symbol: boolean;
+    description: boolean;
+    initialSupply: boolean;
+    decimals: boolean;
+    icon: boolean;
+  };
+  setTouched: Dispatch<
+    SetStateAction<{
+      name: boolean;
+      symbol: boolean;
+      description: boolean;
+      initialSupply: boolean;
+      decimals: boolean;
+      icon: boolean;
+    }>
+  >;
+  setIsValid: Dispatch<
+    SetStateAction<{
+      name: boolean;
+      symbol: boolean;
+      description: boolean;
+      initialSupply: boolean;
+      icon: boolean;
+      decimals: boolean;
+    }>
+  >;
+  iconFile: File | null;
+  setIconFile: Dispatch<SetStateAction<File | null>>;
 }
 
 // Helper type for InfoTooltip
@@ -50,6 +88,12 @@ export default function TokenBasicInfo({
   setConfig,
   errors,
   setErrors,
+  touched,
+  setTouched,
+  isValid,
+  setIsValid,
+  iconFile,
+  setIconFile,
 }: TokenBasicInfoProps) {
   const {
     tokenName,
@@ -59,30 +103,8 @@ export default function TokenBasicInfo({
     tokenDecimals,
   } = config;
 
-  // State for icon upload
-  const [iconFile, setIconFile] = useState<File | null>(null);
-
   // State for advanced options collapse
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  const [touched, setTouched] = useState({
-    name: false,
-    symbol: false,
-    description: false,
-    initialSupply: false,
-    decimals: false,
-    icon: false,
-  });
-
-  // Real-time validation state
-  const [isValid, setIsValid] = useState({
-    name: false,
-    symbol: false,
-    description: true, // Description is optional, so default to true
-    initialSupply: false,
-    decimals: true, // Default to true since we'll use a default value
-    icon: true, // Icon is optional, so default to true
-  });
-
   // Handle blur events to validate on field exit
   const handleBlur = (field: keyof typeof errors) => {
     setTouched({ ...touched, [field]: true });
@@ -130,35 +152,6 @@ export default function TokenBasicInfo({
 
     setErrors((prev) => ({ ...prev, [field]: errorMessage }));
     return !errorMessage;
-  };
-
-  // Validate all fields
-  const validateAll = () => {
-    const nameValid = validateField("name");
-    const symbolValid = validateField("symbol");
-    const descriptionValid = validateField("description");
-    const initialSupplyValid = validateField("initialSupply");
-    const decimalsValid = validateField("decimals");
-    const iconValid = validateField("icon");
-
-    // Set all fields as touched
-    setTouched({
-      name: true,
-      symbol: true,
-      description: true,
-      initialSupply: true,
-      decimals: true,
-      icon: true,
-    });
-
-    return (
-      nameValid &&
-      symbolValid &&
-      descriptionValid &&
-      initialSupplyValid &&
-      decimalsValid &&
-      iconValid
-    );
   };
 
   // Handle onChange for token supply with formatting
@@ -238,20 +231,6 @@ export default function TokenBasicInfo({
       setIsValid((prev) => ({ ...prev, icon: !errorMessage }));
     }
   };
-
-  // Helper function to render a tooltip with the info icon
-  const InfoTooltip = ({ content }: InfoTooltipProps) => (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <InfoIcon className="text-muted-foreground h-4 w-4 cursor-help" />
-        </TooltipTrigger>
-        <TooltipContent side="top" align="center" className="max-w-xs">
-          <p>{content}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
 
   // Toggle advanced options visibility
   const toggleAdvancedOptions = () => {
@@ -374,7 +353,7 @@ export default function TokenBasicInfo({
                     <img
                       src={config.iconUrl ?? URL.createObjectURL(iconFile!)}
                       alt="Token icon preview"
-                      className="rounded-full h-10 w-10 overflow-hidden object-contain"
+                      className="h-10 w-10 overflow-hidden rounded-full object-contain"
                     />
                     <span className="text-p2 text-foreground">
                       {config.iconFileName ?? iconFile?.name}

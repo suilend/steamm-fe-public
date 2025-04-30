@@ -16,6 +16,8 @@ import { POOL_URL_PREFIX } from "@/lib/navigation";
 
 function LaunchPage() {
   const { address } = useWalletContext();
+  // State for icon upload
+  const [iconFile, setIconFile] = useState<File | null>(null);
 
   // Validation state
   const [errors, setErrors] = useState<FormErrors>({
@@ -26,15 +28,44 @@ function LaunchPage() {
     decimals: "",
     icon: "",
   });
-  const { config, setConfig, launchToken } = useLaunch();
+  const [touched, setTouched] = useState({
+    name: false,
+    symbol: false,
+    description: false,
+    initialSupply: false,
+    decimals: false,
+    icon: false,
+  });
+
+  // Real-time validation state
+  const [isValid, setIsValid] = useState({
+    name: false,
+    symbol: false,
+    description: true, // Description is optional, so default to true
+    initialSupply: false,
+    decimals: true, // Default to true since we'll use a default value
+    icon: true, // Icon is optional, so default to true
+  });
+
+  const { config, setConfig, setTempConfig, launchToken } = useLaunch();
   const { error } = config;
 
   // Submit
   const reset = () => {
     setConfig(DEFAULT_CONFIG);
+    setTempConfig(null);
+    const resetValues = {
+      name: false,
+      symbol: false,
+      description: false,
+      initialSupply: false,
+      decimals: false,
+      icon: false,
+    };
+    setTouched(resetValues);
+    setIsValid(resetValues);
+    setIconFile(null);
   };
-
-  // const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
@@ -69,6 +100,12 @@ function LaunchPage() {
             setConfig={setConfig}
             setErrors={setErrors}
             errors={errors}
+            touched={touched}
+            isValid={isValid}
+            setTouched={setTouched}
+            setIsValid={setIsValid}
+            iconFile={iconFile}
+            setIconFile={setIconFile}
           />
 
           {config.status !== TokenCreationStatus.Pending && (
