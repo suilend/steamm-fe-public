@@ -382,6 +382,8 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           const avgTvlUsd_24h = tvlUsd_24hData
             .reduce((acc, d) => acc.plus(d.tvlUsd_7d), new BigNumber(0))
             .div(tvlUsd_24hData.length); // Fallback for no data
+          if (avgTvlUsd_24h.eq(0))
+            return { ...acc, [poolId]: { feesAprPercent: new BigNumber(0) } };
 
           const feesUsd_7dData = data.filter(
             (d) => d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,

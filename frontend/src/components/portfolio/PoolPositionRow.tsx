@@ -33,9 +33,8 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useStake from "@/hooks/useStake";
 import { formatFeeTier, formatPair } from "@/lib/format";
-import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { getIndexesOfObligationsWithDeposit } from "@/lib/obligation";
-import { getPoolSlug } from "@/lib/pools";
+import { getPoolUrl } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { PoolPosition } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -149,7 +148,7 @@ export default function PoolPositionRow({
   return (
     <Link
       className="group relative z-[1] flex min-h-[calc(84px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row items-center border-x border-b bg-background py-[16px] transition-colors hover:bg-tertiary"
-      href={`${POOL_URL_PREFIX}/${poolPosition.pool.id}-${getPoolSlug(appData, poolPosition.pool)}`}
+      href={getPoolUrl(appData, poolPosition.pool)}
     >
       {/* Pool */}
       <div

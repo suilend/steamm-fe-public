@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import init, {
@@ -49,6 +50,7 @@ import {
   formatPair,
   formatTextInputValue,
 } from "@/lib/format";
+import { API_URL, POOL_URL_PREFIX } from "@/lib/navigation";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
@@ -135,13 +137,11 @@ const LP_TOKEN_IMAGE_URL =
 interface CreatePoolCardProps {
   noWhitelist?: boolean;
   quoterId?: QuoterId;
-  onCreate?: (poolId: string) => void;
 }
 
 export default function CreatePoolCard({
   noWhitelist,
   quoterId: hardcodedQuoterId,
-  onCreate,
 }: CreatePoolCardProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
@@ -157,6 +157,11 @@ export default function CreatePoolCard({
         address === ADMIN_ADDRESS ||
         (flags?.steammCreatePoolWhitelist ?? []).includes(address)),
     [address, noWhitelist, flags?.steammCreatePoolWhitelist],
+  );
+
+  // State
+  const [createdPoolId, setCreatedPoolId] = useState<string | undefined>(
+    undefined,
   );
 
   // CoinTypes
@@ -391,6 +396,15 @@ export default function CreatePoolCard({
     : undefined;
 
   // Submit
+  const reset = () => {
+    setCreatedPoolId(undefined);
+
+    setCoinTypes(["", ""]);
+    setValues(["", ""]);
+    if (!hardcodedQuoterId) setQuoterId(undefined);
+    setFeeTierPercent(undefined);
+  };
+
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const submitButtonState: SubmitButtonState = (() => {
@@ -831,20 +845,6 @@ export default function CreatePoolCard({
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
 
-      if (onCreate) {
-        const poolObjectChange: SuiObjectChange | undefined =
-          res.objectChanges?.find(
-            (change) =>
-              change.type === "created" &&
-              change.objectType.includes("::pool::Pool<"),
-          );
-        if (!poolObjectChange) throw new Error("Pool object change not found");
-        if (poolObjectChange.type !== "created")
-          throw new Error("Pool object change is not of type 'created'");
-
-        const poolId = poolObjectChange.objectId;
-        onCreate(poolId);
-      }
       showSuccessTxnToast(
         `Created ${formatPair(tokens.map((token) => token.symbol))} pool`,
         txUrl,
@@ -853,10 +853,23 @@ export default function CreatePoolCard({
         },
       );
 
-      setCoinTypes(["", ""]);
-      setValues(["", ""]);
-      if (!hardcodedQuoterId) setQuoterId(undefined);
-      setFeeTierPercent(undefined);
+      // Get created pool id
+      const poolObjectChange: SuiObjectChange | undefined =
+        res.objectChanges?.find(
+          (change) =>
+            change.type === "created" &&
+            change.objectType.includes("::pool::Pool<"),
+        );
+      if (!poolObjectChange) throw new Error("Pool object change not found");
+      if (poolObjectChange.type !== "created")
+        throw new Error("Pool object change is not of type 'created'");
+
+      setCreatedPoolId(poolObjectChange.objectId);
+      await fetch(`${API_URL}/steamm/clear-cache`); // Clear cache
+
+      await new Promise((resolve) => {
+        setTimeout(() => resolve(true), 1000);
+      }); // Wait 1 second before refreshing data
     } catch (err) {
       showErrorToast("Failed to create pool", err as Error, undefined, true);
       console.error(err);
@@ -1119,10 +1132,30 @@ export default function CreatePoolCard({
         </div>
       </div>
 
-      <SubmitButton
-        submitButtonState={submitButtonState}
-        onClick={onSubmitClick}
-      />
+      {!createdPoolId ? (
+        <SubmitButton
+          submitButtonState={submitButtonState}
+          onClick={onSubmitClick}
+        />
+      ) : (
+        <Link
+          className="flex h-14 w-full flex-row items-center justify-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80"
+          href={`${POOL_URL_PREFIX}/${createdPoolId}`}
+          target="_blank"
+        >
+          <p className="text-p1 text-button-1-foreground">Go to pool</p>
+        </Link>
+      )}
+
+      {/* Reset */}
+      <button
+        className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
+        onClick={reset}
+      >
+        <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
+          Reset
+        </p>
+      </button>
     </div>
   );
 }

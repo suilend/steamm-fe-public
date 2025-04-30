@@ -220,7 +220,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
 
   // Pools (non-blocking, depends on appData, oraclesData, and banksData)
   const { data: poolsData, mutateData: mutatePoolsData } = useFetchPoolsData(
-    steammClient,
     appData,
     oraclesData,
     banksData,

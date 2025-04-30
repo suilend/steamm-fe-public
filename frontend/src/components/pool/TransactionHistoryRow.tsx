@@ -16,8 +16,7 @@ import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
-import { POOL_URL_PREFIX } from "@/lib/navigation";
-import { getPoolSlug } from "@/lib/pools";
+import { getPoolUrl } from "@/lib/pools";
 import {
   HistoryDeposit,
   HistorySwap,
@@ -156,7 +155,7 @@ export default function TransactionHistoryRow({
 
           <Link
             className="block flex flex-col justify-center text-secondary-foreground transition-colors hover:text-foreground"
-            href={`${POOL_URL_PREFIX}/${pool.id}-${getPoolSlug(appData, pool)}`}
+            href={getPoolUrl(appData, pool)}
             target="_blank"
           >
             <ExternalLink className="h-4 w-4" />

@@ -24,8 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
-import { POOL_URL_PREFIX } from "@/lib/navigation";
-import { getPoolSlug } from "@/lib/pools";
+import { getPoolUrl } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedPool } from "@/lib/types";
 
@@ -109,9 +108,7 @@ export default function PoolCard({ pool }: PoolCardProps) {
           </div>
         </div>
 
-        <OpenUrlNewTab
-          url={`${POOL_URL_PREFIX}/${pool.id}-${getPoolSlug(appData, pool)}`}
-        />
+        <OpenUrlNewTab url={getPoolUrl(appData, pool)} />
       </div>
 
       <div className="flex w-full flex-col gap-6">

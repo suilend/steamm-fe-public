@@ -5,12 +5,15 @@ import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm
 
 import { AppData, BanksData, OraclesData } from "@/contexts/AppContext";
 import { formatPair } from "@/lib/format";
+import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 
-export const getPoolSlug = (appData: AppData, pool: ParsedPool) =>
+const getPoolSlug = (appData: AppData, pool: ParsedPool) =>
   `${formatPair(
     pool.coinTypes.map((coinType) => appData.coinMetadataMap[coinType].symbol),
   )}-${QUOTER_ID_NAME_MAP[pool.quoterId]}-${pool.feeTierPercent.times(100)}`;
+export const getPoolUrl = (appData: AppData, pool: ParsedPool) =>
+  `${POOL_URL_PREFIX}/${pool.id}-${getPoolSlug(appData, pool)}`;
 
 export const getQuoterId = (poolInfo: PoolInfo) =>
   poolInfo.quoterType.endsWith("omm::OracleQuoter")

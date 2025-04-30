@@ -5,7 +5,6 @@ import useSWR from "swr";
 import { showErrorToast, useSettingsContext } from "@suilend/frontend-sui-next";
 import { formatRewards } from "@suilend/sdk";
 import { LstClient } from "@suilend/springsui-sdk";
-import { SteammSDK } from "@suilend/steamm-sdk";
 
 import {
   AppData,
@@ -19,7 +18,6 @@ import { getParsedPool } from "@/lib/pools";
 import { ParsedPool } from "@/lib/types";
 
 export default function useFetchPoolsData(
-  steammClient: SteammSDK,
   appData: AppData | undefined,
   oraclesData: OraclesData | undefined,
   banksData: BanksData | undefined,
