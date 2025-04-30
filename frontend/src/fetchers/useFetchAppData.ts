@@ -18,7 +18,7 @@ import { BETA_CONFIG, MAINNET_CONFIG, SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
 import { API_URL } from "@/lib/navigation";
-import { QuoterId } from "@/lib/types";
+import { fetchPool } from "@/lib/pools";
 
 export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
@@ -96,7 +96,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       );
 
     const pointsCoinMetadataMap = await getCoinMetadataMap(
-      suiClient,
       [NORMALIZED_STEAMM_POINTS_COINTYPE].filter(
         (coinType) => !Object.keys(coinMetadataMap).includes(coinType),
       ),
@@ -136,7 +135,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const uniqueBankCoinTypes = Array.from(new Set(bankCoinTypes));
 
     const bankCoinMetadataMap = await getCoinMetadataMap(
-      suiClient,
       uniqueBankCoinTypes.filter(
         (coinType) => !Object.keys(coinMetadataMap).includes(coinType),
       ),
@@ -149,22 +147,19 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       const poolInfos = await steammClient.getPools();
 
       for (const poolInfo of poolInfos) {
-        const quoterId = poolInfo.quoterType.endsWith("omm::OracleQuoter")
-          ? QuoterId.ORACLE
-          : poolInfo.quoterType.endsWith("omm_v2::OracleQuoterV2")
-            ? QuoterId.ORACLE_V2
-            : QuoterId.CPMM;
+        const pool = await fetchPool(steammClient, poolInfo);
+        const redeemQuote = await steammClient.Pool.quoteRedeem({
+          lpTokens: pool.lpSupply.value,
+          poolInfo,
+          bankInfoA: bankObjs.find(
+            (bankObj) => bankObj.bankInfo.btokenType === poolInfo.coinTypeA,
+          )!.bankInfo,
+          bankInfoB: bankObjs.find(
+            (bankObj) => bankObj.bankInfo.btokenType === poolInfo.coinTypeB,
+          )!.bankInfo,
+        });
 
-        const pool =
-          quoterId === QuoterId.ORACLE
-            ? await steammClient.fullClient.fetchOraclePool(poolInfo.poolId)
-            : quoterId === QuoterId.ORACLE_V2
-              ? await steammClient.fullClient.fetchOracleV2Pool(poolInfo.poolId)
-              : await steammClient.fullClient.fetchConstantProductPool(
-                  poolInfo.poolId,
-                );
-
-        poolObjs.push({ poolInfo, pool });
+        poolObjs.push({ poolInfo, pool, redeemQuote });
       }
     } else {
       const poolsRes = await fetch(`${API_URL}/steamm/pools/all`);
@@ -187,7 +182,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const uniquePoolCoinTypes = Array.from(new Set(poolCoinTypes));
 
     const poolCoinMetadataMap = await getCoinMetadataMap(
-      suiClient,
       uniquePoolCoinTypes.filter(
         (coinType) => !Object.keys(coinMetadataMap).includes(coinType),
       ),

@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 
+import { Plus } from "lucide-react";
+
 import CreatePoolCard from "@/components/admin/pools/CreatePoolCard";
 import PoolCard from "@/components/admin/pools/PoolCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,7 +18,14 @@ export default function PoolsTab() {
 
   return (
     <>
-      <CreatePoolCard />
+      <div className="flex w-full max-w-lg flex-col gap-4 rounded-md border p-5">
+        <div className="flex flex-row items-center gap-2">
+          <Plus className="h-4 w-4 text-foreground" />
+          <p className="text-h3 text-foreground">Create pool</p>
+        </div>
+
+        <CreatePoolCard />
+      </div>
 
       <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
         {sortedPools === undefined ? (

@@ -29,6 +29,7 @@ import {
   MAINNET_CONFIG,
   OracleInfo,
   PoolInfo,
+  RedeemQuote,
   SteammSDK,
 } from "@suilend/steamm-sdk";
 import { Bank } from "@suilend/steamm-sdk/_codegen/_generated/steamm/bank/structs";
@@ -85,6 +86,7 @@ export interface AppData {
       | Pool<string, string, CpQuoter, string>
       | Pool<string, string, OracleQuoter, string>
       | Pool<string, string, OracleQuoterV2, string>;
+    redeemQuote: RedeemQuote;
   }[];
 }
 export interface OraclesData {
@@ -131,6 +133,7 @@ interface AppContext {
   setSlippagePercent: (slippagePercent: number) => void;
 
   featuredPoolIds: string[] | undefined;
+  verifiedPoolIds: string[] | undefined;
 }
 type LoadedAppContext = AppContext & {
   steammClient: SteammSDK;
@@ -166,6 +169,7 @@ const AppContext = createContext<AppContext>({
   },
 
   featuredPoolIds: undefined,
+  verifiedPoolIds: undefined,
 });
 
 export const useAppContext = () => useContext(AppContext);
@@ -216,7 +220,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
 
   // Pools (non-blocking, depends on appData, oraclesData, and banksData)
   const { data: poolsData, mutateData: mutatePoolsData } = useFetchPoolsData(
-    steammClient,
     appData,
     oraclesData,
     banksData,
@@ -237,6 +240,12 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   const featuredPoolIds: string[] | undefined = useMemo(
     () => flags?.steammFeaturedPoolIds ?? [],
     [flags?.steammFeaturedPoolIds],
+  );
+
+  // Verified pools
+  const verifiedPoolIds: string[] | undefined = useMemo(
+    () => flags?.steammVerifiedPoolIds ?? [],
+    [flags?.steammVerifiedPoolIds],
   );
 
   // Context
@@ -260,6 +269,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       setSlippagePercent,
 
       featuredPoolIds,
+      verifiedPoolIds,
     }),
     [
       steammClient,
@@ -274,6 +284,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       slippagePercent,
       setSlippagePercent,
       featuredPoolIds,
+      verifiedPoolIds,
     ],
   );
 

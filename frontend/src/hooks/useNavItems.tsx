@@ -3,6 +3,7 @@ import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
 
 import {
   ADMIN_URL,
+  CREATE_URL,
   LAUNCH_URL,
   POINTS_URL,
   POOL_URL_PREFIX,
@@ -22,10 +23,11 @@ const useNavItems = () => {
 
   const NAV_ITEMS: NavItem[] = [
     { url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX },
+    { url: LAUNCH_URL, title: "Launch" },
+    { url: CREATE_URL, title: "Create" },
     { url: PORTFOLIO_URL, title: "Portfolio" },
     { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
     { url: POINTS_URL, title: "Points" },
-    { url: LAUNCH_URL, title: "Launch" },
   ];
   const ADMIN_NAV_ITEM: NavItem = {
     url: ADMIN_URL,

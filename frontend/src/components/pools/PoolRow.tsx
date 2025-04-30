@@ -12,8 +12,7 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
-import { POOL_URL_PREFIX } from "@/lib/navigation";
-import { getPoolSlug } from "@/lib/pools";
+import { getPoolUrl } from "@/lib/pools";
 import { ParsedPool } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +41,7 @@ export default function PoolRow({
           ? "shadow-[inset_2px_0_0_0px_hsl(var(--button-1))] hover:bg-tertiary/50"
           : "hover:bg-tertiary",
       )}
-      href={`${POOL_URL_PREFIX}/${pool.id}-${getPoolSlug(appData, pool)}`}
+      href={getPoolUrl(appData, pool)}
     >
       {/* Pool */}
       <div

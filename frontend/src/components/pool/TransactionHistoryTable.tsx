@@ -5,7 +5,7 @@ import { ClassValue } from "clsx";
 import TransactionHistoryRow from "@/components/pool/TransactionHistoryRow";
 import HeaderColumn from "@/components/TableHeaderColumn";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HistoryDeposit, HistoryRedeem } from "@/lib/types";
+import { HistoryDeposit, HistorySwap, HistoryWithdraw } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export type Column = "date" | "type" | "pool" | "amounts" | "digest";
@@ -13,7 +13,7 @@ type SortableColumn = "";
 
 interface TransactionHistoryTableProps {
   className?: ClassValue;
-  transactionHistory?: (HistoryDeposit | HistoryRedeem)[][];
+  transactionHistory?: (HistoryDeposit | HistoryWithdraw | HistorySwap)[][];
   hasPoolColumn?: boolean;
 }
 
@@ -102,21 +102,23 @@ export default function TransactionHistoryTable({
           Array.from({ length: 3 }).map((_, index) => (
             <Skeleton
               key={index}
-              className="relative z-[1] h-[calc(44px+1px)] w-full border-x border-b"
+              className="relative z-[1] h-[calc(45px+1px)] w-full border-x border-b"
             />
           ))
         ) : transactionHistory.length === 0 ? (
-          <div className="flex h-[calc(44px+1px)] w-full flex-row items-center justify-center border-x border-b bg-background">
+          <div className="flex h-[calc(45px+1px)] w-full flex-row items-center justify-center border-x border-b bg-background">
             <p className="text-p2 text-tertiary-foreground">No transactions</p>
           </div>
         ) : (
           transactionHistory.map((poolTransactionHistory, index) => (
             <Fragment key={index}>
-              {poolTransactionHistory.map((transaction) => (
+              {poolTransactionHistory.map((transaction, transactionIndex) => (
                 <TransactionHistoryRow
                   key={transaction.timestamp}
                   columnStyleMap={columnStyleMap}
+                  prevTransaction={poolTransactionHistory[transactionIndex - 1]}
                   transaction={transaction}
+                  nextTransaction={poolTransactionHistory[transactionIndex + 1]}
                   hasPoolColumn={hasPoolColumn}
                 />
               ))}

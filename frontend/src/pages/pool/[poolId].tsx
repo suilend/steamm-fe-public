@@ -86,6 +86,14 @@ function PoolPage() {
     }, 1000);
   };
 
+  const onSwap = async () => {
+    refresh();
+
+    setTimeout(() => {
+      fetchPoolTransactionHistoryMap([pool.id]);
+    }, 1000);
+  };
+
   return (
     <>
       <Head>
@@ -201,7 +209,7 @@ function PoolPage() {
               </div>
 
               {/* Right */}
-              <div className="flex flex-col gap-6 max-md:w-full md:flex-1 lg:flex-[2]">
+              <div className="flex flex-col gap-6 max-md:w-full md:flex-1 lg:max-w-lg lg:flex-[2]">
                 {/* Cards */}
                 <div className="flex w-full flex-col gap-4">
                   <PoolPositionCard />
@@ -209,6 +217,7 @@ function PoolPage() {
                     key={pool.id}
                     onDeposit={onDeposit}
                     onWithdraw={onWithdraw}
+                    onSwap={onSwap}
                   />
                 </div>
               </div>

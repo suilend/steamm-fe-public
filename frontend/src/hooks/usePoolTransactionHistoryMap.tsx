@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import * as Sentry from "@sentry/nextjs";
-import pLimit, { LimitFunction } from "p-limit";
+import pLimit from "p-limit";
 
 import { showErrorToast, useWalletContext } from "@suilend/frontend-sui-next";
 
-import { API_URL } from "@/lib/navigation";
+import { fetchHistoricalLpTransactions } from "@/lib/lp";
+import { fetchHistoricalSwapTransactions } from "@/lib/swap";
 import {
   HistoryDeposit,
-  HistoryRedeem,
+  HistorySwap,
   HistoryTransactionType,
+  HistoryWithdraw,
 } from "@/lib/types";
 
 const usePoolTransactionHistoryMap = (poolIds: string[] | undefined) => {
@@ -17,16 +19,19 @@ const usePoolTransactionHistoryMap = (poolIds: string[] | undefined) => {
 
   const [poolTransactionHistoryMapMap, setPoolTransactionHistoryMapMap] =
     useState<
-      Record<string, Record<string, (HistoryDeposit | HistoryRedeem)[][]>>
+      Record<
+        string,
+        Record<string, (HistoryDeposit | HistoryWithdraw | HistorySwap)[][]>
+      >
     >({});
   const poolTransactionHistoryMap:
-    | Record<string, (HistoryDeposit | HistoryRedeem)[][]>
+    | Record<string, (HistoryDeposit | HistoryWithdraw | HistorySwap)[][]>
     | undefined = useMemo(
     () => (!address ? {} : poolTransactionHistoryMapMap[address]),
     [address, poolTransactionHistoryMapMap],
   );
 
-  const limitRef = useRef<LimitFunction>(pLimit(3));
+  const limitRef = useRef<pLimit.Limit>(pLimit(3));
   const fetchPoolTransactionHistoryMap = useCallback(
     async (_poolIds: string[]) => {
       console.log("fetchPoolTransactionHistoryMap", _poolIds);
@@ -35,31 +40,37 @@ const usePoolTransactionHistoryMap = (poolIds: string[] | undefined) => {
         await Promise.all(
           _poolIds.map((poolId) =>
             limitRef.current(async () => {
-              const res = await fetch(
-                `${API_URL}/steamm/historical/lp?${new URLSearchParams({
-                  user: address!, // Checked in useEffect below
-                  poolId,
-                })}`,
-              );
-              const json: {
-                deposits: Omit<HistoryDeposit, "type">[];
-                redeems: Omit<HistoryRedeem, "type">[];
-              } = await res.json();
-              if ((json as any)?.statusCode === 500) return;
+              const [lpTransactionHistory, swapTransactionHistory] =
+                await Promise.all([
+                  fetchHistoricalLpTransactions(
+                    address!, // Checked in useEffect below
+                    poolId,
+                  ),
+                  fetchHistoricalSwapTransactions(
+                    address!, // Checked in useEffect below
+                    poolId,
+                  ),
+                ]);
 
               const transactionHistory = [
-                ...(json.deposits.map((entry) => ({
-                  ...entry,
-                  type: HistoryTransactionType.DEPOSIT,
-                })) as HistoryDeposit[]),
-                ...(json.redeems.map((entry) => ({
-                  ...entry,
-                  type: HistoryTransactionType.REDEEM,
-                })) as HistoryRedeem[]),
-              ].sort((a, b) => +a.timestamp - +b.timestamp); // Sort by timestamp (asc)
+                ...lpTransactionHistory,
+                ...swapTransactionHistory,
+              ]
+                .slice()
+                .sort(
+                  (a, b) =>
+                    a.timestamp === b.timestamp
+                      ? a.eventIndex - b.eventIndex // Sort by eventIndex (asc) if timestamps are the same
+                      : b.timestamp - a.timestamp, // Sort by timestamp (desc)
+                )
+                .reverse(); // Oldest first
 
               // Split transaction history into separate positions
-              let positions: (HistoryDeposit | HistoryRedeem)[][] = [];
+              let positions: (
+                | HistoryDeposit
+                | HistoryWithdraw
+                | HistorySwap
+              )[][] = [];
               let currentPositionLpTokens = 0;
 
               for (let i = 0; i < transactionHistory.length; i++) {
@@ -71,22 +82,29 @@ const usePoolTransactionHistoryMap = (poolIds: string[] | undefined) => {
                   else positions[positions.length - 1].push(transaction);
 
                   currentPositionLpTokens += +transaction.mint_lp;
-                } else {
+                } else if (
+                  transaction.type === HistoryTransactionType.WITHDRAW
+                ) {
                   positions[positions.length - 1].push(transaction);
 
                   currentPositionLpTokens -= +transaction.burn_lp;
+                } else {
+                  if (positions.length === 0) positions.push([transaction]);
+                  else positions[positions.length - 1].push(transaction);
                 }
               }
 
               positions = positions
-                .map(
-                  (position) =>
-                    position
-                      .slice()
-                      .sort((a, b) => +b.timestamp - +a.timestamp), // Sort individual position transactions by timestamp (asc)
+                .map((position) =>
+                  position.slice().sort(
+                    (a, b) =>
+                      a.timestamp === b.timestamp
+                        ? a.eventIndex - b.eventIndex // Sort by eventIndex (asc) if timestamps are the same
+                        : b.timestamp - a.timestamp, // Sort by timestamp (desc)
+                  ),
                 )
                 .slice()
-                .reverse(); // Most recent positions first
+                .reverse(); // Newest first
 
               setPoolTransactionHistoryMapMap((prev) => ({
                 ...prev,

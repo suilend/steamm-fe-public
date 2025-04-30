@@ -4,7 +4,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 import { Loader2 } from "lucide-react";
 
-import { formatToken, formatUsd } from "@suilend/frontend-sui";
+import { formatToken, formatUsd, getToken } from "@suilend/frontend-sui";
 import {
   showErrorToast,
   useSettingsContext,
@@ -17,14 +17,14 @@ import OpenUrlNewTab from "@/components/OpenUrlNewTab";
 import Parameter from "@/components/Parameter";
 import PoolTypeTag from "@/components/pool/PoolTypeTag";
 import Tag from "@/components/Tag";
+import TokenLogo from "@/components/TokenLogo";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
-import { POOL_URL_PREFIX } from "@/lib/navigation";
-import { getPoolSlug } from "@/lib/pools";
+import { getPoolUrl } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedPool } from "@/lib/types";
 
@@ -108,9 +108,7 @@ export default function PoolCard({ pool }: PoolCardProps) {
           </div>
         </div>
 
-        <OpenUrlNewTab
-          url={`${POOL_URL_PREFIX}/${pool.id}-${getPoolSlug(appData, pool)}`}
-        />
+        <OpenUrlNewTab url={getPoolUrl(appData, pool)} />
       </div>
 
       <div className="flex w-full flex-col gap-6">
@@ -147,6 +145,13 @@ export default function PoolCard({ pool }: PoolCardProps) {
                     key={coinType}
                     className="flex flex-row items-center gap-2"
                   >
+                    <TokenLogo
+                      token={getToken(
+                        coinType,
+                        appData.coinMetadataMap[coinType],
+                      )}
+                      size={16}
+                    />
                     <Tooltip
                       title={`${formatToken(feeAmount, {
                         dp: appData.coinMetadataMap[coinType].decimals,

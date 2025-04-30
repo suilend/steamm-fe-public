@@ -7,6 +7,7 @@ import { formatUsd } from "@suilend/frontend-sui";
 import { shallowPushQuery } from "@suilend/frontend-sui-next";
 
 import HistoricalDataChart from "@/components/HistoricalDataChart";
+import { Skeleton } from "@/components/ui/skeleton";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { ChartConfig, ChartType, chartStatNameMap } from "@/lib/chart";
@@ -98,6 +99,20 @@ export default function PoolChartCard() {
     [chartConfigMap, selectedChartStat],
   );
 
+  if (
+    poolHistoricalStats.tvlUsd_7d[pool.id] === undefined ||
+    poolHistoricalStats.volumeUsd_7d[pool.id] === undefined ||
+    poolHistoricalStats.feesUsd_7d[pool.id] === undefined
+  )
+    return <Skeleton className="h-[265px] w-full md:h-[325px]" />;
+  if (
+    poolHistoricalStats.tvlUsd_7d[pool.id].every((d) => d.tvlUsd_7d === 0) &&
+    poolHistoricalStats.volumeUsd_7d[pool.id].every(
+      (d) => d.volumeUsd_7d === 0,
+    ) &&
+    poolHistoricalStats.feesUsd_7d[pool.id].every((d) => d.feesUsd_7d === 0)
+  )
+    return null;
   return (
     <div className="relative w-full rounded-md border p-5">
       <HistoricalDataChart

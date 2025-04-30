@@ -33,9 +33,8 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useStake from "@/hooks/useStake";
 import { formatFeeTier, formatPair } from "@/lib/format";
-import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { getIndexesOfObligationsWithDeposit } from "@/lib/obligation";
-import { getPoolSlug } from "@/lib/pools";
+import { getPoolUrl } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { PoolPosition } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -149,7 +148,7 @@ export default function PoolPositionRow({
   return (
     <Link
       className="group relative z-[1] flex min-h-[calc(84px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row items-center border-x border-b bg-background py-[16px] transition-colors hover:bg-tertiary"
-      href={`${POOL_URL_PREFIX}/${poolPosition.pool.id}-${getPoolSlug(appData, poolPosition.pool)}`}
+      href={getPoolUrl(appData, poolPosition.pool)}
     >
       {/* Pool */}
       <div
@@ -205,9 +204,12 @@ export default function PoolPositionRow({
           {poolPosition.balances === undefined ? (
             <Skeleton className="h-[21px] w-40" />
           ) : (
-            <div className="flex flex-row items-center gap-2">
+            <div className="flex flex-row items-center gap-3">
               {poolPosition.pool.coinTypes.map((coinType, index) => (
-                <Fragment key={coinType}>
+                <div
+                  key={coinType}
+                  className="flex flex-row items-center gap-2"
+                >
                   <TokenLogo
                     token={getToken(
                       coinType,
@@ -225,11 +227,7 @@ export default function PoolPositionRow({
                       {appData.coinMetadataMap[coinType].symbol}
                     </p>
                   </Tooltip>
-
-                  {index === 0 && (
-                    <p className="text-p2 text-secondary-foreground">+</p>
-                  )}
-                </Fragment>
+                </div>
               ))}
             </div>
           )}
@@ -330,6 +328,23 @@ export default function PoolPositionRow({
                       {appData.coinMetadataMap[coinType].symbol}
                     </p>
                   </Tooltip>
+
+                  <Tooltip
+                    title={formatUsd(
+                      amount.times(
+                        appData.lmMarket.rewardPriceMap[coinType] ?? 0,
+                      ),
+                      { exact: true },
+                    )}
+                  >
+                    <p className="text-p2 text-secondary-foreground">
+                      {formatUsd(
+                        amount.times(
+                          appData.lmMarket.rewardPriceMap[coinType] ?? 0,
+                        ),
+                      )}
+                    </p>
+                  </Tooltip>
                 </div>
               ),
             )}
@@ -361,7 +376,7 @@ export default function PoolPositionRow({
                     .decimals,
                 })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
               >
-                <p className="text-p2 text-foreground">
+                <p className="text-p1 text-foreground">
                   {formatPoints(poolPosition.totalPoints)}
                 </p>
               </Tooltip>

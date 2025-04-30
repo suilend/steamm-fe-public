@@ -3,6 +3,9 @@ import BigNumber from "bignumber.js";
 import { Token } from "@suilend/frontend-sui";
 import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 
+import { API_URL } from "@/lib/navigation";
+import { HistorySwap, HistoryTransactionType } from "@/lib/types";
+
 export const PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD = 2;
 
 export const getQuoteRatio = (
@@ -24,6 +27,30 @@ export const getBirdeyeRatio = (
   inUsdPrice: BigNumber | undefined,
   outUsdPrice: BigNumber | undefined,
 ) =>
-  inUsdPrice !== undefined && outUsdPrice !== undefined && !outUsdPrice.eq(0)
-    ? inUsdPrice.div(outUsdPrice)
+  inUsdPrice !== undefined && outUsdPrice !== undefined
+    ? !inUsdPrice.eq(0) && !outUsdPrice.eq(0)
+      ? inUsdPrice.div(outUsdPrice)
+      : null
     : undefined;
+
+export const fetchHistoricalSwapTransactions = async (
+  address: string,
+  poolId?: string,
+) => {
+  const urlSearchParams: Record<string, string> = { user: address };
+  if (poolId) urlSearchParams.poolId = poolId;
+
+  const res = await fetch(
+    `${API_URL}/steamm/historical/swaps?${new URLSearchParams(urlSearchParams)}`,
+  );
+  const json: Omit<HistorySwap, "type">[] = await res.json();
+  if ((json as any)?.statusCode === 500)
+    throw new Error("Failed to fetch historical swap transactions");
+
+  return [
+    ...(json.map((entry) => ({
+      ...entry,
+      type: HistoryTransactionType.SWAP,
+    })) as HistorySwap[]),
+  ];
+};

@@ -43,7 +43,7 @@ export default function PoolPositionsTable({
         paddingRight: 4 * 5, // px
       },
       balance: {
-        width: 250, // px
+        width: 230, // px
         justifyContent: "end",
         paddingRight: 4 * 5, // px
       },
@@ -58,7 +58,7 @@ export default function PoolPositionsTable({
         paddingRight: 4 * 5, // px
       },
       claimableRewards: {
-        width: 150, // px
+        width: 175, // px
         justifyContent: "end",
         paddingRight: 4 * 5, // px
       },

@@ -5,12 +5,15 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
+  useState,
 } from "react";
 
 import { Loader2 } from "lucide-react";
 
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { ROOT_URL } from "@/lib/navigation";
+import { fetchPool, getParsedPool } from "@/lib/pools";
 import { ParsedPool } from "@/lib/types";
 
 interface PoolContext {
@@ -27,17 +30,80 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
   const router = useRouter();
   const poolIdWithSlug = router.query.poolId as string;
 
-  const { poolsData } = useLoadedAppContext();
+  const { steammClient, appData, oraclesData, banksData, poolsData } =
+    useLoadedAppContext();
+
+  // Pool info
+  const poolId = useMemo(
+    () => poolIdWithSlug?.split("-")?.[0],
+    [poolIdWithSlug],
+  );
+
+  const poolInfo = useMemo(
+    () =>
+      poolsData === undefined
+        ? undefined
+        : (poolsData?.pools.find((pool) => pool.id === poolId)?.poolInfo ??
+          null),
+    [poolsData, poolId],
+  );
+
+  const isFetchingRefreshedPoolMapRef = useRef<Record<string, boolean>>({});
+  const [refreshedPoolMap, setRefreshedPoolMap] = useState<
+    Record<string, ParsedPool>
+  >({});
+
+  useEffect(() => {
+    (async () => {
+      if (!appData || !oraclesData || !banksData) return;
+      if (!poolInfo) return;
+
+      if (isFetchingRefreshedPoolMapRef.current[poolInfo.poolId]) return;
+      isFetchingRefreshedPoolMapRef.current[poolInfo.poolId] = true;
+
+      try {
+        const pool = await fetchPool(steammClient, poolInfo);
+        const redeemQuote = await steammClient.Pool.quoteRedeem({
+          lpTokens: pool.lpSupply.value,
+          poolInfo,
+          bankInfoA: appData.bankObjs.find(
+            (bankObj) => bankObj.bankInfo.btokenType === poolInfo.coinTypeA,
+          )!.bankInfo,
+          bankInfoB: appData.bankObjs.find(
+            (bankObj) => bankObj.bankInfo.btokenType === poolInfo.coinTypeB,
+          )!.bankInfo,
+        });
+
+        const parsedPool = await getParsedPool(
+          appData,
+          oraclesData,
+          banksData,
+          poolInfo,
+          pool,
+          redeemQuote,
+        );
+        if (parsedPool === undefined) return;
+
+        setRefreshedPoolMap((prev) => ({
+          ...prev,
+          [poolInfo.poolId]: parsedPool,
+        }));
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+  }, [appData, oraclesData, banksData, poolInfo, steammClient]);
 
   // Pool
   const pool = useMemo(
     () =>
-      poolsData === undefined
+      poolInfo === undefined
         ? undefined
-        : (poolsData?.pools.find(
-            (pool) => pool.id === poolIdWithSlug?.split("-")?.[0],
-          ) ?? null),
-    [poolsData, poolIdWithSlug],
+        : poolInfo === null
+          ? null
+          : (refreshedPoolMap[poolId] ??
+            poolsData?.pools.find((pool) => pool.id === poolId)),
+    [poolInfo, refreshedPoolMap, poolsData?.pools, poolId],
   );
 
   useEffect(() => {
