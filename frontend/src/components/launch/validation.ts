@@ -29,8 +29,8 @@ export function validateTokenDecimals(decimals: number): string | undefined {
 export function validateTokenIcon(file: File | null): string | undefined {
   if (!file) return undefined; // Icon is optional
 
-  // Check file size (max 64KB = 65536 bytes)
-  if (file.size > 65536) return "Icon size must be less than 64KB";
+  // Check file size (max 40KB = 40000 bytes)
+  if (file.size > 40000) return "Icon size must be less than 40KB";
 
   // Check file type
   const validTypes = ["image/jpeg", "image/png", "image/svg+xml"];

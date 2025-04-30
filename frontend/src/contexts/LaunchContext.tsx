@@ -8,11 +8,13 @@ import {
 
 import { bcs } from "@mysten/bcs";
 import init, * as template from "@mysten/move-bytecode-template";
+import { SuiEvent } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 import * as Sentry from "@sentry/nextjs";
 import { useLocalStorage } from "usehooks-ts";
 
+import { Token } from "@suilend/frontend-sui";
 import {
   showErrorToast,
   useSettingsContext,
@@ -27,25 +29,19 @@ import { QuoterId } from "@/lib/types";
 const SUI_COIN_TYPE =
   "0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI";
 
-export enum LaunchStep {
-  Start = -1,
-  Config = 0,
-  Deploy = 1,
-  Complete = 2,
-}
-
 export enum TokenCreationStatus {
   Pending = 0,
   Publishing = 1,
   Minting = 2,
-  Pooling = 3,
-  Success = 4,
+  BTokenCreation = 3,
+  BankCreation = 4,
+  LpTokenCreation = 5,
+  DepositLiquidity = 6,
+  Success = 7,
 }
 
 export type LaunchConfig = {
   // Wizard config date
-  step: LaunchStep;
-  lastCompletedStep: LaunchStep;
   tokenName: string;
   tokenSymbol: string;
   tokenDescription: string;
@@ -84,6 +80,40 @@ export type LaunchConfig = {
   transactionDigests: {
     [key: string]: string[];
   };
+
+  createBTokenResults:
+    | [
+        (
+          | {
+              treasuryCapId: string;
+              coinType: string;
+              coinMetadataId: string;
+              digest: string;
+            }
+          | undefined
+        ),
+        (
+          | {
+              treasuryCapId: string;
+              coinType: string;
+              coinMetadataId: string;
+              digest: string;
+            }
+          | undefined
+        ),
+      ]
+    | null;
+
+  createBankEvents: SuiEvent[] | null;
+
+  bTokens: [Token, Token] | null;
+
+  createLpTokenResult: {
+    treasuryCapId: string;
+    coinType: string;
+    coinMetadataId: string;
+    digest: string;
+  } | null;
 };
 
 // Initialize the WebAssembly module
@@ -141,9 +171,9 @@ const generateTokenBytecode = async (
       .toUpperCase()
       .replace(/[^A-Z0-9_]/g, "_");
 
-    // Base64 encoded bytecode template for a standard coin module
+    // Base64 encoded bytecode template for a standard coin module with decimals parameter
     const bytecode = Buffer.from(
-      "oRzrCwYAAAAKAQAMAgweAyonBFEIBVlMB6UBywEI8AJgBtADXQqtBAUMsgQoABABCwIGAhECEgITAAICAAEBBwEAAAIADAEAAQIDDAEAAQQEAgAFBQcAAAkAAQABDwUGAQACBwgJAQIDDAUBAQwDDQ0BAQwEDgoLAAUKAwQAAQQCBwQMAwICCAAHCAQAAQsCAQgAAQoCAQgFAQkAAQsBAQkAAQgABwkAAgoCCgIKAgsBAQgFBwgEAgsDAQkACwIBCQABBggEAQUBCwMBCAACCQAFDENvaW5NZXRhZGF0YQZPcHRpb24IVEVNUExBVEULVHJlYXN1cnlDYXAJVHhDb250ZXh0A1VybARjb2luD2NyZWF0ZV9jdXJyZW5jeQtkdW1teV9maWVsZARpbml0FW5ld191bnNhZmVfZnJvbV9ieXRlcwZvcHRpb24TcHVibGljX3NoYXJlX29iamVjdA9wdWJsaWNfdHJhbnNmZXIGc2VuZGVyBHNvbWUIdGVtcGxhdGUIdHJhbnNmZXIKdHhfY29udGV4dAN1cmwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAQkKAgUEVE1QTAoCDg1UZW1wbGF0ZSBDb2luCgIaGVRlbXBsYXRlIENvaW4gRGVzY3JpcHRpb24KAiEgaHR0cHM6Ly9leGFtcGxlLmNvbS90ZW1wbGF0ZS5wbmcAAgEIAQAAAAACEgsABwAHAQcCBwMHBBEGOAAKATgBDAILAS4RBTgCCwI4AwIA=",
+      "oRzrCwYAAAAKAQAMAgweAyonBFEIBVlMB6UBywEI8AJgBtADXQqtBAUMsgQoABABCwIGAhECEgITAAICAAEBBwEAAAIADAEAAQIDDAEAAQQEAgAFBQcAAAkAAQABDwUGAQACBwgJAQIDDAUBAQwDDQ0BAQwEDgoLAAUKAwQAAQQCBwQMAwICCAAHCAQAAQsCAQgAAQoCAQgFAQkAAQsBAQkAAQgABwkAAgoCCgIKAgsBAQgFBwgEAgsDAQkACwIBCQABBggEAQUBCwMBCAACCQAFDENvaW5NZXRhZGF0YQZPcHRpb24IVEVNUExBVEULVHJlYXN1cnlDYXAJVHhDb250ZXh0A1VybARjb2luD2NyZWF0ZV9jdXJyZW5jeQtkdW1teV9maWVsZARpbml0FW5ld191bnNhZmVfZnJvbV9ieXRlcwZvcHRpb24TcHVibGljX3NoYXJlX29iamVjdA9wdWJsaWNfdHJhbnNmZXIGc2VuZGVyBHNvbWUIdGVtcGxhdGUIdHJhbnNmZXIKdHhfY29udGV4dAN1cmwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAQkKAgUEVE1QTAoCDg1UZW1wbGF0ZSBDb2luCgIaGVRlbXBsYXRlIENvaW4gRGVzY3JpcHRpb24KAiEgaHR0cHM6Ly9leGFtcGxlLmNvbS90ZW1wbGF0ZS5wbmcAAgEIAQAAAAACEgsABwAHAQcCBwMHBBEGOAAKATgBDAILAS4RBTgCCwI4AwIA",
       "base64",
     );
 
@@ -190,6 +220,16 @@ const generateTokenBytecode = async (
       "Vector(U8)",
     );
 
+    // Update decimals in the create_currency call
+    const decimalsBytes = new Uint8Array(1);
+    decimalsBytes[0] = params.tokenDecimals;
+    updated = update_constants(
+      updated,
+      decimalsBytes,
+      new Uint8Array([9]), // Default decimals in template's create_currency call
+      "U8",
+    );
+
     return updated;
   } catch (error) {
     console.error("Error generating token bytecode:", error);
@@ -203,8 +243,6 @@ const generateTokenBytecode = async (
 
 export const DEFAULT_CONFIG: LaunchConfig = {
   status: TokenCreationStatus.Pending,
-  step: LaunchStep.Config,
-  lastCompletedStep: LaunchStep.Start,
   tokenName: "",
   tokenSymbol: "",
   tokenDescription: "",
@@ -231,6 +269,15 @@ export const DEFAULT_CONFIG: LaunchConfig = {
 
   // Transaction digest
   transactionDigests: {},
+
+  // Create BToken results
+  createBTokenResults: null,
+
+  createBankEvents: null,
+
+  bTokens: null,
+
+  createLpTokenResult: null,
 };
 
 type LaunchContextType = {
@@ -270,13 +317,12 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   useEffect(() => {
-    if (config.lastCompletedStep === LaunchStep.Complete) {
+    if (configRaw.status === TokenCreationStatus.Success) {
+      console.log("reset");
       setTempConfig(configRaw);
       setConfig(DEFAULT_CONFIG);
-    } else {
-      setTempConfig(null);
     }
-  }, [config.lastCompletedStep, configRaw, setConfig]);
+  }, [configRaw, setConfig]);
 
   const launchToken = async (): Promise<LaunchConfig | null> => {
     const pendingUpdates: Partial<LaunchConfig> = {
@@ -418,13 +464,13 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
         // Execute the mint transaction
         const mintRes = await signExecuteAndWaitForTransaction(mintTransaction);
 
-        mergedConfig.status = TokenCreationStatus.Publishing;
+        mergedConfig.status = TokenCreationStatus.BTokenCreation;
         mergedConfig.transactionDigests = {
           ...mergedConfig.transactionDigests,
           [TokenCreationStatus.Minting]: [mintRes.digest],
         };
         setConfigWrap({
-          status: TokenCreationStatus.Pooling,
+          status: TokenCreationStatus.BTokenCreation,
           transactionDigests: {
             ...mergedConfig.transactionDigests,
             [TokenCreationStatus.Minting]: [mintRes.digest],
@@ -440,15 +486,21 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
         newTokenMetadata = await suiClient.getCoinMetadata({
           coinType: mergedConfig.tokenType,
         });
-        // Optionally, update your balancesCoinMetadataMap here if needed
+        // Optionally, u
+        // pdate your balancesCoinMetadataMap here if needed
       }
 
       if (!newTokenMetadata) {
         throw new Error("Failed to fetch token metadata");
       }
 
-      if (mergedConfig.coinMetadataChange) {
-        const res = await createPool(
+      console.log("newTokenMetadata", newTokenMetadata);
+
+      if (
+        mergedConfig.coinMetadataChange &&
+        mergedConfig.status !== TokenCreationStatus.Success
+      ) {
+        await createPool(
           banksData!,
           QuoterId.CPMM,
           0.3,
@@ -466,26 +518,9 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
             Math.floor(Number(mergedConfig.initialSupply) * 0.1).toString(),
             (10 ** -9).toString(),
           ],
+          setConfigWrap,
+          mergedConfig,
         );
-
-        mergedConfig.status = TokenCreationStatus.Success;
-        mergedConfig.transactionDigests = {
-          ...mergedConfig.transactionDigests,
-          [TokenCreationStatus.Pooling]: res.txnDigests,
-        };
-        mergedConfig.step = LaunchStep.Complete;
-        mergedConfig.lastCompletedStep = LaunchStep.Complete;
-        mergedConfig.poolUrl = res.poolUrl;
-        setConfigWrap({
-          status: TokenCreationStatus.Success,
-          step: LaunchStep.Complete,
-          lastCompletedStep: LaunchStep.Complete,
-          poolUrl: res.poolUrl,
-          transactionDigests: {
-            ...mergedConfig.transactionDigests,
-            [TokenCreationStatus.Pooling]: res.txnDigests,
-          },
-        });
       }
 
       // Return the result with token information

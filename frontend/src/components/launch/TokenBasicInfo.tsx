@@ -1,6 +1,8 @@
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, Dispatch, SetStateAction, useState } from "react";
 
 import { ChevronDown, ChevronUp, InfoIcon, Upload } from "lucide-react";
+
+import { useWalletContext } from "@suilend/frontend-sui-next";
 
 import Parameter from "@/components/Parameter";
 import TextInput from "@/components/TextInput";
@@ -12,6 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import { LaunchConfig } from "@/contexts/LaunchContext";
 import { cn } from "@/lib/utils";
+import { FormErrors } from "@/pages/launch";
 
 import {
   fileToBase64,
@@ -27,7 +30,8 @@ import {
 interface TokenBasicInfoProps {
   config: LaunchConfig;
   setConfig: (value: LaunchConfig) => void;
-  onSubmit: () => void;
+  errors: FormErrors;
+  setErrors: Dispatch<SetStateAction<FormErrors>>;
 }
 
 // Helper type for InfoTooltip
@@ -38,8 +42,10 @@ interface InfoTooltipProps {
 export default function TokenBasicInfo({
   config,
   setConfig,
-  onSubmit,
+  errors,
+  setErrors,
 }: TokenBasicInfoProps) {
+  const { address } = useWalletContext();
   const {
     tokenName,
     tokenSymbol,
@@ -53,16 +59,6 @@ export default function TokenBasicInfo({
 
   // State for advanced options collapse
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-
-  // Validation state
-  const [errors, setErrors] = useState({
-    name: "",
-    symbol: "",
-    description: "",
-    initialSupply: "",
-    decimals: "",
-    icon: "",
-  });
   const [touched, setTouched] = useState({
     name: false,
     symbol: false,
@@ -89,7 +85,7 @@ export default function TokenBasicInfo({
   };
 
   // Handle focus events - we'll call this manually since TextInput doesn't support onFocus prop
-  const handleFocus = (field: keyof typeof errors) => {
+  const handleFocus = (field: keyof FormErrors) => {
     // Clear error message when the user focuses the field again
     if (touched[field] && errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
@@ -160,15 +156,6 @@ export default function TokenBasicInfo({
     );
   };
 
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (validateAll()) {
-      onSubmit();
-    }
-  };
-
   // Handle onChange for token supply with formatting
   const handleSupplyChange = (value: string) => {
     // Parse the input to remove formatting
@@ -188,7 +175,7 @@ export default function TokenBasicInfo({
 
     // Only update if it's a valid number
     if (!isNaN(parsedValue) || value === "") {
-      setConfig({ ...config, tokenDecimals: value === "" ? 9 : parsedValue });
+      setConfig({ ...config, tokenDecimals: parsedValue });
     }
 
     if (touched.decimals) {
@@ -266,10 +253,8 @@ export default function TokenBasicInfo({
     setShowAdvancedOptions(!showAdvancedOptions);
   };
 
-  console.log("config", config);
-
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="flex flex-col gap-5">
       <h1 className="mb-4 text-h1 text-foreground">Configure your token</h1>
       <Parameter label="Token Name">
         <div className="flex w-full flex-col gap-2">
@@ -311,12 +296,6 @@ export default function TokenBasicInfo({
           {errors.name && touched.name && (
             <p className="text-sm mt-1 text-error">{errors.name}</p>
           )}
-          <div className="mt-1 flex items-center gap-1.5">
-            <p className="text-xs text-secondary-foreground">
-              The full name of your token
-            </p>
-            <InfoTooltip content="The full name of your token (e.g., 'Ethereum')" />
-          </div>
         </div>
       </Parameter>
 
@@ -360,12 +339,6 @@ export default function TokenBasicInfo({
           {errors.symbol && touched.symbol && (
             <p className="text-sm mt-1 text-error">{errors.symbol}</p>
           )}
-          <div className="mt-1 flex items-center gap-1.5">
-            <p className="text-xs text-secondary-foreground">
-              2-6 characters, uppercase letters, numbers, and $ only
-            </p>
-            <InfoTooltip content="The abbreviated token symbol (e.g., 'ETH'). This will display in wallets and exchanges." />
-          </div>
         </div>
       </Parameter>
 
@@ -419,9 +392,8 @@ export default function TokenBasicInfo({
           )}
           <div className="mt-1 flex items-center gap-1.5">
             <p className="text-xs text-secondary-foreground">
-              JPG, PNG, or SVG, max 64KB
+              JPG, PNG, or SVG, max 40KB
             </p>
-            <InfoTooltip content="Upload a token icon in JPG, PNG or SVG format. Maximum size is 64KB. This will be encoded and stored on-chain." />
           </div>
         </div>
       </Parameter>
@@ -449,7 +421,7 @@ export default function TokenBasicInfo({
             <div className="flex w-full flex-col gap-2">
               <div className="relative">
                 <TextInput
-                  value={tokenDecimals?.toString() || "9"}
+                  value={tokenDecimals?.toString()}
                   onChange={handleDecimalsChange}
                   placeholder="Enter token decimals"
                   onFocus={() => handleFocus("decimals")}
@@ -485,12 +457,6 @@ export default function TokenBasicInfo({
               {errors.decimals && touched.decimals && (
                 <p className="text-sm mt-1 text-error">{errors.decimals}</p>
               )}
-              <div className="mt-1 flex items-center gap-1.5">
-                <p className="text-xs text-secondary-foreground">
-                  Decimal places for your token (0-18, default: 9)
-                </p>
-                <InfoTooltip content="The number of decimal places your token supports. Most tokens use 9 decimals, similar to SUI." />
-              </div>
             </div>
           </Parameter>
 
@@ -536,12 +502,6 @@ export default function TokenBasicInfo({
               {errors.description && touched.description && (
                 <p className="text-sm mt-1 text-error">{errors.description}</p>
               )}
-              <div className="mt-1 flex items-center gap-1.5">
-                <p className="text-xs text-secondary-foreground">
-                  Optional. A brief description of your token&apos;s purpose.
-                </p>
-                <InfoTooltip content="Optional. A brief description of your token's purpose or features." />
-              </div>
             </div>
           </Parameter>
 
@@ -552,7 +512,7 @@ export default function TokenBasicInfo({
                   value={initialSupply}
                   onFocus={() => handleFocus("initialSupply")}
                   onChange={handleSupplyChange}
-                  placeholder="Enter initial supply"
+                  placeholder="Enter supply"
                   onBlur={() => handleBlur("initialSupply")}
                   className={cn(
                     "h-12 sm:h-10",
@@ -587,27 +547,10 @@ export default function TokenBasicInfo({
                   {errors.initialSupply}
                 </p>
               )}
-              <div className="mt-1 flex items-center gap-1.5">
-                <p className="text-xs text-secondary-foreground">
-                  The total number of tokens that will be created initially
-                </p>
-                <InfoTooltip content="The total number of tokens to create initially. All will be sent to your wallet." />
-              </div>
             </div>
           </Parameter>
         </div>
       )}
-
-      <button
-        type="submit"
-        disabled={Object.values(errors).some((error) => error !== "")}
-        className={cn(
-          "mt-4 flex h-12 w-full items-center justify-center rounded-md bg-button-1 px-4 py-3 text-p2 text-button-1-foreground hover:bg-button-1/80 disabled:cursor-not-allowed disabled:opacity-50",
-        )}
-        onClick={handleSubmit}
-      >
-        Next
-      </button>
     </form>
   );
 }

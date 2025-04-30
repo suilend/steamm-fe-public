@@ -17,6 +17,7 @@ import {
   normalizeSuiAddress,
 } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
+import { merge } from "lodash";
 
 import {
   Explorer,
@@ -28,6 +29,7 @@ import {
 import { PoolScriptFunctions, SteammSDK } from "@suilend/steamm-sdk";
 
 import { BanksData, OraclesData } from "@/contexts/AppContext";
+import { LaunchConfig, TokenCreationStatus } from "@/contexts/LaunchContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { showSuccessTxnToast } from "@/lib/toasts";
@@ -186,29 +188,10 @@ export const createPool = async (
   suiClient: SuiClient,
   steammClient: SteammSDK,
   values: string[],
-  amplifier?: number,
-  setIsSubmitting?: (isSubmitting: boolean) => void,
-  oraclesData?: OraclesData,
+  setConfigWrap: (config: Partial<LaunchConfig>) => void,
+  mergedConfig: LaunchConfig,
 ) => {
   if (!address) throw new Error("Wallet not connected");
-
-  setIsSubmitting?.(true);
-
-  const oracleIndexA = oraclesData?.COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]];
-  const oracleIndexB = oraclesData?.COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]];
-
-  if ([QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)) {
-    if (oracleIndexA === undefined)
-      throw new Error(
-        "Base asset coinType not found in COINTYPE_ORACLE_INDEX_MAP",
-      );
-    if (oracleIndexB === undefined)
-      throw new Error(
-        "Quote asset coinType not found in COINTYPE_ORACLE_INDEX_MAP",
-      );
-  }
-
-  setIsSubmitting?.(true);
 
   const tokens = coinTypes.map((coinType) =>
     getToken(coinType, balancesCoinMetadataMap![coinType]),
@@ -238,92 +221,135 @@ export const createPool = async (
       : undefined;
   };
 
-  const createBTokenResults: [
-    CreateCoinReturnType | undefined,
-    CreateCoinReturnType | undefined,
-  ] = [undefined, undefined];
-  if (tokens.some((token) => !getExistingBTokenForToken(token))) {
-    for (const index of [0, 1]) {
-      if (!!getExistingBTokenForToken(tokens[index])) continue;
+  if (
+    mergedConfig.status <= TokenCreationStatus.BTokenCreation ||
+    mergedConfig.createBTokenResults === null
+  ) {
+    const createBTokenResults: [
+      CreateCoinReturnType | undefined,
+      CreateCoinReturnType | undefined,
+    ] = [undefined, undefined];
+    if (tokens.some((token) => !getExistingBTokenForToken(token))) {
+      for (const index of [0, 1]) {
+        if (!!getExistingBTokenForToken(tokens[index])) continue;
 
-      console.log(
-        "xxx step 1: create bToken coin - index:",
-        index,
-        "symbol:",
-        tokens[index].symbol,
-      );
-      const createBTokenResult = await createCoin(
-        generate_bytecode(
-          getBTokenModule(tokens[index]),
-          getBTokenType(tokens[index]),
-          getBTokenName(tokens[index]),
-          getBTokenSymbol(tokens[index]),
-          B_TOKEN_DESCRIPTION,
-          B_TOKEN_IMAGE_URL,
-        ),
-        address,
-        signExecuteAndWaitForTransaction,
-      );
-      createBTokenResults[index] = createBTokenResult;
+        console.log(
+          "xxx step 1: create bToken coin - index:",
+          index,
+          "symbol:",
+          tokens[index].symbol,
+        );
+        const createBTokenResult = await createCoin(
+          generate_bytecode(
+            getBTokenModule(tokens[index]),
+            getBTokenType(tokens[index]),
+            getBTokenName(tokens[index]),
+            getBTokenSymbol(tokens[index]),
+            B_TOKEN_DESCRIPTION,
+            B_TOKEN_IMAGE_URL,
+          ),
+          address,
+          signExecuteAndWaitForTransaction,
+        );
+        createBTokenResults[index] = createBTokenResult;
+        mergedConfig.status = TokenCreationStatus.BankCreation;
+        mergedConfig.transactionDigests = {
+          ...mergedConfig.transactionDigests,
+          [TokenCreationStatus.BTokenCreation]: [createBTokenResult.digest],
+        };
+        mergedConfig.createBTokenResults = createBTokenResults!;
+        setConfigWrap({
+          status: TokenCreationStatus.BankCreation,
+          transactionDigests: {
+            ...mergedConfig.transactionDigests,
+            [TokenCreationStatus.BTokenCreation]: [createBTokenResult.digest],
+          },
+        });
+      }
     }
   }
-
-  const bTokens = createBTokenResults.map((result, index) =>
-    result === undefined
-      ? getExistingBTokenForToken(tokens[index])!
-      : getToken(result.coinType, {
-          decimals: 9,
-          description: B_TOKEN_DESCRIPTION,
-          iconUrl: B_TOKEN_IMAGE_URL,
-          id: result.coinMetadataId,
-          name: getBTokenName(tokens[index]),
-          symbol: getBTokenSymbol(tokens[index]),
-        } as CoinMetadata),
-  ) as [Token, Token];
-
   const bankDigests: string[] = [];
-  // Step 2: Create banks (if needed) - one transaction
-  const createBankEvents: SuiEvent[] = [];
-  if (createBTokenResults.some((result) => result !== undefined)) {
-    const createBanksTransaction = new Transaction();
 
-    for (const index of [0, 1]) {
-      if (createBTokenResults[index] === undefined) continue; // bToken and bank already exist
+  if (
+    mergedConfig.status <= TokenCreationStatus.BankCreation ||
+    mergedConfig.createBankEvents === null
+  ) {
+    const bTokens = mergedConfig.createBTokenResults!.map((result, index) =>
+      result === undefined
+        ? getExistingBTokenForToken(tokens[index])!
+        : getToken(result.coinType, {
+            decimals: 9,
+            description: B_TOKEN_DESCRIPTION,
+            iconUrl: B_TOKEN_IMAGE_URL,
+            id: result.coinMetadataId,
+            name: getBTokenName(tokens[index]),
+            symbol: getBTokenSymbol(tokens[index]),
+          } as CoinMetadata),
+    ) as [Token, Token];
 
-      console.log(
-        "xxx step 2: create bank - index:",
-        index,
-        "symbol:",
-        tokens[index].symbol,
-        tokens,
+    // Step 2: Create banks (if needed) - one transaction
+    const createBankEvents: SuiEvent[] = [];
+    if (
+      mergedConfig.createBTokenResults!.some((result) => result !== undefined)
+    ) {
+      const createBanksTransaction = new Transaction();
+
+      for (const index of [0, 1]) {
+        if (mergedConfig.createBTokenResults![index] === undefined) continue; // bToken and bank already exist
+
+        console.log(
+          "xxx step 2: create bank - index:",
+          index,
+          "symbol:",
+          tokens[index].symbol,
+          tokens,
+        );
+        await steammClient.Bank.createBank(createBanksTransaction, {
+          coinType: tokens[index].coinType,
+          coinMetaT: tokens[index].id!, // Checked above
+          bTokenTreasuryId:
+            mergedConfig.createBTokenResults![index].treasuryCapId,
+          bTokenTokenType: mergedConfig.createBTokenResults![index].coinType,
+          bTokenMetadataId:
+            mergedConfig.createBTokenResults![index].coinMetadataId,
+        });
+      }
+
+      const banksRes = await signExecuteAndWaitForTransaction(
+        createBanksTransaction,
       );
-      await steammClient.Bank.createBank(createBanksTransaction, {
-        coinType: tokens[index].coinType,
-        coinMetaT: tokens[index].id!, // Checked above
-        bTokenTreasuryId: createBTokenResults[index].treasuryCapId,
-        bTokenTokenType: createBTokenResults[index].coinType,
-        bTokenMetadataId: createBTokenResults[index].coinMetadataId,
+
+      mergedConfig.status = TokenCreationStatus.LpTokenCreation;
+      mergedConfig.transactionDigests = {
+        ...mergedConfig.transactionDigests,
+        [TokenCreationStatus.BankCreation]: [banksRes.digest],
+      };
+      mergedConfig.createBankEvents = createBankEvents;
+      mergedConfig.bTokens = bTokens;
+      setConfigWrap({
+        status: TokenCreationStatus.LpTokenCreation,
+        createBankEvents,
+        bTokens,
+        transactionDigests: {
+          ...mergedConfig.transactionDigests,
+          [TokenCreationStatus.BankCreation]: [banksRes.digest],
+        },
       });
+      createBankEvents.push(
+        ...(banksRes.events ?? []).filter((event) =>
+          event.type.includes("::bank::NewBankEvent"),
+        ),
+      );
+      bankDigests.push(banksRes.digest);
+      console.log("xxx step 2: create bank events:", createBankEvents);
     }
-
-    const banksRes = await signExecuteAndWaitForTransaction(
-      createBanksTransaction,
-    );
-
-    createBankEvents.push(
-      ...(banksRes.events ?? []).filter((event) =>
-        event.type.includes("::bank::NewBankEvent"),
-      ),
-    );
-    bankDigests.push(banksRes.digest);
-    console.log("xxx step 2: create bank events:", createBankEvents);
   }
 
-  const bankIds = createBTokenResults.map((result, index) => {
+  const bankIds = mergedConfig.createBTokenResults!.map((result, index) => {
     if (result === undefined)
       return banksData.bankMap[tokens[index].coinType].id;
     else {
-      const event = createBankEvents.find(
+      const event = mergedConfig.createBankEvents!.find(
         (event) =>
           normalizeStructTag((event.parsedJson as any).event.coin_type.name) ===
           tokens[index].coinType,
@@ -336,40 +362,62 @@ export const createPool = async (
   }) as [string, string];
   console.log("xxx step 2: bankIds:", bankIds);
 
-  // Step 3: Create LP token - one transaction
-  console.log("xxx step 3: create lpToken coin - bTokens:", bTokens);
-  const createLpTokenResult = await createCoin(
-    generate_bytecode(
-      getLpTokenModule(bTokens[0], bTokens[1]),
-      getLpTokenType(bTokens[0], bTokens[1]),
-      getLpTokenName(bTokens[0], bTokens[1]),
-      getLpTokenSymbol(bTokens[0], bTokens[1]),
-      LP_TOKEN_DESCRIPTION,
-      LP_TOKEN_IMAGE_URL,
-    ),
-    address,
-    signExecuteAndWaitForTransaction,
-  );
+  if (
+    mergedConfig.status <= TokenCreationStatus.LpTokenCreation ||
+    mergedConfig.createLpTokenResult === null
+  ) {
+    // Step 3: Create LP token - one transaction
+    console.log(
+      "xxx step 3: create lpToken coin - bTokens:",
+      mergedConfig.bTokens,
+    );
+    const createLpTokenResult = await createCoin(
+      generate_bytecode(
+        getLpTokenModule(mergedConfig.bTokens![0], mergedConfig.bTokens![1]),
+        getLpTokenType(mergedConfig.bTokens![0], mergedConfig.bTokens![1]),
+        getLpTokenName(mergedConfig.bTokens![0], mergedConfig.bTokens![1]),
+        getLpTokenSymbol(mergedConfig.bTokens![0], mergedConfig.bTokens![1]),
+        LP_TOKEN_DESCRIPTION,
+        LP_TOKEN_IMAGE_URL,
+      ),
+      address,
+      signExecuteAndWaitForTransaction,
+    );
 
+    mergedConfig.status = TokenCreationStatus.DepositLiquidity;
+    mergedConfig.transactionDigests = {
+      ...mergedConfig.transactionDigests,
+      [TokenCreationStatus.LpTokenCreation]: [createLpTokenResult.digest],
+    };
+    mergedConfig.createLpTokenResult = createLpTokenResult;
+    setConfigWrap({
+      status: TokenCreationStatus.DepositLiquidity,
+      createLpTokenResult,
+      transactionDigests: {
+        ...mergedConfig.transactionDigests,
+        [TokenCreationStatus.LpTokenCreation]: [createLpTokenResult.digest],
+      },
+    });
+  }
   // Step 4: Create pool and deposit - one transaction
   const transaction = new Transaction();
 
   // Step 4.1: Create pool
   console.log(
     "xxx step 4.1: create pool - bTokens:",
-    bTokens,
+    mergedConfig.bTokens,
     "lp token:",
-    createLpTokenResult,
+    mergedConfig.createLpTokenResult,
   );
 
   const createPoolBaseArgs = {
-    bTokenTypeA: bTokens[0].coinType,
-    bTokenMetaA: bTokens[0].id!, // Checked above
-    bTokenTypeB: bTokens[1].coinType,
-    bTokenMetaB: bTokens[1].id!, // Checked above
-    lpTreasuryId: createLpTokenResult.treasuryCapId,
-    lpTokenType: createLpTokenResult.coinType,
-    lpMetadataId: createLpTokenResult.coinMetadataId,
+    bTokenTypeA: mergedConfig.bTokens![0].coinType,
+    bTokenMetaA: mergedConfig.bTokens![0].id!, // Checked above
+    bTokenTypeB: mergedConfig.bTokens![1].coinType,
+    bTokenMetaB: mergedConfig.bTokens![1].id!, // Checked above
+    lpTreasuryId: mergedConfig.createLpTokenResult!.treasuryCapId,
+    lpTokenType: mergedConfig.createLpTokenResult!.coinType,
+    lpMetadataId: mergedConfig.createLpTokenResult!.coinMetadataId,
     swapFeeBps: BigInt(feeTierPercent * 100),
   };
 
@@ -379,29 +427,6 @@ export const createPool = async (
       ...createPoolBaseArgs,
       type: "ConstantProduct" as const,
       offset: BigInt(0), // TODO
-    };
-  } else if (quoterId === QuoterId.ORACLE) {
-    poolArgs = {
-      ...createPoolBaseArgs,
-      type: "Oracle" as const,
-      oracleIndexA: BigInt(oracleIndexA!), // Checked above
-      oracleIndexB: BigInt(oracleIndexB!), // Checked above
-      coinTypeA: tokens[0].coinType,
-      coinMetaA: tokens[0].id!, // Checked above
-      coinTypeB: tokens[1].coinType,
-      coinMetaB: tokens[1].id!, // Checked above
-    };
-  } else if (quoterId === QuoterId.ORACLE_V2) {
-    poolArgs = {
-      ...createPoolBaseArgs,
-      type: "OracleV2" as const,
-      oracleIndexA: BigInt(oracleIndexA!), // Checked above
-      oracleIndexB: BigInt(oracleIndexB!), // Checked above
-      coinTypeA: tokens[0].coinType,
-      coinMetaA: tokens[0].id!, // Checked above
-      coinTypeB: tokens[1].coinType,
-      coinMetaB: tokens[1].id!, // Checked above
-      amplifier: BigInt(amplifier!), // Checked above
     };
   } else {
     throw new Error("Invalid quoterId");
@@ -441,8 +466,8 @@ export const createPool = async (
       lendingMarketType,
       tokens[0].coinType,
       tokens[1].coinType,
-      bTokens[0].coinType,
-      bTokens[1].coinType,
+      mergedConfig.bTokens![0].coinType,
+      mergedConfig.bTokens![1].coinType,
       {
         [QuoterId.CPMM]: `${steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.cpmm}::cpmm::CpQuoter`,
         [QuoterId.ORACLE]: `${
@@ -452,7 +477,7 @@ export const createPool = async (
           steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm_v2
         }::omm_v2::OracleQuoterV2`,
       }[quoterId],
-      createLpTokenResult.coinType,
+      mergedConfig.createLpTokenResult!.coinType,
     ],
     {
       pool,
@@ -473,9 +498,9 @@ export const createPool = async (
   // Step 4.3: Share pool
   const sharePoolBaseArgs = {
     pool,
-    lpTokenType: createLpTokenResult.coinType,
-    bTokenTypeA: bTokens[0].coinType,
-    bTokenTypeB: bTokens[1].coinType,
+    lpTokenType: mergedConfig.createLpTokenResult!.coinType,
+    bTokenTypeA: mergedConfig.bTokens![0].coinType,
+    bTokenTypeB: mergedConfig.bTokens![1].coinType,
   };
 
   steammClient.Pool.sharePool(
@@ -498,6 +523,18 @@ export const createPool = async (
 
   const res = await signExecuteAndWaitForTransaction(transaction);
 
+  mergedConfig.status = TokenCreationStatus.Success;
+  mergedConfig.transactionDigests = {
+    ...mergedConfig.transactionDigests,
+    [TokenCreationStatus.DepositLiquidity]: [res.digest],
+  };
+  setConfigWrap({
+    status: TokenCreationStatus.Success,
+    transactionDigests: {
+      ...mergedConfig.transactionDigests,
+      [TokenCreationStatus.DepositLiquidity]: [res.digest],
+    },
+  });
   const poolObject = res.objectChanges?.find(
     (o) => o.type === "created" && o.objectType.includes("Pool"),
   );
@@ -518,10 +555,10 @@ export const createPool = async (
   return {
     poolUrl,
     txnDigests: [
-      createBTokenResults[0]?.digest,
-      createBTokenResults[1]?.digest,
+      mergedConfig.createBTokenResults![0]?.digest,
+      mergedConfig.createBTokenResults![1]?.digest,
       ...bankDigests,
-      createLpTokenResult?.digest,
+      mergedConfig.createLpTokenResult!.digest,
       res.digest,
     ].filter(Boolean) as string[],
   };
