@@ -17,7 +17,6 @@ import {
   normalizeSuiAddress,
 } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
-import { merge } from "lodash";
 
 import {
   Explorer,
@@ -28,10 +27,10 @@ import {
 } from "@suilend/frontend-sui";
 import { PoolScriptFunctions, SteammSDK } from "@suilend/steamm-sdk";
 
-import { BanksData, OraclesData } from "@/contexts/AppContext";
+import { BanksData } from "@/contexts/AppContext";
 import { LaunchConfig, TokenCreationStatus } from "@/contexts/LaunchContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
-import { POOL_URL_PREFIX } from "@/lib/navigation";
+import { API_URL } from "@/lib/navigation";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 
@@ -203,7 +202,6 @@ export const createPool = async (
   await init();
 
   const existingBTokenTypeCoinMetadataMap = await getCoinMetadataMap(
-    suiClient,
     Object.keys(banksData.bTokenTypeCoinTypeMap),
   );
   console.log(
@@ -523,25 +521,29 @@ export const createPool = async (
 
   const res = await signExecuteAndWaitForTransaction(transaction);
 
-  mergedConfig.status = TokenCreationStatus.Success;
-  mergedConfig.transactionDigests = {
-    ...mergedConfig.transactionDigests,
-    [TokenCreationStatus.DepositLiquidity]: [res.digest],
-  };
+  // Get created pool id
+  const poolObjectChange: SuiObjectChange | undefined = res.objectChanges?.find(
+    (change) =>
+      change.type === "created" && change.objectType.includes("::pool::Pool<"),
+  );
+  if (!poolObjectChange) throw new Error("Pool object change not found");
+  if (poolObjectChange.type !== "created")
+    throw new Error("Pool object change is not of type 'created'");
+
+  const poolId = poolObjectChange.objectId;
+
+  await fetch(`${API_URL}/steamm/clear-cache`); // Clear cache
+
+  // Update config
   setConfigWrap({
+    poolId,
     status: TokenCreationStatus.Success,
     transactionDigests: {
       ...mergedConfig.transactionDigests,
       [TokenCreationStatus.DepositLiquidity]: [res.digest],
     },
   });
-  const poolObject = res.objectChanges?.find(
-    (o) => o.type === "created" && o.objectType.includes("Pool"),
-  );
-  const poolUrl =
-    poolObject?.type === "created"
-      ? `${POOL_URL_PREFIX}/${poolObject.objectId}-${tokens[0].symbol}-${tokens[1].symbol}-${QUOTER_ID_NAME_MAP[quoterId]}-${feeTierPercent * 100}`
-      : null;
+
   const txUrl = explorer.buildTxUrl(res.digest);
 
   showSuccessTxnToast(
@@ -551,15 +553,4 @@ export const createPool = async (
       description: `Quoter: ${QUOTER_ID_NAME_MAP[quoterId]}, fee tier: ${formatFeeTier(new BigNumber(feeTierPercent))}`,
     },
   );
-
-  return {
-    poolUrl,
-    txnDigests: [
-      mergedConfig.createBTokenResults![0]?.digest,
-      mergedConfig.createBTokenResults![1]?.digest,
-      ...bankDigests,
-      mergedConfig.createLpTokenResult!.digest,
-      res.digest,
-    ].filter(Boolean) as string[],
-  };
 };

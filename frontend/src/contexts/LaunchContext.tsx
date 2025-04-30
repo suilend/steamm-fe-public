@@ -60,7 +60,7 @@ export type LaunchConfig = {
   status: TokenCreationStatus;
 
   // Pool creation results
-  poolUrl: string | null;
+  poolId: string | null;
 
   // Error
   error: string | null;
@@ -262,7 +262,7 @@ export const DEFAULT_CONFIG: LaunchConfig = {
   coinMetadataChange: null,
 
   // Pool creation results
-  poolUrl: null,
+  poolId: null,
 
   // Error
   error: null,

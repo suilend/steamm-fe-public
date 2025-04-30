@@ -1153,7 +1153,7 @@ export default function CreatePoolCard({
         onClick={reset}
       >
         <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
-          Reset
+          Start over
         </p>
       </button>
     </div>

@@ -2,8 +2,6 @@ import { ChangeEvent, Dispatch, SetStateAction, useState } from "react";
 
 import { ChevronDown, ChevronUp, InfoIcon, Upload } from "lucide-react";
 
-import { useWalletContext } from "@suilend/frontend-sui-next";
-
 import Parameter from "@/components/Parameter";
 import TextInput from "@/components/TextInput";
 import {
@@ -14,7 +12,6 @@ import {
 } from "@/components/ui/tooltip";
 import { LaunchConfig } from "@/contexts/LaunchContext";
 import { cn } from "@/lib/utils";
-import { FormErrors } from "@/pages/launch";
 
 import {
   fileToBase64,
@@ -26,6 +23,15 @@ import {
   validateTokenSupply,
   validateTokenSymbol,
 } from "./validation";
+
+export type FormErrors = {
+  name: string;
+  symbol: string;
+  description: string;
+  initialSupply: string;
+  decimals: string;
+  icon: string;
+};
 
 interface TokenBasicInfoProps {
   config: LaunchConfig;
@@ -45,7 +51,6 @@ export default function TokenBasicInfo({
   errors,
   setErrors,
 }: TokenBasicInfoProps) {
-  const { address } = useWalletContext();
   const {
     tokenName,
     tokenSymbol,
@@ -254,9 +259,8 @@ export default function TokenBasicInfo({
   };
 
   return (
-    <form className="flex flex-col gap-5">
-      <h1 className="mb-4 text-h1 text-foreground">Configure your token</h1>
-      <Parameter label="Token Name">
+    <form className="flex flex-col gap-4">
+      <Parameter label="Token name">
         <div className="flex w-full flex-col gap-2">
           <div className="relative">
             <TextInput
@@ -274,7 +278,7 @@ export default function TokenBasicInfo({
                   ? "border-success focus:border-success"
                   : "",
               )}
-              inputClassName="text-base sm:text-sm"
+              inputClassName="text-base sm:text-p2"
             />
             {touched.name && isValid.name && (
               <div className="absolute inset-y-0 right-3 flex items-center text-success">
@@ -294,12 +298,12 @@ export default function TokenBasicInfo({
             )}
           </div>
           {errors.name && touched.name && (
-            <p className="text-sm mt-1 text-error">{errors.name}</p>
+            <p className="mt-1 text-p2 text-error">{errors.name}</p>
           )}
         </div>
       </Parameter>
 
-      <Parameter label="Token Symbol">
+      <Parameter label="Token symbol">
         <div className="flex w-full flex-col gap-2">
           <div className="relative">
             <TextInput
@@ -317,7 +321,7 @@ export default function TokenBasicInfo({
                   ? "border-success focus:border-success"
                   : "",
               )}
-              inputClassName="text-base sm:text-sm"
+              inputClassName="text-base sm:text-p2"
             />
             {touched.symbol && isValid.symbol && (
               <div className="absolute inset-y-0 right-3 flex items-center text-success">
@@ -337,12 +341,12 @@ export default function TokenBasicInfo({
             )}
           </div>
           {errors.symbol && touched.symbol && (
-            <p className="text-sm mt-1 text-error">{errors.symbol}</p>
+            <p className="mt-1 text-p2 text-error">{errors.symbol}</p>
           )}
         </div>
       </Parameter>
 
-      <Parameter label="Token Icon">
+      <Parameter label="Token icon">
         <div className="flex w-full flex-col gap-2">
           <div className="relative">
             <div
@@ -370,16 +374,16 @@ export default function TokenBasicInfo({
                     <img
                       src={config.iconUrl ?? URL.createObjectURL(iconFile!)}
                       alt="Token icon preview"
-                      className="h-10 w-10 overflow-hidden rounded-full object-contain"
+                      className="rounded-full h-10 w-10 overflow-hidden object-contain"
                     />
-                    <span className="text-sm text-foreground">
+                    <span className="text-p2 text-foreground">
                       {config.iconFileName ?? iconFile?.name}
                     </span>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center space-y-1">
                     <Upload className="text-muted-foreground h-6 w-6" />
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-muted-foreground text-p2">
                       Upload icon (optional)
                     </span>
                   </div>
@@ -388,10 +392,10 @@ export default function TokenBasicInfo({
             </div>
           </div>
           {errors.icon && touched.icon && (
-            <p className="text-sm mt-1 text-error">{errors.icon}</p>
+            <p className="mt-1 text-p2 text-error">{errors.icon}</p>
           )}
           <div className="mt-1 flex items-center gap-1.5">
-            <p className="text-xs text-secondary-foreground">
+            <p className="text-p3 text-secondary-foreground">
               JPG, PNG, or SVG, max 40KB
             </p>
           </div>
@@ -399,13 +403,13 @@ export default function TokenBasicInfo({
       </Parameter>
 
       {/* Advanced Options Toggle Button */}
-      <div className="my-4">
+      <div className="my-0">
         <button
           type="button"
           onClick={toggleAdvancedOptions}
-          className="text-sm hover:bg-muted flex w-full items-center justify-between rounded-md border p-3 font-medium transition-colors"
+          className="hover:bg-muted flex w-full items-center justify-between rounded-md text-p2 text-secondary-foreground transition-colors"
         >
-          <span>Advanced Options</span>
+          <span>Optional</span>
           {showAdvancedOptions ? (
             <ChevronUp className="h-4 w-4" />
           ) : (
@@ -417,7 +421,7 @@ export default function TokenBasicInfo({
       {/* Collapsible Advanced Options Section */}
       {showAdvancedOptions && (
         <div className="mb-4 space-y-4 rounded-md border p-4">
-          <Parameter label="Token Decimals">
+          <Parameter label="Token decimals">
             <div className="flex w-full flex-col gap-2">
               <div className="relative">
                 <TextInput
@@ -435,7 +439,7 @@ export default function TokenBasicInfo({
                       ? "border-success focus:border-success"
                       : "",
                   )}
-                  inputClassName="text-base sm:text-sm"
+                  inputClassName="text-base sm:text-p2"
                 />
                 {touched.decimals && isValid.decimals && (
                   <div className="absolute inset-y-0 right-3 flex items-center text-success">
@@ -455,7 +459,7 @@ export default function TokenBasicInfo({
                 )}
               </div>
               {errors.decimals && touched.decimals && (
-                <p className="text-sm mt-1 text-error">{errors.decimals}</p>
+                <p className="mt-1 text-p2 text-error">{errors.decimals}</p>
               )}
             </div>
           </Parameter>
@@ -478,7 +482,7 @@ export default function TokenBasicInfo({
                       ? "border-success focus:border-success"
                       : "",
                   )}
-                  inputClassName="text-base sm:text-sm"
+                  inputClassName="text-base sm:text-p2"
                 />
                 {touched.description &&
                   tokenDescription &&
@@ -500,12 +504,12 @@ export default function TokenBasicInfo({
                   )}
               </div>
               {errors.description && touched.description && (
-                <p className="text-sm mt-1 text-error">{errors.description}</p>
+                <p className="mt-1 text-p2 text-error">{errors.description}</p>
               )}
             </div>
           </Parameter>
 
-          <Parameter label="Token Supply">
+          <Parameter label="Token supply">
             <div className="flex w-full flex-col gap-2">
               <div className="relative">
                 <TextInput
@@ -523,7 +527,7 @@ export default function TokenBasicInfo({
                       ? "border-success focus:border-success"
                       : "",
                   )}
-                  inputClassName="text-base sm:text-sm"
+                  inputClassName="text-base sm:text-p2"
                 />
                 {touched.initialSupply && isValid.initialSupply && (
                   <div className="absolute inset-y-0 right-3 flex items-center text-success">
@@ -543,7 +547,7 @@ export default function TokenBasicInfo({
                 )}
               </div>
               {errors.initialSupply && touched.initialSupply && (
-                <p className="text-sm mt-1 text-error">
+                <p className="mt-1 text-p2 text-error">
                   {errors.initialSupply}
                 </p>
               )}

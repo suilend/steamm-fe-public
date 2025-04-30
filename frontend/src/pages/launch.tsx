@@ -1,26 +1,22 @@
-import { useEffect, useState } from "react";
+import Head from "next/head";
+import Link from "next/link";
+import { useState } from "react";
 
 import { useWalletContext } from "@suilend/frontend-sui-next";
 
-import Container from "@/components/Container";
-import TokenBasicInfo from "@/components/launch/TokenBasicInfo";
+import TokenBasicInfo, { FormErrors } from "@/components/launch/TokenBasicInfo";
 import TokenCreationProgress from "@/components/launch/TokenCreationProgress";
+import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import LaunchContextProvider, {
   DEFAULT_CONFIG,
   TokenCreationStatus,
   useLaunch,
 } from "@/contexts/LaunchContext";
-import { cn } from "@/lib/utils";
+import { POOL_URL_PREFIX } from "@/lib/navigation";
 
-export type FormErrors = {
-  name: string;
-  symbol: string;
-  description: string;
-  initialSupply: string;
-  decimals: string;
-  icon: string;
-};
 function LaunchPage() {
+  const { address } = useWalletContext();
+
   // Validation state
   const [errors, setErrors] = useState<FormErrors>({
     name: "",
@@ -31,84 +27,87 @@ function LaunchPage() {
     icon: "",
   });
   const { config, setConfig, launchToken } = useLaunch();
-  const { address } = useWalletContext();
-  const [isResumed, setIsResumed] = useState(false);
   const { error } = config;
 
-  useEffect(() => {
-    setIsResumed(JSON.stringify(config) !== JSON.stringify(DEFAULT_CONFIG));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Function to start over
-  const handleStartOver = () => {
+  // Submit
+  const reset = () => {
     setConfig(DEFAULT_CONFIG);
-    setIsResumed(false);
   };
 
-  const handleCta = () => {
-    if (config.status === TokenCreationStatus.Success) {
-      // GOTO POOL
-      return;
-    }
+  // const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const submitButtonState: SubmitButtonState = (() => {
+    if (!address) return { isDisabled: true, title: "Connect wallet" };
+    if (Object.values(errors).some((error) => error !== ""))
+      return { isDisabled: true, title: "There was an error" };
+    if (!!error) return { isDisabled: false, title: "Retry" };
+
+    return { isDisabled: false, title: "Deploy" };
+  })();
+
+  const onSubmitClick = () => {
     document.getElementById("progress-container")?.scrollIntoView();
-    if (error) {
-      setConfig({ ...config, error: null });
-    }
+    if (error) setConfig({ ...config, error: null });
+
     launchToken();
   };
 
-  let ctaText = "Deploy";
-  if (!address) {
-    ctaText = "Connect Wallet";
-  } else if (error) {
-    ctaText = "Retry";
-  } else if (config.status === TokenCreationStatus.Success) {
-    ctaText = "Go to Pool";
-  }
-
   return (
-    <Container className="flex w-full flex-col gap-6 p-0">
-      <div className="w-full md:mx-auto md:max-w-4xl">
-        {isResumed && config.status !== TokenCreationStatus.Success && (
-          <div className="border-info bg-info/10 mb-2 flex w-full items-center justify-between rounded-md border p-3">
-            <p className="text-sm text-info">Resuming your previous session</p>
-            <button onClick={handleStartOver}>Start Over</button>
-          </div>
-        )}
+    <>
+      <Head>
+        <title>STEAMM | Launch</title>
+      </Head>
 
-        <TokenBasicInfo
-          config={config}
-          setConfig={setConfig}
-          setErrors={setErrors}
-          errors={errors}
-        />
-        {config.status !== TokenCreationStatus.Pending && (
-          <div id="progress-container">
-            <TokenCreationProgress />
-          </div>
-        )}
+      <div className="flex w-full max-w-md flex-col gap-8">
+        <div className="flex w-full flex-col gap-6">
+          <h1 className="text-h1 text-foreground">Launch</h1>
+        </div>
 
-        {
+        <div className="flex w-full flex-col gap-4">
+          <TokenBasicInfo
+            config={config}
+            setConfig={setConfig}
+            setErrors={setErrors}
+            errors={errors}
+          />
+
+          {config.status !== TokenCreationStatus.Pending && (
+            <div id="progress-container" className="w-full">
+              <TokenCreationProgress />
+            </div>
+          )}
+
+          {config.status !== TokenCreationStatus.Success ? (
+            <SubmitButton
+              submitButtonState={submitButtonState}
+              onClick={onSubmitClick}
+            />
+          ) : (
+            <Link
+              className="flex h-14 w-full flex-row items-center justify-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80"
+              href={`${POOL_URL_PREFIX}/${config.poolId}`}
+              target="_blank"
+            >
+              <p className="text-p1 text-button-1-foreground">Go to pool</p>
+            </Link>
+          )}
+
+          {/* Reset */}
           <button
-            type="submit"
-            disabled={
-              Object.values(errors).some((error) => error !== "") || !address
-            }
-            className={cn(
-              "mt-4 flex h-12 w-full items-center justify-center rounded-md bg-button-1 px-4 py-3 text-p2 text-button-1-foreground hover:bg-button-1/80 disabled:cursor-not-allowed disabled:opacity-50",
-            )}
-            onClick={handleCta}
+            className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
+            onClick={reset}
           >
-            {ctaText}
+            <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
+              Start over
+            </p>
           </button>
-        }
+        </div>
       </div>
-    </Container>
+    </>
   );
 }
 
-export default function LaunchPageWrapper() {
+export default function Page() {
   return (
     <LaunchContextProvider>
       <LaunchPage />
