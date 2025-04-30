@@ -1,6 +1,6 @@
 export const ROOT_URL = "/";
-export const LAUNCH_URL = "/launch";
 export const POOL_URL_PREFIX = "/pool";
+export const LAUNCH_URL = "/launch";
 export const CREATE_URL = "/create";
 export const PORTFOLIO_URL = "/portfolio";
 export const SWAP_URL = "/swap";
