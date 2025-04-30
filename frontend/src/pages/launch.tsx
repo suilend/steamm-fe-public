@@ -5,7 +5,6 @@ import { useWalletContext } from "@suilend/frontend-sui-next";
 import Container from "@/components/Container";
 import TokenBasicInfo from "@/components/launch/TokenBasicInfo";
 import TokenCreationProgress from "@/components/launch/TokenCreationProgress";
-import { Button } from "@/components/ui/button";
 import LaunchContextProvider, {
   DEFAULT_CONFIG,
   TokenCreationStatus,
@@ -74,9 +73,7 @@ function LaunchPage() {
         {isResumed && config.status !== TokenCreationStatus.Success && (
           <div className="border-info bg-info/10 mb-2 flex w-full items-center justify-between rounded-md border p-3">
             <p className="text-sm text-info">Resuming your previous session</p>
-            <Button variant="outline" size="sm" onClick={handleStartOver}>
-              Start Over
-            </Button>
+            <button onClick={handleStartOver}>Start Over</button>
           </div>
         )}
 
