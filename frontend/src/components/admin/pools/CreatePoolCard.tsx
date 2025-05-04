@@ -54,9 +54,9 @@ import { API_URL, POOL_URL_PREFIX } from "@/lib/navigation";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
-const AMPLIFIERS: number[] = [1, 5, 30, 100, 1000];
+const AMPLIFIERS: number[] = [1, 2, 5, 10, 30, 50, 100];
 const FEE_TIER_PERCENTS: number[] = [0.01, 0.05, 0.3, 1, 2];
 
 const generate_bytecode = (
@@ -990,47 +990,49 @@ export default function CreatePoolCard({
           <p className="text-p2 text-secondary-foreground">Quoter</p>
 
           <div className="flex flex-row gap-1">
-            {Object.values(QuoterId).map((_quoterId) => {
-              const hasExistingPool =
-                hasExistingPoolForQuoterFeeTierAndAmplifier(
-                  _quoterId,
-                  feeTierPercent,
-                  amplifier,
-                );
+            {Object.values(QuoterId)
+              .filter((_quoterId) => _quoterId !== QuoterId.ORACLE)
+              .map((_quoterId) => {
+                const hasExistingPool =
+                  hasExistingPoolForQuoterFeeTierAndAmplifier(
+                    _quoterId,
+                    feeTierPercent,
+                    amplifier,
+                  );
 
-              return (
-                <div key={_quoterId} className="w-max">
-                  <Tooltip
-                    title={hasExistingPool ? existingPoolTooltip : undefined}
-                  >
-                    <div className="w-max">
-                      <button
-                        key={_quoterId}
-                        className={cn(
-                          "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
-                          _quoterId === quoterId
-                            ? "cursor-default bg-button-1"
-                            : "hover:bg-border/50",
-                        )}
-                        onClick={() => onSelectQuoter(_quoterId)}
-                        disabled={hasExistingPool}
-                      >
-                        <p
+                return (
+                  <div key={_quoterId} className="w-max">
+                    <Tooltip
+                      title={hasExistingPool ? existingPoolTooltip : undefined}
+                    >
+                      <div className="w-max">
+                        <button
+                          key={_quoterId}
                           className={cn(
-                            "!text-p2 transition-colors",
+                            "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
                             _quoterId === quoterId
-                              ? "text-button-1-foreground"
-                              : "text-secondary-foreground group-hover:text-foreground",
+                              ? "cursor-default bg-button-1"
+                              : "hover:bg-border/50",
                           )}
+                          onClick={() => onSelectQuoter(_quoterId)}
+                          disabled={hasExistingPool}
                         >
-                          {QUOTER_ID_NAME_MAP[_quoterId]}
-                        </p>
-                      </button>
-                    </div>
-                  </Tooltip>
-                </div>
-              );
-            })}
+                          <p
+                            className={cn(
+                              "!text-p2 transition-colors",
+                              _quoterId === quoterId
+                                ? "text-button-1-foreground"
+                                : "text-secondary-foreground group-hover:text-foreground",
+                            )}
+                          >
+                            {QUOTER_ID_NAME_MAP[_quoterId]}
+                          </p>
+                        </button>
+                      </div>
+                    </Tooltip>
+                  </div>
+                );
+              })}
           </div>
         </div>
       )}
@@ -1038,7 +1040,16 @@ export default function CreatePoolCard({
       {/* Amplifier */}
       {quoterId === QuoterId.ORACLE_V2 && (
         <div className="flex flex-row items-center justify-between">
-          <p className="text-p2 text-secondary-foreground">Amplifier</p>
+          <Tooltip title="The amplifier determines how concentrated the pool will be. Higher values are more suitable for volatile assets, while lower values are more suitable for stable assets.">
+            <p
+              className={cn(
+                "text-p2 text-secondary-foreground decoration-secondary-foreground/50",
+                hoverUnderlineClassName,
+              )}
+            >
+              Amplifier
+            </p>
+          </Tooltip>
 
           <div className="flex flex-row gap-1">
             {AMPLIFIERS.map((_amplifier) => {
