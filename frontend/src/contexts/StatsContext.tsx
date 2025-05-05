@@ -443,7 +443,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           {
             timestampS,
             tvlUsd_7d: +Object.values(poolHistoricalStats.tvlUsd_7d).reduce(
-              (acc2, data) => acc2.plus(data[i].tvlUsd_7d),
+              (acc2, data) => acc2.plus(data[i]?.tvlUsd_7d ?? 0),
               new BigNumber(0),
             ),
           },
@@ -470,7 +470,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             volumeUsd_7d: +Object.values(
               poolHistoricalStats.volumeUsd_7d,
             ).reduce(
-              (acc2, data) => acc2.plus(data[i].volumeUsd_7d),
+              (acc2, data) => acc2.plus(data[i]?.volumeUsd_7d ?? 0),
               new BigNumber(0),
             ),
           },
@@ -495,7 +495,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           {
             timestampS,
             feesUsd_7d: +Object.values(poolHistoricalStats.feesUsd_7d).reduce(
-              (acc2, data) => acc2.plus(data[i].feesUsd_7d),
+              (acc2, data) => acc2.plus(data[i]?.feesUsd_7d ?? 0),
               new BigNumber(0),
             ),
           },

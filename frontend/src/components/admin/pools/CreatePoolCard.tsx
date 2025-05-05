@@ -56,7 +56,7 @@ import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
-const AMPLIFIERS: number[] = [1, 2, 5, 10, 30, 50, 100];
+const AMPLIFIERS: number[] = [1, 5, 10, 20, 50, 100];
 const FEE_TIER_PERCENTS: number[] = [0.01, 0.05, 0.3, 1, 2];
 
 const generate_bytecode = (
