@@ -94,8 +94,6 @@ export default function PoolsPage() {
     useLoadedAppContext();
   const { poolStats, globalHistoricalStats, globalStats } = useStatsContext();
 
-  const { sm } = useBreakpoint();
-
   // TVL
   const totalTvlUsd = useMemo(
     () =>

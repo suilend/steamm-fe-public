@@ -37,8 +37,8 @@ export enum QuoterId {
 }
 export const QUOTER_ID_NAME_MAP: Record<QuoterId, string> = {
   [QuoterId.CPMM]: "CPMM",
-  [QuoterId.ORACLE]: "Oracle",
-  [QuoterId.ORACLE_V2]: "Oracle V2",
+  [QuoterId.ORACLE]: "Oracle V1",
+  [QuoterId.ORACLE_V2]: "Oracle",
 };
 
 export type ParsedPool = {

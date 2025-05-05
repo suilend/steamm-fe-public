@@ -1,7 +1,6 @@
 import Head from "next/head";
 
 import CreatePoolCard from "@/components/admin/pools/CreatePoolCard";
-import { QuoterId } from "@/lib/types";
 
 export default function CreatePage() {
   return (
@@ -15,7 +14,7 @@ export default function CreatePage() {
           <h1 className="text-h1 text-foreground">Create</h1>
         </div>
 
-        <CreatePoolCard noWhitelist quoterId={QuoterId.CPMM} />
+        <CreatePoolCard noWhitelist />
       </div>
     </>
   );
