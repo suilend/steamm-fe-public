@@ -5,6 +5,7 @@ import { PropsWithChildren, useEffect, useRef } from "react";
 
 // import { registerWallet } from "@mysten/wallet-standard";
 // import { createPhantom } from "@phantom/wallet-sdk";
+import { datadogRum } from "@datadog/browser-rum";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { LDProvider } from "launchdarkly-react-client-sdk";
@@ -56,6 +57,22 @@ export default function App({ Component, pageProps }: AppProps) {
       debug: process.env.NEXT_PUBLIC_DEBUG === "true",
       persistence: "localStorage",
     });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      datadogRum.init({
+        applicationId: process.env.DD_APP_ID!,
+        clientToken: process.env.DD_CLIENT_TOKEN!,
+        site: "datadoghq.com",
+        service: "steamm-fe",
+        env: "prod",
+        traceSampleRate: 100,
+        profilingSampleRate: 100,
+        telemetrySampleRate: 100,
+        trackUserInteractions: true,
+      });
+    }
   }, []);
 
   // Phantom
