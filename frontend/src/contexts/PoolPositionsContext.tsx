@@ -39,14 +39,14 @@ const PoolPositionsContext = createContext<PoolPositionsContext>({
 export const usePoolPositionsContext = () => useContext(PoolPositionsContext);
 
 export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
-  const { poolsData } = useAppContext();
+  const { appData, poolsData } = useAppContext();
   const { getBalance, userData } = useUserContext();
   const { poolStats } = useStatsContext();
 
   // Pool positions
   const poolPositions: PoolPosition[] | undefined = useMemo(
     () =>
-      poolsData === undefined || userData === undefined
+      appData === undefined || poolsData === undefined || userData === undefined
         ? undefined
         : (poolsData.pools
             .map((pool) => {
@@ -99,7 +99,7 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
                               getStakingYieldAprPercent(
                                 Side.DEPOSIT,
                                 coinType,
-                                poolsData.lstAprPercentMap,
+                                appData.lstAprPercentMap,
                               ) ?? 0,
                             ).times(
                               pool.prices[index].times(pool.balances[index]),
@@ -147,7 +147,7 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
               };
             })
             .filter(Boolean) as PoolPosition[]),
-    [poolsData, userData, getBalance, poolStats.aprPercent_24h],
+    [appData, poolsData, userData, getBalance, poolStats.aprPercent_24h],
   );
 
   // Points

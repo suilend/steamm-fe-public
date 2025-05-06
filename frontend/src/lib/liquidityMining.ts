@@ -15,7 +15,7 @@ import { ParsedPool } from "@/lib/types";
 
 export const getPoolStakingYieldAprPercent = (
   pool: ParsedPool,
-  lstAprPercentMap: PoolsData["lstAprPercentMap"],
+  lstAprPercentMap: AppData["lstAprPercentMap"],
 ) =>
   pool.tvlUsd.gt(0)
     ? pool.coinTypes

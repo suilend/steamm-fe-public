@@ -173,7 +173,7 @@ export default function PoolsPage() {
             const filteredRewards = getFilteredRewards(rewards);
 
             const stakingYieldAprPercent: BigNumber | undefined =
-              getPoolStakingYieldAprPercent(pool, poolsData.lstAprPercentMap);
+              getPoolStakingYieldAprPercent(pool, appData.lstAprPercentMap);
 
             return {
               ...pool,
@@ -190,7 +190,12 @@ export default function PoolsPage() {
                   : undefined,
             };
           }),
-    [poolsData, poolStats.volumeUsd_24h, poolStats.aprPercent_24h],
+    [
+      poolsData,
+      appData.lstAprPercentMap,
+      poolStats.volumeUsd_24h,
+      poolStats.aprPercent_24h,
+    ],
   );
 
   // Group pools by pair

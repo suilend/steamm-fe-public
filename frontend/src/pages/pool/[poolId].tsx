@@ -34,7 +34,7 @@ function PoolPage() {
   const { poolStats } = useStatsContext();
   const { refresh } = useUserContext();
 
-  const { pool } = usePoolContext();
+  const { pool, fetchRefreshedPool } = usePoolContext();
 
   // Pair
   const formattedPair = formatPair(
@@ -75,6 +75,7 @@ function PoolPage() {
 
     setTimeout(() => {
       fetchPoolTransactionHistoryMap([pool.id]);
+      fetchRefreshedPool(pool.poolInfo);
     }, 1000);
   };
 
@@ -83,6 +84,7 @@ function PoolPage() {
 
     setTimeout(() => {
       fetchPoolTransactionHistoryMap([pool.id]);
+      fetchRefreshedPool(pool.poolInfo);
     }, 1000);
   };
 
@@ -91,6 +93,7 @@ function PoolPage() {
 
     setTimeout(() => {
       fetchPoolTransactionHistoryMap([pool.id]);
+      fetchRefreshedPool(pool.poolInfo);
     }, 1000);
   };
 

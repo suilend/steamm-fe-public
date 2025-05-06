@@ -50,10 +50,10 @@ export default function AprBreakdown({
   const perDayRewards = getDedupedPerDayRewards(filteredRewards);
 
   // LST staking yield APR
-  const stakingYieldAprPercent: BigNumber | undefined =
-    poolsData !== undefined
-      ? getPoolStakingYieldAprPercent(pool, poolsData.lstAprPercentMap)
-      : undefined;
+  const stakingYieldAprPercent: BigNumber = getPoolStakingYieldAprPercent(
+    pool,
+    appData.lstAprPercentMap,
+  );
 
   // Rewards - APR
   const aprRewards = getDedupedAprRewards(filteredRewards);

@@ -28,7 +28,7 @@ export default function SuggestedPools({
   pools,
   isTvlOnly,
 }: SuggestedPoolsProps) {
-  const { poolsData } = useLoadedAppContext();
+  const { appData, poolsData } = useLoadedAppContext();
   const { poolStats } = useStatsContext();
 
   const poolsWithExtraData = useMemo(
@@ -41,8 +41,8 @@ export default function SuggestedPools({
               poolsData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
             const filteredRewards = getFilteredRewards(rewards);
 
-            const stakingYieldAprPercent: BigNumber | undefined =
-              getPoolStakingYieldAprPercent(pool, poolsData.lstAprPercentMap);
+            const stakingYieldAprPercent: BigNumber =
+              getPoolStakingYieldAprPercent(pool, appData.lstAprPercentMap);
 
             return {
               ...pool,
@@ -59,7 +59,13 @@ export default function SuggestedPools({
                   : undefined,
             };
           }),
-    [pools, poolsData, poolStats.volumeUsd_24h, poolStats.aprPercent_24h],
+    [
+      pools,
+      poolsData,
+      appData.lstAprPercentMap,
+      poolStats.volumeUsd_24h,
+      poolStats.aprPercent_24h,
+    ],
   );
 
   const poolGroups = useMemo(

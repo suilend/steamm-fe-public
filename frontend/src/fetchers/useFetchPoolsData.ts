@@ -1,10 +1,8 @@
-import BigNumber from "bignumber.js";
 import pLimit from "p-limit";
 import useSWR from "swr";
 
-import { showErrorToast, useSettingsContext } from "@suilend/frontend-sui-next";
+import { showErrorToast } from "@suilend/frontend-sui-next";
 import { formatRewards } from "@suilend/sdk";
-import { LstClient } from "@suilend/springsui-sdk";
 
 import {
   AppData,
@@ -22,44 +20,13 @@ export default function useFetchPoolsData(
   oraclesData: OraclesData | undefined,
   banksData: BanksData | undefined,
 ) {
-  const { suiClient } = useSettingsContext();
-
   // Data
   const dataFetcher = async () => {
     if (!appData || !oraclesData || !banksData)
       return undefined as unknown as PoolsData; // In practice `dataFetcher` won't be called if `appData`, `oraclesData`, or `banksData` is falsy
 
     const { coinMetadataMap, poolObjs } = appData;
-    const { bTokenTypeCoinTypeMap } = banksData;
     const limit10 = pLimit(10);
-
-    // LSTs
-    const lstAprPercentMapEntries: [string, BigNumber][] = await Promise.all(
-      Object.values(appData.LIQUID_STAKING_INFO_MAP)
-        .filter((LIQUID_STAKING_INFO) =>
-          poolObjs.some(
-            (poolObj) =>
-              bTokenTypeCoinTypeMap[poolObj.poolInfo.coinTypeA] ===
-                LIQUID_STAKING_INFO.type ||
-              bTokenTypeCoinTypeMap[poolObj.poolInfo.coinTypeB] ===
-                LIQUID_STAKING_INFO.type,
-          ),
-        )
-        .map((LIQUID_STAKING_INFO) =>
-          limit10<[], [string, BigNumber]>(async () => {
-            const lstClient = await LstClient.initialize(
-              suiClient,
-              LIQUID_STAKING_INFO,
-            );
-
-            const apr = await lstClient.getSpringSuiApy(); // TODO: Use APR
-            const aprPercent = new BigNumber(apr).times(100);
-
-            return [LIQUID_STAKING_INFO.type, aprPercent];
-          }),
-        ),
-    );
-    const lstAprPercentMap = Object.fromEntries(lstAprPercentMapEntries);
 
     // Pools
     const pools: ParsedPool[] = (
@@ -105,7 +72,6 @@ export default function useFetchPoolsData(
     );
 
     return {
-      lstAprPercentMap,
       rewardMap: lmMarket_rewardMap,
 
       pools: sortedPools,

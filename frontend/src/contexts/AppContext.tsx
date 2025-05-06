@@ -22,7 +22,6 @@ import {
   SuilendClient,
 } from "@suilend/sdk";
 import { Reserve } from "@suilend/sdk/_generated/suilend/reserve/structs";
-import { LiquidStakingObjectInfo } from "@suilend/springsui-sdk";
 import {
   BETA_CONFIG,
   BankInfo,
@@ -53,8 +52,8 @@ export interface AppData {
     refreshedRawReserves: Reserve<string>[];
     reserveMap: Record<string, ParsedReserve>;
 
-    rewardPriceMap: Record<string, BigNumber | undefined>;
     rewardCoinMetadataMap: Record<string, CoinMetadata>;
+    rewardPriceMap: Record<string, BigNumber | undefined>;
 
     depositAprPercentMap: Record<string, BigNumber>;
   };
@@ -66,14 +65,12 @@ export interface AppData {
     refreshedRawReserves: Reserve<string>[];
     reserveMap: Record<string, ParsedReserve>;
 
-    rewardPriceMap: Record<string, BigNumber | undefined>;
     rewardCoinMetadataMap: Record<string, CoinMetadata>;
+    rewardPriceMap: Record<string, BigNumber | undefined>;
   };
 
   coinMetadataMap: Record<string, CoinMetadata>;
-
-  LIQUID_STAKING_INFO_MAP: Record<string, LiquidStakingObjectInfo>;
-  lstCoinTypes: string[];
+  lstAprPercentMap: Record<string, BigNumber>;
 
   bankObjs: {
     bankInfo: BankInfo;
@@ -108,7 +105,6 @@ export interface BanksData {
   bankMap: Record<string, ParsedBank>;
 }
 export interface PoolsData {
-  lstAprPercentMap: Record<string, BigNumber>;
   rewardMap: RewardMap;
 
   pools: ParsedPool[];

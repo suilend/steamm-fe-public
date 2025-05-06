@@ -24,7 +24,6 @@ import {
   getToken,
   isStablecoin,
   isSui,
-  issSui,
 } from "@suilend/frontend-sui";
 import {
   showErrorToast,
@@ -57,7 +56,9 @@ import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 const AMPLIFIERS: number[] = [1, 5, 10, 20, 50, 100];
-const FEE_TIER_PERCENTS: number[] = [0.01, 0.05, 0.3, 1, 2];
+const FEE_TIER_PERCENTS: number[] = [1, 5, 10, 20, 25, 30, 50, 100, 200].map(
+  (bps) => bps / 100,
+);
 
 const generate_bytecode = (
   module: string,
@@ -321,11 +322,10 @@ export default function CreatePoolCard({
       baseTokens.filter(
         (token) =>
           isSui(token.coinType) ||
-          issSui(token.coinType) ||
           isStablecoin(token.coinType) ||
-          appData.lstCoinTypes.includes(token.coinType),
+          Object.keys(appData.lstAprPercentMap).includes(token.coinType),
       ),
-    [baseTokens, appData.lstCoinTypes],
+    [baseTokens, appData.lstAprPercentMap],
   );
 
   const onSelectToken = (token: Token, index: number) => {
@@ -1098,9 +1098,9 @@ export default function CreatePoolCard({
 
       {/* Fee tier */}
       <div className="flex flex-row items-center justify-between">
-        <p className="text-p2 text-secondary-foreground">Fee tier</p>
+        <p className="shrink-0 text-p2 text-secondary-foreground">Fee tier</p>
 
-        <div className="flex flex-row gap-1">
+        <div className="flex flex-1 flex-row flex-wrap justify-end gap-1">
           {FEE_TIER_PERCENTS.map((_feeTierPercent) => {
             const hasExistingPool = hasExistingPoolForQuoterFeeTierAndAmplifier(
               quoterId,
