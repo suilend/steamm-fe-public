@@ -31,7 +31,7 @@ import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
-import { AppData } from "@/contexts/AppContext";
+import { AppContext, AppData } from "@/contexts/AppContext";
 import { getParsedBank } from "@/lib/banks";
 import { ASSETS_URL } from "@/lib/constants";
 import { formatPair } from "@/lib/format";
@@ -79,7 +79,11 @@ type PoolObj = {
   redeemQuote: RedeemQuote;
 };
 
-export default function useFetchAppData(steammClient: SteammSDK) {
+export default function useFetchAppData(
+  steammClient: SteammSDK,
+  localCoinMetadataMap: AppContext["localCoinMetadataMap"],
+  addCoinMetadataToLocalMap: AppContext["addCoinMetadataToLocalMap"],
+) {
   const { suiClient } = useSettingsContext();
 
   // Data
@@ -109,14 +113,26 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         );
 
         const {
-          refreshedRawReserves: mainMarket_refreshedRawReserves,
           lendingMarket: mainMarket_lendingMarket,
+          coinMetadataMap: mainMarket_coinMetadataMap,
 
+          refreshedRawReserves: mainMarket_refreshedRawReserves,
           reserveMap: mainMarket_reserveMap,
 
           activeRewardCoinTypes: mainMarket_activeRewardCoinTypes,
           rewardCoinMetadataMap: mainMarket_rewardCoinMetadataMap,
-        } = await initializeSuilend(suiClient, mainMarket_suilendClient);
+        } = await initializeSuilend(
+          suiClient,
+          mainMarket_suilendClient,
+          localCoinMetadataMap,
+        );
+        for (const coinType of Object.keys(mainMarket_coinMetadataMap)) {
+          if (!localCoinMetadataMap[coinType])
+            addCoinMetadataToLocalMap(
+              coinType,
+              mainMarket_coinMetadataMap[coinType],
+            );
+        }
 
         const { rewardPriceMap: mainMarket_rewardPriceMap } =
           await initializeSuilendRewards(
@@ -147,13 +163,25 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
         const {
           lendingMarket: lmMarket_lendingMarket,
+          coinMetadataMap: lmMarket_coinMetadataMap,
 
           refreshedRawReserves: lmMarket_refreshedRawReserves,
           reserveMap: lmMarket_reserveMap,
 
           activeRewardCoinTypes: lmMarket_activeRewardCoinTypes,
           rewardCoinMetadataMap: lmMarket_rewardCoinMetadataMap,
-        } = await initializeSuilend(suiClient, lmMarket_suilendClient);
+        } = await initializeSuilend(
+          suiClient,
+          lmMarket_suilendClient,
+          localCoinMetadataMap,
+        );
+        for (const coinType of Object.keys(lmMarket_coinMetadataMap)) {
+          if (!localCoinMetadataMap[coinType])
+            addCoinMetadataToLocalMap(
+              coinType,
+              lmMarket_coinMetadataMap[coinType],
+            );
+        }
 
         const { rewardPriceMap: lmMarket_rewardPriceMap } =
           await initializeSuilendRewards(
@@ -192,12 +220,16 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       // LSTs
       (async () => {
         const lstAprsRes = await fetch(`${API_URL}/springsui/all`);
-        const lstAprsJson: AppData["lstAprPercentMap"] =
-          await lstAprsRes.json();
+        const lstAprsJson: Record<string, string> = await lstAprsRes.json();
         if ((lstAprsRes as any)?.statusCode === 500)
           throw new Error("Failed to fetch SpringSui LST APRs");
 
-        return lstAprsJson;
+        return Object.fromEntries(
+          Object.entries(lstAprsJson).map(([coinType, aprPercent]) => [
+            coinType,
+            new BigNumber(aprPercent),
+          ]),
+        ) as AppData["lstAprPercentMap"];
       })(),
 
       // Oracles, Banks, and Pools
@@ -401,7 +433,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       ...suilend.lmMarket.rewardCoinMetadataMap,
     };
 
-    // CoinMetadata - extra
+    // CoinMetadata - additional
     const bankCoinTypes: string[] = [];
     for (const bankObj of bankObjs) {
       bankCoinTypes.push(normalizeStructTag(bankObj.bankInfo.coinType));
@@ -419,16 +451,40 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     }
     const uniquePoolCoinTypes = Array.from(new Set(poolCoinTypes));
 
-    const additionalCoinMetadataMap = await getCoinMetadataMap(
-      Array.from(
-        new Set([
-          NORMALIZED_STEAMM_POINTS_COINTYPE,
-          ...uniqueBankCoinTypes,
-          ...uniquePoolCoinTypes,
-        ]),
-      ).filter((coinType) => !Object.keys(coinMetadataMap).includes(coinType)),
+    //
+
+    const uniqueAdditionalCoinTypes = Array.from(
+      new Set([
+        NORMALIZED_STEAMM_POINTS_COINTYPE,
+        ...uniqueBankCoinTypes,
+        ...uniquePoolCoinTypes,
+      ]),
+    ).filter((coinType) => !Object.keys(coinMetadataMap).includes(coinType));
+
+    const _additionalCoinMetadataMap = await getCoinMetadataMap(
+      uniqueAdditionalCoinTypes.filter(
+        (coinType) => !localCoinMetadataMap[coinType],
+      ),
     );
+    const additionalCoinMetadataMap: Record<string, CoinMetadata> =
+      uniqueAdditionalCoinTypes.reduce(
+        (acc, coinType) => ({
+          ...acc,
+          [coinType]:
+            localCoinMetadataMap?.[coinType] ??
+            _additionalCoinMetadataMap[coinType],
+        }),
+        {} as Record<string, CoinMetadata>,
+      );
     coinMetadataMap = { ...coinMetadataMap, ...additionalCoinMetadataMap };
+
+    for (const coinType of Object.keys(additionalCoinMetadataMap)) {
+      if (!localCoinMetadataMap[coinType])
+        addCoinMetadataToLocalMap(
+          coinType,
+          additionalCoinMetadataMap[coinType],
+        );
+    }
 
     // Banks - parse
     const bTokenTypeCoinTypeMap: Record<string, string> = {};

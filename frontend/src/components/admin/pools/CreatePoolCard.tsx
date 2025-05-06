@@ -571,7 +571,7 @@ export default function CreatePoolCard({
 
       const existingBTokenTypeCoinMetadataMap = await getCoinMetadataMap(
         Object.keys(appData.bTokenTypeCoinTypeMap),
-      );
+      ); // TODO: Add to local coinMetadataMap
       console.log(
         "XXX existingBTokenTypeCoinMetadataMap:",
         existingBTokenTypeCoinMetadataMap,
