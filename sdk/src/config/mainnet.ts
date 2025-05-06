@@ -4,7 +4,7 @@ export const STEAMM_CONFIG = {
   package_id:
     "0x4fb1cf45dffd6230305f1d269dd1816678cc8e3ba0b747a813a556921219f261",
   published_at:
-    "0x90e18bdfa7206d5d19df0eed869203812b608e50d07e3a49b9e9044fdedac443",
+    "0xf7338d805e8dd649bb2c183c4c4e928a0626ea3ee5171a1b35a5fc578f6b3159",
   config: {
     registryId:
       "0x8584948e8c0a2809ec192ede7e030b0a32bd602e5ca6c91bde8dc35fb8b0068d",
