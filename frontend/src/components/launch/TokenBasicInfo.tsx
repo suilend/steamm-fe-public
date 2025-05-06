@@ -4,14 +4,11 @@ import { ChevronDown, ChevronUp, InfoIcon, Upload } from "lucide-react";
 
 import Parameter from "@/components/Parameter";
 import TextInput from "@/components/TextInput";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import Tooltip from "@/components/Tooltip";
 import { LaunchConfig } from "@/contexts/LaunchContext";
 import { cn } from "@/lib/utils";
+
+import { Switch } from "../ui/switch";
 
 import {
   fileToBase64,
@@ -83,6 +80,9 @@ interface InfoTooltipProps {
   content: string;
 }
 
+export const BURN_LP_TOOLTIP_CONTENT =
+  "Burning Liquidity Provider (LP) tokens prevents withdrawals of the initial liquidity in the pool. This action enhances investor trust by ensuring the project's initial liquidity remains immutable.";
+
 export default function TokenBasicInfo({
   config,
   setConfig,
@@ -129,7 +129,7 @@ export default function TokenBasicInfo({
         setIsValid((prev) => ({ ...prev, name: !errorMessage }));
         break;
       case "symbol":
-        errorMessage = validateTokenSymbol(tokenSymbol) || "";
+        errorMessage = validateTokenSymbol(tokenSymbol, tokenName) || "";
         setIsValid((prev) => ({ ...prev, symbol: !errorMessage }));
         break;
       case "description":
@@ -532,6 +532,20 @@ export default function TokenBasicInfo({
               )}
             </div>
           </Parameter>
+          <div className="flex justify-between">
+            <p className="flex items-center gap-1 text-p2 text-secondary-foreground">
+              Burn LP Token{" "}
+              <Tooltip content={BURN_LP_TOOLTIP_CONTENT}>
+                <InfoIcon className="text-muted-foreground h-4 w-4 cursor-help" />
+              </Tooltip>
+            </p>
+            <Switch
+              checked={config.burnLP}
+              onCheckedChange={() =>
+                setConfig({ ...config, burnLP: !config.burnLP })
+              }
+            />
+          </div>
         </div>
       )}
     </form>

@@ -1,9 +1,10 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useWalletContext } from "@suilend/frontend-sui-next";
 
+import LaunchConfirmationDialog from "@/components/launch/LaunchConfirmationDialog";
 import TokenBasicInfo, { FormErrors } from "@/components/launch/TokenBasicInfo";
 import TokenCreationProgress from "@/components/launch/TokenCreationProgress";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
@@ -16,6 +17,7 @@ import { POOL_URL_PREFIX } from "@/lib/navigation";
 
 function LaunchPage() {
   const { address } = useWalletContext();
+  const [isOpen, setIsOpen] = useState(false);
   // State for icon upload
   const [iconFile, setIconFile] = useState<File | null>(null);
 
@@ -81,10 +83,20 @@ function LaunchPage() {
     if (error) setConfig({ ...config, error: null });
 
     launchToken();
+    if (config.status === TokenCreationStatus.Pending) {
+      setIsOpen(true);
+    }
   };
+
+  useEffect(() => {
+    if (config.status > TokenCreationStatus.Publishing || config.error) {
+      setIsOpen(false);
+    }
+  }, [config.status, config.error]);
 
   return (
     <>
+      <LaunchConfirmationDialog isOpen={isOpen} setIsOpen={setIsOpen} />
       <Head>
         <title>STEAMM | Launch</title>
       </Head>
