@@ -87,7 +87,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
   const referenceTimestampSRef = useRef(
     (() => {
-      const nowS = Math.floor(Date.now() / 1000);
+      const nowS = Math.floor((Date.now() - 60 * 1000) / 1000); // Subtract 1 minute to give the BE enough time to update
       const hourStartS = startOfHour(nowS * 1000).getTime();
 
       return (
