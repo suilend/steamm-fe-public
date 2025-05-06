@@ -59,20 +59,25 @@ export default function App({ Component, pageProps }: AppProps) {
     });
   }, []);
 
+  // Datadog
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      datadogRum.init({
-        applicationId: process.env.DD_APP_ID!,
-        clientToken: process.env.DD_CLIENT_TOKEN!,
-        site: "datadoghq.com",
-        service: "steamm-fe",
-        env: "prod",
-        traceSampleRate: 100,
-        profilingSampleRate: 100,
-        telemetrySampleRate: 100,
-        trackUserInteractions: true,
-      });
-    }
+    if (
+      !process.env.NEXT_PUBLIC_DD_APP_ID ||
+      !process.env.NEXT_PUBLIC_DD_CLIENT_TOKEN
+    )
+      return;
+
+    datadogRum.init({
+      applicationId: process.env.NEXT_PUBLIC_DD_APP_ID,
+      clientToken: process.env.NEXT_PUBLIC_DD_CLIENT_TOKEN,
+      site: "datadoghq.com",
+      service: "steamm-fe",
+      env: "prod",
+      traceSampleRate: 100,
+      profilingSampleRate: 100,
+      telemetrySampleRate: 100,
+      trackUserInteractions: true,
+    });
   }, []);
 
   // Phantom
