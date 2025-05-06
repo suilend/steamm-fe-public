@@ -20,6 +20,7 @@
       "name": "frontend",
       "version": "0.1.0",
       "dependencies": {
+        "@datadog/browser-rum": "^6.6.4",
         "@launchdarkly/node-server-sdk": "^9.7.2",
         "@mysten/dapp-kit": "0.16.0",
         "@mysten/kiosk": "0.12.3",
@@ -185,6 +186,12 @@
     "@bcoe/v8-coverage": ["@bcoe/v8-coverage@0.2.3", "", {}, "sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw=="],
 
     "@cspotcode/source-map-support": ["@cspotcode/source-map-support@0.8.1", "", { "dependencies": { "@jridgewell/trace-mapping": "0.3.9" } }, "sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw=="],
+
+    "@datadog/browser-core": ["@datadog/browser-core@6.6.4", "", {}, "sha512-VpJ10Rbj0UX5i1mbZo575ZA04O6cfBNI2L3TstxZPtnT/XQtqAm0KZpazW4sAZ8IFQXNHxMYYVe43mViapP0rw=="],
+
+    "@datadog/browser-rum": ["@datadog/browser-rum@6.6.4", "", { "dependencies": { "@datadog/browser-core": "6.6.4", "@datadog/browser-rum-core": "6.6.4" }, "peerDependencies": { "@datadog/browser-logs": "6.6.4" }, "optionalPeers": ["@datadog/browser-logs"] }, "sha512-SgC38/GGAKczbkPEt+4qDTC2AIHyMTGcVnfObyXMxX3dSNGN64CRGuZCqQxV2Efl0hZiFJ/sOGDDP/BTQZ9eDw=="],
+
+    "@datadog/browser-rum-core": ["@datadog/browser-rum-core@6.6.4", "", { "dependencies": { "@datadog/browser-core": "6.6.4" } }, "sha512-8T/nAA5qn/hIhntF8uSj8lL7R56bGgM/bld8h78iQCHbwxNKGX14pGw7rIANW7IpUo7qsRa+DPl5uXyNT7m2Dw=="],
 
     "@emnapi/core": ["@emnapi/core@1.4.3", "", { "dependencies": { "@emnapi/wasi-threads": "1.0.2", "tslib": "^2.4.0" } }, "sha512-4m62DuCE07lw01soJwPiBGC0nAww0Q+RY70VZ+n49yDIO13yyinhbWCeNnaob0lakDtWQzSdtNWzJeOJt2ma+g=="],
 
