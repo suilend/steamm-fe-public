@@ -3,7 +3,7 @@ import BigNumber from "bignumber.js";
 import { PoolInfo, RedeemQuote, SteammSDK } from "@suilend/steamm-sdk";
 import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 
-import { AppData, BanksData, OraclesData } from "@/contexts/AppContext";
+import { AppData } from "@/contexts/AppContext";
 import { formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
@@ -33,17 +33,30 @@ export const fetchPool = (steammClient: SteammSDK, poolInfo: PoolInfo) => {
       : steammClient.fullClient.fetchConstantProductPool(id);
 };
 
-export const getParsedPool = async (
-  appData: AppData,
-  oraclesData: OraclesData,
-  banksData: BanksData,
+export const getParsedPool = (
+  appData: Pick<
+    AppData,
+    | "suilend"
+    | "coinMetadataMap"
+    | "oracleIndexOracleInfoPriceMap"
+    | "coinTypeOracleInfoPriceMap"
+    | "bTokenTypeCoinTypeMap"
+    | "bankMap"
+  >,
+
   poolInfo: PoolInfo,
   pool: ParsedPool["pool"],
   redeemQuote: RedeemQuote,
-): Promise<ParsedPool | undefined> => {
+): ParsedPool | undefined => {
   {
-    const { mainMarket, coinMetadataMap } = appData;
-    const { bTokenTypeCoinTypeMap, bankMap } = banksData;
+    const {
+      suilend,
+      coinMetadataMap,
+      oracleIndexOracleInfoPriceMap,
+      coinTypeOracleInfoPriceMap,
+      bTokenTypeCoinTypeMap,
+      bankMap,
+    } = appData;
 
     const id = poolInfo.poolId;
     const quoterId = poolInfo.quoterType.endsWith("omm::OracleQuoter")
@@ -70,18 +83,18 @@ export const getParsedPool = async (
     const balances: [BigNumber, BigNumber] = [balanceA, balanceB];
 
     let priceA = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
-      ? oraclesData.oracleIndexOracleInfoPriceMap[
+      ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexA.toString()
         ].price
-      : (oraclesData.coinTypeOracleInfoPriceMap[coinTypeA]?.price ??
-        mainMarket.reserveMap[coinTypeA]?.price ??
+      : (coinTypeOracleInfoPriceMap[coinTypeA]?.price ??
+        suilend.mainMarket.reserveMap[coinTypeA]?.price ??
         undefined);
     let priceB = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
-      ? oraclesData.oracleIndexOracleInfoPriceMap[
+      ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexB.toString()
         ].price
-      : (oraclesData.coinTypeOracleInfoPriceMap[coinTypeB]?.price ??
-        mainMarket.reserveMap[coinTypeB]?.price ??
+      : (coinTypeOracleInfoPriceMap[coinTypeB]?.price ??
+        suilend.mainMarket.reserveMap[coinTypeB]?.price ??
         undefined);
 
     if (priceA === undefined && priceB === undefined) {

@@ -92,7 +92,7 @@ export default function PoolPositionRow({
         console.log("XXX obligationIndexes:", obligationIndexes);
 
         for (const obligationIndex of obligationIndexes) {
-          await appData.lmMarket.suilendClient.withdrawAndSendToUser(
+          await appData.suilend.lmMarket.suilendClient.withdrawAndSendToUser(
             address,
             userData.obligationOwnerCaps[obligationIndex].id,
             userData.obligations[obligationIndex].id,
@@ -259,7 +259,9 @@ export default function PoolPositionRow({
         className="flex h-full flex-row items-center gap-3"
         style={columnStyleMap.stakedPercent}
       >
-        {!!appData.lmMarket.reserveMap[poolPosition.pool.lpTokenType] ? (
+        {!!appData.suilend.lmMarket.reserveMap[
+          poolPosition.pool.lpTokenType
+        ] ? (
           <div className="flex flex-col items-end gap-1">
             <p className="text-p1 text-foreground">
               {formatPercent(stakedPercent)}
@@ -332,7 +334,7 @@ export default function PoolPositionRow({
                   <Tooltip
                     title={formatUsd(
                       amount.times(
-                        appData.lmMarket.rewardPriceMap[coinType] ?? 0,
+                        appData.suilend.lmMarket.rewardPriceMap[coinType] ?? 0,
                       ),
                       { exact: true },
                     )}
@@ -340,7 +342,8 @@ export default function PoolPositionRow({
                     <p className="text-p2 text-secondary-foreground">
                       {formatUsd(
                         amount.times(
-                          appData.lmMarket.rewardPriceMap[coinType] ?? 0,
+                          appData.suilend.lmMarket.rewardPriceMap[coinType] ??
+                            0,
                         ),
                       )}
                     </p>

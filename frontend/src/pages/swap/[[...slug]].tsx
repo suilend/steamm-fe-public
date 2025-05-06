@@ -53,8 +53,7 @@ export default function SwapPage() {
 
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, banksData, poolsData, slippagePercent } =
-    useLoadedAppContext();
+  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
   const { getBalance, refresh } = useUserContext();
 
   // CoinTypes
@@ -206,13 +205,11 @@ export default function SwapPage() {
   // USD prices - current
   const getAvgPoolPrice = useCallback(
     (coinType: string) => {
-      if (poolsData === undefined) return undefined;
-
       const poolPrices = [
-        ...poolsData.pools
+        ...appData.pools
           .filter((pool) => pool.coinTypes[0] === coinType)
           .map((pool) => pool.prices[0]),
-        ...poolsData.pools
+        ...appData.pools
           .filter((pool) => pool.coinTypes[1] === coinType)
           .map((pool) => pool.prices[1]),
       ];
@@ -221,7 +218,7 @@ export default function SwapPage() {
         .reduce((acc, poolPrice) => acc.plus(poolPrice), new BigNumber(0))
         .div(poolPrices.length);
     },
-    [poolsData],
+    [appData.pools],
   );
 
   const inPoolPrice = getAvgPoolPrice(inCoinType);
@@ -279,20 +276,18 @@ export default function SwapPage() {
   // Select
   const tokens: Token[] | undefined = useMemo(
     () =>
-      banksData === undefined
-        ? undefined
-        : Object.values(banksData.bTokenTypeCoinTypeMap)
-            .sort(
-              (a, b) =>
-                appData.coinMetadataMap[a].symbol.toLowerCase() <
-                appData.coinMetadataMap[b].symbol.toLowerCase()
-                  ? -1
-                  : 1, // Sort by symbol (ascending)
-            )
-            .map((coinType) =>
-              getToken(coinType, appData.coinMetadataMap[coinType]),
-            ),
-    [banksData, appData.coinMetadataMap],
+      Object.values(appData.bTokenTypeCoinTypeMap)
+        .sort(
+          (a, b) =>
+            appData.coinMetadataMap[a].symbol.toLowerCase() <
+            appData.coinMetadataMap[b].symbol.toLowerCase()
+              ? -1
+              : 1, // Sort by symbol (ascending)
+        )
+        .map((coinType) =>
+          getToken(coinType, appData.coinMetadataMap[coinType]),
+        ),
+    [appData.bTokenTypeCoinTypeMap, appData.coinMetadataMap],
   );
 
   const onSelectToken = (token: Token, direction: TokenDirection) => {
@@ -418,7 +413,6 @@ export default function SwapPage() {
 
     if (submitButtonState.isDisabled) return;
 
-    if (banksData === undefined) return;
     if (!address || !quote || !route) return;
 
     try {
@@ -447,10 +441,7 @@ export default function SwapPage() {
 
       transaction.transferObjects([coinIn], address);
 
-      const banks = [
-        banksData.bankMap[inCoinType],
-        banksData.bankMap[outCoinType],
-      ];
+      const banks = [appData.bankMap[inCoinType], appData.bankMap[outCoinType]];
       rebalanceBanks(banks, steammClient, transaction);
 
       const res = await signExecuteAndWaitForTransaction(transaction, {
@@ -510,27 +501,26 @@ export default function SwapPage() {
   };
 
   // Suggested pools
-  const suggestedPools: ParsedPool[] | undefined = useMemo(() => {
-    if (poolsData === undefined) return undefined;
-
-    return [
-      ...poolsData.pools.filter(
+  const suggestedPools: ParsedPool[] = useMemo(
+    () => [
+      ...appData.pools.filter(
         (_pool) =>
           _pool.coinTypes[0] === inCoinType &&
           _pool.coinTypes[1] === outCoinType,
       ),
-      ...poolsData.pools.filter(
+      ...appData.pools.filter(
         (_pool) =>
           _pool.coinTypes[0] === inCoinType &&
           _pool.coinTypes[1] !== outCoinType,
       ),
-      ...poolsData.pools.filter(
+      ...appData.pools.filter(
         (_pool) =>
           _pool.coinTypes[0] !== inCoinType &&
           _pool.coinTypes[1] === outCoinType,
       ),
-    ];
-  }, [poolsData, inCoinType, outCoinType]);
+    ],
+    [appData.pools, inCoinType, outCoinType],
+  );
 
   return (
     <>
@@ -603,10 +593,7 @@ export default function SwapPage() {
                     label=""
                   />
 
-                  {isFetchingQuote ||
-                  !quote ||
-                  !route ||
-                  banksData === undefined ? (
+                  {isFetchingQuote || !quote || !route ? (
                     <Skeleton className="h-[21px] w-16" />
                   ) : (
                     <Tooltip
@@ -617,9 +604,7 @@ export default function SwapPage() {
                               <p className="text-p3 text-foreground">
                                 {
                                   appData.coinMetadataMap[
-                                    banksData.bTokenTypeCoinTypeMap[
-                                      r.bTokenType
-                                    ]
+                                    appData.bTokenTypeCoinTypeMap[r.bTokenType]
                                   ].symbol
                                 }
                               </p>

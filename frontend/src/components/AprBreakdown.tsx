@@ -40,20 +40,21 @@ export default function AprBreakdown({
   valueClassName,
   pool,
 }: AprBreakdownProps) {
-  const { appData, poolsData } = useLoadedAppContext();
+  const { appData } = useLoadedAppContext();
   const { poolStats } = useStatsContext();
 
-  const rewards = poolsData?.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
+  const rewards =
+    appData.normalizedPoolRewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
   const filteredRewards = getFilteredRewards(rewards);
 
   // Rewards - per day
   const perDayRewards = getDedupedPerDayRewards(filteredRewards);
 
   // LST staking yield APR
-  const stakingYieldAprPercent: BigNumber | undefined =
-    poolsData !== undefined
-      ? getPoolStakingYieldAprPercent(pool, poolsData.lstAprPercentMap)
-      : undefined;
+  const stakingYieldAprPercent: BigNumber = getPoolStakingYieldAprPercent(
+    pool,
+    appData.lstAprPercentMap,
+  );
 
   // Rewards - APR
   const aprRewards = getDedupedAprRewards(filteredRewards);

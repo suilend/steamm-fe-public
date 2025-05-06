@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import BigNumber from "bignumber.js";
 import { v4 as uuidv4 } from "uuid";
 
 import { Side, getFilteredRewards } from "@suilend/sdk";
@@ -28,21 +29,23 @@ export default function SuggestedPools({
   pools,
   isTvlOnly,
 }: SuggestedPoolsProps) {
-  const { poolsData } = useLoadedAppContext();
+  const { appData } = useLoadedAppContext();
   const { poolStats } = useStatsContext();
 
   const poolsWithExtraData = useMemo(
     () =>
-      pools === undefined || poolsData === undefined
+      pools === undefined
         ? undefined
         : pools.map((pool) => {
             // Same code as in frontend/src/components/AprBreakdown.tsx
             const rewards =
-              poolsData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
+              appData.normalizedPoolRewardMap[pool.lpTokenType]?.[
+                Side.DEPOSIT
+              ] ?? [];
             const filteredRewards = getFilteredRewards(rewards);
 
-            const stakingYieldAprPercent: BigNumber | undefined =
-              getPoolStakingYieldAprPercent(pool, poolsData.lstAprPercentMap);
+            const stakingYieldAprPercent: BigNumber =
+              getPoolStakingYieldAprPercent(pool, appData.lstAprPercentMap);
 
             return {
               ...pool,
@@ -59,7 +62,13 @@ export default function SuggestedPools({
                   : undefined,
             };
           }),
-    [pools, poolsData, poolStats.volumeUsd_24h, poolStats.aprPercent_24h],
+    [
+      pools,
+      appData.normalizedPoolRewardMap,
+      appData.lstAprPercentMap,
+      poolStats.volumeUsd_24h,
+      poolStats.aprPercent_24h,
+    ],
   );
 
   const poolGroups = useMemo(

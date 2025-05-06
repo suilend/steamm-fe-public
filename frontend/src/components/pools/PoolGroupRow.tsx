@@ -37,7 +37,7 @@ export default function PoolGroupRow({
   poolGroup,
   isTvlOnly,
 }: PoolGroupRowProps) {
-  const { appData, poolsData } = useLoadedAppContext();
+  const { appData } = useLoadedAppContext();
 
   // State
   const [isExpanded, setIsExpanded] = useLocalStorage<boolean>(
@@ -73,7 +73,8 @@ export default function PoolGroupRow({
   const rewards = poolGroup.pools.reduce(
     (acc, pool) => [
       ...acc,
-      ...(poolsData?.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []),
+      ...(appData.normalizedPoolRewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ??
+        []),
     ],
     [] as RewardSummary[],
   );

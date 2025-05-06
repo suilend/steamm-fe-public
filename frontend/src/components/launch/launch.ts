@@ -27,7 +27,7 @@ import {
 } from "@suilend/frontend-sui";
 import { PoolScriptFunctions, SteammSDK } from "@suilend/steamm-sdk";
 
-import { BanksData } from "@/contexts/AppContext";
+import { AppData } from "@/contexts/AppContext";
 import { LaunchConfig, TokenCreationStatus } from "@/contexts/LaunchContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { API_URL } from "@/lib/navigation";
@@ -171,7 +171,7 @@ const createCoin = async (
 type CreateCoinReturnType = Awaited<ReturnType<typeof createCoin>>;
 
 export const createPool = async (
-  banksData: BanksData,
+  appData: AppData,
   quoterId: QuoterId,
   feeTierPercent: number,
   coinTypes: string[],
@@ -202,15 +202,15 @@ export const createPool = async (
   await init();
 
   const existingBTokenTypeCoinMetadataMap = await getCoinMetadataMap(
-    Object.keys(banksData.bTokenTypeCoinTypeMap),
-  );
+    Object.keys(appData.bTokenTypeCoinTypeMap),
+  ); // TODO: Add to local coinMetadataMap
   console.log(
     "XXX existingBTokenTypeCoinMetadataMap:",
     existingBTokenTypeCoinMetadataMap,
   );
 
   const getExistingBTokenForToken = (token: Token) => {
-    const bank = banksData.bankMap[token.coinType];
+    const bank = appData.bankMap[token.coinType];
     return bank
       ? getToken(
           bank.bTokenType,
@@ -344,8 +344,7 @@ export const createPool = async (
   }
 
   const bankIds = mergedConfig.createBTokenResults!.map((result, index) => {
-    if (result === undefined)
-      return banksData.bankMap[tokens[index].coinType].id;
+    if (result === undefined) return appData.bankMap[tokens[index].coinType].id;
     else {
       const event = mergedConfig.createBankEvents!.find(
         (event) =>

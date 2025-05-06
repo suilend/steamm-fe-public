@@ -50,11 +50,11 @@ interface BankCardProps {
 export default function BankCard({ bank }: BankCardProps) {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, poolsData } = useLoadedAppContext();
+  const { steammClient, appData } = useLoadedAppContext();
   const { refresh } = useUserContext();
 
   // Price
-  const price = getBankPrice(bank, poolsData);
+  const price = getBankPrice(appData.pools, bank);
 
   // Initialize/set target util. and util. buffer
   const [targetUtilizationPercent, setTargetUtilizationPercent] =
@@ -265,7 +265,7 @@ export default function BankCard({ bank }: BankCardProps) {
         await Promise.all([
           SuilendClient.getObligation(
             obligationId,
-            appData.mainMarket.suilendClient.lendingMarket.$typeArgs,
+            appData.suilend.mainMarket.suilendClient.lendingMarket.$typeArgs,
             suiClient,
           ),
         ])
@@ -273,11 +273,14 @@ export default function BankCard({ bank }: BankCardProps) {
         .map((rawObligation) =>
           simulate.refreshObligation(
             rawObligation,
-            appData.mainMarket.refreshedRawReserves,
+            appData.suilend.mainMarket.refreshedRawReserves,
           ),
         )
         .map((refreshedObligation) =>
-          parseObligation(refreshedObligation, appData.mainMarket.reserveMap),
+          parseObligation(
+            refreshedObligation,
+            appData.suilend.mainMarket.reserveMap,
+          ),
         )
         .sort((a, b) => +b.netValueUsd.minus(a.netValueUsd));
 
@@ -285,19 +288,19 @@ export default function BankCard({ bank }: BankCardProps) {
     })();
   }, [
     bank.bank.lending,
-    appData.mainMarket.suilendClient.lendingMarket.$typeArgs,
+    appData.suilend.mainMarket.suilendClient.lendingMarket.$typeArgs,
     suiClient,
-    appData.mainMarket.refreshedRawReserves,
-    appData.mainMarket.reserveMap,
+    appData.suilend.mainMarket.refreshedRawReserves,
+    appData.suilend.mainMarket.reserveMap,
   ]);
 
   const bankRewardMap: Record<string, BigNumber> | undefined = useMemo(() => {
     if (obligations === undefined) return undefined;
 
     const rewardMap = formatRewards(
-      appData.mainMarket.reserveMap,
-      appData.mainMarket.rewardCoinMetadataMap,
-      appData.mainMarket.rewardPriceMap,
+      appData.suilend.mainMarket.reserveMap,
+      appData.suilend.mainMarket.rewardCoinMetadataMap,
+      appData.suilend.mainMarket.rewardPriceMap,
       obligations,
     );
 
@@ -324,9 +327,9 @@ export default function BankCard({ bank }: BankCardProps) {
     );
   }, [
     obligations,
-    appData.mainMarket.reserveMap,
-    appData.mainMarket.rewardCoinMetadataMap,
-    appData.mainMarket.rewardPriceMap,
+    appData.suilend.mainMarket.reserveMap,
+    appData.suilend.mainMarket.rewardCoinMetadataMap,
+    appData.suilend.mainMarket.rewardPriceMap,
     bank.coinType,
   ]);
 
@@ -360,7 +363,7 @@ export default function BankCard({ bank }: BankCardProps) {
     <div
       className={cn(
         "flex w-full flex-col gap-3 rounded-md border p-4",
-        !!appData.mainMarket.reserveMap[bank.coinType] &&
+        !!appData.suilend.mainMarket.reserveMap[bank.coinType] &&
           !bank.bank.lending &&
           "border-warning",
       )}
@@ -380,7 +383,7 @@ export default function BankCard({ bank }: BankCardProps) {
           </p>
         </div>
 
-        {!!appData.mainMarket.reserveMap[bank.coinType] &&
+        {!!appData.suilend.mainMarket.reserveMap[bank.coinType] &&
           !bank.bank.lending && (
             <Tag className="bg-warning/10" labelClassName="text-warning">
               Not initialized
@@ -428,7 +431,7 @@ export default function BankCard({ bank }: BankCardProps) {
             )}
             disabled={
               address !== ADMIN_ADDRESS ||
-              !appData.mainMarket.reserveMap[bank.coinType] ||
+              !appData.suilend.mainMarket.reserveMap[bank.coinType] ||
               isSettingTargetUtilizationPercent ||
               (!bank.bank.lending &&
                 +targetUtilizationPercent === 0 &&
@@ -655,8 +658,9 @@ export default function BankCard({ bank }: BankCardProps) {
                           <p className="text-p2 text-secondary-foreground">
                             {formatUsd(
                               amount.times(
-                                appData.mainMarket.rewardPriceMap[coinType] ??
-                                  0,
+                                appData.suilend.mainMarket.rewardPriceMap[
+                                  coinType
+                                ] ?? 0,
                               ),
                             )}
                           </p>

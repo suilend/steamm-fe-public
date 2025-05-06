@@ -70,13 +70,13 @@ const useStake = (
       console.log("XXX obligationIndexes:", obligationIndexes);
 
       const { obligationOwnerCapId, didCreate } = createObligationIfNoneExists(
-        appData.lmMarket.suilendClient,
+        appData.suilend.lmMarket.suilendClient,
         transaction,
         obligationIndexes[0] !== -1
           ? userData.obligationOwnerCaps[obligationIndexes[0]] // Deposit into first obligation with deposits of the LP token type, or with less than 5 deposits
           : undefined, // Create obligation (no obligations OR no obligations with less than 5 deposits)
       );
-      await appData.lmMarket.suilendClient.depositIntoObligation(
+      await appData.suilend.lmMarket.suilendClient.depositIntoObligation(
         address,
         poolPosition.pool.lpTokenType,
         submitAmount,

@@ -10,12 +10,12 @@ import {
   getStakingYieldAprPercent,
 } from "@suilend/sdk";
 
-import { AppData, PoolsData } from "@/contexts/AppContext";
+import { AppData } from "@/contexts/AppContext";
 import { ParsedPool } from "@/lib/types";
 
 export const getPoolStakingYieldAprPercent = (
   pool: ParsedPool,
-  lstAprPercentMap: PoolsData["lstAprPercentMap"],
+  lstAprPercentMap: AppData["lstAprPercentMap"],
 ) =>
   pool.tvlUsd.gt(0)
     ? pool.coinTypes
@@ -48,8 +48,8 @@ export const getPoolTotalAprPercent = (
 
 export const normalizeRewards = (
   rewardMap: RewardMap,
-  lmMarket_reserveMap: AppData["lmMarket"]["reserveMap"],
-  pools: PoolsData["pools"],
+  lmMarket_reserveMap: AppData["suilend"]["lmMarket"]["reserveMap"],
+  pools: AppData["pools"],
 ) => {
   const clonedRewardMap = cloneDeep(rewardMap);
 

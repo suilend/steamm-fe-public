@@ -24,7 +24,6 @@ import {
   getToken,
   isStablecoin,
   isSui,
-  issSui,
 } from "@suilend/frontend-sui";
 import {
   showErrorToast,
@@ -57,7 +56,9 @@ import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 const AMPLIFIERS: number[] = [1, 5, 10, 20, 50, 100];
-const FEE_TIER_PERCENTS: number[] = [0.01, 0.05, 0.3, 1, 2];
+const FEE_TIER_PERCENTS: number[] = [1, 5, 10, 20, 25, 30, 50, 100, 200].map(
+  (bps) => bps / 100,
+);
 
 const generate_bytecode = (
   module: string,
@@ -145,8 +146,7 @@ export default function CreatePoolCard({
 }: CreatePoolCardProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, oraclesData, banksData, poolsData } =
-    useLoadedAppContext();
+  const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
   const flags = useFlags();
@@ -173,14 +173,13 @@ export default function CreatePoolCard({
   );
 
   const onSelectQuoter = (newQuoterId: QuoterId) => {
-    if (oraclesData === undefined) return;
     setQuoterId(newQuoterId);
 
     if ([QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(newQuoterId)) {
       setCoinTypes(
         (prev) =>
           prev.map((coinType) =>
-            oraclesData.COINTYPE_ORACLE_INDEX_MAP[coinType] === undefined
+            appData.COINTYPE_ORACLE_INDEX_MAP[coinType] === undefined
               ? ""
               : coinType,
           ) as [string, string],
@@ -295,25 +294,27 @@ export default function CreatePoolCard({
   // Select
   const baseTokens = useMemo(
     () =>
-      oraclesData === undefined
-        ? []
-        : Object.entries(balancesCoinMetadataMap ?? {})
-            .sort(
-              ([, a], [, b]) =>
-                a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1, // Sort by symbol (ascending)
-            )
-            .filter(([coinType]) => getBalance(coinType).gt(0))
-            .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
-            .filter(
-              (token) =>
-                quoterId === undefined ||
-                !(
-                  [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId) &&
-                  oraclesData.COINTYPE_ORACLE_INDEX_MAP[token.coinType] ===
-                    undefined
-                ),
+      Object.entries(balancesCoinMetadataMap ?? {})
+        .sort(
+          ([, a], [, b]) =>
+            a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1, // Sort by symbol (ascending)
+        )
+        .filter(([coinType]) => getBalance(coinType).gt(0))
+        .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
+        .filter(
+          (token) =>
+            quoterId === undefined ||
+            !(
+              [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId) &&
+              appData.COINTYPE_ORACLE_INDEX_MAP[token.coinType] === undefined
             ),
-    [oraclesData, balancesCoinMetadataMap, quoterId, getBalance],
+        ),
+    [
+      balancesCoinMetadataMap,
+      getBalance,
+      quoterId,
+      appData.COINTYPE_ORACLE_INDEX_MAP,
+    ],
   );
 
   const quoteTokens = useMemo(
@@ -321,11 +322,10 @@ export default function CreatePoolCard({
       baseTokens.filter(
         (token) =>
           isSui(token.coinType) ||
-          issSui(token.coinType) ||
           isStablecoin(token.coinType) ||
-          appData.lstCoinTypes.includes(token.coinType),
+          Object.keys(appData.lstAprPercentMap).includes(token.coinType),
       ),
-    [baseTokens, appData.lstCoinTypes],
+    [baseTokens, appData.lstAprPercentMap],
   );
 
   const onSelectToken = (token: Token, index: number) => {
@@ -365,22 +365,22 @@ export default function CreatePoolCard({
   );
 
   // Existing pools
-  const existingPools: ParsedPool[] | undefined = useMemo(() => {
-    if (poolsData === undefined) return undefined;
-
-    return poolsData.pools.filter(
-      (pool) =>
-        pool.coinTypes[0] === coinTypes[0] &&
-        pool.coinTypes[1] === coinTypes[1],
-    );
-  }, [poolsData, coinTypes]);
+  const existingPools: ParsedPool[] = useMemo(
+    () =>
+      appData.pools.filter(
+        (pool) =>
+          pool.coinTypes[0] === coinTypes[0] &&
+          pool.coinTypes[1] === coinTypes[1],
+      ),
+    [appData.pools, coinTypes],
+  );
 
   const hasExistingPoolForQuoterFeeTierAndAmplifier = (
     _quoterId?: QuoterId,
     _feeTierPercent?: number,
     _amplifier?: number,
   ) =>
-    !!(existingPools ?? []).find(
+    !!existingPools.find(
       (pool) =>
         pool.quoterId === _quoterId &&
         +pool.feeTierPercent === _feeTierPercent &&
@@ -536,16 +536,14 @@ export default function CreatePoolCard({
   type CreateCoinReturnType = Awaited<ReturnType<typeof createCoin>>;
 
   const onSubmitClick = async () => {
-    if (oraclesData === undefined || banksData === undefined) return;
-
     if (submitButtonState.isDisabled) return;
     if (!quoterId || !feeTierPercent) return;
 
     try {
       if (!address) throw new Error("Wallet not connected");
 
-      const oracleIndexA = oraclesData.COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]];
-      const oracleIndexB = oraclesData.COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]];
+      const oracleIndexA = appData.COINTYPE_ORACLE_INDEX_MAP[coinTypes[0]];
+      const oracleIndexB = appData.COINTYPE_ORACLE_INDEX_MAP[coinTypes[1]];
 
       if ([QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)) {
         // Won't happen in practice, as we don't allow the user to select tokens that
@@ -572,15 +570,15 @@ export default function CreatePoolCard({
       await init();
 
       const existingBTokenTypeCoinMetadataMap = await getCoinMetadataMap(
-        Object.keys(banksData.bTokenTypeCoinTypeMap),
-      );
+        Object.keys(appData.bTokenTypeCoinTypeMap),
+      ); // TODO: Add to local coinMetadataMap
       console.log(
         "XXX existingBTokenTypeCoinMetadataMap:",
         existingBTokenTypeCoinMetadataMap,
       );
 
       const getExistingBTokenForToken = (token: Token) => {
-        const bank = banksData.bankMap[token.coinType];
+        const bank = appData.bankMap[token.coinType];
         return bank
           ? getToken(
               bank.bTokenType,
@@ -667,7 +665,7 @@ export default function CreatePoolCard({
 
       const bankIds = createBTokenResults.map((result, index) => {
         if (result === undefined)
-          return banksData.bankMap[tokens[index].coinType].id;
+          return appData.bankMap[tokens[index].coinType].id;
         else {
           const event = createBankEvents.find(
             (event) =>
@@ -1098,9 +1096,9 @@ export default function CreatePoolCard({
 
       {/* Fee tier */}
       <div className="flex flex-row items-center justify-between">
-        <p className="text-p2 text-secondary-foreground">Fee tier</p>
+        <p className="shrink-0 text-p2 text-secondary-foreground">Fee tier</p>
 
-        <div className="flex flex-row gap-1">
+        <div className="flex flex-1 flex-row flex-wrap justify-end gap-1">
           {FEE_TIER_PERCENTS.map((_feeTierPercent) => {
             const hasExistingPool = hasExistingPoolForQuoterFeeTierAndAmplifier(
               quoterId,

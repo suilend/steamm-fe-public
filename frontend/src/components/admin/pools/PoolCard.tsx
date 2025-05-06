@@ -20,7 +20,6 @@ import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
@@ -35,14 +34,13 @@ interface PoolCardProps {
 export default function PoolCard({ pool }: PoolCardProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, banksData } = useLoadedAppContext();
+  const { steammClient, appData } = useLoadedAppContext();
   const { refresh } = useUserContext();
 
   // Claim fees
   const [isClaimingFees, setIsClaimingFees] = useState<boolean>(false);
 
   const claimFees = async (pool: ParsedPool) => {
-    if (banksData === undefined) return;
     if (address !== ADMIN_ADDRESS) return;
 
     try {
@@ -59,14 +57,14 @@ export default function PoolCard({ pool }: PoolCardProps) {
 
       const coinA = new Bank(
         steammClient.packageInfo(),
-        banksData.bankMap[pool.coinTypes[0]].bankInfo,
+        appData.bankMap[pool.coinTypes[0]].bankInfo,
       ).burnBTokens(transaction, {
         btokens: bTokenA,
         btokenAmount: pool.pool.protocolFees.feeA.value,
       });
       const coinB = new Bank(
         steammClient.packageInfo(),
-        banksData.bankMap[pool.coinTypes[1]].bankInfo,
+        appData.bankMap[pool.coinTypes[1]].bankInfo,
       ).burnBTokens(transaction, {
         btokens: bTokenB,
         btokenAmount: pool.pool.protocolFees.feeB.value,
@@ -128,16 +126,13 @@ export default function PoolCard({ pool }: PoolCardProps) {
           <div className="flex flex-col items-end gap-1.5">
             <div className="flex flex-col items-end gap-1">
               {pool.coinTypes.map((coinType, index) => {
-                if (banksData === undefined)
-                  return <Skeleton key={coinType} className="h-[21px] w-24" />;
-
                 const feeAmount = new BigNumber(
                   (index === 0
                     ? pool.pool.protocolFees.feeA
                     : pool.pool.protocolFees.feeB
                   ).value.toString(),
                 )
-                  .times(banksData.bankMap[coinType].bTokenExchangeRate)
+                  .times(appData.bankMap[coinType].bTokenExchangeRate)
                   .div(10 ** appData.coinMetadataMap[coinType].decimals);
 
                 return (

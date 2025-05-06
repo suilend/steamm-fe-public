@@ -41,12 +41,9 @@ export default function TransactionHistoryRow({
   hasPoolColumn,
 }: TransactionHistoryRowProps) {
   const { explorer } = useSettingsContext();
-  const { appData, poolsData } = useLoadedAppContext();
+  const { appData } = useLoadedAppContext();
 
-  const pool =
-    poolsData === undefined
-      ? undefined
-      : poolsData.pools.find((_pool) => _pool.id === transaction.pool_id);
+  const pool = appData.pools.find((_pool) => _pool.id === transaction.pool_id);
 
   // Swap
   const getSwapTransactionTokens = () => {
