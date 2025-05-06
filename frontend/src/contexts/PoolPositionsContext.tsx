@@ -39,16 +39,16 @@ const PoolPositionsContext = createContext<PoolPositionsContext>({
 export const usePoolPositionsContext = () => useContext(PoolPositionsContext);
 
 export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
-  const { appData, poolsData } = useAppContext();
+  const { appData } = useAppContext();
   const { getBalance, userData } = useUserContext();
   const { poolStats } = useStatsContext();
 
   // Pool positions
   const poolPositions: PoolPosition[] | undefined = useMemo(
     () =>
-      appData === undefined || poolsData === undefined || userData === undefined
+      appData === undefined || userData === undefined
         ? undefined
-        : (poolsData.pools
+        : (appData.pools
             .map((pool) => {
               const obligationIndexes = getIndexesOfObligationsWithDeposit(
                 userData.obligations,
@@ -86,7 +86,9 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
 
               // Same code as in frontend/src/components/AprBreakdown.tsx
               const rewards =
-                poolsData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
+                appData.normalizedPoolRewardMap[pool.lpTokenType]?.[
+                  Side.DEPOSIT
+                ] ?? [];
               const filteredRewards = getFilteredRewards(rewards);
 
               const stakingYieldAprPercent: BigNumber | undefined =
@@ -138,8 +140,10 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
                     NORMALIZED_STEAMM_POINTS_COINTYPE
                   ] ?? new BigNumber(0),
                 pointsPerDay: (
-                  poolsData.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT].find(
-                    (reward) => isSteammPoints(reward.stats.rewardCoinType),
+                  appData.normalizedPoolRewardMap[pool.lpTokenType]?.[
+                    Side.DEPOSIT
+                  ].find((reward) =>
+                    isSteammPoints(reward.stats.rewardCoinType),
                   )?.stats.perDay ?? new BigNumber(0)
                 )
                   .times(balanceUsd)
@@ -147,15 +151,15 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
               };
             })
             .filter(Boolean) as PoolPosition[]),
-    [appData, poolsData, userData, getBalance, poolStats.aprPercent_24h],
+    [appData, userData, getBalance, poolStats.aprPercent_24h],
   );
 
   // Points
   const totalPoints: BigNumber | undefined = useMemo(
     () =>
-      poolsData === undefined || userData === undefined
+      appData === undefined || userData === undefined
         ? undefined
-        : poolsData.pools.reduce(
+        : appData.pools.reduce(
             (acc, pool) =>
               acc.plus(
                 userData.poolRewardMap[pool.id]?.[
@@ -164,7 +168,7 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
               ),
             new BigNumber(0),
           ),
-    [poolsData, userData],
+    [appData, userData],
   );
 
   const pointsPerDay: BigNumber | undefined = useMemo(

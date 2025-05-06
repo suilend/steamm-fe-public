@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 
 export default function AddOracleCard() {
   const { explorer } = useSettingsContext();
-  const { steammClient, oraclesData } = useLoadedAppContext();
+  const { steammClient, appData } = useLoadedAppContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { refresh } = useUserContext();
 
@@ -154,9 +154,7 @@ export default function AddOracleCard() {
             address !== ADMIN_ADDRESS ||
             isAddingOracle ||
             priceIdentifier === "" ||
-            Object.values(
-              oraclesData?.oracleIndexOracleInfoPriceMap ?? {},
-            ).some(
+            Object.values(appData.oracleIndexOracleInfoPriceMap).some(
               ({ oracleInfo }) =>
                 oracleInfo.oracleType === oracleType &&
                 (parseOraclePriceIdentifier(oracleInfo) === priceIdentifier ||

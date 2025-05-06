@@ -37,8 +37,7 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
   const router = useRouter();
   const poolIdWithSlug = router.query.poolId as string;
 
-  const { steammClient, appData, oraclesData, banksData, poolsData } =
-    useLoadedAppContext();
+  const { steammClient, appData } = useLoadedAppContext();
 
   // Pool info
   const poolId = useMemo(
@@ -47,12 +46,8 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
   );
 
   const poolInfo = useMemo(
-    () =>
-      poolsData === undefined
-        ? undefined
-        : (poolsData?.pools.find((pool) => pool.id === poolId)?.poolInfo ??
-          null),
-    [poolsData, poolId],
+    () => appData.pools.find((pool) => pool.id === poolId)?.poolInfo ?? null,
+    [appData.pools, poolId],
   );
 
   // Refreshed pool map
@@ -62,29 +57,16 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
 
   const fetchRefreshedPool = useCallback(
     async (_poolInfo: PoolInfo) => {
-      if (!appData || !oraclesData || !banksData) return;
-
       try {
         const pool = await fetchPool(steammClient, _poolInfo);
         const redeemQuote = await steammClient.Pool.quoteRedeem({
           lpTokens: pool.lpSupply.value,
           poolInfo: _poolInfo,
-          bankInfoA: appData.bankObjs.find(
-            (bankObj) => bankObj.bankInfo.btokenType === _poolInfo.coinTypeA,
-          )!.bankInfo,
-          bankInfoB: appData.bankObjs.find(
-            (bankObj) => bankObj.bankInfo.btokenType === _poolInfo.coinTypeB,
-          )!.bankInfo,
+          bankInfoA: appData.bankMap[_poolInfo.coinTypeA].bankInfo,
+          bankInfoB: appData.bankMap[_poolInfo.coinTypeB].bankInfo,
         });
 
-        const parsedPool = await getParsedPool(
-          appData,
-          oraclesData,
-          banksData,
-          _poolInfo,
-          pool,
-          redeemQuote,
-        );
+        const parsedPool = getParsedPool(appData, _poolInfo, pool, redeemQuote);
         if (parsedPool === undefined) return;
 
         setRefreshedPoolMap((prev) => ({
@@ -95,19 +77,18 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
         console.error(err);
       }
     },
-    [appData, oraclesData, banksData, steammClient],
+    [steammClient, appData],
   );
 
   const hasFetchedRefreshedPoolMapRef = useRef<Record<string, boolean>>({});
   useEffect(() => {
-    if (!appData || !oraclesData || !banksData) return;
     if (!poolInfo) return;
 
     if (hasFetchedRefreshedPoolMapRef.current[poolInfo.poolId]) return;
     hasFetchedRefreshedPoolMapRef.current[poolInfo.poolId] = true;
 
     fetchRefreshedPool(poolInfo);
-  }, [appData, oraclesData, banksData, poolInfo, fetchRefreshedPool]);
+  }, [poolInfo, fetchRefreshedPool]);
 
   // Pool
   const pool = useMemo(
@@ -117,8 +98,8 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
         : poolInfo === null
           ? null
           : (refreshedPoolMap[poolId] ??
-            poolsData?.pools.find((pool) => pool.id === poolId)),
-    [poolInfo, refreshedPoolMap, poolsData?.pools, poolId],
+            appData.pools.find((pool) => pool.id === poolId)),
+    [poolInfo, refreshedPoolMap, poolId, appData.pools],
   );
 
   useEffect(() => {

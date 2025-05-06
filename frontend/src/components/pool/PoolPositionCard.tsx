@@ -31,7 +31,7 @@ export default function PoolPositionCard() {
   return (
     <>
       {/* LP Tokens not staked */}
-      {!!appData.lmMarket.reserveMap[pool.lpTokenType] &&
+      {!!appData.suilend.lmMarket.reserveMap[pool.lpTokenType] &&
         poolPosition !== undefined &&
         poolPosition.stakedPercent.lt(100) && (
           <div className="flex w-full flex-row items-center justify-between gap-4 rounded-md border border-warning bg-warning/25 px-5 py-2">

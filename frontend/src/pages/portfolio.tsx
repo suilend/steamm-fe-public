@@ -41,7 +41,7 @@ import { HistoryTransactionType, PoolPosition } from "@/lib/types";
 export default function PortfolioPage() {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { appData, poolsData } = useLoadedAppContext();
+  const { appData } = useLoadedAppContext();
   const { userData, refresh } = useUserContext();
   const { poolPositions, totalPoints } = usePoolPositionsContext();
 
@@ -54,12 +54,12 @@ export default function PortfolioPage() {
 
   const poolDepositedAmountUsdMap: Record<string, BigNumber> | undefined =
     useMemo(() => {
-      return poolsData === undefined || poolTransactionHistoryMap === undefined
+      return poolTransactionHistoryMap === undefined
         ? undefined
         : Object.fromEntries(
             Object.entries(poolTransactionHistoryMap).reduce(
               (acc, [poolId, transactionHistory]) => {
-                const pool = poolsData.pools.find((p) => p.id === poolId);
+                const pool = appData.pools.find((p) => p.id === poolId);
                 if (!pool) return acc; // Should not happen
 
                 const depositedAmountsUsd = [0, 1].map((index) =>
@@ -115,7 +115,7 @@ export default function PortfolioPage() {
               [] as [string, BigNumber][],
             ),
           );
-    }, [poolsData, poolTransactionHistoryMap, appData.coinMetadataMap]);
+    }, [poolTransactionHistoryMap, appData.pools, appData.coinMetadataMap]);
 
   // Pool positions - Extra data
   const poolPositionsWithExtraData: PoolPosition[] | undefined = useMemo(
@@ -252,7 +252,7 @@ export default function PortfolioPage() {
             side: Side.DEPOSIT,
           }));
 
-        appData.lmMarket.suilendClient.claimRewardsAndSendToUser(
+        appData.suilend.lmMarket.suilendClient.claimRewardsAndSendToUser(
           address,
           obligationOwnerCap.id,
           rewards,
@@ -369,9 +369,8 @@ export default function PortfolioPage() {
                                     <p className="text-p2 text-secondary-foreground">
                                       {formatUsd(
                                         amount.times(
-                                          appData.lmMarket.rewardPriceMap[
-                                            coinType
-                                          ] ?? 0,
+                                          appData.suilend.lmMarket
+                                            .rewardPriceMap[coinType] ?? 0,
                                         ),
                                       )}
                                     </p>
@@ -472,8 +471,7 @@ export default function PortfolioPage() {
         <div className="flex w-full flex-col gap-6">
           <div className="flex flex-row items-center gap-3">
             <p className="text-h3 text-foreground">Transaction history</p>
-            {poolsData === undefined ||
-            addressGlobalTransactionHistory === undefined ? (
+            {addressGlobalTransactionHistory === undefined ? (
               <Skeleton className="h-5 w-12" />
             ) : (
               <Tag>
@@ -492,7 +490,6 @@ export default function PortfolioPage() {
 
           <TransactionHistoryTable
             transactionHistory={
-              poolsData === undefined ||
               addressGlobalTransactionHistory === undefined
                 ? undefined
                 : addressGlobalTransactionHistory.length === 0

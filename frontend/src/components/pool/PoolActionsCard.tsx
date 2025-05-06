@@ -44,7 +44,7 @@ import PriceDifferenceLabel from "@/components/swap/PriceDifferenceLabel";
 import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
 import TokenLogo from "@/components/TokenLogo";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BanksData, useLoadedAppContext } from "@/contexts/AppContext";
+import { AppData, useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useBirdeyeUsdPrices from "@/hooks/useBirdeyeUsdPrices";
@@ -83,8 +83,7 @@ interface DepositTabProps {
 function DepositTab({ onDeposit }: DepositTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, banksData, slippagePercent } =
-    useLoadedAppContext();
+  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
   const { getBalance, userData, refresh } = useUserContext();
   const { pool } = usePoolContext();
 
@@ -312,7 +311,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
 
     if (submitButtonState.isDisabled) return;
 
-    if (banksData === undefined || userData === undefined) return;
+    if (userData === undefined) return;
     if (!address || !quote) return;
 
     try {
@@ -355,10 +354,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
         useGasCoin: isSui(coinTypeB),
       })(transaction);
 
-      const banks = [
-        banksData.bankMap[coinTypeA],
-        banksData.bankMap[coinTypeB],
-      ];
+      const banks = [appData.bankMap[coinTypeA], appData.bankMap[coinTypeB]];
 
       const [lpCoin] = await steammClient.Pool.depositLiquidity(transaction, {
         coinA,
@@ -374,7 +370,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
       rebalanceBanks(banks, steammClient, transaction);
 
       // Stake LP tokens (if reserve exists)
-      if (!!appData.lmMarket.reserveMap[pool.lpTokenType]) {
+      if (!!appData.suilend.lmMarket.reserveMap[pool.lpTokenType]) {
         let obligationIndexes = getIndexesOfObligationsWithDeposit(
           userData.obligations,
           pool.lpTokenType,
@@ -389,13 +385,13 @@ function DepositTab({ onDeposit }: DepositTabProps) {
 
         const { obligationOwnerCapId, didCreate } =
           createObligationIfNoneExists(
-            appData.lmMarket.suilendClient,
+            appData.suilend.lmMarket.suilendClient,
             transaction,
             obligationIndexes[0] !== -1
               ? userData.obligationOwnerCaps[obligationIndexes[0]] // Deposit into first obligation with deposits of the LP token type, or with less than 5 deposits
               : undefined, // Create obligation (no obligations OR no obligations with less than 5 deposits)
           );
-        appData.lmMarket.suilendClient.deposit(
+        appData.suilend.lmMarket.suilendClient.deposit(
           lpCoin,
           pool.lpTokenType,
           obligationOwnerCapId,
@@ -566,8 +562,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
   const { explorer } = useSettingsContext();
   const { address, dryRunTransaction, signExecuteAndWaitForTransaction } =
     useWalletContext();
-  const { steammClient, appData, banksData, slippagePercent } =
-    useLoadedAppContext();
+  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
   const { getBalance, userData, refresh } = useUserContext();
   const { pool } = usePoolContext();
 
@@ -739,7 +734,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
   })();
 
   const buildTransaction = async (withoutProvision: boolean) => {
-    if (banksData === undefined || userData === undefined) return;
+    if (userData === undefined) return;
     if (!address || !quote) return;
 
     const [lpTokenType, coinTypeA, coinTypeB] = [
@@ -803,13 +798,14 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
 
           const submitAmount = MAX_U64.toString();
 
-          const [_lpCoin] = await appData.lmMarket.suilendClient.withdraw(
-            userData.obligationOwnerCaps[obligationIndex].id,
-            userData.obligations[obligationIndex].id,
-            pool.lpTokenType,
-            submitAmount,
-            transaction,
-          );
+          const [_lpCoin] =
+            await appData.suilend.lmMarket.suilendClient.withdraw(
+              userData.obligationOwnerCaps[obligationIndex].id,
+              userData.obligations[obligationIndex].id,
+              pool.lpTokenType,
+              submitAmount,
+              transaction,
+            );
           lpCoins.push(_lpCoin);
         }
       } else {
@@ -829,7 +825,10 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
             .integerValue(BigNumber.ROUND_DOWN)
             .toString(),
         )
-          .div(appData.lmMarket.reserveMap[pool.lpTokenType].cTokenExchangeRate)
+          .div(
+            appData.suilend.lmMarket.reserveMap[pool.lpTokenType]
+              .cTokenExchangeRate,
+          )
           .integerValue(BigNumber.ROUND_UP);
         let withdrawnCtokenAmount = new BigNumber(0);
 
@@ -864,13 +863,14 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
             );
           }
 
-          const [_lpCoin] = await appData.lmMarket.suilendClient.withdraw(
-            userData.obligationOwnerCaps[obligationIndex].id,
-            userData.obligations[obligationIndex].id,
-            pool.lpTokenType,
-            submitAmount,
-            transaction,
-          );
+          const [_lpCoin] =
+            await appData.suilend.lmMarket.suilendClient.withdraw(
+              userData.obligationOwnerCaps[obligationIndex].id,
+              userData.obligations[obligationIndex].id,
+              pool.lpTokenType,
+              submitAmount,
+              transaction,
+            );
           lpCoins.push(_lpCoin);
         }
       }
@@ -903,7 +903,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
         : steammClient.Pool.redeemLiquidityWithProvision
     ).bind(steammClient.Pool);
 
-    const banks = [banksData.bankMap[coinTypeA], banksData.bankMap[coinTypeB]];
+    const banks = [appData.bankMap[coinTypeA], appData.bankMap[coinTypeB]];
 
     const [coinA, coinB] = await redeemFunc(transaction, {
       lpCoin: transaction.object(lpCoin),
@@ -925,7 +925,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
 
     if (submitButtonState.isDisabled) return;
 
-    if (banksData === undefined || userData === undefined) return;
+    if (userData === undefined) return;
     if (!address || !quote) return;
 
     try {
@@ -1118,8 +1118,7 @@ interface SwapTabProps {
 function SwapTab({ onSwap }: SwapTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, banksData, slippagePercent } =
-    useLoadedAppContext();
+  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
   const { getBalance, refresh } = useUserContext();
   const { pool } = usePoolContext();
 
@@ -1147,15 +1146,15 @@ function SwapTab({ onSwap }: SwapTabProps) {
     async (
       _steammClient: SteammSDK,
       _value: string,
-      _banksData: BanksData | undefined,
+      _bankMap: AppData["bankMap"] | undefined,
       _pool: ParsedPool,
       _activeCoinIndex: number,
     ) => {
       console.log(
         "SwapTab.fetchQuote - _value(=formattedValue):",
         _value,
-        "_banksData:",
-        _banksData,
+        "_bankMap:",
+        _bankMap,
         "_pool:",
         _pool,
         "_activeCoinIndex:",
@@ -1164,7 +1163,7 @@ function SwapTab({ onSwap }: SwapTabProps) {
         valueRef.current,
       );
 
-      if (_banksData === undefined) return;
+      if (_bankMap === undefined) return;
       if (valueRef.current !== _value) return;
 
       try {
@@ -1181,8 +1180,8 @@ function SwapTab({ onSwap }: SwapTabProps) {
           a2b: _activeCoinIndex === 0,
           amountIn: BigInt(submitAmount),
           poolInfo: _pool.poolInfo,
-          bankInfoA: _banksData.bankMap[_pool.coinTypes[0]].bankInfo,
-          bankInfoB: _banksData.bankMap[_pool.coinTypes[1]].bankInfo,
+          bankInfoA: _bankMap[_pool.coinTypes[0]].bankInfo,
+          bankInfoB: _bankMap[_pool.coinTypes[1]].bankInfo,
         });
 
         if (valueRef.current !== _value) return;
@@ -1229,7 +1228,7 @@ function SwapTab({ onSwap }: SwapTabProps) {
     (isImmediate ? fetchQuote : debouncedFetchQuote)(
       steammClient,
       formattedValue,
-      banksData,
+      appData.bankMap,
       pool,
       activeCoinIndex,
     );
@@ -1308,7 +1307,7 @@ function SwapTab({ onSwap }: SwapTabProps) {
 
     // value > 0
     setIsFetchingQuote(true);
-    fetchQuote(steammClient, value, banksData, pool, newActiveCoinIndex);
+    fetchQuote(steammClient, value, appData.bankMap, pool, newActiveCoinIndex);
   };
 
   // Submit
@@ -1368,7 +1367,6 @@ function SwapTab({ onSwap }: SwapTabProps) {
 
     if (submitButtonState.isDisabled) return;
 
-    if (banksData === undefined) return;
     if (!address || !quote) return;
 
     try {
@@ -1405,10 +1403,7 @@ function SwapTab({ onSwap }: SwapTabProps) {
               useGasCoin: isSui(coinTypeB),
             })(transaction);
 
-      const banks = [
-        banksData.bankMap[coinTypeA],
-        banksData.bankMap[coinTypeB],
-      ];
+      const banks = [appData.bankMap[coinTypeA], appData.bankMap[coinTypeB]];
 
       await steammClient.Pool.swap(transaction, {
         coinA,

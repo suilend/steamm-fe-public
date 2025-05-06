@@ -8,13 +8,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 
 export default function PoolsTab() {
-  const { poolsData } = useLoadedAppContext();
+  const { appData } = useLoadedAppContext();
 
-  const sortedPools = useMemo(() => {
-    if (poolsData === undefined) return undefined;
-
-    return poolsData.pools.slice().sort((a, b) => +b.tvlUsd - +a.tvlUsd);
-  }, [poolsData]);
+  const sortedPools = useMemo(
+    () => appData.pools.slice().sort((a, b) => +b.tvlUsd - +a.tvlUsd),
+    [appData.pools],
+  );
 
   return (
     <>

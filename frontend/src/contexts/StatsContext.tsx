@@ -75,15 +75,15 @@ const StatsContext = createContext<StatsContext>({
 export const useStatsContext = () => useContext(StatsContext);
 
 export function StatsContextProvider({ children }: PropsWithChildren) {
-  const { appData, poolsData } = useAppContext();
+  const { appData } = useAppContext();
 
   const poolCountRef = useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (poolsData === undefined) return;
+    if (appData === undefined) return;
 
     if (poolCountRef.current !== undefined) return;
-    poolCountRef.current = poolsData.pools.length;
-  }, [poolsData]);
+    poolCountRef.current = appData.pools.length;
+  }, [appData]);
 
   const referenceTimestampSRef = useRef(
     (() => {
@@ -109,9 +109,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   });
 
   const fetchPoolHistoricalStats = useCallback(async () => {
-    if (appData === undefined || poolsData === undefined) return;
+    if (appData === undefined) return;
 
-    for (const pool of poolsData.pools) {
+    for (const pool of appData.pools) {
       // TVL
       (async () => {
         try {
@@ -307,17 +307,17 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         }
       })();
     }
-  }, [appData, poolsData]);
+  }, [appData]);
 
   const hasFetchedPoolHistoricalStatsRef = useRef<boolean>(false);
   useEffect(() => {
-    if (appData === undefined || poolsData === undefined) return;
+    if (appData === undefined) return;
 
     if (hasFetchedPoolHistoricalStatsRef.current) return;
     hasFetchedPoolHistoricalStatsRef.current = true;
 
     fetchPoolHistoricalStats();
-  }, [appData, poolsData, fetchPoolHistoricalStats]);
+  }, [appData, fetchPoolHistoricalStats]);
 
   const poolStats: {
     volumeUsd_7d: Record<string, BigNumber>;
@@ -411,7 +411,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
     volumeUsd_7d: ChartData[] | undefined;
     feesUsd_7d: ChartData[] | undefined;
   } = useMemo(() => {
-    if (poolsData === undefined)
+    if (appData === undefined)
       return {
         tvlUsd_7d: undefined,
         volumeUsd_7d: undefined,
@@ -506,7 +506,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
     return result;
   }, [
-    poolsData,
+    appData,
     poolHistoricalStats.tvlUsd_7d,
     poolHistoricalStats.volumeUsd_7d,
     poolHistoricalStats.feesUsd_7d,

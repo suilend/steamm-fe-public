@@ -40,10 +40,11 @@ export default function AprBreakdown({
   valueClassName,
   pool,
 }: AprBreakdownProps) {
-  const { appData, poolsData } = useLoadedAppContext();
+  const { appData } = useLoadedAppContext();
   const { poolStats } = useStatsContext();
 
-  const rewards = poolsData?.rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
+  const rewards =
+    appData.normalizedPoolRewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
   const filteredRewards = getFilteredRewards(rewards);
 
   // Rewards - per day

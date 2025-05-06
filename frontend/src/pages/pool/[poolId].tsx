@@ -30,7 +30,7 @@ import { ParsedPool } from "@/lib/types";
 
 function PoolPage() {
   const { address } = useWalletContext();
-  const { appData, poolsData } = useLoadedAppContext();
+  const { appData } = useLoadedAppContext();
   const { poolStats } = useStatsContext();
   const { refresh } = useUserContext();
 
@@ -51,23 +51,23 @@ function PoolPage() {
   );
 
   // Suggested pools
-  const otherBaseAssetPools: ParsedPool[] | undefined = useMemo(() => {
-    if (poolsData === undefined) return undefined;
+  const otherBaseAssetPools: ParsedPool[] = useMemo(
+    () =>
+      appData.pools.filter(
+        (_pool) =>
+          _pool.id !== pool.id && _pool.coinTypes[0] === pool.coinTypes[0],
+      ),
+    [appData.pools, pool],
+  );
 
-    return poolsData.pools.filter(
-      (_pool) =>
-        _pool.id !== pool.id && _pool.coinTypes[0] === pool.coinTypes[0],
-    );
-  }, [poolsData, pool]);
-
-  const otherQuoteAssetPools: ParsedPool[] | undefined = useMemo(() => {
-    if (poolsData === undefined) return undefined;
-
-    return poolsData.pools.filter(
-      (_pool) =>
-        _pool.id !== pool.id && _pool.coinTypes[1] === pool.coinTypes[1],
-    );
-  }, [poolsData, pool]);
+  const otherQuoteAssetPools: ParsedPool[] = useMemo(
+    () =>
+      appData.pools.filter(
+        (_pool) =>
+          _pool.id !== pool.id && _pool.coinTypes[1] === pool.coinTypes[1],
+      ),
+    [appData.pools, pool],
+  );
 
   // Actions
   const onDeposit = async () => {

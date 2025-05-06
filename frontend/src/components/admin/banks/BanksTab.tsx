@@ -6,35 +6,37 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { getBankPrice } from "@/lib/banks";
 
 export default function BanksTab() {
-  const { appData, banksData, poolsData } = useLoadedAppContext();
+  const { appData } = useLoadedAppContext();
 
-  const sortedInitializableBanks = useMemo(() => {
-    if (banksData === undefined || poolsData === undefined) return undefined;
+  const sortedInitializableBanks = useMemo(
+    () =>
+      appData.banks
+        .filter(
+          (bank) => !!appData.suilend.mainMarket.reserveMap[bank.coinType],
+        )
+        .sort((a, b) => {
+          const priceA = getBankPrice(appData.pools, a);
+          const priceB = getBankPrice(appData.pools, b);
+          if (priceA === undefined || priceB === undefined) return 0;
 
-    return banksData.banks
-      .filter((bank) => !!appData.mainMarket.reserveMap[bank.coinType])
-      .sort((a, b) => {
-        const priceA = getBankPrice(a, poolsData);
-        const priceB = getBankPrice(b, poolsData);
-        if (priceA === undefined || priceB === undefined) return 0;
+          return +b.totalFunds.times(priceB) - +a.totalFunds.times(priceA);
+        }),
+    [appData.banks, appData.suilend.mainMarket.reserveMap, appData.pools],
+  );
 
-        return +b.totalFunds.times(priceB) - +a.totalFunds.times(priceA);
-      });
-  }, [banksData, poolsData, appData]);
+  const sortedNonInitializableBanks = useMemo(
+    () =>
+      appData.banks
+        .filter((bank) => !appData.suilend.mainMarket.reserveMap[bank.coinType])
+        .sort((a, b) => {
+          const priceA = getBankPrice(appData.pools, a);
+          const priceB = getBankPrice(appData.pools, b);
+          if (priceA === undefined || priceB === undefined) return 0;
 
-  const sortedNonInitializableBanks = useMemo(() => {
-    if (banksData === undefined || poolsData === undefined) return undefined;
-
-    return banksData.banks
-      .filter((bank) => !appData.mainMarket.reserveMap[bank.coinType])
-      .sort((a, b) => {
-        const priceA = getBankPrice(a, poolsData);
-        const priceB = getBankPrice(b, poolsData);
-        if (priceA === undefined || priceB === undefined) return 0;
-
-        return +b.totalFunds.times(priceB) - +a.totalFunds.times(priceA);
-      });
-  }, [banksData, poolsData, appData]);
+          return +b.totalFunds.times(priceB) - +a.totalFunds.times(priceA);
+        }),
+    [appData.banks, appData.suilend.mainMarket.reserveMap, appData.pools],
+  );
 
   return (
     <div className="flex w-full flex-col gap-4">

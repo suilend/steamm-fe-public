@@ -15,18 +15,18 @@ import { normalizeRewards } from "@/lib/liquidityMining";
 export default function useFetchUserData() {
   const { suiClient } = useSettingsContext();
   const { address } = useWalletContext();
-  const { appData, poolsData } = useAppContext();
+  const { appData } = useAppContext();
 
   // Data
   const dataFetcher = async () => {
-    if (!appData || !poolsData) return undefined as unknown as UserData; // In practice `dataFetcher` won't be called if `appData` is falsy
+    if (!appData) return undefined as unknown as UserData; // In practice `dataFetcher` won't be called if `appData` is falsy
 
     const { obligationOwnerCaps: _obligationOwnerCaps, obligations } =
       await initializeObligations(
         suiClient,
-        appData.lmMarket.suilendClient,
-        appData.lmMarket.refreshedRawReserves,
-        appData.lmMarket.reserveMap,
+        appData.suilend.lmMarket.suilendClient,
+        appData.suilend.lmMarket.refreshedRawReserves,
+        appData.suilend.lmMarket.reserveMap,
         address,
       );
     const obligationOwnerCaps = _obligationOwnerCaps
@@ -39,17 +39,17 @@ export default function useFetchUserData() {
 
     const rewardMap = normalizeRewards(
       formatRewards(
-        appData.lmMarket.reserveMap,
-        appData.lmMarket.rewardCoinMetadataMap,
-        appData.lmMarket.rewardPriceMap,
+        appData.suilend.lmMarket.reserveMap,
+        appData.suilend.lmMarket.rewardCoinMetadataMap,
+        appData.suilend.lmMarket.rewardPriceMap,
         obligations,
       ),
-      appData.lmMarket.reserveMap,
-      poolsData.pools,
+      appData.suilend.lmMarket.reserveMap,
+      appData.pools,
     );
 
     // Pool rewards
-    const poolRewardMap = poolsData.pools.reduce(
+    const poolRewardMap = appData.pools.reduce(
       (acc, pool) => ({
         ...acc,
         [pool.id]: (rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []).reduce(
@@ -87,7 +87,7 @@ export default function useFetchUserData() {
   };
 
   const { data, mutate } = useSWR<UserData>(
-    !appData || !poolsData ? null : `userData-${address}`,
+    !appData ? null : `userData-${address}`,
     dataFetcher,
     {
       refreshInterval: 30 * 1000,

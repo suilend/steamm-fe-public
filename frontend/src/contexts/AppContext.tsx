@@ -24,106 +24,70 @@ import {
 import { Reserve } from "@suilend/sdk/_generated/suilend/reserve/structs";
 import {
   BETA_CONFIG,
-  BankInfo,
   MAINNET_CONFIG,
   OracleInfo,
-  PoolInfo,
-  RedeemQuote,
   SteammSDK,
 } from "@suilend/steamm-sdk";
-import { Bank } from "@suilend/steamm-sdk/_codegen/_generated/steamm/bank/structs";
-import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
-import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
-import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
-import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
-import useFetchBanksData from "@/fetchers/useFetchBanksData";
-import useFetchOraclesData from "@/fetchers/useFetchOraclesData";
-import useFetchPoolsData from "@/fetchers/useFetchPoolsData";
 import { ParsedBank, ParsedPool } from "@/lib/types";
 
 export interface AppData {
-  mainMarket: {
-    suilendClient: SuilendClient;
+  suilend: {
+    mainMarket: {
+      suilendClient: SuilendClient;
 
-    lendingMarket: ParsedLendingMarket;
+      lendingMarket: ParsedLendingMarket;
 
-    refreshedRawReserves: Reserve<string>[];
-    reserveMap: Record<string, ParsedReserve>;
+      refreshedRawReserves: Reserve<string>[];
+      reserveMap: Record<string, ParsedReserve>;
 
-    rewardCoinMetadataMap: Record<string, CoinMetadata>;
-    rewardPriceMap: Record<string, BigNumber | undefined>;
+      rewardCoinMetadataMap: Record<string, CoinMetadata>;
+      rewardPriceMap: Record<string, BigNumber | undefined>;
 
-    depositAprPercentMap: Record<string, BigNumber>;
-  };
-  lmMarket: {
-    suilendClient: SuilendClient;
+      depositAprPercentMap: Record<string, BigNumber>;
+    };
+    lmMarket: {
+      suilendClient: SuilendClient;
 
-    lendingMarket: ParsedLendingMarket;
+      lendingMarket: ParsedLendingMarket;
 
-    refreshedRawReserves: Reserve<string>[];
-    reserveMap: Record<string, ParsedReserve>;
+      refreshedRawReserves: Reserve<string>[];
+      reserveMap: Record<string, ParsedReserve>;
 
-    rewardCoinMetadataMap: Record<string, CoinMetadata>;
-    rewardPriceMap: Record<string, BigNumber | undefined>;
+      rewardCoinMetadataMap: Record<string, CoinMetadata>;
+      rewardPriceMap: Record<string, BigNumber | undefined>;
+    };
   };
 
   coinMetadataMap: Record<string, CoinMetadata>;
   lstAprPercentMap: Record<string, BigNumber>;
 
-  bankObjs: {
-    bankInfo: BankInfo;
-    bank: Bank<string, string, string>;
-    totalFunds: number;
-  }[];
-  poolObjs: {
-    poolInfo: PoolInfo;
-    pool:
-      | Pool<string, string, CpQuoter, string>
-      | Pool<string, string, OracleQuoter, string>
-      | Pool<string, string, OracleQuoterV2, string>;
-    redeemQuote: RedeemQuote;
-  }[];
-}
-export interface OraclesData {
-  COINTYPE_ORACLE_INDEX_MAP: Record<string, number>;
-
+  // Oracles
   oracleIndexOracleInfoPriceMap: Record<
     number,
     { oracleInfo: OracleInfo; price: BigNumber }
   >;
+  COINTYPE_ORACLE_INDEX_MAP: Record<string, number>;
   coinTypeOracleInfoPriceMap: Record<
     string,
     { oracleInfo: OracleInfo; price: BigNumber }
   >;
-}
-export interface BanksData {
-  bTokenTypeCoinTypeMap: Record<string, string>;
 
+  // Banks
+  bTokenTypeCoinTypeMap: Record<string, string>;
   banks: ParsedBank[];
   bankMap: Record<string, ParsedBank>;
-}
-export interface PoolsData {
-  rewardMap: RewardMap;
 
+  // Pools
   pools: ParsedPool[];
+  normalizedPoolRewardMap: RewardMap;
 }
-
 interface AppContext {
   steammClient: SteammSDK | undefined;
 
   appData: AppData | undefined;
   refreshAppData: () => Promise<void>;
-
-  oraclesData: OraclesData | undefined;
-  refreshOraclesData: () => Promise<void>;
-
-  banksData: BanksData | undefined; // Depends on appData
-  refreshBanksData: () => Promise<void>;
-
-  poolsData: PoolsData | undefined; // Depends on appData, oraclesData, and banksData
-  refreshPoolsData: () => Promise<void>;
 
   slippagePercent: number;
   setSlippagePercent: (slippagePercent: number) => void;
@@ -141,21 +105,6 @@ const AppContext = createContext<AppContext>({
   steammClient: undefined,
   appData: undefined,
   refreshAppData: async () => {
-    throw Error("AppContextProvider not initialized");
-  },
-
-  oraclesData: undefined,
-  refreshOraclesData: async () => {
-    throw Error("AppContextProvider not initialized");
-  },
-
-  banksData: undefined,
-  refreshBanksData: async () => {
-    throw Error("AppContextProvider not initialized");
-  },
-
-  poolsData: undefined,
-  refreshPoolsData: async () => {
     throw Error("AppContextProvider not initialized");
   },
 
@@ -198,33 +147,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     await mutateAppData();
   }, [mutateAppData]);
 
-  // Oracles (non-blocking)
-  const { data: oraclesData, mutateData: mutateOraclesData } =
-    useFetchOraclesData(steammClient);
-
-  const refreshOraclesData = useCallback(async () => {
-    await mutateOraclesData();
-  }, [mutateOraclesData]);
-
-  // Banks (non-blocking, depends on appData)
-  const { data: banksData, mutateData: mutateBanksData } =
-    useFetchBanksData(appData);
-
-  const refreshBanksData = useCallback(async () => {
-    await mutateBanksData();
-  }, [mutateBanksData]);
-
-  // Pools (non-blocking, depends on appData, oraclesData, and banksData)
-  const { data: poolsData, mutateData: mutatePoolsData } = useFetchPoolsData(
-    appData,
-    oraclesData,
-    banksData,
-  );
-
-  const refreshPoolsData = useCallback(async () => {
-    await mutatePoolsData();
-  }, [mutatePoolsData]);
-
   // Slippage
   const [slippagePercent, setSlippagePercent] = useLocalStorage<number>(
     "slippagePercent",
@@ -252,15 +174,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       appData,
       refreshAppData,
 
-      oraclesData,
-      refreshOraclesData,
-
-      banksData,
-      refreshBanksData,
-
-      poolsData,
-      refreshPoolsData,
-
       slippagePercent,
       setSlippagePercent,
 
@@ -271,12 +184,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       steammClient,
       appData,
       refreshAppData,
-      oraclesData,
-      refreshOraclesData,
-      banksData,
-      refreshBanksData,
-      poolsData,
-      refreshPoolsData,
       slippagePercent,
       setSlippagePercent,
       featuredPoolIds,

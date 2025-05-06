@@ -303,7 +303,7 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
   const config = tempConfig ?? configRaw;
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, banksData } = useLoadedAppContext();
+  const { steammClient, appData } = useLoadedAppContext();
   const [txnInProgress, setTxnInProgress] = useState(false);
   const { balancesCoinMetadataMap } = useUserContext();
   const setConfigWrap = useCallback(
@@ -515,7 +515,7 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
         mergedConfig.status !== TokenCreationStatus.Success
       ) {
         await createPool(
-          banksData!,
+          appData,
           QuoterId.CPMM,
           0.3,
           [mergedConfig.tokenType, SUI_COIN_TYPE],
