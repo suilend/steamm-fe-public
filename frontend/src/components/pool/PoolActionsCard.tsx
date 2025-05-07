@@ -1276,7 +1276,7 @@ function SwapTab({ onSwap }: SwapTabProps) {
       ),
     [birdeyeUsdPricesMap, activeCoinType, inactiveCoinType],
   );
-  console.log("SwapTab - birdeyeRatio:", birdeyeRatio);
+  // console.log("SwapTab - birdeyeRatio:", birdeyeRatio);
 
   // Value - max
   const onBalanceClick = () => {

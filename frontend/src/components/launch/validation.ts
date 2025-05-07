@@ -7,10 +7,15 @@ export function validateTokenName(name: string): string | undefined {
   return undefined;
 }
 
-export function validateTokenSymbol(symbol: string): string | undefined {
+export function validateTokenSymbol(
+  symbol: string,
+  tokenName: string,
+): string | undefined {
   if (!symbol) return "Token symbol is required";
   if (symbol.length < 2) return "Token symbol must be at least 2 characters";
   if (symbol.length > 6) return "Token symbol must be at most 6 characters";
+  if (symbol === tokenName)
+    return "Token symbol cannot be the same as the token name";
   if (!/^[A-Z$][A-Z0-9$]*$/.test(symbol))
     return "Token symbol must start with a letter or $ and contain only uppercase letters, numbers, and $";
   return undefined;

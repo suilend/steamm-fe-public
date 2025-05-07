@@ -49,6 +49,7 @@ export type LaunchConfig = {
   initialSupply: string;
   maxSupply: string;
   iconUrl: string | null;
+  burnLP: boolean;
 
   iconFileName: string | null;
 
@@ -249,7 +250,7 @@ export const DEFAULT_CONFIG: LaunchConfig = {
   maxSupply: "1000000000",
   iconUrl: null,
   iconFileName: null,
-
+  burnLP: true,
   // Token creation results
   tokenType: null,
   treasuryCapChange: null,
@@ -530,7 +531,7 @@ const LaunchContextProvider = ({ children }: { children: React.ReactNode }) => {
           steammClient,
           [
             Math.floor(Number(mergedConfig.initialSupply) * 0.1).toString(),
-            (10 ** -9).toString(),
+            "0.000000001",
           ],
           setConfigWrap,
           mergedConfig,
