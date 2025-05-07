@@ -2,8 +2,8 @@ import { useMemo } from "react";
 
 import { Plus } from "lucide-react";
 
-import CreatePoolCard from "@/components/admin/pools/CreatePoolCard";
 import PoolCard from "@/components/admin/pools/PoolCard";
+import CreatePoolCard from "@/components/pools/CreatePoolCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 

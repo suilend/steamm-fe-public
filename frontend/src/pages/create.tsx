@@ -1,6 +1,6 @@
 import Head from "next/head";
 
-import CreatePoolCard from "@/components/admin/pools/CreatePoolCard";
+import CreatePoolCard from "@/components/pools/CreatePoolCard";
 
 export default function CreatePage() {
   return (

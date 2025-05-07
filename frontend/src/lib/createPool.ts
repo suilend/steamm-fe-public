@@ -1,19 +1,10 @@
 import {
-  update_constants,
-  update_identifiers,
-} from "@mysten/move-bytecode-template";
-import { bcs } from "@mysten/sui/bcs";
-import {
   SuiEvent,
   SuiObjectChange,
   SuiTransactionBlockResponse,
 } from "@mysten/sui/client";
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
-import {
-  SUI_CLOCK_OBJECT_ID,
-  normalizeStructTag,
-  normalizeSuiAddress,
-} from "@mysten/sui/utils";
+import { SUI_CLOCK_OBJECT_ID, normalizeStructTag } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 
 import {
@@ -22,17 +13,16 @@ import {
   getToken,
   isSui,
 } from "@suilend/frontend-sui";
+import { WalletContext } from "@suilend/frontend-sui-next";
 import { PoolScriptFunctions, SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
+import {
+  CreateCoinResult,
+  createCoin,
+  generate_bytecode,
+} from "@/lib/createCoin";
 import { QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
-
-type SignExecuteAndWaitForTransaction = (
-  transaction: Transaction,
-  options?: {
-    auction?: boolean;
-  },
-) => Promise<SuiTransactionBlockResponse>; // TODO: Use WalletContext type directly (currently not exported)
 
 export const AMPLIFIERS: number[] = [1, 5, 10, 20, 50, 100];
 export const FEE_TIER_PERCENTS: number[] = [
@@ -65,122 +55,13 @@ const LP_TOKEN_DESCRIPTION = "STEAMM LP Token";
 const LP_TOKEN_IMAGE_URL =
   "https://suilend-assets.s3.us-east-2.amazonaws.com/steamm/STEAMM+LP+Token.svg";
 
-export const generate_bytecode = (
-  module: string,
-  type: string,
-  name: string,
-  symbol: string,
-  description: string,
-  iconUrl: string,
-): Uint8Array<ArrayBufferLike> => {
-  const bytecode = Buffer.from(
-    "oRzrCwYAAAAKAQAMAgweAyonBFEIBVlMB6UBywEI8AJgBtADXQqtBAUMsgQoABABCwIGAhECEgITAAICAAEBBwEAAAIADAEAAQIDDAEAAQQEAgAFBQcAAAkAAQABDwUGAQACBwgJAQIDDAUBAQwDDQ0BAQwEDgoLAAUKAwQAAQQCBwQMAwICCAAHCAQAAQsCAQgAAQoCAQgFAQkAAQsBAQkAAQgABwkAAgoCCgIKAgsBAQgFBwgEAgsDAQkACwIBCQABBggEAQUBCwMBCAACCQAFDENvaW5NZXRhZGF0YQZPcHRpb24IVEVNUExBVEULVHJlYXN1cnlDYXAJVHhDb250ZXh0A1VybARjb2luD2NyZWF0ZV9jdXJyZW5jeQtkdW1teV9maWVsZARpbml0FW5ld191bnNhZmVfZnJvbV9ieXRlcwZvcHRpb24TcHVibGljX3NoYXJlX29iamVjdA9wdWJsaWNfdHJhbnNmZXIGc2VuZGVyBHNvbWUIdGVtcGxhdGUIdHJhbnNmZXIKdHhfY29udGV4dAN1cmwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAQkKAgUEVE1QTAoCDg1UZW1wbGF0ZSBDb2luCgIaGVRlbXBsYXRlIENvaW4gRGVzY3JpcHRpb24KAiEgaHR0cHM6Ly9leGFtcGxlLmNvbS90ZW1wbGF0ZS5wbmcAAgEIAQAAAAACEgsABwAHAQcCBwMHBBEGOAAKATgBDAILAS4RBTgCCwI4AwIA=",
-    "base64",
-  );
-
-  let updated = update_identifiers(bytecode, {
-    TEMPLATE: type,
-    template: module,
-  });
-
-  updated = update_constants(
-    updated,
-    bcs.string().serialize(symbol).toBytes(),
-    bcs.string().serialize("TMPL").toBytes(),
-    "Vector(U8)", // type of the constant
-  );
-
-  updated = update_constants(
-    updated,
-    bcs.string().serialize(name).toBytes(), // new value
-    bcs.string().serialize("Template Coin").toBytes(), // current value
-    "Vector(U8)", // type of the constant
-  );
-
-  updated = update_constants(
-    updated,
-    bcs.string().serialize(description).toBytes(), // new value
-    bcs.string().serialize("Template Coin Description").toBytes(), // current value
-    "Vector(U8)", // type of the constant
-  );
-
-  updated = update_constants(
-    updated,
-    bcs.string().serialize(iconUrl).toBytes(), // new value
-    bcs.string().serialize("https://example.com/template.png").toBytes(), // current value
-    "Vector(U8)", // type of the constant
-  );
-
-  return updated;
-};
-
-type CreateCoinResult = {
-  treasuryCapId: string;
-  coinType: string;
-  coinMetadataId: string;
-};
-const createCoin = async (
-  bytecode: Uint8Array<ArrayBufferLike>,
-  address: string,
-  signExecuteAndWaitForTransaction: SignExecuteAndWaitForTransaction,
-): Promise<CreateCoinResult> => {
-  const transaction = new Transaction();
-
-  const [upgradeCap] = transaction.publish({
-    modules: [[...bytecode]],
-    dependencies: [normalizeSuiAddress("0x1"), normalizeSuiAddress("0x2")],
-  });
-  transaction.transferObjects([upgradeCap], transaction.pure.address(address!));
-
-  const res = await signExecuteAndWaitForTransaction(transaction);
-
-  // Get TreasuryCap id from transaction
-  const treasuryCapObjectChange: SuiObjectChange | undefined =
-    res.objectChanges?.find(
-      (change) =>
-        change.type === "created" && change.objectType.includes("TreasuryCap"),
-    );
-  if (!treasuryCapObjectChange)
-    throw new Error("TreasuryCap object change not found");
-  if (treasuryCapObjectChange.type !== "created")
-    throw new Error("TreasuryCap object change is not of type 'created'");
-
-  // Get CoinMetadata id from transaction
-  const coinMetaObjectChange: SuiObjectChange | undefined =
-    res.objectChanges?.find(
-      (change) =>
-        change.type === "created" && change.objectType.includes("CoinMetadata"),
-    );
-  if (!coinMetaObjectChange)
-    throw new Error("CoinMetadata object change not found");
-  if (coinMetaObjectChange.type !== "created")
-    throw new Error("CoinMetadata object change is not of type 'created'");
-
-  const treasuryCapId = treasuryCapObjectChange.objectId;
-  const coinType = treasuryCapObjectChange.objectType
-    .split("<")[1]
-    .split(">")[0];
-  const coinMetadataId = coinMetaObjectChange.objectId;
-
-  console.log(
-    "coinType:",
-    coinType,
-    "treasuryCapId:",
-    treasuryCapId,
-    "coinMetadataId:",
-    coinMetadataId,
-  );
-
-  return { treasuryCapId, coinType, coinMetadataId };
-};
-
 // bTokens and banks
 export const getOrCreateBTokenAndBankForToken = async (
   token: Token,
   steammClient: SteammSDK,
   appData: AppData,
   address: string,
-  signExecuteAndWaitForTransaction: SignExecuteAndWaitForTransaction,
+  signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
 ): Promise<{ bToken: Token; bankId: string }> => {
   const existingBank = appData.bankMap[token.coinType];
   if (!!existingBank) {
@@ -267,7 +148,7 @@ export const getOrCreateBTokenAndBankForToken = async (
 export const createLpToken = async (
   bTokens: [Token, Token],
   address: string,
-  signExecuteAndWaitForTransaction: SignExecuteAndWaitForTransaction,
+  signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
 ): Promise<CreateCoinResult> => {
   console.log("[createLpToken] Creating LP token for bTokens", bTokens);
 
@@ -300,7 +181,7 @@ export const createPoolAndDepositInitialLiquidity = async (
   steammClient: SteammSDK,
   appData: AppData,
   address: string,
-  signExecuteAndWaitForTransaction: SignExecuteAndWaitForTransaction,
+  signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
 ): Promise<{ res: SuiTransactionBlockResponse; poolId: string }> => {
   const oracleIndexA = appData.COINTYPE_ORACLE_INDEX_MAP[tokens[0].coinType];
   const oracleIndexB = appData.COINTYPE_ORACLE_INDEX_MAP[tokens[1].coinType];
