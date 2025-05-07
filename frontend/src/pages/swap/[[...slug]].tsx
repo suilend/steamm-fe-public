@@ -262,7 +262,7 @@ export default function SwapPage() {
       ),
     [birdeyeUsdPricesMap, inCoinType, outCoinType],
   );
-  console.log("SwapPage - birdeyeRatio:", birdeyeRatio, birdeyeUsdPricesMap);
+  // console.log("SwapPage - birdeyeRatio:", birdeyeRatio, birdeyeUsdPricesMap);
 
   // Value - max
   const onBalanceClick = () => {
