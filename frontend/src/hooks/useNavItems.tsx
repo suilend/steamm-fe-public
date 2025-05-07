@@ -23,7 +23,7 @@ const useNavItems = () => {
 
   const NAV_ITEMS: NavItem[] = [
     { url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX },
-    { url: LAUNCH_URL, title: "Launch" },
+    // { url: LAUNCH_URL, title: "Launch" },
     { url: CREATE_URL, title: "Create" },
     { url: PORTFOLIO_URL, title: "Portfolio" },
     { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },

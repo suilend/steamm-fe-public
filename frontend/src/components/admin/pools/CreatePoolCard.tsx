@@ -22,6 +22,7 @@ import {
   Token,
   getCoinMetadataMap,
   getToken,
+  isSend,
   isStablecoin,
   isSui,
 } from "@suilend/frontend-sui";
@@ -321,6 +322,7 @@ export default function CreatePoolCard({
     () =>
       baseTokens.filter(
         (token) =>
+          isSend(token.coinType) ||
           isSui(token.coinType) ||
           isStablecoin(token.coinType) ||
           Object.keys(appData.lstAprPercentMap).includes(token.coinType),
