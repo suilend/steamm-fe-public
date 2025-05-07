@@ -281,30 +281,16 @@ export default function LaunchTokenCard() {
       >
         <div className="flex w-full flex-row gap-4">
           {/* Name */}
-          <div className="flex flex-[2] flex-col gap-3">
+          <div className="flex flex-[2] flex-col gap-2">
             <p className="text-p2 text-secondary-foreground">Name</p>
             <TextInput value={name} onChange={setName} />
           </div>
 
           {/* Symbol */}
-          <div className="flex flex-1 flex-col gap-3">
+          <div className="flex flex-1 flex-col gap-2">
             <p className="text-p2 text-secondary-foreground">Symbol</p>
             <TextInput value={symbol} onChange={setSymbol} />
           </div>
-        </div>
-
-        {/* Description */}
-        <div className="flex w-full flex-col gap-3">
-          <div className="flex flex-row items-baseline gap-1.5">
-            <p className="text-p2 text-secondary-foreground">Description</p>
-            <p className="text-p3 text-tertiary-foreground">Optional</p>
-          </div>
-          <TextInput
-            value={description}
-            onChange={setDescription}
-            isTextarea
-            minRows={1}
-          />
         </div>
 
         {/* Icon */}
@@ -314,10 +300,9 @@ export default function LaunchTokenCard() {
             <p className="text-p3 text-tertiary-foreground">
               {[
                 "PNG, JPEG, or SVG.",
-                `Max ~${formatNumber(
-                  new BigNumber(MAX_FILE_SIZE_BYTES / 1024),
-                  { dp: 0 },
-                )} KB.`,
+                `Max ${formatNumber(new BigNumber(MAX_FILE_SIZE_BYTES / 1024), {
+                  dp: 0,
+                })} KB.`,
                 `256x256 or larger recommended`,
               ].join(" ")}
             </p>
@@ -356,8 +341,19 @@ export default function LaunchTokenCard() {
 
         {showOptional && (
           <>
+            {/* Optional - Description */}
+            <div className="flex w-full flex-col gap-2">
+              <p className="text-p2 text-secondary-foreground">Description</p>
+              <TextInput
+                value={description}
+                onChange={setDescription}
+                isTextarea
+                minRows={1}
+              />
+            </div>
+
             {/* Optional - Decimals */}
-            <div className="flex w-full flex-col gap-3">
+            <div className="flex w-full flex-col gap-2">
               <p className="text-p2 text-secondary-foreground">Decimals</p>
               <TextInput
                 placeholder={decimals.toString()}
@@ -367,7 +363,7 @@ export default function LaunchTokenCard() {
             </div>
 
             {/* Optional - Supply */}
-            <div className="flex w-full flex-col gap-3">
+            <div className="flex w-full flex-col gap-2">
               <p className="text-p2 text-secondary-foreground">Supply</p>
               <TextInput
                 placeholder={supply.toString()}
@@ -375,27 +371,27 @@ export default function LaunchTokenCard() {
                 onChange={onSupplyChange}
               />
             </div>
+
+            {/* Optional - Burn LP tokens */}
+            <Parameter
+              label="Burn LP tokens"
+              labelTooltip="Burning your LP tokens prevents you from withdrawing the pool's initial liquidity. You also won't receive any LP fees from depositing the pool's initial liquidity."
+              isHorizontal
+            >
+              <button
+                className={cn(
+                  "group flex h-6 w-6 flex-row items-center justify-center rounded-sm border transition-colors",
+                  burnLpTokens
+                    ? "border-button-1 bg-button-1/25"
+                    : "hover:bg-border/50",
+                )}
+                onClick={() => setBurnLpTokens(!burnLpTokens)}
+              >
+                {burnLpTokens && <Check className="h-4 w-4 text-foreground" />}
+              </button>
+            </Parameter>
           </>
         )}
-
-        {/* Burn LP tokens */}
-        <Parameter
-          label="Burn LP tokens"
-          labelTooltip="Burning your LP tokens prevents you from withdrawing the pool's initial liquidity. You also won't receive any LP fees from depositing the pool's initial liquidity."
-          isHorizontal
-        >
-          <button
-            className={cn(
-              "group flex h-6 w-6 flex-row items-center justify-center rounded-sm border transition-colors",
-              burnLpTokens
-                ? "border-button-1 bg-button-1/25"
-                : "hover:bg-border/50",
-            )}
-            onClick={() => setBurnLpTokens(!burnLpTokens)}
-          >
-            {burnLpTokens && <Check className="h-4 w-4 text-foreground" />}
-          </button>
-        </Parameter>
 
         <Divider />
 

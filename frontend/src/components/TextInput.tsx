@@ -34,7 +34,7 @@ export default function TextInput({
   return (
     <div
       className={cn(
-        "w-full rounded-md bg-card transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]",
+        "w-full rounded-md bg-card/75 transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]",
         isTextarea ? "h-max" : "h-10",
         className,
       )}

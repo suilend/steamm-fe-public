@@ -180,8 +180,8 @@ export default function IconUpload({
             </>
           ) : (
             <div className="pointer-events-none relative z-[2] flex h-24 w-24 flex-col items-center justify-center gap-0.5">
-              <p className="text-p3 text-secondary-foreground">Drag & drop</p>
-              <p className="text-p3 text-secondary-foreground">or browse</p>
+              <p className="text-p3 text-tertiary-foreground">Drag & drop</p>
+              <p className="text-p3 text-tertiary-foreground">or browse</p>
             </div>
           )}
 
