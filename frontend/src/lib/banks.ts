@@ -1,7 +1,7 @@
 import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 
-import { Bank, BankInfo, SteammSDK } from "@suilend/steamm-sdk";
+import { BankAbi, BankInfo, SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
 import { ParsedBank } from "@/lib/types";
@@ -13,7 +13,7 @@ export const rebalanceBanks = (
 ) => {
   for (const bank of banks) {
     if (!bank.bank.lending) continue;
-    new Bank(steammClient.packageInfo(), bank.bankInfo).rebalance(transaction);
+    new BankAbi(steammClient.steammInfo, bank.bankInfo).rebalance(transaction);
   }
 };
 

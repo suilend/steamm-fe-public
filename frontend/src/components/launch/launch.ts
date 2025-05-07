@@ -25,7 +25,7 @@ import {
   getToken,
   isSui,
 } from "@suilend/frontend-sui";
-import { PoolScriptFunctions, SteammSDK } from "@suilend/steamm-sdk";
+import { Codegen, SteammSDK } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
 import { LaunchConfig, TokenCreationStatus } from "@/contexts/LaunchContext";
@@ -455,9 +455,9 @@ export const createPool = async (
   })(transaction);
 
   const { lendingMarketId, lendingMarketType } =
-    steammClient.sdkOptions.suilend_config.config!;
+    steammClient.sdkOptions.packages.suilend.config!;
 
-  const [lpCoin] = PoolScriptFunctions.depositLiquidity(
+  const [lpCoin] = Codegen.PoolScriptV2.depositLiquidity(
     transaction,
     [
       lendingMarketType,
@@ -466,12 +466,12 @@ export const createPool = async (
       mergedConfig.bTokens![0].coinType,
       mergedConfig.bTokens![1].coinType,
       {
-        [QuoterId.CPMM]: `${steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.cpmm}::cpmm::CpQuoter`,
+        [QuoterId.CPMM]: `${steammClient.sdkOptions.packages.steamm.config!.quoterIds.cpmm}::cpmm::CpQuoter`,
         [QuoterId.ORACLE]: `${
-          steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm
+          steammClient.sdkOptions.packages.steamm.config!.quoterIds.omm
         }::omm::OracleQuoter`,
         [QuoterId.ORACLE_V2]: `${
-          steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm_v2
+          steammClient.sdkOptions.packages.steamm.config!.quoterIds.ommV2
         }::omm_v2::OracleQuoterV2`,
       }[quoterId],
       mergedConfig.createLpTokenResult!.coinType,
@@ -487,7 +487,7 @@ export const createPool = async (
       maxB: BigInt(submitAmountB),
       clock: transaction.object(SUI_CLOCK_OBJECT_ID),
     },
-    steammClient.scriptPackageInfo().publishedAt,
+    steammClient.scriptInfo.publishedAt,
   );
   transaction.transferObjects([coinA, coinB], address);
   transaction.transferObjects([lpCoin], address);

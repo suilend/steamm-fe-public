@@ -10,7 +10,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { Bank } from "@suilend/steamm-sdk";
+import { BankAbi } from "@suilend/steamm-sdk";
 import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
 
 import OpenUrlNewTab from "@/components/OpenUrlNewTab";
@@ -55,15 +55,15 @@ export default function PoolCard({ pool }: PoolCardProps) {
         transaction,
       );
 
-      const coinA = new Bank(
-        steammClient.packageInfo(),
+      const coinA = new BankAbi(
+        steammClient.steammInfo,
         appData.bankMap[pool.coinTypes[0]].bankInfo,
       ).burnBTokens(transaction, {
         btokens: bTokenA,
         btokenAmount: pool.pool.protocolFees.feeA.value,
       });
-      const coinB = new Bank(
-        steammClient.packageInfo(),
+      const coinB = new BankAbi(
+        steammClient.steammInfo,
         appData.bankMap[pool.coinTypes[1]].bankInfo,
       ).burnBTokens(transaction, {
         btokens: bTokenB,

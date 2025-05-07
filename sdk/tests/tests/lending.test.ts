@@ -5,22 +5,12 @@ import { Transaction } from "@mysten/sui/transactions";
 import { beforeAll, describe, expect, it } from "bun:test";
 import dotenv from "dotenv";
 
-import { PoolModule } from "../../src/modules/poolModule";
+import { PoolManager } from "../../src/managers/pool";
 import { SteammSDK } from "../../src/sdk";
 import { BankList, DataPage, PoolInfo } from "../../src/types";
 
-import {
-  GLOBAL_ADMIN_ID,
-  LENDING_MARKET_ID,
-  LENDING_MARKET_TYPE,
-  ORACLES_PKG_ID,
-  REGISTRY_ID,
-  STEAMM_PKG_ID,
-  STEAMM_SCRIPT_PKG_ID,
-  SUILEND_PKG_ID,
-} from "./../packages";
+import { STEAMM_PKG_ID } from "./../packages";
 import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
-import { parseErrorCode } from "../../src";
 import { initLendingNoOp, testConfig } from "../utils/utils";
 
 dotenv.config();
@@ -52,10 +42,10 @@ export async function test() {
 
     beforeAll(async () => {
       sdk = new SteammSDK(testConfig());
-      pools = await sdk.getPools();
-      bankInfos = await sdk.getBanks();
+      pools = await sdk.fetchPoolData();
+      bankInfos = await sdk.fetchBankData();
       pool = (
-        await sdk.getPools([
+        await sdk.fetchPoolData([
           `${STEAMM_PKG_ID}::usdc::USDC`,
           `${STEAMM_PKG_ID}::sui::SUI`,
         ])
@@ -91,7 +81,7 @@ export async function test() {
       await initLendingNoOp(sdk, `${STEAMM_PKG_ID}::usdc::USDC`);
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const poolModule = new PoolModule(sdk);
+      const poolManager = new PoolManager(sdk);
       const tx = new Transaction();
 
       const suiCoin = tx.moveCall({
@@ -114,7 +104,7 @@ export async function test() {
 
       //////////////////////////////////////////////////////////////
 
-      await poolModule.depositLiquidityEntry(tx, {
+      await poolManager.depositLiquidityEntry(tx, {
         pool: pool.poolId,
         coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
         coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,

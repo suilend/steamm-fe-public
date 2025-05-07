@@ -22,12 +22,14 @@ import {
   initializeSuilend,
 } from "@suilend/sdk";
 
-import { Bank, BankScript, Pool, PoolScript } from "./base";
-import { RouterModule } from "./modules";
-import { BankModule } from "./modules/bankModule";
-import { PoolModule } from "./modules/poolModule";
-import { RpcModule } from "./modules/rpcModule";
+import { BankAbi, BankScript, PoolAbi, PoolScript } from "./abis";
+import { PYTH_STATE_ID, WORMHOLE_STATE_ID } from "./config";
+import { BankManager } from "./managers/bank";
+import { FullClient } from "./managers/client";
+import { PoolManager } from "./managers/pool";
+import { Router } from "./managers/router";
 import {
+  BankCache,
   BankInfo,
   BankList,
   DataPage,
@@ -36,14 +38,14 @@ import {
   NewOracleQuoterEvent,
   NewOracleV2QuoterEvent,
   NewPoolEvent,
-  OracleConfigs,
+  OracleCache,
   OracleInfo,
-  Package,
   PackageInfo,
+  PoolCache,
   PoolInfo,
-  SteammConfigs,
-  SteammPackageInfo,
-  SuilendConfigs,
+  SdkOptions,
+  SteammInfo,
+  TestConfig,
   extractBankList,
   extractOracleQuoterInfo,
   extractOracleV2QuoterInfo,
@@ -51,49 +53,43 @@ import {
 } from "./types";
 import { SuiAddressType, patchFixSuiObjectId } from "./utils";
 
-const WORMHOLE_STATE_ID =
-  "0xaeab97f96cf9877fee2883315d459552b2b921edc16d7ceac6eab944dd88919c";
-const PYTH_STATE_ID =
-  "0x1f9310238ee9298fb703c3419030b35b22bb1cc37113e3bb5007c99aec79e5b8";
-
-export const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET
-  ? "0xa902504c338e17f44dfee1bd1c3cad1ff03326579b9cdcfe2762fc12c46fc033" // beta owner
-  : "0xb1ffbc2e1915f44b8f271a703becc1bf8aa79bc22431a58900a102892b783c25";
-
-export type SdkOptions = {
-  fullRpcUrl: string;
-  steamm_config: Package<SteammConfigs>;
-  oracle_config: Package<OracleConfigs>;
-  steamm_script_config: Package;
-  suilend_config: Package<SuilendConfigs>;
-  cache_refresh_ms?: number /* default: 5000 */;
-  enableTestMode?: boolean;
-};
-
-interface TestConfig {
-  mockOracleObjs: Record<string, string>;
-}
-
-interface PoolCache {
-  pools: PoolInfo[];
-  updatedAt: number;
-}
-
-interface BankCache {
-  banks: BankList;
-  updatedAt: number;
-}
-
-interface OracleCache {
-  oracles: OracleInfo[];
-  updatedAt: number;
-}
-
+/**
+ * The primary SDK class for interacting with the STEAMM protocol on Sui blockchain.
+ *
+ * SteammSDK provides comprehensive functionality for working with STEAMM pools, banks,
+ * oracles and router functionality. It handles caching, transaction building, and
+ * data fetching operations required to interact with the protocol.
+ *
+ * Key capabilities include:
+ * - Pool management: create, deposit LP, withdraw LP, swap, query and interact with liquidity pools
+ * - Bank operations: mint and burn btokens, rebalancing ops
+ * - Routing: find optimal paths for token swaps
+ * - Oracle integration: access price feed data via Pyth
+ * - Position management: track and manage user LP positions
+ * - Transaction construction: build, sign and execute protocol transactions
+ *
+ * The SDK uses a modular architecture with specialized managers for different
+ * protocol components (Pool, Bank, Router) and maintains internal caches to
+ * minimize redundant blockchain queries.
+ *
+ * @example
+ * ```typescript
+ * import {SteammSDK, MAINNET_CONFIG} from "@suilend/steamm-sdk";
+ *
+ * const sdk = new SteammSDK(MAINNET_CONFIG);
+ *
+ * // Connect a signer
+ * sdk.signer = mySigner;
+ *
+ * // Fetch pool data
+ * const pools = await sdk.fetchPoolData();
+ * ```
+ */
 export class SteammSDK {
-  protected _rpcModule: RpcModule;
-  protected _pool: PoolModule;
-  protected _router: RouterModule;
-  protected _bank: BankModule;
+  protected _rpcClient: FullClient;
+  protected _pool: PoolManager;
+  protected _router: Router;
+  protected _bank: BankManager;
   protected _sdkOptions: SdkOptions;
   protected _pools?: PoolCache;
   protected _banks?: BankCache;
@@ -110,15 +106,15 @@ export class SteammSDK {
       ...options,
       cache_refresh_ms: options.cache_refresh_ms ?? 5000,
     };
-    this._rpcModule = new RpcModule({
+    this._rpcClient = new FullClient({
       url: options.fullRpcUrl,
     });
 
-    this._pool = new PoolModule(this);
-    this._bank = new BankModule(this);
-    this._router = new RouterModule(this);
+    this._pool = new PoolManager(this);
+    this._bank = new BankManager(this);
+    this._router = new Router(this);
     this._pythClient = new SuiPythClient(
-      this._rpcModule,
+      this._rpcClient,
       PYTH_STATE_ID,
       WORMHOLE_STATE_ID,
     );
@@ -129,13 +125,38 @@ export class SteammSDK {
     patchFixSuiObjectId(this.sdkOptions);
   }
 
+  // **************** Getters and Setters **************** //
+
+  /**
+   * Getter for the fullClient property.
+   * @returns {FullClient} The fullClient property value.
+   */
+  get fullClient(): FullClient {
+    return this._rpcClient;
+  }
+
+  /**
+   * Getter for the SuiPythClient instance.
+   *
+   * @returns {SuiPythClient} The current instance of SuiPythClient.
+   */
   get pythClient(): SuiPythClient {
     return this._pythClient;
   }
+
+  /**
+   * Gets the Pyth price service connection instance used for fetching price data.
+   * @returns {SuiPriceServiceConnection} The Pyth price service connection instance.
+   */
   get pythConnection(): SuiPriceServiceConnection {
     return this._pythConnection;
   }
 
+  /**
+   * Gets the sender's Sui address. Throws an error if the address is not set.
+   * @returns {SuiAddressType} The sender's Sui address.
+   * @throws {Error} If the sender address has not been set.
+   */
   get senderAddress(): SuiAddressType {
     if (this._senderAddress === "") {
       throw new Error("Sender address not set.");
@@ -143,25 +164,29 @@ export class SteammSDK {
     return this._senderAddress;
   }
 
-  set senderAddress(value: string) {
-    this._senderAddress = value;
-  }
-
-  set signer(signer: Signer) {
-    this._signer = signer;
-    this._senderAddress = signer.getPublicKey().toSuiAddress();
-  }
-
+  /**
+   * Gets the current signer instance used for transactions.
+   * @returns {Signer | undefined} The current signer instance, or undefined if not set.
+   */
   get signer(): Signer | undefined {
     return this._signer;
   }
 
   /**
-   * Getter for the fullClient property.
-   * @returns {RpcModule} The fullClient property value.
+   * Sets the sender's Sui address.
+   * @param {string} value - The Sui address to set.
    */
-  get fullClient(): RpcModule {
-    return this._rpcModule;
+  set senderAddress(value: string) {
+    this._senderAddress = value;
+  }
+
+  /**
+   * Sets the signer for transactions and automatically updates the sender address.
+   * @param {Signer} signer - The signer instance to use for transactions.
+   */
+  set signer(signer: Signer) {
+    this._signer = signer;
+    this._senderAddress = signer.getPublicKey().toSuiAddress();
   }
 
   /**
@@ -173,101 +198,142 @@ export class SteammSDK {
   }
 
   /**
-   * Getter for the Pool property.
-   * @returns {PoolModule} The Pool property value.
+   * Retrieves the package information for the Steamm protocol.
+   * @returns {SteammInfo} Object containing the package ID, publishedAt, and quoter package information
    */
-  get Pool(): PoolModule {
-    return this._pool;
+  get steammInfo(): SteammInfo {
+    return {
+      originalId: this.sdkOptions.packages.steamm.packageId,
+      publishedAt: this.sdkOptions.packages.steamm.publishedAt,
+      quoterIds: {
+        cpmm: this.sdkOptions.packages.steamm.config!.quoterIds.cpmm,
+        omm: this.sdkOptions.packages.steamm.config!.quoterIds.omm,
+        ommV2: this.sdkOptions.packages.steamm.config!.quoterIds.ommV2,
+      },
+    };
+  }
+
+  /**
+   * Retrieves the STEAMM Script package information.
+   * @returns {PackageInfo} Object containing script original package ID and publishedAt
+   */
+  get scriptInfo(): PackageInfo {
+    return {
+      originalId: this.sdkOptions.packages.steammScript.packageId,
+      publishedAt: this.sdkOptions.packages.steammScript.publishedAt,
+    };
+  }
+
+  // TODO: Consider deprecating this in favor of steammInfo
+  /**
+   * Gets the STEAMM source package ID from the SDK configuration.
+   * @returns {string} The source package ID
+   */
+  get originalId(): string {
+    return this.sdkOptions.packages.steamm.packageId;
+  }
+
+  // TODO: Consider deprecating this in favor of steammInfo
+  /**
+   * Gets the STEAMM last package ID from the SDK configuration.
+   * @returns {string} STEAMM last package ID.
+   */
+  get publishedAt(): string {
+    return this.sdkOptions.packages.steamm.publishedAt;
   }
 
   /**
    * Getter for the Pool property.
-   * @returns {BankModule} The Pool property value.
+   * @returns {PoolManager} The Pool Manager property.
    */
-  get Bank(): BankModule {
+  get Pool(): PoolManager {
+    return this._pool;
+  }
+
+  /**
+   * Getter for the Bank Manager property.
+   * @returns {BankManager} The Bank Manager.
+   */
+  get Bank(): BankManager {
     return this._bank;
   }
 
-  get Router(): RouterModule {
+  /**
+   * Getter for the Router property.
+   * @returns {BankManager} The Router.
+   */
+  get Router(): Router {
     return this._router;
   }
 
-  getPool(poolInfo: PoolInfo): Pool {
-    return new Pool(this.packageInfo(), poolInfo);
+  // **************** Abi Constructors **************** //
+
+  /**
+   * Creates a Pool ABI instance based on the provided pool information.
+   * @param {PoolInfo} poolInfo - Information about the pool to be instantiated
+   * @returns {Pool} A new Pool ABI instance.
+   */
+  poolAbi(poolInfo: PoolInfo): PoolAbi {
+    return new PoolAbi(this.steammInfo, poolInfo);
   }
 
-  getBank(bankInfo: BankInfo): Bank {
-    return new Bank(this.packageInfo(), bankInfo);
+  /**
+   * Creates a Bank ABI instance based on the provided bank information.
+   * @param {BankInfo} bankInfo - Information about the bank to be instantiated
+   * @returns {Bank} A new Bank ABI instance.
+   */
+  bankAbi(bankInfo: BankInfo): BankAbi {
+    return new BankAbi(this.steammInfo, bankInfo);
   }
 
-  getPoolScript(
+  /**
+   * Creates a PoolScript ABI instance for operations involving a pool and two banks.
+   * @param {PoolInfo} poolInfo - Information about the pool
+   * @param {BankInfo} bankInfoA - Information about the first bank
+   * @param {BankInfo} bankInfoB - Information about the second bank
+   * @returns {PoolScript} A new PoolScript ABI instance
+   */
+  poolScript(
     poolInfo: PoolInfo,
     bankInfoA: BankInfo,
     bankInfoB: BankInfo,
   ): PoolScript {
     return new PoolScript(
-      this.packageInfo(),
-      this.scriptPackageInfo(),
+      this.steammInfo,
+      this.scriptInfo,
       poolInfo,
       bankInfoA,
       bankInfoB,
     );
   }
 
-  getBankScript(bankInfoX: BankInfo, bankInfoY: BankInfo): BankScript {
+  /**
+   * Creates a BankScript ABI instance for operations involving two banks.
+   * @param {BankInfo} bankInfoX - Information about the first bank
+   * @param {BankInfo} bankInfoY - Information about the second bank
+   * @returns {BankScript} A new BankScript ABI instance.
+   */
+  bankScript(bankInfoX: BankInfo, bankInfoY: BankInfo): BankScript {
     return new BankScript(
-      this.packageInfo(),
-      this.scriptPackageInfo(),
+      this.steammInfo,
+      this.scriptInfo,
       bankInfoX,
       bankInfoY,
     );
   }
 
-  public packageInfo(): SteammPackageInfo {
-    return {
-      sourcePkgId: this.sourcePkgId(),
-      publishedAt: this.publishedAt(),
-      quoterPkgs: {
-        cpmm: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.cpmm,
-        omm: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm,
-        omm_v2: this.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm_v2,
-      },
-    };
-  }
+  // **************** Fetching Methods **************** //
 
-  public scriptPackageInfo(): PackageInfo {
-    return {
-      sourcePkgId: this.sdkOptions.steamm_script_config.package_id,
-      publishedAt: this.sdkOptions.steamm_script_config.published_at,
-    };
-  }
-
-  public sourcePkgId(): string {
-    return this.sdkOptions.steamm_config.package_id;
-  }
-
-  public publishedAt(): string {
-    return this.sdkOptions.steamm_config.published_at;
-  }
-
-  async getBanks(): Promise<BankList> {
-    if (!this._banks) {
-      await this.refreshBankCache();
-    } else if (
-      this.sdkOptions.cache_refresh_ms &&
-      Date.now() > this._banks.updatedAt + this.sdkOptions.cache_refresh_ms
-    ) {
-      await this.refreshBankCache();
-    }
-
-    if (!this._banks) {
-      throw new Error("Bank cache not initialized");
-    }
-
-    return this._banks.banks;
-  }
-
-  async getPools(coinTypes?: [string, string]): Promise<PoolInfo[]> {
+  /**
+   * Retrieves pools from the cache or fetches new data if the cache is expired.
+   * The cache is considered expired if the time since the last update exceeds cache_refresh_ms.
+   *
+   * @param {[string, string]} [coinTypes] - Optional tuple of coin types to filter pools.
+   *                                         If provided, returns only pools that match these coin types in either order.
+   * @returns {Promise<PoolInfo[]>} A promise that resolves to an array of pool information
+   * @throws {Error} If the pool cache fails to initialize
+   */
+  async fetchPoolData(coinTypes?: [string, string]): Promise<PoolInfo[]> {
     if (!this._pools) {
       await this.refreshPoolCache();
     } else if (
@@ -284,7 +350,7 @@ export class SteammSDK {
     if (!coinTypes) {
       return this._pools.pools;
     } else {
-      const banks = await this.getBanks();
+      const banks = await this.fetchBankData();
       const bcoinTypes = {
         coinType1: banks[coinTypes[0]].btokenType,
         coinType2: banks[coinTypes[1]].btokenType,
@@ -300,7 +366,39 @@ export class SteammSDK {
     }
   }
 
-  async getOracles(): Promise<OracleInfo[]> {
+  /**
+   * Retrieves the list of banks from the cache or fetches new data if the cache is expired.
+   * The cache is considered expired if the time since the last update exceeds cache_refresh_ms.
+   *
+   * @returns {Promise<BankList>} A promise that resolves to a map of bank information indexed by coin type
+   * @throws {Error} If the bank cache fails to initialize
+   */
+  async fetchBankData(): Promise<BankList> {
+    if (!this._banks) {
+      await this.refreshBankCache();
+    } else if (
+      this.sdkOptions.cache_refresh_ms &&
+      Date.now() > this._banks.updatedAt + this.sdkOptions.cache_refresh_ms
+    ) {
+      await this.refreshBankCache();
+    }
+
+    if (!this._banks) {
+      throw new Error("Bank cache not initialized");
+    }
+
+    return this._banks.banks;
+  }
+
+  /**
+   * Retrieves the list of oracles from the cache or fetches new data if the cache is expired.
+   * The cache is considered expired if the time since the last update exceeds cache_refresh_ms.
+   *
+   * @returns {Promise<OracleInfo[]>} A promise that resolves to an array of oracle information objects.
+   *                                  Each object contains the oracle identifier, index, and type.
+   * @throws {Error} If the oracle registry cache fails to initialize
+   */
+  async fetchOracleData(): Promise<OracleInfo[]> {
     if (!this._oracleRegistry) {
       await this.refreshOracleCache();
     } else if (
@@ -319,7 +417,7 @@ export class SteammSDK {
   }
 
   async fetchLpTokenTypes(): Promise<Set<string>> {
-    const poolData = await this.getPools();
+    const poolData = await this.fetchPoolData();
 
     const lpTokenTypesArray: string[] = [];
 
@@ -330,7 +428,17 @@ export class SteammSDK {
     return new Set(lpTokenTypesArray);
   }
 
-  async fetchLpTokenBalances(
+  /**
+   * Fetches all LP token balances for a specific address.
+   *
+   * @param {SuiAddressType} address - The address to fetch LP token balances for.
+   * @param {Set<string>} [lpCoinTypes] - Optional set of LP coin types to filter by.
+   *                                      If not provided, all LP token types will be fetched.
+   * @returns {Promise<CoinBalance[]>} A promise that resolves to an array of CoinBalance objects
+   *                                   representing the LP token balances for the address.
+   * @throws {Error} If there is an error fetching the balances from the blockchain.
+   */
+  async getLpTokenBalances(
     address: SuiAddressType,
     lpCoinTypes?: Set<string>,
   ): Promise<CoinBalance[]> {
@@ -352,136 +460,34 @@ export class SteammSDK {
     }
   }
 
-  private async refreshOracleCache() {
-    const oracleRegistry = await this.fullClient.fetchOracleRegistry(
-      this._sdkOptions.oracle_config.config!.oracleRegistryId,
-    );
-
-    const oracles = oracleRegistry.oracles;
-
-    const oracleInfos: OracleInfo[] = oracles.map((oracle, index) => {
-      const oracleType = oracle.oracleType;
-      const oracleVariant = oracleType.$data;
-
-      let identifier;
-      if (oracleVariant.$kind === "pyth") {
-        identifier = oracleType.$data.pyth?.priceIdentifier.bytes as number[];
-      } else if (oracleVariant.$kind === "switchboard") {
-        identifier = oracleType.$data.switchboard?.feedId as string;
-      } else {
-        throw new Error(`Unknown oracle type: ${oracleVariant}`);
-      }
-
-      return {
-        oracleIdentifier: identifier,
-        oracleIndex: index,
-        oracleType: oracleVariant.$kind,
-      };
-    });
-
-    this._oracleRegistry = { oracles: oracleInfos, updatedAt: Date.now() };
-  }
-
-  private async refreshBankCache() {
-    const pkgAddy = this.sourcePkgId();
-
-    let eventData: EventData<NewBankEvent>[] = [];
-
-    const res: DataPage<EventData<NewBankEvent>[]> =
-      await this.fullClient.queryEventsByPage({
-        MoveEventType: `${pkgAddy}::events::Event<${pkgAddy}::bank::NewBankEvent>`,
-      });
-
-    eventData = res.data.reduce((acc, curr) => acc.concat(curr), []);
-
-    this._banks = { banks: extractBankList(eventData), updatedAt: Date.now() };
-  }
-
-  async refreshPoolCache() {
-    const pkgAddy = this.sourcePkgId();
-
-    let eventData: EventData<NewPoolEvent>[] = [];
-
-    const res: DataPage<EventData<NewPoolEvent>[]> =
-      await this.fullClient.queryEventsByPage({
-        MoveEventType: `${pkgAddy}::events::Event<${pkgAddy}::pool::NewPoolResult>`,
-      });
-
-    eventData = res.data.reduce((acc, curr) => acc.concat(curr), []);
-    const pools = extractPoolInfo(eventData);
-
-    const oracleQuoterPkgId =
-      this.sdkOptions.steamm_config.config?.quoterSourcePkgs.omm;
-    const oracleV2QuoterPkgId =
-      this.sdkOptions.steamm_config.config?.quoterSourcePkgs.omm_v2;
-
-    let oracleQuoterEventData: EventData<NewOracleQuoterEvent>[] = [];
-    const res2: DataPage<EventData<NewOracleQuoterEvent>[]> =
-      await this.fullClient.queryEventsByPage({
-        MoveEventType: `${pkgAddy}::events::Event<${oracleQuoterPkgId}::omm::NewOracleQuoter>`,
-      });
-
-    oracleQuoterEventData = res2.data.reduce(
-      (acc, curr) => acc.concat(curr),
-      [],
-    );
-
-    const oracleQuoterData = extractOracleQuoterInfo(oracleQuoterEventData);
-
-    pools.forEach((pool) => {
-      if (oracleQuoterData[pool.poolId]) {
-        pool.quoterData = oracleQuoterData[pool.poolId];
-      }
-    });
-
-    if (oracleV2QuoterPkgId !== "0x0") {
-      let oracleV2QuoterEventData: EventData<NewOracleV2QuoterEvent>[] = [];
-      const res3: DataPage<EventData<NewOracleV2QuoterEvent>[]> =
-        await this.fullClient.queryEventsByPage({
-          MoveEventType: `${pkgAddy}::events::Event<${oracleV2QuoterPkgId}::omm_v2::NewOracleQuoterV2>`,
-        });
-
-      oracleV2QuoterEventData = res3.data.reduce(
-        (acc, curr) => acc.concat(curr),
-        [],
-      );
-
-      const oracleV2QuoterData = extractOracleV2QuoterInfo(
-        oracleV2QuoterEventData,
-      );
-
-      pools.forEach((pool) => {
-        if (oracleV2QuoterData[pool.poolId]) {
-          pool.quoterData = oracleV2QuoterData[pool.poolId];
-        }
-      });
-    }
-
-    this._pools = { pools, updatedAt: Date.now() };
-  }
-
-  mockOracleObjectForTesting(feedId: string, objectId: string) {
-    if (!this._sdkOptions.enableTestMode) {
-      throw new Error("Mocking only enabled in test mode.");
-    }
-    if (!this.testConfig) {
-      this.testConfig = { mockOracleObjs: {} };
-    }
-    this.testConfig.mockOracleObjs[feedId] = objectId;
-  }
-
-  getMockOraclePriceObject(feedId: string): string {
-    if (!this._sdkOptions.enableTestMode) {
-      throw new Error("Mocking only enabled in test mode.");
-    }
-
-    const mockObject = this.testConfig!.mockOracleObjs[feedId];
-    if (!mockObject) {
-      throw new Error(`Mock oracle object for feedId ${feedId} not found.`);
-    }
-    return mockObject;
-  }
-
+  /**
+   * Retrieves all liquidity positions for a specific user across all pools.
+   *
+   * This method fetches comprehensive information about a user's positions including:
+   * - LP token balances (both in wallet and deposited in lending markets)
+   * - Underlying asset balances (tokenA and tokenB) based on the user's share of the pool
+   * - Claimable rewards across all relevant protocols
+   * - Total STEAMM points accumulated
+   *
+   * The method aggregates data from multiple sources:
+   * - Pool and bank information from STEAMM protocol
+   * - LP token deposits from SuiLend protocol
+   * - Reward information from both protocols
+   * - Coin metadata for proper decimal handling
+   *
+   * @param {string} address - The Sui address of the user whose positions to fetch
+   * @returns {Promise<Array<{
+   *   poolId: string;              - Unique identifier of the liquidity pool
+   *   coinTypeA: string;           - Coin type of the first token in the pool
+   *   coinTypeB: string;           - Coin type of the second token in the pool
+   *   lpTokenBalance: BigNumber;   - LP token balance in the user's wallet
+   *   balanceA: BigNumber;         - User's share of token A in the pool (normalized by decimals)
+   *   balanceB: BigNumber;         - User's share of token B in the pool (normalized by decimals)
+   *   claimableRewards: Record<string, BigNumber>; - Map of claimable rewards by coin type
+   *   totalPoints: BigNumber;      - Total STEAMM points accumulated
+   * }>>} Array of user position objects for each pool where the user has a position
+   * @throws Will throw an error if there's a problem fetching the underlying data
+   */
   async getUserPositions(address: string): Promise<
     {
       poolId: string;
@@ -495,7 +501,7 @@ export class SteammSDK {
     }[]
   > {
     // Banks
-    const bankInfos = Object.values(await this.getBanks());
+    const bankInfos = Object.values(await this.fetchBankData());
 
     const bTokenTypeCoinTypeMap: Record<string, string> = {};
 
@@ -506,7 +512,7 @@ export class SteammSDK {
     }
 
     // Pools
-    const poolInfos = await this.getPools();
+    const poolInfos = await this.fetchPoolData();
 
     // CoinMetadata
     const coinMetadataMap = await getCoinMetadataMap(
@@ -732,5 +738,158 @@ export class SteammSDK {
     );
 
     return result;
+  }
+
+  // **************** Cache Refresh Methods **************** //
+
+  /**
+   * Refreshes the pool cache by querying events for new pool creations and oracle quoter updates.
+   * Fetches both NewPoolEvent and NewOracleQuoterEvent events to build a complete pool list
+   * with associated oracle quoter data where available.
+   * Updates the internal pool cache with the latest data and timestamp.
+   *
+   * @public
+   */
+  async refreshPoolCache() {
+    let eventData: EventData<NewPoolEvent>[] = [];
+
+    const res: DataPage<EventData<NewPoolEvent>[]> =
+      await this.fullClient.queryEventsByPage({
+        MoveEventType: `${this.originalId}::events::Event<${this.originalId}::pool::NewPoolResult>`,
+      });
+
+    eventData = res.data.reduce((acc, curr) => acc.concat(curr), []);
+    const pools = extractPoolInfo(eventData);
+
+    const oracleQuoterPkgId =
+      this.sdkOptions.packages.steamm.config?.quoterIds.omm;
+    const oracleV2QuoterPkgId =
+      this.sdkOptions.packages.steamm.config?.quoterIds.ommV2;
+
+    let oracleQuoterEventData: EventData<NewOracleQuoterEvent>[] = [];
+    const res2: DataPage<EventData<NewOracleQuoterEvent>[]> =
+      await this.fullClient.queryEventsByPage({
+        MoveEventType: `${this.originalId}::events::Event<${oracleQuoterPkgId}::omm::NewOracleQuoter>`,
+      });
+
+    oracleQuoterEventData = res2.data.reduce(
+      (acc, curr) => acc.concat(curr),
+      [],
+    );
+
+    const oracleQuoterData = extractOracleQuoterInfo(oracleQuoterEventData);
+
+    pools.forEach((pool) => {
+      if (oracleQuoterData[pool.poolId]) {
+        pool.quoterData = oracleQuoterData[pool.poolId];
+      }
+    });
+
+    if (oracleV2QuoterPkgId !== "0x0") {
+      let oracleV2QuoterEventData: EventData<NewOracleV2QuoterEvent>[] = [];
+      const res3: DataPage<EventData<NewOracleV2QuoterEvent>[]> =
+        await this.fullClient.queryEventsByPage({
+          MoveEventType: `${this.originalId}::events::Event<${oracleV2QuoterPkgId}::omm_v2::NewOracleQuoterV2>`,
+        });
+
+      oracleV2QuoterEventData = res3.data.reduce(
+        (acc, curr) => acc.concat(curr),
+        [],
+      );
+
+      const oracleV2QuoterData = extractOracleV2QuoterInfo(
+        oracleV2QuoterEventData,
+      );
+
+      pools.forEach((pool) => {
+        if (oracleV2QuoterData[pool.poolId]) {
+          pool.quoterData = oracleV2QuoterData[pool.poolId];
+        }
+      });
+    }
+
+    this._pools = { pools, updatedAt: Date.now() };
+  }
+
+  /**
+   * Refreshes the bank cache by querying events for new bank creations.
+   * Fetches all NewBankEvent events and processes them into a structured bank list.
+   * Updates the internal bank cache with the latest data and timestamp.
+   *
+   * @private
+   */
+  private async refreshBankCache() {
+    let eventData: EventData<NewBankEvent>[] = [];
+
+    const res: DataPage<EventData<NewBankEvent>[]> =
+      await this.fullClient.queryEventsByPage({
+        MoveEventType: `${this.originalId}::events::Event<${this.originalId}::bank::NewBankEvent>`,
+      });
+
+    eventData = res.data.reduce((acc, curr) => acc.concat(curr), []);
+
+    this._banks = { banks: extractBankList(eventData), updatedAt: Date.now() };
+  }
+
+  /**
+   * Refreshes the oracle cache by fetching the latest oracle registry data.
+   * Maps each oracle to an OracleInfo object containing its identifier, index, and type.
+   * Handles both Pyth and Switchboard oracle types.
+   *
+   * @private
+   * @throws {Error} When encountering an unknown oracle type
+   */
+  private async refreshOracleCache() {
+    const oracleRegistry = await this.fullClient.fetchOracleRegistry(
+      this._sdkOptions.packages.oracle.config!.oracleRegistryId,
+    );
+
+    const oracles = oracleRegistry.oracles;
+
+    const oracleInfos: OracleInfo[] = oracles.map((oracle, index) => {
+      const oracleType = oracle.oracleType;
+      const oracleVariant = oracleType.$data;
+
+      let identifier;
+      if (oracleVariant.$kind === "pyth") {
+        identifier = oracleType.$data.pyth?.priceIdentifier.bytes as number[];
+      } else if (oracleVariant.$kind === "switchboard") {
+        identifier = oracleType.$data.switchboard?.feedId as string;
+      } else {
+        throw new Error(`Unknown oracle type: ${oracleVariant}`);
+      }
+
+      return {
+        oracleIdentifier: identifier,
+        oracleIndex: index,
+        oracleType: oracleVariant.$kind,
+      };
+    });
+
+    this._oracleRegistry = { oracles: oracleInfos, updatedAt: Date.now() };
+  }
+
+  // **************** Test-only Methods **************** //
+
+  mockOracleObjectForTesting(feedId: string, objectId: string) {
+    if (!this._sdkOptions.enableTestMode) {
+      throw new Error("Mocking only enabled in test mode.");
+    }
+    if (!this.testConfig) {
+      this.testConfig = { mockOracleObjs: {} };
+    }
+    this.testConfig.mockOracleObjs[feedId] = objectId;
+  }
+
+  getMockOraclePriceObject(feedId: string): string {
+    if (!this._sdkOptions.enableTestMode) {
+      throw new Error("Mocking only enabled in test mode.");
+    }
+
+    const mockObject = this.testConfig!.mockOracleObjs[feedId];
+    if (!mockObject) {
+      throw new Error(`Mock oracle object for feedId ${feedId} not found.`);
+    }
+    return mockObject;
   }
 }

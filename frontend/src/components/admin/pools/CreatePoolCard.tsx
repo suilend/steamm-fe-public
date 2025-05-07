@@ -30,7 +30,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { ADMIN_ADDRESS, PoolScriptFunctions } from "@suilend/steamm-sdk";
+import { ADMIN_ADDRESS, Codegen } from "@suilend/steamm-sdk";
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
@@ -776,9 +776,9 @@ export default function CreatePoolCard({
       })(transaction);
 
       const { lendingMarketId, lendingMarketType } =
-        steammClient.sdkOptions.suilend_config.config!;
+        steammClient.sdkOptions.packages.suilend.config!;
 
-      const [lpCoin] = PoolScriptFunctions.depositLiquidity(
+      const [lpCoin] = Codegen.PoolScriptV2.depositLiquidity(
         transaction,
         [
           lendingMarketType,
@@ -787,13 +787,12 @@ export default function CreatePoolCard({
           bTokens[0].coinType,
           bTokens[1].coinType,
           {
-            [QuoterId.CPMM]: `${steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.cpmm}::cpmm::CpQuoter`,
+            [QuoterId.CPMM]: `${steammClient.sdkOptions.packages.steamm.config!.quoterIds.cpmm}::cpmm::CpQuoter`,
             [QuoterId.ORACLE]: `${
-              steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs.omm
+              steammClient.sdkOptions.packages.steamm.config!.quoterIds.omm
             }::omm::OracleQuoter`,
             [QuoterId.ORACLE_V2]: `${
-              steammClient.sdkOptions.steamm_config.config!.quoterSourcePkgs
-                .omm_v2
+              steammClient.sdkOptions.packages.steamm.config!.quoterIds.ommV2
             }::omm_v2::OracleQuoterV2`,
           }[quoterId],
           createLpTokenResult.coinType,
@@ -809,7 +808,7 @@ export default function CreatePoolCard({
           maxB: BigInt(submitAmountB),
           clock: transaction.object(SUI_CLOCK_OBJECT_ID),
         },
-        steammClient.scriptPackageInfo().publishedAt,
+        steammClient.scriptInfo.publishedAt,
       );
       transaction.transferObjects([coinA, coinB], address);
       transaction.transferObjects([lpCoin], address);

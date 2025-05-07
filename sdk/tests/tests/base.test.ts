@@ -5,7 +5,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import { beforeAll, describe, expect, it } from "bun:test";
 import dotenv from "dotenv";
 
-import { PoolModule } from "../../src/modules/poolModule";
+import { PoolManager } from "../../src/managers/pool";
 import { SteammSDK } from "../../src/sdk";
 import { BankList, DataPage, PoolInfo } from "../../src/types";
 
@@ -50,10 +50,10 @@ export async function test() {
 
     beforeAll(async () => {
       sdk = new SteammSDK(testConfig());
-      pools = await sdk.getPools();
-      banks = await sdk.getBanks();
+      pools = await sdk.fetchPoolData();
+      banks = await sdk.fetchBankData();
       pool = (
-        await sdk.getPools([
+        await sdk.fetchPoolData([
           `${STEAMM_PKG_ID}::usdc::USDC`,
           `${STEAMM_PKG_ID}::sui::SUI`,
         ])
@@ -84,8 +84,8 @@ export async function test() {
     });
 
     it("setup && listen to pool/bank creation events", async () => {
-      const pools = await sdk.getPools();
-      const banks = await sdk.getBanks();
+      const pools = await sdk.fetchPoolData();
+      const banks = await sdk.fetchBankData();
 
       expect(pools.length).toBeGreaterThan(0);
       expect(Object.keys(banks).length).toBeGreaterThan(0);
@@ -93,7 +93,7 @@ export async function test() {
 
     it("Deposits liquidity", async () => {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      const poolModule = new PoolModule(sdk);
+      const poolManager = new PoolManager(sdk);
       const tx = new Transaction();
 
       const suiCoin = tx.moveCall({
@@ -116,7 +116,7 @@ export async function test() {
 
       //////////////////////////////////////////////////////////////
 
-      await poolModule.depositLiquidityEntry(tx, {
+      await poolManager.depositLiquidityEntry(tx, {
         pool: pool.poolId,
         coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
         coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
@@ -158,7 +158,7 @@ export async function test() {
     });
 
     it("Swaps", async () => {
-      const poolModule = new PoolModule(sdk);
+      const poolManager = new PoolManager(sdk);
       const tx = new Transaction();
 
       const suiCoin = tx.moveCall({
@@ -181,7 +181,7 @@ export async function test() {
 
       //////////////////////////////////////////////////////////////
 
-      await poolModule.depositLiquidityEntry(tx, {
+      await poolManager.depositLiquidityEntry(tx, {
         pool: pool.poolId,
         coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
         coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
@@ -205,7 +205,7 @@ export async function test() {
         arguments: [],
       });
 
-      await poolModule.swap(tx, {
+      await poolManager.swap(tx, {
         pool: pool.poolId,
         coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
         coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
@@ -253,7 +253,7 @@ export async function test() {
     });
 
     it("Redeems liquidity", async () => {
-      const poolModule = new PoolModule(sdk);
+      const poolManager = new PoolManager(sdk);
       const tx = new Transaction();
 
       const suiCoin = tx.moveCall({
@@ -270,7 +270,7 @@ export async function test() {
 
       //////////////////////////////////////////////////////////////
 
-      const [lpToken, _depositResult] = await poolModule.depositLiquidity(tx, {
+      const [lpToken, _depositResult] = await poolManager.depositLiquidity(tx, {
         pool: pool.poolId,
         coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
         coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,
@@ -284,7 +284,7 @@ export async function test() {
 
       //////////////////////////////////////////////////////////////
 
-      await poolModule.redeemLiquidityEntry(tx, {
+      await poolManager.redeemLiquidityEntry(tx, {
         pool: pool.poolId,
         coinTypeA: `${STEAMM_PKG_ID}::usdc::USDC`,
         coinTypeB: `${STEAMM_PKG_ID}::sui::SUI`,

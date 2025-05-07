@@ -1,35 +1,35 @@
-import { SdkOptions } from "../sdk";
+import { SdkOptions } from "../types";
 
 export const STEAMM_CONFIG = {
-  package_id:
+  packageId:
     "0x4fb1cf45dffd6230305f1d269dd1816678cc8e3ba0b747a813a556921219f261",
-  published_at:
+  publishedAt:
     "0xf7338d805e8dd649bb2c183c4c4e928a0626ea3ee5171a1b35a5fc578f6b3159",
   config: {
     registryId:
       "0x8584948e8c0a2809ec192ede7e030b0a32bd602e5ca6c91bde8dc35fb8b0068d",
     globalAdmin:
       "0xdd3d22dba6c38117615a51698136e9867191328a8ef1b065c342d0a887b9be4a",
-    quoterSourcePkgs: {
+    quoterIds: {
       cpmm: "0x4fb1cf45dffd6230305f1d269dd1816678cc8e3ba0b747a813a556921219f261",
       omm: "0x67e4835cbe51818ce79af790f25ee7d8dfb03fc1556094ca5531cc399c687444",
-      omm_v2:
+      ommV2:
         "0x90e18bdfa7206d5d19df0eed869203812b608e50d07e3a49b9e9044fdedac443",
     },
   },
 };
 
 export const STEAMM_SCRIPT_CONFIG = {
-  package_id:
+  packageId:
     "0x13bfc09cfc1bd922d3aa53fcf7b2cd510727ee65068ce136e2ebd5f3b213fdd2",
-  published_at:
+  publishedAt:
     "0xe861377e806547370a7d219cb0f0eb7fa1d497607f2722352a47ed825b2a1db4",
 };
 
 export const SUILEND_CONFIG = {
-  package_id:
+  packageId:
     "0xf95b06141ed4a174f239417323bde3f209b972f5930d8521ea38a52aff3a6ddf",
-  published_at:
+  publishedAt:
     "0x21f544aff826a48e6bd5364498454d8487c4a90f84995604cd5c947c06b596c3",
   config: {
     lendingMarketId:
@@ -40,9 +40,9 @@ export const SUILEND_CONFIG = {
 };
 
 export const ORACLE_CONFIG = {
-  package_id:
+  packageId:
     "0xe84b649199654d18c38e727212f5d8dacfc3cf78d60d0a7fc85fd589f280eb2b",
-  published_at:
+  publishedAt:
     "0xe84b649199654d18c38e727212f5d8dacfc3cf78d60d0a7fc85fd589f280eb2b",
   config: {
     oracleRegistryId:
@@ -52,8 +52,10 @@ export const ORACLE_CONFIG = {
 
 export const MAINNET_CONFIG: SdkOptions = {
   fullRpcUrl: "https://fullnode.mainnet.sui.io:443",
-  suilend_config: SUILEND_CONFIG,
-  steamm_config: STEAMM_CONFIG,
-  steamm_script_config: STEAMM_SCRIPT_CONFIG,
-  oracle_config: ORACLE_CONFIG,
+  packages: {
+    suilend: SUILEND_CONFIG,
+    steamm: STEAMM_CONFIG,
+    steammScript: STEAMM_SCRIPT_CONFIG,
+    oracle: ORACLE_CONFIG,
+  },
 };
