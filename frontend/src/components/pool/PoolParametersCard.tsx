@@ -154,17 +154,19 @@ export default function PoolParametersCard() {
         ))}
       </Parameter>
 
-      <Parameter label="Amplifier" labelTooltip={AMPLIFIER_TOOLTIP}>
-        <p className="text-p2 text-foreground">
-          {formatAmplifier(
-            new BigNumber(
-              (
-                pool.pool as Pool<string, string, OracleQuoterV2, string>
-              ).quoter.amp.toString(),
-            ),
-          )}
-        </p>
-      </Parameter>
+      {pool.quoterId === QuoterId.ORACLE_V2 && (
+        <Parameter label="Amplifier" labelTooltip={AMPLIFIER_TOOLTIP}>
+          <p className="text-p2 text-foreground">
+            {formatAmplifier(
+              new BigNumber(
+                (
+                  pool.pool as Pool<string, string, OracleQuoterV2, string>
+                ).quoter.amp.toString(),
+              ),
+            )}
+          </p>
+        </Parameter>
+      )}
 
       <Parameter label="Fee tier">
         <p className="text-p2 text-foreground">
