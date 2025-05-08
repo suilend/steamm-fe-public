@@ -35,7 +35,7 @@ export default function Parameter({
         <Tooltip title={labelTooltip}>
           <div
             className={cn(
-              "flex shrink-0 flex-row items-baseline gap-1.5",
+              "flex w-max shrink-0 flex-row items-baseline gap-1.5",
               labelContainerClassName,
             )}
           >

@@ -46,6 +46,7 @@ import {
   formatTextInputValue,
 } from "@/lib/format";
 import { API_URL, POOL_URL_PREFIX } from "@/lib/navigation";
+import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
@@ -649,7 +650,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
         {/* Amplifier */}
         {quoterId === QuoterId.ORACLE_V2 && (
           <div className="flex flex-row items-center justify-between">
-            <Tooltip title="The amplifier determines the concentration of the pool. Higher values are more suitable for more volatile assets, while lower values are more suitable for more stable assets.">
+            <Tooltip title={AMPLIFIER_TOOLTIP}>
               <p
                 className={cn(
                   "text-p2 text-secondary-foreground decoration-secondary-foreground/50",

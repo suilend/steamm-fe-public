@@ -19,6 +19,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
+import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
 
 import Divider from "@/components/Divider";
 import IconUpload from "@/components/launch/IconUpload";
@@ -31,6 +32,7 @@ import { useUserContext } from "@/contexts/UserContext";
 import { initializeCoinCreation } from "@/lib/createCoin";
 import { formatTextInputValue } from "@/lib/format";
 import {
+  BLACKLISTED_WORDS,
   DEFAULT_TOKEN_DECIMALS,
   DEFAULT_TOKEN_SUPPLY,
   DEPOSITED_QUOTE_ASSET,
@@ -151,6 +153,7 @@ export default function LaunchTokenCard() {
     setName("");
     setSymbol("");
     setDescription("");
+
     setIconUrl("");
     setIconFilename("");
     setIconFileSize("");
@@ -184,16 +187,29 @@ export default function LaunchTokenCard() {
 
     // Symbol
     if (symbol === "") return { isDisabled: true, title: "Enter a symbol" };
+    if (symbol !== symbol.toUpperCase())
+      return { isDisabled: true, title: "Symbol must be uppercase" };
+    if (/\s/.test(symbol))
+      return { isDisabled: true, title: "Symbol cannot contain spaces" };
     if (symbol.length < 1 || symbol.length > 8)
       return {
         isDisabled: true,
         title: "Symbol must be between 1 and 8 characters",
+      };
+    if (
+      address !== ADMIN_ADDRESS &&
+      BLACKLISTED_WORDS.includes(symbol.toLowerCase())
+    )
+      return {
+        isDisabled: true,
+        title: "Symbol cannot be a reserved or blacklisted word",
       };
     if (symbol === name)
       return {
         isDisabled: true,
         title: "Symbol can't be the same as the name",
       };
+    // Don't enforce symbol uniqueness for admin
 
     // Description
     if (description.length > 256)

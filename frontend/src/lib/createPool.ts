@@ -24,7 +24,7 @@ import {
 } from "@/lib/createCoin";
 import { QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 
-export const AMPLIFIERS: number[] = [1, 5, 10, 20, 50, 100];
+export const AMPLIFIERS: number[] = [1, 5, 10, 20, 30, 50, 100];
 export const FEE_TIER_PERCENTS: number[] = [
   1, 5, 10, 20, 25, 30, 50, 100, 200,
 ].map((bps) => bps / 100);
