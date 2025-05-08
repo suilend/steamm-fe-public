@@ -16,7 +16,18 @@ export const generate_bytecode = (
   symbol: string,
   description: string,
   iconUrl: string,
+  decimals?: number,
 ): Uint8Array<ArrayBufferLike> => {
+  console.log("[generate_bytecode] Generating bytecode", {
+    module,
+    type,
+    name,
+    symbol,
+    description,
+    iconUrl,
+    decimals,
+  });
+
   const bytecode = Buffer.from(
     "oRzrCwYAAAAKAQAMAgweAyonBFEIBVlMB6UBywEI8AJgBtADXQqtBAUMsgQoABABCwIGAhECEgITAAICAAEBBwEAAAIADAEAAQIDDAEAAQQEAgAFBQcAAAkAAQABDwUGAQACBwgJAQIDDAUBAQwDDQ0BAQwEDgoLAAUKAwQAAQQCBwQMAwICCAAHCAQAAQsCAQgAAQoCAQgFAQkAAQsBAQkAAQgABwkAAgoCCgIKAgsBAQgFBwgEAgsDAQkACwIBCQABBggEAQUBCwMBCAACCQAFDENvaW5NZXRhZGF0YQZPcHRpb24IVEVNUExBVEULVHJlYXN1cnlDYXAJVHhDb250ZXh0A1VybARjb2luD2NyZWF0ZV9jdXJyZW5jeQtkdW1teV9maWVsZARpbml0FW5ld191bnNhZmVfZnJvbV9ieXRlcwZvcHRpb24TcHVibGljX3NoYXJlX29iamVjdA9wdWJsaWNfdHJhbnNmZXIGc2VuZGVyBHNvbWUIdGVtcGxhdGUIdHJhbnNmZXIKdHhfY29udGV4dAN1cmwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAQkKAgUEVE1QTAoCDg1UZW1wbGF0ZSBDb2luCgIaGVRlbXBsYXRlIENvaW4gRGVzY3JpcHRpb24KAiEgaHR0cHM6Ly9leGFtcGxlLmNvbS90ZW1wbGF0ZS5wbmcAAgEIAQAAAAACEgsABwAHAQcCBwMHBBEGOAAKATgBDAILAS4RBTgCCwI4AwIA=",
     "base64",
@@ -55,6 +66,13 @@ export const generate_bytecode = (
     "Vector(U8)", // type of the constant
   );
 
+  updated = update_constants(
+    updated,
+    new Uint8Array([decimals ?? 9]), // new value
+    new Uint8Array([9]), // current value
+    "U8",
+  );
+
   return updated;
 };
 
@@ -63,6 +81,7 @@ export const initializeCoinCreation = async () => {
 };
 
 export type CreateCoinResult = {
+  upgradeCapId: string;
   treasuryCapId: string;
   coinType: string;
   coinMetadataId: string;
@@ -81,6 +100,15 @@ export const createCoin = async (
   transaction.transferObjects([upgradeCap], transaction.pure.address(address));
 
   const res = await signExecuteAndWaitForTransaction(transaction);
+
+  // Get UpgradeCap id from transaction
+  const upgradeCapChange: SuiObjectChange | undefined = res.objectChanges?.find(
+    (change) =>
+      change.type === "created" && change.objectType.includes("UpgradeCap"),
+  );
+  if (!upgradeCapChange) throw new Error("UpgradeCap object change not found");
+  if (upgradeCapChange.type !== "created")
+    throw new Error("UpgradeCap object change is not of type 'created'");
 
   // Get TreasuryCap id from transaction
   const treasuryCapObjectChange: SuiObjectChange | undefined =
@@ -104,6 +132,7 @@ export const createCoin = async (
   if (coinMetaObjectChange.type !== "created")
     throw new Error("CoinMetadata object change is not of type 'created'");
 
+  const upgradeCapId = upgradeCapChange.objectId;
   const treasuryCapId = treasuryCapObjectChange.objectId;
   const coinType = treasuryCapObjectChange.objectType
     .split("<")[1]
@@ -119,5 +148,5 @@ export const createCoin = async (
     coinMetadataId,
   );
 
-  return { treasuryCapId, coinType, coinMetadataId };
+  return { upgradeCapId, treasuryCapId, coinType, coinMetadataId };
 };

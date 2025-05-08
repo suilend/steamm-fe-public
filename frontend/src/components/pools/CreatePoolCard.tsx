@@ -426,6 +426,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
         { bToken: Token; bankId: string },
         { bToken: Token; bankId: string },
       ];
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const bTokens = bTokensAndBankIds.map(({ bToken }) => bToken) as [
         Token,
@@ -442,6 +443,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
         address,
         signExecuteAndWaitForTransaction,
       );
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // 3) Create pool and deposit initial liquidity (1 transaction)
       const { res, poolId } = await createPoolAndDepositInitialLiquidity(
@@ -453,6 +455,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
         bTokens,
         bankIds,
         createLpTokenResult,
+        false,
         steammClient,
         appData,
         address,
@@ -473,10 +476,14 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
       );
 
       if (process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET !== "true") {
-        await fetch(`${API_URL}/steamm/clear-cache`); // Clear cache
+        try {
+          await fetch(`${API_URL}/steamm/clear-cache`); // Clear cache
+        } catch (err) {
+          console.error(err);
+        }
         await new Promise((resolve) => {
-          setTimeout(() => resolve(true), 1000);
-        }); // Wait 1 second before showing Go to pool button
+          setTimeout(() => resolve(true), 2000);
+        }); // Wait 2 seconds before showing Go to pool button
       }
       setCreatedPoolId(poolId);
     } catch (err) {

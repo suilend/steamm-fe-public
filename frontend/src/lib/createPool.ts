@@ -22,6 +22,7 @@ import {
   createCoin,
   generate_bytecode,
 } from "@/lib/createCoin";
+import { BURN_ADDRESS } from "@/lib/launchToken";
 import { QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 
 export const AMPLIFIERS: number[] = [1, 5, 10, 20, 30, 50, 100];
@@ -178,6 +179,7 @@ export const createPoolAndDepositInitialLiquidity = async (
   bTokens: [Token, Token],
   bankIds: [string, string],
   createLpTokenResult: CreateCoinResult,
+  burnLpTokens: boolean,
   steammClient: SteammSDK,
   appData: AppData,
   address: string,
@@ -317,7 +319,7 @@ export const createPoolAndDepositInitialLiquidity = async (
     steammClient.scriptPackageInfo().publishedAt,
   );
   transaction.transferObjects([coinA, coinB], address);
-  transaction.transferObjects([lpCoin], address);
+  transaction.transferObjects([lpCoin], !burnLpTokens ? address : BURN_ADDRESS); // Burn LP tokens if `burnLpTokens` is true
 
   // 3) Share pool
   const sharePoolBaseArgs = {

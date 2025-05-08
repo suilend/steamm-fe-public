@@ -7,7 +7,9 @@ import { Check, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import {
   NORMALIZED_SUI_COINTYPE,
   SUI_GAS_MIN,
+  Token,
   formatNumber,
+  formatPercent,
   formatToken,
   getToken,
   isSend,
@@ -15,6 +17,7 @@ import {
   isSui,
 } from "@suilend/frontend-sui";
 import {
+  API_URL,
   showErrorToast,
   useSettingsContext,
   useWalletContext,
@@ -30,16 +33,26 @@ import TextInput from "@/components/TextInput";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import { initializeCoinCreation } from "@/lib/createCoin";
-import { formatTextInputValue } from "@/lib/format";
+import {
+  createLpToken,
+  createPoolAndDepositInitialLiquidity,
+  getOrCreateBTokenAndBankForToken,
+} from "@/lib/createPool";
+import { formatPair, formatTextInputValue } from "@/lib/format";
 import {
   BLACKLISTED_WORDS,
   DEFAULT_TOKEN_DECIMALS,
   DEFAULT_TOKEN_SUPPLY,
   DEPOSITED_QUOTE_ASSET,
   DEPOSITED_TOKEN_PERCENT,
+  FEE_TIER_PERCENT,
   MAX_FILE_SIZE_BYTES,
+  QUOTER_ID,
+  createToken,
+  mintToken,
 } from "@/lib/launchToken";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
+import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
 
 export default function LaunchTokenCard() {
@@ -117,18 +130,17 @@ export default function LaunchTokenCard() {
   const quoteTokens = useMemo(
     () =>
       Object.entries(balancesCoinMetadataMap ?? {})
-        .sort(
-          ([, a], [, b]) =>
-            a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1, // Sort by symbol (ascending)
+        .filter(
+          ([coinType]) =>
+            isSend(coinType) ||
+            isSui(coinType) ||
+            isStablecoin(coinType) ||
+            Object.keys(appData.lstAprPercentMap).includes(coinType),
         )
         .filter(([coinType]) => getBalance(coinType).gt(0))
         .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
-        .filter(
-          (token) =>
-            isSend(token.coinType) ||
-            isSui(token.coinType) ||
-            isStablecoin(token.coinType) ||
-            Object.keys(appData.lstAprPercentMap).includes(token.coinType),
+        .sort(
+          (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
         ),
     [balancesCoinMetadataMap, getBalance, appData.lstAprPercentMap],
   );
@@ -252,12 +264,13 @@ export default function LaunchTokenCard() {
 
     return {
       isDisabled: false,
-      title: "Launch token",
+      title: "Launch token & create pool",
     };
   })();
 
   const onSubmitClick = async () => {
     if (submitButtonState.isDisabled) return;
+    if (!quoteToken) return; // Should not happen
 
     try {
       if (!address) throw new Error("Wallet not connected");
@@ -265,19 +278,117 @@ export default function LaunchTokenCard() {
       setIsSubmitting(true);
 
       // 0) Prepare
-      if (!quoteToken!.id) throw new Error("Token coinMetadata id not found");
+      if (!quoteToken.id) throw new Error("Token coinMetadata id not found");
 
       await initializeCoinCreation();
 
       // 1) Create token
+      const createTokenResult = await createToken(
+        name,
+        symbol,
+        description,
+        iconUrl,
+        decimals,
+        address,
+        signExecuteAndWaitForTransaction,
+      );
+
+      const createdToken = getToken(createTokenResult.coinType, {
+        decimals,
+        description,
+        iconUrl,
+        id: createTokenResult.coinMetadataId,
+        name,
+        symbol,
+      });
+      const tokens = [createdToken, quoteToken] as [Token, Token];
 
       // 2) Mint token
+      await mintToken(
+        createTokenResult,
+        supply,
+        decimals,
+        address,
+        signExecuteAndWaitForTransaction,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // 3) Get/create bTokens and banks (2 transactions for each bToken+bank pair = 0, 2, or 4 transactions in total)
+      const bTokensAndBankIds = (await Promise.all(
+        tokens.map((token) =>
+          getOrCreateBTokenAndBankForToken(
+            token,
+            steammClient,
+            appData,
+            address,
+            signExecuteAndWaitForTransaction,
+          ),
+        ),
+      )) as [
+        { bToken: Token; bankId: string },
+        { bToken: Token; bankId: string },
+      ];
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const bTokens = bTokensAndBankIds.map(({ bToken }) => bToken) as [
+        Token,
+        Token,
+      ];
+      const bankIds = bTokensAndBankIds.map(({ bankId }) => bankId) as [
+        string,
+        string,
+      ];
 
       // 4) Create LP token (1 transaction)
+      const createLpTokenResult = await createLpToken(
+        bTokens,
+        address,
+        signExecuteAndWaitForTransaction,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // 5) Create pool and deposit initial liquidity (1 transaction)
+      const values = [
+        new BigNumber(supply)
+          .times(DEPOSITED_TOKEN_PERCENT)
+          .div(100)
+          .toFixed(decimals, BigNumber.ROUND_DOWN),
+        DEPOSITED_QUOTE_ASSET.toString(),
+      ] as [string, string];
+
+      const { res, poolId } = await createPoolAndDepositInitialLiquidity(
+        tokens,
+        values,
+        QUOTER_ID,
+        undefined,
+        FEE_TIER_PERCENT,
+        bTokens,
+        bankIds,
+        createLpTokenResult,
+        burnLpTokens,
+        steammClient,
+        appData,
+        address,
+        signExecuteAndWaitForTransaction,
+      );
+
+      const txUrl = explorer.buildTxUrl(res.digest);
+
+      showSuccessTxnToast(`Launched ${symbol}`, txUrl, {
+        description: `Created ${formatPair(tokens.map((token) => token.symbol))} pool with initial liquidity`,
+      });
+
+      if (process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET !== "true") {
+        try {
+          await fetch(`${API_URL}/steamm/clear-cache`); // Clear cache
+        } catch (err) {
+          console.error(err);
+        }
+        await new Promise((resolve) => {
+          setTimeout(() => resolve(true), 2000);
+        }); // Wait 2 seconds before showing Go to pool button
+      }
+      setCreatedPoolId(poolId);
     } catch (err) {
       showErrorToast("Failed to launch token", err as Error, undefined, true);
       console.error(err);
@@ -305,7 +416,10 @@ export default function LaunchTokenCard() {
           {/* Symbol */}
           <div className="flex flex-1 flex-col gap-2">
             <p className="text-p2 text-secondary-foreground">Symbol</p>
-            <TextInput value={symbol} onChange={setSymbol} />
+            <TextInput
+              value={symbol}
+              onChange={(value) => setSymbol(value.toUpperCase())}
+            />
           </div>
         </div>
 
@@ -439,7 +553,11 @@ export default function LaunchTokenCard() {
                       .div(100),
                     { dp: decimals },
                   )}{" "}
-                  {symbol || "tokens"}
+                  {symbol || "tokens"} (
+                  {formatPercent(new BigNumber(DEPOSITED_TOKEN_PERCENT), {
+                    dp: 0,
+                  })}
+                  )
                 </p>
                 <Plus className="h-4 w-4 text-tertiary-foreground" />
                 <p className="text-p2 text-foreground">
