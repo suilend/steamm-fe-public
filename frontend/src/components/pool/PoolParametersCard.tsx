@@ -10,6 +10,8 @@ import {
 } from "@suilend/frontend-sui";
 import { useSettingsContext } from "@suilend/frontend-sui-next";
 import { SwapQuote } from "@suilend/steamm-sdk";
+import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
+import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
@@ -21,7 +23,8 @@ import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
-import { formatFeeTier } from "@/lib/format";
+import { formatAmplifier, formatFeeTier } from "@/lib/format";
+import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
 import { QuoterId } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
@@ -149,6 +152,18 @@ export default function PoolParametersCard() {
             )}
           </div>
         ))}
+      </Parameter>
+
+      <Parameter label="Amplifier" labelTooltip={AMPLIFIER_TOOLTIP}>
+        <p className="text-p2 text-foreground">
+          {formatAmplifier(
+            new BigNumber(
+              (
+                pool.pool as Pool<string, string, OracleQuoterV2, string>
+              ).quoter.amp.toString(),
+            ),
+          )}
+        </p>
       </Parameter>
 
       <Parameter label="Fee tier">

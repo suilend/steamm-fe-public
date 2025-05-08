@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import init from "@mysten/move-bytecode-template";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
 
@@ -32,6 +31,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useBirdeyeUsdPrices from "@/hooks/useBirdeyeUsdPrices";
+import { initializeCoinCreation } from "@/lib/createCoin";
 import {
   AMPLIFIERS,
   FEE_TIER_PERCENTS,
@@ -46,6 +46,7 @@ import {
   formatTextInputValue,
 } from "@/lib/format";
 import { API_URL, POOL_URL_PREFIX } from "@/lib/navigation";
+import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
@@ -408,7 +409,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
       if (!tokens.every((token) => !!token.id))
         throw new Error("Token coinMetadata id not found");
 
-      await init();
+      await initializeCoinCreation();
 
       // 1) Get/create bTokens and banks (2 transactions for each bToken+bank pair = 0, 2, or 4 transactions in total)
       const bTokensAndBankIds = (await Promise.all(
@@ -621,7 +622,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
                           className={cn(
                             "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
                             _quoterId === quoterId
-                              ? "cursor-default bg-button-1"
+                              ? "cursor-default border-button-1 bg-button-1/25"
                               : "hover:bg-border/50",
                           )}
                           onClick={() => onSelectQuoter(_quoterId)}
@@ -631,7 +632,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
                             className={cn(
                               "!text-p2 transition-colors",
                               _quoterId === quoterId
-                                ? "text-button-1-foreground"
+                                ? "text-foreground"
                                 : "text-secondary-foreground group-hover:text-foreground",
                             )}
                           >
@@ -649,7 +650,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
         {/* Amplifier */}
         {quoterId === QuoterId.ORACLE_V2 && (
           <div className="flex flex-row items-center justify-between">
-            <Tooltip title="The amplifier determines the concentration of the pool. Higher values are more suitable for more volatile assets, while lower values are more suitable for more stable assets.">
+            <Tooltip title={AMPLIFIER_TOOLTIP}>
               <p
                 className={cn(
                   "text-p2 text-secondary-foreground decoration-secondary-foreground/50",
@@ -679,7 +680,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
                           className={cn(
                             "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
                             amplifier === _amplifier
-                              ? "cursor-default bg-button-1"
+                              ? "cursor-default border-button-1 bg-button-1/25"
                               : "hover:bg-border/50",
                           )}
                           onClick={() => setAmplifier(_amplifier)}
@@ -689,7 +690,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
                             className={cn(
                               "!text-p2 transition-colors",
                               amplifier === _amplifier
-                                ? "text-button-1-foreground"
+                                ? "text-foreground"
                                 : "text-secondary-foreground group-hover:text-foreground",
                             )}
                           >
@@ -732,7 +733,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
                         className={cn(
                           "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
                           feeTierPercent === _feeTierPercent
-                            ? "cursor-default bg-button-1"
+                            ? "cursor-default border-button-1 bg-button-1/25"
                             : "hover:bg-border/50",
                         )}
                         onClick={() => setFeeTierPercent(_feeTierPercent)}
@@ -742,7 +743,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
                           className={cn(
                             "!text-p2 transition-colors",
                             feeTierPercent === _feeTierPercent
-                              ? "text-button-1-foreground"
+                              ? "text-foreground"
                               : "text-secondary-foreground group-hover:text-foreground",
                           )}
                         >

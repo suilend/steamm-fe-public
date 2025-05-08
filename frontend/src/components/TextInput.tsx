@@ -1,6 +1,5 @@
-import { FocusEventHandler } from "react";
-
 import { ClassValue } from "clsx";
+import TextareaAutosize from "react-textarea-autosize";
 
 import { cn } from "@/lib/utils";
 
@@ -11,8 +10,10 @@ interface TextInputProps {
   placeholder?: string;
   value: string;
   onChange: (value: string) => void;
-  onBlur?: FocusEventHandler<HTMLInputElement>;
-  onFocus?: FocusEventHandler<HTMLInputElement>;
+  onBlur?: () => void;
+  onFocus?: () => void;
+  isTextarea?: boolean;
+  minRows?: number; // Only used if `isTextarea` is true
 }
 
 export default function TextInput({
@@ -24,18 +25,25 @@ export default function TextInput({
   onChange,
   onBlur,
   onFocus,
+  isTextarea,
+  minRows = 2,
 }: TextInputProps) {
+  const Component = isTextarea ? TextareaAutosize : "input";
+  const componentProps = isTextarea ? { minRows } : {};
+
   return (
     <div
       className={cn(
-        "h-10 w-full rounded-md bg-card transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]",
+        "w-full rounded-md bg-card/75 transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]",
+        isTextarea ? "h-max" : "h-10",
         className,
       )}
     >
-      <input
+      <Component
         autoFocus={autoFocus}
         className={cn(
-          "h-full w-full min-w-0 !border-0 !bg-[transparent] px-3 !text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+          "block w-full min-w-0 !border-0 !bg-[transparent] px-3 py-2.5 !text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+          isTextarea ? "h-auto max-h-32 min-h-10" : "h-full",
           inputClassName,
         )}
         type="text"
@@ -45,6 +53,7 @@ export default function TextInput({
         onWheel={(e) => e.currentTarget.blur()}
         onBlur={onBlur}
         onFocus={onFocus}
+        {...componentProps}
       />
     </div>
   );
