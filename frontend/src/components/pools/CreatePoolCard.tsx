@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
+import { ExternalLink } from "lucide-react";
 
 import {
   NORMALIZED_SUI_COINTYPE,
@@ -35,9 +36,11 @@ import { initializeCoinCreation } from "@/lib/createCoin";
 import {
   AMPLIFIERS,
   FEE_TIER_PERCENTS,
+  createBTokenAndBankForToken,
   createLpToken,
   createPoolAndDepositInitialLiquidity,
-  getOrCreateBTokenAndBankForToken,
+  getBTokenAndBankForToken,
+  hasBTokenAndBankForToken,
 } from "@/lib/createPool";
 import {
   formatAmplifier,
@@ -411,22 +414,28 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
 
       await initializeCoinCreation();
 
-      // 1) Get/create bTokens and banks (2 transactions for each bToken+bank pair = 0, 2, or 4 transactions in total)
+      // 1) Get/create bTokens and banks (2 transactions for each missing bToken+bank pair = 0, 2, or 4 transactions in total)
       const bTokensAndBankIds = (await Promise.all(
         tokens.map((token) =>
-          getOrCreateBTokenAndBankForToken(
-            token,
-            steammClient,
-            appData,
-            address,
-            signExecuteAndWaitForTransaction,
-          ),
+          hasBTokenAndBankForToken(token, appData)
+            ? getBTokenAndBankForToken(token, appData)
+            : (async () => {
+                const { bToken, bankId } = await createBTokenAndBankForToken(
+                  token,
+                  steammClient,
+                  appData,
+                  address,
+                  signExecuteAndWaitForTransaction,
+                );
+                await new Promise((resolve) => setTimeout(resolve, 2000));
+
+                return { bToken, bankId };
+              })(),
         ),
       )) as [
         { bToken: Token; bankId: string },
         { bToken: Token; bankId: string },
       ];
-      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const bTokens = bTokensAndBankIds.map(({ bToken }) => bToken) as [
         Token,
@@ -476,11 +485,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
       );
 
       if (process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET !== "true") {
-        try {
-          await fetch(`${API_URL}/steamm/clear-cache`); // Clear cache
-        } catch (err) {
-          console.error(err);
-        }
+        await fetch(`${API_URL}/steamm/clear-cache`); // Clear cache
         await new Promise((resolve) => {
           setTimeout(() => resolve(true), 2000);
         }); // Wait 2 seconds before showing Go to pool button
@@ -573,7 +578,9 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
                 {coinTypes.every((coinType) => coinType !== "") ? (
                   birdeyeRatio === undefined ? (
                     <Skeleton className="h-[21px] w-24" />
-                  ) : birdeyeRatio === null ? null : (
+                  ) : birdeyeRatio === null ? (
+                    "--"
+                  ) : (
                     `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${birdeyeRatio.toFixed(
                       balancesCoinMetadataMap![coinTypes[1]].decimals,
                       BigNumber.ROUND_DOWN,
@@ -772,24 +779,15 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
           onClick={onSubmitClick}
         />
       ) : (
-        <div className="flex w-full flex-col gap-1">
-          <Link
-            className="flex h-14 w-full flex-row items-center justify-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80"
-            href={`${POOL_URL_PREFIX}/${createdPoolId}`}
-            target="_blank"
-          >
-            <p className="text-p1 text-button-1-foreground">Go to pool</p>
-          </Link>
-
-          <button
-            className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
-            onClick={reset}
-          >
-            <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
-              Start over
-            </p>
-          </button>
-        </div>
+        <Link
+          className="flex h-14 w-full flex-row items-center justify-center gap-2 rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80"
+          href={`${POOL_URL_PREFIX}/${createdPoolId}`}
+          target="_blank"
+          onClick={reset}
+        >
+          <p className="text-p1 text-button-1-foreground">Go to pool</p>
+          <ExternalLink className="h-4 w-4 text-button-1-foreground" />
+        </Link>
       )}
     </div>
   );

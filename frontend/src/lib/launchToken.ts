@@ -169,7 +169,7 @@ export const mintToken = async (
   decimals: number,
   address: string,
   signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
-): Promise<{ res: SuiTransactionBlockResponse }> => {
+): Promise<SuiTransactionBlockResponse> => {
   console.log("[mintToken] Minting");
 
   const supplyAmount = BigInt(
@@ -204,7 +204,7 @@ export const mintToken = async (
 
   const res = await signExecuteAndWaitForTransaction(transaction);
 
-  return { res };
+  return res;
 };
 
 // Pool

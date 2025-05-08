@@ -57,23 +57,36 @@ const LP_TOKEN_IMAGE_URL =
   "https://suilend-assets.s3.us-east-2.amazonaws.com/steamm/STEAMM+LP+Token.svg";
 
 // bTokens and banks
-export const getOrCreateBTokenAndBankForToken = async (
+export const hasBTokenAndBankForToken = (
+  token: Token,
+  appData: AppData,
+): boolean => !!appData.bankMap[token.coinType];
+
+export const getBTokenAndBankForToken = async (
+  token: Token,
+  appData: AppData,
+): Promise<{ bToken: Token; bankId: string }> => {
+  const existingBank = appData.bankMap[token.coinType];
+  if (!existingBank) throw new Error("Bank not found");
+
+  const coinMetadataMap = await getCoinMetadataMap([existingBank.bTokenType]);
+
+  const bToken = getToken(
+    existingBank.bTokenType,
+    coinMetadataMap[existingBank.bTokenType],
+  );
+  return { bToken, bankId: existingBank.id };
+};
+
+export const createBTokenAndBankForToken = async (
   token: Token,
   steammClient: SteammSDK,
   appData: AppData,
   address: string,
   signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
 ): Promise<{ bToken: Token; bankId: string }> => {
-  const existingBank = appData.bankMap[token.coinType];
-  if (!!existingBank) {
-    const coinMetadataMap = await getCoinMetadataMap([existingBank.bTokenType]);
-
-    const bToken = getToken(
-      existingBank.bTokenType,
-      coinMetadataMap[existingBank.bTokenType],
-    );
-    return { bToken, bankId: existingBank.id };
-  }
+  if (hasBTokenAndBankForToken(token, appData))
+    throw new Error("BToken and bank already exist for token");
 
   // 1) Create bToken
   console.log(
@@ -107,6 +120,7 @@ export const getOrCreateBTokenAndBankForToken = async (
   );
 
   // 2) Create bank
+  // Note: If bank creation fails, a new bToken will be created next time
   console.log(
     `[createBTokenAndBankForToken] bank - Creating bank for coinType ${token.coinType}`,
   );
