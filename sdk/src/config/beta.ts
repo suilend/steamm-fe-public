@@ -7,7 +7,7 @@ export const STEAMM_BETA_CONFIG: Package<SteammConfigs> = {
   package_id:
     "0xc765782a3e13ca6d89880433bcd7137bf368860038bc52513f4e4710a92b9d13",
   published_at:
-    "0xc765782a3e13ca6d89880433bcd7137bf368860038bc52513f4e4710a92b9d13",
+    "0xcd79d7c2cdc9b3ed0ece47f1a5a9d8faa2f418328375c5cc00393ecfc1c67bbf",
   config: {
     registryId:
       "0x15fe7bd1184857440c3613126718506d26e225db5ec43ebae01f1027fcf15d34",
@@ -26,7 +26,7 @@ export const STEAMM_SCRIPT_BETA_CONFIG = {
   package_id:
     "0xeb1cdce9f21401a0c49d67ce4391ef431054da51b51b2701528f1815eb787f51",
   published_at:
-    "0xeb1cdce9f21401a0c49d67ce4391ef431054da51b51b2701528f1815eb787f51",
+    "0x93d2b8f81d1935938cfbc26590ec475ecaab8f80201dcf35019a6ae8d6ae5156",
 };
 
 export const SUILEND_BETA_CONFIG = {

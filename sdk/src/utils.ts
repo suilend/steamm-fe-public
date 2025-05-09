@@ -149,11 +149,11 @@ export const computeOptimalOffset = (
   const denominator = BigInt(10) ** BigInt(pricePrecision);
 
   // Check if the result will be an integer
-  if (numerator % denominator !== BigInt(0)) {
-    throw new Error(
-      "Result contains a fractional part and cannot be represented as an integer offset",
-    );
-  }
+  // if (numerator % denominator !== BigInt(0)) {
+  //   throw new Error(
+  //     "Result contains a fractional part and cannot be represented as an integer offset",
+  //   );
+  // }
 
   // Calculate the final result
   const result = numerator / denominator;

@@ -57,6 +57,7 @@ import {
   createToken,
   mintToken,
 } from "@/lib/launchToken";
+import { getPoolPrice } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
 
@@ -96,9 +97,7 @@ export default function LaunchTokenCard() {
   const [createPoolResult, setCreatePoolResult] = useState<
     CreatePoolAndDepositInitialLiquidityResult | undefined
   >(undefined);
-  const [hasClearedCache, setHasClearedCache] = useState<boolean>(
-    process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true" ? true : false,
-  );
+  const [hasClearedCache, setHasClearedCache] = useState<boolean>(false);
 
   // State - token
   const [showOptional, setShowOptional] = useState<boolean>(false);
@@ -201,10 +200,14 @@ export default function LaunchTokenCard() {
     const depositedSupply = new BigNumber(supply)
       .times(DEPOSITED_TOKEN_PERCENT)
       .div(100);
-    const initialPrice = INITIAL_TOKEN_MC_USD / +depositedSupply;
+
+    const quotePrice = getPoolPrice(appData.pools, quoteToken.coinType)!; // TODO: Must have pool for quote token
+
+    const initialPriceUsd = INITIAL_TOKEN_MC_USD / +depositedSupply;
+    const initialPriceQuote = +new BigNumber(initialPriceUsd).div(quotePrice);
 
     return computeOptimalOffset(
-      initialPrice,
+      initialPriceQuote,
       BigInt(
         depositedSupply
           .times(10 ** decimals)
@@ -212,9 +215,10 @@ export default function LaunchTokenCard() {
           .toString(),
       ),
       decimals,
-      quoteToken?.decimals,
+      quoteToken.decimals,
     );
-  }, [quoteToken, supply, decimals]);
+  }, [quoteToken, supply, appData.pools, decimals]);
+  console.log("xxx offset:", offset);
 
   // Submit
   const reset = () => {
@@ -226,9 +230,7 @@ export default function LaunchTokenCard() {
     setBTokensAndBankIds([undefined, undefined]);
     setCreateLpTokenResult(undefined);
     setCreatePoolResult(undefined);
-    setHasClearedCache(
-      process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true" ? true : false,
-    );
+    setHasClearedCache(false);
 
     // Token
     setShowOptional(false);

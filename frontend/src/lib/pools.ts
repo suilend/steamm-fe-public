@@ -1,6 +1,7 @@
 import BigNumber from "bignumber.js";
 
 import { PoolInfo, RedeemQuote, SteammSDK } from "@suilend/steamm-sdk";
+import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
 import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 
 import { AppData } from "@/contexts/AppContext";
@@ -109,8 +110,26 @@ export const getParsedPool = (
       console.warn(
         `Missing price for coinTypeA ${coinTypeA}, using balance ratio to calculate price (pool with id ${id}, quoterId ${quoterId})`,
       );
+      console.log(
+        "XXX poolId",
+        pool.id,
+        "balanceA:",
+        balanceA.toString(),
+        "balanceB:",
+        balanceB.toString(),
+      );
       priceA = !balanceA.eq(0)
-        ? balanceB.div(balanceA).times(priceB)
+        ? new BigNumber(
+            balanceB.plus(
+              quoterId === QuoterId.CPMM
+                ? new BigNumber(
+                    (pool.quoter as CpQuoter).offset.toString(),
+                  ).div(10 ** coinMetadataMap[coinTypes[1]].decimals)
+                : 0,
+            ),
+          )
+            .div(balanceA)
+            .times(priceB)
         : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM quoter)
     } else if (priceB === undefined) {
       console.warn(
@@ -121,6 +140,14 @@ export const getParsedPool = (
         : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM quoter)
     }
     const prices: [BigNumber, BigNumber] = [priceA, priceB];
+    if (quoterId === QuoterId.CPMM)
+      console.log(
+        "xxx prices:",
+        +prices[0].toString(),
+        +prices[1].toString(),
+        pool.id,
+        (pool.quoter as CpQuoter).offset.toString(),
+      );
 
     const lpSupply = new BigNumber(pool.lpSupply.value.toString()).div(10 ** 9);
     const tvlUsd = balanceA.times(priceA).plus(balanceB.times(priceB));
@@ -171,4 +198,11 @@ export const getParsedPool = (
       suilendWeightedAverageDepositAprPercent,
     };
   }
+};
+
+export const getPoolPrice = (pools: AppData["pools"], coinType: string) => {
+  const pool = pools.find((p) => p.coinTypes.includes(coinType));
+  if (!pool) return undefined;
+
+  return pool.coinTypes[0] === coinType ? pool.prices[0] : pool.prices[1];
 };
