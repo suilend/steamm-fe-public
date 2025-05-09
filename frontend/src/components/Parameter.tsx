@@ -2,20 +2,23 @@ import { PropsWithChildren } from "react";
 
 import { ClassValue } from "clsx";
 
-import { cn } from "@/lib/utils";
+import Tooltip from "@/components/Tooltip";
+import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 interface ParameterProps extends PropsWithChildren {
   className?: ClassValue;
-  label?: string;
   labelContainerClassName?: ClassValue;
+  label?: string;
+  labelTooltip?: string;
   labelEndDecorator?: string;
   isHorizontal?: boolean;
 }
 
 export default function Parameter({
   className,
-  label,
   labelContainerClassName,
+  label,
+  labelTooltip,
   labelEndDecorator,
   isHorizontal,
   children,
@@ -24,24 +27,37 @@ export default function Parameter({
     <div
       className={cn(
         "flex w-full",
-        isHorizontal ? "flex-row justify-between" : "flex-col gap-1",
+        isHorizontal ? "flex-row justify-between gap-4" : "flex-col gap-1",
         className,
       )}
     >
       {label && (
-        <div
-          className={cn(
-            "flex shrink-0 flex-row items-baseline gap-1.5",
-            labelContainerClassName,
-          )}
-        >
-          <p className="text-p2 text-secondary-foreground">{label}</p>
-          {labelEndDecorator && (
-            <p className="text-p3 text-tertiary-foreground">
-              {labelEndDecorator}
+        <Tooltip title={labelTooltip}>
+          <div
+            className={cn(
+              "flex w-max shrink-0 flex-row items-baseline gap-1.5",
+              labelContainerClassName,
+            )}
+          >
+            <p
+              className={cn(
+                "text-p2 text-secondary-foreground",
+                labelTooltip &&
+                  cn(
+                    "decoration-secondary-foreground/50",
+                    hoverUnderlineClassName,
+                  ),
+              )}
+            >
+              {label}
             </p>
-          )}
-        </div>
+            {labelEndDecorator && (
+              <p className="text-p3 text-tertiary-foreground">
+                {labelEndDecorator}
+              </p>
+            )}
+          </div>
+        </Tooltip>
       )}
 
       {children}

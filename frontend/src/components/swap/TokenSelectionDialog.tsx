@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { ClassValue } from "clsx";
 import { ChevronDown, Search, Wallet, X } from "lucide-react";
 
 import {
@@ -75,12 +76,22 @@ function TokenRow({ token, isSelected, onClick }: TokenRowProps) {
 }
 
 interface TokenSelectionDialogProps {
+  triggerClassName?: ClassValue;
+  triggerIconSize?: number;
+  triggerLabelSelectedClassName?: ClassValue;
+  triggerLabelUnselectedClassName?: ClassValue;
+  triggerChevronClassName?: ClassValue;
   token?: Token;
   tokens: Token[];
   onSelectToken: (token: Token) => void;
 }
 
 export default function TokenSelectionDialog({
+  triggerClassName,
+  triggerIconSize,
+  triggerLabelSelectedClassName,
+  triggerLabelUnselectedClassName,
+  triggerChevronClassName,
   token,
   tokens,
   onSelectToken,
@@ -184,14 +195,20 @@ export default function TokenSelectionDialog({
     <Dialog
       rootProps={{ open: isOpen, onOpenChange }}
       trigger={
-        <button className="group flex h-10 flex-row items-center gap-2">
-          {token && <TokenLogo token={token} size={24} />}
+        <button
+          className={cn(
+            "group flex h-10 flex-row items-center gap-2",
+            triggerClassName,
+          )}
+        >
+          {token && <TokenLogo token={token} size={triggerIconSize ?? 24} />}
           <p
             className={cn(
               token
-                ? "!text-h3 text-foreground"
+                ? cn("!text-h3 text-foreground", triggerLabelSelectedClassName)
                 : cn(
                     "!text-p1 transition-colors",
+                    triggerLabelUnselectedClassName,
                     isOpen
                       ? "text-foreground"
                       : "text-secondary-foreground group-hover:text-foreground",
@@ -201,7 +218,12 @@ export default function TokenSelectionDialog({
             {token ? token.symbol : "Select token"}
           </p>
 
-          <ChevronDown className="-ml-0.5 -mr-1 h-5 w-5 shrink-0 text-secondary-foreground transition-colors group-hover:text-foreground" />
+          <ChevronDown
+            className={cn(
+              "-ml-0.5 -mr-1 h-5 w-5 shrink-0 text-secondary-foreground transition-colors group-hover:text-foreground",
+              triggerChevronClassName,
+            )}
+          />
         </button>
       }
       headerProps={{

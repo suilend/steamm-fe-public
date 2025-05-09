@@ -135,8 +135,8 @@ export default function AddOracleCard() {
         </Parameter>
 
         <Parameter
-          label="Price identifier"
           labelContainerClassName="flex-1 items-center h-8"
+          label="Price identifier"
           isHorizontal
         >
           <div className="flex-1">

@@ -76,7 +76,7 @@ function PoolPage() {
     setTimeout(() => {
       fetchPoolTransactionHistoryMap([pool.id]);
       fetchRefreshedPool(pool.poolInfo);
-    }, 1000);
+    }, 2000);
   };
 
   const onWithdraw = async () => {
@@ -85,7 +85,7 @@ function PoolPage() {
     setTimeout(() => {
       fetchPoolTransactionHistoryMap([pool.id]);
       fetchRefreshedPool(pool.poolInfo);
-    }, 1000);
+    }, 2000);
   };
 
   const onSwap = async () => {
@@ -94,7 +94,7 @@ function PoolPage() {
     setTimeout(() => {
       fetchPoolTransactionHistoryMap([pool.id]);
       fetchRefreshedPool(pool.poolInfo);
-    }, 1000);
+    }, 2000);
   };
 
   return (

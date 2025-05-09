@@ -395,8 +395,8 @@ export default function BankCard({ bank }: BankCardProps) {
         {/* Initialize/update target util. and util. buffer */}
         <div className="flex w-full flex-col items-end gap-2">
           <Parameter
-            label="Target util."
             labelContainerClassName="flex-1 items-center h-8"
+            label="Target util."
             isHorizontal
           >
             <div className="flex-1">
@@ -410,8 +410,8 @@ export default function BankCard({ bank }: BankCardProps) {
           </Parameter>
 
           <Parameter
-            label="Util. buffer"
             labelContainerClassName="flex-1 items-center h-8"
+            label="Util. buffer"
             isHorizontal
           >
             <div className="flex-1">
@@ -457,8 +457,8 @@ export default function BankCard({ bank }: BankCardProps) {
         {/* Min. token block size */}
         <div className="flex w-full flex-col items-end gap-2">
           <Parameter
-            label="Min. token block size"
             labelContainerClassName="flex-1 items-center h-8"
+            label="Min. token block size"
             isHorizontal
           >
             <div className="flex-1">
@@ -681,7 +681,7 @@ export default function BankCard({ bank }: BankCardProps) {
                 </div>
               </Tooltip>
             ) : (
-              <p className="text-p2 text-secondary-foreground">--</p>
+              <p className="text-p2 text-foreground">--</p>
             )}
 
             <button

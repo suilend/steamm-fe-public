@@ -41,28 +41,8 @@ import { OracleType } from "@/lib/oracles";
 import { fetchPool, getParsedPool } from "@/lib/pools";
 import { ParsedBank, ParsedPool } from "@/lib/types";
 
-const TEST_BANK_COIN_TYPES = [
-  "0x02242e71c54b389c5e4001c2635c598469c5900020cc873e21d01a542124b260::zxcv::ZXCV",
-  "0x990988b4d1297c9d9bad49a43717bd46b37c6fe5546d789274e94a6bfa8e4632::asdd::ASDD",
-  "0xfaccf97bcd174fdd11c9f540085a2dfe5a1aa1d861713b2887271a41c6fe9556::bzbz::BZBZ",
-  "0x6d73ca1798d868a3320e32be4657969175793356b499e4e32240a2ff071c7ead::ott::OTT",
-  "0x235a314a92d8dddfd72e002aeb00f69c5e23bb27d53637d74e928bac94ed0d9a::orng::ORNG",
-  "0x601c6056be147470ff3fae945e9488abf8dd776e3921684ed6f5d931795e5b4d::ttt::TTT",
-  "0x55708349d3786db6ad10a6d6709528b666b1be9479d0e7dbcff9671fe09747b5::zxc::ZXC",
-];
-
-const TEST_POOL_IDS = [
-  "0x9bac3b28b5960f791e0526b3c5bcea889c2bce56a8dd37fc39a532fe8d49baec",
-  "0x56d3919cdbdf22c0a4d60471c045e07fd0ba37d0b8fe2577b22408c17141f692",
-  "0x2c76690cd6ef9607212b4e72aa3292bcf74843586ffbef61f781d1afecc19a37",
-  "0x1d4cf16a1a83883117577a3e5e4dbe2aab8016dc67bf2451c4671d400d9f05c9",
-  "0x843c212b9a37fb0c5f6c02d227a861515e0346f62abb41ebed3983899d618f0d",
-  "0x6a8b1f29b7f7b4d0ad5c53f95fa9081ac62bf3895d196d5abac001e465c72661",
-  "0x5376f6262948204581fcdbd14808613b8890655d868ad615e2c8a4ef5397783f",
-  "0x31abe0dfec024f6b794f462e078b6713e94fd5d5b2ea39bb0a0329cdf41210e7", // DMC test pool
-  "0xee46df0cf257d6fb91792fa9837f54a24377d3c7b43a2a96283aced4cda96f78", // GMB test pool
-  "0x7ac91a9b9197a669b902bf51faa2ed609cebb178c21af5dc55aa3ad02ecf3f3a", // FUD test pool
-];
+const TEST_BANK_COIN_TYPES: string[] = [];
+const TEST_POOL_IDS: string[] = [];
 
 type BankObj = {
   bankInfo: BankInfo;
