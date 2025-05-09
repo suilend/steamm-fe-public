@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import { useMemo } from "react";
 
 import BigNumber from "bignumber.js";
+import { ChartNoAxesCombined, Database } from "lucide-react";
 
 import { formatUsd } from "@suilend/frontend-sui";
 import { shallowPushQuery } from "@suilend/frontend-sui-next";
@@ -104,7 +105,7 @@ export default function PoolChartCard() {
     poolHistoricalStats.volumeUsd_7d[pool.id] === undefined ||
     poolHistoricalStats.feesUsd_7d[pool.id] === undefined
   )
-    return <Skeleton className="h-[265px] w-full md:h-[325px]" />;
+    return <Skeleton className="h-[265px] w-full rounded-md md:h-[325px]" />;
   if (
     poolHistoricalStats.tvlUsd_7d[pool.id].every((d) => d.tvlUsd_7d === 0) &&
     poolHistoricalStats.volumeUsd_7d[pool.id].every(
@@ -112,7 +113,12 @@ export default function PoolChartCard() {
     ) &&
     poolHistoricalStats.feesUsd_7d[pool.id].every((d) => d.feesUsd_7d === 0)
   )
-    return null;
+    return (
+      <div className="flex h-[265px] w-full flex-col items-center justify-center gap-2 rounded-md bg-card/50 md:h-[325px]">
+        <ChartNoAxesCombined className="h-5 w-5 text-secondary-foreground" />
+        <p className="text-p2 text-secondary-foreground">No data yet</p>
+      </div>
+    );
   return (
     <div className="relative w-full rounded-md border p-5">
       <HistoricalDataChart
