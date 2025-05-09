@@ -62,8 +62,12 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
         const redeemQuote = await steammClient.Pool.quoteRedeem({
           lpTokens: pool.lpSupply.value,
           poolInfo: _poolInfo,
-          bankInfoA: appData.bankMap[_poolInfo.coinTypeA].bankInfo,
-          bankInfoB: appData.bankMap[_poolInfo.coinTypeB].bankInfo,
+          bankInfoA:
+            appData.bankMap[appData.bTokenTypeCoinTypeMap[_poolInfo.coinTypeA]]
+              .bankInfo,
+          bankInfoB:
+            appData.bankMap[appData.bTokenTypeCoinTypeMap[_poolInfo.coinTypeB]]
+              .bankInfo,
         });
 
         const parsedPool = getParsedPool(appData, _poolInfo, pool, redeemQuote);

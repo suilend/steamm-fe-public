@@ -12,6 +12,8 @@ import { normalizeSuiAddress } from "@mysten/sui/utils";
 
 import { WalletContext } from "@suilend/frontend-sui-next";
 
+import { LAUNCH_TOKEN_PACKAGE_ID } from "@/lib/launchToken";
+
 export const generate_bytecode = (
   module: string,
   type: string,
@@ -20,6 +22,7 @@ export const generate_bytecode = (
   description: string,
   iconUrl: string,
   decimals?: number,
+  options?: { isLaunchToken?: boolean },
 ): Uint8Array<ArrayBufferLike> => {
   console.log("[generate_bytecode] Generating bytecode", {
     module,
@@ -32,7 +35,9 @@ export const generate_bytecode = (
   });
 
   const bytecode = Buffer.from(
-    "oRzrCwYAAAAKAQAMAgweAyonBFEIBVlMB6UBywEI8AJgBtADXQqtBAUMsgQoABABCwIGAhECEgITAAICAAEBBwEAAAIADAEAAQIDDAEAAQQEAgAFBQcAAAkAAQABDwUGAQACBwgJAQIDDAUBAQwDDQ0BAQwEDgoLAAUKAwQAAQQCBwQMAwICCAAHCAQAAQsCAQgAAQoCAQgFAQkAAQsBAQkAAQgABwkAAgoCCgIKAgsBAQgFBwgEAgsDAQkACwIBCQABBggEAQUBCwMBCAACCQAFDENvaW5NZXRhZGF0YQZPcHRpb24IVEVNUExBVEULVHJlYXN1cnlDYXAJVHhDb250ZXh0A1VybARjb2luD2NyZWF0ZV9jdXJyZW5jeQtkdW1teV9maWVsZARpbml0FW5ld191bnNhZmVfZnJvbV9ieXRlcwZvcHRpb24TcHVibGljX3NoYXJlX29iamVjdA9wdWJsaWNfdHJhbnNmZXIGc2VuZGVyBHNvbWUIdGVtcGxhdGUIdHJhbnNmZXIKdHhfY29udGV4dAN1cmwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAQkKAgUEVE1QTAoCDg1UZW1wbGF0ZSBDb2luCgIaGVRlbXBsYXRlIENvaW4gRGVzY3JpcHRpb24KAiEgaHR0cHM6Ly9leGFtcGxlLmNvbS90ZW1wbGF0ZS5wbmcAAgEIAQAAAAACEgsABwAHAQcCBwMHBBEGOAAKATgBDAILAS4RBTgCCwI4AwIA=",
+    !options?.isLaunchToken
+      ? "oRzrCwYAAAAKAQAMAgweAyonBFEIBVlMB6UBywEI8AJgBtADXQqtBAUMsgQoABABCwIGAhECEgITAAICAAEBBwEAAAIADAEAAQIDDAEAAQQEAgAFBQcAAAkAAQABDwUGAQACBwgJAQIDDAUBAQwDDQ0BAQwEDgoLAAUKAwQAAQQCBwQMAwICCAAHCAQAAQsCAQgAAQoCAQgFAQkAAQsBAQkAAQgABwkAAgoCCgIKAgsBAQgFBwgEAgsDAQkACwIBCQABBggEAQUBCwMBCAACCQAFDENvaW5NZXRhZGF0YQZPcHRpb24IVEVNUExBVEULVHJlYXN1cnlDYXAJVHhDb250ZXh0A1VybARjb2luD2NyZWF0ZV9jdXJyZW5jeQtkdW1teV9maWVsZARpbml0FW5ld191bnNhZmVfZnJvbV9ieXRlcwZvcHRpb24TcHVibGljX3NoYXJlX29iamVjdA9wdWJsaWNfdHJhbnNmZXIGc2VuZGVyBHNvbWUIdGVtcGxhdGUIdHJhbnNmZXIKdHhfY29udGV4dAN1cmwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAQkKAgUEVE1QTAoCDg1UZW1wbGF0ZSBDb2luCgIaGVRlbXBsYXRlIENvaW4gRGVzY3JpcHRpb24KAiEgaHR0cHM6Ly9leGFtcGxlLmNvbS90ZW1wbGF0ZS5wbmcAAgEIAQAAAAACEgsABwAHAQcCBwMHBBEGOAAKATgBDAILAS4RBTgCCwI4AwIA="
+      : "oRzrCwYAAAAKAQAMAgwYAyQbBD8GBUVAB4UBsgEItwJgBpcDXQr0AwUM+QMrAAwBBQEOAQ8BEAINAAECAAEADAEAAQECDAEAAQMDAgAEBAcAAAgAAQACCgsBAQwDCwgJAAQJAwQABQYGBwECBAUBCgECAggABwgDAAELAQEIAAEKAgEIBAEIAAcJAAIKAgoCCgIIBAcIAwILAgEJAAsBAQkAAQYIAwEFAQsCAQgAAgkABQxDb2luTWV0YWRhdGEIVEVNUExBVEULVHJlYXN1cnlDYXAJVHhDb250ZXh0A1VybARjb2luD2NyZWF0ZV9jdXJyZW5jeQtkdW1teV9maWVsZARpbml0FW5ld191bnNhZmVfZnJvbV9ieXRlcw9wdWJsaWNfdHJhbnNmZXIGc2VuZGVyCHRlbXBsYXRlDXRva2VuX2VtaXR0ZXIIdHJhbnNmZXIKdHhfY29udGV4dAN1cmwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC9AVLTJZ+pkFzRT9ZOg7JjLaqNRY1y8QS9P31+AS7mNsCAQAKAgUEVE1QTAoCDg1UZW1wbGF0ZSBDb2luCgIaGVRlbXBsYXRlIENvaW4gRGVzY3JpcHRpb24KAiEgaHR0cHM6Ly9leGFtcGxlLmNvbS90ZW1wbGF0ZS5wbmcAAgEHAQAAAAACFAsABwAHAQcCBwMHBBEDCgE4AAwCCgEuEQI4AQsCCwEuEQI4AgIA",
     "base64",
   );
 
@@ -94,12 +99,19 @@ export const createCoin = async (
   bytecode: Uint8Array<ArrayBufferLike>,
   address: string,
   signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
+  options?: { isLaunchToken?: boolean },
 ): Promise<CreateCoinResult> => {
   const transaction = new Transaction();
 
   const [upgradeCap] = transaction.publish({
     modules: [[...bytecode]],
-    dependencies: [normalizeSuiAddress("0x1"), normalizeSuiAddress("0x2")],
+    dependencies: !options?.isLaunchToken
+      ? [normalizeSuiAddress("0x1"), normalizeSuiAddress("0x2")]
+      : [
+          normalizeSuiAddress("0x1"),
+          normalizeSuiAddress("0x2"),
+          normalizeSuiAddress(LAUNCH_TOKEN_PACKAGE_ID),
+        ],
   });
   transaction.transferObjects([upgradeCap], transaction.pure.address(address));
 
