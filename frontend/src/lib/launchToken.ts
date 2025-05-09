@@ -12,6 +12,9 @@ import {
 import { QuoterId } from "@/lib/types";
 
 // Token
+export const LAUNCH_TOKEN_PACKAGE_ID =
+  "0xf4054b4c967ea64173453f593a0ec98cb6aa351635cbc412f4fdf5f804bb98db";
+
 export const BLACKLISTED_WORDS = [
   // Sui
   "sui",
@@ -155,9 +158,11 @@ export const createToken = async (
       description,
       iconUrl,
       decimals,
+      { isLaunchToken: true },
     ),
     address,
     signExecuteAndWaitForTransaction,
+    { isLaunchToken: true },
   );
 
   return createTokenResult;
@@ -183,7 +188,7 @@ export const mintToken = async (
   const transaction = new Transaction();
 
   const mintedCoin = transaction.moveCall({
-    target: "0x2::coin::mint",
+    target: `${LAUNCH_TOKEN_PACKAGE_ID}::token_emitter::mint`,
     arguments: [
       transaction.object(createTokenResult.treasuryCapId),
       transaction.pure.u64(supplyAmount),
