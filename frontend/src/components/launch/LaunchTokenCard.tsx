@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
-import { Check, ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import {
   NORMALIZED_SUI_COINTYPE,
@@ -21,7 +21,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
+import { ADMIN_ADDRESS, computeOptimalOffset } from "@suilend/steamm-sdk";
 
 import Divider from "@/components/Divider";
 import IconUpload from "@/components/launch/IconUpload";
@@ -48,9 +48,9 @@ import {
   BLACKLISTED_WORDS,
   DEFAULT_TOKEN_DECIMALS,
   DEFAULT_TOKEN_SUPPLY,
-  DEPOSITED_QUOTE_ASSET,
   DEPOSITED_TOKEN_PERCENT,
   FEE_TIER_PERCENT,
+  INITIAL_TOKEN_MC_USD,
   MAX_FILE_SIZE_BYTES,
   MintTokenResult,
   QUOTER_ID,
@@ -195,6 +195,27 @@ export default function LaunchTokenCard() {
   // State - pool - burn LP tokens
   const [burnLpTokens, setBurnLpTokens] = useState<boolean>(false);
 
+  const offset: bigint | undefined = useMemo(() => {
+    if (quoteToken === undefined) return undefined;
+
+    const depositedSupply = new BigNumber(supply)
+      .times(DEPOSITED_TOKEN_PERCENT)
+      .div(100);
+    const initialPrice = INITIAL_TOKEN_MC_USD / +depositedSupply;
+
+    return computeOptimalOffset(
+      initialPrice,
+      BigInt(
+        depositedSupply
+          .times(10 ** decimals)
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString(),
+      ),
+      decimals,
+      quoteToken?.decimals,
+    );
+  }, [quoteToken, supply, decimals]);
+
   // Submit
   const reset = () => {
     // Progress
@@ -303,18 +324,6 @@ export default function LaunchTokenCard() {
 
     if (quoteAssetCoinType === undefined)
       return { isDisabled: true, title: "Select a quote asset" };
-    if (
-      isSui(quoteAssetCoinType) &&
-      new BigNumber(getBalance(NORMALIZED_SUI_COINTYPE).minus(SUI_GAS_MIN)).lt(
-        DEPOSITED_QUOTE_ASSET,
-      )
-    )
-      return {
-        isDisabled: true,
-        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
-      };
-    if (getBalance(quoteAssetCoinType).lt(DEPOSITED_QUOTE_ASSET))
-      return { isDisabled: true, title: `Insufficient ${quoteToken!.symbol}` };
 
     // Failed
     if (hasFailed) return { isDisabled: false, title: "Retry" };
@@ -456,7 +465,7 @@ export default function LaunchTokenCard() {
           .times(DEPOSITED_TOKEN_PERCENT)
           .div(100)
           .toFixed(decimals, BigNumber.ROUND_DOWN),
-        DEPOSITED_QUOTE_ASSET.toString(),
+        "0",
       ] as [string, string];
 
       let _createPoolResult = createPoolResult;
@@ -465,6 +474,7 @@ export default function LaunchTokenCard() {
           tokens,
           values,
           QUOTER_ID,
+          offset,
           undefined,
           FEE_TIER_PERCENT,
           bTokens,
@@ -670,29 +680,19 @@ export default function LaunchTokenCard() {
             {/* Deposited */}
             <Parameter label="Initial liquidity" isHorizontal>
               {quoteToken ? (
-                <div className="flex flex-row flex-wrap items-center justify-end gap-x-2 gap-y-1">
-                  <p className="text-p2 text-foreground">
-                    {formatToken(
-                      new BigNumber(supply)
-                        .times(DEPOSITED_TOKEN_PERCENT)
-                        .div(100),
-                      { dp: decimals, trimTrailingZeros: true },
-                    )}{" "}
-                    {symbol || "tokens"} (
-                    {formatPercent(new BigNumber(DEPOSITED_TOKEN_PERCENT), {
-                      dp: 0,
-                    })}
-                    )
-                  </p>
-                  <Plus className="h-4 w-4 text-tertiary-foreground" />
-                  <p className="text-p2 text-foreground">
-                    {formatToken(new BigNumber(DEPOSITED_QUOTE_ASSET), {
-                      dp: quoteToken.decimals,
-                      trimTrailingZeros: true,
-                    })}{" "}
-                    {quoteToken!.symbol}
-                  </p>
-                </div>
+                <p className="text-p2 text-foreground">
+                  {formatToken(
+                    new BigNumber(supply)
+                      .times(DEPOSITED_TOKEN_PERCENT)
+                      .div(100),
+                    { dp: decimals, trimTrailingZeros: true },
+                  )}{" "}
+                  {symbol || "tokens"} (
+                  {formatPercent(new BigNumber(DEPOSITED_TOKEN_PERCENT), {
+                    dp: 0,
+                  })}
+                  )
+                </p>
               ) : (
                 <p className="text-p2 text-foreground">--</p>
               )}

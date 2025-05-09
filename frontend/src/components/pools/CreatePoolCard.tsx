@@ -531,6 +531,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
           tokens,
           values,
           quoterId,
+          undefined,
           amplifier,
           feeTierPercent,
           bTokens,

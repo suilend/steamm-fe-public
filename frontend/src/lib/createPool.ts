@@ -206,7 +206,8 @@ export const createPoolAndDepositInitialLiquidity = async (
   tokens: [Token, Token],
   values: [string, string],
   quoterId: QuoterId,
-  amplifier: number | undefined,
+  cpmmOffset: bigint | undefined,
+  oracleV2Amplifier: number | undefined,
   feeTierPercent: number,
   bTokens: [Token, Token],
   bankIds: [string, string],
@@ -223,7 +224,8 @@ export const createPoolAndDepositInitialLiquidity = async (
       tokens,
       values,
       quoterId,
-      amplifier,
+      cpmmOffset,
+      oracleV2Amplifier,
       feeTierPercent,
       bTokens,
       bankIds,
@@ -251,7 +253,7 @@ export const createPoolAndDepositInitialLiquidity = async (
   if (quoterId === QuoterId.ORACLE_V2) {
     // Won't happen in practice, as we don't allow the user to create a pool with
     // an Oracle V2 quoter if the amplifier is not set
-    if (!amplifier)
+    if (!oracleV2Amplifier)
       throw new Error(
         `Amplifier is required for ${QUOTER_ID_NAME_MAP[quoterId]} quoter`,
       );
@@ -278,7 +280,7 @@ export const createPoolAndDepositInitialLiquidity = async (
     poolArgs = {
       ...createPoolBaseArgs,
       type: "ConstantProduct" as const,
-      offset: BigInt(0), // TODO
+      offset: BigInt(cpmmOffset ?? 0),
     };
   } else if (quoterId === QuoterId.ORACLE) {
     poolArgs = {
@@ -301,7 +303,7 @@ export const createPoolAndDepositInitialLiquidity = async (
       coinMetaA: tokens[0].id!,
       coinTypeB: tokens[1].coinType,
       coinMetaB: tokens[1].id!,
-      amplifier: BigInt(amplifier!), // Checked above
+      amplifier: BigInt(oracleV2Amplifier!), // Checked above
     };
   } else {
     throw new Error("Invalid quoterId");
