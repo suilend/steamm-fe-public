@@ -10,6 +10,7 @@ import {
 } from "@suilend/frontend-sui";
 import { useSettingsContext } from "@suilend/frontend-sui-next";
 import { SwapQuote } from "@suilend/steamm-sdk";
+import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
@@ -34,6 +35,20 @@ export default function PoolParametersCard() {
   const { pool } = usePoolContext();
 
   // Current price
+  const getOraclePrice = (index: number): BigNumber => {
+    if (![QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId))
+      throw new Error(
+        `Pool with id ${pool.id} has quoterId ${pool.quoterId} - expected ${QuoterId.ORACLE} or ${QuoterId.ORACLE_V2}`,
+      );
+
+    const quoter = pool.pool.quoter as OracleQuoter | OracleQuoterV2;
+    const oracleIndex = +(
+      index === 0 ? quoter.oracleIndexA : quoter.oracleIndexB
+    ).toString();
+
+    return appData.oracleIndexOracleInfoPriceMap[oracleIndex].price;
+  };
+
   const [quoteMap, setQuoteMap] = useState<Record<string, SwapQuote>>({});
   const quote =
     pool.quoterId === QuoterId.CPMM
@@ -47,11 +62,7 @@ export default function PoolParametersCard() {
               .toString(),
           ),
           amountOut: BigInt(
-            new BigNumber(
-              appData.coinTypeOracleInfoPriceMap[pool.coinTypes[0]].price.div(
-                appData.coinTypeOracleInfoPriceMap[pool.coinTypes[1]].price,
-              ),
-            )
+            new BigNumber(getOraclePrice(0).div(getOraclePrice(1)))
               .times(10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals)
               .integerValue(BigNumber.ROUND_DOWN)
               .toString(),
