@@ -25,7 +25,7 @@ import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
 
 import Divider from "@/components/Divider";
 import IconUpload from "@/components/launch/IconUpload";
-import LaunchStepsDialog from "@/components/launch/LaunchStepsDialog";
+import LaunchTokenStepsDialog from "@/components/launch/LaunchTokenStepsDialog";
 import Parameter from "@/components/Parameter";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
@@ -274,7 +274,7 @@ export default function LaunchTokenCard() {
         isDisabled: true,
         title: "Symbol can't be the same as the name",
       };
-    // Don't enforce symbol uniqueness for admin
+    // Don't enforce symbol uniqueness
 
     // Description
     if (description.length > 256)
@@ -304,16 +304,17 @@ export default function LaunchTokenCard() {
     if (quoteAssetCoinType === undefined)
       return { isDisabled: true, title: "Select a quote asset" };
     if (
-      new BigNumber(
-        getBalance(quoteAssetCoinType).minus(
-          isSui(quoteAssetCoinType) ? SUI_GAS_MIN : 0,
-        ),
-      ).lt(DEPOSITED_QUOTE_ASSET)
+      isSui(quoteAssetCoinType) &&
+      new BigNumber(getBalance(NORMALIZED_SUI_COINTYPE).minus(SUI_GAS_MIN)).lt(
+        DEPOSITED_QUOTE_ASSET,
+      )
     )
       return {
         isDisabled: true,
-        title: `Insufficient ${quoteToken!.symbol}`,
+        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
       };
+    if (getBalance(quoteAssetCoinType).lt(DEPOSITED_QUOTE_ASSET))
+      return { isDisabled: true, title: `Insufficient ${quoteToken!.symbol}` };
 
     // Failed
     if (hasFailed) return { isDisabled: false, title: "Retry" };
@@ -504,7 +505,7 @@ export default function LaunchTokenCard() {
 
   return (
     <>
-      <LaunchStepsDialog
+      <LaunchTokenStepsDialog
         isOpen={isSubmitting || hasClearedCache}
         createTokenResult={createTokenResult}
         mintTokenResult={mintTokenResult}

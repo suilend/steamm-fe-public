@@ -2,11 +2,10 @@ import Link from "next/link";
 import { useMemo } from "react";
 
 import { SuiTransactionBlockResponse } from "@mysten/sui/client";
-import { Check, ExternalLink, Loader2 } from "lucide-react";
-
-import { useSettingsContext } from "@suilend/frontend-sui-next";
+import { ExternalLink } from "lucide-react";
 
 import Dialog from "@/components/Dialog";
+import Step from "@/components/Step";
 import SubmitButton from "@/components/SubmitButton";
 import { CreateCoinResult } from "@/lib/createCoin";
 import {
@@ -16,70 +15,8 @@ import {
 import { GetBTokenAndBankForTokenResult } from "@/lib/createPool";
 import { MintTokenResult } from "@/lib/launchToken";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
-import { cn } from "@/lib/utils";
 
-interface StepProps {
-  number: number;
-  title: string;
-  isCompleted?: boolean;
-  isCurrent?: boolean;
-  res?: SuiTransactionBlockResponse[];
-}
-
-function Step({ number, title, isCurrent, isCompleted, res }: StepProps) {
-  const { explorer } = useSettingsContext();
-
-  return (
-    <div className="flex w-full flex-row items-center gap-3">
-      <div
-        className={cn(
-          "flex h-6 w-6 flex-row items-center justify-center rounded-full",
-          isCompleted
-            ? "bg-success"
-            : isCurrent
-              ? "bg-transparent"
-              : "bg-border",
-        )}
-      >
-        {isCompleted ? (
-          <Check className="h-4 w-4 text-background" />
-        ) : isCurrent ? (
-          <Loader2 className="h-6 w-6 animate-spin text-foreground" />
-        ) : (
-          <p className="text-p3 text-secondary-foreground">{number}</p>
-        )}
-      </div>
-
-      <div className="flex flex-row items-center gap-2">
-        <p
-          className={cn(
-            "!text-p1 transition-colors",
-            isCurrent ? "text-foreground" : "text-secondary-foreground",
-          )}
-        >
-          {title}
-        </p>
-
-        {isCompleted && (
-          <div className="flex flex-row items-center gap-1">
-            {(res ?? []).map((r, index) => (
-              <Link
-                key={index}
-                className="block flex flex-col justify-center text-secondary-foreground transition-colors hover:text-foreground"
-                href={explorer.buildTxUrl(r.digest)}
-                target="_blank"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-interface LaunchStepsDialogProps {
+interface LaunchTokenStepsDialogProps {
   isOpen: boolean;
   createTokenResult: CreateCoinResult | undefined;
   mintTokenResult: MintTokenResult | undefined;
@@ -101,7 +38,7 @@ interface LaunchStepsDialogProps {
   reset: () => void;
 }
 
-export default function LaunchStepsDialog({
+export default function LaunchTokenStepsDialog({
   isOpen,
   createTokenResult,
   mintTokenResult,
@@ -110,7 +47,7 @@ export default function LaunchStepsDialog({
   createPoolResult,
   hasClearedCache,
   reset,
-}: LaunchStepsDialogProps) {
+}: LaunchTokenStepsDialogProps) {
   const currentStep: number = useMemo(() => {
     if (createTokenResult === undefined) return 1;
     if (mintTokenResult === undefined) return 2;
@@ -136,12 +73,8 @@ export default function LaunchStepsDialog({
         onOpenChange: !hasClearedCache ? undefined : reset,
       }}
       headerProps={{
-        title: {
-          children: !hasClearedCache ? "Launching token" : "Launched token",
-        },
-        description: !hasClearedCache
-          ? "Don't close the window or refresh the page"
-          : "Created pool and deposited initial liquidity",
+        title: { children: "Launch token" },
+        description: "Don't close the window or refresh the page",
         showCloseButton: !hasClearedCache ? false : true,
       }}
       dialogContentInnerClassName="max-w-sm"

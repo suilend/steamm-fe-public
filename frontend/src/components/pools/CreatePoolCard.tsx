@@ -1,9 +1,7 @@
-import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
-import { ExternalLink } from "lucide-react";
 
 import {
   NORMALIZED_SUI_COINTYPE,
@@ -26,16 +24,20 @@ import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/struct
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import Divider from "@/components/Divider";
 import Parameter from "@/components/Parameter";
+import CreatePoolStepsDialog from "@/components/pools/CreatePoolStepsDialog";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useBirdeyeUsdPrices from "@/hooks/useBirdeyeUsdPrices";
-import { initializeCoinCreation } from "@/lib/createCoin";
+import { CreateCoinResult, initializeCoinCreation } from "@/lib/createCoin";
 import {
   AMPLIFIERS,
+  CreateBTokenAndBankForTokenResult,
+  CreatePoolAndDepositInitialLiquidityResult,
   FEE_TIER_PERCENTS,
+  GetBTokenAndBankForTokenResult,
   createBTokenAndBankForToken,
   createLpToken,
   createPoolAndDepositInitialLiquidity,
@@ -48,7 +50,7 @@ import {
   formatPair,
   formatTextInputValue,
 } from "@/lib/format";
-import { API_URL, POOL_URL_PREFIX } from "@/lib/navigation";
+import { API_URL } from "@/lib/navigation";
 import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
@@ -60,7 +62,7 @@ interface CreatePoolCardProps {
 }
 
 export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
-  const { explorer } = useSettingsContext();
+  const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
@@ -75,13 +77,36 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
     [address, noWhitelist, flags?.steammCreatePoolWhitelist],
   );
 
-  // State
-  const [createdPoolId, setCreatedPoolId] = useState<string | undefined>(
-    undefined,
+  // State - progress
+  const [hasFailed, setHasFailed] = useState<boolean>(false);
+
+  const [bTokensAndBankIds, setBTokensAndBankIds] = useState<
+    [
+      (
+        | GetBTokenAndBankForTokenResult
+        | CreateBTokenAndBankForTokenResult
+        | undefined
+      ),
+      (
+        | GetBTokenAndBankForTokenResult
+        | CreateBTokenAndBankForTokenResult
+        | undefined
+      ),
+    ]
+  >([undefined, undefined]);
+  const [createLpTokenResult, setCreateLpTokenResult] = useState<
+    CreateCoinResult | undefined
+  >(undefined);
+  const [createPoolResult, setCreatePoolResult] = useState<
+    CreatePoolAndDepositInitialLiquidityResult | undefined
+  >(undefined);
+  const [hasClearedCache, setHasClearedCache] = useState<boolean>(
+    process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true" ? true : false,
   );
 
   // CoinTypes
   const [coinTypes, setCoinTypes] = useState<[string, string]>(["", ""]);
+  const baseAssetCoinInputRef = useRef<HTMLInputElement>(null);
 
   // Quoter
   const [quoterId, setQuoterId] = useState<QuoterId | undefined>(undefined);
@@ -211,19 +236,18 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
   const baseTokens = useMemo(
     () =>
       Object.entries(balancesCoinMetadataMap ?? {})
-        .sort(
-          ([, a], [, b]) =>
-            a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1, // Sort by symbol (ascending)
-        )
         .filter(([coinType]) => getBalance(coinType).gt(0))
-        .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
         .filter(
-          (token) =>
+          ([coinType]) =>
             quoterId === undefined ||
             !(
               [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId) &&
-              appData.COINTYPE_ORACLE_INDEX_MAP[token.coinType] === undefined
+              appData.COINTYPE_ORACLE_INDEX_MAP[coinType] === undefined
             ),
+        )
+        .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
+        .sort(
+          (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
         ),
     [
       balancesCoinMetadataMap,
@@ -313,9 +337,20 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
 
   // Submit
   const reset = () => {
-    setCreatedPoolId(undefined);
+    // Progress
+    setHasFailed(false);
 
+    setBTokensAndBankIds([undefined, undefined]);
+    setCreateLpTokenResult(undefined);
+    setCreatePoolResult(undefined);
+    setHasClearedCache(
+      process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true" ? true : false,
+    );
+
+    // Pool
     setCoinTypes(["", ""]);
+    setTimeout(() => baseAssetCoinInputRef.current?.focus(), 100); // After dialog is closed
+
     setValues(["", ""]);
     setLastActiveInputIndex(undefined);
     setQuoterId(undefined);
@@ -330,6 +365,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
     if (!isWhitelisted)
       return { isDisabled: true, title: "Create pool and deposit" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
+    if (hasClearedCache) return { isDisabled: true, isSuccess: true };
 
     if (coinTypes.some((coinType) => coinType === ""))
       return { isDisabled: true, title: "Select tokens" };
@@ -390,6 +426,9 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
         };
     }
 
+    // Failed
+    if (hasFailed) return { isDisabled: false, title: "Retry" };
+
     return {
       isDisabled: false,
       title: "Create pool and deposit",
@@ -415,85 +454,117 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
       await initializeCoinCreation();
 
       // 1) Get/create bTokens and banks (2 transactions for each missing bToken+bank pair = 0, 2, or 4 transactions in total)
-      const bTokensAndBankIds = (await Promise.all(
-        tokens.map((token) =>
-          hasBTokenAndBankForToken(token, appData)
-            ? getBTokenAndBankForToken(token, appData)
-            : (async () => {
-                const { bToken, bankId } = await createBTokenAndBankForToken(
-                  token,
-                  steammClient,
+      const _bTokensAndBankIds = bTokensAndBankIds;
+      if (
+        _bTokensAndBankIds.some(
+          (bTokenAndBankId) => bTokenAndBankId === undefined,
+        )
+      ) {
+        for (const index of [0, 1]) {
+          if (_bTokensAndBankIds[index] === undefined) {
+            _bTokensAndBankIds[index] = hasBTokenAndBankForToken(
+              tokens[index],
+              appData,
+            )
+              ? await getBTokenAndBankForToken(
+                  tokens[index],
+                  suiClient,
                   appData,
-                  address,
-                  signExecuteAndWaitForTransaction,
-                );
-                await new Promise((resolve) => setTimeout(resolve, 2000));
+                )
+              : await (async () => {
+                  const result = await createBTokenAndBankForToken(
+                    tokens[index],
+                    steammClient,
+                    appData,
+                    address,
+                    signExecuteAndWaitForTransaction,
+                  );
+                  await new Promise((resolve) => setTimeout(resolve, 2000));
 
-                return { bToken, bankId };
-              })(),
-        ),
-      )) as [
-        { bToken: Token; bankId: string },
-        { bToken: Token; bankId: string },
-      ];
+                  return result;
+                })();
 
-      const bTokens = bTokensAndBankIds.map(({ bToken }) => bToken) as [
-        Token,
-        Token,
-      ];
-      const bankIds = bTokensAndBankIds.map(({ bankId }) => bankId) as [
-        string,
-        string,
-      ];
+            setBTokensAndBankIds(
+              (prev) =>
+                [0, 1].map((i) =>
+                  i === index ? _bTokensAndBankIds[index] : prev[i],
+                ) as [
+                  (
+                    | GetBTokenAndBankForTokenResult
+                    | CreateBTokenAndBankForTokenResult
+                    | undefined
+                  ),
+                  (
+                    | GetBTokenAndBankForTokenResult
+                    | CreateBTokenAndBankForTokenResult
+                    | undefined
+                  ),
+                ],
+            );
+          }
+        }
+      }
+
+      const bTokens = _bTokensAndBankIds.map(
+        (bTokenAndBankId) => bTokenAndBankId!.bToken,
+      ) as [Token, Token];
+      const bankIds = _bTokensAndBankIds.map(
+        (bTokenAndBankId) => bTokenAndBankId!.bankId,
+      ) as [string, string];
 
       // 2) Create LP token (1 transaction)
-      const createLpTokenResult = await createLpToken(
-        bTokens,
-        address,
-        signExecuteAndWaitForTransaction,
-      );
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      let _createLpTokenResult = createLpTokenResult;
+      if (_createLpTokenResult === undefined) {
+        _createLpTokenResult = await createLpToken(
+          bTokens,
+          address,
+          signExecuteAndWaitForTransaction,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        setCreateLpTokenResult(_createLpTokenResult);
+      }
 
       // 3) Create pool and deposit initial liquidity (1 transaction)
-      const { res, poolId } = await createPoolAndDepositInitialLiquidity(
-        tokens,
-        values,
-        quoterId,
-        amplifier,
-        feeTierPercent,
-        bTokens,
-        bankIds,
-        createLpTokenResult,
-        false,
-        steammClient,
-        appData,
-        address,
-        signExecuteAndWaitForTransaction,
-      );
-
-      const txUrl = explorer.buildTxUrl(res.digest);
-
-      showSuccessTxnToast(
-        `Created ${formatPair(tokens.map((token) => token.symbol))} pool`,
-        txUrl,
-        {
-          description: [
-            QUOTER_ID_NAME_MAP[quoterId],
-            formatFeeTier(new BigNumber(feeTierPercent)),
-          ].join(", "),
-        },
-      );
-
-      if (process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET !== "true") {
-        await fetch(`${API_URL}/steamm/clear-cache`); // Clear cache
-        await new Promise((resolve) => {
-          setTimeout(() => resolve(true), 2000);
-        }); // Wait 2 seconds before showing Go to pool button
+      let _createPoolResult = createPoolResult;
+      if (_createPoolResult === undefined) {
+        _createPoolResult = await createPoolAndDepositInitialLiquidity(
+          tokens,
+          values,
+          quoterId,
+          amplifier,
+          feeTierPercent,
+          bTokens,
+          bankIds,
+          _createLpTokenResult,
+          false,
+          steammClient,
+          appData,
+          address,
+          signExecuteAndWaitForTransaction,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        setCreatePoolResult(_createPoolResult);
       }
-      setCreatedPoolId(poolId);
+
+      const _hasClearedCache = hasClearedCache;
+      if (!_hasClearedCache) {
+        await fetch(`${API_URL}/steamm/clear-cache`);
+
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        setHasClearedCache(true);
+      }
+
+      const txUrl = explorer.buildTxUrl(_createPoolResult.res.digest);
+      showSuccessTxnToast(
+        `Created ${formatPair(tokens.map((token) => token.symbol))} ${QUOTER_ID_NAME_MAP[quoterId]} ${formatFeeTier(new BigNumber(feeTierPercent))} pool`,
+        txUrl,
+        { description: "Deposited initial liquidity" },
+      );
     } catch (err) {
       showErrorToast("Failed to create pool", err as Error, undefined, true);
       console.error(err);
+
+      setHasFailed(true);
     } finally {
       setIsSubmitting(false);
       refresh();
@@ -501,191 +572,265 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
   };
 
   return (
-    <div className="flex w-full flex-col gap-4">
-      <div
-        className={cn(
-          "flex w-full flex-col gap-4",
-          createdPoolId && "pointer-events-none",
-        )}
-      >
-        {/* Base asset */}
-        <div className="flex w-full flex-col gap-3">
-          <p className="text-p2 text-secondary-foreground">Base asset</p>
-          <CoinInput
-            autoFocus={!createdPoolId}
-            token={
-              coinTypes[0] !== ""
-                ? getToken(coinTypes[0], balancesCoinMetadataMap![coinTypes[0]])
-                : undefined
-            }
-            value={values[0]}
-            usdValue={birdeyeUsdValues[0]}
-            onChange={(value) => onValueChange(value, 0)}
-            onMaxAmountClick={
-              coinTypes[0] !== "" ? () => onBalanceClick(0) : undefined
-            }
-            tokens={baseTokens}
-            onSelectToken={(token) => onSelectToken(token, 0)}
-          />
-        </div>
+    <>
+      <CreatePoolStepsDialog
+        isOpen={isSubmitting || hasClearedCache}
+        bTokensAndBankIds={bTokensAndBankIds}
+        createdLpToken={createLpTokenResult}
+        createPoolResult={createPoolResult}
+        hasClearedCache={hasClearedCache}
+        reset={reset}
+      />
 
-        {/* Quote */}
-        <div className="flex w-full flex-col gap-3">
-          <div className="flex w-full flex-col gap-1">
-            <p className="text-p2 text-secondary-foreground">Quote asset</p>
-            <p className="text-p3 text-tertiary-foreground">
-              SUI or stablecoins (e.g. USDC, USDT) are usually used as the quote
-              asset.
-            </p>
+      <div className="flex w-full flex-col gap-4">
+        <div
+          className={cn(
+            "flex w-full flex-col gap-4",
+            hasFailed && "pointer-events-none",
+          )}
+        >
+          {/* Base asset */}
+          <div className="flex w-full flex-col gap-3">
+            <p className="text-p2 text-secondary-foreground">Base asset</p>
+            <CoinInput
+              ref={baseAssetCoinInputRef}
+              autoFocus
+              token={
+                coinTypes[0] !== ""
+                  ? getToken(
+                      coinTypes[0],
+                      balancesCoinMetadataMap![coinTypes[0]],
+                    )
+                  : undefined
+              }
+              value={values[0]}
+              usdValue={birdeyeUsdValues[0]}
+              onChange={(value) => onValueChange(value, 0)}
+              onMaxAmountClick={
+                coinTypes[0] !== "" ? () => onBalanceClick(0) : undefined
+              }
+              tokens={baseTokens}
+              onSelectToken={(token) => onSelectToken(token, 0)}
+            />
           </div>
-          <CoinInput
-            token={
-              coinTypes[1] !== ""
-                ? getToken(coinTypes[1], balancesCoinMetadataMap![coinTypes[1]])
-                : undefined
-            }
-            value={values[1]}
-            usdValue={birdeyeUsdValues[1]}
-            onChange={(value) => onValueChange(value, 1)}
-            onMaxAmountClick={
-              coinTypes[1] !== "" ? () => onBalanceClick(1) : undefined
-            }
-            tokens={quoteTokens}
-            onSelectToken={(token) => onSelectToken(token, 1)}
-          />
-        </div>
 
-        <div className="flex w-full flex-col gap-2">
-          {/* Initial price */}
-          <Parameter label="Initial price" isHorizontal>
-            <p className="text-p2 text-foreground">
-              {coinTypes.every((coinType) => coinType !== "") &&
-              values.every((value) => value !== "")
-                ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${new BigNumber(
-                    new BigNumber(values[1]).div(values[0]),
-                  ).toFixed(
-                    balancesCoinMetadataMap![coinTypes[1]].decimals,
-                    BigNumber.ROUND_DOWN,
-                  )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
-                : "--"}
-            </p>
-          </Parameter>
+          {/* Quote */}
+          <div className="flex w-full flex-col gap-3">
+            <div className="flex w-full flex-col gap-1">
+              <p className="text-p2 text-secondary-foreground">Quote asset</p>
+              <p className="text-p3 text-tertiary-foreground">
+                SUI or stablecoins (e.g. USDC, USDT) are usually used as the
+                quote asset.
+              </p>
+            </div>
+            <CoinInput
+              token={
+                coinTypes[1] !== ""
+                  ? getToken(
+                      coinTypes[1],
+                      balancesCoinMetadataMap![coinTypes[1]],
+                    )
+                  : undefined
+              }
+              value={values[1]}
+              usdValue={birdeyeUsdValues[1]}
+              onChange={(value) => onValueChange(value, 1)}
+              onMaxAmountClick={
+                coinTypes[1] !== "" ? () => onBalanceClick(1) : undefined
+              }
+              tokens={quoteTokens}
+              onSelectToken={(token) => onSelectToken(token, 1)}
+            />
+          </div>
 
-          {/* Market price */}
-          <Parameter label="Market price (Birdeye)" isHorizontal>
-            <div className="flex flex-col items-end gap-1.5">
+          <div className="flex w-full flex-col gap-2">
+            {/* Initial price */}
+            <Parameter label="Initial price" isHorizontal>
               <p className="text-p2 text-foreground">
-                {coinTypes.every((coinType) => coinType !== "") ? (
-                  birdeyeRatio === undefined ? (
-                    <Skeleton className="h-[21px] w-24" />
-                  ) : birdeyeRatio === null ? (
-                    "--"
-                  ) : (
-                    `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${birdeyeRatio.toFixed(
+                {coinTypes.every((coinType) => coinType !== "") &&
+                values.every((value) => value !== "")
+                  ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${new BigNumber(
+                      new BigNumber(values[1]).div(values[0]),
+                    ).toFixed(
                       balancesCoinMetadataMap![coinTypes[1]].decimals,
                       BigNumber.ROUND_DOWN,
                     )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
-                  )
-                ) : (
-                  "--"
-                )}
+                  : "--"}
               </p>
+            </Parameter>
 
-              {coinTypes.every((coinType) => coinType !== "") &&
-                (birdeyeRatio === undefined ? (
-                  <Skeleton className="h-[24px] w-16" />
-                ) : birdeyeRatio === null ? null : (
-                  <button
-                    className="group flex h-6 flex-row items-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80"
-                    onClick={onUseBirdeyePriceClick}
-                  >
-                    <p className="text-p3 text-button-2-foreground">
-                      Use market price
-                    </p>
-                  </button>
-                ))}
+            {/* Market price */}
+            <Parameter label="Market price (Birdeye)" isHorizontal>
+              <div className="flex flex-col items-end gap-1.5">
+                <p className="text-p2 text-foreground">
+                  {coinTypes.every((coinType) => coinType !== "") ? (
+                    birdeyeRatio === undefined ? (
+                      <Skeleton className="h-[21px] w-24" />
+                    ) : birdeyeRatio === null ? (
+                      "--"
+                    ) : (
+                      `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${birdeyeRatio.toFixed(
+                        balancesCoinMetadataMap![coinTypes[1]].decimals,
+                        BigNumber.ROUND_DOWN,
+                      )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
+                    )
+                  ) : (
+                    "--"
+                  )}
+                </p>
+
+                {coinTypes.every((coinType) => coinType !== "") &&
+                  (birdeyeRatio === undefined ? (
+                    <Skeleton className="h-[24px] w-16" />
+                  ) : birdeyeRatio === null ? null : (
+                    <button
+                      className="group flex h-6 flex-row items-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80"
+                      onClick={onUseBirdeyePriceClick}
+                    >
+                      <p className="text-p3 text-button-2-foreground">
+                        Use market price
+                      </p>
+                    </button>
+                  ))}
+              </div>
+            </Parameter>
+          </div>
+
+          <Divider />
+
+          {/* Quoter */}
+          <div className="flex flex-row items-center justify-between">
+            <p className="text-p2 text-secondary-foreground">Quoter</p>
+
+            <div className="flex flex-row gap-1">
+              {Object.values(QuoterId)
+                .filter((_quoterId) => _quoterId !== QuoterId.ORACLE)
+                .map((_quoterId) => {
+                  const hasExistingPool =
+                    hasExistingPoolForQuoterFeeTierAndAmplifier(
+                      _quoterId,
+                      feeTierPercent,
+                      amplifier,
+                    );
+
+                  return (
+                    <div key={_quoterId} className="w-max">
+                      <Tooltip
+                        title={
+                          hasExistingPool ? existingPoolTooltip : undefined
+                        }
+                      >
+                        <div className="w-max">
+                          <button
+                            key={_quoterId}
+                            className={cn(
+                              "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
+                              _quoterId === quoterId
+                                ? "cursor-default border-button-1 bg-button-1/25"
+                                : "hover:bg-border/50",
+                            )}
+                            onClick={() => onSelectQuoter(_quoterId)}
+                            disabled={hasExistingPool}
+                          >
+                            <p
+                              className={cn(
+                                "!text-p2 transition-colors",
+                                _quoterId === quoterId
+                                  ? "text-foreground"
+                                  : "text-secondary-foreground group-hover:text-foreground",
+                              )}
+                            >
+                              {QUOTER_ID_NAME_MAP[_quoterId]}
+                            </p>
+                          </button>
+                        </div>
+                      </Tooltip>
+                    </div>
+                  );
+                })}
             </div>
-          </Parameter>
-        </div>
+          </div>
 
-        <Divider />
+          {/* Amplifier */}
+          {quoterId === QuoterId.ORACLE_V2 && (
+            <div className="flex flex-row items-center justify-between">
+              <Tooltip title={AMPLIFIER_TOOLTIP}>
+                <p
+                  className={cn(
+                    "text-p2 text-secondary-foreground decoration-secondary-foreground/50",
+                    hoverUnderlineClassName,
+                  )}
+                >
+                  Amplifier
+                </p>
+              </Tooltip>
 
-        {/* Quoter */}
-        <div className="flex flex-row items-center justify-between">
-          <p className="text-p2 text-secondary-foreground">Quoter</p>
+              <div className="flex flex-row gap-1">
+                {AMPLIFIERS.map((_amplifier) => {
+                  const hasExistingPool =
+                    hasExistingPoolForQuoterFeeTierAndAmplifier(
+                      quoterId,
+                      feeTierPercent,
+                      _amplifier,
+                    );
 
-          <div className="flex flex-row gap-1">
-            {Object.values(QuoterId)
-              .filter((_quoterId) => _quoterId !== QuoterId.ORACLE)
-              .map((_quoterId) => {
+                  return (
+                    <div key={_amplifier} className="w-max">
+                      <Tooltip
+                        title={
+                          hasExistingPool ? existingPoolTooltip : undefined
+                        }
+                      >
+                        <div className="w-max">
+                          <button
+                            className={cn(
+                              "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
+                              amplifier === _amplifier
+                                ? "cursor-default border-button-1 bg-button-1/25"
+                                : "hover:bg-border/50",
+                            )}
+                            onClick={() => setAmplifier(_amplifier)}
+                            disabled={hasExistingPool}
+                          >
+                            <p
+                              className={cn(
+                                "!text-p2 transition-colors",
+                                amplifier === _amplifier
+                                  ? "text-foreground"
+                                  : "text-secondary-foreground group-hover:text-foreground",
+                              )}
+                            >
+                              {formatAmplifier(new BigNumber(_amplifier))}
+                            </p>
+                          </button>
+                        </div>
+                      </Tooltip>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Fee tier */}
+          <div className="flex flex-row justify-between">
+            <div className="flex h-10 flex-row items-center">
+              <p className="shrink-0 text-p2 text-secondary-foreground">
+                Fee tier
+              </p>
+            </div>
+
+            <div className="flex flex-1 flex-row flex-wrap justify-end gap-1">
+              {FEE_TIER_PERCENTS.map((_feeTierPercent) => {
                 const hasExistingPool =
                   hasExistingPoolForQuoterFeeTierAndAmplifier(
-                    _quoterId,
-                    feeTierPercent,
+                    quoterId,
+                    _feeTierPercent,
                     amplifier,
                   );
 
                 return (
-                  <div key={_quoterId} className="w-max">
-                    <Tooltip
-                      title={hasExistingPool ? existingPoolTooltip : undefined}
-                    >
-                      <div className="w-max">
-                        <button
-                          key={_quoterId}
-                          className={cn(
-                            "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
-                            _quoterId === quoterId
-                              ? "cursor-default border-button-1 bg-button-1/25"
-                              : "hover:bg-border/50",
-                          )}
-                          onClick={() => onSelectQuoter(_quoterId)}
-                          disabled={hasExistingPool}
-                        >
-                          <p
-                            className={cn(
-                              "!text-p2 transition-colors",
-                              _quoterId === quoterId
-                                ? "text-foreground"
-                                : "text-secondary-foreground group-hover:text-foreground",
-                            )}
-                          >
-                            {QUOTER_ID_NAME_MAP[_quoterId]}
-                          </p>
-                        </button>
-                      </div>
-                    </Tooltip>
-                  </div>
-                );
-              })}
-          </div>
-        </div>
-
-        {/* Amplifier */}
-        {quoterId === QuoterId.ORACLE_V2 && (
-          <div className="flex flex-row items-center justify-between">
-            <Tooltip title={AMPLIFIER_TOOLTIP}>
-              <p
-                className={cn(
-                  "text-p2 text-secondary-foreground decoration-secondary-foreground/50",
-                  hoverUnderlineClassName,
-                )}
-              >
-                Amplifier
-              </p>
-            </Tooltip>
-
-            <div className="flex flex-row gap-1">
-              {AMPLIFIERS.map((_amplifier) => {
-                const hasExistingPool =
-                  hasExistingPoolForQuoterFeeTierAndAmplifier(
-                    quoterId,
-                    feeTierPercent,
-                    _amplifier,
-                  );
-
-                return (
-                  <div key={_amplifier} className="w-max">
+                  <div key={_feeTierPercent} className="w-max">
                     <Tooltip
                       title={hasExistingPool ? existingPoolTooltip : undefined}
                     >
@@ -693,22 +838,22 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
                         <button
                           className={cn(
                             "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
-                            amplifier === _amplifier
+                            feeTierPercent === _feeTierPercent
                               ? "cursor-default border-button-1 bg-button-1/25"
                               : "hover:bg-border/50",
                           )}
-                          onClick={() => setAmplifier(_amplifier)}
+                          onClick={() => setFeeTierPercent(_feeTierPercent)}
                           disabled={hasExistingPool}
                         >
                           <p
                             className={cn(
                               "!text-p2 transition-colors",
-                              amplifier === _amplifier
+                              feeTierPercent === _feeTierPercent
                                 ? "text-foreground"
                                 : "text-secondary-foreground group-hover:text-foreground",
                             )}
                           >
-                            {formatAmplifier(new BigNumber(_amplifier))}
+                            {formatFeeTier(new BigNumber(_feeTierPercent))}
                           </p>
                         </button>
                       </div>
@@ -718,77 +863,26 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
               })}
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Fee tier */}
-        <div className="flex flex-row justify-between">
-          <div className="flex h-10 flex-row items-center">
-            <p className="shrink-0 text-p2 text-secondary-foreground">
-              Fee tier
-            </p>
-          </div>
+        <div className="flex w-full flex-col gap-1">
+          <SubmitButton
+            submitButtonState={submitButtonState}
+            onClick={onSubmitClick}
+          />
 
-          <div className="flex flex-1 flex-row flex-wrap justify-end gap-1">
-            {FEE_TIER_PERCENTS.map((_feeTierPercent) => {
-              const hasExistingPool =
-                hasExistingPoolForQuoterFeeTierAndAmplifier(
-                  quoterId,
-                  _feeTierPercent,
-                  amplifier,
-                );
-
-              return (
-                <div key={_feeTierPercent} className="w-max">
-                  <Tooltip
-                    title={hasExistingPool ? existingPoolTooltip : undefined}
-                  >
-                    <div className="w-max">
-                      <button
-                        className={cn(
-                          "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
-                          feeTierPercent === _feeTierPercent
-                            ? "cursor-default border-button-1 bg-button-1/25"
-                            : "hover:bg-border/50",
-                        )}
-                        onClick={() => setFeeTierPercent(_feeTierPercent)}
-                        disabled={hasExistingPool}
-                      >
-                        <p
-                          className={cn(
-                            "!text-p2 transition-colors",
-                            feeTierPercent === _feeTierPercent
-                              ? "text-foreground"
-                              : "text-secondary-foreground group-hover:text-foreground",
-                          )}
-                        >
-                          {formatFeeTier(new BigNumber(_feeTierPercent))}
-                        </p>
-                      </button>
-                    </div>
-                  </Tooltip>
-                </div>
-              );
-            })}
-          </div>
+          {hasFailed && !hasClearedCache && (
+            <button
+              className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
+              onClick={reset}
+            >
+              <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
+                Start over
+              </p>
+            </button>
+          )}
         </div>
       </div>
-
-      {!createdPoolId ? (
-        <SubmitButton
-          submitButtonState={submitButtonState}
-          onClick={onSubmitClick}
-        />
-      ) : (
-        <Link
-          className="flex h-14 w-full flex-row items-center justify-center gap-2 rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80"
-          href={`${POOL_URL_PREFIX}/${createdPoolId}`}
-          target="_blank"
-          onClick={reset}
-        >
-          <p className="text-p1 text-button-1-foreground">Go to pool</p>
-          <ExternalLink className="h-4 w-4 text-button-1-foreground" />
-        </Link>
-      )}
-    </div>
+    </>
   );
 }
