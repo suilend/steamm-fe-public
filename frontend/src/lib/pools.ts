@@ -9,7 +9,7 @@ import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 
 export const AMPLIFIER_TOOLTIP =
-  "The amplifier determines the concentration of the pool. Higher values are more suitable for more volatile assets, while lower values are more suitable for more stable assets.";
+  "The amplifier determines the concentration of the pool. Higher values are more suitable for more stable assets, while lower values are more suitable for more volatile assets.";
 
 const getPoolSlug = (appData: AppData, pool: ParsedPool) =>
   `${formatPair(

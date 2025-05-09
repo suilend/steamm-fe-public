@@ -1,4 +1,5 @@
 import {
+  SuiClient,
   SuiEvent,
   SuiObjectChange,
   SuiTransactionBlockResponse,
@@ -7,12 +8,7 @@ import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID, normalizeStructTag } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 
-import {
-  Token,
-  getCoinMetadataMap,
-  getToken,
-  isSui,
-} from "@suilend/frontend-sui";
+import { Token, getToken, isSui } from "@suilend/frontend-sui";
 import { WalletContext } from "@suilend/frontend-sui-next";
 import { PoolScriptFunctions, SteammSDK } from "@suilend/steamm-sdk";
 
@@ -57,23 +53,49 @@ const LP_TOKEN_IMAGE_URL =
   "https://suilend-assets.s3.us-east-2.amazonaws.com/steamm/STEAMM+LP+Token.svg";
 
 // bTokens and banks
-export const getOrCreateBTokenAndBankForToken = async (
+export const hasBTokenAndBankForToken = (
+  token: Token,
+  appData: AppData,
+): boolean => !!appData.bankMap[token.coinType];
+
+export type GetBTokenAndBankForTokenResult = {
+  bToken: Token;
+  bankId: string;
+};
+export const getBTokenAndBankForToken = async (
+  token: Token,
+  suiClient: SuiClient,
+  appData: AppData,
+): Promise<GetBTokenAndBankForTokenResult> => {
+  const existingBank = appData.bankMap[token.coinType];
+  if (!existingBank) throw new Error("Bank not found");
+
+  const coinMetadata = await suiClient.getCoinMetadata({
+    coinType: existingBank.bTokenType,
+  });
+  if (!coinMetadata) throw new Error("Coin metadata not found");
+
+  return {
+    bToken: getToken(existingBank.bTokenType, coinMetadata),
+    bankId: existingBank.id,
+  };
+};
+
+export type CreateBTokenAndBankForTokenResult = {
+  createBTokenResult: CreateCoinResult;
+  bToken: Token;
+  createBankRes: SuiTransactionBlockResponse;
+  bankId: string;
+};
+export const createBTokenAndBankForToken = async (
   token: Token,
   steammClient: SteammSDK,
   appData: AppData,
   address: string,
   signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
-): Promise<{ bToken: Token; bankId: string }> => {
-  const existingBank = appData.bankMap[token.coinType];
-  if (!!existingBank) {
-    const coinMetadataMap = await getCoinMetadataMap([existingBank.bTokenType]);
-
-    const bToken = getToken(
-      existingBank.bTokenType,
-      coinMetadataMap[existingBank.bTokenType],
-    );
-    return { bToken, bankId: existingBank.id };
-  }
+): Promise<CreateBTokenAndBankForTokenResult> => {
+  if (hasBTokenAndBankForToken(token, appData))
+    throw new Error("BToken and bank already exist for token");
 
   // 1) Create bToken
   console.log(
@@ -107,6 +129,7 @@ export const getOrCreateBTokenAndBankForToken = async (
   );
 
   // 2) Create bank
+  // Note: If bank creation fails, a new bToken will be created next time
   console.log(
     `[createBTokenAndBankForToken] bank - Creating bank for coinType ${token.coinType}`,
   );
@@ -142,7 +165,12 @@ export const getOrCreateBTokenAndBankForToken = async (
     `[createBTokenAndBankForToken] bank - Created bank: ${createdBankId}`,
   );
 
-  return { bToken: createdBToken, bankId: createdBankId };
+  return {
+    createBTokenResult,
+    bToken: createdBToken,
+    createBankRes,
+    bankId: createdBankId,
+  };
 };
 
 // LP token
@@ -170,6 +198,10 @@ export const createLpToken = async (
 };
 
 // Pool
+export type CreatePoolAndDepositInitialLiquidityResult = {
+  res: SuiTransactionBlockResponse;
+  poolId: string;
+};
 export const createPoolAndDepositInitialLiquidity = async (
   tokens: [Token, Token],
   values: [string, string],
@@ -184,7 +216,22 @@ export const createPoolAndDepositInitialLiquidity = async (
   appData: AppData,
   address: string,
   signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
-): Promise<{ res: SuiTransactionBlockResponse; poolId: string }> => {
+): Promise<CreatePoolAndDepositInitialLiquidityResult> => {
+  console.log(
+    "[createPoolAndDepositInitialLiquidity] Creating pool and depositing initial liquidity",
+    {
+      tokens,
+      values,
+      quoterId,
+      amplifier,
+      feeTierPercent,
+      bTokens,
+      bankIds,
+      createLpTokenResult,
+      burnLpTokens,
+    },
+  );
+
   const oracleIndexA = appData.COINTYPE_ORACLE_INDEX_MAP[tokens[0].coinType];
   const oracleIndexB = appData.COINTYPE_ORACLE_INDEX_MAP[tokens[1].coinType];
 

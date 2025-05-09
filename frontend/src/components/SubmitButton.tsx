@@ -1,7 +1,8 @@
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 
 export type SubmitButtonState = {
   isLoading?: boolean;
+  isSuccess?: boolean;
   isDisabled?: boolean;
   title?: string;
   description?: string;
@@ -24,6 +25,8 @@ export default function SubmitButton({
     >
       {submitButtonState.isLoading ? (
         <Loader2 className="h-6 w-6 animate-spin text-button-1-foreground" />
+      ) : submitButtonState.isSuccess ? (
+        <Check className="h-6 w-6 text-button-1-foreground" />
       ) : (
         <p className="text-p1 text-button-1-foreground">
           {submitButtonState.title}

@@ -91,10 +91,11 @@ export default function IconUpload({
         "image/png",
         "image/jpeg",
         "image/jpg",
+        "image/webp",
         "image/svg+xml",
       ];
       if (!validTypes.includes(file.type))
-        throw new Error("Please upload a PNG, JPEG, or SVG image");
+        throw new Error("Please upload a PNG, JPEG, WebP, or SVG image");
 
       // Validate file size
       if (file.size > MAX_FILE_SIZE_BYTES)
