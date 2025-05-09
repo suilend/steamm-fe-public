@@ -3,7 +3,10 @@ import init, {
   update_identifiers,
 } from "@mysten/move-bytecode-template";
 import { bcs } from "@mysten/sui/bcs";
-import { SuiObjectChange } from "@mysten/sui/client";
+import {
+  SuiObjectChange,
+  SuiTransactionBlockResponse,
+} from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
@@ -81,6 +84,7 @@ export const initializeCoinCreation = async () => {
 };
 
 export type CreateCoinResult = {
+  res: SuiTransactionBlockResponse;
   upgradeCapId: string;
   treasuryCapId: string;
   coinType: string;
@@ -148,5 +152,5 @@ export const createCoin = async (
     coinMetadataId,
   );
 
-  return { upgradeCapId, treasuryCapId, coinType, coinMetadataId };
+  return { res, upgradeCapId, treasuryCapId, coinType, coinMetadataId };
 };

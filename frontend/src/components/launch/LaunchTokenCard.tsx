@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { Check, ChevronDown, ChevronUp, Plus } from "lucide-react";
@@ -26,17 +25,23 @@ import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
 
 import Divider from "@/components/Divider";
 import IconUpload from "@/components/launch/IconUpload";
+import LaunchStepsDialog from "@/components/launch/LaunchStepsDialog";
 import Parameter from "@/components/Parameter";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
 import TextInput from "@/components/TextInput";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
-import { initializeCoinCreation } from "@/lib/createCoin";
+import { CreateCoinResult, initializeCoinCreation } from "@/lib/createCoin";
 import {
+  CreateBTokenAndBankForTokenResult,
+  CreatePoolAndDepositInitialLiquidityResult,
+  GetBTokenAndBankForTokenResult,
+  createBTokenAndBankForToken,
   createLpToken,
   createPoolAndDepositInitialLiquidity,
-  getOrCreateBTokenAndBankForToken,
+  getBTokenAndBankForToken,
+  hasBTokenAndBankForToken,
 } from "@/lib/createPool";
 import { formatPair, formatTextInputValue } from "@/lib/format";
 import {
@@ -47,30 +52,66 @@ import {
   DEPOSITED_TOKEN_PERCENT,
   FEE_TIER_PERCENT,
   MAX_FILE_SIZE_BYTES,
+  MintTokenResult,
   QUOTER_ID,
   createToken,
   mintToken,
 } from "@/lib/launchToken";
-import { POOL_URL_PREFIX } from "@/lib/navigation";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
 
 export default function LaunchTokenCard() {
-  const { explorer } = useSettingsContext();
+  const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
+  // State - progress
+  const [hasFailed, setHasFailed] = useState<boolean>(false);
+
+  const [createTokenResult, setCreateTokenResult] = useState<
+    CreateCoinResult | undefined
+  >(undefined);
+  const [mintTokenResult, setMintTokenResult] = useState<
+    MintTokenResult | undefined
+  >(undefined);
+
+  const [bTokensAndBankIds, setBTokensAndBankIds] = useState<
+    [
+      (
+        | GetBTokenAndBankForTokenResult
+        | CreateBTokenAndBankForTokenResult
+        | undefined
+      ),
+      (
+        | GetBTokenAndBankForTokenResult
+        | CreateBTokenAndBankForTokenResult
+        | undefined
+      ),
+    ]
+  >([undefined, undefined]);
+  const [createLpTokenResult, setCreateLpTokenResult] = useState<
+    CreateCoinResult | undefined
+  >(undefined);
+  const [createPoolResult, setCreatePoolResult] = useState<
+    CreatePoolAndDepositInitialLiquidityResult | undefined
+  >(undefined);
+  const [hasClearedCache, setHasClearedCache] = useState<boolean>(
+    process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true" ? true : false,
+  );
+
   // State - token
+  const [showOptional, setShowOptional] = useState<boolean>(false);
+
   const [name, setName] = useState<string>("");
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
   const [symbol, setSymbol] = useState<string>("");
   const [description, setDescription] = useState<string>("");
 
   const [iconUrl, setIconUrl] = useState<string>("");
   const [iconFilename, setIconFilename] = useState<string>("");
   const [iconFileSize, setIconFileSize] = useState<string>("");
-
-  const [showOptional, setShowOptional] = useState<boolean>(false);
 
   // State - token - decimals
   const [decimalsRaw, setDecimalsRaw] = useState<string>(
@@ -121,11 +162,6 @@ export default function LaunchTokenCard() {
     [decimals],
   );
 
-  // State - pool
-  const [createdPoolId, setCreatedPoolId] = useState<string | undefined>(
-    undefined,
-  );
-
   // State - pool - quote asset
   const quoteTokens = useMemo(
     () =>
@@ -161,8 +197,24 @@ export default function LaunchTokenCard() {
 
   // Submit
   const reset = () => {
+    // Progress
+    setHasFailed(false);
+
+    setCreateTokenResult(undefined);
+    setMintTokenResult(undefined);
+    setBTokensAndBankIds([undefined, undefined]);
+    setCreateLpTokenResult(undefined);
+    setCreatePoolResult(undefined);
+    setHasClearedCache(
+      process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true" ? true : false,
+    );
+
     // Token
+    setShowOptional(false);
+
     setName("");
+    setTimeout(() => nameInputRef.current?.focus(), 100); // After dialog is closed
+
     setSymbol("");
     setDescription("");
 
@@ -171,14 +223,12 @@ export default function LaunchTokenCard() {
     setIconFileSize("");
     (document.getElementById("icon-upload") as HTMLInputElement).value = "";
 
-    setShowOptional(false);
     setDecimalsRaw(DEFAULT_TOKEN_DECIMALS.toString());
     setDecimals(DEFAULT_TOKEN_DECIMALS);
     setSupplyRaw(DEFAULT_TOKEN_SUPPLY.toString());
     setSupply(DEFAULT_TOKEN_SUPPLY);
 
     // Pool
-    setCreatedPoolId(undefined);
     setQuoteAssetCoinType(undefined);
     setBurnLpTokens(false);
   };
@@ -188,6 +238,7 @@ export default function LaunchTokenCard() {
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
+    if (hasClearedCache) return { isDisabled: true, isSuccess: true };
 
     // Name
     if (name === "") return { isDisabled: true, title: "Enter a name" };
@@ -203,6 +254,8 @@ export default function LaunchTokenCard() {
       return { isDisabled: true, title: "Symbol must be uppercase" };
     if (/\s/.test(symbol))
       return { isDisabled: true, title: "Symbol cannot contain spaces" };
+    if (/^\d/.test(symbol))
+      return { isDisabled: true, title: "Symbol cannot start with a number" };
     if (symbol.length < 1 || symbol.length > 8)
       return {
         isDisabled: true,
@@ -262,6 +315,9 @@ export default function LaunchTokenCard() {
         title: `Insufficient ${quoteToken!.symbol}`,
       };
 
+    // Failed
+    if (hasFailed) return { isDisabled: false, title: "Retry" };
+
     return {
       isDisabled: false,
       title: "Launch token & create pool",
@@ -283,69 +339,115 @@ export default function LaunchTokenCard() {
       await initializeCoinCreation();
 
       // 1) Create token
-      const createTokenResult = await createToken(
-        name,
-        symbol,
-        description,
-        iconUrl,
-        decimals,
-        address,
-        signExecuteAndWaitForTransaction,
-      );
+      let _createTokenResult = createTokenResult;
+      if (_createTokenResult === undefined) {
+        _createTokenResult = await createToken(
+          name,
+          symbol,
+          description,
+          iconUrl,
+          decimals,
+          address,
+          signExecuteAndWaitForTransaction,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        setCreateTokenResult(_createTokenResult);
+      }
 
-      const createdToken = getToken(createTokenResult.coinType, {
+      const createdToken = getToken(_createTokenResult.coinType, {
         decimals,
         description,
         iconUrl,
-        id: createTokenResult.coinMetadataId,
+        id: _createTokenResult.coinMetadataId,
         name,
         symbol,
       });
       const tokens = [createdToken, quoteToken] as [Token, Token];
 
       // 2) Mint token
-      await mintToken(
-        createTokenResult,
-        supply,
-        decimals,
-        address,
-        signExecuteAndWaitForTransaction,
-      );
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      let _mintTokenResult = mintTokenResult;
+      if (_mintTokenResult === undefined) {
+        _mintTokenResult = await mintToken(
+          _createTokenResult,
+          supply,
+          decimals,
+          address,
+          signExecuteAndWaitForTransaction,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        setMintTokenResult(_mintTokenResult);
+      }
 
-      // 3) Get/create bTokens and banks (2 transactions for each bToken+bank pair = 0, 2, or 4 transactions in total)
-      const bTokensAndBankIds = (await Promise.all(
-        tokens.map((token) =>
-          getOrCreateBTokenAndBankForToken(
-            token,
-            steammClient,
-            appData,
-            address,
-            signExecuteAndWaitForTransaction,
-          ),
-        ),
-      )) as [
-        { bToken: Token; bankId: string },
-        { bToken: Token; bankId: string },
-      ];
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // 3) Get/create bTokens and banks (2 transactions for each missing bToken+bank pair = 0, 2, or 4 transactions in total)
+      const _bTokensAndBankIds = bTokensAndBankIds;
+      if (
+        _bTokensAndBankIds.some(
+          (bTokenAndBankId) => bTokenAndBankId === undefined,
+        )
+      ) {
+        for (const index of [0, 1]) {
+          if (_bTokensAndBankIds[index] === undefined) {
+            _bTokensAndBankIds[index] = hasBTokenAndBankForToken(
+              tokens[index],
+              appData,
+            )
+              ? await getBTokenAndBankForToken(
+                  tokens[index],
+                  suiClient,
+                  appData,
+                )
+              : await (async () => {
+                  const result = await createBTokenAndBankForToken(
+                    tokens[index],
+                    steammClient,
+                    appData,
+                    address,
+                    signExecuteAndWaitForTransaction,
+                  );
+                  await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const bTokens = bTokensAndBankIds.map(({ bToken }) => bToken) as [
-        Token,
-        Token,
-      ];
-      const bankIds = bTokensAndBankIds.map(({ bankId }) => bankId) as [
-        string,
-        string,
-      ];
+                  return result;
+                })();
+
+            setBTokensAndBankIds(
+              (prev) =>
+                [0, 1].map((i) =>
+                  i === index ? _bTokensAndBankIds[index] : prev[i],
+                ) as [
+                  (
+                    | GetBTokenAndBankForTokenResult
+                    | CreateBTokenAndBankForTokenResult
+                    | undefined
+                  ),
+                  (
+                    | GetBTokenAndBankForTokenResult
+                    | CreateBTokenAndBankForTokenResult
+                    | undefined
+                  ),
+                ],
+            );
+          }
+        }
+      }
+
+      const bTokens = _bTokensAndBankIds.map(
+        (bTokenAndBankId) => bTokenAndBankId!.bToken,
+      ) as [Token, Token];
+      const bankIds = _bTokensAndBankIds.map(
+        (bTokenAndBankId) => bTokenAndBankId!.bankId,
+      ) as [string, string];
 
       // 4) Create LP token (1 transaction)
-      const createLpTokenResult = await createLpToken(
-        bTokens,
-        address,
-        signExecuteAndWaitForTransaction,
-      );
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      let _createLpTokenResult = createLpTokenResult;
+      if (_createLpTokenResult === undefined) {
+        _createLpTokenResult = await createLpToken(
+          bTokens,
+          address,
+          signExecuteAndWaitForTransaction,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        setCreateLpTokenResult(_createLpTokenResult);
+      }
 
       // 5) Create pool and deposit initial liquidity (1 transaction)
       const values = [
@@ -356,42 +458,44 @@ export default function LaunchTokenCard() {
         DEPOSITED_QUOTE_ASSET.toString(),
       ] as [string, string];
 
-      const { res, poolId } = await createPoolAndDepositInitialLiquidity(
-        tokens,
-        values,
-        QUOTER_ID,
-        undefined,
-        FEE_TIER_PERCENT,
-        bTokens,
-        bankIds,
-        createLpTokenResult,
-        burnLpTokens,
-        steammClient,
-        appData,
-        address,
-        signExecuteAndWaitForTransaction,
-      );
-
-      const txUrl = explorer.buildTxUrl(res.digest);
-
-      showSuccessTxnToast(`Launched ${symbol}`, txUrl, {
-        description: `Created ${formatPair(tokens.map((token) => token.symbol))} pool with initial liquidity`,
-      });
-
-      if (process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET !== "true") {
-        try {
-          await fetch(`${API_URL}/steamm/clear-cache`); // Clear cache
-        } catch (err) {
-          console.error(err);
-        }
-        await new Promise((resolve) => {
-          setTimeout(() => resolve(true), 2000);
-        }); // Wait 2 seconds before showing Go to pool button
+      let _createPoolResult = createPoolResult;
+      if (_createPoolResult === undefined) {
+        _createPoolResult = await createPoolAndDepositInitialLiquidity(
+          tokens,
+          values,
+          QUOTER_ID,
+          undefined,
+          FEE_TIER_PERCENT,
+          bTokens,
+          bankIds,
+          _createLpTokenResult,
+          burnLpTokens,
+          steammClient,
+          appData,
+          address,
+          signExecuteAndWaitForTransaction,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        setCreatePoolResult(_createPoolResult);
       }
-      setCreatedPoolId(poolId);
+
+      const _hasClearedCache = hasClearedCache;
+      if (!_hasClearedCache) {
+        await fetch(`${API_URL}/steamm/clear-cache`);
+
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        setHasClearedCache(true);
+      }
+
+      const txUrl = explorer.buildTxUrl(_createPoolResult.res.digest);
+      showSuccessTxnToast(`Launched ${symbol}`, txUrl, {
+        description: `Created ${formatPair(tokens.map((token) => token.symbol))} pool and deposited initial liquidity`,
+      });
     } catch (err) {
       showErrorToast("Failed to launch token", err as Error, undefined, true);
       console.error(err);
+
+      setHasFailed(true);
     } finally {
       setIsSubmitting(false);
       refresh();
@@ -399,206 +503,220 @@ export default function LaunchTokenCard() {
   };
 
   return (
-    <div className="flex w-full flex-col gap-4">
-      <div
-        className={cn(
-          "flex w-full flex-col gap-4",
-          createdPoolId && "pointer-events-none",
-        )}
-      >
-        <div className="flex w-full flex-row gap-4">
-          {/* Name */}
-          <div className="flex flex-[2] flex-col gap-2">
-            <p className="text-p2 text-secondary-foreground">Name</p>
-            <TextInput value={name} onChange={setName} />
+    <>
+      <LaunchStepsDialog
+        isOpen={isSubmitting || hasClearedCache}
+        createTokenResult={createTokenResult}
+        mintTokenResult={mintTokenResult}
+        bTokensAndBankIds={bTokensAndBankIds}
+        createdLpToken={createLpTokenResult}
+        createPoolResult={createPoolResult}
+        hasClearedCache={hasClearedCache}
+        reset={reset}
+      />
+
+      <div className="flex w-full flex-col gap-4">
+        <div
+          className={cn(
+            "flex w-full flex-col gap-4",
+            hasFailed && "pointer-events-none",
+          )}
+        >
+          <div className="flex w-full flex-row gap-4">
+            {/* Name */}
+            <div className="flex flex-[2] flex-col gap-2">
+              <p className="text-p2 text-secondary-foreground">Name</p>
+              <TextInput
+                ref={nameInputRef}
+                autoFocus
+                value={name}
+                onChange={setName}
+              />
+            </div>
+
+            {/* Symbol */}
+            <div className="flex flex-1 flex-col gap-2">
+              <p className="text-p2 text-secondary-foreground">Symbol</p>
+              <TextInput
+                value={symbol}
+                onChange={(value) => setSymbol(value.toUpperCase())}
+              />
+            </div>
           </div>
 
-          {/* Symbol */}
-          <div className="flex flex-1 flex-col gap-2">
-            <p className="text-p2 text-secondary-foreground">Symbol</p>
-            <TextInput
-              value={symbol}
-              onChange={(value) => setSymbol(value.toUpperCase())}
+          {/* Icon */}
+          <div className="flex w-full flex-col gap-3">
+            <div className="flex w-full flex-col gap-1">
+              <p className="text-p2 text-secondary-foreground">Icon</p>
+              <p className="text-p3 text-tertiary-foreground">
+                {[
+                  "PNG, JPEG, WebP, or SVG.",
+                  `Max ${formatNumber(
+                    new BigNumber(MAX_FILE_SIZE_BYTES / 1024),
+                    { dp: 0 },
+                  )} KB.`,
+                  `256x256 or larger recommended`,
+                ].join(" ")}
+              </p>
+            </div>
+            <IconUpload
+              iconUrl={iconUrl}
+              setIconUrl={setIconUrl}
+              iconFilename={iconFilename}
+              setIconFilename={setIconFilename}
+              iconFileSize={iconFileSize}
+              setIconFileSize={setIconFileSize}
             />
           </div>
-        </div>
 
-        {/* Icon */}
-        <div className="flex w-full flex-col gap-3">
-          <div className="flex w-full flex-col gap-1">
-            <p className="text-p2 text-secondary-foreground">Icon</p>
-            <p className="text-p3 text-tertiary-foreground">
-              {[
-                "PNG, JPEG, or SVG.",
-                `Max ${formatNumber(new BigNumber(MAX_FILE_SIZE_BYTES / 1024), {
-                  dp: 0,
-                })} KB.`,
-                `256x256 or larger recommended`,
-              ].join(" ")}
-            </p>
-          </div>
-          <IconUpload
-            iconUrl={iconUrl}
-            setIconUrl={setIconUrl}
-            iconFilename={iconFilename}
-            setIconFilename={setIconFilename}
-            iconFileSize={iconFileSize}
-            setIconFileSize={setIconFileSize}
-          />
-        </div>
-
-        {/* Optional */}
-        <button
-          className="group flex w-max flex-row items-center gap-2"
-          onClick={() => setShowOptional(!showOptional)}
-        >
-          <p
-            className={cn(
-              "!text-p2 transition-colors",
-              showOptional
-                ? "text-foreground"
-                : "text-secondary-foreground group-hover:text-foreground",
-            )}
+          {/* Optional */}
+          <button
+            className="group flex w-max flex-row items-center gap-2"
+            onClick={() => setShowOptional(!showOptional)}
           >
-            Optional
-          </p>
-          {showOptional ? (
-            <ChevronUp className="h-4 w-4 text-foreground" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-secondary-foreground group-hover:text-foreground" />
-          )}
-        </button>
-
-        {showOptional && (
-          <>
-            {/* Optional - Description */}
-            <div className="flex w-full flex-col gap-2">
-              <p className="text-p2 text-secondary-foreground">Description</p>
-              <TextInput
-                value={description}
-                onChange={setDescription}
-                isTextarea
-                minRows={1}
-              />
-            </div>
-
-            {/* Optional - Decimals */}
-            <div className="flex w-full flex-col gap-2">
-              <p className="text-p2 text-secondary-foreground">Decimals</p>
-              <TextInput
-                placeholder={decimals.toString()}
-                value={decimalsRaw}
-                onChange={onDecimalsChange}
-              />
-            </div>
-
-            {/* Optional - Supply */}
-            <div className="flex w-full flex-col gap-2">
-              <p className="text-p2 text-secondary-foreground">Supply</p>
-              <TextInput
-                placeholder={supply.toString()}
-                value={supplyRaw}
-                onChange={onSupplyChange}
-              />
-            </div>
-
-            {/* Optional - Burn LP tokens */}
-            <Parameter
-              label="Burn LP tokens"
-              labelTooltip="Burning your LP tokens prevents you from withdrawing the pool's initial liquidity. You also won't receive any LP fees from depositing the pool's initial liquidity."
-              isHorizontal
+            <p
+              className={cn(
+                "!text-p2 transition-colors",
+                showOptional
+                  ? "text-foreground"
+                  : "text-secondary-foreground group-hover:text-foreground",
+              )}
             >
-              <button
-                className={cn(
-                  "group flex h-6 w-6 flex-row items-center justify-center rounded-sm border transition-colors",
-                  burnLpTokens
-                    ? "border-button-1 bg-button-1/25"
-                    : "hover:bg-border/50",
-                )}
-                onClick={() => setBurnLpTokens(!burnLpTokens)}
+              Optional
+            </p>
+            {showOptional ? (
+              <ChevronUp className="h-4 w-4 text-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-secondary-foreground group-hover:text-foreground" />
+            )}
+          </button>
+
+          {showOptional && (
+            <>
+              {/* Optional - Description */}
+              <div className="flex w-full flex-col gap-2">
+                <p className="text-p2 text-secondary-foreground">Description</p>
+                <TextInput
+                  value={description}
+                  onChange={setDescription}
+                  isTextarea
+                  minRows={1}
+                />
+              </div>
+
+              {/* Optional - Decimals */}
+              <div className="flex w-full flex-col gap-2">
+                <p className="text-p2 text-secondary-foreground">Decimals</p>
+                <TextInput
+                  placeholder={decimals.toString()}
+                  value={decimalsRaw}
+                  onChange={onDecimalsChange}
+                />
+              </div>
+
+              {/* Optional - Supply */}
+              <div className="flex w-full flex-col gap-2">
+                <p className="text-p2 text-secondary-foreground">Supply</p>
+                <TextInput
+                  placeholder={supply.toString()}
+                  value={supplyRaw}
+                  onChange={onSupplyChange}
+                />
+              </div>
+
+              {/* Optional - Burn LP tokens */}
+              <Parameter
+                label="Burn LP tokens"
+                labelTooltip="Burning your LP tokens prevents you from withdrawing the pool's initial liquidity. You also won't receive any LP fees from depositing the pool's initial liquidity."
+                isHorizontal
               >
-                {burnLpTokens && <Check className="h-4 w-4 text-foreground" />}
-              </button>
+                <button
+                  className={cn(
+                    "group flex h-6 w-6 flex-row items-center justify-center rounded-sm border transition-colors",
+                    burnLpTokens
+                      ? "border-button-1 bg-button-1/25"
+                      : "hover:bg-border/50",
+                  )}
+                  onClick={() => setBurnLpTokens(!burnLpTokens)}
+                >
+                  {burnLpTokens && (
+                    <Check className="h-4 w-4 text-foreground" />
+                  )}
+                </button>
+              </Parameter>
+            </>
+          )}
+
+          <Divider />
+
+          {/* Quote asset */}
+          <div className="flex flex-row justify-between">
+            <p className="text-p2 text-secondary-foreground">Quote asset</p>
+
+            <TokenSelectionDialog
+              triggerClassName="h-6"
+              triggerIconSize={16}
+              triggerLabelSelectedClassName="!text-p2"
+              triggerLabelUnselectedClassName="!text-p2"
+              triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
+              token={quoteToken}
+              tokens={quoteTokens}
+              onSelectToken={(token) => setQuoteAssetCoinType(token.coinType)}
+            />
+          </div>
+
+          <div className="flex w-full flex-col gap-2">
+            {/* Deposited */}
+            <Parameter label="Initial liquidity" isHorizontal>
+              {quoteToken ? (
+                <div className="flex flex-row flex-wrap items-center justify-end gap-x-2 gap-y-1">
+                  <p className="text-p2 text-foreground">
+                    {formatToken(
+                      new BigNumber(supply)
+                        .times(DEPOSITED_TOKEN_PERCENT)
+                        .div(100),
+                      { dp: decimals, trimTrailingZeros: true },
+                    )}{" "}
+                    {symbol || "tokens"} (
+                    {formatPercent(new BigNumber(DEPOSITED_TOKEN_PERCENT), {
+                      dp: 0,
+                    })}
+                    )
+                  </p>
+                  <Plus className="h-4 w-4 text-tertiary-foreground" />
+                  <p className="text-p2 text-foreground">
+                    {formatToken(new BigNumber(DEPOSITED_QUOTE_ASSET), {
+                      dp: quoteToken.decimals,
+                      trimTrailingZeros: true,
+                    })}{" "}
+                    {quoteToken!.symbol}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-p2 text-foreground">--</p>
+              )}
             </Parameter>
-          </>
-        )}
-
-        <Divider />
-
-        {/* Quote asset */}
-        <div className="flex flex-row justify-between">
-          <p className="text-p2 text-secondary-foreground">Quote asset</p>
-
-          <TokenSelectionDialog
-            triggerClassName="h-6"
-            triggerIconSize={16}
-            triggerLabelSelectedClassName="!text-p2"
-            triggerLabelUnselectedClassName="!text-p2"
-            triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
-            token={quoteToken}
-            tokens={quoteTokens}
-            onSelectToken={(token) => setQuoteAssetCoinType(token.coinType)}
-          />
+          </div>
         </div>
 
-        <div className="flex w-full flex-col gap-2">
-          {/* Deposited */}
-          <Parameter label="Initial liquidity" isHorizontal>
-            {quoteToken ? (
-              <div className="flex flex-row flex-wrap items-center justify-end gap-x-2 gap-y-1">
-                <p className="text-p2 text-foreground">
-                  {formatToken(
-                    new BigNumber(supply)
-                      .times(DEPOSITED_TOKEN_PERCENT)
-                      .div(100),
-                    { dp: decimals },
-                  )}{" "}
-                  {symbol || "tokens"} (
-                  {formatPercent(new BigNumber(DEPOSITED_TOKEN_PERCENT), {
-                    dp: 0,
-                  })}
-                  )
-                </p>
-                <Plus className="h-4 w-4 text-tertiary-foreground" />
-                <p className="text-p2 text-foreground">
-                  {formatToken(new BigNumber(DEPOSITED_QUOTE_ASSET), {
-                    dp: quoteToken.decimals,
-                  })}{" "}
-                  {quoteToken!.symbol}
-                </p>
-              </div>
-            ) : (
-              <p className="text-p2 text-tertiary-foreground">N/A</p>
-            )}
-          </Parameter>
+        <div className="flex w-full flex-col gap-1">
+          <SubmitButton
+            submitButtonState={submitButtonState}
+            onClick={onSubmitClick}
+          />
+
+          {hasFailed && !hasClearedCache && (
+            <button
+              className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
+              onClick={reset}
+            >
+              <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
+                Start over
+              </p>
+            </button>
+          )}
         </div>
       </div>
-
-      {!createdPoolId ? (
-        <SubmitButton
-          submitButtonState={submitButtonState}
-          onClick={onSubmitClick}
-        />
-      ) : (
-        <div className="flex w-full flex-col gap-1">
-          <Link
-            className="flex h-14 w-full flex-row items-center justify-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80"
-            href={`${POOL_URL_PREFIX}/${createdPoolId}`}
-            target="_blank"
-          >
-            <p className="text-p1 text-button-1-foreground">Go to pool</p>
-          </Link>
-
-          <button
-            className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
-            onClick={reset}
-          >
-            <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
-              Start over
-            </p>
-          </button>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

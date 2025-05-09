@@ -131,9 +131,9 @@ export const BURN_ADDRESS =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 const getTokenModule = (symbol: string) =>
-  symbol.toLowerCase().replace(/\s+/g, "_"); // E.g. pump
+  symbol.toLowerCase().replace(/\s+/g, "_"); // E.g. sui
 const getTokenType = (symbol: string) =>
-  symbol.toUpperCase().replace(/\s+/g, "_"); // E.g. PUMP
+  symbol.toUpperCase().replace(/\s+/g, "_"); // E.g. SUI
 
 export const createToken = async (
   name: string,
@@ -163,13 +163,14 @@ export const createToken = async (
   return createTokenResult;
 };
 
+export type MintTokenResult = { res: SuiTransactionBlockResponse };
 export const mintToken = async (
   createTokenResult: CreateCoinResult,
   supply: number,
   decimals: number,
   address: string,
   signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
-): Promise<SuiTransactionBlockResponse> => {
+): Promise<MintTokenResult> => {
   console.log("[mintToken] Minting");
 
   const supplyAmount = BigInt(
@@ -204,12 +205,12 @@ export const mintToken = async (
 
   const res = await signExecuteAndWaitForTransaction(transaction);
 
-  return res;
+  return { res };
 };
 
 // Pool
 export const DEPOSITED_TOKEN_PERCENT = 20;
-export const DEPOSITED_QUOTE_ASSET = 1;
+export const DEPOSITED_QUOTE_ASSET = 0.01;
 
 export const FEE_TIER_PERCENT = 0.3;
 export const QUOTER_ID = QuoterId.CPMM;

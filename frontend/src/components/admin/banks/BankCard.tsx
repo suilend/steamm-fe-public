@@ -681,7 +681,7 @@ export default function BankCard({ bank }: BankCardProps) {
                 </div>
               </Tooltip>
             ) : (
-              <p className="text-p2 text-secondary-foreground">--</p>
+              <p className="text-p2 text-foreground">--</p>
             )}
 
             <button
