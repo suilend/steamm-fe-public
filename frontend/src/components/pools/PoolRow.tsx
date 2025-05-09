@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { CSSProperties } from "react";
 
+import { BadgeCheck } from "lucide-react";
+
 import { formatUsd } from "@suilend/frontend-sui";
 
 import AprBreakdown from "@/components/AprBreakdown";
@@ -31,7 +33,7 @@ export default function PoolRow({
   isInsideGroup,
   isLastPoolInGroup,
 }: PoolRowProps) {
-  const { appData } = useLoadedAppContext();
+  const { appData, verifiedPoolIds } = useLoadedAppContext();
 
   return (
     <Link
@@ -77,6 +79,12 @@ export default function PoolRow({
             {formatFeeTier(pool.feeTierPercent)}
           </Tag>
         </div>
+
+        {verifiedPoolIds?.includes(pool.id) && (
+          <Tooltip title="Verified">
+            <BadgeCheck className="-ml-0.5 h-4 w-4 text-success" />
+          </Tooltip>
+        )}
       </div>
 
       {/* TVL */}
