@@ -36,7 +36,7 @@ export default function PoolsTable({
     () => ({
       pool: {
         flex: 1,
-        minWidth: isTvlOnly ? 300 : 350, // px
+        minWidth: isTvlOnly ? 300 : 400, // px
         paddingLeft: 4 * 5, // px
       },
       tvlUsd: {
