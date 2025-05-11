@@ -58,10 +58,14 @@ import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 interface CreatePoolCardProps {
+  cpmmOnly?: boolean;
   noWhitelist?: boolean;
 }
 
-export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
+export default function CreatePoolCard({
+  cpmmOnly,
+  noWhitelist,
+}: CreatePoolCardProps) {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
@@ -109,7 +113,9 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
   const baseAssetCoinInputRef = useRef<HTMLInputElement>(null);
 
   // Quoter
-  const [quoterId, setQuoterId] = useState<QuoterId | undefined>(undefined);
+  const [quoterId, setQuoterId] = useState<QuoterId | undefined>(
+    cpmmOnly ? QuoterId.CPMM : undefined,
+  );
 
   const onSelectQuoter = (newQuoterId: QuoterId) => {
     setQuoterId(newQuoterId);
@@ -353,7 +359,7 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
 
     setValues(["", ""]);
     setLastActiveInputIndex(undefined);
-    setQuoterId(undefined);
+    setQuoterId(cpmmOnly ? QuoterId.CPMM : undefined);
     setAmplifier(undefined);
     setFeeTierPercent(undefined);
   };
@@ -705,6 +711,9 @@ export default function CreatePoolCard({ noWhitelist }: CreatePoolCardProps) {
             <div className="flex flex-row gap-1">
               {Object.values(QuoterId)
                 .filter((_quoterId) => _quoterId !== QuoterId.ORACLE)
+                .filter((_quoterId) =>
+                  _quoterId === QuoterId.CPMM ? true : !cpmmOnly,
+                )
                 .map((_quoterId) => {
                   const hasExistingPool =
                     hasExistingPoolForQuoterFeeTierAndAmplifier(
