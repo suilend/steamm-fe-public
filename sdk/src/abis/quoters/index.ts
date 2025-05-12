@@ -1,5 +1,6 @@
 export * from "./constantProduct";
 export * from "./oracleV1";
+export * from "./oracleV2";
 
 import {
   Transaction,
