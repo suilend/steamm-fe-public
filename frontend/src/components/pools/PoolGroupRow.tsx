@@ -25,7 +25,10 @@ import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolGroupRowProps {
-  columnStyleMap: Record<Column, CSSProperties>;
+  columnStyleMap: Record<
+    Column,
+    { cell: CSSProperties; children: CSSProperties }
+  >;
   tableId: string;
   poolGroup: PoolGroup;
   isTvlOnly?: boolean;
@@ -85,9 +88,9 @@ export default function PoolGroupRow({
 
   return (
     <>
-      <div
+      <tr
         className={cn(
-          "group relative z-[1] flex h-[calc(56px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row border-x border-b bg-background transition-colors",
+          "group h-[calc(56px+1px)] cursor-pointer border-x border-b bg-background transition-colors",
           isExpanded
             ? "bg-card/75 shadow-[inset_2px_0_0_0px_hsl(var(--button-1))]"
             : "hover:bg-tertiary",
@@ -95,115 +98,131 @@ export default function PoolGroupRow({
         onClick={() => setIsExpanded((prev) => !prev)}
       >
         {/* Pool */}
-        <div
-          className="flex h-full flex-row items-center gap-3"
-          style={columnStyleMap.pool}
-        >
-          <Tag
-            className={cn("min-w-[50px]", isExpanded && "bg-border")}
-            labelClassName={cn("w-max", isExpanded && "text-foreground")}
-            startDecorator={
-              <Chevron
-                className={cn(
-                  "h-4 w-4 transition-colors",
-                  isExpanded
-                    ? "text-foreground"
-                    : "text-secondary-foreground group-hover:text-foreground",
-                )}
-              />
-            }
+        <td className="whitespace-nowrap" style={columnStyleMap.pool.cell}>
+          <div
+            className="flex min-w-max flex-row items-center gap-3"
+            style={columnStyleMap.pool.children}
           >
-            {poolGroup.pools.length}
-          </Tag>
+            <Tag
+              className={cn("min-w-[50px]", isExpanded && "bg-border")}
+              labelClassName={cn("w-max", isExpanded && "text-foreground")}
+              startDecorator={
+                <Chevron
+                  className={cn(
+                    "h-4 w-4 transition-colors",
+                    isExpanded
+                      ? "text-foreground"
+                      : "text-secondary-foreground group-hover:text-foreground",
+                  )}
+                />
+              }
+            >
+              {poolGroup.pools.length}
+            </Tag>
 
-          <TokenLogos coinTypes={poolGroup.coinTypes} size={20} />
-          <p className="text-p1 text-foreground">
-            {formatPair(
-              poolGroup.coinTypes.map(
-                (coinType) => appData.coinMetadataMap[coinType].symbol,
-              ),
-            )}
-          </p>
-        </div>
+            <TokenLogos coinTypes={poolGroup.coinTypes} size={20} />
+            <p className="text-p1 text-foreground">
+              {formatPair(
+                poolGroup.coinTypes.map(
+                  (coinType) => appData.coinMetadataMap[coinType].symbol,
+                ),
+              )}
+            </p>
+          </div>
+        </td>
 
         {/* TVL */}
-        <div
-          className="flex h-full flex-row items-center"
-          style={columnStyleMap.tvlUsd}
-        >
-          <div className="flex flex-row items-center gap-2">
-            <p className="text-p3 text-tertiary-foreground">Total</p>
-
-            <Tooltip title={formatUsd(totalTvlUsd, { exact: true })}>
-              <p className="text-p1 text-foreground">
-                {formatUsd(totalTvlUsd)}
-              </p>
-            </Tooltip>
-          </div>
-        </div>
-
-        {/* Volume */}
-        {!isTvlOnly && (
+        <td className="whitespace-nowrap" style={columnStyleMap.tvlUsd.cell}>
           <div
-            className="flex h-full flex-row items-center"
-            style={columnStyleMap.volumeUsd_24h}
+            className="flex min-w-max flex-row items-center"
+            style={columnStyleMap.tvlUsd.children}
           >
             <div className="flex flex-row items-center gap-2">
               <p className="text-p3 text-tertiary-foreground">Total</p>
 
-              {totalVolumeUsd_24h === undefined ? (
-                <Skeleton className="h-[24px] w-16" />
-              ) : (
-                <Tooltip title={formatUsd(totalVolumeUsd_24h, { exact: true })}>
-                  <p className="text-p1 text-foreground">
-                    {formatUsd(totalVolumeUsd_24h)}
-                  </p>
-                </Tooltip>
-              )}
+              <Tooltip title={formatUsd(totalTvlUsd, { exact: true })}>
+                <p className="text-p1 text-foreground">
+                  {formatUsd(totalTvlUsd)}
+                </p>
+              </Tooltip>
             </div>
           </div>
+        </td>
+
+        {/* Volume */}
+        {!isTvlOnly && (
+          <td
+            className="whitespace-nowrap"
+            style={columnStyleMap.volumeUsd_24h.cell}
+          >
+            <div
+              className="flex min-w-max flex-row items-center"
+              style={columnStyleMap.volumeUsd_24h.children}
+            >
+              <div className="flex flex-row items-center gap-2">
+                <p className="text-p3 text-tertiary-foreground">Total</p>
+
+                {totalVolumeUsd_24h === undefined ? (
+                  <Skeleton className="h-[24px] w-16" />
+                ) : (
+                  <Tooltip
+                    title={formatUsd(totalVolumeUsd_24h, { exact: true })}
+                  >
+                    <p className="text-p1 text-foreground">
+                      {formatUsd(totalVolumeUsd_24h)}
+                    </p>
+                  </Tooltip>
+                )}
+              </div>
+            </div>
+          </td>
         )}
 
         {/* APR */}
         {!isTvlOnly && (
-          <div
-            className="flex h-full flex-row items-center"
-            style={columnStyleMap.aprPercent_24h}
+          <td
+            className="whitespace-nowrap"
+            style={columnStyleMap.aprPercent_24h.cell}
           >
-            <div className="flex flex-row items-center gap-2">
-              <p className="w-max whitespace-nowrap text-p3 text-tertiary-foreground">
-                Up to
-              </p>
-
-              <TokenLogos
-                coinTypes={Array.from(
-                  new Set(
-                    [...perDayRewards, ...aprRewards].map(
-                      (r) => r.stats.rewardCoinType,
-                    ),
-                  ),
-                )}
-                size={16}
-              />
-
-              {maxAprPercent_24h === undefined ? (
-                <Skeleton className="h-[24px] w-16" />
-              ) : (
-                <p
-                  className={cn(
-                    "!text-p1",
-                    [...perDayRewards, ...aprRewards].length > 0
-                      ? "text-button-2-foreground"
-                      : "text-foreground",
-                  )}
-                >
-                  {formatPercent(maxAprPercent_24h)}
+            <div
+              className="flex min-w-max flex-row items-center"
+              style={columnStyleMap.aprPercent_24h.children}
+            >
+              <div className="flex flex-row items-center gap-2">
+                <p className="w-max whitespace-nowrap text-p3 text-tertiary-foreground">
+                  Up to
                 </p>
-              )}
+
+                <TokenLogos
+                  coinTypes={Array.from(
+                    new Set(
+                      [...perDayRewards, ...aprRewards].map(
+                        (r) => r.stats.rewardCoinType,
+                      ),
+                    ),
+                  )}
+                  size={16}
+                />
+
+                {maxAprPercent_24h === undefined ? (
+                  <Skeleton className="h-[24px] w-16" />
+                ) : (
+                  <p
+                    className={cn(
+                      "!text-p1",
+                      [...perDayRewards, ...aprRewards].length > 0
+                        ? "text-button-2-foreground"
+                        : "text-foreground",
+                    )}
+                  >
+                    {formatPercent(maxAprPercent_24h)}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
+          </td>
         )}
-      </div>
+      </tr>
 
       {isExpanded &&
         poolGroup.pools.map((pool, index) => (
