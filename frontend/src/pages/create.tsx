@@ -14,7 +14,7 @@ export default function CreatePage() {
           <h1 className="text-h1 text-foreground">Create</h1>
         </div>
 
-        <CreatePoolCard cpmmOnly noWhitelist />
+        <CreatePoolCard />
       </div>
     </>
   );

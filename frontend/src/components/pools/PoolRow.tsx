@@ -72,6 +72,11 @@ export default function PoolRow({
             ),
           )}
         </p>
+        {verifiedPoolIds?.includes(pool.id) && (
+          <Tooltip title="Verified">
+            <BadgeCheck className="-ml-1.5 h-4 w-4 text-success" />
+          </Tooltip>
+        )}
 
         <div className="flex flex-row items-center gap-px">
           <PoolTypeTag className="rounded-r-[0] pr-2" pool={pool} />
@@ -79,12 +84,6 @@ export default function PoolRow({
             {formatFeeTier(pool.feeTierPercent)}
           </Tag>
         </div>
-
-        {verifiedPoolIds?.includes(pool.id) && (
-          <Tooltip title="Verified">
-            <BadgeCheck className="-ml-0.5 h-4 w-4 text-success" />
-          </Tooltip>
-        )}
       </div>
 
       {/* TVL */}

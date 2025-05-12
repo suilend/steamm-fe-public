@@ -305,7 +305,7 @@ export default function PoolsPage() {
           <div className="flex w-full flex-col rounded-md border md:flex-row md:items-stretch">
             {/* TVL */}
             <div className="flex-1">
-              <div className="w-full p-5">
+              <div className="w-full p-6">
                 <HistoricalDataChart
                   title="TVL"
                   value={
@@ -322,11 +322,11 @@ export default function PoolsPage() {
               </div>
             </div>
 
-            <Divider className="md:h-auto md:w-px" />
+            <Divider className="bg-border/25 md:h-auto md:w-px" />
 
             {/* Volume */}
             <div className="flex-1">
-              <div className="relative w-full p-5">
+              <div className="relative w-full p-6">
                 <HistoricalDataChart
                   className="relative z-[1]"
                   title={rhsChartConfig.title}
@@ -339,7 +339,7 @@ export default function PoolsPage() {
                   formatCategory={(category) => category}
                 />
 
-                <div className="absolute right-5 top-5 z-[2] flex flex-row gap-1">
+                <div className="absolute right-6 top-6 z-[2] flex flex-row gap-1">
                   {Object.values(RhsChartStat).map((rhsChartStat) => (
                     <button
                       key={rhsChartStat}
