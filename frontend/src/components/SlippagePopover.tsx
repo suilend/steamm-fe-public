@@ -75,7 +75,7 @@ export default function SlippagePopover() {
     >
       <div className="flex w-full flex-col gap-3">
         <div className="flex w-full flex-row gap-1">
-          {[0.1, 1, 3].map((sp) => (
+          {[0.3, 1, 3].map((sp) => (
             <button
               key={sp}
               className={cn(
