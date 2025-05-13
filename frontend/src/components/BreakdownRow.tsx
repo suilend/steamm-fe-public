@@ -1,17 +1,17 @@
 import { PropsWithChildren, ReactNode } from "react";
 
-interface AprBreakdownRowProps extends PropsWithChildren {
+interface BreakdownRowProps extends PropsWithChildren {
   isLast?: boolean;
   labelEndDecorator?: string;
   value?: ReactNode;
 }
 
-export default function AprBreakdownRow({
+export default function BreakdownRow({
   isLast,
   labelEndDecorator,
   value,
   children,
-}: AprBreakdownRowProps) {
+}: BreakdownRowProps) {
   return (
     <div className="flex flex-row items-start justify-between gap-4">
       <div className="flex flex-row items-stretch gap-2">

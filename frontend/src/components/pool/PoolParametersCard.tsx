@@ -14,6 +14,7 @@ import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
+import BreakdownRow from "@/components/BreakdownRow";
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
 import OpenUrlNewTab from "@/components/OpenUrlNewTab";
@@ -118,51 +119,84 @@ export default function PoolParametersCard() {
   return (
     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
       <Parameter label="Assets">
-        {pool.coinTypes.map((coinType, index) => (
-          <div
-            key={coinType}
-            className="flex w-full flex-row items-center gap-2"
-          >
-            <TokenLogo
-              token={getToken(coinType, appData.coinMetadataMap[coinType])}
-              size={16}
-            />
+        {pool.coinTypes.map((coinType, index) => {
+          const accruedLpFees = new BigNumber(
+            pool.pool.tradingData[
+              index === 0 ? "poolFeesA" : "poolFeesB"
+            ].toString(),
+          ).div(10 ** appData.coinMetadataMap[coinType].decimals);
 
-            <Tooltip
-              title={`${formatToken(pool.balances[index], {
-                dp: appData.coinMetadataMap[coinType].decimals,
-              })} ${appData.coinMetadataMap[coinType].symbol}`}
+          return (
+            <div
+              key={coinType}
+              className="flex w-full flex-row items-center gap-2"
             >
-              <p className="text-p2 text-foreground">
-                {formatToken(pool.balances[index], { exact: false })}{" "}
-                {appData.coinMetadataMap[coinType].symbol}
-              </p>
-            </Tooltip>
+              <TokenLogo
+                token={getToken(coinType, appData.coinMetadataMap[coinType])}
+                size={16}
+              />
 
-            <div className="flex flex-row items-center gap-1">
-              <CopyToClipboardButton value={coinType} />
-              <OpenUrlNewTab url={explorer.buildCoinUrl(coinType)} />
-            </div>
+              <Tooltip
+                content={
+                  <div className="flex flex-col gap-2">
+                    {/* Total */}
+                    <div className="flex flex-row items-center justify-between gap-4">
+                      <p className="text-p1 text-foreground">Total</p>
+                      <p className="text-p1 font-bold text-foreground">
+                        {formatToken(pool.balances[index], { exact: false })}{" "}
+                        {appData.coinMetadataMap[coinType].symbol}
+                      </p>
+                    </div>
 
-            {appData.suilend.mainMarket.reserveMap[coinType] && (
-              <Tag
-                labelClassName={cn(
-                  "text-foreground decoration-foreground/50",
-                  hoverUnderlineClassName,
-                )}
-                tooltip={`${formatPercent(appData.bankMap[coinType].utilizationPercent)} of deposited ${appData.coinMetadataMap[coinType].symbol} is earning ${formatPercent(appData.bankMap[coinType].suilendDepositAprPercent)} APR on Suilend`}
-                startDecorator={<SuilendLogo size={12} />}
+                    {/* Accrued LP fees */}
+                    <BreakdownRow
+                      isLast
+                      value={`${formatToken(accruedLpFees, { exact: false })} ${appData.coinMetadataMap[coinType].symbol} (${formatPercent(accruedLpFees.div(pool.balances[index]).times(100))})`}
+                    >
+                      Accrued LP fees
+                    </BreakdownRow>
+                  </div>
+                }
+                contentProps={{
+                  style: { maxWidth: 320 },
+                }}
               >
-                {formatPercent(
-                  appData.bankMap[coinType].suilendDepositAprPercent
-                    .times(appData.bankMap[coinType].utilizationPercent)
-                    .div(100),
-                )}{" "}
-                APR
-              </Tag>
-            )}
-          </div>
-        ))}
+                <p
+                  className={cn(
+                    "text-p2 text-foreground decoration-foreground/50",
+                    hoverUnderlineClassName,
+                  )}
+                >
+                  {formatToken(pool.balances[index], { exact: false })}{" "}
+                  {appData.coinMetadataMap[coinType].symbol}
+                </p>
+              </Tooltip>
+
+              <div className="flex flex-row items-center gap-1">
+                <CopyToClipboardButton value={coinType} />
+                <OpenUrlNewTab url={explorer.buildCoinUrl(coinType)} />
+              </div>
+
+              {appData.suilend.mainMarket.reserveMap[coinType] && (
+                <Tag
+                  labelClassName={cn(
+                    "text-foreground decoration-foreground/50",
+                    hoverUnderlineClassName,
+                  )}
+                  tooltip={`${formatPercent(appData.bankMap[coinType].utilizationPercent)} of deposited ${appData.coinMetadataMap[coinType].symbol} is earning ${formatPercent(appData.bankMap[coinType].suilendDepositAprPercent)} APR on Suilend`}
+                  startDecorator={<SuilendLogo size={12} />}
+                >
+                  {formatPercent(
+                    appData.bankMap[coinType].suilendDepositAprPercent
+                      .times(appData.bankMap[coinType].utilizationPercent)
+                      .div(100),
+                  )}{" "}
+                  APR
+                </Tag>
+              )}
+            </div>
+          );
+        })}
       </Parameter>
 
       {pool.quoterId === QuoterId.ORACLE_V2 && (
