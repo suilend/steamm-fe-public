@@ -1,5 +1,7 @@
-import Link from "next/link";
+import { useRouter } from "next/router";
 import { CSSProperties } from "react";
+
+import { BadgeCheck } from "lucide-react";
 
 import { formatUsd } from "@suilend/frontend-sui";
 
@@ -17,7 +19,10 @@ import { ParsedPool } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolRowProps {
-  columnStyleMap: Record<Column, CSSProperties>;
+  columnStyleMap: Record<
+    Column,
+    { cell: CSSProperties; children: CSSProperties }
+  >;
   pool: ParsedPool;
   isTvlOnly?: boolean;
   isInsideGroup?: boolean;
@@ -31,91 +36,112 @@ export default function PoolRow({
   isInsideGroup,
   isLastPoolInGroup,
 }: PoolRowProps) {
-  const { appData } = useLoadedAppContext();
+  const router = useRouter();
+
+  const { appData, verifiedPoolIds } = useLoadedAppContext();
 
   return (
-    <Link
+    <tr
       className={cn(
-        "group relative z-[1] flex h-[calc(56px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row border-x border-b bg-background transition-colors",
+        "group h-[calc(56px+1px)] cursor-pointer border-x border-b bg-background transition-colors",
         isInsideGroup
           ? "shadow-[inset_2px_0_0_0px_hsl(var(--button-1))] hover:bg-tertiary/50"
           : "hover:bg-tertiary",
       )}
-      href={getPoolUrl(appData, pool)}
+      onClick={() => router.push(getPoolUrl(appData, pool))}
     >
       {/* Pool */}
-      <div
-        className="flex h-full flex-row items-center gap-3"
-        style={columnStyleMap.pool}
-      >
-        {isInsideGroup && (
-          <div className="h-full w-[50px] shrink-0 pl-4">
-            <div className="relative h-full w-6">
-              {!isLastPoolInGroup && (
-                <div className="absolute bottom-0 left-0 top-0 w-px bg-border" />
-              )}
-              <div
-                className="absolute left-0 right-0 top-0 rounded-bl-md border-b border-l"
-                style={{ bottom: `calc(50% - ${1 / 2}px)` }}
-              />
+      <td className="whitespace-nowrap" style={columnStyleMap.pool.cell}>
+        <div
+          className="flex min-w-max flex-row items-center gap-3"
+          style={columnStyleMap.pool.children}
+        >
+          {isInsideGroup && (
+            <div className="h-14 w-[50px] shrink-0 pl-4">
+              <div className="relative h-full w-6">
+                {!isLastPoolInGroup && (
+                  <div className="absolute bottom-0 left-0 top-0 w-px bg-border" />
+                )}
+                <div
+                  className="absolute left-0 right-0 top-0 rounded-bl-md border-b border-l"
+                  style={{ bottom: `calc(50% - ${1 / 2}px)` }}
+                />
+              </div>
             </div>
-          </div>
-        )}
-
-        <TokenLogos coinTypes={pool.coinTypes} size={20} />
-        <p className="text-p1 text-foreground">
-          {formatPair(
-            pool.coinTypes.map(
-              (coinType) => appData.coinMetadataMap[coinType].symbol,
-            ),
           )}
-        </p>
 
-        <div className="flex flex-row items-center gap-px">
-          <PoolTypeTag className="rounded-r-[0] pr-2" pool={pool} />
-          <Tag className="rounded-l-[0] pl-2">
-            {formatFeeTier(pool.feeTierPercent)}
-          </Tag>
+          <TokenLogos coinTypes={pool.coinTypes} size={20} />
+          <p className="text-p1 text-foreground">
+            {formatPair(
+              pool.coinTypes.map(
+                (coinType) => appData.coinMetadataMap[coinType].symbol,
+              ),
+            )}
+          </p>
+          {verifiedPoolIds?.includes(pool.id) && (
+            <Tooltip title="Verified">
+              <BadgeCheck className="-ml-1.5 h-4 w-4 text-success" />
+            </Tooltip>
+          )}
+
+          <div className="flex flex-row items-center gap-px">
+            <PoolTypeTag className="rounded-r-[0] pr-2" pool={pool} />
+            <Tag className="rounded-l-[0] pl-2">
+              {formatFeeTier(pool.feeTierPercent)}
+            </Tag>
+          </div>
         </div>
-      </div>
+      </td>
 
       {/* TVL */}
-      <div
-        className="flex h-full flex-row items-center"
-        style={columnStyleMap.tvlUsd}
-      >
-        <Tooltip title={formatUsd(pool.tvlUsd, { exact: true })}>
-          <p className="text-p1 text-foreground">{formatUsd(pool.tvlUsd)}</p>
-        </Tooltip>
-      </div>
+      <td className="whitespace-nowrap" style={columnStyleMap.tvlUsd.cell}>
+        <div
+          className="flex min-w-max flex-row items-center"
+          style={columnStyleMap.tvlUsd.children}
+        >
+          <Tooltip title={formatUsd(pool.tvlUsd, { exact: true })}>
+            <p className="text-p1 text-foreground">{formatUsd(pool.tvlUsd)}</p>
+          </Tooltip>
+        </div>
+      </td>
 
       {/* Volume */}
       {!isTvlOnly && (
-        <div
-          className="flex h-full flex-row items-center"
-          style={columnStyleMap.volumeUsd_24h}
+        <td
+          className="whitespace-nowrap"
+          style={columnStyleMap.volumeUsd_24h.cell}
         >
-          {pool.volumeUsd_24h === undefined ? (
-            <Skeleton className="h-[24px] w-16" />
-          ) : (
-            <Tooltip title={formatUsd(pool.volumeUsd_24h, { exact: true })}>
-              <p className="text-p1 text-foreground">
-                {formatUsd(pool.volumeUsd_24h)}
-              </p>
-            </Tooltip>
-          )}
-        </div>
+          <div
+            className="flex min-w-max flex-row items-center"
+            style={columnStyleMap.volumeUsd_24h.children}
+          >
+            {pool.volumeUsd_24h === undefined ? (
+              <Skeleton className="h-[24px] w-16" />
+            ) : (
+              <Tooltip title={formatUsd(pool.volumeUsd_24h, { exact: true })}>
+                <p className="text-p1 text-foreground">
+                  {formatUsd(pool.volumeUsd_24h)}
+                </p>
+              </Tooltip>
+            )}
+          </div>
+        </td>
       )}
 
       {/* APR */}
       {!isTvlOnly && (
-        <div
-          className="flex h-full flex-row items-center"
-          style={columnStyleMap.aprPercent_24h}
+        <td
+          className="whitespace-nowrap"
+          style={columnStyleMap.aprPercent_24h.cell}
         >
-          <AprBreakdown pool={pool} />
-        </div>
+          <div
+            className="flex min-w-max flex-row items-center"
+            style={columnStyleMap.aprPercent_24h.children}
+          >
+            <AprBreakdown pool={pool} />
+          </div>
+        </td>
       )}
-    </Link>
+    </tr>
   );
 }

@@ -322,7 +322,7 @@ export default function PoolsPage() {
               </div>
             </div>
 
-            <Divider className="md:h-auto md:w-px" />
+            <Divider className="bg-border/25 md:h-auto md:w-px" />
 
             {/* Volume */}
             <div className="flex-1">

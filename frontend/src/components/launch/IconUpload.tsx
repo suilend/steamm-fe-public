@@ -12,7 +12,16 @@ import { MAX_BASE64_LENGTH, MAX_FILE_SIZE_BYTES } from "@/lib/launchToken";
 
 const FILE_SIZE_ERROR_MESSAGE = `Please upload an image smaller than ${formatNumber(new BigNumber(MAX_FILE_SIZE_BYTES / 1024), { dp: 0 })} KB`;
 
+const VALID_MIME_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/svg+xml",
+];
+
 interface IconUploadProps {
+  isDragAndDropDisabled?: boolean;
   iconUrl: string;
   setIconUrl: (url: string) => void;
   iconFilename: string;
@@ -22,6 +31,7 @@ interface IconUploadProps {
 }
 
 export default function IconUpload({
+  isDragAndDropDisabled,
   iconUrl,
   setIconUrl,
   iconFilename,
@@ -87,14 +97,7 @@ export default function IconUpload({
       );
 
       // Validate file type
-      const validTypes = [
-        "image/png",
-        "image/jpeg",
-        "image/jpg",
-        "image/webp",
-        "image/svg+xml",
-      ];
-      if (!validTypes.includes(file.type))
+      if (!VALID_MIME_TYPES.includes(file.type))
         throw new Error("Please upload a PNG, JPEG, WebP, or SVG image");
 
       // Validate file size
@@ -143,7 +146,7 @@ export default function IconUpload({
 
   return (
     <>
-      {isDragging && (
+      {!isDragAndDropDisabled && isDragging && (
         <div
           className="fixed inset-0 z-50 flex flex-row items-center justify-center bg-background/80"
           onDrop={handleDrop}
@@ -190,7 +193,7 @@ export default function IconUpload({
             id="icon-upload"
             className="absolute inset-0 z-[1] appearance-none opacity-0"
             type="file"
-            accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+            accept={VALID_MIME_TYPES.join(",")}
             onChange={handleFileSelect}
             disabled={isProcessing}
           />

@@ -474,17 +474,7 @@ export default function PortfolioPage() {
             {addressGlobalTransactionHistory === undefined ? (
               <Skeleton className="h-5 w-12" />
             ) : (
-              <Tag>
-                {
-                  addressGlobalTransactionHistory.filter(
-                    (transaction) =>
-                      !addressGlobalTransactionHistory.some(
-                        (transaction2) =>
-                          transaction.digest === transaction2.digest,
-                      ),
-                  ).length
-                }
-              </Tag>
+              <Tag>{addressGlobalTransactionHistory.length}</Tag>
             )}
           </div>
 

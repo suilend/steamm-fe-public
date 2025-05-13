@@ -96,9 +96,7 @@ export default function LaunchTokenCard() {
   const [createPoolResult, setCreatePoolResult] = useState<
     CreatePoolAndDepositInitialLiquidityResult | undefined
   >(undefined);
-  const [hasClearedCache, setHasClearedCache] = useState<boolean>(
-    process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true" ? true : false,
-  );
+  const [hasClearedCache, setHasClearedCache] = useState<boolean>(false);
 
   // State - token
   const [showOptional, setShowOptional] = useState<boolean>(false);
@@ -205,9 +203,7 @@ export default function LaunchTokenCard() {
     setBTokensAndBankIds([undefined, undefined]);
     setCreateLpTokenResult(undefined);
     setCreatePoolResult(undefined);
-    setHasClearedCache(
-      process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true" ? true : false,
-    );
+    setHasClearedCache(false);
 
     // Token
     setShowOptional(false);
@@ -503,10 +499,12 @@ export default function LaunchTokenCard() {
     }
   };
 
+  const isStepsDialogOpen = isSubmitting || hasClearedCache;
+
   return (
     <>
       <LaunchTokenStepsDialog
-        isOpen={isSubmitting || hasClearedCache}
+        isOpen={isStepsDialogOpen}
         createTokenResult={createTokenResult}
         mintTokenResult={mintTokenResult}
         bTokensAndBankIds={bTokensAndBankIds}
@@ -561,6 +559,7 @@ export default function LaunchTokenCard() {
               </p>
             </div>
             <IconUpload
+              isDragAndDropDisabled={hasFailed || isStepsDialogOpen}
               iconUrl={iconUrl}
               setIconUrl={setIconUrl}
               iconFilename={iconFilename}

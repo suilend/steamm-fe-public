@@ -1,7 +1,6 @@
 import { CSSProperties, useMemo } from "react";
 
 import BigNumber from "bignumber.js";
-import { ClassValue } from "clsx";
 import { useLocalStorage } from "usehooks-ts";
 
 import PoolGroupRow from "@/components/pools/PoolGroupRow";
@@ -9,13 +8,11 @@ import PoolRow from "@/components/pools/PoolRow";
 import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PoolGroup } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 export type Column = "pool" | "tvlUsd" | "volumeUsd_24h" | "aprPercent_24h";
 type SortableColumn = "tvlUsd" | "volumeUsd_24h" | "aprPercent_24h";
 
 interface PoolsTableProps {
-  className?: ClassValue;
   tableId: string;
   poolGroups?: PoolGroup[];
   searchString?: string;
@@ -24,7 +21,6 @@ interface PoolsTableProps {
 }
 
 export default function PoolsTable({
-  className,
   tableId,
   poolGroups,
   searchString,
@@ -32,30 +28,42 @@ export default function PoolsTable({
   isTvlOnly,
 }: PoolsTableProps) {
   // Columns
-  const columnStyleMap: Record<Column, CSSProperties> = useMemo(
+  const columnStyleMap: Record<
+    Column,
+    { cell: CSSProperties; children: CSSProperties }
+  > = useMemo(
     () => ({
       pool: {
-        flex: 1,
-        minWidth: isTvlOnly ? 300 : 350, // px
-        paddingLeft: 4 * 5, // px
+        cell: { textAlign: "left" },
+        children: {
+          paddingLeft: 4 * 5, // px
+          paddingRight: 4 * 5, // px
+          justifyContent: "start",
+        },
       },
       tvlUsd: {
-        width: isTvlOnly ? 100 : 150, // px
-        justifyContent: "end",
-        paddingRight: 4 * 5, // px
+        cell: { textAlign: "right" },
+        children: {
+          paddingRight: 4 * 5, // px
+          justifyContent: "end",
+        },
       },
       volumeUsd_24h: {
-        width: 150, // px
-        justifyContent: "end",
-        paddingRight: 4 * 5, // px
+        cell: { textAlign: "right" },
+        children: {
+          paddingRight: 4 * 5, // px
+          justifyContent: "end",
+        },
       },
       aprPercent_24h: {
-        width: 175, // px
-        justifyContent: "end",
-        paddingRight: 4 * 5, // px
+        cell: { textAlign: "right" },
+        children: {
+          paddingRight: 4 * 5, // px
+          justifyContent: "end",
+        },
       },
     }),
-    [isTvlOnly],
+    [],
   );
 
   // Sort
@@ -135,120 +143,127 @@ export default function PoolsTable({
     <div className="relative w-full overflow-hidden rounded-md">
       <div className="pointer-events-none absolute inset-0 z-[2] rounded-md border" />
 
-      <div className={cn("relative z-[1] w-full overflow-auto", className)}>
-        {/* Header */}
-        <div className="sticky left-0 top-0 z-[2] flex h-[calc(1px+40px+1px)] w-full min-w-max shrink-0 flex-row border bg-secondary">
-          <HeaderColumn<Column, SortableColumn>
-            id="pool"
-            style={columnStyleMap.pool}
-          >
-            Pool
-          </HeaderColumn>
-
-          <HeaderColumn<Column, SortableColumn>
-            id="tvlUsd"
-            sortState={sortState}
-            toggleSortByColumn={toggleSortByColumn}
-            style={columnStyleMap.tvlUsd}
-          >
-            TVL
-          </HeaderColumn>
-
-          {!isTvlOnly && (
+      <div className="relative z-[1] w-full overflow-auto">
+        <table className="w-full">
+          {/* Header */}
+          <tr className="h-[calc(1px+40px+1px)] border bg-secondary">
             <HeaderColumn<Column, SortableColumn>
-              id="volumeUsd_24h"
-              sortState={sortState}
-              toggleSortByColumn={
-                (poolGroups ?? []).every(
-                  (poolGroup) =>
-                    !!poolGroup.pools.every(
-                      (pool) => pool.volumeUsd_24h !== undefined,
-                    ),
-                )
-                  ? toggleSortByColumn
-                  : undefined
-              }
-              titleEndDecorator="24H"
-              style={columnStyleMap.volumeUsd_24h}
+              id="pool"
+              style={columnStyleMap.pool}
             >
-              Volume
+              Pool
             </HeaderColumn>
-          )}
 
-          {!isTvlOnly && (
             <HeaderColumn<Column, SortableColumn>
-              id="aprPercent_24h"
+              id="tvlUsd"
               sortState={sortState}
-              toggleSortByColumn={
-                (poolGroups ?? []).every(
-                  (poolGroup) =>
-                    !!poolGroup.pools.every(
-                      (pool) => pool.aprPercent_24h !== undefined,
-                    ),
-                )
-                  ? toggleSortByColumn
-                  : undefined
-              }
-              titleEndDecorator="24H"
-              style={columnStyleMap.aprPercent_24h}
+              toggleSortByColumn={toggleSortByColumn}
+              style={columnStyleMap.tvlUsd}
             >
-              APR
+              TVL
             </HeaderColumn>
-          )}
-        </div>
 
-        {/* Rows */}
-        {sortedPoolGroups === undefined ? (
-          Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton
-              key={index}
-              className="relative z-[1] h-[calc(56px+1px)] w-full border-x border-b"
-            />
-          ))
-        ) : sortedPoolGroups.length === 0 ? (
-          <div className="flex h-[calc(56px+1px)] w-full flex-row items-center justify-center border-x border-b bg-background">
-            <p className="text-p2 text-tertiary-foreground">
-              {searchString ? `No matches for "${searchString}"` : "No pools"}
-            </p>
-          </div>
-        ) : (
-          <>
-            {isFlat ? (
-              sortedPoolGroups
-                .map((poolGroup) => poolGroup.pools)
-                .flat()
-                .map((pool) => (
-                  <PoolRow
-                    key={pool.id}
-                    columnStyleMap={columnStyleMap}
-                    pool={pool}
-                    isTvlOnly={isTvlOnly}
-                  />
-                ))
-            ) : (
-              <>
-                {sortedPoolGroups.map((poolGroup) =>
-                  poolGroup.pools.length === 1 ? (
-                    <PoolRow
-                      key={poolGroup.id}
-                      columnStyleMap={columnStyleMap}
-                      pool={poolGroup.pools[0]}
-                      isTvlOnly={isTvlOnly}
-                    />
-                  ) : (
-                    <PoolGroupRow
-                      key={poolGroup.id}
-                      columnStyleMap={columnStyleMap}
-                      tableId={tableId}
-                      poolGroup={poolGroup}
-                      isTvlOnly={isTvlOnly}
-                    />
-                  ),
-                )}
-              </>
+            {!isTvlOnly && (
+              <HeaderColumn<Column, SortableColumn>
+                id="volumeUsd_24h"
+                sortState={sortState}
+                toggleSortByColumn={
+                  (poolGroups ?? []).every(
+                    (poolGroup) =>
+                      !!poolGroup.pools.every(
+                        (pool) => pool.volumeUsd_24h !== undefined,
+                      ),
+                  )
+                    ? toggleSortByColumn
+                    : undefined
+                }
+                titleEndDecorator="24H"
+                style={columnStyleMap.volumeUsd_24h}
+              >
+                Volume
+              </HeaderColumn>
             )}
-          </>
-        )}
+
+            {!isTvlOnly && (
+              <HeaderColumn<Column, SortableColumn>
+                id="aprPercent_24h"
+                sortState={sortState}
+                toggleSortByColumn={
+                  (poolGroups ?? []).every(
+                    (poolGroup) =>
+                      !!poolGroup.pools.every(
+                        (pool) => pool.aprPercent_24h !== undefined,
+                      ),
+                  )
+                    ? toggleSortByColumn
+                    : undefined
+                }
+                titleEndDecorator="24H"
+                style={columnStyleMap.aprPercent_24h}
+              >
+                APR
+              </HeaderColumn>
+            )}
+          </tr>
+
+          {/* Rows */}
+          {sortedPoolGroups === undefined ? (
+            Array.from({ length: 3 }).map((_, index) => (
+              <tr key={index} className="h-[calc(56px+1px)] border-x border-b">
+                <td colSpan={10}>
+                  <Skeleton className="h-[56px]" />
+                </td>
+              </tr>
+            ))
+          ) : sortedPoolGroups.length === 0 ? (
+            <tr className="h-[calc(56px+1px)] border-x border-b bg-background">
+              <td colSpan={10}>
+                <p className="text-center text-p2 text-tertiary-foreground">
+                  {searchString
+                    ? `No matches for "${searchString}"`
+                    : "No pools"}
+                </p>
+              </td>
+            </tr>
+          ) : (
+            <>
+              {isFlat ? (
+                sortedPoolGroups
+                  .map((poolGroup) => poolGroup.pools)
+                  .flat()
+                  .map((pool) => (
+                    <PoolRow
+                      key={pool.id}
+                      columnStyleMap={columnStyleMap}
+                      pool={pool}
+                      isTvlOnly={isTvlOnly}
+                    />
+                  ))
+              ) : (
+                <>
+                  {sortedPoolGroups.map((poolGroup) =>
+                    poolGroup.pools.length === 1 ? (
+                      <PoolRow
+                        key={poolGroup.id}
+                        columnStyleMap={columnStyleMap}
+                        pool={poolGroup.pools[0]}
+                        isTvlOnly={isTvlOnly}
+                      />
+                    ) : (
+                      <PoolGroupRow
+                        key={poolGroup.id}
+                        columnStyleMap={columnStyleMap}
+                        tableId={tableId}
+                        poolGroup={poolGroup}
+                        isTvlOnly={isTvlOnly}
+                      />
+                    ),
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </table>
       </div>
     </div>
   );
