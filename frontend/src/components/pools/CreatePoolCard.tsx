@@ -361,8 +361,6 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    if (!isWhitelisted)
-      return { isDisabled: true, title: "Create pool and deposit" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
     if (hasClearedCache) return { isDisabled: true, isSuccess: true };
 
