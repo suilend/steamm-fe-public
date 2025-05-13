@@ -39,6 +39,8 @@ import {
   FEE_TIER_PERCENTS,
   GetBTokenAndBankForTokenResult,
   PUBLIC_FEE_TIER_PERCENTS,
+  PUBLIC_QUOTER_IDS,
+  QUOTER_IDS,
   createBTokenAndBankForToken,
   createLpToken,
   createPoolAndDepositInitialLiquidity,
@@ -58,11 +60,7 @@ import { showSuccessTxnToast } from "@/lib/toasts";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
-interface CreatePoolCardProps {
-  useWhitelist?: boolean;
-}
-
-export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
+export default function CreatePoolCard() {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
@@ -71,11 +69,10 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
   const flags = useFlags();
   const isWhitelisted = useMemo(
     () =>
-      useWhitelist &&
       !!address &&
       (address === ADMIN_ADDRESS ||
         (flags?.steammCreatePoolWhitelist ?? []).includes(address)),
-    [useWhitelist, address, flags?.steammCreatePoolWhitelist],
+    [address, flags?.steammCreatePoolWhitelist],
   );
 
   // State - progress
@@ -108,9 +105,7 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
   const baseAssetCoinInputRef = useRef<HTMLInputElement>(null);
 
   // Quoter
-  const [quoterId, setQuoterId] = useState<QuoterId | undefined>(
-    useWhitelist ? undefined : QuoterId.CPMM,
-  );
+  const [quoterId, setQuoterId] = useState<QuoterId | undefined>(undefined);
 
   const onSelectQuoter = (newQuoterId: QuoterId) => {
     setQuoterId(newQuoterId);
@@ -352,7 +347,7 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
 
     setValues(["", ""]);
     setLastActiveInputIndex(undefined);
-    setQuoterId(useWhitelist ? undefined : QuoterId.CPMM);
+    setQuoterId(undefined);
     setAmplifier(undefined);
     setFeeTierPercent(undefined);
   };
@@ -702,53 +697,49 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
             <p className="text-p2 text-secondary-foreground">Quoter</p>
 
             <div className="flex flex-row gap-1">
-              {Object.values(QuoterId)
-                .filter((_quoterId) =>
-                  isWhitelisted ? true : _quoterId === QuoterId.CPMM,
-                )
-                .map((_quoterId) => {
-                  const hasExistingPool =
-                    hasExistingPoolForQuoterFeeTierAndAmplifier(
-                      _quoterId,
-                      feeTierPercent,
-                      amplifier,
-                    );
-
-                  return (
-                    <div key={_quoterId} className="w-max">
-                      <Tooltip
-                        title={
-                          hasExistingPool ? existingPoolTooltip : undefined
-                        }
-                      >
-                        <div className="w-max">
-                          <button
-                            key={_quoterId}
-                            className={cn(
-                              "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
-                              _quoterId === quoterId
-                                ? "cursor-default border-button-1 bg-button-1/25"
-                                : "hover:bg-border/50",
-                            )}
-                            onClick={() => onSelectQuoter(_quoterId)}
-                            disabled={hasExistingPool}
-                          >
-                            <p
-                              className={cn(
-                                "!text-p2 transition-colors",
-                                _quoterId === quoterId
-                                  ? "text-foreground"
-                                  : "text-secondary-foreground group-hover:text-foreground",
-                              )}
-                            >
-                              {QUOTER_ID_NAME_MAP[_quoterId]}
-                            </p>
-                          </button>
-                        </div>
-                      </Tooltip>
-                    </div>
+              {QUOTER_IDS.filter((_quoterId) =>
+                isWhitelisted ? true : PUBLIC_QUOTER_IDS.includes(_quoterId),
+              ).map((_quoterId) => {
+                const hasExistingPool =
+                  hasExistingPoolForQuoterFeeTierAndAmplifier(
+                    _quoterId,
+                    feeTierPercent,
+                    amplifier,
                   );
-                })}
+
+                return (
+                  <div key={_quoterId} className="w-max">
+                    <Tooltip
+                      title={hasExistingPool ? existingPoolTooltip : undefined}
+                    >
+                      <div className="w-max">
+                        <button
+                          key={_quoterId}
+                          className={cn(
+                            "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
+                            _quoterId === quoterId
+                              ? "cursor-default border-button-1 bg-button-1/25"
+                              : "hover:bg-border/50",
+                          )}
+                          onClick={() => onSelectQuoter(_quoterId)}
+                          disabled={hasExistingPool}
+                        >
+                          <p
+                            className={cn(
+                              "!text-p2 transition-colors",
+                              _quoterId === quoterId
+                                ? "text-foreground"
+                                : "text-secondary-foreground group-hover:text-foreground",
+                            )}
+                          >
+                            {QUOTER_ID_NAME_MAP[_quoterId]}
+                          </p>
+                        </button>
+                      </div>
+                    </Tooltip>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
