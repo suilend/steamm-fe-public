@@ -2,12 +2,12 @@ import { useRouter } from "next/router";
 import { useMemo } from "react";
 
 import BigNumber from "bignumber.js";
-import { ChartNoAxesCombined, Database } from "lucide-react";
 
 import { formatUsd } from "@suilend/frontend-sui";
 import { shallowPushQuery } from "@suilend/frontend-sui-next";
 
 import HistoricalDataChart from "@/components/HistoricalDataChart";
+import NoDataIcon from "@/components/icons/NoDataIcon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
@@ -115,7 +115,7 @@ export default function PoolChartCard() {
   )
     return (
       <div className="flex h-[265px] w-full flex-col items-center justify-center gap-2 rounded-md bg-card/50 md:h-[325px]">
-        <ChartNoAxesCombined className="h-5 w-5 text-secondary-foreground" />
+        <NoDataIcon className="h-5 w-5 text-secondary-foreground" />
         <p className="text-p2 text-secondary-foreground">No data yet</p>
       </div>
     );
