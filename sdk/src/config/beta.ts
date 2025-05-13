@@ -1,38 +1,37 @@
-import { SdkOptions } from "../sdk";
-import { Package, SteammConfigs } from "../types";
+import { Package, SdkOptions, SteammConfigs } from "../types";
 
 import { ORACLE_CONFIG } from "./mainnet";
 
 export const STEAMM_BETA_CONFIG: Package<SteammConfigs> = {
-  package_id:
+  packageId:
     "0xc765782a3e13ca6d89880433bcd7137bf368860038bc52513f4e4710a92b9d13",
-  published_at:
+  publishedAt:
     "0xcd79d7c2cdc9b3ed0ece47f1a5a9d8faa2f418328375c5cc00393ecfc1c67bbf",
   config: {
     registryId:
       "0x15fe7bd1184857440c3613126718506d26e225db5ec43ebae01f1027fcf15d34",
     globalAdmin:
       "0xb480e29206136932123a8f9b04bdb42da79e15060f3811c6e8b62c365e96b395",
-    quoterSourcePkgs: {
+    quoterIds: {
       cpmm: "0xc765782a3e13ca6d89880433bcd7137bf368860038bc52513f4e4710a92b9d13",
       omm: "0xc765782a3e13ca6d89880433bcd7137bf368860038bc52513f4e4710a92b9d13",
-      omm_v2:
+      ommV2:
         "0xc765782a3e13ca6d89880433bcd7137bf368860038bc52513f4e4710a92b9d13",
     },
   },
 };
 
 export const STEAMM_SCRIPT_BETA_CONFIG = {
-  package_id:
+  packageId:
     "0xeb1cdce9f21401a0c49d67ce4391ef431054da51b51b2701528f1815eb787f51",
-  published_at:
+  publishedAt:
     "0x93d2b8f81d1935938cfbc26590ec475ecaab8f80201dcf35019a6ae8d6ae5156",
 };
 
 export const SUILEND_BETA_CONFIG = {
-  package_id:
+  packageId:
     "0x1f54a9a2d71799553197e9ea24557797c6398d6a65f2d4d3818c9304b75d5e21",
-  published_at:
+  publishedAt:
     "0xd1ad8c401da6933bb5a5ccde1420f35c45e6a42a79ea6003f3248fe3c510d418",
   config: {
     lendingMarketId:
@@ -44,8 +43,10 @@ export const SUILEND_BETA_CONFIG = {
 
 export const BETA_CONFIG: SdkOptions = {
   fullRpcUrl: "https://fullnode.mainnet.sui.io:443",
-  suilend_config: SUILEND_BETA_CONFIG,
-  steamm_config: STEAMM_BETA_CONFIG,
-  steamm_script_config: STEAMM_SCRIPT_BETA_CONFIG,
-  oracle_config: ORACLE_CONFIG,
+  packages: {
+    suilend: SUILEND_BETA_CONFIG,
+    steamm: STEAMM_BETA_CONFIG,
+    steammScript: STEAMM_SCRIPT_BETA_CONFIG,
+    oracle: ORACLE_CONFIG,
+  },
 };

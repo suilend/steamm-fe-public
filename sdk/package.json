@@ -1,6 +1,6 @@
 {
   "name": "@suilend/steamm-sdk-local",
-  "version": "0.0.25",
+  "version": "1.0.0",
   "private": false,
   "description": "A TypeScript SDK for interacting with the STEAMM program",
   "author": "Suilend",
@@ -16,6 +16,7 @@
     "prettier": "prettier --write \"./src/**/*\"",
     "lint": "bun eslint && bun prettier && bun tsc --noEmit",
     "test": "bun test",
+    "check": "bun tsc --noEmit",
     "release": "bun run build && bun ts-node ./release.ts && cd ./dist && npm publish --access public"
   },
   "repository": {

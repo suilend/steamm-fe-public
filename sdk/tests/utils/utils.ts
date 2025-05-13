@@ -32,36 +32,38 @@ export function testConfig(): SdkOptions {
   return {
     fullRpcUrl: "http://127.0.0.1:9000",
     enableTestMode: true,
-    steamm_config: {
-      package_id: STEAMM_PKG_ID,
-      published_at: STEAMM_PKG_ID,
-      config: {
-        registryId: REGISTRY_ID,
-        globalAdmin: GLOBAL_ADMIN_ID,
-        quoterSourcePkgs: {
-          cpmm: STEAMM_PKG_ID,
-          omm: STEAMM_PKG_ID,
-          omm_v2: STEAMM_PKG_ID,
+    packages: {
+      steamm: {
+        packageId: STEAMM_PKG_ID,
+        publishedAt: STEAMM_PKG_ID,
+        config: {
+          registryId: REGISTRY_ID,
+          globalAdmin: GLOBAL_ADMIN_ID,
+          quoterIds: {
+            cpmm: STEAMM_PKG_ID,
+            omm: STEAMM_PKG_ID,
+            ommV2: STEAMM_PKG_ID,
+          },
         },
       },
-    },
-    suilend_config: {
-      package_id: SUILEND_PKG_ID,
-      published_at: SUILEND_PKG_ID,
-      config: {
-        lendingMarketId: LENDING_MARKET_ID,
-        lendingMarketType: LENDING_MARKET_TYPE,
+      suilend: {
+        packageId: SUILEND_PKG_ID,
+        publishedAt: SUILEND_PKG_ID,
+        config: {
+          lendingMarketId: LENDING_MARKET_ID,
+          lendingMarketType: LENDING_MARKET_TYPE,
+        },
       },
-    },
-    steamm_script_config: {
-      package_id: STEAMM_SCRIPT_PKG_ID,
-      published_at: STEAMM_SCRIPT_PKG_ID,
-    },
-    oracle_config: {
-      package_id: ORACLES_PKG_ID,
-      published_at: ORACLES_PKG_ID,
-      config: {
-        oracleRegistryId: ORACLE_REGISTRY_ID,
+      steammScript: {
+        packageId: STEAMM_SCRIPT_PKG_ID,
+        publishedAt: STEAMM_SCRIPT_PKG_ID,
+      },
+      oracle: {
+        packageId: ORACLES_PKG_ID,
+        publishedAt: ORACLES_PKG_ID,
+        config: {
+          oracleRegistryId: ORACLE_REGISTRY_ID,
+        },
       },
     },
   };
@@ -275,7 +277,7 @@ export function createPythPrice(
   },
 ) {
   return tx.moveCall({
-    target: `${sdk.sdkOptions.suilend_config.published_at}::setup::new_price_info_obj`,
+    target: `${sdk.sdkOptions.packages.suilend.publishedAt}::setup::new_price_info_obj`,
     arguments: [
       tx.pure.u64(args.price),
       tx.pure.u8(args.expo),
@@ -315,6 +317,8 @@ export async function createOraclePoolHelper(
 
   const oracleIndexA = feedIdCounter++;
   const oracleIndexB = feedIdCounter++;
+  console.log("oracleIndexA: ", oracleIndexA);
+  console.log("oracleIndexB: ", oracleIndexB);
   const priceObjA = createPythPrice(sdk, newPoolTx, {
     price: BigInt("1"),
     expo: 1,
@@ -332,7 +336,7 @@ export async function createOraclePoolHelper(
   });
 
   newPoolTx.moveCall({
-    target: `${sdk.sdkOptions.oracle_config.published_at}::oracles::add_pyth_oracle`,
+    target: `${sdk.sdkOptions.packages.oracle.publishedAt}::oracles::add_pyth_oracle`,
     arguments: [
       newPoolTx.object(ORACLE_REGISTRY_ID),
       newPoolTx.object(ORACLE_ADMIN_CAP_ID),
@@ -341,7 +345,7 @@ export async function createOraclePoolHelper(
   });
 
   newPoolTx.moveCall({
-    target: `${sdk.sdkOptions.oracle_config.published_at}::oracles::add_pyth_oracle`,
+    target: `${sdk.sdkOptions.packages.oracle.publishedAt}::oracles::add_pyth_oracle`,
     arguments: [
       newPoolTx.object(ORACLE_REGISTRY_ID),
       newPoolTx.object(ORACLE_ADMIN_CAP_ID),
@@ -457,6 +461,7 @@ export async function createOraclev2PoolHelper(
 
   const oracleIndexA = feedIdCounter++;
   const oracleIndexB = feedIdCounter++;
+
   const priceObjA = createPythPrice(sdk, newPoolTx, {
     price: BigInt("1"),
     expo: 1,
@@ -474,7 +479,7 @@ export async function createOraclev2PoolHelper(
   });
 
   newPoolTx.moveCall({
-    target: `${sdk.sdkOptions.oracle_config.published_at}::oracles::add_pyth_oracle`,
+    target: `${sdk.sdkOptions.packages.oracle.publishedAt}::oracles::add_pyth_oracle`,
     arguments: [
       newPoolTx.object(ORACLE_REGISTRY_ID),
       newPoolTx.object(ORACLE_ADMIN_CAP_ID),
@@ -483,7 +488,7 @@ export async function createOraclev2PoolHelper(
   });
 
   newPoolTx.moveCall({
-    target: `${sdk.sdkOptions.oracle_config.published_at}::oracles::add_pyth_oracle`,
+    target: `${sdk.sdkOptions.packages.oracle.publishedAt}::oracles::add_pyth_oracle`,
     arguments: [
       newPoolTx.object(ORACLE_REGISTRY_ID),
       newPoolTx.object(ORACLE_ADMIN_CAP_ID),
@@ -552,6 +557,9 @@ export async function createOraclev2PoolHelper(
     );
   }
 
+  console.log("priceInfoA: ", priceInfoObjects[0]);
+  console.log("priceInfoB: ", priceInfoObjects[1]);
+
   sdk.mockOracleObjectForTesting(
     toHex(new Uint8Array(oracleIndexAByteArray as number[])),
     priceInfoObjects[0].objectId,
@@ -587,7 +595,7 @@ export function mintCoin(
 }
 
 export async function initLendingNoOp(sdk: SteammSDK, coinType: string) {
-  const banks = await sdk.getBanks();
+  const banks = await sdk.fetchBankData();
   const bankId = banks[coinType].bankId;
   const bankState = await sdk.fullClient.getObject({
     id: bankId,

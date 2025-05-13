@@ -84,11 +84,11 @@ export default function useFetchAppData(
         // Suilend - Main market
         const mainMarket_suilendClient = await SuilendClient.initialize(
           process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-            ? BETA_CONFIG.suilend_config.config!.lendingMarketId // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
-            : MAINNET_CONFIG.suilend_config.config!.lendingMarketId,
+            ? BETA_CONFIG.packages.suilend.config!.lendingMarketId // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
+            : MAINNET_CONFIG.packages.suilend.config!.lendingMarketId,
           process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-            ? BETA_CONFIG.suilend_config.config!.lendingMarketType // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
-            : MAINNET_CONFIG.suilend_config.config!.lendingMarketType,
+            ? BETA_CONFIG.packages.suilend.config!.lendingMarketType // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
+            : MAINNET_CONFIG.packages.suilend.config!.lendingMarketType,
           suiClient,
         );
 
@@ -241,7 +241,7 @@ export default function useFetchAppData(
                     "https://hermes.pyth.network",
                   );
 
-                  const oracleInfos = await steammClient.getOracles();
+                  const oracleInfos = await steammClient.fetchOracleData();
 
                   const oracleIndexOracleInfoPriceEntries: [
                     number,
@@ -333,7 +333,9 @@ export default function useFetchAppData(
           (async () => {
             const bankObjs: BankObj[] = [];
             if (process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true") {
-              const bankInfos = Object.values(await steammClient.getBanks());
+              const bankInfos = Object.values(
+                await steammClient.fetchBankData(),
+              );
 
               for (const bankInfo of bankInfos) {
                 if (TEST_BANK_COIN_TYPES.includes(bankInfo.coinType)) continue; // Filter out test banks
@@ -373,7 +375,7 @@ export default function useFetchAppData(
         // Pools
         const poolObjs: PoolObj[] = [];
         if (process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true") {
-          const poolInfos = await steammClient.getPools();
+          const poolInfos = await steammClient.fetchPoolData();
 
           for (const poolInfo of poolInfos) {
             if (TEST_POOL_IDS.includes(poolInfo.poolId)) continue; // Filter out test pools

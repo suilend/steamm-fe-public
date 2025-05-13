@@ -15,11 +15,9 @@ import { BankList, DataPage, PoolInfo } from "../../src/types";
 
 import { STEAMM_PKG_ID } from "./../packages";
 import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
-import { PoolModule } from "../../src";
+import { PoolManager } from "../../src";
 import {
   createCoinAndBankHelper,
-  createOraclePoolHelper,
-  createPoolHelper,
   createOraclev2PoolHelper,
   mintCoin,
   testConfig,
@@ -57,8 +55,8 @@ export async function test() {
 
     beforeAll(async () => {
       sdk = new SteammSDK(testConfig());
-      pools = await sdk.getPools();
-      banks = await sdk.getBanks();
+      pools = await sdk.fetchPoolData();
+      banks = await sdk.fetchBankData();
 
       sdk.signer = keypair;
 
@@ -94,11 +92,11 @@ export async function test() {
 
       console.log(
         "pools: ",
-        await sdk.getPools([coinAData.coinType, coinBData.coinType]),
+        await sdk.fetchPoolData([coinAData.coinType, coinBData.coinType]),
       );
 
       const poolAB = (
-        await sdk.getPools([coinAData.coinType, coinBData.coinType])
+        await sdk.fetchPoolData([coinAData.coinType, coinBData.coinType])
       )[0];
 
       const depositTx = new Transaction();
@@ -145,9 +143,9 @@ export async function test() {
       );
 
       await sdk.refreshPoolCache();
-      const poolModule = new PoolModule(sdk);
+      const poolManager = new PoolManager(sdk);
 
-      await poolModule.swap(swapTx, {
+      await poolManager.swap(swapTx, {
         pool: poolAB.poolId,
         coinTypeA: coinAData.coinType,
         coinTypeB: coinBData.coinType,
