@@ -2,37 +2,29 @@
 
 A TypeScript SDK for interacting with the STEAMM program published on npm as [`@suilend/steamm-sdk`](https://www.npmjs.com/package/@suilend/steamm-sdk).
 
-### Testnet & Mainnet Beta actions
-
-Currently the protocol is only available on testnet and on mainnet beta. In order to bypass SUI faucet restrictions we deployed TEST coins with a dedicated faucet. To get coins for the purpose of interacting with the protocol:
-
-```ts
-const suiCoin = getTestSui(tx, 1000000000000000000);
-const usdcCoin = getTestUsdc(tx, 1000000000000000000);
-```
+### Mainnet actions
 
 To initiate the sdk:
 
 ```ts
-const sdk = new SteammSDK(BETA_CONFIG);
-// const sdk = new SteammSDK(TESTNET_CONFIG);
+import { MAINNET_CONFIG, SteammSDK } from "@suilend/steamm-sdk";
+
+const sdk = new SteammSDK(MAINNET_CONFIG);
 
 sdk.signer = keypair;
 ```
 
-Use `STEAMM_BETA_PKG_ID` for the mainnet beta package and `STEAMM_TESTNET_PKG_ID` for testnet.
-
 To fetch the pools:
 
 ```ts
-const pools = await sdk.getPools();
+const pools = await sdk.fetchPoolData();
 ```
 
 Alternatively, one can fetch all pools for a dedicated pair:
 
 ```ts
 // Note: type1 and type2 do not correspond to the token type's position in the pool
-const pools = await sdk.getPoolsByType(coinType1, coinType2);
+const pools = await sdk.fetchPoolData([coinType1, coinType2]);
 ```
 
 To deposit liquidity:
@@ -41,8 +33,8 @@ To deposit liquidity:
 await sdk.Pool.depositLiquidityEntry(
   {
     pool: pools[0].poolId,
-    coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
-    coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
+    coinTypeA,
+    coinTypeB,
     coinA: usdcCoin,
     coinB: suiCoin,
     maxA: BigInt("1000000000000000000"),
@@ -58,8 +50,8 @@ To perform a swap:
 await sdk.Pool.swapEntry(
   {
     pool: pools[0].poolId,
-    coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
-    coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
+    coinTypeA,
+    coinTypeB,
     coinA: usdcCoin,
     coinB: suiCoin,
     a2b: false,
@@ -76,8 +68,8 @@ And to redeem liquidity:
 await sdk.Pool.redeemLiquidityEntry(
   {
     pool: pools[0].poolId,
-    coinTypeA: `${STEAMM_BETA_PKG_ID}::usdc::USDC`,
-    coinTypeB: `${STEAMM_BETA_PKG_ID}::sui::SUI`,
+    coinTypeA,
+    coinTypeB,
     lpCoin: lpToken,
     minA: BigInt("0"),
     minB: BigInt("0"),

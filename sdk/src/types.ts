@@ -1,15 +1,44 @@
-export interface SteammPackageInfo {
-  sourcePkgId: string;
-  publishedAt: string;
-  quoterPkgs: {
-    cpmm: string;
-    omm: string;
-    omm_v2: string;
+export type SdkOptions = {
+  fullRpcUrl: string;
+  packages: {
+    steamm: Package<SteammConfigs>;
+    oracle: Package<OracleConfigs>;
+    steammScript: Package;
+    suilend: Package<SuilendConfigs>;
   };
+  cache_refresh_ms?: number /* default: 5000 */;
+  enableTestMode?: boolean;
+};
+
+export interface TestConfig {
+  mockOracleObjs: Record<string, string>;
 }
 
+export interface PoolCache {
+  pools: PoolInfo[];
+  updatedAt: number;
+}
+
+export interface BankCache {
+  banks: BankList;
+  updatedAt: number;
+}
+
+export interface OracleCache {
+  oracles: OracleInfo[];
+  updatedAt: number;
+}
+
+export type SteammInfo = PackageInfo & {
+  quoterIds: {
+    cpmm: string;
+    omm: string;
+    ommV2: string;
+  };
+};
+
 export interface PackageInfo {
-  sourcePkgId: string;
+  originalId: string;
   publishedAt: string;
 }
 
@@ -181,10 +210,10 @@ export function extractOracleV2QuoterInfo(
 export type SteammConfigs = {
   registryId: SuiObjectIdType;
   globalAdmin: SuiObjectIdType;
-  quoterSourcePkgs: {
+  quoterIds: {
     cpmm: SuiObjectIdType;
     omm: SuiObjectIdType;
-    omm_v2: SuiObjectIdType;
+    ommV2: SuiObjectIdType;
   };
 };
 
@@ -297,55 +326,6 @@ export type BankInfo = {
 };
 
 /**
- * Represents configuration data for a cryptocurrency coin.
- */
-export type CoinConfig = {
-  /**
-   * The unique identifier of the coin.
-   */
-  id: string;
-
-  /**
-   * The name of the coin.
-   */
-  name: string;
-
-  /**
-   * The symbol of the coin.
-   */
-  symbol: string;
-
-  /**
-   * The address associated with the coin.
-   */
-  address: string;
-
-  /**
-   * The Pyth identifier of the coin.
-   */
-  pyth_id: string;
-
-  /**
-   * The project URL related to the coin.
-   */
-  project_url: string;
-
-  /**
-   * The URL to the logo image of the coin.
-   */
-  logo_url: string;
-
-  /**
-   * The number of decimal places used for the coin.
-   */
-  decimals: number;
-
-  /**
-   * Additional properties for the coin configuration.
-   */
-} & Record<string, any>;
-
-/**
  * Represents a package containing specific configuration or data.
  * @template T - The type of configuration or data contained in the package.
  */
@@ -353,11 +333,11 @@ export type Package<T = undefined> = {
   /**
    * The unique identifier of the package.
    */
-  package_id: string;
+  packageId: string;
   /**
    * the package was published.
    */
-  published_at: string;
+  publishedAt: string;
   /**
    * The version number of the package (optional).
    */

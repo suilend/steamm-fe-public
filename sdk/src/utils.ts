@@ -108,8 +108,59 @@ export const extractGenerics = (typeString: string): string[] => {
   return generics;
 };
 
-const zip = <T, U>(a: T[], b: U[]): [T, U][] => {
+export const zip = <T, U>(a: T[], b: U[]): [T, U][] => {
   return a.map((k, i) => [k, b[i]]);
 };
 
-export { zip };
+// Add chunk helper at the top of the file
+export const chunk = <T>(arr: T[], size: number): T[][] =>
+  Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+    arr.slice(i * size, i * size + size),
+  );
+
+/**
+ * Computes the optimal offset using the formula: Price * tokenReserve * 10^(decimalsY - decimalsX)
+ * @param price The price as a decimal number or string
+ * @param tokenReserve Total amount of tokens to launch that have been added to the pool
+ * @param decimalsX The decimal places of token X
+ * @param decimalsY The decimal places of token Y
+ * @returns The calculated offset as a bigint
+ * @throws Error if the result contains a fractional part
+ */
+export const computeOptimalOffset = (
+  price: number | string,
+  tokenReserve: bigint,
+  decimalsX: number,
+  decimalsY: number,
+): bigint => {
+  // Convert price to string if it's a number
+  const priceStr = typeof price === "number" ? price.toString() : price;
+
+  // Parse price to determine its decimal places
+  const [intPart, fracPart = ""] = priceStr.split(".");
+  const pricePrecision = fracPart.length;
+
+  // Convert price to a bigint (removing the decimal point)
+  const priceAsBigInt = BigInt(intPart + fracPart);
+
+  // Calculate 10^(decimalsY - decimalsX)
+  const decimalAdjustment = BigInt(10) ** BigInt(decimalsY - decimalsX);
+
+  // Calculate the numerator: priceAsBigInt * tokenReserve * decimalAdjustment
+  const numerator = priceAsBigInt * tokenReserve * decimalAdjustment;
+
+  // Calculate the denominator: 10^pricePrecision
+  const denominator = BigInt(10) ** BigInt(pricePrecision);
+
+  // Check if the result will be an integer
+  if (numerator % denominator !== BigInt(0)) {
+    throw new Error(
+      "Result contains a fractional part and cannot be represented as an integer offset",
+    );
+  }
+
+  // Calculate the final result
+  const result = numerator / denominator;
+
+  return result;
+};

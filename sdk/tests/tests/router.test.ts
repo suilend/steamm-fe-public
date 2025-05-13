@@ -61,8 +61,8 @@ export async function test() {
 
     beforeAll(async () => {
       sdk = new SteammSDK(testConfig());
-      pools = await sdk.getPools();
-      banks = await sdk.getBanks();
+      pools = await sdk.fetchPoolData();
+      banks = await sdk.fetchBankData();
 
       sdk.signer = keypair;
 
@@ -94,39 +94,25 @@ export async function test() {
       const coinAData = await createCoinAndBankHelper(sdk, "A");
       const coinBData = await createCoinAndBankHelper(sdk, "B");
       const coinCData = await createCoinAndBankHelper(sdk, "C");
-      // const coinDData = await createCoinAndBankHelper(sdk, "D");
-      // const coinEData = await createCoinAndBankHelper(sdk, "E");
-      // const coinFData = await createCoinAndBankHelper(sdk, "F");
 
       // get banks
-      const banks = await sdk.getBanks();
+      const banks = await sdk.fetchBankData();
       const bankA = banks[coinAData.coinType];
       const bankB = banks[coinBData.coinType];
       const bankC = banks[coinCData.coinType];
-      // const bankD = banks[coinDData.coinType];
-      // const bankE = banks[coinEData.coinType];
-      // const bankF = banks[coinFData.coinType];
 
       const lpAB = await createPoolHelper(sdk, coinAData, coinBData);
       const lpBC = await createPoolHelper(sdk, coinBData, coinCData);
-      // const lpAD = await createPoolHelper(sdk, coinAData, coinDData);
-      // const lpAE = await createPoolHelper(sdk, coinAData, coinEData);
-
-      // const lpDB = await createPoolHelper(sdk, coinDData, coinBData);
-      // const lpDF = await createPoolHelper(sdk, coinDData, coinFData);
-      // const lpEF = await createPoolHelper(sdk, coinEData, coinFData);
-
-      // const lpFE = await createPoolHelper(sdk, coinFData, coinCData);
 
       // Seed the pools with liquidity
-      const pools = await sdk.getPools();
+      const pools = await sdk.fetchPoolData();
 
       const poolAB = (
-        await sdk.getPools([coinAData.coinType, coinBData.coinType])
+        await sdk.fetchPoolData([coinAData.coinType, coinBData.coinType])
       )[0];
 
       const poolBC = (
-        await sdk.getPools([coinBData.coinType, coinCData.coinType])
+        await sdk.fetchPoolData([coinBData.coinType, coinCData.coinType])
       )[0];
 
       const depositTx = new Transaction();
