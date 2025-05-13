@@ -23,7 +23,7 @@ export default function PoolsTab() {
           <p className="text-h3 text-foreground">Create pool</p>
         </div>
 
-        <CreatePoolCard />
+        <CreatePoolCard useWhitelist />
       </div>
 
       <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">

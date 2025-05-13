@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { CSSProperties, Fragment, MouseEvent, useState } from "react";
+import { useRouter } from "next/router";
+import { CSSProperties, MouseEvent, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
@@ -40,7 +40,10 @@ import { PoolPosition } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolPositionRowProps {
-  columnStyleMap: Record<Column, CSSProperties>;
+  columnStyleMap: Record<
+    Column,
+    { cell: CSSProperties; children: CSSProperties }
+  >;
   poolPosition: PoolPosition;
 }
 
@@ -48,6 +51,8 @@ export default function PoolPositionRow({
   columnStyleMap,
   poolPosition,
 }: PoolPositionRowProps) {
+  const router = useRouter();
+
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { appData } = useLoadedAppContext();
@@ -146,264 +151,292 @@ export default function PoolPositionRow({
   };
 
   return (
-    <Link
-      className="group relative z-[1] flex min-h-[calc(84px+1px)] w-full min-w-max shrink-0 cursor-pointer flex-row items-center border-x border-b bg-background py-[16px] transition-colors hover:bg-tertiary"
-      href={getPoolUrl(appData, poolPosition.pool)}
+    <tr
+      className="group cursor-pointer border-x border-b bg-background transition-colors hover:bg-tertiary"
+      onClick={() => router.push(getPoolUrl(appData, poolPosition.pool))}
     >
       {/* Pool */}
-      <div
-        className="flex h-full flex-row items-center gap-3"
-        style={columnStyleMap.pool}
-      >
-        <TokenLogos coinTypes={poolPosition.pool.coinTypes} size={20} />
-        <p className="text-p1 text-foreground">
-          {formatPair(
-            poolPosition.pool.coinTypes.map(
-              (coinType) => appData.coinMetadataMap[coinType].symbol,
-            ),
-          )}
-        </p>
+      <td className="whitespace-nowrap" style={columnStyleMap.pool.cell}>
+        <div
+          className="flex min-w-max flex-row items-center gap-3 py-4"
+          style={columnStyleMap.pool.children}
+        >
+          <TokenLogos coinTypes={poolPosition.pool.coinTypes} size={20} />
+          <p className="text-p1 text-foreground">
+            {formatPair(
+              poolPosition.pool.coinTypes.map(
+                (coinType) => appData.coinMetadataMap[coinType].symbol,
+              ),
+            )}
+          </p>
 
-        <div className="flex flex-row items-center gap-px">
-          <PoolTypeTag
-            className="rounded-r-[0] pr-2"
-            pool={poolPosition.pool}
-          />
-          <Tag className="rounded-l-[0] pl-2">
-            {formatFeeTier(poolPosition.pool.feeTierPercent)}
-          </Tag>
+          <div className="flex flex-row items-center gap-px">
+            <PoolTypeTag
+              className="rounded-r-[0] pr-2"
+              pool={poolPosition.pool}
+            />
+            <Tag className="rounded-l-[0] pl-2">
+              {formatFeeTier(poolPosition.pool.feeTierPercent)}
+            </Tag>
+          </div>
         </div>
-      </div>
+      </td>
 
       {/* APR */}
-      <div
-        className="flex h-full flex-row items-center"
-        style={columnStyleMap.aprPercent_24h}
+      <td
+        className="whitespace-nowrap"
+        style={columnStyleMap.aprPercent_24h.cell}
       >
-        <AprBreakdown pool={poolPosition.pool} />
-      </div>
+        <div
+          className="flex min-w-max flex-row items-center py-4"
+          style={columnStyleMap.aprPercent_24h.children}
+        >
+          <AprBreakdown pool={poolPosition.pool} />
+        </div>
+      </td>
 
       {/* Balance */}
-      <div
-        className="flex h-full flex-row items-center"
-        style={columnStyleMap.balance}
-      >
-        <div className="flex flex-col items-end gap-1">
-          {poolPosition.balanceUsd === undefined ? (
-            <Skeleton className="h-[24px] w-16" />
-          ) : (
-            <Tooltip
-              title={formatUsd(poolPosition.balanceUsd, { exact: true })}
-            >
-              <p className="text-p1 text-foreground">
-                {formatUsd(poolPosition.balanceUsd)}
-              </p>
-            </Tooltip>
-          )}
+      <td className="whitespace-nowrap" style={columnStyleMap.balance.cell}>
+        <div
+          className="flex min-w-max flex-row items-center py-4"
+          style={columnStyleMap.balance.children}
+        >
+          <div className="flex flex-col items-end gap-1">
+            {poolPosition.balanceUsd === undefined ? (
+              <Skeleton className="h-[24px] w-16" />
+            ) : (
+              <Tooltip
+                title={formatUsd(poolPosition.balanceUsd, { exact: true })}
+              >
+                <p className="text-p1 text-foreground">
+                  {formatUsd(poolPosition.balanceUsd)}
+                </p>
+              </Tooltip>
+            )}
 
-          {poolPosition.balances === undefined ? (
-            <Skeleton className="h-[21px] w-40" />
-          ) : (
-            <div className="flex flex-row items-center gap-3">
-              {poolPosition.pool.coinTypes.map((coinType, index) => (
-                <div
-                  key={coinType}
-                  className="flex flex-row items-center gap-2"
-                >
-                  <TokenLogo
-                    token={getToken(
-                      coinType,
-                      appData.coinMetadataMap[coinType],
-                    )}
-                    size={16}
-                  />
-                  <Tooltip
-                    title={`${formatToken(poolPosition.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
+            {poolPosition.balances === undefined ? (
+              <Skeleton className="h-[21px] w-40" />
+            ) : (
+              <div className="flex flex-row items-center gap-3">
+                {poolPosition.pool.coinTypes.map((coinType, index) => (
+                  <div
+                    key={coinType}
+                    className="flex flex-row items-center gap-2"
                   >
-                    <p className="text-p2 text-foreground">
-                      {formatToken(poolPosition.balances[index], {
-                        exact: false,
-                      })}{" "}
-                      {appData.coinMetadataMap[coinType].symbol}
-                    </p>
-                  </Tooltip>
-                </div>
-              ))}
-            </div>
-          )}
+                    <TokenLogo
+                      token={getToken(
+                        coinType,
+                        appData.coinMetadataMap[coinType],
+                      )}
+                      size={16}
+                    />
+                    <Tooltip
+                      title={`${formatToken(poolPosition.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
+                    >
+                      <p className="text-p2 text-foreground">
+                        {formatToken(poolPosition.balances[index], {
+                          exact: false,
+                        })}{" "}
+                        {appData.coinMetadataMap[coinType].symbol}
+                      </p>
+                    </Tooltip>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </td>
 
       {/* PnL */}
-      <div
-        className="flex h-full flex-row items-center"
-        style={columnStyleMap.pnlPercent}
-      >
-        {poolPosition.pnlPercent === undefined ? (
-          <Skeleton className="h-[24px] w-16" />
-        ) : (
-          <p
-            className={cn(
-              "!text-p1",
-              poolPosition.pnlPercent.gte(0) ? "text-success" : "text-error",
-            )}
-          >
-            {poolPosition.pnlPercent.gte(0) ? "+" : "-"}
-            {formatPercent(new BigNumber(poolPosition.pnlPercent.abs()))}
-          </p>
-        )}
-      </div>
+      <td className="whitespace-nowrap" style={columnStyleMap.pnlPercent.cell}>
+        <div
+          className="flex min-w-max flex-row items-center py-4"
+          style={columnStyleMap.pnlPercent.children}
+        >
+          {poolPosition.pnlPercent === undefined ? (
+            <Skeleton className="h-[24px] w-16" />
+          ) : (
+            <p
+              className={cn(
+                "!text-p1",
+                poolPosition.pnlPercent.gte(0) ? "text-success" : "text-error",
+              )}
+            >
+              {poolPosition.pnlPercent.gte(0) ? "+" : "-"}
+              {formatPercent(new BigNumber(poolPosition.pnlPercent.abs()))}
+            </p>
+          )}
+        </div>
+      </td>
 
       {/* Staked */}
-      <div
-        className="flex h-full flex-row items-center gap-3"
-        style={columnStyleMap.stakedPercent}
+      <td
+        className="whitespace-nowrap"
+        style={columnStyleMap.stakedPercent.cell}
       >
-        {!!appData.suilend.lmMarket.reserveMap[
-          poolPosition.pool.lpTokenType
-        ] ? (
-          <div className="flex flex-col items-end gap-1">
-            <p className="text-p1 text-foreground">
-              {formatPercent(stakedPercent)}
-            </p>
+        <div
+          className="flex min-w-max flex-row items-center gap-3 py-4"
+          style={columnStyleMap.stakedPercent.children}
+        >
+          {!!appData.suilend.lmMarket.reserveMap[
+            poolPosition.pool.lpTokenType
+          ] ? (
+            <div className="flex flex-col items-end gap-1">
+              <p className="text-p1 text-foreground">
+                {formatPercent(stakedPercent)}
+              </p>
 
-            <div className="flex flex-row items-center gap-2">
-              {!stakedPercent.eq(100) && (
-                <button
-                  className="flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-1 px-2 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
-                  disabled={isStaking}
-                  onClick={onStakeClick}
-                >
-                  {isStaking ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-button-1-foreground" />
-                  ) : (
-                    <p className="text-p3 text-button-1-foreground">Stake</p>
-                  )}
-                </button>
-              )}
+              <div className="flex flex-row items-center gap-2">
+                {!stakedPercent.eq(100) && (
+                  <button
+                    className="flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-1 px-2 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
+                    disabled={isStaking}
+                    onClick={onStakeClick}
+                  >
+                    {isStaking ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-button-1-foreground" />
+                    ) : (
+                      <p className="text-p3 text-button-1-foreground">Stake</p>
+                    )}
+                  </button>
+                )}
 
-              {!stakedPercent.eq(0) && (
-                <button
-                  className="flex h-6 w-[60px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
-                  disabled={isUnstaking}
-                  onClick={onUnstakeClick}
-                >
-                  {isUnstaking ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
-                  ) : (
-                    <p className="text-p3 text-button-2-foreground">Unstake</p>
-                  )}
-                </button>
-              )}
+                {!stakedPercent.eq(0) && (
+                  <button
+                    className="flex h-6 w-[60px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
+                    disabled={isUnstaking}
+                    onClick={onUnstakeClick}
+                  >
+                    {isUnstaking ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
+                    ) : (
+                      <p className="text-p3 text-button-2-foreground">
+                        Unstake
+                      </p>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ) : (
-          <p className="text-p1 text-foreground">--</p>
-        )}
-      </div>
+          ) : (
+            <p className="text-p1 text-foreground">--</p>
+          )}
+        </div>
+      </td>
 
       {/* Claimable rewards */}
-      <div
-        className="flex h-full flex-row items-center"
-        style={columnStyleMap.claimableRewards}
+      <td
+        className="whitespace-nowrap"
+        style={columnStyleMap.claimableRewards.cell}
       >
-        {Object.keys(poolPosition.claimableRewards).length > 0 ? (
-          <div className="flex flex-col items-end gap-1">
-            {Object.entries(poolPosition.claimableRewards).map(
-              ([coinType, amount]) => (
-                <div
-                  key={coinType}
-                  className="flex flex-row items-center gap-2"
-                >
-                  <TokenLogo
-                    token={getToken(
-                      coinType,
-                      appData.coinMetadataMap[coinType],
-                    )}
-                    size={16}
-                  />
-                  <Tooltip
-                    title={`${formatToken(amount, { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
+        <div
+          className="flex min-w-max flex-row items-center py-4"
+          style={columnStyleMap.claimableRewards.children}
+        >
+          {Object.keys(poolPosition.claimableRewards).length > 0 ? (
+            <div className="flex flex-col items-end gap-1">
+              {Object.entries(poolPosition.claimableRewards).map(
+                ([coinType, amount]) => (
+                  <div
+                    key={coinType}
+                    className="flex flex-row items-center gap-2"
                   >
-                    <p className="text-p2 text-foreground">
-                      {formatToken(amount, { exact: false })}{" "}
-                      {appData.coinMetadataMap[coinType].symbol}
-                    </p>
-                  </Tooltip>
+                    <TokenLogo
+                      token={getToken(
+                        coinType,
+                        appData.coinMetadataMap[coinType],
+                      )}
+                      size={16}
+                    />
+                    <Tooltip
+                      title={`${formatToken(amount, { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
+                    >
+                      <p className="text-p2 text-foreground">
+                        {formatToken(amount, { exact: false })}{" "}
+                        {appData.coinMetadataMap[coinType].symbol}
+                      </p>
+                    </Tooltip>
 
-                  <Tooltip
-                    title={formatUsd(
-                      amount.times(
-                        appData.suilend.lmMarket.rewardPriceMap[coinType] ?? 0,
-                      ),
-                      { exact: true },
-                    )}
-                  >
-                    <p className="text-p2 text-secondary-foreground">
-                      {formatUsd(
+                    <Tooltip
+                      title={formatUsd(
                         amount.times(
                           appData.suilend.lmMarket.rewardPriceMap[coinType] ??
                             0,
                         ),
+                        { exact: true },
                       )}
-                    </p>
-                  </Tooltip>
-                </div>
-              ),
-            )}
-          </div>
-        ) : (
-          <p className="text-p1 text-foreground">--</p>
-        )}
-      </div>
+                    >
+                      <p className="text-p2 text-secondary-foreground">
+                        {formatUsd(
+                          amount.times(
+                            appData.suilend.lmMarket.rewardPriceMap[coinType] ??
+                              0,
+                          ),
+                        )}
+                      </p>
+                    </Tooltip>
+                  </div>
+                ),
+              )}
+            </div>
+          ) : (
+            <p className="text-p1 text-foreground">--</p>
+          )}
+        </div>
+      </td>
 
       {/* Points */}
-      <div
-        className="flex h-full flex-row items-center"
-        style={columnStyleMap.points}
-      >
-        {poolPosition.totalPoints.gt(0) || poolPosition.pointsPerDay.gt(0) ? (
-          <div className="flex flex-col items-end gap-1">
-            <div className="flex flex-row items-center gap-2">
-              <TokenLogo
-                token={getToken(
-                  NORMALIZED_STEAMM_POINTS_COINTYPE,
-                  appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
-                )}
-                size={16}
-              />
+      <td className="whitespace-nowrap" style={columnStyleMap.points.cell}>
+        <div
+          className="flex min-w-max flex-row items-center py-4"
+          style={columnStyleMap.points.children}
+        >
+          {poolPosition.totalPoints.gt(0) || poolPosition.pointsPerDay.gt(0) ? (
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex flex-row items-center gap-2">
+                <TokenLogo
+                  token={getToken(
+                    NORMALIZED_STEAMM_POINTS_COINTYPE,
+                    appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
+                  )}
+                  size={16}
+                />
 
-              <Tooltip
-                title={`${formatPoints(poolPosition.totalPoints, {
-                  dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE]
-                    .decimals,
-                })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
-              >
-                <p className="text-p1 text-foreground">
-                  {formatPoints(poolPosition.totalPoints)}
-                </p>
-              </Tooltip>
+                <Tooltip
+                  title={`${formatPoints(poolPosition.totalPoints, {
+                    dp: appData.coinMetadataMap[
+                      NORMALIZED_STEAMM_POINTS_COINTYPE
+                    ].decimals,
+                  })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
+                >
+                  <p className="text-p1 text-foreground">
+                    {formatPoints(poolPosition.totalPoints)}
+                  </p>
+                </Tooltip>
+              </div>
+
+              <div className="flex flex-row items-center gap-2">
+                <div className="w-4" />
+
+                <Tooltip
+                  title={`${formatPoints(poolPosition.pointsPerDay, {
+                    dp: appData.coinMetadataMap[
+                      NORMALIZED_STEAMM_POINTS_COINTYPE
+                    ].decimals,
+                  })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol} per day`}
+                >
+                  <p className="text-p2 text-secondary-foreground">
+                    {formatPoints(poolPosition.pointsPerDay)} per day
+                  </p>
+                </Tooltip>
+              </div>
             </div>
-
-            <div className="flex flex-row items-center gap-2">
-              <div className="w-4" />
-
-              <Tooltip
-                title={`${formatPoints(poolPosition.pointsPerDay, {
-                  dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE]
-                    .decimals,
-                })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol} per day`}
-              >
-                <p className="text-p2 text-secondary-foreground">
-                  {formatPoints(poolPosition.pointsPerDay)} per day
-                </p>
-              </Tooltip>
-            </div>
-          </div>
-        ) : (
-          <p className="text-p1 text-foreground">--</p>
-        )}
-      </div>
-    </Link>
+          ) : (
+            <p className="text-p1 text-foreground">--</p>
+          )}
+        </div>
+      </td>
+    </tr>
   );
 }

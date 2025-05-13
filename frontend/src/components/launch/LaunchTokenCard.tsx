@@ -515,10 +515,12 @@ export default function LaunchTokenCard() {
     }
   };
 
+  const isStepsDialogOpen = isSubmitting || hasClearedCache;
+
   return (
     <>
       <LaunchTokenStepsDialog
-        isOpen={isSubmitting || hasClearedCache}
+        isOpen={isStepsDialogOpen}
         createTokenResult={createTokenResult}
         mintTokenResult={mintTokenResult}
         bTokensAndBankIds={bTokensAndBankIds}
@@ -573,6 +575,7 @@ export default function LaunchTokenCard() {
               </p>
             </div>
             <IconUpload
+              isDragAndDropDisabled={hasFailed || isStepsDialogOpen}
               iconUrl={iconUrl}
               setIconUrl={setIconUrl}
               iconFilename={iconFilename}

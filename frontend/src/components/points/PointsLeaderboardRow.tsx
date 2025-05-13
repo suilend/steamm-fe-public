@@ -23,7 +23,10 @@ import { PORTFOLIO_URL } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 interface PointsLeaderboardRowProps {
-  columnStyleMap: Record<Column, CSSProperties>;
+  columnStyleMap: Record<
+    Column,
+    { cell: CSSProperties; children: CSSProperties }
+  >;
   row: LeaderboardRowData;
 }
 
@@ -35,113 +38,124 @@ export default function PointsLeaderboardRow({
   const { appData } = useLoadedAppContext();
 
   return (
-    <div className="relative z-[1] flex min-h-[calc(53px+1px)] w-full min-w-max shrink-0 flex-row items-center border-x border-b bg-background">
+    <tr className="h-[calc(45px+1px)] border-x border-b bg-background">
       {/* Rank */}
-      <div
-        className="flex h-full flex-row items-center gap-2"
-        style={columnStyleMap.rank}
-      >
-        <p
-          className={cn(
-            "!text-p2 text-foreground",
-            row.rank === 1 && "text-gold",
-            row.rank === 2 && "text-silver",
-            row.rank === 3 && "text-bronze",
-          )}
+      <td className="whitespace-nowrap" style={columnStyleMap.rank.cell}>
+        <div
+          className="flex min-w-max flex-row items-center gap-2"
+          style={columnStyleMap.rank.children}
         >
-          {row.rank === -1 ? "N/A" : formatRank(row.rank)}
-        </p>
-        {[1, 2, 3].includes(row.rank) && (
-          <Trophy
+          <p
             className={cn(
-              "h-3 w-3",
+              "!text-p2 text-foreground",
               row.rank === 1 && "text-gold",
               row.rank === 2 && "text-silver",
               row.rank === 3 && "text-bronze",
             )}
-          />
-        )}
-      </div>
+          >
+            {row.rank === -1 ? "N/A" : formatRank(row.rank)}
+          </p>
+          {[1, 2, 3].includes(row.rank) && (
+            <Trophy
+              className={cn(
+                "h-3 w-3",
+                row.rank === 1 && "text-gold",
+                row.rank === 2 && "text-silver",
+                row.rank === 3 && "text-bronze",
+              )}
+            />
+          )}
+        </div>
+      </td>
 
       {/* Address */}
-      <div
-        className="flex h-full flex-row items-center gap-2"
-        style={columnStyleMap.address}
-      >
-        <Tooltip title={row.address}>
-          <p className="text-p2 text-foreground">
-            {formatAddress(row.address, 12)}
-          </p>
-        </Tooltip>
+      <td className="whitespace-nowrap" style={columnStyleMap.address.cell}>
+        <div
+          className="flex min-w-max flex-row items-center gap-2"
+          style={columnStyleMap.address.children}
+        >
+          <Tooltip title={row.address}>
+            <p className="text-p2 text-foreground">
+              {formatAddress(row.address, 12)}
+            </p>
+          </Tooltip>
 
-        <div className="flex flex-row items-center gap-1">
-          <CopyToClipboardButton value={row.address} />
-          <OpenUrlNewTab url={explorer.buildAddressUrl(row.address)} />
-          <OpenUrlNewTab
-            url={`${PORTFOLIO_URL}?wallet=${row.address}`}
-            Icon={VenetianMask}
-            tooltip="View Portfolio as this user"
-          />
+          <div className="flex flex-row items-center gap-1">
+            <CopyToClipboardButton value={row.address} />
+            <OpenUrlNewTab url={explorer.buildAddressUrl(row.address)} />
+            <OpenUrlNewTab
+              url={`${PORTFOLIO_URL}?wallet=${row.address}`}
+              Icon={VenetianMask}
+              tooltip="View Portfolio as this user"
+            />
+          </div>
         </div>
-      </div>
+      </td>
 
       {/* Total points */}
-      <div
-        className="flex h-full flex-row items-center gap-2"
-        style={columnStyleMap.totalPoints}
-      >
-        <TokenLogo
-          token={getToken(
-            NORMALIZED_STEAMM_POINTS_COINTYPE,
-            appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
-          )}
-          size={16}
-        />
-        <Tooltip
-          title={`${formatPoints(
-            row.totalPoints.eq(-1) ? new BigNumber(0) : row.totalPoints,
-            {
-              dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE]
-                .decimals,
-            },
-          )} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
+      <td className="whitespace-nowrap" style={columnStyleMap.totalPoints.cell}>
+        <div
+          className="flex min-w-max flex-row items-center gap-2"
+          style={columnStyleMap.totalPoints.children}
         >
-          <p className="text-p2 text-foreground">
-            {formatPoints(
-              row.totalPoints.eq(-1) ? new BigNumber(0) : row.totalPoints,
+          <TokenLogo
+            token={getToken(
+              NORMALIZED_STEAMM_POINTS_COINTYPE,
+              appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
             )}
-          </p>
-        </Tooltip>
-      </div>
+            size={16}
+          />
+          <Tooltip
+            title={`${formatPoints(
+              row.totalPoints.eq(-1) ? new BigNumber(0) : row.totalPoints,
+              {
+                dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE]
+                  .decimals,
+              },
+            )} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
+          >
+            <p className="text-p2 text-foreground">
+              {formatPoints(
+                row.totalPoints.eq(-1) ? new BigNumber(0) : row.totalPoints,
+              )}
+            </p>
+          </Tooltip>
+        </div>
+      </td>
 
       {/* Points per day */}
-      <div
-        className="flex h-full flex-row items-center gap-2"
-        style={columnStyleMap.pointsPerDay}
+      <td
+        className="whitespace-nowrap"
+        style={columnStyleMap.pointsPerDay.cell}
       >
-        <TokenLogo
-          token={getToken(
-            NORMALIZED_STEAMM_POINTS_COINTYPE,
-            appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
-          )}
-          size={16}
-        />
-        <Tooltip
-          title={`${formatPoints(
-            row.pointsPerDay.eq(-1) ? new BigNumber(0) : row.pointsPerDay,
-            {
-              dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE]
-                .decimals,
-            },
-          )} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
+        <div
+          className="flex min-w-max flex-row items-center gap-2"
+          style={columnStyleMap.pointsPerDay.children}
         >
-          <p className="text-p2 text-foreground">
-            {formatPoints(
-              row.pointsPerDay.eq(-1) ? new BigNumber(0) : row.pointsPerDay,
+          <TokenLogo
+            token={getToken(
+              NORMALIZED_STEAMM_POINTS_COINTYPE,
+              appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
             )}
-          </p>
-        </Tooltip>
-      </div>
-    </div>
+            size={16}
+          />
+          <Tooltip
+            title={`${formatPoints(
+              row.pointsPerDay.eq(-1) ? new BigNumber(0) : row.pointsPerDay,
+              {
+                dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE]
+                  .decimals,
+              },
+            )} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
+          >
+            <p className="text-p2 text-foreground">
+              {formatPoints(
+                row.pointsPerDay.eq(-1) ? new BigNumber(0) : row.pointsPerDay,
+              )}
+            </p>
+          </Tooltip>
+        </div>
+      </td>
+    </tr>
   );
 }

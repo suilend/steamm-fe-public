@@ -1,6 +1,5 @@
 import { CSSProperties, useMemo, useState } from "react";
 
-import { ClassValue } from "clsx";
 import { useLocalStorage } from "usehooks-ts";
 
 import PointsLeaderboardRow from "@/components/points/PointsLeaderboardRow";
@@ -13,7 +12,6 @@ export type Column = "rank" | "address" | "totalPoints" | "pointsPerDay";
 type SortableColumn = "totalPoints" | "pointsPerDay";
 
 interface PointsLeaderboardTableProps {
-  className?: ClassValue;
   tableId: string;
   rows?: LeaderboardRowData[];
   skeletonRows?: number;
@@ -21,33 +19,45 @@ interface PointsLeaderboardTableProps {
 }
 
 export default function PointsLeaderboardTable({
-  className,
   tableId,
   rows,
   skeletonRows,
   disableSorting,
 }: PointsLeaderboardTableProps) {
   // Columns
-  const columnStyleMap: Record<Column, CSSProperties> = useMemo(
+  const columnStyleMap: Record<
+    Column,
+    { cell: CSSProperties; children: CSSProperties }
+  > = useMemo(
     () => ({
       rank: {
-        width: 100, // px
-        paddingLeft: 4 * 5, // px
+        cell: { textAlign: "left" },
+        children: {
+          paddingLeft: 4 * 5, // px
+          justifyContent: "start",
+        },
       },
       address: {
-        flex: 1,
-        minWidth: 350, // px
-        paddingLeft: 4 * 5, // px
+        cell: { textAlign: "left" },
+        children: {
+          paddingLeft: 4 * 5, // px
+          paddingRight: 4 * 5, // px
+          justifyContent: "start",
+        },
       },
       totalPoints: {
-        width: 150, // px
-        justifyContent: "end",
-        paddingRight: 4 * 5, // px
+        cell: { textAlign: "right" },
+        children: {
+          paddingRight: 4 * 5, // px
+          justifyContent: "end",
+        },
       },
       pointsPerDay: {
-        width: 150, // px
-        justifyContent: "end",
-        paddingRight: 4 * 5, // px
+        cell: { textAlign: "right" },
+        children: {
+          paddingRight: 4 * 5, // px
+          justifyContent: "end",
+        },
       },
     }),
     [],
@@ -147,67 +157,77 @@ export default function PointsLeaderboardTable({
       <div className="relative w-full overflow-hidden rounded-md">
         <div className="pointer-events-none absolute inset-0 z-[2] rounded-md border" />
 
-        <div className={cn("relative z-[1] w-full overflow-auto", className)}>
-          {/* Header */}
-          <div className="sticky left-0 top-0 z-[2] flex h-[calc(1px+40px+1px)] w-full min-w-max shrink-0 flex-row border bg-secondary">
-            <HeaderColumn<Column, SortableColumn>
-              id="rank"
-              style={columnStyleMap.rank}
-            >
-              Rank
-            </HeaderColumn>
+        <div className="relative z-[1] w-full overflow-auto">
+          <table className="w-full">
+            {/* Header */}
+            <tr className="h-[calc(1px+40px+1px)] border bg-secondary">
+              <HeaderColumn<Column, SortableColumn>
+                id="rank"
+                style={columnStyleMap.rank}
+              >
+                Rank
+              </HeaderColumn>
 
-            <HeaderColumn<Column, SortableColumn>
-              id="address"
-              style={columnStyleMap.address}
-            >
-              Address
-            </HeaderColumn>
+              <HeaderColumn<Column, SortableColumn>
+                id="address"
+                style={columnStyleMap.address}
+              >
+                Address
+              </HeaderColumn>
 
-            <HeaderColumn<Column, SortableColumn>
-              id="totalPoints"
-              sortState={disableSorting ? undefined : sortState}
-              toggleSortByColumn={
-                disableSorting ? undefined : toggleSortByColumn
-              }
-              style={columnStyleMap.totalPoints}
-            >
-              Total points
-            </HeaderColumn>
+              <HeaderColumn<Column, SortableColumn>
+                id="totalPoints"
+                sortState={disableSorting ? undefined : sortState}
+                toggleSortByColumn={
+                  disableSorting ? undefined : toggleSortByColumn
+                }
+                style={columnStyleMap.totalPoints}
+              >
+                Total points
+              </HeaderColumn>
 
-            <HeaderColumn<Column, SortableColumn>
-              id="pointsPerDay"
-              sortState={disableSorting ? undefined : sortState}
-              toggleSortByColumn={
-                disableSorting ? undefined : toggleSortByColumn
-              }
-              style={columnStyleMap.pointsPerDay}
-            >
-              Points per day
-            </HeaderColumn>
-          </div>
+              <HeaderColumn<Column, SortableColumn>
+                id="pointsPerDay"
+                sortState={disableSorting ? undefined : sortState}
+                toggleSortByColumn={
+                  disableSorting ? undefined : toggleSortByColumn
+                }
+                style={columnStyleMap.pointsPerDay}
+              >
+                Points per day
+              </HeaderColumn>
+            </tr>
 
-          {/* Rows */}
-          {pageRows === undefined ? (
-            Array.from({ length: skeletonRows ?? 3 }).map((_, index) => (
-              <Skeleton
-                key={index}
-                className="relative z-[1] h-[calc(53px+1px)] w-full border-x border-b"
-              />
-            ))
-          ) : pageRows.length === 0 ? (
-            <div className="flex h-[calc(53px+1px)] w-full flex-row items-center justify-center border-x border-b bg-background">
-              <p className="text-p2 text-tertiary-foreground">No data</p>
-            </div>
-          ) : (
-            pageRows.map((row) => (
-              <PointsLeaderboardRow
-                key={row.address}
-                columnStyleMap={columnStyleMap}
-                row={row}
-              />
-            ))
-          )}
+            {/* Rows */}
+            {pageRows === undefined ? (
+              Array.from({ length: skeletonRows ?? 3 }).map((_, index) => (
+                <tr
+                  key={index}
+                  className="h-[calc(45px+1px)] border-x border-b"
+                >
+                  <td colSpan={10}>
+                    <Skeleton className="h-[45px]" />
+                  </td>
+                </tr>
+              ))
+            ) : pageRows.length === 0 ? (
+              <tr className="h-[calc(45px+1px)] border-x border-b bg-background">
+                <td colSpan={10}>
+                  <p className="text-center text-p2 text-tertiary-foreground">
+                    No data
+                  </p>
+                </td>
+              </tr>
+            ) : (
+              pageRows.map((row) => (
+                <PointsLeaderboardRow
+                  key={row.address}
+                  columnStyleMap={columnStyleMap}
+                  row={row}
+                />
+              ))
+            )}
+          </table>
         </div>
       </div>
 

@@ -23,8 +23,11 @@ import { QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 
 export const AMPLIFIERS: number[] = [1, 5, 10, 20, 30, 50, 100];
 export const FEE_TIER_PERCENTS: number[] = [
-  1, 5, 10, 20, 25, 30, 50, 100, 200,
+  1, 5, 10, 20, 25, 30, 50, 100, 200, 1000, 5000,
 ].map((bps) => bps / 100);
+export const PUBLIC_FEE_TIER_PERCENTS: number[] = [1, 30, 100, 200].map(
+  (bps) => bps / 100,
+);
 
 const getBTokenModule = (token: Token) =>
   `b_${token.coinType.split("::")[1]}`.toLowerCase(); // E.g. b_sui

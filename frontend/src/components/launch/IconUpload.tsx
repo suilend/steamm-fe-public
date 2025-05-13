@@ -21,6 +21,7 @@ const VALID_MIME_TYPES = [
 ];
 
 interface IconUploadProps {
+  isDragAndDropDisabled?: boolean;
   iconUrl: string;
   setIconUrl: (url: string) => void;
   iconFilename: string;
@@ -30,6 +31,7 @@ interface IconUploadProps {
 }
 
 export default function IconUpload({
+  isDragAndDropDisabled,
   iconUrl,
   setIconUrl,
   iconFilename,
@@ -144,7 +146,7 @@ export default function IconUpload({
 
   return (
     <>
-      {isDragging && (
+      {!isDragAndDropDisabled && isDragging && (
         <div
           className="fixed inset-0 z-50 flex flex-row items-center justify-center bg-background/80"
           onDrop={handleDrop}
