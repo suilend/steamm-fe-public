@@ -1,5 +1,11 @@
 import BigNumber from "bignumber.js";
 
+import {
+  NORMALIZED_SUI_COINTYPE,
+  NORMALIZED_USDC_COINTYPE,
+  isStablecoin,
+  isSui,
+} from "@suilend/frontend-sui";
 import { PoolInfo, RedeemQuote, SteammSDK } from "@suilend/steamm-sdk";
 import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 
@@ -40,6 +46,7 @@ export const getParsedPool = (
   appData: Pick<
     AppData,
     | "coinMetadataMap"
+    | "lstAprPercentMap"
     | "oracleIndexOracleInfoPriceMap"
     | "coinTypeOracleInfoPriceMap"
     | "bTokenTypeCoinTypeMap"
@@ -53,11 +60,15 @@ export const getParsedPool = (
   {
     const {
       coinMetadataMap,
+      lstAprPercentMap,
       oracleIndexOracleInfoPriceMap,
       coinTypeOracleInfoPriceMap,
       bTokenTypeCoinTypeMap,
       bankMap,
     } = appData;
+
+    const isLst = (coinType: string) =>
+      Object.keys(lstAprPercentMap).includes(coinType);
 
     const id = poolInfo.poolId;
     const quoterId = poolInfo.quoterType.endsWith("omm::OracleQuoter")
@@ -87,12 +98,20 @@ export const getParsedPool = (
       ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexA.toString()
         ].price
-      : (coinTypeOracleInfoPriceMap[coinTypeA]?.price ?? undefined);
+      : isSui(coinTypeA) || isLst(coinTypeA)
+        ? coinTypeOracleInfoPriceMap[NORMALIZED_SUI_COINTYPE]?.price
+        : isStablecoin(coinTypeA)
+          ? coinTypeOracleInfoPriceMap[NORMALIZED_USDC_COINTYPE]?.price
+          : coinTypeOracleInfoPriceMap[coinTypeA]?.price;
     let priceB = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
       ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexB.toString()
         ].price
-      : (coinTypeOracleInfoPriceMap[coinTypeB]?.price ?? undefined);
+      : isSui(coinTypeB) || isLst(coinTypeB)
+        ? coinTypeOracleInfoPriceMap[NORMALIZED_SUI_COINTYPE]?.price
+        : isStablecoin(coinTypeB)
+          ? coinTypeOracleInfoPriceMap[NORMALIZED_USDC_COINTYPE]?.price
+          : coinTypeOracleInfoPriceMap[coinTypeB]?.price;
 
     if (priceA === undefined && priceB === undefined) {
       console.error(
@@ -165,4 +184,11 @@ export const getParsedPool = (
       suilendWeightedAverageDepositAprPercent,
     };
   }
+};
+
+export const getPriceFromPool = (pools: AppData["pools"], coinType: string) => {
+  const pool = pools.find((p) => p.coinTypes.includes(coinType));
+  if (!pool) return undefined;
+
+  return pool.coinTypes[0] === coinType ? pool.prices[0] : pool.prices[1];
 };

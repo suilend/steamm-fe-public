@@ -502,6 +502,7 @@ export default function useFetchAppData(
         getParsedPool(
           {
             coinMetadataMap,
+            lstAprPercentMap,
             oracleIndexOracleInfoPriceMap,
             coinTypeOracleInfoPriceMap,
             bTokenTypeCoinTypeMap,

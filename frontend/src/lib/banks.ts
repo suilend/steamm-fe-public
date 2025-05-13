@@ -17,13 +17,6 @@ export const rebalanceBanks = (
   }
 };
 
-export const getBankPrice = (pools: AppData["pools"], bank: ParsedBank) => {
-  const pool = pools.find((p) => p.coinTypes.includes(bank.coinType));
-  if (!pool) return undefined;
-
-  return pool.coinTypes[0] === bank.coinType ? pool.prices[0] : pool.prices[1];
-};
-
 export const getParsedBank = (
   appData: Pick<AppData, "suilend" | "coinMetadataMap">,
   bankInfo: BankInfo,

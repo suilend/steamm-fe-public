@@ -5,6 +5,7 @@ import { Check, ChevronDown, ChevronUp, Plus } from "lucide-react";
 
 import {
   NORMALIZED_SUI_COINTYPE,
+  NORMALIZED_USDC_COINTYPE,
   SUI_GAS_MIN,
   Token,
   formatNumber,
@@ -48,7 +49,7 @@ import {
   BLACKLISTED_WORDS,
   DEFAULT_TOKEN_DECIMALS,
   DEFAULT_TOKEN_SUPPLY,
-  DEPOSITED_QUOTE_ASSET,
+  DEPOSITED_QUOTE_ASSET_USD,
   DEPOSITED_TOKEN_PERCENT,
   FEE_TIER_PERCENT,
   MAX_FILE_SIZE_BYTES,
@@ -57,6 +58,7 @@ import {
   createToken,
   mintToken,
 } from "@/lib/launchToken";
+import { getPriceFromPool } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +67,12 @@ export default function LaunchTokenCard() {
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
+
+  const isLst = useCallback(
+    (coinType: string) =>
+      Object.keys(appData.lstAprPercentMap).includes(coinType),
+    [appData.lstAprPercentMap],
+  );
 
   // State - progress
   const [hasFailed, setHasFailed] = useState<boolean>(false);
@@ -190,6 +198,31 @@ export default function LaunchTokenCard() {
         )
       : undefined;
 
+  const depositedQuoteAssetAmount = useMemo(() => {
+    if (quoteToken === undefined) return new BigNumber(0.01); // Not shown in UI
+
+    const price =
+      isSui(quoteToken.coinType) || isLst(quoteToken.coinType)
+        ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_SUI_COINTYPE]?.price
+        : isStablecoin(quoteToken.coinType)
+          ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_USDC_COINTYPE]?.price
+          : (appData.coinTypeOracleInfoPriceMap[quoteToken.coinType]?.price ??
+            getPriceFromPool(appData.pools, quoteToken.coinType));
+    if (price === undefined) return new BigNumber(1);
+
+    const rawAmount = DEPOSITED_QUOTE_ASSET_USD / +price;
+    if (isSui(quoteToken.coinType) || isLst(quoteToken.coinType))
+      return new BigNumber(Math.round(rawAmount / 10) * 10); // Round to nearest 10 for SUI and LSTs
+    if (isStablecoin(quoteToken.coinType))
+      return new BigNumber(DEPOSITED_QUOTE_ASSET_USD); // Use exact amount for stablecoins (1:1)
+
+    // All others (SEND)
+    return new BigNumber(rawAmount).decimalPlaces(
+      quoteToken.decimals,
+      BigNumber.ROUND_DOWN,
+    );
+  }, [quoteToken, isLst, appData.coinTypeOracleInfoPriceMap, appData.pools]);
+
   // State - pool - burn LP tokens
   const [burnLpTokens, setBurnLpTokens] = useState<boolean>(false);
 
@@ -302,14 +335,14 @@ export default function LaunchTokenCard() {
     if (
       isSui(quoteAssetCoinType) &&
       new BigNumber(getBalance(NORMALIZED_SUI_COINTYPE).minus(SUI_GAS_MIN)).lt(
-        DEPOSITED_QUOTE_ASSET,
+        depositedQuoteAssetAmount,
       )
     )
       return {
         isDisabled: true,
         title: `${SUI_GAS_MIN} SUI should be saved for gas`,
       };
-    if (getBalance(quoteAssetCoinType).lt(DEPOSITED_QUOTE_ASSET))
+    if (getBalance(quoteAssetCoinType).lt(depositedQuoteAssetAmount))
       return { isDisabled: true, title: `Insufficient ${quoteToken!.symbol}` };
 
     // Failed
@@ -452,7 +485,10 @@ export default function LaunchTokenCard() {
           .times(DEPOSITED_TOKEN_PERCENT)
           .div(100)
           .toFixed(decimals, BigNumber.ROUND_DOWN),
-        DEPOSITED_QUOTE_ASSET.toString(),
+        depositedQuoteAssetAmount.toFixed(
+          quoteToken.decimals,
+          BigNumber.ROUND_DOWN,
+        ),
       ] as [string, string];
 
       let _createPoolResult = createPoolResult;
@@ -685,7 +721,7 @@ export default function LaunchTokenCard() {
                   </p>
                   <Plus className="h-4 w-4 text-tertiary-foreground" />
                   <p className="text-p2 text-foreground">
-                    {formatToken(new BigNumber(DEPOSITED_QUOTE_ASSET), {
+                    {formatToken(depositedQuoteAssetAmount, {
                       dp: quoteToken.decimals,
                       trimTrailingZeros: true,
                     })}{" "}

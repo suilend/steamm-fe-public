@@ -214,8 +214,8 @@ export const mintToken = async (
 };
 
 // Pool
-export const DEPOSITED_TOKEN_PERCENT = 20;
-export const DEPOSITED_QUOTE_ASSET = 0.01;
+export const DEPOSITED_TOKEN_PERCENT = 5;
+export const DEPOSITED_QUOTE_ASSET_USD = 50;
 
 export const FEE_TIER_PERCENT = 0.3;
 export const QUOTER_ID = QuoterId.CPMM;
