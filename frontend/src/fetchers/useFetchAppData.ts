@@ -197,22 +197,27 @@ export default function useFetchAppData(
         };
       })(),
 
-      // LSTs
+      // LSTs (won't throw on error)
       (async () => {
-        const lstInfoRes = await fetch(`${API_URL}/springsui/lst-info`);
-        const lstInfoJson: Record<
-          string,
-          { LIQUID_STAKING_INFO: any; liquidStakingInfo: any; apy: string }
-        > = await lstInfoRes.json();
-        if ((lstInfoRes as any)?.statusCode === 500)
-          throw new Error("Failed to fetch SpringSui LST data");
+        try {
+          const lstInfoRes = await fetch(`${API_URL}/springsui/lst-info`);
+          const lstInfoJson: Record<
+            string,
+            { LIQUID_STAKING_INFO: any; liquidStakingInfo: any; apy: string }
+          > = await lstInfoRes.json();
+          if ((lstInfoRes as any)?.statusCode === 500)
+            throw new Error("Failed to fetch SpringSui LST data");
 
-        return Object.fromEntries(
-          Object.entries(lstInfoJson).map(([coinType, lstData]) => [
-            coinType,
-            new BigNumber(lstData.apy),
-          ]),
-        ) as AppData["lstAprPercentMap"];
+          return Object.fromEntries(
+            Object.entries(lstInfoJson).map(([coinType, lstData]) => [
+              coinType,
+              new BigNumber(lstData.apy),
+            ]),
+          ) as AppData["lstAprPercentMap"];
+        } catch (err) {
+          console.error(err);
+          return {} as AppData["lstAprPercentMap"];
+        }
       })(),
 
       // Oracles, Banks, and Pools
