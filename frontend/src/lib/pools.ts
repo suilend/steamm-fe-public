@@ -39,7 +39,6 @@ export const fetchPool = (steammClient: SteammSDK, poolInfo: PoolInfo) => {
 export const getParsedPool = (
   appData: Pick<
     AppData,
-    | "suilend"
     | "coinMetadataMap"
     | "oracleIndexOracleInfoPriceMap"
     | "coinTypeOracleInfoPriceMap"
@@ -53,7 +52,6 @@ export const getParsedPool = (
 ): ParsedPool | undefined => {
   {
     const {
-      suilend,
       coinMetadataMap,
       oracleIndexOracleInfoPriceMap,
       coinTypeOracleInfoPriceMap,
@@ -89,20 +87,16 @@ export const getParsedPool = (
       ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexA.toString()
         ].price
-      : (coinTypeOracleInfoPriceMap[coinTypeA]?.price ??
-        suilend.mainMarket.reserveMap[coinTypeA]?.price ??
-        undefined);
+      : (coinTypeOracleInfoPriceMap[coinTypeA]?.price ?? undefined);
     let priceB = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
       ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexB.toString()
         ].price
-      : (coinTypeOracleInfoPriceMap[coinTypeB]?.price ??
-        suilend.mainMarket.reserveMap[coinTypeB]?.price ??
-        undefined);
+      : (coinTypeOracleInfoPriceMap[coinTypeB]?.price ?? undefined);
 
     if (priceA === undefined && priceB === undefined) {
       console.error(
-        `Skipping pool with id ${id}, quoterId ${quoterId} - missing prices for both assets (no Pyth or Switchboard price feed, no Suilend main market reserve) for coinType(s) ${coinTypes.join(", ")}`,
+        `Skipping pool with id ${id}, quoterId ${quoterId} - missing prices for both assets (no Pyth or Switchboard price feed) for coinType(s) ${coinTypes.join(", ")}`,
       );
       return undefined;
     } else if (priceA === undefined) {
@@ -111,14 +105,14 @@ export const getParsedPool = (
       );
       priceA = !balanceA.eq(0)
         ? balanceB.div(balanceA).times(priceB)
-        : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM quoter)
+        : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM pools)
     } else if (priceB === undefined) {
       console.warn(
         `Missing price for coinTypeB ${coinTypeB}, using balance ratio to calculate price (pool with id ${id}, quoterId ${quoterId})`,
       );
       priceB = !balanceB.eq(0)
         ? balanceA.div(balanceB).times(priceA)
-        : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM quoter)
+        : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM pools)
     }
     const prices: [BigNumber, BigNumber] = [priceA, priceB];
 

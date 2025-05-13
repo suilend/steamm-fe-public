@@ -501,7 +501,6 @@ export default function useFetchAppData(
       .map((poolObj) =>
         getParsedPool(
           {
-            suilend,
             coinMetadataMap,
             oracleIndexOracleInfoPriceMap,
             coinTypeOracleInfoPriceMap,
