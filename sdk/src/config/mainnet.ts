@@ -3,7 +3,7 @@ import { SdkOptions } from "../types";
 export const STEAMM_CONFIG = {
   packageId:
     "0x4fb1cf45dffd6230305f1d269dd1816678cc8e3ba0b747a813a556921219f261",
-  published_at:
+  publishedAt:
     "0x941d7bfb56d052d014659847f0c49b980e1d90242544aee9a88e5aec1a8e1ae1",
   config: {
     registryId:
