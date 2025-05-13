@@ -101,9 +101,7 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
   const [createPoolResult, setCreatePoolResult] = useState<
     CreatePoolAndDepositInitialLiquidityResult | undefined
   >(undefined);
-  const [hasClearedCache, setHasClearedCache] = useState<boolean>(
-    process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true" ? true : false,
-  );
+  const [hasClearedCache, setHasClearedCache] = useState<boolean>(false);
 
   // CoinTypes
   const [coinTypes, setCoinTypes] = useState<[string, string]>(["", ""]);
@@ -346,9 +344,7 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
     setBTokensAndBankIds([undefined, undefined]);
     setCreateLpTokenResult(undefined);
     setCreatePoolResult(undefined);
-    setHasClearedCache(
-      process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true" ? true : false,
-    );
+    setHasClearedCache(false);
 
     // Pool
     setCoinTypes(["", ""]);
@@ -574,10 +570,12 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
     }
   };
 
+  const isStepsDialogOpen = isSubmitting || hasClearedCache;
+
   return (
     <>
       <CreatePoolStepsDialog
-        isOpen={isSubmitting || hasClearedCache}
+        isOpen={isStepsDialogOpen}
         bTokensAndBankIds={bTokensAndBankIds}
         createdLpToken={createLpTokenResult}
         createPoolResult={createPoolResult}
