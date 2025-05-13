@@ -151,7 +151,12 @@ export default function PoolParametersCard() {
                     {/* Accrued LP fees */}
                     <BreakdownRow
                       isLast
-                      value={`${formatToken(accruedLpFees, { exact: false })} ${appData.coinMetadataMap[coinType].symbol} (${formatPercent(accruedLpFees.div(pool.balances[index]).times(100))})`}
+                      value={
+                        <>
+                          {formatToken(accruedLpFees, { exact: false })}{" "}
+                          {appData.coinMetadataMap[coinType].symbol}
+                        </>
+                      }
                     >
                       Accrued LP fees
                     </BreakdownRow>
