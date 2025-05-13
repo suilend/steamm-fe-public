@@ -93,11 +93,12 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       return (
         hourStartS +
         Math.floor((nowS - hourStartS) / FIFTEEN_MINUTES_S) * FIFTEEN_MINUTES_S
-      );
+      ); // Snap to the last 15 minute mark
     })(),
   );
 
   // Pool
+  // Pool - historical stats
   const [poolHistoricalStats, setPoolHistoricalStats] = useState<{
     tvlUsd_7d: Record<string, ChartData[]>;
     volumeUsd_7d: Record<string, ChartData[]>;
@@ -319,6 +320,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
     fetchPoolHistoricalStats();
   }, [appData, fetchPoolHistoricalStats]);
 
+  // Pool - stats
   const poolStats: {
     volumeUsd_7d: Record<string, BigNumber>;
     volumeUsd_24h: Record<string, BigNumber>;
@@ -405,27 +407,147 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
     [poolHistoricalStats],
   );
 
-  // Total
-  const globalHistoricalStats: {
-    tvlUsd_7d: ChartData[] | undefined;
+  // Global
+  // Global - historical stats
+  const [globalHistoricalStats, setGlobalHistoricalStats] = useState<{
     volumeUsd_7d: ChartData[] | undefined;
     feesUsd_7d: ChartData[] | undefined;
+  }>({
+    volumeUsd_7d: undefined,
+    feesUsd_7d: undefined,
+  });
+
+  const fetchGlobalHistoricalStats = useCallback(async () => {
+    // TVL
+    // (async () => {
+    //   try {
+    //     const res = await fetch(
+    //       `${API_URL}/steamm/historical/tvl?${new URLSearchParams({
+    //         startTimestampS: `${referenceTimestampSRef.current - SEVEN_DAYS_S}`,
+    //         endTimestampS: `${referenceTimestampSRef.current - 1}`,
+    //         intervalS: `${ONE_HOUR_S}`,
+    //       })}`,
+    //     );
+    //     const json: {
+    //       start: number;
+    //       end: number;
+    //       tvl: Record<string, string>;
+    //       usdValue: string;
+    //     }[] = await res.json();
+    //     if ((json as any)?.statusCode === 500)
+    //       throw new Error("Failed to fetch global historical TVL");
+
+    //     console.log("XXXX tvl", json);
+    //   } catch (err) {
+    //     console.error(err);
+    //   }
+    // })();
+
+    // Volume
+    (async () => {
+      try {
+        const res = await fetch(
+          `${API_URL}/steamm/historical/volume?${new URLSearchParams({
+            startTimestampS: `${referenceTimestampSRef.current - SEVEN_DAYS_S}`,
+            endTimestampS: `${referenceTimestampSRef.current - 1}`,
+            intervalS: `${SIX_HOURS_S}`,
+          })}`,
+        );
+        const json: {
+          start: number;
+          end: number;
+          volume: Record<string, string>;
+          usdValue: string;
+        }[] = await res.json();
+        if ((json as any)?.statusCode === 500)
+          throw new Error("Failed to fetch global historical volume");
+
+        setGlobalHistoricalStats((prev) => ({
+          ...prev,
+          volumeUsd_7d: json.reduce(
+            (acc, d) => [
+              ...acc,
+              {
+                timestampS: d.start,
+                volumeUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
+              },
+            ],
+            [] as ChartData[],
+          ),
+        }));
+      } catch (err) {
+        console.error(err);
+
+        setGlobalHistoricalStats((prev) => ({
+          ...prev,
+          volumeUsd_7d: [{ timestampS: 0, volumeUsd_7d: 0 }],
+        }));
+      }
+    })();
+
+    // Fees
+    (async () => {
+      try {
+        const res = await fetch(
+          `${API_URL}/steamm/historical/fees?${new URLSearchParams({
+            startTimestampS: `${referenceTimestampSRef.current - SEVEN_DAYS_S}`,
+            endTimestampS: `${referenceTimestampSRef.current - 1}`,
+            intervalS: `${SIX_HOURS_S}`,
+          })}`,
+        );
+        const json: {
+          start: number;
+          end: number;
+          fees: Record<string, string>;
+          usdValue: string;
+        }[] = await res.json();
+        if ((json as any)?.statusCode === 500)
+          throw new Error("Failed to fetch global historical fees");
+
+        setGlobalHistoricalStats((prev) => ({
+          ...prev,
+          feesUsd_7d: json.reduce(
+            (acc, d) => [
+              ...acc,
+              {
+                timestampS: d.start,
+                feesUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
+              },
+            ],
+            [] as ChartData[],
+          ),
+        }));
+      } catch (err) {
+        console.error(err);
+
+        setGlobalHistoricalStats((prev) => ({
+          ...prev,
+          feesUsd_7d: [{ timestampS: 0, feesUsd_7d: 0 }],
+        }));
+      }
+    })();
+  }, []);
+
+  const hasFetchedGlobalHistoricalStatsRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (hasFetchedGlobalHistoricalStatsRef.current) return;
+    hasFetchedGlobalHistoricalStatsRef.current = true;
+
+    fetchGlobalHistoricalStats();
+  }, [fetchGlobalHistoricalStats]);
+
+  const globalHistoricalPoolDerivedStats: {
+    tvlUsd_7d: ChartData[] | undefined;
   } = useMemo(() => {
     if (appData === undefined)
       return {
         tvlUsd_7d: undefined,
-        volumeUsd_7d: undefined,
-        feesUsd_7d: undefined,
       };
 
     const result: {
       tvlUsd_7d: ChartData[] | undefined;
-      volumeUsd_7d: ChartData[] | undefined;
-      feesUsd_7d: ChartData[] | undefined;
     } = {
       tvlUsd_7d: undefined,
-      volumeUsd_7d: undefined,
-      feesUsd_7d: undefined,
     };
 
     // TVL
@@ -452,66 +574,10 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       );
     }
 
-    // Volume
-    if (
-      Object.keys(poolHistoricalStats.volumeUsd_7d).length > 0 &&
-      Object.keys(poolHistoricalStats.volumeUsd_7d).length ===
-        poolCountRef.current
-    ) {
-      const timestampsS = Object.values(
-        poolHistoricalStats.volumeUsd_7d,
-      )[0].map((d) => d.timestampS);
-
-      result.volumeUsd_7d = timestampsS.reduce(
-        (acc, timestampS, i) => [
-          ...acc,
-          {
-            timestampS,
-            volumeUsd_7d: +Object.values(
-              poolHistoricalStats.volumeUsd_7d,
-            ).reduce(
-              (acc2, data) => acc2.plus(data[i]?.volumeUsd_7d ?? 0),
-              new BigNumber(0),
-            ),
-          },
-        ],
-        [] as ChartData[],
-      );
-    }
-
-    // Fees
-    if (
-      Object.keys(poolHistoricalStats.feesUsd_7d).length > 0 &&
-      Object.keys(poolHistoricalStats.feesUsd_7d).length ===
-        poolCountRef.current
-    ) {
-      const timestampsS = Object.values(poolHistoricalStats.feesUsd_7d)[0].map(
-        (d) => d.timestampS,
-      );
-
-      result.feesUsd_7d = timestampsS.reduce(
-        (acc, timestampS, i) => [
-          ...acc,
-          {
-            timestampS,
-            feesUsd_7d: +Object.values(poolHistoricalStats.feesUsd_7d).reduce(
-              (acc2, data) => acc2.plus(data[i]?.feesUsd_7d ?? 0),
-              new BigNumber(0),
-            ),
-          },
-        ],
-        [] as ChartData[],
-      );
-    }
-
     return result;
-  }, [
-    appData,
-    poolHistoricalStats.tvlUsd_7d,
-    poolHistoricalStats.volumeUsd_7d,
-    poolHistoricalStats.feesUsd_7d,
-  ]);
+  }, [appData, poolHistoricalStats.tvlUsd_7d]);
 
+  // Global - stats
   const globalStats: {
     volumeUsd_7d: BigNumber | undefined;
     feesUsd_7d: BigNumber | undefined;
@@ -541,10 +607,19 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       poolHistoricalStats,
       poolStats,
 
-      globalHistoricalStats,
+      globalHistoricalStats: {
+        ...globalHistoricalStats,
+        ...globalHistoricalPoolDerivedStats,
+      },
       globalStats,
     }),
-    [poolHistoricalStats, poolStats, globalHistoricalStats, globalStats],
+    [
+      poolHistoricalStats,
+      poolStats,
+      globalHistoricalStats,
+      globalHistoricalPoolDerivedStats,
+      globalStats,
+    ],
   );
 
   return (
