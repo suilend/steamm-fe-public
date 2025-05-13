@@ -1,11 +1,5 @@
 import { normalizeSuiObjectId } from "@mysten/sui/utils";
 
-// Add chunk helper at the top of the file
-export const chunk = <T>(arr: T[], size: number): T[][] =>
-  Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
-    arr.slice(i * size, i * size + size),
-  );
-
 export interface PoolTypes<A, B, Quoter, W, P> {
   aType: A;
   bType: B;
@@ -117,6 +111,12 @@ export const extractGenerics = (typeString: string): string[] => {
 export const zip = <T, U>(a: T[], b: U[]): [T, U][] => {
   return a.map((k, i) => [k, b[i]]);
 };
+
+// Add chunk helper at the top of the file
+export const chunk = <T>(arr: T[], size: number): T[][] =>
+  Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+    arr.slice(i * size, i * size + size),
+  );
 
 /**
  * Computes the optimal offset using the formula: Price * tokenReserve * 10^(decimalsY - decimalsX)
