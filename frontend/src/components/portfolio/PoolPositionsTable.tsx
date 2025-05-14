@@ -1,7 +1,8 @@
 import { CSSProperties, useMemo } from "react";
 
 import BigNumber from "bignumber.js";
-import { useLocalStorage } from "usehooks-ts";
+
+import { useLocalStorage } from "@suilend/frontend-sui-next";
 
 import PoolPositionRow from "@/components/portfolio/PoolPositionRow";
 import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";

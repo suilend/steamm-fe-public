@@ -1,7 +1,8 @@
 import { CSSProperties, useMemo } from "react";
 
 import BigNumber from "bignumber.js";
-import { useLocalStorage } from "usehooks-ts";
+
+import { useLocalStorage } from "@suilend/frontend-sui-next";
 
 import PoolGroupRow from "@/components/pools/PoolGroupRow";
 import PoolRow from "@/components/pools/PoolRow";

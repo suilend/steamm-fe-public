@@ -9,9 +9,9 @@ import {
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
-import { useLocalStorage } from "usehooks-ts";
 
 import {
+  useLocalStorage,
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";

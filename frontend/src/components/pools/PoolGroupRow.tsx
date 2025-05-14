@@ -2,9 +2,9 @@ import { CSSProperties } from "react";
 
 import BigNumber from "bignumber.js";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useLocalStorage } from "usehooks-ts";
 
 import { formatPercent, formatUsd } from "@suilend/frontend-sui";
+import { useLocalStorage } from "@suilend/frontend-sui-next";
 import {
   RewardSummary,
   Side,

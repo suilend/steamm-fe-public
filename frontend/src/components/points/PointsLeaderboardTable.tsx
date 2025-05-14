@@ -1,6 +1,6 @@
 import { CSSProperties, useMemo, useState } from "react";
 
-import { useLocalStorage } from "usehooks-ts";
+import { useLocalStorage } from "@suilend/frontend-sui-next";
 
 import PointsLeaderboardRow from "@/components/points/PointsLeaderboardRow";
 import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";
