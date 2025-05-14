@@ -80,7 +80,7 @@ export default function PoolRow({
           </p>
           {verifiedPoolIds?.includes(pool.id) && (
             <Tooltip title="Verified">
-              <BadgeCheck className="-ml-1.5 h-4 w-4 text-success" />
+              <BadgeCheck className="-ml-1.5 h-4 w-4 text-verified" />
             </Tooltip>
           )}
 
