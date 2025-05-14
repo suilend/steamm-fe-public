@@ -2,6 +2,7 @@ import { SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 
+import { formatNumber } from "@suilend/frontend-sui";
 import { WalletContext } from "@suilend/frontend-sui-next";
 
 import {
@@ -127,8 +128,8 @@ export const BLACKLISTED_WORDS = [
 export const DEFAULT_TOKEN_DECIMALS = 6;
 export const DEFAULT_TOKEN_SUPPLY = 10 ** 9; // 1B
 
-export const MAX_BASE64_LENGTH = 2 ** 16; // 65,536 characters
-export const MAX_FILE_SIZE_BYTES = Math.floor((MAX_BASE64_LENGTH * 3) / 4); // ~49KB to ensure base64 stays under 2^16
+export const BROWSE_MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+export const BROWSE_FILE_SIZE_ERROR_MESSAGE = `Please upload an image smaller than ${formatNumber(new BigNumber(BROWSE_MAX_FILE_SIZE_BYTES / 1024 / 1024), { dp: 0 })} MB`;
 
 export const BURN_ADDRESS =
   "0x0000000000000000000000000000000000000000000000000000000000000000";

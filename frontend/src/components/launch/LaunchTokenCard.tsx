@@ -47,12 +47,12 @@ import {
 import { formatPair, formatTextInputValue } from "@/lib/format";
 import {
   BLACKLISTED_WORDS,
+  BROWSE_MAX_FILE_SIZE_BYTES,
   DEFAULT_TOKEN_DECIMALS,
   DEFAULT_TOKEN_SUPPLY,
   DEPOSITED_QUOTE_ASSET_USD,
   DEPOSITED_TOKEN_PERCENT,
   FEE_TIER_PERCENT,
-  MAX_FILE_SIZE_BYTES,
   MintTokenResult,
   QUOTER_ID,
   createToken,
@@ -587,9 +587,9 @@ export default function LaunchTokenCard() {
                 {[
                   "PNG, JPEG, WebP, or SVG.",
                   `Max ${formatNumber(
-                    new BigNumber(MAX_FILE_SIZE_BYTES / 1024),
+                    new BigNumber(BROWSE_MAX_FILE_SIZE_BYTES / 1024 / 1024),
                     { dp: 0 },
-                  )} KB.`,
+                  )} MB.`,
                   `256x256 or larger recommended`,
                 ].join(" ")}
               </p>
