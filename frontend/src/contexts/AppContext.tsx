@@ -15,6 +15,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
+import useExpandedLocalStorageMap from "@suilend/frontend-sui-next/hooks/useExpandedLocalStorageMap";
 import {
   ParsedLendingMarket,
   ParsedReserve,
@@ -136,13 +137,14 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   const { address } = useWalletContext();
 
   // Local CoinMetadata map
-  const [localCoinMetadataMap, setLocalCoinMetadataMap] = useLocalStorage<
-    Record<string, CoinMetadata>
-  >("steamm_coinMetadataMap", {});
+  const { value: localCoinMetadataMap, setValue: setLocalCoinMetadataMap } =
+    useExpandedLocalStorageMap<Record<string, CoinMetadata>>(
+      "steamm_coinMetadataMap",
+    );
 
   const addCoinMetadataToLocalMap = useCallback(
     (coinType: string, coinMetadata: CoinMetadata) => {
-      setLocalCoinMetadataMap((o) => ({ ...o, [coinType]: coinMetadata }));
+      setLocalCoinMetadataMap({ [coinType]: coinMetadata });
     },
     [setLocalCoinMetadataMap],
   );
