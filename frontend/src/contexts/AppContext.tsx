@@ -9,13 +9,12 @@ import {
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
+import { useLocalStorage } from "usehooks-ts";
 
 import {
-  useLocalStorage,
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import useExpandedLocalStorageMap from "@suilend/frontend-sui-next/hooks/useExpandedLocalStorageMap";
 import {
   ParsedLendingMarket,
   ParsedReserve,
@@ -85,13 +84,7 @@ export interface AppData {
   pools: ParsedPool[];
   normalizedPoolRewardMap: RewardMap;
 }
-export interface AppContext {
-  localCoinMetadataMap: Record<string, CoinMetadata>;
-  addCoinMetadataToLocalMap: (
-    coinType: string,
-    coinMetadata: CoinMetadata,
-  ) => void;
-
+interface AppContext {
   steammClient: SteammSDK | undefined;
 
   appData: AppData | undefined;
@@ -110,11 +103,6 @@ type LoadedAppContext = AppContext & {
 };
 
 const AppContext = createContext<AppContext>({
-  localCoinMetadataMap: {},
-  addCoinMetadataToLocalMap: () => {
-    throw Error("AppContextProvider not initialized");
-  },
-
   steammClient: undefined,
   appData: undefined,
   refreshAppData: async () => {
@@ -137,19 +125,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   const { rpc } = useSettingsContext();
   const { address } = useWalletContext();
 
-  // Local CoinMetadata map
-  const { value: localCoinMetadataMap, setValue: setLocalCoinMetadataMap } =
-    useExpandedLocalStorageMap<Record<string, CoinMetadata>>(
-      "steamm_coinMetadataMap",
-    );
-
-  const addCoinMetadataToLocalMap = useCallback(
-    (coinType: string, coinMetadata: CoinMetadata) => {
-      setLocalCoinMetadataMap({ [coinType]: coinMetadata });
-    },
-    [setLocalCoinMetadataMap],
-  );
-
   // STEAMM client
   const steammClient = useMemo(() => {
     const sdk = new SteammSDK({
@@ -166,11 +141,8 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   }, [rpc.url, address]);
 
   // App data (blocking)
-  const { data: appData, mutateData: mutateAppData } = useFetchAppData(
-    steammClient,
-    localCoinMetadataMap,
-    addCoinMetadataToLocalMap,
-  );
+  const { data: appData, mutateData: mutateAppData } =
+    useFetchAppData(steammClient);
 
   const refreshAppData = useCallback(async () => {
     await mutateAppData();
@@ -198,9 +170,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   // Context
   const contextValue: AppContext = useMemo(
     () => ({
-      localCoinMetadataMap,
-      addCoinMetadataToLocalMap,
-
       steammClient,
 
       appData,
@@ -213,8 +182,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       verifiedPoolIds,
     }),
     [
-      localCoinMetadataMap,
-      addCoinMetadataToLocalMap,
       steammClient,
       appData,
       refreshAppData,

@@ -35,7 +35,7 @@ import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
-import { AppContext, AppData } from "@/contexts/AppContext";
+import { AppData } from "@/contexts/AppContext";
 import { ASSETS_URL } from "@/lib/constants";
 import { formatPair } from "@/lib/format";
 import { normalizeRewards } from "@/lib/liquidityMining";
@@ -61,11 +61,7 @@ type PoolObj = {
   redeemQuote: RedeemQuote;
 };
 
-export default function useFetchAppData(
-  steammClient: SteammSDK,
-  localCoinMetadataMap: AppContext["localCoinMetadataMap"],
-  addCoinMetadataToLocalMap: AppContext["addCoinMetadataToLocalMap"],
-) {
+export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
 
   // Data
@@ -96,25 +92,13 @@ export default function useFetchAppData(
 
         const {
           lendingMarket: mainMarket_lendingMarket,
-          coinMetadataMap: mainMarket_coinMetadataMap,
 
           refreshedRawReserves: mainMarket_refreshedRawReserves,
           reserveMap: mainMarket_reserveMap,
 
           activeRewardCoinTypes: mainMarket_activeRewardCoinTypes,
           rewardCoinMetadataMap: mainMarket_rewardCoinMetadataMap,
-        } = await initializeSuilend(
-          suiClient,
-          mainMarket_suilendClient,
-          localCoinMetadataMap,
-        );
-        for (const coinType of Object.keys(mainMarket_coinMetadataMap)) {
-          if (!localCoinMetadataMap[coinType])
-            addCoinMetadataToLocalMap(
-              coinType,
-              mainMarket_coinMetadataMap[coinType],
-            );
-        }
+        } = await initializeSuilend(suiClient, mainMarket_suilendClient);
 
         const { rewardPriceMap: mainMarket_rewardPriceMap } =
           await initializeSuilendRewards(
@@ -145,25 +129,13 @@ export default function useFetchAppData(
 
         const {
           lendingMarket: lmMarket_lendingMarket,
-          coinMetadataMap: lmMarket_coinMetadataMap,
 
           refreshedRawReserves: lmMarket_refreshedRawReserves,
           reserveMap: lmMarket_reserveMap,
 
           activeRewardCoinTypes: lmMarket_activeRewardCoinTypes,
           rewardCoinMetadataMap: lmMarket_rewardCoinMetadataMap,
-        } = await initializeSuilend(
-          suiClient,
-          lmMarket_suilendClient,
-          localCoinMetadataMap,
-        );
-        for (const coinType of Object.keys(lmMarket_coinMetadataMap)) {
-          if (!localCoinMetadataMap[coinType])
-            addCoinMetadataToLocalMap(
-              coinType,
-              lmMarket_coinMetadataMap[coinType],
-            );
-        }
+        } = await initializeSuilend(suiClient, lmMarket_suilendClient);
 
         const { rewardPriceMap: lmMarket_rewardPriceMap } =
           await initializeSuilendRewards(
@@ -453,30 +425,10 @@ export default function useFetchAppData(
       ]),
     ).filter((coinType) => !Object.keys(coinMetadataMap).includes(coinType));
 
-    const _additionalCoinMetadataMap = await getCoinMetadataMap(
-      uniqueAdditionalCoinTypes.filter(
-        (coinType) => !localCoinMetadataMap[coinType],
-      ),
+    const additionalCoinMetadataMap = await getCoinMetadataMap(
+      uniqueAdditionalCoinTypes,
     );
-    const additionalCoinMetadataMap: Record<string, CoinMetadata> =
-      uniqueAdditionalCoinTypes.reduce(
-        (acc, coinType) => ({
-          ...acc,
-          [coinType]:
-            localCoinMetadataMap?.[coinType] ??
-            _additionalCoinMetadataMap[coinType],
-        }),
-        {} as Record<string, CoinMetadata>,
-      );
     coinMetadataMap = { ...coinMetadataMap, ...additionalCoinMetadataMap };
-
-    for (const coinType of Object.keys(additionalCoinMetadataMap)) {
-      if (!localCoinMetadataMap[coinType])
-        addCoinMetadataToLocalMap(
-          coinType,
-          additionalCoinMetadataMap[coinType],
-        );
-    }
 
     // Banks - parse
     const bTokenTypeCoinTypeMap: Record<string, string> = {};
