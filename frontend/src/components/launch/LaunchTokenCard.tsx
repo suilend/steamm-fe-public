@@ -327,7 +327,7 @@ export default function LaunchTokenCard() {
     if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
       return {
         isDisabled: true,
-        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+        title: "Insufficient gas",
       };
 
     if (quoteAssetCoinType === undefined)
@@ -340,7 +340,7 @@ export default function LaunchTokenCard() {
     )
       return {
         isDisabled: true,
-        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+        title: "Insufficient gas",
       };
     if (getBalance(quoteAssetCoinType).lt(depositedQuoteAssetAmount))
       return { isDisabled: true, title: `Insufficient ${quoteToken!.symbol}` };

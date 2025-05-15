@@ -397,7 +397,7 @@ export default function CreatePoolCard() {
     if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
       return {
         isDisabled: true,
-        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+        title: "Insufficient gas",
       };
 
     for (let i = 0; i < coinTypes.length; i++) {
@@ -412,7 +412,7 @@ export default function CreatePoolCard() {
       )
         return {
           isDisabled: true,
-          title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+          title: "Insufficient gas",
         };
 
       if (getBalance(coinType).lt(values[i]))

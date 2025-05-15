@@ -248,7 +248,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
     if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
       return {
         isDisabled: true,
-        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+        title: "Insufficient gas",
       };
 
     if (quote) {
@@ -274,7 +274,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
       )
         return {
           isDisabled: true,
-          title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+          title: "Insufficient gas",
         };
 
       for (let i = 0; i < pool.coinTypes.length; i++) {
@@ -718,7 +718,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
     if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
       return {
         isDisabled: true,
-        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+        title: "Insufficient gas",
       };
 
     if (new BigNumber(sliderValue).gt(100))
@@ -1326,7 +1326,7 @@ function SwapTab({ onSwap }: SwapTabProps) {
     if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
       return {
         isDisabled: true,
-        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+        title: "Insufficient gas",
       };
 
     if (quote) {
@@ -1340,7 +1340,7 @@ function SwapTab({ onSwap }: SwapTabProps) {
       )
         return {
           isDisabled: true,
-          title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+          title: "Insufficient gas",
         };
 
       if (

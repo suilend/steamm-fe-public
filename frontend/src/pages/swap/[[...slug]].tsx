@@ -377,7 +377,7 @@ export default function SwapPage() {
     if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
       return {
         isDisabled: true,
-        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+        title: "Insufficient gas",
       };
 
     if (quote) {
@@ -391,7 +391,7 @@ export default function SwapPage() {
       )
         return {
           isDisabled: true,
-          title: `${SUI_GAS_MIN} SUI should be saved for gas`,
+          title: "Insufficient gas",
         };
 
       if (

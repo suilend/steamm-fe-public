@@ -33,7 +33,7 @@
         "@radix-ui/react-popover": "^1.1.2",
         "@radix-ui/react-tooltip": "^1.1.4",
         "@sentry/nextjs": "^8.38.0",
-        "@suilend/frontend-sui": "^0.2.66",
+        "@suilend/frontend-sui": "^0.2.67",
         "@suilend/frontend-sui-next": "^0.1.44",
         "@suilend/sdk": "^1.1.54",
         "@tanstack/react-table": "^8.20.5",
@@ -80,7 +80,7 @@
     },
     "sdk": {
       "name": "@suilend/steamm-sdk-local",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": {
         "@pythnetwork/pyth-sui-js": "^2.1.0",
         "@suilend/frontend-sui": "^0.2.66",
@@ -2254,6 +2254,8 @@
     "foreground-child/signal-exit": ["signal-exit@4.1.0", "", {}, "sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw=="],
 
     "form-data/mime-types": ["mime-types@2.1.35", "", { "dependencies": { "mime-db": "1.52.0" } }, "sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw=="],
+
+    "frontend/@suilend/frontend-sui": ["@suilend/frontend-sui@0.2.67", "", { "dependencies": { "@pythnetwork/pyth-sui-js": "^2.1.0", "bignumber.js": "^9.1.2", "lodash": "^4.17.21", "mixpanel-browser": "^2.56.0", "next": "^15.0.3" }, "peerDependencies": { "@mysten/sui": "1.28.2", "date-fns": "^4.1.0" } }, "sha512-4xUOqB2iGBh3pKtw9AB3KjISEMSEs6cQqvKldvBIskaLhTob7wCZF/wv19M0cCJWEHMKkcFYAiixlBXNpFm7Vw=="],
 
     "glob/minimatch": ["minimatch@9.0.5", "", { "dependencies": { "brace-expansion": "^2.0.1" } }, "sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow=="],
 
