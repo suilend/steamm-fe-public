@@ -25,7 +25,7 @@ import {
   parseObligation,
 } from "@suilend/sdk";
 import * as simulate from "@suilend/sdk/utils/simulate";
-import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
+import { ADMIN_ADDRESS, ParsedBank } from "@suilend/steamm-sdk";
 
 import Parameter from "@/components/Parameter";
 import PercentInput from "@/components/PercentInput";
@@ -41,7 +41,6 @@ import { rebalanceBanks } from "@/lib/banks";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
 import { getPriceFromPool } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { ParsedBank } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface BankCardProps {
