@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import { ClassValue } from "clsx";
 
+import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@suilend/steamm-sdk";
 import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 
@@ -9,7 +10,6 @@ import Tag from "@/components/Tag";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { SUILEND_ASSETS_URL } from "@/lib/constants";
 import { OracleType } from "@/lib/oracles";
-import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 
 interface PoolTypeTagProps {
   className?: ClassValue;

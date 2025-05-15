@@ -12,12 +12,11 @@ import {
 
 import { Loader2 } from "lucide-react";
 
-import { PoolInfo } from "@suilend/steamm-sdk";
+import { ParsedPool, PoolInfo, getParsedPool } from "@suilend/steamm-sdk";
 
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { ROOT_URL } from "@/lib/navigation";
-import { fetchPool, getParsedPool } from "@/lib/pools";
-import { ParsedPool } from "@/lib/types";
+import { fetchPool } from "@/lib/pools";
 
 interface PoolContext {
   pool: ParsedPool;

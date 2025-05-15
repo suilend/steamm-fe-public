@@ -21,9 +21,13 @@ import {
   BankInfo,
   MAINNET_CONFIG,
   OracleInfo,
+  ParsedBank,
+  ParsedPool,
   PoolInfo,
   RedeemQuote,
   SteammSDK,
+  getParsedBank,
+  getParsedPool,
 } from "@suilend/steamm-sdk";
 import { Bank } from "@suilend/steamm-sdk/_codegen/_generated/steamm/bank/structs";
 import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
@@ -32,14 +36,12 @@ import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/o
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
 import { AppContext, AppData } from "@/contexts/AppContext";
-import { getParsedBank } from "@/lib/banks";
 import { ASSETS_URL } from "@/lib/constants";
 import { formatPair } from "@/lib/format";
 import { normalizeRewards } from "@/lib/liquidityMining";
 import { API_URL } from "@/lib/navigation";
 import { OracleType } from "@/lib/oracles";
-import { fetchPool, getParsedPool } from "@/lib/pools";
-import { ParsedBank, ParsedPool } from "@/lib/types";
+import { fetchPool } from "@/lib/pools";
 
 const TEST_BANK_COIN_TYPES: string[] = [];
 const TEST_POOL_IDS: string[] = [];

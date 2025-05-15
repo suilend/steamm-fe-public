@@ -25,7 +25,12 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { MultiSwapQuote, Route, SteammSDK } from "@suilend/steamm-sdk";
+import {
+  MultiSwapQuote,
+  ParsedPool,
+  Route,
+  SteammSDK,
+} from "@suilend/steamm-sdk";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
@@ -44,7 +49,7 @@ import { rebalanceBanks } from "@/lib/banks";
 import { formatTextInputValue } from "@/lib/format";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { ParsedPool, TokenDirection } from "@/lib/types";
+import { TokenDirection } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 export default function SwapPage() {

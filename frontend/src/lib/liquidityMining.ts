@@ -9,9 +9,9 @@ import {
   getRewardsAprPercent,
   getStakingYieldAprPercent,
 } from "@suilend/sdk";
+import { ParsedPool } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
-import { ParsedPool } from "@/lib/types";
 
 export const getPoolStakingYieldAprPercent = (
   pool: ParsedPool,

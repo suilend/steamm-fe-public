@@ -4,6 +4,7 @@ import BigNumber from "bignumber.js";
 import { v4 as uuidv4 } from "uuid";
 
 import { Side, getFilteredRewards } from "@suilend/sdk";
+import { ParsedPool } from "@suilend/steamm-sdk";
 
 import PoolsTable from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
@@ -14,7 +15,6 @@ import {
   getPoolStakingYieldAprPercent,
   getPoolTotalAprPercent,
 } from "@/lib/liquidityMining";
-import { ParsedPool } from "@/lib/types";
 
 interface SuggestedPoolsProps {
   tableId: string;

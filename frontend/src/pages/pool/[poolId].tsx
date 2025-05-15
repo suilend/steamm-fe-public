@@ -6,6 +6,7 @@ import { ChevronRight } from "lucide-react";
 
 import { formatUsd } from "@suilend/frontend-sui";
 import { useWalletContext } from "@suilend/frontend-sui-next";
+import { ParsedPool } from "@suilend/steamm-sdk";
 
 import AprBreakdown from "@/components/AprBreakdown";
 import PoolActionsCard from "@/components/pool/PoolActionsCard";
@@ -26,7 +27,6 @@ import { useUserContext } from "@/contexts/UserContext";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { ROOT_URL } from "@/lib/navigation";
-import { ParsedPool } from "@/lib/types";
 
 function PoolPage() {
   const { address } = useWalletContext();

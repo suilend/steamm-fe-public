@@ -14,6 +14,7 @@ import {
   getDedupedPerDayRewards,
   getFilteredRewards,
 } from "@suilend/sdk";
+import { ParsedPool } from "@suilend/steamm-sdk";
 
 import BreakdownRow from "@/components/BreakdownRow";
 import SuilendLogo from "@/components/SuilendLogo";
@@ -27,7 +28,6 @@ import {
   getPoolStakingYieldAprPercent,
   getPoolTotalAprPercent,
 } from "@/lib/liquidityMining";
-import { ParsedPool } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 interface AprBreakdownProps {

@@ -4,6 +4,7 @@ import { CSSProperties } from "react";
 import { BadgeCheck } from "lucide-react";
 
 import { formatUsd } from "@suilend/frontend-sui";
+import { ParsedPool } from "@suilend/steamm-sdk";
 
 import AprBreakdown from "@/components/AprBreakdown";
 import PoolTypeTag from "@/components/pool/PoolTypeTag";
@@ -15,7 +16,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { getPoolUrl } from "@/lib/pools";
-import { ParsedPool } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolRowProps {

@@ -17,7 +17,12 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
+import {
+  ADMIN_ADDRESS,
+  ParsedPool,
+  QUOTER_ID_NAME_MAP,
+  QuoterId,
+} from "@suilend/steamm-sdk";
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
@@ -57,7 +62,6 @@ import { API_URL } from "@/lib/navigation";
 import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 export default function CreatePoolCard() {

@@ -4,13 +4,13 @@ import BigNumber from "bignumber.js";
 
 import { formatNumber } from "@suilend/frontend-sui";
 import { WalletContext } from "@suilend/frontend-sui-next";
+import { QuoterId } from "@suilend/steamm-sdk";
 
 import {
   CreateCoinResult,
   createCoin,
   generate_bytecode,
 } from "@/lib/createCoin";
-import { QuoterId } from "@/lib/types";
 
 // Token
 export const LAUNCH_TOKEN_PACKAGE_ID =

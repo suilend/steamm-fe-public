@@ -29,6 +29,7 @@ import {
 } from "@suilend/sdk";
 import {
   DepositQuote,
+  ParsedPool,
   RedeemQuote,
   SteammSDK,
   SwapQuote,
@@ -57,7 +58,6 @@ import {
 } from "@/lib/obligation";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { ParsedPool } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 enum Action {

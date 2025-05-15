@@ -22,6 +22,11 @@ export enum QuoterId {
   ORACLE = "oracle",
   ORACLE_V2 = "oracle_v2",
 }
+export const QUOTER_ID_NAME_MAP: Record<QuoterId, string> = {
+  [QuoterId.CPMM]: "CPMM",
+  [QuoterId.ORACLE]: "Oracle V1",
+  [QuoterId.ORACLE_V2]: "Oracle V2",
+};
 
 export enum OracleType {
   PYTH = "pyth",

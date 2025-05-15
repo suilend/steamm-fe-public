@@ -9,7 +9,7 @@ import {
   getToken,
 } from "@suilend/frontend-sui";
 import { useSettingsContext } from "@suilend/frontend-sui-next";
-import { SwapQuote } from "@suilend/steamm-sdk";
+import { QuoterId, SwapQuote } from "@suilend/steamm-sdk";
 import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
@@ -27,7 +27,6 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { formatAmplifier, formatFeeTier } from "@/lib/format";
 import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
-import { QuoterId } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 export default function PoolParametersCard() {

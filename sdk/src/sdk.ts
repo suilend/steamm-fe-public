@@ -21,12 +21,7 @@ import {
   toHexString,
 } from "@suilend/sdk";
 
-import { Bank } from "./_codegen/_generated/steamm/bank/structs";
-import { CpQuoter } from "./_codegen/_generated/steamm/cpmm/structs";
-import { OracleQuoter } from "./_codegen/_generated/steamm/omm/structs";
-import { OracleQuoterV2 } from "./_codegen/_generated/steamm/omm_v2/structs";
-import { Pool } from "./_codegen/_generated/steamm/pool/structs";
-import { BankAbi, BankScript, PoolAbi, PoolScript, RedeemQuote } from "./abis";
+import { BankAbi, BankScript, PoolAbi, PoolScript } from "./abis";
 import { PYTH_STATE_ID, WORMHOLE_STATE_ID } from "./config";
 import { API_URL, ASSETS_URL } from "./lib/constants";
 import {

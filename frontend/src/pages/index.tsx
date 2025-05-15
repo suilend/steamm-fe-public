@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from "uuid";
 import { formatUsd } from "@suilend/frontend-sui";
 import { shallowPushQuery } from "@suilend/frontend-sui-next";
 import { Side, getFilteredRewards } from "@suilend/sdk";
+import { ParsedPool } from "@suilend/steamm-sdk";
 
 import Divider from "@/components/Divider";
 import HistoricalDataChart from "@/components/HistoricalDataChart";
@@ -26,7 +27,7 @@ import {
   getPoolTotalAprPercent,
 } from "@/lib/liquidityMining";
 import { CREATE_URL } from "@/lib/navigation";
-import { ParsedPool, PoolGroup } from "@/lib/types";
+import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PoolsSearchInputProps {

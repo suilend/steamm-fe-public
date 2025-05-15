@@ -27,11 +27,12 @@ import {
   BETA_CONFIG,
   MAINNET_CONFIG,
   OracleInfo,
+  ParsedBank,
+  ParsedPool,
   SteammSDK,
 } from "@suilend/steamm-sdk";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
-import { ParsedBank, ParsedPool } from "@/lib/types";
 
 export interface AppData {
   suilend: {

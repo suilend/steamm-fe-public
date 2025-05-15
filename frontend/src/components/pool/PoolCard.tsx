@@ -1,4 +1,5 @@
 import { formatUsd } from "@suilend/frontend-sui";
+import { ParsedPool } from "@suilend/steamm-sdk";
 
 import AprBreakdown from "@/components/AprBreakdown";
 import PoolTypeTag from "@/components/pool/PoolTypeTag";
@@ -7,7 +8,6 @@ import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
-import { ParsedPool } from "@/lib/types";
 
 interface PoolCardProps {
   pool: ParsedPool;

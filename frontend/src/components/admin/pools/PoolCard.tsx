@@ -10,7 +10,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { BankAbi } from "@suilend/steamm-sdk";
+import { BankAbi, ParsedPool } from "@suilend/steamm-sdk";
 import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
 
 import OpenUrlNewTab from "@/components/OpenUrlNewTab";
@@ -25,7 +25,6 @@ import { useUserContext } from "@/contexts/UserContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { getPoolUrl } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { ParsedPool } from "@/lib/types";
 
 interface PoolCardProps {
   pool: ParsedPool;
