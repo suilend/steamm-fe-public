@@ -17,7 +17,6 @@ import {
   isSui,
 } from "@suilend/frontend-sui";
 import {
-  API_URL,
   showErrorToast,
   useSettingsContext,
   useWalletContext,
@@ -58,6 +57,7 @@ import {
   createToken,
   mintToken,
 } from "@/lib/launchToken";
+import { API_URL } from "@/lib/navigation";
 import { getPriceFromPool } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
