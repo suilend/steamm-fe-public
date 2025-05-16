@@ -38,6 +38,8 @@ import { FullClient } from "./managers/client";
 import { PoolManager } from "./managers/pool";
 import { Router } from "./managers/router";
 import {
+  ApiBankCache,
+  ApiPoolCache,
   BankCache,
   BankInfo,
   BankList,
@@ -106,6 +108,9 @@ export class SteammSDK {
   protected _pythClient: SuiPythClient;
   protected _pythConnection: SuiPriceServiceConnection;
   testConfig?: TestConfig;
+
+  protected _apiPools?: ApiPoolCache;
+  protected _apiBanks?: ApiBankCache;
 
   protected _signer: Signer | undefined;
   protected _senderAddress = "";
@@ -641,6 +646,12 @@ export class SteammSDK {
 
       // Banks
       (async () => {
+        if (
+          this._apiBanks !== undefined &&
+          Date.now() <= this._apiBanks.updatedAt + 5 * 60 * 1000 // 5 minutes
+        )
+          return this._apiBanks.bankObjs;
+
         const bankObjs: BankObj[] = [];
 
         const banksRes = await fetch(`${API_URL}/steamm/banks/all`);
@@ -657,11 +668,18 @@ export class SteammSDK {
           ),
         );
 
+        this._apiBanks = { bankObjs, updatedAt: Date.now() };
         return bankObjs;
       })(),
 
       // Pools
       (async () => {
+        if (
+          this._apiPools !== undefined &&
+          Date.now() <= this._apiPools.updatedAt + 5 * 60 * 1000 // 5 minutes
+        )
+          return this._apiPools.poolObjs;
+
         const poolObjs: PoolObj[] = [];
 
         const poolsRes = await fetch(`${API_URL}/steamm/pools/all`);
@@ -675,6 +693,7 @@ export class SteammSDK {
           ),
         );
 
+        this._apiPools = { poolObjs, updatedAt: Date.now() };
         return poolObjs;
       })(),
     ]);
