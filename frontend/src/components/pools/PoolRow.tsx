@@ -1,20 +1,15 @@
 import { useRouter } from "next/router";
 import { CSSProperties } from "react";
 
-import { BadgeCheck } from "lucide-react";
-
 import { formatUsd } from "@suilend/frontend-sui";
 import { ParsedPool } from "@suilend/steamm-sdk";
 
 import AprBreakdown from "@/components/AprBreakdown";
-import PoolTypeTag from "@/components/pool/PoolTypeTag";
+import PoolLabel from "@/components/pool/PoolLabel";
 import { Column } from "@/components/pools/PoolsTable";
-import Tag from "@/components/Tag";
-import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { formatFeeTier, formatPair } from "@/lib/format";
 import { getPoolUrl } from "@/lib/pools";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +33,7 @@ export default function PoolRow({
 }: PoolRowProps) {
   const router = useRouter();
 
-  const { appData, verifiedPoolIds } = useLoadedAppContext();
+  const { appData } = useLoadedAppContext();
 
   return (
     <tr
@@ -70,26 +65,7 @@ export default function PoolRow({
             </div>
           )}
 
-          <TokenLogos coinTypes={pool.coinTypes} size={20} />
-          <p className="text-p1 text-foreground">
-            {formatPair(
-              pool.coinTypes.map(
-                (coinType) => appData.coinMetadataMap[coinType].symbol,
-              ),
-            )}
-          </p>
-          {verifiedPoolIds?.includes(pool.id) && (
-            <Tooltip title="Verified">
-              <BadgeCheck className="-ml-1.5 h-4 w-4 text-verified" />
-            </Tooltip>
-          )}
-
-          <div className="flex flex-row items-center gap-px">
-            <PoolTypeTag className="rounded-r-[0] pr-2" pool={pool} />
-            <Tag className="rounded-l-[0] pl-2">
-              {formatFeeTier(pool.feeTierPercent)}
-            </Tag>
-          </div>
+          <PoolLabel pool={pool} />
         </div>
       </td>
 

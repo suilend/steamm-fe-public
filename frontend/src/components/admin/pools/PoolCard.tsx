@@ -15,14 +15,11 @@ import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
 
 import OpenUrlNewTab from "@/components/OpenUrlNewTab";
 import Parameter from "@/components/Parameter";
-import PoolTypeTag from "@/components/pool/PoolTypeTag";
-import Tag from "@/components/Tag";
+import PoolLabel from "@/components/pool/PoolLabel";
 import TokenLogo from "@/components/TokenLogo";
-import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
-import { formatFeeTier, formatPair } from "@/lib/format";
 import { getPoolUrl } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 
@@ -86,26 +83,12 @@ export default function PoolCard({ pool }: PoolCardProps) {
   return (
     <div className="flex w-full flex-col gap-3 rounded-md border p-4">
       {/* Top */}
-      <div className="flex w-full flex-row items-center justify-between">
-        <div className="flex w-full flex-row items-center gap-2">
-          <TokenLogos coinTypes={pool.coinTypes} size={16} />
-          <p className="text-p1 text-foreground">
-            {formatPair(
-              pool.coinTypes.map(
-                (coinType) => appData.coinMetadataMap[coinType].symbol,
-              ),
-            )}
-          </p>
+      <div className="flex w-full flex-row justify-between gap-4">
+        <PoolLabel className="flex-1" pool={pool} />
 
-          <div className="flex flex-row items-center gap-px">
-            <PoolTypeTag className="rounded-r-[0] pr-2" pool={pool} />
-            <Tag className="rounded-l-[0] pl-2">
-              {formatFeeTier(pool.feeTierPercent)}
-            </Tag>
-          </div>
+        <div className="flex h-6 flex-row items-center">
+          <OpenUrlNewTab url={getPoolUrl(appData, pool)} />
         </div>
-
-        <OpenUrlNewTab url={getPoolUrl(appData, pool)} />
       </div>
 
       <div className="flex w-full flex-col gap-6">

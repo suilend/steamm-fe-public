@@ -22,17 +22,15 @@ import {
 } from "@suilend/frontend-sui-next";
 
 import AprBreakdown from "@/components/AprBreakdown";
-import PoolTypeTag from "@/components/pool/PoolTypeTag";
+import PoolLabel from "@/components/pool/PoolLabel";
 import { Column } from "@/components/portfolio/PoolPositionsTable";
-import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
-import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useStake from "@/hooks/useStake";
-import { formatFeeTier, formatPair } from "@/lib/format";
+import { formatPair } from "@/lib/format";
 import { getIndexesOfObligationsWithDeposit } from "@/lib/obligation";
 import { getPoolUrl } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
@@ -158,27 +156,10 @@ export default function PoolPositionRow({
       {/* Pool */}
       <td className="whitespace-nowrap" style={columnStyleMap.pool.cell}>
         <div
-          className="flex min-w-max flex-row items-center gap-3 py-4"
+          className="flex min-w-max flex-row items-center py-4"
           style={columnStyleMap.pool.children}
         >
-          <TokenLogos coinTypes={poolPosition.pool.coinTypes} size={20} />
-          <p className="text-p1 text-foreground">
-            {formatPair(
-              poolPosition.pool.coinTypes.map(
-                (coinType) => appData.coinMetadataMap[coinType].symbol,
-              ),
-            )}
-          </p>
-
-          <div className="flex flex-row items-center gap-px">
-            <PoolTypeTag
-              className="rounded-r-[0] pr-2"
-              pool={poolPosition.pool}
-            />
-            <Tag className="rounded-l-[0] pl-2">
-              {formatFeeTier(poolPosition.pool.feeTierPercent)}
-            </Tag>
-          </div>
+          <PoolLabel pool={poolPosition.pool} />
         </div>
       </td>
 

@@ -8,14 +8,11 @@ import { ArrowRight, ExternalLink, Plus } from "lucide-react";
 import { formatToken, getToken } from "@suilend/frontend-sui";
 import { useSettingsContext } from "@suilend/frontend-sui-next";
 
-import PoolTypeTag from "@/components/pool/PoolTypeTag";
+import PoolLabel from "@/components/pool/PoolLabel";
 import { Column } from "@/components/pool/TransactionHistoryTable";
-import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
-import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { formatFeeTier, formatPair } from "@/lib/format";
 import { getPoolUrl } from "@/lib/pools";
 import {
   HistoryDeposit,
@@ -142,21 +139,7 @@ export default function TransactionHistoryRow({
             className="flex min-w-max flex-row items-center gap-3 py-3"
             style={columnStyleMap.pool.children}
           >
-            <TokenLogos coinTypes={pool.coinTypes} size={20} />
-            <p className="text-p2 text-foreground">
-              {formatPair(
-                pool.coinTypes.map(
-                  (coinType) => appData.coinMetadataMap[coinType].symbol,
-                ),
-              )}
-            </p>
-
-            <div className="flex flex-row items-center gap-px">
-              <PoolTypeTag className="rounded-r-[0] pr-2" pool={pool} />
-              <Tag className="rounded-l-[0] pl-2">
-                {formatFeeTier(pool.feeTierPercent)}
-              </Tag>
-            </div>
+            <PoolLabel isSmall pool={pool} />
 
             <Link
               className="block flex flex-col justify-center text-secondary-foreground transition-colors hover:text-foreground"

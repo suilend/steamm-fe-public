@@ -34,8 +34,6 @@ const usePoolTransactionHistoryMap = (poolIds: string[] | undefined) => {
   const limitRef = useRef<pLimit.Limit>(pLimit(3));
   const fetchPoolTransactionHistoryMap = useCallback(
     async (_poolIds: string[]) => {
-      console.log("fetchPoolTransactionHistoryMap", _poolIds);
-
       try {
         await Promise.all(
           _poolIds.map((poolId) =>

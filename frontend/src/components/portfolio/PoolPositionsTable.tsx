@@ -163,109 +163,114 @@ export default function PoolPositionsTable({
 
       <div className="relative z-[1] w-full overflow-auto">
         <table className="w-full">
-          {/* Header */}
-          <tr className="h-[calc(1px+40px+1px)] border bg-secondary">
-            <HeaderColumn<Column, SortableColumn>
-              id="pool"
-              style={columnStyleMap.pool}
-            >
-              Pool
-            </HeaderColumn>
+          <tbody>
+            {/* Header */}
+            <tr className="h-[calc(1px+40px+1px)] border bg-secondary">
+              <HeaderColumn<Column, SortableColumn>
+                id="pool"
+                style={columnStyleMap.pool}
+              >
+                Pool
+              </HeaderColumn>
 
-            <HeaderColumn<Column, SortableColumn>
-              id="aprPercent_24h"
-              sortState={sortState}
-              toggleSortByColumn={
-                !!(poolPositions ?? []).every(
-                  (position) => position.pool.aprPercent_24h !== undefined,
-                )
-                  ? toggleSortByColumn
-                  : undefined
-              }
-              style={columnStyleMap.aprPercent_24h}
-            >
-              APR
-            </HeaderColumn>
+              <HeaderColumn<Column, SortableColumn>
+                id="aprPercent_24h"
+                sortState={sortState}
+                toggleSortByColumn={
+                  !!(poolPositions ?? []).every(
+                    (position) => position.pool.aprPercent_24h !== undefined,
+                  )
+                    ? toggleSortByColumn
+                    : undefined
+                }
+                style={columnStyleMap.aprPercent_24h}
+              >
+                APR
+              </HeaderColumn>
 
-            <HeaderColumn<Column, SortableColumn>
-              id="balance"
-              sortState={sortState}
-              toggleSortByColumn={
-                !!(poolPositions ?? []).every(
-                  (position) => position.balanceUsd !== undefined,
-                )
-                  ? toggleSortByColumn
-                  : undefined
-              }
-              style={columnStyleMap.balance}
-            >
-              Balance
-            </HeaderColumn>
+              <HeaderColumn<Column, SortableColumn>
+                id="balance"
+                sortState={sortState}
+                toggleSortByColumn={
+                  !!(poolPositions ?? []).every(
+                    (position) => position.balanceUsd !== undefined,
+                  )
+                    ? toggleSortByColumn
+                    : undefined
+                }
+                style={columnStyleMap.balance}
+              >
+                Balance
+              </HeaderColumn>
 
-            <HeaderColumn<Column, SortableColumn>
-              id="pnlPercent"
-              tooltip="PnL is the difference between your current balance and the net amount deposited."
-              sortState={sortState}
-              toggleSortByColumn={
-                !!(poolPositions ?? []).every(
-                  (position) => position.pnlPercent !== undefined,
-                )
-                  ? toggleSortByColumn
-                  : undefined
-              }
-              style={columnStyleMap.pnlPercent}
-            >
-              PnL
-            </HeaderColumn>
+              <HeaderColumn<Column, SortableColumn>
+                id="pnlPercent"
+                tooltip="PnL is the difference between your current balance and the net amount deposited."
+                sortState={sortState}
+                toggleSortByColumn={
+                  !!(poolPositions ?? []).every(
+                    (position) => position.pnlPercent !== undefined,
+                  )
+                    ? toggleSortByColumn
+                    : undefined
+                }
+                style={columnStyleMap.pnlPercent}
+              >
+                PnL
+              </HeaderColumn>
 
-            <HeaderColumn<Column, SortableColumn>
-              id="stakedPercent"
-              style={columnStyleMap.stakedPercent}
-            >
-              Staked
-            </HeaderColumn>
+              <HeaderColumn<Column, SortableColumn>
+                id="stakedPercent"
+                style={columnStyleMap.stakedPercent}
+              >
+                Staked
+              </HeaderColumn>
 
-            <HeaderColumn<Column, SortableColumn>
-              id="claimableRewards"
-              style={columnStyleMap.claimableRewards}
-            >
-              Claimable rewards
-            </HeaderColumn>
+              <HeaderColumn<Column, SortableColumn>
+                id="claimableRewards"
+                style={columnStyleMap.claimableRewards}
+              >
+                Claimable rewards
+              </HeaderColumn>
 
-            <HeaderColumn<Column, SortableColumn>
-              id="points"
-              style={columnStyleMap.points}
-            >
-              Points
-            </HeaderColumn>
-          </tr>
+              <HeaderColumn<Column, SortableColumn>
+                id="points"
+                style={columnStyleMap.points}
+              >
+                Points
+              </HeaderColumn>
+            </tr>
 
-          {/* Rows */}
-          {sortedPoolPositions === undefined ? (
-            Array.from({ length: 3 }).map((_, index) => (
-              <tr key={index} className="h-[calc(84px+1px)] border-x border-b">
+            {/* Rows */}
+            {sortedPoolPositions === undefined ? (
+              Array.from({ length: 3 }).map((_, index) => (
+                <tr
+                  key={index}
+                  className="h-[calc(84px+1px)] border-x border-b"
+                >
+                  <td colSpan={10}>
+                    <Skeleton className="h-[84px]" />
+                  </td>
+                </tr>
+              ))
+            ) : sortedPoolPositions.length === 0 ? (
+              <tr className="h-[calc(84px+1px)] border-x border-b bg-background">
                 <td colSpan={10}>
-                  <Skeleton className="h-[84px]" />
+                  <p className="text-center text-p2 text-tertiary-foreground">
+                    No positions
+                  </p>
                 </td>
               </tr>
-            ))
-          ) : sortedPoolPositions.length === 0 ? (
-            <tr className="h-[calc(84px+1px)] border-x border-b bg-background">
-              <td colSpan={10}>
-                <p className="text-center text-p2 text-tertiary-foreground">
-                  No positions
-                </p>
-              </td>
-            </tr>
-          ) : (
-            sortedPoolPositions.map((position) => (
-              <PoolPositionRow
-                key={position.pool.id}
-                columnStyleMap={columnStyleMap}
-                poolPosition={position}
-              />
-            ))
-          )}
+            ) : (
+              sortedPoolPositions.map((position) => (
+                <PoolPositionRow
+                  key={position.pool.id}
+                  columnStyleMap={columnStyleMap}
+                  poolPosition={position}
+                />
+              ))
+            )}
+          </tbody>
         </table>
       </div>
     </div>

@@ -145,124 +145,129 @@ export default function PoolsTable({
 
       <div className="relative z-[1] w-full overflow-auto">
         <table className="w-full">
-          {/* Header */}
-          <tr className="h-[calc(1px+40px+1px)] border bg-secondary">
-            <HeaderColumn<Column, SortableColumn>
-              id="pool"
-              style={columnStyleMap.pool}
-            >
-              Pool
-            </HeaderColumn>
-
-            <HeaderColumn<Column, SortableColumn>
-              id="tvlUsd"
-              sortState={sortState}
-              toggleSortByColumn={toggleSortByColumn}
-              style={columnStyleMap.tvlUsd}
-            >
-              TVL
-            </HeaderColumn>
-
-            {!isTvlOnly && (
+          <tbody>
+            {/* Header */}
+            <tr className="h-[calc(1px+40px+1px)] border bg-secondary">
               <HeaderColumn<Column, SortableColumn>
-                id="volumeUsd_24h"
-                sortState={sortState}
-                toggleSortByColumn={
-                  (poolGroups ?? []).every(
-                    (poolGroup) =>
-                      !!poolGroup.pools.every(
-                        (pool) => pool.volumeUsd_24h !== undefined,
-                      ),
-                  )
-                    ? toggleSortByColumn
-                    : undefined
-                }
-                titleEndDecorator="24H"
-                style={columnStyleMap.volumeUsd_24h}
+                id="pool"
+                style={columnStyleMap.pool}
               >
-                Volume
+                Pool
               </HeaderColumn>
-            )}
 
-            {!isTvlOnly && (
               <HeaderColumn<Column, SortableColumn>
-                id="aprPercent_24h"
+                id="tvlUsd"
                 sortState={sortState}
-                toggleSortByColumn={
-                  (poolGroups ?? []).every(
-                    (poolGroup) =>
-                      !!poolGroup.pools.every(
-                        (pool) => pool.aprPercent_24h !== undefined,
-                      ),
-                  )
-                    ? toggleSortByColumn
-                    : undefined
-                }
-                titleEndDecorator="24H"
-                style={columnStyleMap.aprPercent_24h}
+                toggleSortByColumn={toggleSortByColumn}
+                style={columnStyleMap.tvlUsd}
               >
-                APR
+                TVL
               </HeaderColumn>
-            )}
-          </tr>
 
-          {/* Rows */}
-          {sortedPoolGroups === undefined ? (
-            Array.from({ length: 3 }).map((_, index) => (
-              <tr key={index} className="h-[calc(56px+1px)] border-x border-b">
+              {!isTvlOnly && (
+                <HeaderColumn<Column, SortableColumn>
+                  id="volumeUsd_24h"
+                  sortState={sortState}
+                  toggleSortByColumn={
+                    (poolGroups ?? []).every(
+                      (poolGroup) =>
+                        !!poolGroup.pools.every(
+                          (pool) => pool.volumeUsd_24h !== undefined,
+                        ),
+                    )
+                      ? toggleSortByColumn
+                      : undefined
+                  }
+                  titleEndDecorator="24H"
+                  style={columnStyleMap.volumeUsd_24h}
+                >
+                  Volume
+                </HeaderColumn>
+              )}
+
+              {!isTvlOnly && (
+                <HeaderColumn<Column, SortableColumn>
+                  id="aprPercent_24h"
+                  sortState={sortState}
+                  toggleSortByColumn={
+                    (poolGroups ?? []).every(
+                      (poolGroup) =>
+                        !!poolGroup.pools.every(
+                          (pool) => pool.aprPercent_24h !== undefined,
+                        ),
+                    )
+                      ? toggleSortByColumn
+                      : undefined
+                  }
+                  titleEndDecorator="24H"
+                  style={columnStyleMap.aprPercent_24h}
+                >
+                  APR
+                </HeaderColumn>
+              )}
+            </tr>
+
+            {/* Rows */}
+            {sortedPoolGroups === undefined ? (
+              Array.from({ length: 3 }).map((_, index) => (
+                <tr
+                  key={index}
+                  className="h-[calc(56px+1px)] border-x border-b"
+                >
+                  <td colSpan={10}>
+                    <Skeleton className="h-[56px]" />
+                  </td>
+                </tr>
+              ))
+            ) : sortedPoolGroups.length === 0 ? (
+              <tr className="h-[calc(56px+1px)] border-x border-b bg-background">
                 <td colSpan={10}>
-                  <Skeleton className="h-[56px]" />
+                  <p className="text-center text-p2 text-tertiary-foreground">
+                    {searchString
+                      ? `No matches for "${searchString}"`
+                      : "No pools"}
+                  </p>
                 </td>
               </tr>
-            ))
-          ) : sortedPoolGroups.length === 0 ? (
-            <tr className="h-[calc(56px+1px)] border-x border-b bg-background">
-              <td colSpan={10}>
-                <p className="text-center text-p2 text-tertiary-foreground">
-                  {searchString
-                    ? `No matches for "${searchString}"`
-                    : "No pools"}
-                </p>
-              </td>
-            </tr>
-          ) : (
-            <>
-              {isFlat ? (
-                sortedPoolGroups
-                  .map((poolGroup) => poolGroup.pools)
-                  .flat()
-                  .map((pool) => (
-                    <PoolRow
-                      key={pool.id}
-                      columnStyleMap={columnStyleMap}
-                      pool={pool}
-                      isTvlOnly={isTvlOnly}
-                    />
-                  ))
-              ) : (
-                <>
-                  {sortedPoolGroups.map((poolGroup) =>
-                    poolGroup.pools.length === 1 ? (
+            ) : (
+              <>
+                {isFlat ? (
+                  sortedPoolGroups
+                    .map((poolGroup) => poolGroup.pools)
+                    .flat()
+                    .map((pool) => (
                       <PoolRow
-                        key={poolGroup.id}
+                        key={pool.id}
                         columnStyleMap={columnStyleMap}
-                        pool={poolGroup.pools[0]}
+                        pool={pool}
                         isTvlOnly={isTvlOnly}
                       />
-                    ) : (
-                      <PoolGroupRow
-                        key={poolGroup.id}
-                        columnStyleMap={columnStyleMap}
-                        tableId={tableId}
-                        poolGroup={poolGroup}
-                        isTvlOnly={isTvlOnly}
-                      />
-                    ),
-                  )}
-                </>
-              )}
-            </>
-          )}
+                    ))
+                ) : (
+                  <>
+                    {sortedPoolGroups.map((poolGroup) =>
+                      poolGroup.pools.length === 1 ? (
+                        <PoolRow
+                          key={poolGroup.id}
+                          columnStyleMap={columnStyleMap}
+                          pool={poolGroup.pools[0]}
+                          isTvlOnly={isTvlOnly}
+                        />
+                      ) : (
+                        <PoolGroupRow
+                          key={poolGroup.id}
+                          columnStyleMap={columnStyleMap}
+                          tableId={tableId}
+                          poolGroup={poolGroup}
+                          isTvlOnly={isTvlOnly}
+                        />
+                      ),
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </tbody>
         </table>
       </div>
     </div>

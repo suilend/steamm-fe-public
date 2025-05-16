@@ -159,74 +159,76 @@ export default function PointsLeaderboardTable({
 
         <div className="relative z-[1] w-full overflow-auto">
           <table className="w-full">
-            {/* Header */}
-            <tr className="h-[calc(1px+40px+1px)] border bg-secondary">
-              <HeaderColumn<Column, SortableColumn>
-                id="rank"
-                style={columnStyleMap.rank}
-              >
-                Rank
-              </HeaderColumn>
-
-              <HeaderColumn<Column, SortableColumn>
-                id="address"
-                style={columnStyleMap.address}
-              >
-                Address
-              </HeaderColumn>
-
-              <HeaderColumn<Column, SortableColumn>
-                id="totalPoints"
-                sortState={disableSorting ? undefined : sortState}
-                toggleSortByColumn={
-                  disableSorting ? undefined : toggleSortByColumn
-                }
-                style={columnStyleMap.totalPoints}
-              >
-                Total points
-              </HeaderColumn>
-
-              <HeaderColumn<Column, SortableColumn>
-                id="pointsPerDay"
-                sortState={disableSorting ? undefined : sortState}
-                toggleSortByColumn={
-                  disableSorting ? undefined : toggleSortByColumn
-                }
-                style={columnStyleMap.pointsPerDay}
-              >
-                Points per day
-              </HeaderColumn>
-            </tr>
-
-            {/* Rows */}
-            {pageRows === undefined ? (
-              Array.from({ length: skeletonRows ?? 3 }).map((_, index) => (
-                <tr
-                  key={index}
-                  className="h-[calc(45px+1px)] border-x border-b"
+            <tbody>
+              {/* Header */}
+              <tr className="h-[calc(1px+40px+1px)] border bg-secondary">
+                <HeaderColumn<Column, SortableColumn>
+                  id="rank"
+                  style={columnStyleMap.rank}
                 >
+                  Rank
+                </HeaderColumn>
+
+                <HeaderColumn<Column, SortableColumn>
+                  id="address"
+                  style={columnStyleMap.address}
+                >
+                  Address
+                </HeaderColumn>
+
+                <HeaderColumn<Column, SortableColumn>
+                  id="totalPoints"
+                  sortState={disableSorting ? undefined : sortState}
+                  toggleSortByColumn={
+                    disableSorting ? undefined : toggleSortByColumn
+                  }
+                  style={columnStyleMap.totalPoints}
+                >
+                  Total points
+                </HeaderColumn>
+
+                <HeaderColumn<Column, SortableColumn>
+                  id="pointsPerDay"
+                  sortState={disableSorting ? undefined : sortState}
+                  toggleSortByColumn={
+                    disableSorting ? undefined : toggleSortByColumn
+                  }
+                  style={columnStyleMap.pointsPerDay}
+                >
+                  Points per day
+                </HeaderColumn>
+              </tr>
+
+              {/* Rows */}
+              {pageRows === undefined ? (
+                Array.from({ length: skeletonRows ?? 3 }).map((_, index) => (
+                  <tr
+                    key={index}
+                    className="h-[calc(45px+1px)] border-x border-b"
+                  >
+                    <td colSpan={10}>
+                      <Skeleton className="h-[45px]" />
+                    </td>
+                  </tr>
+                ))
+              ) : pageRows.length === 0 ? (
+                <tr className="h-[calc(45px+1px)] border-x border-b bg-background">
                   <td colSpan={10}>
-                    <Skeleton className="h-[45px]" />
+                    <p className="text-center text-p2 text-tertiary-foreground">
+                      No data
+                    </p>
                   </td>
                 </tr>
-              ))
-            ) : pageRows.length === 0 ? (
-              <tr className="h-[calc(45px+1px)] border-x border-b bg-background">
-                <td colSpan={10}>
-                  <p className="text-center text-p2 text-tertiary-foreground">
-                    No data
-                  </p>
-                </td>
-              </tr>
-            ) : (
-              pageRows.map((row) => (
-                <PointsLeaderboardRow
-                  key={row.address}
-                  columnStyleMap={columnStyleMap}
-                  row={row}
-                />
-              ))
-            )}
+              ) : (
+                pageRows.map((row) => (
+                  <PointsLeaderboardRow
+                    key={row.address}
+                    columnStyleMap={columnStyleMap}
+                    row={row}
+                  />
+                ))
+              )}
+            </tbody>
           </table>
         </div>
       </div>

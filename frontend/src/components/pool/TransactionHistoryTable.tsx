@@ -33,28 +33,28 @@ export default function TransactionHistoryTable({
       type: {
         cell: { textAlign: "left" },
         children: {
-          paddingLeft: 4 * 5, // px
+          paddingLeft: 4 * 8, // px
           justifyContent: "start",
         },
       },
       pool: {
         cell: { textAlign: "left" },
         children: {
-          paddingLeft: 4 * 5, // px
+          paddingLeft: 4 * 8, // px
           justifyContent: "start",
         },
       },
       amounts: {
         cell: { textAlign: "left" },
         children: {
-          paddingLeft: 4 * 5, // px
-          paddingRight: 4 * 5, // px
+          paddingLeft: 4 * 8, // px
           justifyContent: "start",
         },
       },
       digest: {
         cell: { textAlign: "right" },
         children: {
+          paddingLeft: 4 * 8, // px
           paddingRight: 4 * 5, // px
           justifyContent: "end",
         },
@@ -69,88 +69,95 @@ export default function TransactionHistoryTable({
 
       <div className="relative z-[1] w-full overflow-auto">
         <table className="w-full">
-          {/* Header */}
-          <tr className="h-[calc(1px+40px+1px)] border bg-secondary">
-            <HeaderColumn<Column, SortableColumn>
-              id="date"
-              style={columnStyleMap.date}
-            >
-              Date
-            </HeaderColumn>
-
-            <HeaderColumn<Column, SortableColumn>
-              id="type"
-              style={columnStyleMap.type}
-            >
-              Action
-            </HeaderColumn>
-
-            {hasPoolColumn && (
+          <tbody>
+            {/* Header */}
+            <tr className="h-[calc(1px+40px+1px)] border bg-secondary">
               <HeaderColumn<Column, SortableColumn>
-                id="pool"
-                style={columnStyleMap.pool}
+                id="date"
+                style={columnStyleMap.date}
               >
-                Pool
+                Date
               </HeaderColumn>
-            )}
 
-            <HeaderColumn<Column, SortableColumn>
-              id="amounts"
-              style={columnStyleMap.amounts}
-            >
-              Details
-            </HeaderColumn>
+              <HeaderColumn<Column, SortableColumn>
+                id="type"
+                style={columnStyleMap.type}
+              >
+                Action
+              </HeaderColumn>
 
-            <HeaderColumn<Column, SortableColumn>
-              id="digest"
-              style={columnStyleMap.digest}
-            >
-              Txn
-            </HeaderColumn>
-          </tr>
+              {hasPoolColumn && (
+                <HeaderColumn<Column, SortableColumn>
+                  id="pool"
+                  style={columnStyleMap.pool}
+                >
+                  Pool
+                </HeaderColumn>
+              )}
 
-          {/* Rows */}
-          {transactionHistory === undefined ? (
-            Array.from({ length: 3 }).map((_, index) => (
-              <tr key={index} className="h-[calc(45px+1px)] border-x border-b">
+              <HeaderColumn<Column, SortableColumn>
+                id="amounts"
+                style={columnStyleMap.amounts}
+              >
+                Details
+              </HeaderColumn>
+
+              <HeaderColumn<Column, SortableColumn>
+                id="digest"
+                style={columnStyleMap.digest}
+              >
+                Txn
+              </HeaderColumn>
+            </tr>
+
+            {/* Rows */}
+            {transactionHistory === undefined ? (
+              Array.from({ length: 3 }).map((_, index) => (
+                <tr
+                  key={index}
+                  className="h-[calc(45px+1px)] border-x border-b"
+                >
+                  <td colSpan={10}>
+                    <Skeleton className="h-[45px]" />
+                  </td>
+                </tr>
+              ))
+            ) : transactionHistory.length === 0 ? (
+              <tr className="h-[calc(45px+1px)] border-x border-b bg-background">
                 <td colSpan={10}>
-                  <Skeleton className="h-[45px]" />
+                  <p className="text-center text-p2 text-tertiary-foreground">
+                    No transactions
+                  </p>
                 </td>
               </tr>
-            ))
-          ) : transactionHistory.length === 0 ? (
-            <tr className="h-[calc(45px+1px)] border-x border-b bg-background">
-              <td colSpan={10}>
-                <p className="text-center text-p2 text-tertiary-foreground">
-                  No transactions
-                </p>
-              </td>
-            </tr>
-          ) : (
-            transactionHistory.map((poolTransactionHistory, index) => (
-              <Fragment key={index}>
-                {poolTransactionHistory.map((transaction, transactionIndex) => (
-                  <TransactionHistoryRow
-                    key={transaction.timestamp}
-                    columnStyleMap={columnStyleMap}
-                    prevTransaction={
-                      poolTransactionHistory[transactionIndex - 1]
-                    }
-                    transaction={transaction}
-                    nextTransaction={
-                      poolTransactionHistory[transactionIndex + 1]
-                    }
-                    hasPoolColumn={hasPoolColumn}
-                  />
-                ))}
-                {index !== transactionHistory.length - 1 && (
-                  <tr>
-                    <td className="h-[3px] bg-border" colSpan={10} />
-                  </tr>
-                )}
-              </Fragment>
-            ))
-          )}
+            ) : (
+              transactionHistory.map((poolTransactionHistory, index) => (
+                <Fragment key={index}>
+                  {poolTransactionHistory.map(
+                    (transaction, transactionIndex) => (
+                      <TransactionHistoryRow
+                        key={`${transaction.digest}-${transaction.eventIndex}`}
+                        columnStyleMap={columnStyleMap}
+                        prevTransaction={
+                          poolTransactionHistory[transactionIndex - 1]
+                        }
+                        transaction={transaction}
+                        nextTransaction={
+                          poolTransactionHistory[transactionIndex + 1]
+                        }
+                        hasPoolColumn={hasPoolColumn}
+                      />
+                    ),
+                  )}
+                  {index !== transactionHistory.length - 1 && (
+                    <tr>
+                      <td className="h-[3px] bg-border" colSpan={10} />
+                    </tr>
+                  )}
+                </Fragment>
+              ))
+            )}
+          </tbody>
         </table>
       </div>
     </div>
