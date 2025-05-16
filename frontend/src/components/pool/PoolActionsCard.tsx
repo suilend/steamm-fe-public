@@ -1526,8 +1526,11 @@ function SwapTab({ onSwap }: SwapTabProps) {
         <div className="flex w-full flex-col gap-2">
           <ExchangeRateParameter
             labelClassName="text-secondary-foreground"
+            priceLabelClassName="text-tertiary-foreground"
             inToken={getToken(activeCoinType, activeCoinMetadata)}
+            inPrice={pool.prices[activeCoinIndex]}
             outToken={getToken(inactiveCoinType, inactiveCoinMetadata)}
+            outPrice={pool.prices[inactiveCoinIndex]}
             isFetchingQuote={isFetchingQuote}
             quote={quote}
             isInverted

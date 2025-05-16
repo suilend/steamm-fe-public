@@ -47,6 +47,7 @@ import { useUserContext } from "@/contexts/UserContext";
 import useBirdeyeUsdPrices from "@/hooks/useBirdeyeUsdPrices";
 import { rebalanceBanks } from "@/lib/banks";
 import { formatTextInputValue } from "@/lib/format";
+import { getAvgPoolPrice } from "@/lib/pools";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { TokenDirection } from "@/lib/types";
@@ -207,27 +208,10 @@ export default function SwapPage() {
       outCoinType,
     );
   };
+
   // USD prices - current
-  const getAvgPoolPrice = useCallback(
-    (coinType: string) => {
-      const poolPrices = [
-        ...appData.pools
-          .filter((pool) => pool.coinTypes[0] === coinType)
-          .map((pool) => pool.prices[0]),
-        ...appData.pools
-          .filter((pool) => pool.coinTypes[1] === coinType)
-          .map((pool) => pool.prices[1]),
-      ];
-
-      return poolPrices
-        .reduce((acc, poolPrice) => acc.plus(poolPrice), new BigNumber(0))
-        .div(poolPrices.length);
-    },
-    [appData.pools],
-  );
-
-  const inPoolPrice = getAvgPoolPrice(inCoinType);
-  const outPoolPrice = getAvgPoolPrice(outCoinType);
+  const inPoolPrice = getAvgPoolPrice(appData.pools, inCoinType);
+  const outPoolPrice = getAvgPoolPrice(appData.pools, outCoinType);
 
   const inUsdValue = useMemo(
     () =>
@@ -591,7 +575,9 @@ export default function SwapPage() {
                     className="w-max"
                     labelClassName="text-secondary-foreground"
                     inToken={getToken(inCoinType, inCoinMetadata)}
+                    inPrice={inPoolPrice}
                     outToken={getToken(outCoinType, outCoinMetadata)}
+                    outPrice={outPoolPrice}
                     isFetchingQuote={isFetchingQuote}
                     quote={quote}
                     isInverted

@@ -29,6 +29,7 @@ export default function PoolLabel({
   const { appData, verifiedPoolIds } = useLoadedAppContext();
 
   const Heading = isLarge ? "h1" : "p";
+  const isVerified = verifiedPoolIds?.includes(pool.id);
 
   return (
     <div
@@ -66,7 +67,7 @@ export default function PoolLabel({
               ),
             )}
           </Heading>
-          {verifiedPoolIds?.includes(pool.id) && (
+          {isVerified && (
             <Tooltip title="Verified pool">
               <BadgeCheck className="h-4 w-4 text-verified" />
             </Tooltip>

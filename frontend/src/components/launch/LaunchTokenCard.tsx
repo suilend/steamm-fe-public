@@ -58,7 +58,7 @@ import {
   mintToken,
 } from "@/lib/launchToken";
 import { API_URL } from "@/lib/navigation";
-import { getPriceFromPool } from "@/lib/pools";
+import { getAvgPoolPrice } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
 
@@ -207,7 +207,7 @@ export default function LaunchTokenCard() {
         : isStablecoin(quoteToken.coinType)
           ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_USDC_COINTYPE]?.price
           : (appData.coinTypeOracleInfoPriceMap[quoteToken.coinType]?.price ??
-            getPriceFromPool(appData.pools, quoteToken.coinType));
+            getAvgPoolPrice(appData.pools, quoteToken.coinType));
     if (price === undefined) return new BigNumber(1);
 
     const rawAmount = DEPOSITED_QUOTE_ASSET_USD / +price;

@@ -1,12 +1,18 @@
 import { PropsWithChildren, ReactNode } from "react";
 
+import { ClassValue } from "clsx";
+
+import { cn } from "@/lib/utils";
+
 interface BreakdownRowProps extends PropsWithChildren {
+  valueClassName?: ClassValue;
   isLast?: boolean;
   labelEndDecorator?: string;
   value?: ReactNode;
 }
 
 export default function BreakdownRow({
+  valueClassName,
   isLast,
   labelEndDecorator,
   value,
@@ -33,7 +39,12 @@ export default function BreakdownRow({
       </div>
 
       {value && (
-        <p className="flex flex-col items-end text-right text-p2 text-foreground">
+        <p
+          className={cn(
+            "flex flex-col items-end text-right !text-p2 text-foreground",
+            valueClassName,
+          )}
+        >
           {value}
         </p>
       )}

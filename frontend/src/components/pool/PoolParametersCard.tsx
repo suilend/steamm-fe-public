@@ -4,8 +4,8 @@ import BigNumber from "bignumber.js";
 
 import {
   formatAddress,
-  formatPercent,
   formatToken,
+  formatUsd,
   getToken,
 } from "@suilend/frontend-sui";
 import { useSettingsContext } from "@suilend/frontend-sui-next";
@@ -19,8 +19,6 @@ import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
 import OpenUrlNewTab from "@/components/OpenUrlNewTab";
 import Parameter from "@/components/Parameter";
-import SuilendLogo from "@/components/SuilendLogo";
-import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
@@ -141,19 +139,41 @@ export default function PoolParametersCard() {
                     {/* Total */}
                     <div className="flex flex-row items-center justify-between gap-4">
                       <p className="text-p1 text-foreground">Total</p>
-                      <p className="text-p1 font-bold text-foreground">
-                        {formatToken(pool.balances[index], { exact: false })}{" "}
-                        {appData.coinMetadataMap[coinType].symbol}
-                      </p>
+
+                      <div className="flex flex-row items-center gap-2">
+                        <p className="text-p1 font-bold text-foreground">
+                          {formatToken(pool.balances[index], {
+                            exact: false,
+                          })}{" "}
+                          {appData.coinMetadataMap[coinType].symbol}
+                        </p>
+                        <p className="text-p2 font-medium text-secondary-foreground">
+                          {formatUsd(
+                            new BigNumber(pool.balances[index]).times(
+                              pool.prices[index],
+                            ),
+                          )}
+                        </p>
+                      </div>
                     </div>
 
                     {/* Accrued LP fees */}
                     <BreakdownRow
+                      valueClassName="gap-2 items-center flex-row"
                       isLast
                       value={
                         <>
-                          {formatToken(accruedLpFees, { exact: false })}{" "}
-                          {appData.coinMetadataMap[coinType].symbol}
+                          <span>
+                            {formatToken(accruedLpFees, { exact: false })}{" "}
+                            {appData.coinMetadataMap[coinType].symbol}
+                          </span>
+                          <span className="text-secondary-foreground">
+                            {formatUsd(
+                              new BigNumber(accruedLpFees).times(
+                                pool.prices[index],
+                              ),
+                            )}
+                          </span>
                         </>
                       }
                     >
@@ -162,7 +182,7 @@ export default function PoolParametersCard() {
                   </div>
                 }
                 contentProps={{
-                  style: { maxWidth: 320 },
+                  style: { maxWidth: 350 },
                 }}
               >
                 <p
@@ -176,28 +196,25 @@ export default function PoolParametersCard() {
                 </p>
               </Tooltip>
 
+              <Tooltip
+                title={formatUsd(
+                  new BigNumber(pool.balances[index]).times(pool.prices[index]),
+                  { exact: true },
+                )}
+              >
+                <p className="text-p2 text-secondary-foreground">
+                  {formatUsd(
+                    new BigNumber(pool.balances[index]).times(
+                      pool.prices[index],
+                    ),
+                  )}
+                </p>
+              </Tooltip>
+
               <div className="flex flex-row items-center gap-1">
                 <CopyToClipboardButton value={coinType} />
                 <OpenUrlNewTab url={explorer.buildCoinUrl(coinType)} />
               </div>
-
-              {appData.suilend.mainMarket.reserveMap[coinType] && (
-                <Tag
-                  labelClassName={cn(
-                    "text-foreground decoration-foreground/50",
-                    hoverUnderlineClassName,
-                  )}
-                  tooltip={`${formatPercent(appData.bankMap[coinType].utilizationPercent)} of deposited ${appData.coinMetadataMap[coinType].symbol} is earning ${formatPercent(appData.bankMap[coinType].suilendDepositAprPercent)} APR on Suilend`}
-                  startDecorator={<SuilendLogo size={12} />}
-                >
-                  {formatPercent(
-                    appData.bankMap[coinType].suilendDepositAprPercent
-                      .times(appData.bankMap[coinType].utilizationPercent)
-                      .div(100),
-                  )}{" "}
-                  APR
-                </Tag>
-              )}
             </div>
           );
         })}
@@ -228,10 +245,12 @@ export default function PoolParametersCard() {
           pool.coinTypes[0],
           appData.coinMetadataMap[pool.coinTypes[0]],
         )}
+        inPrice={pool.prices[0]}
         outToken={getToken(
           pool.coinTypes[1],
           appData.coinMetadataMap[pool.coinTypes[1]],
         )}
+        outPrice={pool.prices[1]}
         quote={quote}
         label="Current price"
       />

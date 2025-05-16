@@ -39,7 +39,7 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import { rebalanceBanks } from "@/lib/banks";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
-import { getPriceFromPool } from "@/lib/pools";
+import { getAvgPoolPrice } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
 
@@ -54,7 +54,7 @@ export default function BankCard({ bank }: BankCardProps) {
   const { refresh } = useUserContext();
 
   // Price
-  const price = getPriceFromPool(appData.pools, bank.coinType);
+  const price = getAvgPoolPrice(appData.pools, bank.coinType);
 
   // Initialize/set target util. and util. buffer
   const [targetUtilizationPercent, setTargetUtilizationPercent] =

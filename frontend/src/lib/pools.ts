@@ -38,9 +38,17 @@ export const fetchPool = (steammClient: SteammSDK, poolInfo: PoolInfo) => {
       : steammClient.fullClient.fetchConstantProductPool(id);
 };
 
-export const getPriceFromPool = (pools: AppData["pools"], coinType: string) => {
-  const pool = pools.find((p) => p.coinTypes.includes(coinType));
-  if (!pool) return undefined;
+export const getAvgPoolPrice = (pools: AppData["pools"], coinType: string) => {
+  const poolPrices = [
+    ...pools
+      .filter((pool) => pool.coinTypes[0] === coinType)
+      .map((pool) => pool.prices[0]),
+    ...pools
+      .filter((pool) => pool.coinTypes[1] === coinType)
+      .map((pool) => pool.prices[1]),
+  ];
 
-  return pool.coinTypes[0] === coinType ? pool.prices[0] : pool.prices[1];
+  return poolPrices
+    .reduce((acc, poolPrice) => acc.plus(poolPrice), new BigNumber(0))
+    .div(poolPrices.length);
 };

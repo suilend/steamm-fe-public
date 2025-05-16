@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import BankCard from "@/components/admin/banks/BankCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { getPriceFromPool } from "@/lib/pools";
+import { getAvgPoolPrice } from "@/lib/pools";
 
 export default function BanksTab() {
   const { appData } = useLoadedAppContext();
@@ -15,8 +15,8 @@ export default function BanksTab() {
           (bank) => !!appData.suilend.mainMarket.reserveMap[bank.coinType],
         )
         .sort((a, b) => {
-          const priceA = getPriceFromPool(appData.pools, a.coinType);
-          const priceB = getPriceFromPool(appData.pools, b.coinType);
+          const priceA = getAvgPoolPrice(appData.pools, a.coinType);
+          const priceB = getAvgPoolPrice(appData.pools, b.coinType);
           if (priceA === undefined || priceB === undefined) return 0;
 
           return +b.totalFunds.times(priceB) - +a.totalFunds.times(priceA);
@@ -29,8 +29,8 @@ export default function BanksTab() {
       appData.banks
         .filter((bank) => !appData.suilend.mainMarket.reserveMap[bank.coinType])
         .sort((a, b) => {
-          const priceA = getPriceFromPool(appData.pools, a.coinType);
-          const priceB = getPriceFromPool(appData.pools, b.coinType);
+          const priceA = getAvgPoolPrice(appData.pools, a.coinType);
+          const priceB = getAvgPoolPrice(appData.pools, b.coinType);
           if (priceA === undefined || priceB === undefined) return 0;
 
           return +b.totalFunds.times(priceB) - +a.totalFunds.times(priceA);
