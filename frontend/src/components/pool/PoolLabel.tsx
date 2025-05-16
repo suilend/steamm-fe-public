@@ -53,7 +53,12 @@ export default function PoolLabel({
           isSmall ? "gap-x-2" : "gap-x-3",
         )}
       >
-        <div className="flex flex-row items-center gap-1.5">
+        <div
+          className={cn(
+            "flex flex-row items-center",
+            isLarge ? "gap-2" : "gap-1.5",
+          )}
+        >
           <Heading
             className={cn(
               "text-foreground",
@@ -69,7 +74,12 @@ export default function PoolLabel({
           </Heading>
           {isVerified && (
             <Tooltip title="Verified pool">
-              <BadgeCheck className="h-4 w-4 text-verified" />
+              <BadgeCheck
+                className={cn(
+                  "text-verified",
+                  isSmall ? "h-3.5 w-3.5" : isLarge ? "h-6 w-6" : "h-4 w-4",
+                )}
+              />
             </Tooltip>
           )}
         </div>
