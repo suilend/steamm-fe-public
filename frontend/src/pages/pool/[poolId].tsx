@@ -1,6 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { ChevronRight } from "lucide-react";
 
@@ -30,10 +30,24 @@ import { ROOT_URL } from "@/lib/navigation";
 function PoolPage() {
   const { address } = useWalletContext();
   const { appData } = useLoadedAppContext();
-  const { poolStats } = useStatsContext();
+  const {
+    poolStats,
+    fetchPoolHistoricalVolumeUsd7d,
+    fetchPoolHistoricalFeesUsd7d,
+  } = useStatsContext();
   const { refresh } = useUserContext();
 
   const { pool, fetchRefreshedPool } = usePoolContext();
+
+  // Fetch historical stats
+  const hasFetchedPoolHistoricalStatsRef = useRef<Record<string, boolean>>({});
+  useEffect(() => {
+    if (hasFetchedPoolHistoricalStatsRef.current[pool.id]) return;
+    hasFetchedPoolHistoricalStatsRef.current[pool.id] = true;
+
+    fetchPoolHistoricalVolumeUsd7d([pool.id]);
+    fetchPoolHistoricalFeesUsd7d([pool.id]);
+  }, [pool.id, fetchPoolHistoricalVolumeUsd7d, fetchPoolHistoricalFeesUsd7d]);
 
   // Pair
   const formattedPair = formatPair(

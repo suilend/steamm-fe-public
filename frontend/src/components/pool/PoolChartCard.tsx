@@ -50,9 +50,14 @@ export default function PoolChartCard() {
       [ChartStat.VOLUME]: {
         title: chartStatNameMap[ChartStat.VOLUME],
         value:
-          poolStats.volumeUsd_7d[pool.id] === undefined
+          poolStats.volumeUsd_7d[pool.id] === undefined ||
+          poolHistoricalStats.volumeUsd_7d[pool.id] === undefined
             ? undefined
-            : formatUsd(poolStats.volumeUsd_7d[pool.id]),
+            : poolHistoricalStats.volumeUsd_7d[pool.id].every(
+                  (d) => d.volumeUsd_7d === 0,
+                )
+              ? "--"
+              : formatUsd(poolStats.volumeUsd_7d[pool.id]),
         valuePeriodDays: 7,
         chartType: ChartType.BAR,
         data: poolHistoricalStats.volumeUsd_7d[pool.id],
@@ -62,9 +67,14 @@ export default function PoolChartCard() {
       [ChartStat.FEES]: {
         title: chartStatNameMap[ChartStat.FEES],
         value:
-          poolStats.feesUsd_7d[pool.id] === undefined
+          poolStats.feesUsd_7d[pool.id] === undefined ||
+          poolHistoricalStats.feesUsd_7d[pool.id] === undefined
             ? undefined
-            : formatUsd(poolStats.feesUsd_7d[pool.id]),
+            : poolHistoricalStats.feesUsd_7d[pool.id].every(
+                  (d) => d.feesUsd_7d === 0,
+                )
+              ? "--"
+              : formatUsd(poolStats.feesUsd_7d[pool.id]),
         valuePeriodDays: 7,
         chartType: ChartType.BAR,
         dataPeriodDays: 7,
@@ -100,25 +110,6 @@ export default function PoolChartCard() {
     [chartConfigMap, selectedChartStat],
   );
 
-  if (
-    poolHistoricalStats.tvlUsd_7d[pool.id] === undefined ||
-    poolHistoricalStats.volumeUsd_7d[pool.id] === undefined ||
-    poolHistoricalStats.feesUsd_7d[pool.id] === undefined
-  )
-    return <Skeleton className="h-[265px] w-full rounded-md md:h-[325px]" />;
-  if (
-    poolHistoricalStats.tvlUsd_7d[pool.id].every((d) => d.tvlUsd_7d === 0) &&
-    poolHistoricalStats.volumeUsd_7d[pool.id].every(
-      (d) => d.volumeUsd_7d === 0,
-    ) &&
-    poolHistoricalStats.feesUsd_7d[pool.id].every((d) => d.feesUsd_7d === 0)
-  )
-    return (
-      <div className="flex h-[265px] w-full flex-col items-center justify-center gap-2 rounded-md bg-card/50 md:h-[325px]">
-        <NoDataIcon className="h-5 w-5 text-secondary-foreground" />
-        <p className="text-p2 text-secondary-foreground">No data yet</p>
-      </div>
-    );
   return (
     <div className="relative w-full rounded-md border p-5">
       <HistoricalDataChart
