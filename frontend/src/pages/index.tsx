@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from "uuid";
 import { formatUsd } from "@suilend/frontend-sui";
 import { shallowPushQuery } from "@suilend/frontend-sui-next";
 import { Side, getFilteredRewards } from "@suilend/sdk";
-import { ParsedPool } from "@suilend/steamm-sdk";
+import { ParsedPool, QUOTER_ID_NAME_MAP } from "@suilend/steamm-sdk";
 
 import Divider from "@/components/Divider";
 import HistoricalDataChart from "@/components/HistoricalDataChart";
@@ -203,11 +203,10 @@ export default function PoolsPage() {
     const poolGroupsByPair: Record<string, ParsedPool[]> = {};
 
     for (const pool of poolsWithExtraData) {
-      const formattedPair = formatPair(pool.coinTypes);
+      const key = `${pool.coinTypes[0]}-${pool.coinTypes[1]}`;
 
-      if (!poolGroupsByPair[formattedPair])
-        poolGroupsByPair[formattedPair] = [pool];
-      else poolGroupsByPair[formattedPair].push(pool);
+      if (!poolGroupsByPair[key]) poolGroupsByPair[key] = [pool];
+      else poolGroupsByPair[key].push(pool);
     }
 
     return Object.values(poolGroupsByPair).map((pools) => ({
@@ -216,6 +215,10 @@ export default function PoolsPage() {
       pools,
     }));
   }, [poolsWithExtraData]);
+  const poolGroupsCount =
+    poolGroups === undefined
+      ? undefined
+      : poolGroups.reduce((acc, poolGroup) => acc + poolGroup.pools.length, 0);
 
   // Featured pools (flat)
   const featuredPoolGroups = useMemo(
@@ -231,6 +234,8 @@ export default function PoolsPage() {
             })),
     [featuredPoolIds, poolsWithExtraData],
   );
+  const featuredPoolGroupsCount =
+    featuredPoolGroups === undefined ? undefined : featuredPoolGroups.length; // Flat
 
   // Verified pools (groups)
   const verifiedPoolGroups = useMemo(
@@ -249,6 +254,13 @@ export default function PoolsPage() {
             })),
     [verifiedPoolIds, poolGroups],
   );
+  const verifiedPoolGroupsCount =
+    verifiedPoolGroups === undefined
+      ? undefined
+      : verifiedPoolGroups.reduce(
+          (acc, poolGroup) => acc + poolGroup.pools.length,
+          0,
+        );
 
   // Search
   const getFilteredPoolGroups = useCallback(
@@ -258,20 +270,39 @@ export default function PoolsPage() {
 
       return _poolGroups
         .filter((poolGroup) =>
-          poolGroup.coinTypes.some((coinType) =>
-            `${poolGroup.pools.map((pool) => pool.id).join("__")}__${coinType}__${appData.coinMetadataMap[coinType].symbol}`
-              .toLowerCase()
-              .includes(_searchString.toLowerCase()),
-          ),
+          [
+            poolGroup.pools.map((pool) => pool.id).join("__"),
+            poolGroup.coinTypes.join("__"),
+            formatPair(
+              poolGroup.coinTypes.map(
+                (coinType) => appData.coinMetadataMap[coinType].symbol,
+              ),
+            ),
+            poolGroup.pools
+              .map((pool) => QUOTER_ID_NAME_MAP[pool.quoterId])
+              .flat()
+              .join("__"),
+          ]
+            .join("____")
+            .toLowerCase()
+            .includes(_searchString.toLowerCase()),
         )
         .map((poolGroup) => ({
           ...poolGroup,
           pools: poolGroup.pools.filter((pool) =>
-            pool.coinTypes.some((coinType) =>
-              `${pool.id}__${coinType}__${appData.coinMetadataMap[coinType].symbol}`
-                .toLowerCase()
-                .includes(_searchString.toLowerCase()),
-            ),
+            [
+              pool.id,
+              pool.coinTypes.join("__"),
+              formatPair(
+                pool.coinTypes.map(
+                  (coinType) => appData.coinMetadataMap[coinType].symbol,
+                ),
+              ),
+              QUOTER_ID_NAME_MAP[pool.quoterId],
+            ]
+              .join("____")
+              .toLowerCase()
+              .includes(_searchString.toLowerCase()),
           ),
         }));
     },
@@ -286,9 +317,25 @@ export default function PoolsPage() {
     verifiedPoolGroups,
   );
 
+  const filteredVerifiedPoolGroupsCount =
+    filteredVerifiedPoolGroups === undefined
+      ? undefined
+      : filteredVerifiedPoolGroups.reduce(
+          (acc, poolGroup) => acc + poolGroup.pools.length,
+          0,
+        );
+
   // Search - all pools
   const [searchString, setSearchString] = useState<string>("");
   const filteredPoolGroups = getFilteredPoolGroups(searchString, poolGroups);
+
+  const filteredPoolGroupsCount =
+    filteredPoolGroups === undefined
+      ? undefined
+      : filteredPoolGroups.reduce(
+          (acc, poolGroup) => acc + poolGroup.pools.length,
+          0,
+        );
 
   return (
     <>
@@ -378,10 +425,10 @@ export default function PoolsPage() {
               <div className="flex flex-row items-center gap-3">
                 <h2 className="text-h3 text-foreground">Featured pools</h2>
 
-                {featuredPoolGroups === undefined ? (
+                {featuredPoolGroupsCount === undefined ? (
                   <Skeleton className="h-5 w-12" />
                 ) : (
-                  <Tag>{featuredPoolGroups.length}</Tag>
+                  <Tag>{featuredPoolGroupsCount}</Tag>
                 )}
               </div>
 
@@ -408,14 +455,19 @@ export default function PoolsPage() {
             <div className="flex flex-row items-center gap-3">
               <h2 className="text-h3 text-foreground">Verified pools</h2>
 
-              {filteredVerifiedPoolGroups === undefined ? (
+              {verifiedPoolGroupsCount === undefined ||
+              filteredVerifiedPoolGroupsCount === undefined ? (
                 <Skeleton className="h-5 w-12" />
               ) : (
                 <Tag>
-                  {filteredVerifiedPoolGroups.reduce(
-                    (acc, poolGroup) => acc + poolGroup.pools.length,
-                    0,
+                  {filteredVerifiedPoolGroupsCount !==
+                    verifiedPoolGroupsCount && (
+                    <>
+                      {filteredVerifiedPoolGroupsCount}
+                      {"/"}
+                    </>
                   )}
+                  {verifiedPoolGroupsCount}
                 </Tag>
               )}
             </div>
@@ -440,14 +492,18 @@ export default function PoolsPage() {
             <div className="flex flex-row items-center gap-3">
               <h2 className="text-h3 text-foreground">All pools</h2>
 
-              {filteredPoolGroups === undefined ? (
+              {poolGroupsCount === undefined ||
+              filteredPoolGroupsCount === undefined ? (
                 <Skeleton className="h-5 w-12" />
               ) : (
                 <Tag>
-                  {filteredPoolGroups.reduce(
-                    (acc, poolGroup) => acc + poolGroup.pools.length,
-                    0,
+                  {filteredPoolGroupsCount !== poolGroupsCount && (
+                    <>
+                      {filteredPoolGroupsCount}
+                      {"/"}
+                    </>
                   )}
+                  {poolGroupsCount}
                 </Tag>
               )}
             </div>
