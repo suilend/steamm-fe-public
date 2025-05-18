@@ -6,7 +6,6 @@ import { Check, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import {
   NORMALIZED_SUI_COINTYPE,
   NORMALIZED_USDC_COINTYPE,
-  SUI_GAS_MIN,
   Token,
   formatNumber,
   formatPercent,
@@ -324,24 +323,8 @@ export default function LaunchTokenCard() {
 
     //
 
-    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
-      return {
-        isDisabled: true,
-        title: "Insufficient gas",
-      };
-
     if (quoteAssetCoinType === undefined)
       return { isDisabled: true, title: "Select a quote asset" };
-    if (
-      isSui(quoteAssetCoinType) &&
-      new BigNumber(getBalance(NORMALIZED_SUI_COINTYPE).minus(SUI_GAS_MIN)).lt(
-        depositedQuoteAssetAmount,
-      )
-    )
-      return {
-        isDisabled: true,
-        title: "Insufficient gas",
-      };
     if (getBalance(quoteAssetCoinType).lt(depositedQuoteAssetAmount))
       return { isDisabled: true, title: `Insufficient ${quoteToken!.symbol}` };
 

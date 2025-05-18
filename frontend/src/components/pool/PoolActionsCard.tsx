@@ -2,15 +2,12 @@ import { useRouter } from "next/router";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
-import { SUI_DECIMALS } from "@mysten/sui/utils";
 import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
 
 import {
   MAX_U64,
-  NORMALIZED_SUI_COINTYPE,
-  SUI_GAS_MIN,
   formatToken,
   getBalanceChange,
   getToken,
@@ -50,6 +47,7 @@ import { usePoolContext } from "@/contexts/PoolContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useBirdeyeUsdPrices from "@/hooks/useBirdeyeUsdPrices";
 import { rebalanceBanks } from "@/lib/banks";
+import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
 import {
   getIndexesOfObligationsWithDeposit,
@@ -95,7 +93,10 @@ function DepositTab({ onDeposit }: DepositTabProps) {
 
   const maxValues = pool.coinTypes.map((coinType, index) =>
     (isSui(coinType)
-      ? BigNumber.max(0, getBalance(coinType).minus(1))
+      ? BigNumber.max(
+          0,
+          getBalance(coinType).minus(MAX_BALANCE_SUI_SUBTRACTED_AMOUNT),
+        )
       : getBalance(coinType)
     ).decimalPlaces(
       appData.coinMetadataMap[pool.coinTypes[index]].decimals,
@@ -245,38 +246,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
     if (Object.values(values).some((value) => new BigNumber(value).eq(0)))
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
-    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
-      return {
-        isDisabled: true,
-        title: "Insufficient gas",
-      };
-
     if (quote) {
-      if (
-        pool.coinTypes.includes(NORMALIZED_SUI_COINTYPE) &&
-        new BigNumber(
-          getBalance(NORMALIZED_SUI_COINTYPE).minus(SUI_GAS_MIN),
-        ).lt(
-          new BigNumber(
-            (pool.coinTypes.indexOf(NORMALIZED_SUI_COINTYPE) === 0
-              ? quote.depositA
-              : quote.depositB
-            ).toString(),
-          )
-            .div(10 ** SUI_DECIMALS)
-            .times(
-              pool.coinTypes.indexOf(NORMALIZED_SUI_COINTYPE) ===
-                lastActiveInputIndex || pool.tvlUsd.eq(0)
-                ? 1
-                : 1 + slippagePercent / 100,
-            ),
-        )
-      )
-        return {
-          isDisabled: true,
-          title: "Insufficient gas",
-        };
-
       for (let i = 0; i < pool.coinTypes.length; i++) {
         const coinType = pool.coinTypes[i];
 
@@ -715,12 +685,6 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
     )
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
-    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
-      return {
-        isDisabled: true,
-        title: "Insufficient gas",
-      };
-
     if (new BigNumber(sliderValue).gt(100))
       return {
         isDisabled: true,
@@ -1133,7 +1097,10 @@ function SwapTab({ onSwap }: SwapTabProps) {
 
   // Value
   const activeMaxValue = isSui(activeCoinType)
-    ? BigNumber.max(0, getBalance(activeCoinType).minus(1))
+    ? BigNumber.max(
+        0,
+        getBalance(activeCoinType).minus(MAX_BALANCE_SUI_SUBTRACTED_AMOUNT),
+      )
     : getBalance(activeCoinType);
 
   const [value, setValue] = useState<string>("");
@@ -1323,26 +1290,7 @@ function SwapTab({ onSwap }: SwapTabProps) {
     if (new BigNumber(value).eq(0))
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
-    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
-      return {
-        isDisabled: true,
-        title: "Insufficient gas",
-      };
-
     if (quote) {
-      if (
-        isSui(activeCoinType) &&
-        new BigNumber(getBalance(activeCoinType).minus(SUI_GAS_MIN)).lt(
-          new BigNumber(quote.amountIn.toString()).div(
-            10 ** activeCoinMetadata.decimals,
-          ),
-        )
-      )
-        return {
-          isDisabled: true,
-          title: "Insufficient gas",
-        };
-
       if (
         getBalance(activeCoinType).lt(
           new BigNumber(quote.amountIn.toString()).div(

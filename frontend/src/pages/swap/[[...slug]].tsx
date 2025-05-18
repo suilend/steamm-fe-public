@@ -11,7 +11,6 @@ import { ArrowRight } from "lucide-react";
 import {
   NORMALIZED_SEND_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
-  SUI_GAS_MIN,
   Token,
   formatToken,
   getBalanceChange,
@@ -46,6 +45,7 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useBirdeyeUsdPrices from "@/hooks/useBirdeyeUsdPrices";
 import { rebalanceBanks } from "@/lib/banks";
+import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
 import { formatTextInputValue } from "@/lib/format";
 import { getAvgPoolPrice } from "@/lib/pools";
 import { getBirdeyeRatio } from "@/lib/swap";
@@ -97,7 +97,10 @@ export default function SwapPage() {
 
   // Value
   const inMaxValue = isSui(inCoinType)
-    ? BigNumber.max(0, getBalance(inCoinType).minus(1))
+    ? BigNumber.max(
+        0,
+        getBalance(inCoinType).minus(MAX_BALANCE_SUI_SUBTRACTED_AMOUNT),
+      )
     : getBalance(inCoinType);
 
   const valueRef = useRef<string>("");
@@ -358,26 +361,7 @@ export default function SwapPage() {
     if (new BigNumber(value).eq(0))
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
-    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
-      return {
-        isDisabled: true,
-        title: "Insufficient gas",
-      };
-
     if (quote) {
-      if (
-        isSui(inCoinType) &&
-        new BigNumber(getBalance(inCoinType).minus(SUI_GAS_MIN)).lt(
-          new BigNumber(quote.amountIn.toString()).div(
-            10 ** inCoinMetadata.decimals,
-          ),
-        )
-      )
-        return {
-          isDisabled: true,
-          title: "Insufficient gas",
-        };
-
       if (
         getBalance(inCoinType).lt(
           new BigNumber(quote.amountIn.toString()).div(

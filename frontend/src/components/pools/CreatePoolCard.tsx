@@ -4,8 +4,6 @@ import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
 
 import {
-  NORMALIZED_SUI_COINTYPE,
-  SUI_GAS_MIN,
   Token,
   getToken,
   isSend,
@@ -36,6 +34,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useBirdeyeUsdPrices from "@/hooks/useBirdeyeUsdPrices";
+import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
 import { CreateCoinResult, initializeCoinCreation } from "@/lib/createCoin";
 import {
   AMPLIFIERS,
@@ -130,7 +129,10 @@ export default function CreatePoolCard() {
   const maxValues = coinTypes.map((coinType) =>
     coinType !== ""
       ? isSui(coinType)
-        ? BigNumber.max(0, getBalance(coinType).minus(1))
+        ? BigNumber.max(
+            0,
+            getBalance(coinType).minus(MAX_BALANCE_SUI_SUBTRACTED_AMOUNT),
+          )
         : getBalance(coinType)
       : new BigNumber(0),
   ) as [BigNumber, BigNumber];
@@ -394,26 +396,9 @@ export default function CreatePoolCard() {
 
     //
 
-    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
-      return {
-        isDisabled: true,
-        title: "Insufficient gas",
-      };
-
     for (let i = 0; i < coinTypes.length; i++) {
       const coinType = coinTypes[i];
       const coinMetadata = balancesCoinMetadataMap![coinType];
-
-      if (
-        isSui(coinType) &&
-        new BigNumber(
-          getBalance(NORMALIZED_SUI_COINTYPE).minus(SUI_GAS_MIN),
-        ).lt(values[i])
-      )
-        return {
-          isDisabled: true,
-          title: "Insufficient gas",
-        };
 
       if (getBalance(coinType).lt(values[i]))
         return {
