@@ -30,11 +30,7 @@ import { ROOT_URL } from "@/lib/navigation";
 function PoolPage() {
   const { address } = useWalletContext();
   const { appData } = useLoadedAppContext();
-  const {
-    poolStats,
-    fetchPoolHistoricalVolumeUsd7d,
-    fetchPoolHistoricalFeesUsd7d,
-  } = useStatsContext();
+  const { poolStats, fetchPoolHistoricalStats } = useStatsContext();
   const { refresh } = useUserContext();
 
   const { pool, fetchRefreshedPool } = usePoolContext();
@@ -45,9 +41,8 @@ function PoolPage() {
     if (hasFetchedPoolHistoricalStatsRef.current[pool.id]) return;
     hasFetchedPoolHistoricalStatsRef.current[pool.id] = true;
 
-    fetchPoolHistoricalVolumeUsd7d([pool.id]);
-    fetchPoolHistoricalFeesUsd7d([pool.id]);
-  }, [pool.id, fetchPoolHistoricalVolumeUsd7d, fetchPoolHistoricalFeesUsd7d]);
+    fetchPoolHistoricalStats([pool.id]);
+  }, [pool.id, fetchPoolHistoricalStats]);
 
   // Pair
   const formattedPair = formatPair(
