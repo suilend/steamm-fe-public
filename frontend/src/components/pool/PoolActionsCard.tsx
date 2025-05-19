@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
@@ -15,6 +15,7 @@ import {
 } from "@suilend/frontend-sui";
 import {
   shallowPushQuery,
+  shallowReplaceQuery,
   showErrorToast,
   useSettingsContext,
   useWalletContext,
@@ -27,6 +28,7 @@ import {
 import {
   DepositQuote,
   ParsedPool,
+  QuoterId,
   RedeemQuote,
   SteammSDK,
   SwapQuote,
@@ -1077,9 +1079,10 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
 
 interface SwapTabProps {
   onSwap: () => void;
+  hasNoQuoteAssets: boolean;
 }
 
-function SwapTab({ onSwap }: SwapTabProps) {
+function SwapTab({ onSwap, hasNoQuoteAssets }: SwapTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
@@ -1087,7 +1090,9 @@ function SwapTab({ onSwap }: SwapTabProps) {
   const { pool } = usePoolContext();
 
   // CoinTypes
-  const [activeCoinIndex, setActiveCoinIndex] = useState<0 | 1>(0);
+  const [activeCoinIndex, setActiveCoinIndex] = useState<0 | 1>(
+    hasNoQuoteAssets ? 1 : 0,
+  );
   const activeCoinType = pool.coinTypes[activeCoinIndex];
   const activeCoinMetadata = appData.coinMetadataMap[activeCoinType];
 
@@ -1436,7 +1441,12 @@ function SwapTab({ onSwap }: SwapTabProps) {
 
   return (
     <>
-      <div className="relative flex w-full min-w-0 flex-col items-center gap-2">
+      <div
+        className={cn(
+          "relative flex w-full min-w-0 flex-col items-center",
+          hasNoQuoteAssets ? "gap-4" : "gap-2",
+        )}
+      >
         <CoinInput
           className="relative z-[1]"
           token={getToken(activeCoinType, activeCoinMetadata)}
@@ -1446,7 +1456,7 @@ function SwapTab({ onSwap }: SwapTabProps) {
           onMaxAmountClick={() => onBalanceClick()}
         />
 
-        <ReverseAssetsButton onClick={reverseAssets} />
+        {!hasNoQuoteAssets && <ReverseAssetsButton onClick={reverseAssets} />}
 
         <CoinInput
           className="relative z-[1]"
@@ -1566,20 +1576,37 @@ export default function PoolActionsCard({
   onSwap,
 }: PoolActionsCardProps) {
   const router = useRouter();
-  const queryParams = {
-    [QueryParams.ACTION]: router.query[QueryParams.ACTION] as
-      | Action
-      | undefined,
-  };
+  const queryParams = useMemo(
+    () => ({
+      [QueryParams.ACTION]: router.query[QueryParams.ACTION] as
+        | Action
+        | undefined,
+    }),
+    [router.query],
+  );
 
   const { pool } = usePoolContext();
+
+  const hasNoQuoteAssets =
+    pool.quoterId === QuoterId.CPMM && pool.balances[1].eq(0); // New tokens launched on STEAMM (CPMM with offset, 0 quote assets)
 
   // Tabs
   const selectedAction =
     queryParams[QueryParams.ACTION] &&
     Object.values(Action).includes(queryParams[QueryParams.ACTION])
       ? queryParams[QueryParams.ACTION]
-      : Action.DEPOSIT;
+      : hasNoQuoteAssets
+        ? Action.SWAP
+        : Action.DEPOSIT;
+  useEffect(() => {
+    if (hasNoQuoteAssets) {
+      if (queryParams[QueryParams.ACTION] !== Action.SWAP)
+        shallowReplaceQuery(router, {
+          ...router.query,
+          [QueryParams.ACTION]: Action.SWAP,
+        });
+    }
+  }, [queryParams, hasNoQuoteAssets, router]);
   const onSelectedActionChange = (action: Action) => {
     shallowPushQuery(router, { ...router.query, [QueryParams.ACTION]: action });
   };
@@ -1590,11 +1617,13 @@ export default function PoolActionsCard({
         {/* Tabs */}
         <div className="flex flex-row">
           {Object.values(Action).map((action) => {
+            if (action === Action.DEPOSIT && hasNoQuoteAssets) return null;
             if (
-              pool.tvlUsd.eq(0) &&
-              [Action.WITHDRAW, Action.SWAP].includes(action)
+              action === Action.WITHDRAW &&
+              (hasNoQuoteAssets || pool.tvlUsd.eq(0))
             )
               return null;
+            if (action === Action.SWAP && pool.tvlUsd.eq(0)) return null;
 
             return (
               <button
@@ -1631,13 +1660,16 @@ export default function PoolActionsCard({
         <SlippagePopover />
       </div>
 
-      {selectedAction === Action.DEPOSIT && (
+      {selectedAction === Action.DEPOSIT && !hasNoQuoteAssets && (
         <DepositTab onDeposit={onDeposit} />
       )}
-      {selectedAction === Action.WITHDRAW && (
-        <WithdrawTab onWithdraw={onWithdraw} />
+      {selectedAction === Action.WITHDRAW &&
+        !(hasNoQuoteAssets || pool.tvlUsd.eq(0)) && (
+          <WithdrawTab onWithdraw={onWithdraw} />
+        )}
+      {selectedAction === Action.SWAP && !pool.tvlUsd.eq(0) && (
+        <SwapTab onSwap={onSwap} hasNoQuoteAssets={hasNoQuoteAssets} />
       )}
-      {selectedAction === Action.SWAP && <SwapTab onSwap={onSwap} />}
     </div>
   );
 }

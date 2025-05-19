@@ -1,15 +1,17 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
-import { Check, ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import {
   NORMALIZED_SUI_COINTYPE,
   NORMALIZED_USDC_COINTYPE,
   Token,
+  formatInteger,
   formatNumber,
   formatPercent,
   formatToken,
+  formatUsd,
   getToken,
   isSend,
   isStablecoin,
@@ -20,7 +22,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
+import { ADMIN_ADDRESS, computeOptimalOffset } from "@suilend/steamm-sdk";
 
 import Divider from "@/components/Divider";
 import IconUpload from "@/components/launch/IconUpload";
@@ -48,9 +50,9 @@ import {
   BROWSE_MAX_FILE_SIZE_BYTES,
   DEFAULT_TOKEN_DECIMALS,
   DEFAULT_TOKEN_SUPPLY,
-  DEPOSITED_QUOTE_ASSET_USD,
   DEPOSITED_TOKEN_PERCENT,
   FEE_TIER_PERCENT,
+  INITIAL_TOKEN_MC_USD,
   MintTokenResult,
   QUOTER_ID,
   createToken,
@@ -155,8 +157,10 @@ export default function LaunchTokenCard() {
       try {
         if (formattedValue === "") return;
         if (isNaN(+formattedValue)) throw new Error("Supply must be a number");
-        if (+formattedValue < 10 ** 3)
-          throw new Error("Supply must be at least 1,000");
+        if (new BigNumber(formattedValue).lt(10 ** 3))
+          throw new Error(`Supply must be at least ${formatInteger(10 ** 3)}`);
+        if (new BigNumber(formattedValue).gt(10 ** 12))
+          throw new Error(`Supply must be at most ${formatInteger(10 ** 12)}`);
 
         setSupply(+formattedValue);
       } catch (err) {
@@ -168,22 +172,39 @@ export default function LaunchTokenCard() {
   );
 
   // State - pool - quote asset
+  const getQuotePrice = useCallback(
+    (coinType: string) =>
+      isSui(coinType) || isLst(coinType)
+        ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_SUI_COINTYPE]?.price
+        : isStablecoin(coinType)
+          ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_USDC_COINTYPE]?.price
+          : (appData.coinTypeOracleInfoPriceMap[coinType]?.price ??
+            getAvgPoolPrice(appData.pools, coinType)),
+    [isLst, appData.coinTypeOracleInfoPriceMap, appData.pools],
+  );
+
   const quoteTokens = useMemo(
     () =>
       Object.entries(balancesCoinMetadataMap ?? {})
         .filter(
           ([coinType]) =>
-            isSend(coinType) ||
-            isSui(coinType) ||
-            isStablecoin(coinType) ||
-            Object.keys(appData.lstAprPercentMap).includes(coinType),
+            (isSend(coinType) ||
+              isSui(coinType) ||
+              isStablecoin(coinType) ||
+              Object.keys(appData.lstAprPercentMap).includes(coinType)) &&
+            getQuotePrice(coinType) !== undefined,
         )
         .filter(([coinType]) => getBalance(coinType).gt(0))
         .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
         .sort(
           (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
         ),
-    [balancesCoinMetadataMap, getBalance, appData.lstAprPercentMap],
+    [
+      balancesCoinMetadataMap,
+      getQuotePrice,
+      getBalance,
+      appData.lstAprPercentMap,
+    ],
   );
 
   const [quoteAssetCoinType, setQuoteAssetCoinType] = useState<
@@ -197,33 +218,35 @@ export default function LaunchTokenCard() {
         )
       : undefined;
 
-  const depositedQuoteAssetAmount = useMemo(() => {
-    if (quoteToken === undefined) return new BigNumber(0.01); // Not shown in UI
-
-    const price =
-      isSui(quoteToken.coinType) || isLst(quoteToken.coinType)
-        ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_SUI_COINTYPE]?.price
-        : isStablecoin(quoteToken.coinType)
-          ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_USDC_COINTYPE]?.price
-          : (appData.coinTypeOracleInfoPriceMap[quoteToken.coinType]?.price ??
-            getAvgPoolPrice(appData.pools, quoteToken.coinType));
-    if (price === undefined) return new BigNumber(1);
-
-    const rawAmount = DEPOSITED_QUOTE_ASSET_USD / +price;
-    if (isSui(quoteToken.coinType) || isLst(quoteToken.coinType))
-      return new BigNumber(Math.round(rawAmount / 10) * 10); // Round to nearest 10 for SUI and LSTs
-    if (isStablecoin(quoteToken.coinType))
-      return new BigNumber(DEPOSITED_QUOTE_ASSET_USD); // Use exact amount for stablecoins (1:1)
-
-    // All others (SEND)
-    return new BigNumber(rawAmount).decimalPlaces(
-      quoteToken.decimals,
-      BigNumber.ROUND_DOWN,
-    );
-  }, [quoteToken, isLst, appData.coinTypeOracleInfoPriceMap, appData.pools]);
-
   // State - pool - burn LP tokens
   const [burnLpTokens, setBurnLpTokens] = useState<boolean>(false);
+
+  const offset: bigint | undefined = useMemo(() => {
+    if (quoteToken === undefined) return undefined;
+
+    const depositedSupply = new BigNumber(supply)
+      .times(DEPOSITED_TOKEN_PERCENT)
+      .div(100);
+
+    const quotePrice = getQuotePrice(quoteToken.coinType)!;
+
+    const tokenInitialPriceUsd = new BigNumber(INITIAL_TOKEN_MC_USD).div(
+      depositedSupply,
+    );
+    const tokenInitialPriceQuote = tokenInitialPriceUsd.div(quotePrice);
+
+    return computeOptimalOffset(
+      +tokenInitialPriceQuote,
+      BigInt(
+        depositedSupply
+          .times(10 ** decimals)
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString(),
+      ),
+      decimals,
+      quoteToken.decimals,
+    );
+  }, [quoteToken, supply, getQuotePrice, decimals]);
 
   // Submit
   const reset = () => {
@@ -265,7 +288,12 @@ export default function LaunchTokenCard() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    if (isSubmitting) return { isDisabled: true, isLoading: true };
+    if (isSubmitting) {
+      return {
+        isDisabled: true,
+        title: hasFailed ? "Retry" : "Launch token & create pool",
+      };
+    }
     if (hasClearedCache) return { isDisabled: true, isSuccess: true };
 
     // Name
@@ -325,8 +353,6 @@ export default function LaunchTokenCard() {
 
     if (quoteAssetCoinType === undefined)
       return { isDisabled: true, title: "Select a quote asset" };
-    if (getBalance(quoteAssetCoinType).lt(depositedQuoteAssetAmount))
-      return { isDisabled: true, title: `Insufficient ${quoteToken!.symbol}` };
 
     // Failed
     if (hasFailed) return { isDisabled: false, title: "Retry" };
@@ -468,10 +494,7 @@ export default function LaunchTokenCard() {
           .times(DEPOSITED_TOKEN_PERCENT)
           .div(100)
           .toFixed(decimals, BigNumber.ROUND_DOWN),
-        depositedQuoteAssetAmount.toFixed(
-          quoteToken.decimals,
-          BigNumber.ROUND_DOWN,
-        ),
+        "0",
       ] as [string, string];
 
       let _createPoolResult = createPoolResult;
@@ -480,6 +503,7 @@ export default function LaunchTokenCard() {
           tokens,
           values,
           QUOTER_ID,
+          offset,
           undefined,
           FEE_TIER_PERCENT,
           bTokens,
@@ -533,7 +557,7 @@ export default function LaunchTokenCard() {
         reset={reset}
       />
 
-      <div className="flex w-full flex-col gap-4">
+      <div className="flex w-full flex-col gap-6">
         <div
           className={cn(
             "flex w-full flex-col gap-4",
@@ -585,6 +609,22 @@ export default function LaunchTokenCard() {
               setIconFilename={setIconFilename}
               iconFileSize={iconFileSize}
               setIconFileSize={setIconFileSize}
+            />
+          </div>
+
+          {/* Quote asset */}
+          <div className="flex flex-row justify-between">
+            <p className="text-p2 text-secondary-foreground">Quote asset</p>
+
+            <TokenSelectionDialog
+              triggerClassName="h-6"
+              triggerIconSize={16}
+              triggerLabelSelectedClassName="!text-p2"
+              triggerLabelUnselectedClassName="!text-p2"
+              triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
+              token={quoteToken}
+              tokens={quoteTokens}
+              onSelectToken={(token) => setQuoteAssetCoinType(token.coinType)}
             />
           </div>
 
@@ -651,7 +691,7 @@ export default function LaunchTokenCard() {
               >
                 <button
                   className={cn(
-                    "group flex h-6 w-6 flex-row items-center justify-center rounded-sm border transition-colors",
+                    "group flex h-5 w-5 flex-row items-center justify-center rounded-sm border transition-colors",
                     burnLpTokens
                       ? "border-button-1 bg-button-1/25"
                       : "hover:bg-border/50",
@@ -668,27 +708,13 @@ export default function LaunchTokenCard() {
 
           <Divider />
 
-          {/* Quote asset */}
-          <div className="flex flex-row justify-between">
-            <p className="text-p2 text-secondary-foreground">Quote asset</p>
-
-            <TokenSelectionDialog
-              triggerClassName="h-6"
-              triggerIconSize={16}
-              triggerLabelSelectedClassName="!text-p2"
-              triggerLabelUnselectedClassName="!text-p2"
-              triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
-              token={quoteToken}
-              tokens={quoteTokens}
-              onSelectToken={(token) => setQuoteAssetCoinType(token.coinType)}
-            />
-          </div>
-
           <div className="flex w-full flex-col gap-2">
             {/* Deposited */}
             <Parameter label="Initial liquidity" isHorizontal>
-              {quoteToken ? (
-                <div className="flex flex-row flex-wrap items-center justify-end gap-x-2 gap-y-1">
+              {symbol === "" ? (
+                <p className="text-p2 text-foreground">--</p>
+              ) : (
+                <div className="flex flex-row items-center gap-2">
                   <p className="text-p2 text-foreground">
                     {formatToken(
                       new BigNumber(supply)
@@ -696,24 +722,24 @@ export default function LaunchTokenCard() {
                         .div(100),
                       { dp: decimals, trimTrailingZeros: true },
                     )}{" "}
-                    {symbol || "tokens"} (
+                    {symbol}
+                  </p>
+
+                  <p className="text-p2 text-secondary-foreground">
                     {formatPercent(new BigNumber(DEPOSITED_TOKEN_PERCENT), {
                       dp: 0,
-                    })}
-                    )
-                  </p>
-                  <Plus className="h-4 w-4 text-tertiary-foreground" />
-                  <p className="text-p2 text-foreground">
-                    {formatToken(depositedQuoteAssetAmount, {
-                      dp: quoteToken.decimals,
-                      trimTrailingZeros: true,
                     })}{" "}
-                    {quoteToken!.symbol}
+                    of supply
                   </p>
                 </div>
-              ) : (
-                <p className="text-p2 text-foreground">--</p>
               )}
+            </Parameter>
+
+            {/* Initial MC */}
+            <Parameter label="Initial market cap (MC)" isHorizontal>
+              <p className="text-p2 text-foreground">
+                {formatUsd(new BigNumber(INITIAL_TOKEN_MC_USD))}
+              </p>
             </Parameter>
           </div>
         </div>
