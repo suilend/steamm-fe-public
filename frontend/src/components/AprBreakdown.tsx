@@ -66,7 +66,7 @@ export default function AprBreakdown({
     stakingYieldAprPercent !== undefined
       ? getPoolTotalAprPercent(
           poolStats.aprPercent_24h[pool.id].feesAprPercent,
-          pool.suilendDepositAprPercents,
+          pool.suilendWeightedAverageDepositAprPercent,
           filteredRewards,
           stakingYieldAprPercent,
         )

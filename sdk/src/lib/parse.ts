@@ -88,6 +88,7 @@ export type ParsedPool = {
   protocolFeePercent: BigNumber;
 
   suilendDepositAprPercents: [BigNumber, BigNumber];
+  suilendWeightedAverageDepositAprPercent: BigNumber;
 
   //
   volumeUsd_24h?: BigNumber; // Used on Pools page
@@ -281,6 +282,13 @@ export const getParsedPool = (
           })
         : [new BigNumber(0), new BigNumber(0)]
     ) as [BigNumber, BigNumber];
+    const suilendWeightedAverageDepositAprPercent = suilendDepositAprPercents
+      .reduce(
+        (acc, aprPercent, index) =>
+          acc.plus(aprPercent.times(prices[index].times(balances[index]))),
+        new BigNumber(0),
+      )
+      .div(tvlUsd);
 
     return {
       id,
@@ -301,6 +309,7 @@ export const getParsedPool = (
       protocolFeePercent,
 
       suilendDepositAprPercents,
+      suilendWeightedAverageDepositAprPercent,
     };
   }
 };
