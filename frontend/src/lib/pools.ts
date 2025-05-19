@@ -163,10 +163,3 @@ export const getFilteredPoolGroups = (
       ),
     }));
 };
-
-export const getPoolPrice = (pools: AppData["pools"], coinType: string) => {
-  const pool = pools.find((p) => p.coinTypes.includes(coinType));
-  if (!pool) return undefined;
-
-  return pool.coinTypes[0] === coinType ? pool.prices[0] : pool.prices[1];
-};

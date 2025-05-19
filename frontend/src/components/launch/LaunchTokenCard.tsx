@@ -4,8 +4,6 @@ import BigNumber from "bignumber.js";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import {
-  NORMALIZED_SUI_COINTYPE,
-  NORMALIZED_USDC_COINTYPE,
   Token,
   formatNumber,
   formatPercent,
@@ -48,7 +46,6 @@ import {
   BROWSE_MAX_FILE_SIZE_BYTES,
   DEFAULT_TOKEN_DECIMALS,
   DEFAULT_TOKEN_SUPPLY,
-  DEPOSITED_QUOTE_ASSET_USD,
   DEPOSITED_TOKEN_PERCENT,
   FEE_TIER_PERCENT,
   INITIAL_TOKEN_MC_USD,
@@ -67,12 +64,6 @@ export default function LaunchTokenCard() {
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
-
-  const isLst = useCallback(
-    (coinType: string) =>
-      Object.keys(appData.lstAprPercentMap).includes(coinType),
-    [appData.lstAprPercentMap],
-  );
 
   // State - progress
   const [hasFailed, setHasFailed] = useState<boolean>(false);
@@ -197,31 +188,6 @@ export default function LaunchTokenCard() {
           balancesCoinMetadataMap![quoteAssetCoinType],
         )
       : undefined;
-
-  const depositedQuoteAssetAmount = useMemo(() => {
-    if (quoteToken === undefined) return new BigNumber(0.01); // Not shown in UI
-
-    const price =
-      isSui(quoteToken.coinType) || isLst(quoteToken.coinType)
-        ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_SUI_COINTYPE]?.price
-        : isStablecoin(quoteToken.coinType)
-          ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_USDC_COINTYPE]?.price
-          : (appData.coinTypeOracleInfoPriceMap[quoteToken.coinType]?.price ??
-            getAvgPoolPrice(appData.pools, quoteToken.coinType));
-    if (price === undefined) return new BigNumber(1);
-
-    const rawAmount = DEPOSITED_QUOTE_ASSET_USD / +price;
-    if (isSui(quoteToken.coinType) || isLst(quoteToken.coinType))
-      return new BigNumber(Math.round(rawAmount / 10) * 10); // Round to nearest 10 for SUI and LSTs
-    if (isStablecoin(quoteToken.coinType))
-      return new BigNumber(DEPOSITED_QUOTE_ASSET_USD); // Use exact amount for stablecoins (1:1)
-
-    // All others (SEND)
-    return new BigNumber(rawAmount).decimalPlaces(
-      quoteToken.decimals,
-      BigNumber.ROUND_DOWN,
-    );
-  }, [quoteToken, isLst, appData.coinTypeOracleInfoPriceMap, appData.pools]);
 
   // State - pool - burn LP tokens
   const [burnLpTokens, setBurnLpTokens] = useState<boolean>(false);
@@ -352,8 +318,6 @@ export default function LaunchTokenCard() {
 
     if (quoteAssetCoinType === undefined)
       return { isDisabled: true, title: "Select a quote asset" };
-    if (getBalance(quoteAssetCoinType).lt(depositedQuoteAssetAmount))
-      return { isDisabled: true, title: `Insufficient ${quoteToken!.symbol}` };
 
     // Failed
     if (hasFailed) return { isDisabled: false, title: "Retry" };
