@@ -161,7 +161,13 @@ export default function AprBreakdown({
                           !stakingYieldAprPercent.gt(0) &&
                           aprRewards.length === 0
                         }
-                        value={formatPercent(aprPercent)}
+                        value={formatPercent(
+                          aprPercent
+                            .times(
+                              pool.balances[index].times(pool.prices[index]),
+                            )
+                            .div(pool.tvlUsd),
+                        )}
                       >
                         <TokenLogo
                           token={getToken(

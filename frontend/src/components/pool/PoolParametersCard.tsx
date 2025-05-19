@@ -219,12 +219,12 @@ export default function PoolParametersCard() {
       </Parameter>
 
       {pool.coinTypes.some((coinType) =>
-        appData.bankMap[coinType].utilizationPercent.gt(0),
+        appData.bankMap[coinType].suilendDepositAprPercent.gt(0),
       ) && (
         <Parameter label="Bank utilization">
           {pool.coinTypes
             .filter((coinType) =>
-              appData.bankMap[coinType].utilizationPercent.gt(0),
+              appData.bankMap[coinType].suilendDepositAprPercent.gt(0),
             )
             .map((coinType) => (
               <div key={coinType} className="flex flex-row items-center gap-2">
