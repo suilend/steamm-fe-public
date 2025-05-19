@@ -136,6 +136,10 @@ export default function PoolsPage() {
     () => getPoolGroups(poolsWithExtraData),
     [poolsWithExtraData],
   );
+  const poolGroupsCount =
+    poolGroups === undefined
+      ? undefined
+      : poolGroups.reduce((acc, poolGroup) => acc + poolGroup.pools.length, 0);
 
   // Featured pools (flat)
   const featuredPoolGroups = useMemo(
@@ -329,13 +333,17 @@ export default function PoolsPage() {
 
         {/* All pools */}
         <Link
-          className="group flex w-max flex-row items-center gap-2"
+          className="group flex w-max flex-row items-center gap-3"
           href={POOLS_URL}
         >
           <h2 className="text-h3 text-foreground underline decoration-foreground/50 decoration-1 underline-offset-2 transition-colors group-hover:decoration-foreground">
             All pools
           </h2>
-          <ExternalLink className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
+          {poolGroupsCount === undefined ? (
+            <Skeleton className="h-5 w-12" />
+          ) : (
+            <Tag>{poolGroupsCount}</Tag>
+          )}
         </Link>
       </div>
     </>
