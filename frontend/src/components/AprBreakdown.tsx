@@ -161,23 +161,7 @@ export default function AprBreakdown({
                           !stakingYieldAprPercent.gt(0) &&
                           aprRewards.length === 0
                         }
-                        value={
-                          <>
-                            {formatPercent(aprPercent)}
-                            {/* <span className="text-p3 text-tertiary-foreground">
-                              {formatPercent(
-                                appData.bankMap[pool.coinTypes[index]]
-                                  .utilizationPercent,
-                              )}
-                              {" at "}
-                              {formatPercent(
-                                appData.bankMap[pool.coinTypes[index]]
-                                  .suilendDepositAprPercent,
-                              )}
-                              {" APR"}
-                            </span> */}
-                          </>
-                        }
+                        value={formatPercent(aprPercent)}
                       >
                         <TokenLogo
                           token={getToken(
