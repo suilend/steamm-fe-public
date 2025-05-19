@@ -25,7 +25,7 @@ import { useStatsContext } from "@/contexts/StatsContext";
 import { useUserContext } from "@/contexts/UserContext";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
 import { formatPair } from "@/lib/format";
-import { ROOT_URL } from "@/lib/navigation";
+import { POOLS_URL } from "@/lib/navigation";
 
 function PoolPage() {
   const { address } = useWalletContext();
@@ -115,7 +115,7 @@ function PoolPage() {
         <div className="flex w-full flex-row items-center justify-between">
           {/* Breadcrumb */}
           <div className="flex flex-row items-center gap-2">
-            <Link className="group" href={ROOT_URL}>
+            <Link className="group" href={POOLS_URL}>
               <p className="text-p2 text-tertiary-foreground transition-colors group-hover:text-foreground">
                 Pools
               </p>

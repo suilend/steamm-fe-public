@@ -107,7 +107,7 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     if (pool === undefined) return; // Loading
-    if (pool === null) router.replace(ROOT_URL); // Redirect to Pools page if poolId is not valid
+    if (pool === null) router.replace(ROOT_URL); // Redirect to Home page if poolId is not valid
   }, [pool, router]);
 
   // Context
@@ -125,7 +125,7 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
         <Loader2 className="h-8 w-8 animate-spin text-foreground" />
       </div>
     );
-  if (pool === null) return null; // Display nothing while redirecting to Pools page
+  if (pool === null) return null; // Display nothing while redirecting to Home page
   return (
     <PoolContext.Provider value={contextValue}>{children}</PoolContext.Provider>
   );
