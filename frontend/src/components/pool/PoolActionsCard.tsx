@@ -77,9 +77,10 @@ enum QueryParams {
 
 interface DepositTabProps {
   onDeposit: () => void;
+  hasNoQuoteAssets: boolean;
 }
 
-function DepositTab({ onDeposit }: DepositTabProps) {
+function DepositTab({ onDeposit, hasNoQuoteAssets }: DepositTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
@@ -244,7 +245,10 @@ function DepositTab({ onDeposit }: DepositTabProps) {
       return { isDisabled: true, title: "Enter an amount" };
     if (Object.values(values).some((value) => new BigNumber(value).lt(0)))
       return { isDisabled: true, title: "Enter a +ve amount" };
-    if (Object.values(values).some((value) => new BigNumber(value).eq(0)))
+    if (
+      new BigNumber(values[0]).eq(0) ||
+      (!hasNoQuoteAssets && new BigNumber(values[1]).eq(0))
+    )
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
     if (quote) {
@@ -1078,17 +1082,15 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
 
 interface SwapTabProps {
   onSwap: () => void;
+  hasNoQuoteAssets: boolean;
 }
 
-function SwapTab({ onSwap }: SwapTabProps) {
+function SwapTab({ onSwap, hasNoQuoteAssets }: SwapTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
   const { getBalance, refresh } = useUserContext();
   const { pool } = usePoolContext();
-
-  const hasNoQuoteAssets =
-    pool.quoterId === QuoterId.CPMM && pool.balances[1].eq(0);
 
   // CoinTypes
   const [activeCoinIndex, setActiveCoinIndex] = useState<0 | 1>(
@@ -1585,6 +1587,9 @@ export default function PoolActionsCard({
 
   const { pool } = usePoolContext();
 
+  const hasNoQuoteAssets =
+    pool.quoterId === QuoterId.CPMM && pool.balances[1].eq(0); // New tokens launched on STEAMM (CPMM with offset, 0 quote assets)
+
   // Tabs
   const selectedAction =
     queryParams[QueryParams.ACTION] &&
@@ -1643,12 +1648,14 @@ export default function PoolActionsCard({
       </div>
 
       {selectedAction === Action.DEPOSIT && (
-        <DepositTab onDeposit={onDeposit} />
+        <DepositTab onDeposit={onDeposit} hasNoQuoteAssets={hasNoQuoteAssets} />
       )}
       {selectedAction === Action.WITHDRAW && (
         <WithdrawTab onWithdraw={onWithdraw} />
       )}
-      {selectedAction === Action.SWAP && <SwapTab onSwap={onSwap} />}
+      {selectedAction === Action.SWAP && (
+        <SwapTab onSwap={onSwap} hasNoQuoteAssets={hasNoQuoteAssets} />
+      )}
     </div>
   );
 }
