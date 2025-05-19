@@ -20,6 +20,7 @@ import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
 import OpenUrlNewTab from "@/components/OpenUrlNewTab";
 import Parameter from "@/components/Parameter";
+import PieChart from "@/components/PieChart";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
@@ -117,105 +118,122 @@ export default function PoolParametersCard() {
   return (
     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
       <Parameter label="Assets">
-        {pool.coinTypes.map((coinType, index) => {
-          const accruedLpFees = new BigNumber(
-            pool.pool.tradingData[
-              index === 0 ? "poolFeesA" : "poolFeesB"
-            ].toString(),
-          ).div(10 ** appData.coinMetadataMap[coinType].decimals);
+        <div className="flex flex-row flex-wrap gap-x-6 gap-y-4">
+          <div className="flex flex-col gap-1">
+            {pool.coinTypes.map((coinType, index) => {
+              const accruedLpFees = new BigNumber(
+                pool.pool.tradingData[
+                  index === 0 ? "poolFeesA" : "poolFeesB"
+                ].toString(),
+              ).div(10 ** appData.coinMetadataMap[coinType].decimals);
 
-          return (
-            <div
-              key={coinType}
-              className="flex w-full flex-row items-center gap-2"
-            >
-              <TokenLogo
-                token={getToken(coinType, appData.coinMetadataMap[coinType])}
-                size={16}
-              />
-
-              <Tooltip
-                content={
-                  <div className="flex flex-col gap-2">
-                    {/* Total */}
-                    <div className="flex flex-row items-center justify-between gap-4">
-                      <p className="text-p1 text-foreground">Total</p>
-
-                      <div className="flex flex-row items-center gap-2">
-                        <p className="text-p1 font-bold text-foreground">
-                          {formatToken(pool.balances[index], {
-                            exact: false,
-                          })}{" "}
-                          {appData.coinMetadataMap[coinType].symbol}
-                        </p>
-                        <p className="text-p2 font-medium text-secondary-foreground">
-                          {formatUsd(
-                            new BigNumber(pool.balances[index]).times(
-                              pool.prices[index],
-                            ),
-                          )}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Accrued LP fees */}
-                    <BreakdownRow
-                      valueClassName="gap-2 items-center flex-row"
-                      isLast
-                      value={
-                        <>
-                          <span>
-                            {formatToken(accruedLpFees, { exact: false })}{" "}
-                            {appData.coinMetadataMap[coinType].symbol}
-                          </span>
-                          <span className="text-secondary-foreground">
-                            {formatUsd(
-                              new BigNumber(accruedLpFees).times(
-                                pool.prices[index],
-                              ),
-                            )}
-                          </span>
-                        </>
-                      }
-                    >
-                      Accrued LP fees
-                    </BreakdownRow>
-                  </div>
-                }
-              >
-                <p
-                  className={cn(
-                    "text-p2 text-foreground decoration-foreground/50",
-                    hoverUnderlineClassName,
-                  )}
+              return (
+                <div
+                  key={coinType}
+                  className="flex w-full flex-row items-center gap-2"
                 >
-                  {formatToken(pool.balances[index], { exact: false })}{" "}
-                  {appData.coinMetadataMap[coinType].symbol}
-                </p>
-              </Tooltip>
+                  <TokenLogo
+                    token={getToken(
+                      coinType,
+                      appData.coinMetadataMap[coinType],
+                    )}
+                    size={16}
+                  />
 
-              <Tooltip
-                title={formatUsd(
-                  new BigNumber(pool.balances[index]).times(pool.prices[index]),
-                  { exact: true },
-                )}
-              >
-                <p className="text-p2 text-secondary-foreground">
-                  {formatUsd(
-                    new BigNumber(pool.balances[index]).times(
-                      pool.prices[index],
-                    ),
-                  )}
-                </p>
-              </Tooltip>
+                  <Tooltip
+                    content={
+                      <div className="flex flex-col gap-2">
+                        {/* Total */}
+                        <div className="flex flex-row items-center justify-between gap-4">
+                          <p className="text-p1 text-foreground">Total</p>
 
-              <div className="flex flex-row items-center gap-1">
-                <CopyToClipboardButton value={coinType} />
-                <OpenUrlNewTab url={explorer.buildCoinUrl(coinType)} />
-              </div>
-            </div>
-          );
-        })}
+                          <div className="flex flex-row items-center gap-2">
+                            <p className="text-p1 font-bold text-foreground">
+                              {formatToken(pool.balances[index], {
+                                exact: false,
+                              })}{" "}
+                              {appData.coinMetadataMap[coinType].symbol}
+                            </p>
+                            <p className="text-p2 font-medium text-secondary-foreground">
+                              {formatUsd(
+                                new BigNumber(pool.balances[index]).times(
+                                  pool.prices[index],
+                                ),
+                              )}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Accrued LP fees */}
+                        <BreakdownRow
+                          valueClassName="gap-2 items-center flex-row"
+                          isLast
+                          value={
+                            <>
+                              <span>
+                                {formatToken(accruedLpFees, { exact: false })}{" "}
+                                {appData.coinMetadataMap[coinType].symbol}
+                              </span>
+                              <span className="text-secondary-foreground">
+                                {formatUsd(
+                                  new BigNumber(accruedLpFees).times(
+                                    pool.prices[index],
+                                  ),
+                                )}
+                              </span>
+                            </>
+                          }
+                        >
+                          Accrued LP fees
+                        </BreakdownRow>
+                      </div>
+                    }
+                  >
+                    <p
+                      className={cn(
+                        "text-p2 text-foreground decoration-foreground/50",
+                        hoverUnderlineClassName,
+                      )}
+                    >
+                      {formatToken(pool.balances[index], { exact: false })}{" "}
+                      {appData.coinMetadataMap[coinType].symbol}
+                    </p>
+                  </Tooltip>
+
+                  <Tooltip
+                    title={formatUsd(
+                      new BigNumber(pool.balances[index]).times(
+                        pool.prices[index],
+                      ),
+                      { exact: true },
+                    )}
+                  >
+                    <p className="text-p2 text-secondary-foreground">
+                      {formatUsd(
+                        new BigNumber(pool.balances[index]).times(
+                          pool.prices[index],
+                        ),
+                      )}
+                    </p>
+                  </Tooltip>
+
+                  <div className="flex flex-row items-center gap-1">
+                    <CopyToClipboardButton value={coinType} />
+                    <OpenUrlNewTab url={explorer.buildCoinUrl(coinType)} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <PieChart
+            data={pool.coinTypes.map((coinType, index) => ({
+              label: appData.coinMetadataMap[coinType].symbol,
+              value: +pool.balances[index].times(pool.prices[index]),
+            }))}
+            size={46}
+          />
+        </div>
       </Parameter>
 
       {pool.coinTypes.some((coinType) =>
