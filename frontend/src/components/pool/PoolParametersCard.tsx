@@ -83,22 +83,12 @@ export default function PoolParametersCard({
                         {/* Total */}
                         <div className="flex flex-row items-center justify-between gap-4">
                           <p className="text-p1 text-foreground">Total</p>
-
-                          <div className="flex flex-row items-center gap-2">
-                            <p className="text-p1 font-bold text-foreground">
-                              {formatToken(pool.balances[index], {
-                                exact: false,
-                              })}{" "}
-                              {appData.coinMetadataMap[coinType].symbol}
-                            </p>
-                            <p className="text-p2 font-medium text-secondary-foreground">
-                              {formatUsd(
-                                new BigNumber(pool.balances[index]).times(
-                                  pool.prices[index],
-                                ),
-                              )}
-                            </p>
-                          </div>
+                          <p className="text-p1 font-bold text-foreground">
+                            {formatToken(pool.balances[index], {
+                              exact: false,
+                            })}{" "}
+                            {appData.coinMetadataMap[coinType].symbol}
+                          </p>
                         </div>
 
                         {/* Accrued LP fees */}
@@ -107,17 +97,8 @@ export default function PoolParametersCard({
                           isLast
                           value={
                             <>
-                              <span>
-                                {formatToken(accruedLpFees, { exact: false })}{" "}
-                                {appData.coinMetadataMap[coinType].symbol}
-                              </span>
-                              <span className="text-secondary-foreground">
-                                {formatUsd(
-                                  new BigNumber(accruedLpFees).times(
-                                    pool.prices[index],
-                                  ),
-                                )}
-                              </span>
+                              {formatToken(accruedLpFees, { exact: false })}{" "}
+                              {appData.coinMetadataMap[coinType].symbol}
                             </>
                           }
                         >
