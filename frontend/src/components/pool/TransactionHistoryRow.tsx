@@ -186,9 +186,9 @@ export default function TransactionHistoryRow({
                         size={16}
                       />
                       <Tooltip
-                        title={formatToken(amount, {
+                        title={`${formatToken(amount, {
                           dp: appData.coinMetadataMap[coinType].decimals,
-                        })}
+                        })} ${appData.coinMetadataMap[coinType].symbol}`}
                       >
                         <p className="text-p2 text-foreground">
                           {formatToken(amount, { exact: false })}{" "}
