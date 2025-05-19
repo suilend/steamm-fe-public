@@ -213,8 +213,8 @@ export default function SwapPage() {
   };
 
   // USD prices - current
-  const inPoolPrice = getAvgPoolPrice(appData.pools, inCoinType);
-  const outPoolPrice = getAvgPoolPrice(appData.pools, outCoinType);
+  const inPoolPrice = getAvgPoolPrice(appData.pools, inCoinType)!;
+  const outPoolPrice = getAvgPoolPrice(appData.pools, outCoinType)!;
 
   const inUsdValue = useMemo(
     () =>
