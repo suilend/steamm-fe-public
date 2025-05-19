@@ -5,7 +5,7 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import {
   NORMALIZED_SUI_COINTYPE,
-  SUI_GAS_MIN,
+  NORMALIZED_USDC_COINTYPE,
   Token,
   formatNumber,
   formatPercent,
@@ -16,7 +16,6 @@ import {
   isSui,
 } from "@suilend/frontend-sui";
 import {
-  API_URL,
   showErrorToast,
   useSettingsContext,
   useWalletContext,
@@ -46,18 +45,20 @@ import {
 import { formatPair, formatTextInputValue } from "@/lib/format";
 import {
   BLACKLISTED_WORDS,
+  BROWSE_MAX_FILE_SIZE_BYTES,
   DEFAULT_TOKEN_DECIMALS,
   DEFAULT_TOKEN_SUPPLY,
+  DEPOSITED_QUOTE_ASSET_USD,
   DEPOSITED_TOKEN_PERCENT,
   FEE_TIER_PERCENT,
   INITIAL_TOKEN_MC_USD,
-  MAX_FILE_SIZE_BYTES,
   MintTokenResult,
   QUOTER_ID,
   createToken,
   mintToken,
 } from "@/lib/launchToken";
-import { getPoolPrice } from "@/lib/pools";
+import { API_URL } from "@/lib/navigation";
+import { getAvgPoolPrice } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
 
@@ -66,6 +67,12 @@ export default function LaunchTokenCard() {
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
+
+  const isLst = useCallback(
+    (coinType: string) =>
+      Object.keys(appData.lstAprPercentMap).includes(coinType),
+    [appData.lstAprPercentMap],
+  );
 
   // State - progress
   const [hasFailed, setHasFailed] = useState<boolean>(false);
@@ -191,6 +198,31 @@ export default function LaunchTokenCard() {
         )
       : undefined;
 
+  const depositedQuoteAssetAmount = useMemo(() => {
+    if (quoteToken === undefined) return new BigNumber(0.01); // Not shown in UI
+
+    const price =
+      isSui(quoteToken.coinType) || isLst(quoteToken.coinType)
+        ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_SUI_COINTYPE]?.price
+        : isStablecoin(quoteToken.coinType)
+          ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_USDC_COINTYPE]?.price
+          : (appData.coinTypeOracleInfoPriceMap[quoteToken.coinType]?.price ??
+            getAvgPoolPrice(appData.pools, quoteToken.coinType));
+    if (price === undefined) return new BigNumber(1);
+
+    const rawAmount = DEPOSITED_QUOTE_ASSET_USD / +price;
+    if (isSui(quoteToken.coinType) || isLst(quoteToken.coinType))
+      return new BigNumber(Math.round(rawAmount / 10) * 10); // Round to nearest 10 for SUI and LSTs
+    if (isStablecoin(quoteToken.coinType))
+      return new BigNumber(DEPOSITED_QUOTE_ASSET_USD); // Use exact amount for stablecoins (1:1)
+
+    // All others (SEND)
+    return new BigNumber(rawAmount).decimalPlaces(
+      quoteToken.decimals,
+      BigNumber.ROUND_DOWN,
+    );
+  }, [quoteToken, isLst, appData.coinTypeOracleInfoPriceMap, appData.pools]);
+
   // State - pool - burn LP tokens
   const [burnLpTokens, setBurnLpTokens] = useState<boolean>(false);
 
@@ -201,7 +233,7 @@ export default function LaunchTokenCard() {
       .times(DEPOSITED_TOKEN_PERCENT)
       .div(100);
 
-    const quotePrice = getPoolPrice(appData.pools, quoteToken.coinType)!; // TODO: Must have pool for quote token
+    const quotePrice = getAvgPoolPrice(appData.pools, quoteToken.coinType)!; // TODO: Must have pool for quote token
 
     const initialPriceUsd = INITIAL_TOKEN_MC_USD / +depositedSupply;
     const initialPriceQuote = +new BigNumber(initialPriceUsd).div(quotePrice);
@@ -318,14 +350,10 @@ export default function LaunchTokenCard() {
 
     //
 
-    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
-      return {
-        isDisabled: true,
-        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
-      };
-
     if (quoteAssetCoinType === undefined)
       return { isDisabled: true, title: "Select a quote asset" };
+    if (getBalance(quoteAssetCoinType).lt(depositedQuoteAssetAmount))
+      return { isDisabled: true, title: `Insufficient ${quoteToken!.symbol}` };
 
     // Failed
     if (hasFailed) return { isDisabled: false, title: "Retry" };
@@ -567,9 +595,9 @@ export default function LaunchTokenCard() {
                 {[
                   "PNG, JPEG, WebP, or SVG.",
                   `Max ${formatNumber(
-                    new BigNumber(MAX_FILE_SIZE_BYTES / 1024),
+                    new BigNumber(BROWSE_MAX_FILE_SIZE_BYTES / 1024 / 1024),
                     { dp: 0 },
-                  )} KB.`,
+                  )} MB.`,
                   `256x256 or larger recommended`,
                 ].join(" ")}
               </p>
@@ -684,23 +712,17 @@ export default function LaunchTokenCard() {
           <div className="flex w-full flex-col gap-2">
             {/* Deposited */}
             <Parameter label="Initial liquidity" isHorizontal>
-              {quoteToken ? (
-                <p className="text-p2 text-foreground">
-                  {formatToken(
-                    new BigNumber(supply)
-                      .times(DEPOSITED_TOKEN_PERCENT)
-                      .div(100),
-                    { dp: decimals, trimTrailingZeros: true },
-                  )}{" "}
-                  {symbol || "tokens"} (
-                  {formatPercent(new BigNumber(DEPOSITED_TOKEN_PERCENT), {
-                    dp: 0,
-                  })}
-                  )
-                </p>
-              ) : (
-                <p className="text-p2 text-foreground">--</p>
-              )}
+              <p className="text-p2 text-foreground">
+                {formatToken(
+                  new BigNumber(supply).times(DEPOSITED_TOKEN_PERCENT).div(100),
+                  { dp: decimals, trimTrailingZeros: true },
+                )}{" "}
+                {symbol || "tokens"} (
+                {formatPercent(new BigNumber(DEPOSITED_TOKEN_PERCENT), {
+                  dp: 0,
+                })}
+                )
+              </p>
             </Parameter>
           </div>
         </div>

@@ -22,16 +22,18 @@ const SIX_HOURS_S = ONE_HOUR_S * 6;
 const ONE_DAY_S = SIX_HOURS_S * 4;
 const SEVEN_DAYS_S = ONE_DAY_S * 7;
 
-interface StatsContext {
+export interface StatsContext {
   poolHistoricalStats: {
     tvlUsd_7d: Record<string, ChartData[]>;
     volumeUsd_7d: Record<string, ChartData[]>;
     feesUsd_7d: Record<string, ChartData[]>;
   };
+  fetchPoolHistoricalStats: (poolIds: string[]) => void;
   poolStats: {
     volumeUsd_7d: Record<string, BigNumber>;
-    volumeUsd_24h: Record<string, BigNumber>;
     feesUsd_7d: Record<string, BigNumber>;
+
+    volumeUsd_24h: Record<string, BigNumber>;
     feesUsd_24h: Record<string, BigNumber>;
     aprPercent_24h: Record<string, { feesAprPercent: BigNumber }>;
   };
@@ -53,10 +55,14 @@ const StatsContext = createContext<StatsContext>({
     volumeUsd_7d: {},
     feesUsd_7d: {},
   },
+  fetchPoolHistoricalStats: async () => {
+    throw Error("StatsContextProvider not initialized");
+  },
   poolStats: {
     volumeUsd_7d: {},
-    volumeUsd_24h: {},
     feesUsd_7d: {},
+
+    volumeUsd_24h: {},
     feesUsd_24h: {},
     aprPercent_24h: {},
   },
@@ -77,14 +83,6 @@ export const useStatsContext = () => useContext(StatsContext);
 export function StatsContextProvider({ children }: PropsWithChildren) {
   const { appData } = useAppContext();
 
-  const poolCountRef = useRef<number | undefined>(undefined);
-  useEffect(() => {
-    if (appData === undefined) return;
-
-    if (poolCountRef.current !== undefined) return;
-    poolCountRef.current = appData.pools.length;
-  }, [appData]);
-
   const referenceTimestampSRef = useRef(
     (() => {
       const nowS = Math.floor((Date.now() - 60 * 1000) / 1000); // Subtract 1 minute to give the BE enough time to update
@@ -93,11 +91,60 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       return (
         hourStartS +
         Math.floor((nowS - hourStartS) / FIFTEEN_MINUTES_S) * FIFTEEN_MINUTES_S
-      );
+      ); // Snap to the last 15 minute mark
     })(),
   );
 
+  // Stats
+  const [stats, setStats] = useState<{
+    pools: Record<
+      string,
+      {
+        volumeUsd_24h: BigNumber;
+        feesUsd_24h: BigNumber;
+      }
+    >;
+  }>({ pools: {} });
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/steamm/stats/all`);
+      const json: {
+        pools: Record<
+          string,
+          {
+            volume24h: BigNumber;
+            fees24h: BigNumber;
+          }
+        >;
+      } = await res.json();
+      if ((json as any)?.statusCode === 500)
+        throw new Error("Failed to fetch stats");
+
+      setStats({
+        pools: Object.fromEntries(
+          Object.entries(json.pools).map(([poolId, { volume24h, fees24h }]) => [
+            poolId,
+            {
+              volumeUsd_24h: new BigNumber(volume24h),
+              feesUsd_24h: new BigNumber(fees24h),
+            },
+          ]),
+        ),
+      });
+    } catch {}
+  }, []);
+
+  const hasFetchedStatsRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (hasFetchedStatsRef.current) return;
+    hasFetchedStatsRef.current = true;
+
+    fetchStats();
+  }, [fetchStats]);
+
   // Pool
+  // Pool - historical stats
   const [poolHistoricalStats, setPoolHistoricalStats] = useState<{
     tvlUsd_7d: Record<string, ChartData[]>;
     volumeUsd_7d: Record<string, ChartData[]>;
@@ -108,10 +155,8 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
     feesUsd_7d: {},
   });
 
-  const fetchPoolHistoricalStats = useCallback(async () => {
-    if (appData === undefined) return;
-
-    for (const pool of appData.pools) {
+  const fetchPoolHistoricalStats = useCallback(async (_poolIds: string[]) => {
+    for (const poolId of _poolIds) {
       // TVL
       (async () => {
         try {
@@ -120,7 +165,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
               startTimestampS: `${referenceTimestampSRef.current - SEVEN_DAYS_S}`,
               endTimestampS: `${referenceTimestampSRef.current - 1}`,
               intervalS: `${ONE_HOUR_S}`,
-              poolId: pool.id,
+              poolId,
             })}`,
           );
           const json: {
@@ -131,33 +176,19 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           }[] = await res.json();
           if ((json as any)?.statusCode === 500)
             throw new Error(
-              `Failed to fetch historical TVL for pool with id ${pool.id}`,
+              `Failed to fetch historical TVL for pool with id ${poolId}`,
             );
 
           setPoolHistoricalStats((prev) => ({
             ...prev,
             tvlUsd_7d: {
               ...prev.tvlUsd_7d,
-              [pool.id]: json.reduce(
+              [poolId]: json.reduce(
                 (acc, d) => [
                   ...acc,
                   {
                     timestampS: d.start,
-                    tvlUsd_7d: !isNaN(+d.usdValue)
-                      ? +d.usdValue
-                      : Object.entries(d.tvl).reduce(
-                          (acc2, [coinType, tvl]) =>
-                            acc2 +
-                            +new BigNumber(tvl)
-                              .div(
-                                10 **
-                                  appData.coinMetadataMap[coinType].decimals,
-                              )
-                              .times(
-                                pool.prices[pool.coinTypes.indexOf(coinType)],
-                              ),
-                          0,
-                        ),
+                    tvlUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
                   },
                 ],
                 [] as ChartData[],
@@ -171,7 +202,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             ...prev,
             tvlUsd_7d: {
               ...prev.tvlUsd_7d,
-              [pool.id]: [{ timestampS: 0, tvlUsd_7d: 0 }],
+              [poolId]: [{ timestampS: 0, tvlUsd_7d: 0 }],
             },
           }));
         }
@@ -185,7 +216,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
               startTimestampS: `${referenceTimestampSRef.current - SEVEN_DAYS_S}`,
               endTimestampS: `${referenceTimestampSRef.current - 1}`,
               intervalS: `${SIX_HOURS_S}`,
-              poolId: pool.id,
+              poolId,
             })}`,
           );
           const json: {
@@ -196,33 +227,19 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           }[] = await res.json();
           if ((json as any)?.statusCode === 500)
             throw new Error(
-              `Failed to fetch historical volume for pool with id ${pool.id}`,
+              `Failed to fetch historical volume for pool with id ${poolId}`,
             );
 
           setPoolHistoricalStats((prev) => ({
             ...prev,
             volumeUsd_7d: {
               ...prev.volumeUsd_7d,
-              [pool.id]: json.reduce(
+              [poolId]: json.reduce(
                 (acc, d) => [
                   ...acc,
                   {
                     timestampS: d.start,
-                    volumeUsd_7d: !isNaN(+d.usdValue)
-                      ? +d.usdValue
-                      : Object.entries(d.volume ?? {}).reduce(
-                          (acc2, [coinType, volume]) =>
-                            acc2 +
-                            +new BigNumber(volume)
-                              .div(
-                                10 **
-                                  appData.coinMetadataMap[coinType].decimals,
-                              )
-                              .times(
-                                pool.prices[pool.coinTypes.indexOf(coinType)],
-                              ),
-                          0,
-                        ),
+                    volumeUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
                   },
                 ],
                 [] as ChartData[],
@@ -236,7 +253,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             ...prev,
             volumeUsd_7d: {
               ...prev.volumeUsd_7d,
-              [pool.id]: [{ timestampS: 0, volumeUsd_7d: 0 }],
+              [poolId]: [{ timestampS: 0, volumeUsd_7d: 0 }],
             },
           }));
         }
@@ -250,7 +267,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
               startTimestampS: `${referenceTimestampSRef.current - SEVEN_DAYS_S}`,
               endTimestampS: `${referenceTimestampSRef.current - 1}`,
               intervalS: `${SIX_HOURS_S}`,
-              poolId: pool.id,
+              poolId,
             })}`,
           );
           const json: {
@@ -261,33 +278,19 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           }[] = await res.json();
           if ((json as any)?.statusCode === 500)
             throw new Error(
-              `Failed to fetch historical fees for pool with id ${pool.id}`,
+              `Failed to fetch historical fees for pool with id ${poolId}`,
             );
 
           setPoolHistoricalStats((prev) => ({
             ...prev,
             feesUsd_7d: {
               ...prev.feesUsd_7d,
-              [pool.id]: json.reduce(
+              [poolId]: json.reduce(
                 (acc, d) => [
                   ...acc,
                   {
                     timestampS: d.start,
-                    feesUsd_7d: !isNaN(+d.usdValue)
-                      ? +d.usdValue
-                      : Object.entries(d.fees).reduce(
-                          (acc2, [coinType, fees]) =>
-                            acc2 +
-                            +new BigNumber(fees)
-                              .div(
-                                10 **
-                                  appData.coinMetadataMap[coinType].decimals,
-                              )
-                              .times(
-                                pool.prices[pool.coinTypes.indexOf(coinType)],
-                              ),
-                          0,
-                        ),
+                    feesUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
                   },
                 ],
                 [] as ChartData[],
@@ -301,28 +304,20 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             ...prev,
             feesUsd_7d: {
               ...prev.feesUsd_7d,
-              [pool.id]: [{ timestampS: 0, feesUsd_7d: 0 }],
+              [poolId]: [{ timestampS: 0, feesUsd_7d: 0 }],
             },
           }));
         }
       })();
     }
-  }, [appData]);
+  }, []);
 
-  const hasFetchedPoolHistoricalStatsRef = useRef<boolean>(false);
-  useEffect(() => {
-    if (appData === undefined) return;
-
-    if (hasFetchedPoolHistoricalStatsRef.current) return;
-    hasFetchedPoolHistoricalStatsRef.current = true;
-
-    fetchPoolHistoricalStats();
-  }, [appData, fetchPoolHistoricalStats]);
-
+  // Pool - stats
   const poolStats: {
     volumeUsd_7d: Record<string, BigNumber>;
-    volumeUsd_24h: Record<string, BigNumber>;
     feesUsd_7d: Record<string, BigNumber>;
+
+    volumeUsd_24h: Record<string, BigNumber>;
     feesUsd_24h: Record<string, BigNumber>;
     aprPercent_24h: Record<string, { feesAprPercent: BigNumber }>;
   } = useMemo(
@@ -337,17 +332,6 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         }),
         {} as Record<string, BigNumber>,
       ),
-      volumeUsd_24h: Object.entries(poolHistoricalStats.volumeUsd_7d).reduce(
-        (acc, [poolId, data]) => ({
-          ...acc,
-          [poolId]: data
-            .filter(
-              (d) => d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,
-            )
-            .reduce((acc2, d) => acc2.plus(d.volumeUsd_7d), new BigNumber(0)),
-        }),
-        {} as Record<string, BigNumber>,
-      ),
       feesUsd_7d: Object.entries(poolHistoricalStats.feesUsd_7d).reduce(
         (acc, [poolId, data]) => ({
           ...acc,
@@ -358,160 +342,193 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         }),
         {} as Record<string, BigNumber>,
       ),
-      feesUsd_24h: Object.entries(poolHistoricalStats.feesUsd_7d).reduce(
-        (acc, [poolId, data]) => ({
-          ...acc,
-          [poolId]: data
-            .filter(
-              (d) => d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,
-            )
-            .reduce((acc2, d) => acc2.plus(d.feesUsd_7d), new BigNumber(0)),
-        }),
-        {} as Record<string, BigNumber>,
-      ),
-      aprPercent_24h: Object.entries(poolHistoricalStats.feesUsd_7d).reduce(
-        (acc, [poolId, data]) => {
-          const tvlUsd_24hData = (
-            poolHistoricalStats.tvlUsd_7d[poolId] ?? []
-          ).filter(
-            (d) => d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,
-          );
-          if (tvlUsd_24hData.length === 0)
-            return { ...acc, [poolId]: { feesAprPercent: new BigNumber(0) } };
 
-          const avgTvlUsd_24h = tvlUsd_24hData
-            .reduce((acc, d) => acc.plus(d.tvlUsd_7d), new BigNumber(0))
-            .div(tvlUsd_24hData.length); // Fallback for no data
-          if (avgTvlUsd_24h.eq(0))
-            return { ...acc, [poolId]: { feesAprPercent: new BigNumber(0) } };
-
-          const feesUsd_7dData = data.filter(
-            (d) => d.timestampS >= referenceTimestampSRef.current - ONE_DAY_S,
-          );
-          if (feesUsd_7dData.length === 0)
-            return { ...acc, [poolId]: { feesAprPercent: new BigNumber(0) } };
-
-          const feesAprPercent = feesUsd_7dData
-            .reduce((acc2, d) => acc2.plus(d.feesUsd_7d), new BigNumber(0))
-            .div(avgTvlUsd_24h)
-            .times(365)
-            .times(100);
-
-          return { ...acc, [poolId]: { feesAprPercent } };
-        },
-        {} as Record<string, { feesAprPercent: BigNumber }>,
-      ),
+      volumeUsd_24h:
+        stats.pools === undefined
+          ? {}
+          : (appData?.pools ?? []).reduce(
+              (acc, pool) => ({
+                ...acc,
+                [pool.id]:
+                  stats.pools[pool.id]?.volumeUsd_24h ?? new BigNumber(0),
+              }),
+              {} as Record<string, BigNumber>,
+            ),
+      feesUsd_24h:
+        stats.pools === undefined
+          ? {}
+          : (appData?.pools ?? []).reduce(
+              (acc, pool) => ({
+                ...acc,
+                [pool.id]:
+                  stats.pools[pool.id]?.feesUsd_24h ?? new BigNumber(0),
+              }),
+              {} as Record<string, BigNumber>,
+            ),
+      aprPercent_24h:
+        stats.pools === undefined
+          ? {}
+          : (appData?.pools ?? []).reduce(
+              (acc, pool) => ({
+                ...acc,
+                [pool.id]: {
+                  feesAprPercent: pool.tvlUsd.eq(0) // TODO: Use Average TVL (24h)
+                    ? new BigNumber(0)
+                    : (stats.pools[pool.id]?.feesUsd_24h ?? new BigNumber(0))
+                        .div(pool.tvlUsd) // TODO: Use Average TVL (24h)
+                        .times(365)
+                        .times(100),
+                },
+              }),
+              {} as Record<string, { feesAprPercent: BigNumber }>,
+            ),
     }),
-    [poolHistoricalStats],
+    [
+      poolHistoricalStats.volumeUsd_7d,
+      poolHistoricalStats.feesUsd_7d,
+      stats.pools,
+      appData?.pools,
+    ],
   );
 
-  // Total
-  const globalHistoricalStats: {
+  // Global
+  // Global - historical stats
+  const [globalHistoricalStats, setGlobalHistoricalStats] = useState<{
     tvlUsd_7d: ChartData[] | undefined;
     volumeUsd_7d: ChartData[] | undefined;
     feesUsd_7d: ChartData[] | undefined;
-  } = useMemo(() => {
-    if (appData === undefined)
-      return {
-        tvlUsd_7d: undefined,
-        volumeUsd_7d: undefined,
-        feesUsd_7d: undefined,
-      };
+  }>({
+    tvlUsd_7d: undefined,
+    volumeUsd_7d: undefined,
+    feesUsd_7d: undefined,
+  });
 
-    const result: {
-      tvlUsd_7d: ChartData[] | undefined;
-      volumeUsd_7d: ChartData[] | undefined;
-      feesUsd_7d: ChartData[] | undefined;
-    } = {
-      tvlUsd_7d: undefined,
-      volumeUsd_7d: undefined,
-      feesUsd_7d: undefined,
-    };
-
+  const fetchGlobalHistoricalStats = useCallback(async () => {
     // TVL
-    if (
-      Object.keys(poolHistoricalStats.tvlUsd_7d).length > 0 &&
-      Object.keys(poolHistoricalStats.tvlUsd_7d).length === poolCountRef.current
-    ) {
-      const timestampsS = Object.values(poolHistoricalStats.tvlUsd_7d)[0].map(
-        (d) => d.timestampS,
-      );
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/steamm/historical/tvl`);
+        const json: {
+          start: number;
+          end: number;
+          tvl: Record<string, string>;
+          usdValue: string;
+        }[] = await res.json();
+        if ((json as any)?.statusCode === 500)
+          throw new Error("Failed to fetch global historical TVL");
 
-      result.tvlUsd_7d = timestampsS.reduce(
-        (acc, timestampS, i) => [
-          ...acc,
-          {
-            timestampS,
-            tvlUsd_7d: +Object.values(poolHistoricalStats.tvlUsd_7d).reduce(
-              (acc2, data) => acc2.plus(data[i]?.tvlUsd_7d ?? 0),
-              new BigNumber(0),
-            ),
-          },
-        ],
-        [] as ChartData[],
-      );
-    }
+        setGlobalHistoricalStats((prev) => ({
+          ...prev,
+          tvlUsd_7d: json.reduce(
+            (acc, d) => [
+              ...acc,
+              {
+                timestampS: d.start,
+                tvlUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
+              },
+            ],
+            [] as ChartData[],
+          ),
+        }));
+      } catch (err) {
+        console.error(err);
+      }
+    })();
 
     // Volume
-    if (
-      Object.keys(poolHistoricalStats.volumeUsd_7d).length > 0 &&
-      Object.keys(poolHistoricalStats.volumeUsd_7d).length ===
-        poolCountRef.current
-    ) {
-      const timestampsS = Object.values(
-        poolHistoricalStats.volumeUsd_7d,
-      )[0].map((d) => d.timestampS);
+    (async () => {
+      try {
+        const res = await fetch(
+          `${API_URL}/steamm/historical/volume?${new URLSearchParams({
+            startTimestampS: `${referenceTimestampSRef.current - SEVEN_DAYS_S}`,
+            endTimestampS: `${referenceTimestampSRef.current - 1}`,
+            intervalS: `${SIX_HOURS_S}`,
+          })}`,
+        );
+        const json: {
+          start: number;
+          end: number;
+          volume: Record<string, string>;
+          usdValue: string;
+        }[] = await res.json();
+        if ((json as any)?.statusCode === 500)
+          throw new Error("Failed to fetch global historical volume");
 
-      result.volumeUsd_7d = timestampsS.reduce(
-        (acc, timestampS, i) => [
-          ...acc,
-          {
-            timestampS,
-            volumeUsd_7d: +Object.values(
-              poolHistoricalStats.volumeUsd_7d,
-            ).reduce(
-              (acc2, data) => acc2.plus(data[i]?.volumeUsd_7d ?? 0),
-              new BigNumber(0),
-            ),
-          },
-        ],
-        [] as ChartData[],
-      );
-    }
+        setGlobalHistoricalStats((prev) => ({
+          ...prev,
+          volumeUsd_7d: json.reduce(
+            (acc, d) => [
+              ...acc,
+              {
+                timestampS: d.start,
+                volumeUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
+              },
+            ],
+            [] as ChartData[],
+          ),
+        }));
+      } catch (err) {
+        console.error(err);
+
+        setGlobalHistoricalStats((prev) => ({
+          ...prev,
+          volumeUsd_7d: [{ timestampS: 0, volumeUsd_7d: 0 }],
+        }));
+      }
+    })();
 
     // Fees
-    if (
-      Object.keys(poolHistoricalStats.feesUsd_7d).length > 0 &&
-      Object.keys(poolHistoricalStats.feesUsd_7d).length ===
-        poolCountRef.current
-    ) {
-      const timestampsS = Object.values(poolHistoricalStats.feesUsd_7d)[0].map(
-        (d) => d.timestampS,
-      );
+    (async () => {
+      try {
+        const res = await fetch(
+          `${API_URL}/steamm/historical/fees?${new URLSearchParams({
+            startTimestampS: `${referenceTimestampSRef.current - SEVEN_DAYS_S}`,
+            endTimestampS: `${referenceTimestampSRef.current - 1}`,
+            intervalS: `${SIX_HOURS_S}`,
+          })}`,
+        );
+        const json: {
+          start: number;
+          end: number;
+          fees: Record<string, string>;
+          usdValue: string;
+        }[] = await res.json();
+        if ((json as any)?.statusCode === 500)
+          throw new Error("Failed to fetch global historical fees");
 
-      result.feesUsd_7d = timestampsS.reduce(
-        (acc, timestampS, i) => [
-          ...acc,
-          {
-            timestampS,
-            feesUsd_7d: +Object.values(poolHistoricalStats.feesUsd_7d).reduce(
-              (acc2, data) => acc2.plus(data[i]?.feesUsd_7d ?? 0),
-              new BigNumber(0),
-            ),
-          },
-        ],
-        [] as ChartData[],
-      );
-    }
+        setGlobalHistoricalStats((prev) => ({
+          ...prev,
+          feesUsd_7d: json.reduce(
+            (acc, d) => [
+              ...acc,
+              {
+                timestampS: d.start,
+                feesUsd_7d: !isNaN(+d.usdValue) ? +d.usdValue : 0,
+              },
+            ],
+            [] as ChartData[],
+          ),
+        }));
+      } catch (err) {
+        console.error(err);
 
-    return result;
-  }, [
-    appData,
-    poolHistoricalStats.tvlUsd_7d,
-    poolHistoricalStats.volumeUsd_7d,
-    poolHistoricalStats.feesUsd_7d,
-  ]);
+        setGlobalHistoricalStats((prev) => ({
+          ...prev,
+          feesUsd_7d: [{ timestampS: 0, feesUsd_7d: 0 }],
+        }));
+      }
+    })();
+  }, []);
 
+  const hasFetchedGlobalHistoricalStatsRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (hasFetchedGlobalHistoricalStatsRef.current) return;
+    hasFetchedGlobalHistoricalStatsRef.current = true;
+
+    fetchGlobalHistoricalStats();
+  }, [fetchGlobalHistoricalStats]);
+
+  // Global - stats
   const globalStats: {
     volumeUsd_7d: BigNumber | undefined;
     feesUsd_7d: BigNumber | undefined;
@@ -539,12 +556,19 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   const contextValue: StatsContext = useMemo(
     () => ({
       poolHistoricalStats,
+      fetchPoolHistoricalStats,
       poolStats,
 
       globalHistoricalStats,
       globalStats,
     }),
-    [poolHistoricalStats, poolStats, globalHistoricalStats, globalStats],
+    [
+      poolHistoricalStats,
+      fetchPoolHistoricalStats,
+      poolStats,
+      globalHistoricalStats,
+      globalStats,
+    ],
   );
 
   return (

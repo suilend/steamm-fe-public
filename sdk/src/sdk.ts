@@ -1,4 +1,3 @@
-import { CoinBalance } from "@mysten/sui/client";
 import { Signer } from "@mysten/sui/cryptography";
 import { normalizeStructTag } from "@mysten/sui/utils";
 import {
@@ -6,7 +5,6 @@ import {
   SuiPythClient,
 } from "@pythnetwork/pyth-sui-js";
 import BigNumber from "bignumber.js";
-import pLimit from "p-limit";
 
 import {
   NORMALIZED_STEAMM_POINTS_COINTYPE,
@@ -20,15 +18,28 @@ import {
   formatRewards,
   initializeObligations,
   initializeSuilend,
+  toHexString,
 } from "@suilend/sdk";
 
 import { BankAbi, BankScript, PoolAbi, PoolScript } from "./abis";
 import { PYTH_STATE_ID, WORMHOLE_STATE_ID } from "./config";
+import { API_URL, ASSETS_URL } from "./lib/constants";
+import {
+  BankObj,
+  OracleType,
+  ParsedBank,
+  ParsedPool,
+  PoolObj,
+  getParsedBank,
+  getParsedPool,
+} from "./lib/parse";
 import { BankManager } from "./managers/bank";
 import { FullClient } from "./managers/client";
 import { PoolManager } from "./managers/pool";
 import { Router } from "./managers/router";
 import {
+  ApiBankCache,
+  ApiPoolCache,
   BankCache,
   BankInfo,
   BankList,
@@ -97,6 +108,9 @@ export class SteammSDK {
   protected _pythClient: SuiPythClient;
   protected _pythConnection: SuiPriceServiceConnection;
   testConfig?: TestConfig;
+
+  protected _apiPools?: ApiPoolCache;
+  protected _apiBanks?: ApiBankCache;
 
   protected _signer: Signer | undefined;
   protected _senderAddress = "";
@@ -429,38 +443,6 @@ export class SteammSDK {
   }
 
   /**
-   * Fetches all LP token balances for a specific address.
-   *
-   * @param {SuiAddressType} address - The address to fetch LP token balances for.
-   * @param {Set<string>} [lpCoinTypes] - Optional set of LP coin types to filter by.
-   *                                      If not provided, all LP token types will be fetched.
-   * @returns {Promise<CoinBalance[]>} A promise that resolves to an array of CoinBalance objects
-   *                                   representing the LP token balances for the address.
-   * @throws {Error} If there is an error fetching the balances from the blockchain.
-   */
-  async getLpTokenBalances(
-    address: SuiAddressType,
-    lpCoinTypes?: Set<string>,
-  ): Promise<CoinBalance[]> {
-    const coinTypes = lpCoinTypes ?? (await this.fetchLpTokenTypes());
-    try {
-      const balances = await this.fullClient.getAllBalances({
-        owner: address,
-      });
-      const lpBalances = [];
-
-      for (const balance of balances) {
-        if (coinTypes.has(balance.coinType)) {
-          lpBalances.push(balance);
-        }
-      }
-      return lpBalances;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
    * Retrieves all liquidity positions for a specific user across all pools.
    *
    * This method fetches comprehensive information about a user's positions including:
@@ -500,52 +482,291 @@ export class SteammSDK {
       totalPoints: BigNumber;
     }[]
   > {
-    // Banks
-    const bankInfos = Object.values(await this.fetchBankData());
+    // Setup
+    const TEST_BANK_COIN_TYPES: string[] = [];
+    const TEST_POOL_IDS: string[] = [];
 
+    // Data
+    const [
+      suilend,
+      lstAprPercentMap,
+      {
+        oracleIndexOracleInfoPriceMap,
+        COINTYPE_ORACLE_INDEX_MAP,
+        coinTypeOracleInfoPriceMap,
+      },
+      bankObjs,
+      poolObjs,
+    ] = await Promise.all([
+      // Suilend
+      (async () => {
+        // Suilend - Main market
+        const mainMarket_reserveDepositAprPercentMap: Record<
+          string,
+          BigNumber
+        > = {}; // Not needed for this use case
+
+        // Suilend - LM market
+        const lmMarket_suilendClient = await SuilendClient.initialize(
+          process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+            ? "0xb1d89cf9082cedce09d3647f0ebda4a8b5db125aff5d312a8bfd7eefa715bd35" // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
+            : "0xc1888ec1b81a414e427a44829310508352aec38252ee0daa9f8b181b6947de9f",
+          process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+            ? "0xdeeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP"
+            : "0x0a071f4976abae1a7f722199cf0bfcbe695ef9408a878e7d12a7ca87b7e582a6::lp_rewards::LP_REWARDS",
+          this.fullClient,
+        );
+
+        const {
+          refreshedRawReserves: lmMarket_refreshedRawReserves,
+          reserveMap: lmMarket_reserveMap,
+
+          rewardCoinMetadataMap: lmMarket_rewardCoinMetadataMap,
+        } = await initializeSuilend(
+          this.fullClient,
+          lmMarket_suilendClient,
+          {},
+        );
+
+        return {
+          mainMarket: {
+            depositAprPercentMap: mainMarket_reserveDepositAprPercentMap,
+          },
+          lmMarket: {
+            suilendClient: lmMarket_suilendClient,
+
+            refreshedRawReserves: lmMarket_refreshedRawReserves,
+            reserveMap: lmMarket_reserveMap,
+
+            rewardCoinMetadataMap: lmMarket_rewardCoinMetadataMap,
+          },
+        };
+      })(),
+
+      // LSTs
+      (async () => {
+        const lstAprPercentMap: Record<string, BigNumber> = {}; // Not needed for this use case
+
+        return lstAprPercentMap;
+      })(),
+
+      // Oracles
+      (async () => {
+        const [oracleIndexOracleInfoPriceMap, COINTYPE_ORACLE_INDEX_MAP] =
+          await Promise.all([
+            // OracleInfos
+            (async () => {
+              const pythConnection = new SuiPriceServiceConnection(
+                "https://hermes.pyth.network",
+              );
+
+              const oracleInfos = await this.fetchOracleData();
+
+              const oracleIndexOracleInfoPriceEntries: [
+                number,
+                { oracleInfo: OracleInfo; price: BigNumber },
+              ][] = await Promise.all(
+                oracleInfos.map((oracleInfo, index) =>
+                  (async () => {
+                    const priceIdentifier =
+                      oracleInfo.oracleType === OracleType.PYTH
+                        ? typeof oracleInfo.oracleIdentifier === "string"
+                          ? oracleInfo.oracleIdentifier
+                          : toHexString(oracleInfo.oracleIdentifier)
+                        : ""; // TODO: Parse Switchboard price identifier
+
+                    if (oracleInfo.oracleType === OracleType.PYTH) {
+                      const pythPriceFeeds =
+                        (await pythConnection.getLatestPriceFeeds([
+                          priceIdentifier,
+                        ])) ?? [];
+
+                      return [
+                        +index,
+                        {
+                          oracleInfo,
+                          price: new BigNumber(
+                            pythPriceFeeds[0]
+                              .getPriceUnchecked()
+                              .getPriceAsNumberUnchecked(),
+                          ),
+                        },
+                      ];
+                    } else if (
+                      oracleInfo.oracleType === OracleType.SWITCHBOARD
+                    ) {
+                      return [
+                        +index,
+                        {
+                          oracleInfo,
+                          price: new BigNumber(0.000001), // TODO: Fetch Switchboard price
+                        },
+                      ];
+                    } else {
+                      throw new Error(
+                        `Unknown oracle type: ${oracleInfo.oracleType}`,
+                      );
+                    }
+                  })(),
+                ),
+              );
+
+              return Object.fromEntries(oracleIndexOracleInfoPriceEntries);
+            })(),
+
+            // COINTYPE_ORACLE_INDEX_MAP
+            (async () => {
+              const COINTYPE_ORACLE_INDEX_MAP: Record<string, number> = await (
+                await fetch(
+                  `${ASSETS_URL}/cointype-oracle-index-map.json?timestamp=${Date.now()}`,
+                )
+              ).json();
+
+              return COINTYPE_ORACLE_INDEX_MAP;
+            })(),
+          ]);
+
+        const coinTypeOracleInfoPriceMap: Record<
+          string,
+          { oracleInfo: OracleInfo; price: BigNumber }
+        > = Object.entries(COINTYPE_ORACLE_INDEX_MAP).reduce(
+          (acc, [coinType, oracleIndex]) => ({
+            ...acc,
+            [coinType]: oracleIndexOracleInfoPriceMap[oracleIndex],
+          }),
+          {} as Record<string, { oracleInfo: OracleInfo; price: BigNumber }>,
+        );
+
+        return {
+          oracleIndexOracleInfoPriceMap,
+          COINTYPE_ORACLE_INDEX_MAP,
+          coinTypeOracleInfoPriceMap,
+        };
+      })(),
+
+      // Banks
+      (async () => {
+        if (
+          this._apiBanks !== undefined &&
+          Date.now() <= this._apiBanks.updatedAt + 5 * 60 * 1000 // 5 minutes
+        )
+          return this._apiBanks.bankObjs;
+
+        const bankObjs: BankObj[] = [];
+
+        const banksRes = await fetch(`${API_URL}/steamm/banks/all`);
+        const banksJson: (Omit<BankObj, "totalFundsRaw"> & {
+          totalFunds: number;
+        })[] = await banksRes.json();
+        if ((banksJson as any)?.statusCode === 500)
+          throw new Error("Failed to fetch banks");
+
+        bankObjs.push(
+          ...banksJson.filter(
+            (bankObj) =>
+              !TEST_BANK_COIN_TYPES.includes(bankObj.bankInfo.coinType), // Filter out test banks
+          ),
+        );
+
+        this._apiBanks = { bankObjs, updatedAt: Date.now() };
+        return bankObjs;
+      })(),
+
+      // Pools
+      (async () => {
+        if (
+          this._apiPools !== undefined &&
+          Date.now() <= this._apiPools.updatedAt + 5 * 60 * 1000 // 5 minutes
+        )
+          return this._apiPools.poolObjs;
+
+        const poolObjs: PoolObj[] = [];
+
+        const poolsRes = await fetch(`${API_URL}/steamm/pools/all`);
+        const poolsJson: PoolObj[] = await poolsRes.json();
+        if ((poolsJson as any)?.statusCode === 500)
+          throw new Error("Failed to fetch pools");
+
+        poolObjs.push(
+          ...poolsJson.filter(
+            (poolObj) => !TEST_POOL_IDS.includes(poolObj.poolInfo.poolId), // Filter out test pools
+          ),
+        );
+
+        this._apiPools = { poolObjs, updatedAt: Date.now() };
+        return poolObjs;
+      })(),
+    ]);
+
+    // CoinMetadata
+    // CoinMetadata - banks
+    const bankCoinTypes: string[] = [];
+    for (const bankObj of bankObjs) {
+      bankCoinTypes.push(normalizeStructTag(bankObj.bankInfo.coinType));
+    }
+    const uniqueBankCoinTypes = Array.from(new Set(bankCoinTypes));
+
+    // CoinMetadata - pools
+    const poolCoinTypes: string[] = [];
+    for (const poolObj of poolObjs) {
+      const coinTypes = [
+        poolObj.poolInfo.lpTokenType,
+        // bTokenTypeCoinTypeMap[poolInfo.coinTypeA], // Already included in bankCoinTypes
+        // bTokenTypeCoinTypeMap[poolInfo.coinTypeB], // Already included in bankCoinTypes
+      ];
+      poolCoinTypes.push(...coinTypes);
+    }
+    const uniquePoolCoinTypes = Array.from(new Set(poolCoinTypes));
+
+    // CoinMetadata - all
+    const uniqueCoinTypes = Array.from(
+      new Set([
+        NORMALIZED_STEAMM_POINTS_COINTYPE,
+        ...uniqueBankCoinTypes,
+        ...uniquePoolCoinTypes,
+      ]),
+    );
+
+    const coinMetadataMap = await getCoinMetadataMap(uniqueCoinTypes);
+
+    // Banks - parse
     const bTokenTypeCoinTypeMap: Record<string, string> = {};
-
-    for (const bankInfo of bankInfos) {
-      bTokenTypeCoinTypeMap[bankInfo.btokenType] = normalizeStructTag(
-        bankInfo.coinType,
+    for (const bankObj of bankObjs) {
+      bTokenTypeCoinTypeMap[bankObj.bankInfo.btokenType] = normalizeStructTag(
+        bankObj.bankInfo.coinType,
       );
     }
 
-    // Pools
-    const poolInfos = await this.fetchPoolData();
-
-    // CoinMetadata
-    const coinMetadataMap = await getCoinMetadataMap(
-      Array.from(
-        new Set(
-          poolInfos
-            .map((poolInfo) => [
-              poolInfo.lpTokenType,
-              bTokenTypeCoinTypeMap[poolInfo.coinTypeA],
-              bTokenTypeCoinTypeMap[poolInfo.coinTypeB],
-            ])
-            .flat(),
-        ),
+    const banks: ParsedBank[] = bankObjs.map((bankObj) =>
+      getParsedBank(
+        { suilend, coinMetadataMap },
+        bankObj.bankInfo,
+        bankObj.bank,
+        bankObj.totalFunds,
       ),
     );
-
-    // Suilend
-    const suilendClient = await SuilendClient.initialize(
-      process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-        ? "0xb1d89cf9082cedce09d3647f0ebda4a8b5db125aff5d312a8bfd7eefa715bd35" // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
-        : "0xc1888ec1b81a414e427a44829310508352aec38252ee0daa9f8b181b6947de9f",
-      process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-        ? "0xdeeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP"
-        : "0x0a071f4976abae1a7f722199cf0bfcbe695ef9408a878e7d12a7ca87b7e582a6::lp_rewards::LP_REWARDS",
-      this.fullClient,
+    const bankMap = Object.fromEntries(
+      banks.map((bank) => [bank.coinType, bank]),
     );
 
-    const {
-      refreshedRawReserves,
-      reserveMap,
-
-      rewardCoinMetadataMap,
-    } = await initializeSuilend(this.fullClient, suilendClient);
+    // Pools - parse
+    const pools: ParsedPool[] = poolObjs
+      .map((poolObj) =>
+        getParsedPool(
+          {
+            coinMetadataMap,
+            lstAprPercentMap,
+            oracleIndexOracleInfoPriceMap,
+            coinTypeOracleInfoPriceMap,
+            bTokenTypeCoinTypeMap,
+            bankMap,
+          },
+          poolObj.poolInfo,
+          poolObj.pool,
+          poolObj.redeemQuote,
+        ),
+      )
+      .filter(Boolean) as ParsedPool[];
 
     // Obligations
     const getObligationDepositPosition = (
@@ -574,16 +795,16 @@ export class SteammSDK {
 
     const { obligationOwnerCaps, obligations } = await initializeObligations(
       this.fullClient,
-      suilendClient,
-      refreshedRawReserves,
-      reserveMap,
+      suilend.lmMarket.suilendClient,
+      suilend.lmMarket.refreshedRawReserves,
+      suilend.lmMarket.reserveMap,
       address,
     );
 
     // Rewards
     const rewardMap = formatRewards(
-      reserveMap,
-      rewardCoinMetadataMap,
+      suilend.lmMarket.reserveMap,
+      suilend.lmMarket.rewardCoinMetadataMap,
       {}, // No need to pass the current USD prices for this use case (since we don't need to calculate the APR %)
       obligations,
     );
@@ -606,12 +827,11 @@ export class SteammSDK {
         {} as Record<string, BigNumber>,
       );
 
-    const poolRewardMap = poolInfos.reduce(
-      (acc, poolInfo) => ({
+    // From useFetchUserData
+    const poolRewardMap = pools.reduce(
+      (acc, pool) => ({
         ...acc,
-        [poolInfo.poolId]: (
-          rewardMap[poolInfo.lpTokenType]?.[Side.DEPOSIT] ?? []
-        ).reduce(
+        [pool.id]: (rewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? []).reduce(
           (acc2, r) => {
             for (let i = 0; i < obligations.length; i++) {
               const obligation = obligations[i];
@@ -648,94 +868,49 @@ export class SteammSDK {
       totalPoints: BigNumber;
     }[] = [];
 
-    const limit10 = pLimit(10);
-    await Promise.all(
-      poolInfos.map((poolInfo) =>
-        limit10(async () => {
-          const pool = poolInfo.quoterType.endsWith("omm::OracleQuoter")
-            ? await this.fullClient.fetchOraclePool(poolInfo.poolId)
-            : poolInfo.quoterType.endsWith("omm_v2::OracleQuoterV2")
-              ? await this.fullClient.fetchOracleV2Pool(poolInfo.poolId)
-              : await this.fullClient.fetchConstantProductPool(poolInfo.poolId);
+    for (const pool of pools) {
+      // User
+      const obligationIndexes = getIndexesOfObligationsWithDeposit(
+        obligations,
+        pool.lpTokenType,
+      );
 
-          const bTokenTypeA = poolInfo.coinTypeA;
-          const bTokenTypeB = poolInfo.coinTypeB;
-
-          const coinTypeA = bTokenTypeCoinTypeMap[bTokenTypeA];
-          const coinTypeB = bTokenTypeCoinTypeMap[bTokenTypeB];
-
-          const bankInfoA = bankInfos.find(
-            (bankInfo) => bankInfo.btokenType === bTokenTypeA,
-          )!;
-          const bankInfoB = bankInfos.find(
-            (bankInfo) => bankInfo.btokenType === bTokenTypeB,
-          )!;
-
-          const redeemQuote = await this.Pool.quoteRedeem({
-            lpTokens: pool.lpSupply.value,
-            poolInfo,
-            bankInfoA,
-            bankInfoB,
-          });
-
-          const balanceA = new BigNumber(redeemQuote.withdrawA.toString()).div(
-            10 ** coinMetadataMap[coinTypeA].decimals,
-          );
-          const balanceB = new BigNumber(redeemQuote.withdrawB.toString()).div(
-            10 ** coinMetadataMap[coinTypeB].decimals,
-          );
-
-          // User
-          const obligationIndexes = getIndexesOfObligationsWithDeposit(
-            obligations,
-            poolInfo.lpTokenType,
-          );
-
-          const lpTokenBalance =
-            balanceMap[poolInfo.lpTokenType] ?? new BigNumber(0);
-          const lpTokenDepositedAmount = obligationIndexes.reduce(
-            (acc, obligationIndex) =>
-              acc.plus(
-                getObligationDepositedAmount(
-                  obligations[obligationIndex],
-                  poolInfo.lpTokenType,
-                ),
-              ),
-            new BigNumber(0),
-          );
-
-          const lpTokenTotalAmount = lpTokenBalance.plus(
-            lpTokenDepositedAmount,
-          );
-          if (lpTokenTotalAmount.eq(0)) return;
-
-          const lpSupply = new BigNumber(pool.lpSupply.value.toString()).div(
-            10 ** 9,
-          );
-
-          result.push({
-            poolId: poolInfo.poolId,
-            coinTypeA,
-            coinTypeB,
-            lpTokenBalance,
-            balanceA: new BigNumber(lpTokenTotalAmount.div(lpSupply)).times(
-              balanceA,
+      const lpTokenBalance = balanceMap[pool.lpTokenType] ?? new BigNumber(0);
+      const lpTokenDepositedAmount = obligationIndexes.reduce(
+        (acc, obligationIndex) =>
+          acc.plus(
+            getObligationDepositedAmount(
+              obligations[obligationIndex],
+              pool.lpTokenType,
             ),
-            balanceB: new BigNumber(lpTokenTotalAmount.div(lpSupply)).times(
-              balanceB,
-            ),
-            claimableRewards: Object.fromEntries(
-              Object.entries(poolRewardMap[pool.id] ?? {}).filter(
-                ([coinType, amount]) => !isSteammPoints(coinType),
-              ),
-            ),
-            totalPoints:
-              poolRewardMap[pool.id]?.[NORMALIZED_STEAMM_POINTS_COINTYPE] ??
-              new BigNumber(0),
-          });
-        }),
-      ),
-    );
+          ),
+        new BigNumber(0),
+      );
+
+      const lpTokenTotalAmount = lpTokenBalance.plus(lpTokenDepositedAmount);
+      if (lpTokenTotalAmount.eq(0)) continue;
+
+      result.push({
+        poolId: pool.id,
+        coinTypeA: pool.coinTypes[0],
+        coinTypeB: pool.coinTypes[1],
+        lpTokenBalance: lpTokenTotalAmount,
+        balanceA: new BigNumber(lpTokenTotalAmount.div(pool.lpSupply)).times(
+          pool.balances[0],
+        ),
+        balanceB: new BigNumber(lpTokenTotalAmount.div(pool.lpSupply)).times(
+          pool.balances[1],
+        ),
+        claimableRewards: Object.fromEntries(
+          Object.entries(poolRewardMap[pool.id] ?? {}).filter(
+            ([coinType, amount]) => !isSteammPoints(coinType),
+          ),
+        ),
+        totalPoints:
+          poolRewardMap[pool.id]?.[NORMALIZED_STEAMM_POINTS_COINTYPE] ??
+          new BigNumber(0),
+      });
+    }
 
     return result;
   }

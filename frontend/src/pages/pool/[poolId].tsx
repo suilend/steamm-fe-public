@@ -1,22 +1,22 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { ChevronRight } from "lucide-react";
 
 import { formatUsd } from "@suilend/frontend-sui";
 import { useWalletContext } from "@suilend/frontend-sui-next";
+import { ParsedPool } from "@suilend/steamm-sdk";
 
 import AprBreakdown from "@/components/AprBreakdown";
 import PoolActionsCard from "@/components/pool/PoolActionsCard";
 import PoolChartCard from "@/components/pool/PoolChartCard";
+import PoolLabel from "@/components/pool/PoolLabel";
 import PoolParametersCard from "@/components/pool/PoolParametersCard";
 import PoolPositionCard from "@/components/pool/PoolPositionCard";
-import PoolTypeTag from "@/components/pool/PoolTypeTag";
 import SuggestedPools from "@/components/pool/SuggestedPools";
 import TransactionHistoryTable from "@/components/pool/TransactionHistoryTable";
 import Tag from "@/components/Tag";
-import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
@@ -24,17 +24,25 @@ import { PoolContextProvider, usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { useUserContext } from "@/contexts/UserContext";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
-import { formatFeeTier, formatPair } from "@/lib/format";
+import { formatPair } from "@/lib/format";
 import { ROOT_URL } from "@/lib/navigation";
-import { ParsedPool } from "@/lib/types";
 
 function PoolPage() {
   const { address } = useWalletContext();
   const { appData } = useLoadedAppContext();
-  const { poolStats } = useStatsContext();
+  const { poolStats, fetchPoolHistoricalStats } = useStatsContext();
   const { refresh } = useUserContext();
 
   const { pool, fetchRefreshedPool } = usePoolContext();
+
+  // Fetch historical stats
+  const hasFetchedPoolHistoricalStatsRef = useRef<Record<string, boolean>>({});
+  useEffect(() => {
+    if (hasFetchedPoolHistoricalStatsRef.current[pool.id]) return;
+    hasFetchedPoolHistoricalStatsRef.current[pool.id] = true;
+
+    fetchPoolHistoricalStats([pool.id]);
+  }, [pool.id, fetchPoolHistoricalStats]);
 
   // Pair
   const formattedPair = formatPair(
@@ -123,17 +131,7 @@ function PoolPage() {
             {/* Top */}
             <div className="flex w-full flex-col max-lg:gap-6 lg:flex-row lg:items-center lg:justify-between">
               {/* Title */}
-              <div className="flex flex-row items-center gap-3">
-                <TokenLogos coinTypes={pool.coinTypes} size={32} />
-                <h1 className="text-h2 text-foreground">{formattedPair}</h1>
-
-                <div className="flex flex-row items-center gap-px">
-                  <PoolTypeTag className="rounded-r-[0] pr-2" pool={pool} />
-                  <Tag className="rounded-l-[0] pl-2">
-                    {formatFeeTier(pool.feeTierPercent)}
-                  </Tag>
-                </div>
-              </div>
+              <PoolLabel isLarge pool={pool} />
 
               {/* Stats */}
               <div className="grid grid-cols-2 gap-6 md:flex md:flex-row md:gap-12">

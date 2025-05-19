@@ -11,7 +11,6 @@ import { ArrowRight } from "lucide-react";
 import {
   NORMALIZED_SEND_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
-  SUI_GAS_MIN,
   Token,
   formatToken,
   getBalanceChange,
@@ -25,7 +24,12 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { MultiSwapQuote, Route, SteammSDK } from "@suilend/steamm-sdk";
+import {
+  MultiSwapQuote,
+  ParsedPool,
+  Route,
+  SteammSDK,
+} from "@suilend/steamm-sdk";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
@@ -41,10 +45,12 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useBirdeyeUsdPrices from "@/hooks/useBirdeyeUsdPrices";
 import { rebalanceBanks } from "@/lib/banks";
+import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
 import { formatTextInputValue } from "@/lib/format";
+import { getAvgPoolPrice } from "@/lib/pools";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { ParsedPool, TokenDirection } from "@/lib/types";
+import { TokenDirection } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 export default function SwapPage() {
@@ -91,7 +97,10 @@ export default function SwapPage() {
 
   // Value
   const inMaxValue = isSui(inCoinType)
-    ? BigNumber.max(0, getBalance(inCoinType).minus(1))
+    ? BigNumber.max(
+        0,
+        getBalance(inCoinType).minus(MAX_BALANCE_SUI_SUBTRACTED_AMOUNT),
+      )
     : getBalance(inCoinType);
 
   const valueRef = useRef<string>("");
@@ -202,27 +211,10 @@ export default function SwapPage() {
       outCoinType,
     );
   };
+
   // USD prices - current
-  const getAvgPoolPrice = useCallback(
-    (coinType: string) => {
-      const poolPrices = [
-        ...appData.pools
-          .filter((pool) => pool.coinTypes[0] === coinType)
-          .map((pool) => pool.prices[0]),
-        ...appData.pools
-          .filter((pool) => pool.coinTypes[1] === coinType)
-          .map((pool) => pool.prices[1]),
-      ];
-
-      return poolPrices
-        .reduce((acc, poolPrice) => acc.plus(poolPrice), new BigNumber(0))
-        .div(poolPrices.length);
-    },
-    [appData.pools],
-  );
-
-  const inPoolPrice = getAvgPoolPrice(inCoinType);
-  const outPoolPrice = getAvgPoolPrice(outCoinType);
+  const inPoolPrice = getAvgPoolPrice(appData.pools, inCoinType);
+  const outPoolPrice = getAvgPoolPrice(appData.pools, outCoinType);
 
   const inUsdValue = useMemo(
     () =>
@@ -369,26 +361,7 @@ export default function SwapPage() {
     if (new BigNumber(value).eq(0))
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
-    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
-      return {
-        isDisabled: true,
-        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
-      };
-
     if (quote) {
-      if (
-        isSui(inCoinType) &&
-        new BigNumber(getBalance(inCoinType).minus(SUI_GAS_MIN)).lt(
-          new BigNumber(quote.amountIn.toString()).div(
-            10 ** inCoinMetadata.decimals,
-          ),
-        )
-      )
-        return {
-          isDisabled: true,
-          title: `${SUI_GAS_MIN} SUI should be saved for gas`,
-        };
-
       if (
         getBalance(inCoinType).lt(
           new BigNumber(quote.amountIn.toString()).div(
@@ -586,7 +559,9 @@ export default function SwapPage() {
                     className="w-max"
                     labelClassName="text-secondary-foreground"
                     inToken={getToken(inCoinType, inCoinMetadata)}
+                    inPrice={inPoolPrice}
                     outToken={getToken(outCoinType, outCoinMetadata)}
+                    outPrice={outPoolPrice}
                     isFetchingQuote={isFetchingQuote}
                     quote={quote}
                     isInverted

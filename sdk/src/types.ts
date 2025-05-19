@@ -1,3 +1,5 @@
+import { BankObj, PoolObj } from "./lib";
+
 export type SdkOptions = {
   fullRpcUrl: string;
   packages: {
@@ -347,3 +349,13 @@ export type Package<T = undefined> = {
    */
   config?: T;
 };
+
+export interface ApiPoolCache {
+  poolObjs: PoolObj[];
+  updatedAt: number;
+}
+
+export interface ApiBankCache {
+  bankObjs: BankObj[];
+  updatedAt: number;
+}

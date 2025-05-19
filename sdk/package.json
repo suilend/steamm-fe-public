@@ -1,6 +1,6 @@
 {
   "name": "@suilend/steamm-sdk-local",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "private": false,
   "description": "A TypeScript SDK for interacting with the STEAMM program",
   "author": "Suilend",
@@ -28,11 +28,10 @@
   },
   "dependencies": {
     "@pythnetwork/pyth-sui-js": "^2.1.0",
-    "@suilend/frontend-sui": "^0.2.60",
+    "@suilend/frontend-sui": "^0.2.69",
     "@suilend/sdk": "^1.1.53",
     "bignumber.js": "^9.1.2",
-    "dotenv": "^16.4.7",
-    "p-limit": "3.1.0"
+    "dotenv": "^16.4.7"
   },
   "devDependencies": {
     "@types/bun": "^1.1.17",

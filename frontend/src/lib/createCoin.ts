@@ -101,6 +101,8 @@ export const createCoin = async (
   signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
   options?: { isLaunchToken?: boolean },
 ): Promise<CreateCoinResult> => {
+  console.log("[createCoin] Creating coin");
+
   const transaction = new Transaction();
 
   const [upgradeCap] = transaction.publish({
@@ -158,6 +160,8 @@ export const createCoin = async (
   console.log(
     "coinType:",
     coinType,
+    "upgradeCapId:",
+    upgradeCapId,
     "treasuryCapId:",
     treasuryCapId,
     "coinMetadataId:",

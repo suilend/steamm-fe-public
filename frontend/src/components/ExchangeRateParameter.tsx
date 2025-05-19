@@ -1,9 +1,10 @@
 import { useState } from "react";
 
+import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { ArrowRightLeft } from "lucide-react";
 
-import { Token, formatToken } from "@suilend/frontend-sui";
+import { Token, formatToken, formatUsd } from "@suilend/frontend-sui";
 import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 
 import Parameter from "@/components/Parameter";
@@ -14,8 +15,11 @@ import { cn } from "@/lib/utils";
 interface ExchangeRateParameterProps {
   className?: ClassValue;
   labelClassName?: ClassValue;
+  priceLabelClassName?: ClassValue;
   inToken: Token;
+  inPrice: BigNumber;
   outToken: Token;
+  outPrice: BigNumber;
   isFetchingQuote?: boolean;
   quote?: SwapQuote | MultiSwapQuote;
   isInverted?: boolean;
@@ -26,8 +30,11 @@ interface ExchangeRateParameterProps {
 export default function ExchangeRateParameter({
   className,
   labelClassName,
+  priceLabelClassName,
   inToken,
+  inPrice,
   outToken,
+  outPrice,
   isFetchingQuote,
   quote,
   isInverted: _isInverted,
@@ -84,6 +91,22 @@ export default function ExchangeRateParameter({
               "N/A"
             )}
           </p>
+
+          {isDefined && (
+            <p
+              className={cn(
+                "!text-p2 text-secondary-foreground",
+                priceLabelClassName,
+              )}
+            >
+              {formatUsd(
+                !isInverted
+                  ? outPrice.times(quoteRatio!)
+                  : inPrice.times(reversedQuoteRatio!),
+                { exact: true },
+              )}
+            </p>
+          )}
 
           {isDefined && (
             <ArrowRightLeft className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />

@@ -26,11 +26,12 @@ import {
   BETA_CONFIG,
   MAINNET_CONFIG,
   OracleInfo,
+  ParsedBank,
+  ParsedPool,
   SteammSDK,
 } from "@suilend/steamm-sdk";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
-import { ParsedBank, ParsedPool } from "@/lib/types";
 
 export interface AppData {
   suilend: {
@@ -83,13 +84,7 @@ export interface AppData {
   pools: ParsedPool[];
   normalizedPoolRewardMap: RewardMap;
 }
-export interface AppContext {
-  localCoinMetadataMap: Record<string, CoinMetadata>;
-  addCoinMetadataToLocalMap: (
-    coinType: string,
-    coinMetadata: CoinMetadata,
-  ) => void;
-
+interface AppContext {
   steammClient: SteammSDK | undefined;
 
   appData: AppData | undefined;
@@ -108,11 +103,6 @@ type LoadedAppContext = AppContext & {
 };
 
 const AppContext = createContext<AppContext>({
-  localCoinMetadataMap: {},
-  addCoinMetadataToLocalMap: () => {
-    throw Error("AppContextProvider not initialized");
-  },
-
   steammClient: undefined,
   appData: undefined,
   refreshAppData: async () => {
@@ -135,18 +125,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   const { rpc } = useSettingsContext();
   const { address } = useWalletContext();
 
-  // Local CoinMetadata map
-  const [localCoinMetadataMap, setLocalCoinMetadataMap] = useLocalStorage<
-    Record<string, CoinMetadata>
-  >("coinMetadataMap", {});
-
-  const addCoinMetadataToLocalMap = useCallback(
-    (coinType: string, coinMetadata: CoinMetadata) => {
-      setLocalCoinMetadataMap((o) => ({ ...o, [coinType]: coinMetadata }));
-    },
-    [setLocalCoinMetadataMap],
-  );
-
   // STEAMM client
   const steammClient = useMemo(() => {
     const sdk = new SteammSDK({
@@ -163,11 +141,8 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   }, [rpc.url, address]);
 
   // App data (blocking)
-  const { data: appData, mutateData: mutateAppData } = useFetchAppData(
-    steammClient,
-    localCoinMetadataMap,
-    addCoinMetadataToLocalMap,
-  );
+  const { data: appData, mutateData: mutateAppData } =
+    useFetchAppData(steammClient);
 
   const refreshAppData = useCallback(async () => {
     await mutateAppData();
@@ -195,9 +170,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   // Context
   const contextValue: AppContext = useMemo(
     () => ({
-      localCoinMetadataMap,
-      addCoinMetadataToLocalMap,
-
       steammClient,
 
       appData,
@@ -210,8 +182,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       verifiedPoolIds,
     }),
     [
-      localCoinMetadataMap,
-      addCoinMetadataToLocalMap,
       steammClient,
       appData,
       refreshAppData,

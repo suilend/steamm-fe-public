@@ -4,8 +4,6 @@ import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
 
 import {
-  NORMALIZED_SUI_COINTYPE,
-  SUI_GAS_MIN,
   Token,
   getToken,
   isSend,
@@ -17,7 +15,12 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
-import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
+import {
+  ADMIN_ADDRESS,
+  ParsedPool,
+  QUOTER_ID_NAME_MAP,
+  QuoterId,
+} from "@suilend/steamm-sdk";
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
@@ -31,6 +34,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useBirdeyeUsdPrices from "@/hooks/useBirdeyeUsdPrices";
+import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
 import { CreateCoinResult, initializeCoinCreation } from "@/lib/createCoin";
 import {
   AMPLIFIERS,
@@ -39,6 +43,8 @@ import {
   FEE_TIER_PERCENTS,
   GetBTokenAndBankForTokenResult,
   PUBLIC_FEE_TIER_PERCENTS,
+  PUBLIC_QUOTER_IDS,
+  QUOTER_IDS,
   createBTokenAndBankForToken,
   createLpToken,
   createPoolAndDepositInitialLiquidity,
@@ -55,14 +61,9 @@ import { API_URL } from "@/lib/navigation";
 import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
-interface CreatePoolCardProps {
-  useWhitelist?: boolean;
-}
-
-export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
+export default function CreatePoolCard() {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
@@ -71,11 +72,10 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
   const flags = useFlags();
   const isWhitelisted = useMemo(
     () =>
-      useWhitelist &&
       !!address &&
       (address === ADMIN_ADDRESS ||
         (flags?.steammCreatePoolWhitelist ?? []).includes(address)),
-    [useWhitelist, address, flags?.steammCreatePoolWhitelist],
+    [address, flags?.steammCreatePoolWhitelist],
   );
 
   // State - progress
@@ -108,9 +108,7 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
   const baseAssetCoinInputRef = useRef<HTMLInputElement>(null);
 
   // Quoter
-  const [quoterId, setQuoterId] = useState<QuoterId | undefined>(
-    useWhitelist ? undefined : QuoterId.CPMM,
-  );
+  const [quoterId, setQuoterId] = useState<QuoterId | undefined>(undefined);
 
   const onSelectQuoter = (newQuoterId: QuoterId) => {
     setQuoterId(newQuoterId);
@@ -131,7 +129,10 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
   const maxValues = coinTypes.map((coinType) =>
     coinType !== ""
       ? isSui(coinType)
-        ? BigNumber.max(0, getBalance(coinType).minus(1))
+        ? BigNumber.max(
+            0,
+            getBalance(coinType).minus(MAX_BALANCE_SUI_SUBTRACTED_AMOUNT),
+          )
         : getBalance(coinType)
       : new BigNumber(0),
   ) as [BigNumber, BigNumber];
@@ -352,7 +353,7 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
 
     setValues(["", ""]);
     setLastActiveInputIndex(undefined);
-    setQuoterId(useWhitelist ? undefined : QuoterId.CPMM);
+    setQuoterId(undefined);
     setAmplifier(undefined);
     setFeeTierPercent(undefined);
   };
@@ -361,8 +362,6 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    if (!isWhitelisted)
-      return { isDisabled: true, title: "Create pool and deposit" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
     if (hasClearedCache) return { isDisabled: true, isSuccess: true };
 
@@ -397,26 +396,9 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
 
     //
 
-    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(SUI_GAS_MIN))
-      return {
-        isDisabled: true,
-        title: `${SUI_GAS_MIN} SUI should be saved for gas`,
-      };
-
     for (let i = 0; i < coinTypes.length; i++) {
       const coinType = coinTypes[i];
       const coinMetadata = balancesCoinMetadataMap![coinType];
-
-      if (
-        isSui(coinType) &&
-        new BigNumber(
-          getBalance(NORMALIZED_SUI_COINTYPE).minus(SUI_GAS_MIN),
-        ).lt(values[i])
-      )
-        return {
-          isDisabled: true,
-          title: `${SUI_GAS_MIN} SUI should be saved for gas`,
-        };
 
       if (getBalance(coinType).lt(values[i]))
         return {
@@ -705,53 +687,49 @@ export default function CreatePoolCard({ useWhitelist }: CreatePoolCardProps) {
             <p className="text-p2 text-secondary-foreground">Quoter</p>
 
             <div className="flex flex-row gap-1">
-              {Object.values(QuoterId)
-                .filter((_quoterId) =>
-                  isWhitelisted ? true : _quoterId === QuoterId.CPMM,
-                )
-                .map((_quoterId) => {
-                  const hasExistingPool =
-                    hasExistingPoolForQuoterFeeTierAndAmplifier(
-                      _quoterId,
-                      feeTierPercent,
-                      amplifier,
-                    );
-
-                  return (
-                    <div key={_quoterId} className="w-max">
-                      <Tooltip
-                        title={
-                          hasExistingPool ? existingPoolTooltip : undefined
-                        }
-                      >
-                        <div className="w-max">
-                          <button
-                            key={_quoterId}
-                            className={cn(
-                              "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
-                              _quoterId === quoterId
-                                ? "cursor-default border-button-1 bg-button-1/25"
-                                : "hover:bg-border/50",
-                            )}
-                            onClick={() => onSelectQuoter(_quoterId)}
-                            disabled={hasExistingPool}
-                          >
-                            <p
-                              className={cn(
-                                "!text-p2 transition-colors",
-                                _quoterId === quoterId
-                                  ? "text-foreground"
-                                  : "text-secondary-foreground group-hover:text-foreground",
-                              )}
-                            >
-                              {QUOTER_ID_NAME_MAP[_quoterId]}
-                            </p>
-                          </button>
-                        </div>
-                      </Tooltip>
-                    </div>
+              {QUOTER_IDS.filter((_quoterId) =>
+                isWhitelisted ? true : PUBLIC_QUOTER_IDS.includes(_quoterId),
+              ).map((_quoterId) => {
+                const hasExistingPool =
+                  hasExistingPoolForQuoterFeeTierAndAmplifier(
+                    _quoterId,
+                    feeTierPercent,
+                    amplifier,
                   );
-                })}
+
+                return (
+                  <div key={_quoterId} className="w-max">
+                    <Tooltip
+                      title={hasExistingPool ? existingPoolTooltip : undefined}
+                    >
+                      <div className="w-max">
+                        <button
+                          key={_quoterId}
+                          className={cn(
+                            "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
+                            _quoterId === quoterId
+                              ? "cursor-default border-button-1 bg-button-1/25"
+                              : "hover:bg-border/50",
+                          )}
+                          onClick={() => onSelectQuoter(_quoterId)}
+                          disabled={hasExistingPool}
+                        >
+                          <p
+                            className={cn(
+                              "!text-p2 transition-colors",
+                              _quoterId === quoterId
+                                ? "text-foreground"
+                                : "text-secondary-foreground group-hover:text-foreground",
+                            )}
+                          >
+                            {QUOTER_ID_NAME_MAP[_quoterId]}
+                          </p>
+                        </button>
+                      </div>
+                    </Tooltip>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

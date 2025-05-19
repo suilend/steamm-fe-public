@@ -1,8 +1,7 @@
-import { Fragment } from "react";
-
 import { Loader2 } from "lucide-react";
 
 import { formatToken, formatUsd, getToken } from "@suilend/frontend-sui";
+import { QuoterId } from "@suilend/steamm-sdk";
 
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
@@ -11,7 +10,6 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { usePoolPositionsContext } from "@/contexts/PoolPositionsContext";
 import useStake from "@/hooks/useStake";
-import { QuoterId } from "@/lib/types";
 
 export default function PoolPositionCard() {
   const { appData } = useLoadedAppContext();

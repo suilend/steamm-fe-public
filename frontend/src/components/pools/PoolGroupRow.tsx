@@ -2,7 +2,7 @@ import { CSSProperties } from "react";
 
 import BigNumber from "bignumber.js";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useLocalStorage } from "usehooks-ts";
+import { useSessionStorage } from "usehooks-ts";
 
 import { formatPercent, formatUsd } from "@suilend/frontend-sui";
 import {
@@ -43,8 +43,12 @@ export default function PoolGroupRow({
   const { appData } = useLoadedAppContext();
 
   // State
-  const [isExpanded, setIsExpanded] = useLocalStorage<boolean>(
-    `PoolGroupRow_${tableId}_${formatPair(poolGroup.coinTypes)}_isExpanded`,
+  const [isExpanded, setIsExpanded] = useSessionStorage<boolean>(
+    `PoolGroupRow_${tableId}_${formatPair(
+      poolGroup.coinTypes.map(
+        (coinType) => appData.coinMetadataMap[coinType].symbol,
+      ),
+    )}_isExpanded`,
     false,
   );
   const Chevron = isExpanded ? ChevronUp : ChevronDown;
@@ -104,7 +108,10 @@ export default function PoolGroupRow({
             style={columnStyleMap.pool.children}
           >
             <Tag
-              className={cn("min-w-[50px]", isExpanded && "bg-border")}
+              className={cn(
+                "min-w-[50px] group-hover:bg-border/50",
+                isExpanded && "bg-border group-hover:bg-border",
+              )}
               labelClassName={cn("w-max", isExpanded && "text-foreground")}
               startDecorator={
                 <Chevron

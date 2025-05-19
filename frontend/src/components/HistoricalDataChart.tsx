@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import * as Recharts from "recharts";
 import { v4 as uuidv4 } from "uuid";
 
+import NoDataIcon from "@/components/icons/NoDataIcon";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ChartConfig,
@@ -279,11 +280,32 @@ export default function HistoricalDataChart({
       </div>
 
       {/* Bottom */}
-      <div className="flex w-full flex-col gap-3">
+      <div className="flex w-full flex-col">
         {/* Chart */}
         <div className="h-[120px] transform-gpu md:h-[180px]">
-          {processedData === undefined ? (
-            <Skeleton className="h-full w-full" />
+          {processedData === undefined ||
+          processedData.every((d) =>
+            categories.every((category) => d[category] === 0),
+          ) ? (
+            <div
+              className={cn(
+                "flex h-full w-full flex-col justify-center bg-card/50",
+                processedData === undefined && "animate-pulse",
+              )}
+              style={{ paddingTop: 12 + 18 }}
+            >
+              {processedData !== undefined &&
+                processedData.every((d) =>
+                  categories.every((category) => d[category] === 0),
+                ) && (
+                  <div className="flex flex-col items-center gap-2">
+                    <NoDataIcon className="h-5 w-5 text-secondary-foreground" />
+                    <p className="text-p2 text-secondary-foreground">
+                      No data yet
+                    </p>
+                  </div>
+                )}
+            </div>
           ) : (
             <>
               {chartType === ChartType.BAR ? (
@@ -465,10 +487,22 @@ export default function HistoricalDataChart({
         </div>
 
         {/* X-axis */}
-        {processedData === undefined ? (
-          <Skeleton className="h-[18px] w-full" />
+        {processedData === undefined ||
+        processedData.every((d) =>
+          categories.every((category) => d[category] === 0),
+        ) ? (
+          <div
+            className={cn(
+              "w-full bg-card/50",
+              processedData === undefined && "animate-pulse",
+            )}
+            style={{ height: 12 + 18 }}
+          />
         ) : (
-          <div className="flex w-full flex-row justify-between">
+          <div
+            className="flex w-full flex-row justify-between"
+            style={{ paddingTop: 12 }}
+          >
             {ticksX.map((tickX) => (
               <p key={tickX} className="text-p3 text-tertiary-foreground">
                 {format(

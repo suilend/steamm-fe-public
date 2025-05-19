@@ -47,6 +47,7 @@ module.exports = {
       tooltip: "hsl(var(--tooltip))",
 
       success: "hsl(var(--success))",
+      verified: "hsl(var(--verified))",
       warning: "hsl(var(--warning))",
       error: "hsl(var(--error))",
 
@@ -74,7 +75,12 @@ module.exports = {
       "a5-active": "hsl(var(--a5-active))",
       "a5-disabled": "hsl(var(--a5-disabled))",
     },
-    borderRadius: { sm: "4px", md: "8px", lg: "12px", full: "calc(infinity * 1px)" },
+    borderRadius: {
+      sm: "4px",
+      md: "8px",
+      lg: "12px",
+      full: "calc(infinity * 1px)",
+    },
   },
   plugins: [require("tailwindcss-animate")],
 };

@@ -207,11 +207,8 @@ export default function TokenSelectionDialog({
               token
                 ? cn("!text-h3 text-foreground", triggerLabelSelectedClassName)
                 : cn(
-                    "!text-p1 transition-colors",
+                    "!text-p1 text-secondary-foreground transition-colors group-hover:text-foreground",
                     triggerLabelUnselectedClassName,
-                    isOpen
-                      ? "text-foreground"
-                      : "text-secondary-foreground group-hover:text-foreground",
                   ),
             )}
           >
@@ -262,26 +259,22 @@ export default function TokenSelectionDialog({
       {/* Top tokens */}
       {topTokens.length > 0 && (
         <div className="flex shrink-0 flex-row flex-wrap gap-2">
-          {topTokens.map((t) => {
-            const isSelected = t.coinType === token?.coinType;
-
-            return (
-              <button
-                key={t.coinType}
-                className={cn(
-                  "group flex h-10 flex-row items-center gap-2 rounded-[20px] border pl-2 pr-3 transition-colors",
-                  isSelected
-                    ? "border-button-1 bg-button-1/25"
-                    : "hover:bg-border/50",
-                )}
-                onClick={() => onTokenClick(t)}
-              >
-                {/* TODO: Truncate symbol if the list of top tokens includes non-reserves */}
-                <TokenLogo token={t} size={24} />
-                <p className="text-p2 text-foreground">{t.symbol}</p>
-              </button>
-            );
-          })}
+          {topTokens.map((t) => (
+            <button
+              key={t.coinType}
+              className={cn(
+                "group flex h-10 flex-row items-center gap-2 rounded-[20px] border pl-2 pr-3 transition-colors",
+                t.coinType === token?.coinType
+                  ? "border-button-1 bg-button-1/25"
+                  : "hover:bg-border/50",
+              )}
+              onClick={() => onTokenClick(t)}
+            >
+              {/* TODO: Truncate symbol if the list of top tokens includes non-reserves */}
+              <TokenLogo token={t} size={24} />
+              <p className="text-p2 text-foreground">{t.symbol}</p>
+            </button>
+          ))}
         </div>
       )}
 

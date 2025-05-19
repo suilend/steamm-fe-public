@@ -1,13 +1,24 @@
 import BigNumber from "bignumber.js";
+import { v4 as uuidv4 } from "uuid";
 
-import { PoolInfo, RedeemQuote, SteammSDK } from "@suilend/steamm-sdk";
-import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
-import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
+import { Side, getFilteredRewards } from "@suilend/sdk";
+import {
+  ParsedPool,
+  PoolInfo,
+  QUOTER_ID_NAME_MAP,
+  QuoterId,
+  SteammSDK,
+} from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
+import { StatsContext } from "@/contexts/StatsContext";
 import { formatPair } from "@/lib/format";
+import {
+  getPoolStakingYieldAprPercent,
+  getPoolTotalAprPercent,
+} from "@/lib/liquidityMining";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
-import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
+import { PoolGroup } from "@/lib/types";
 
 export const AMPLIFIER_TOOLTIP =
   "The amplifier determines the concentration of the pool. Higher values are more suitable for more stable assets, while lower values are more suitable for more volatile assets.";
@@ -37,167 +48,120 @@ export const fetchPool = (steammClient: SteammSDK, poolInfo: PoolInfo) => {
       : steammClient.fullClient.fetchConstantProductPool(id);
 };
 
-export const getParsedPool = (
-  appData: Pick<
-    AppData,
-    | "suilend"
-    | "coinMetadataMap"
-    | "oracleIndexOracleInfoPriceMap"
-    | "coinTypeOracleInfoPriceMap"
-    | "bTokenTypeCoinTypeMap"
-    | "bankMap"
-  >,
+export const getAvgPoolPrice = (pools: AppData["pools"], coinType: string) => {
+  const poolPrices = [
+    ...pools
+      .filter((pool) => pool.coinTypes[0] === coinType)
+      .map((pool) => pool.prices[0]),
+    ...pools
+      .filter((pool) => pool.coinTypes[1] === coinType)
+      .map((pool) => pool.prices[1]),
+  ];
 
-  poolInfo: PoolInfo,
-  pool: ParsedPool["pool"],
-  redeemQuote: RedeemQuote,
-): ParsedPool | undefined => {
+  return poolPrices
+    .reduce((acc, poolPrice) => acc.plus(poolPrice), new BigNumber(0))
+    .div(poolPrices.length);
+};
+
+export const getPoolsWithExtraData = (
   {
-    const {
-      suilend,
-      coinMetadataMap,
-      oracleIndexOracleInfoPriceMap,
-      coinTypeOracleInfoPriceMap,
-      bTokenTypeCoinTypeMap,
-      bankMap,
-    } = appData;
+    lstAprPercentMap,
+    pools,
+    normalizedPoolRewardMap,
+  }: Pick<AppData, "lstAprPercentMap" | "pools" | "normalizedPoolRewardMap">,
+  poolStats: StatsContext["poolStats"],
+) =>
+  pools.map((pool) => {
+    // Same code as in frontend/src/components/AprBreakdown.tsx
+    const rewards =
+      normalizedPoolRewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
+    const filteredRewards = getFilteredRewards(rewards);
 
-    const id = poolInfo.poolId;
-    const quoterId = poolInfo.quoterType.endsWith("omm::OracleQuoter")
-      ? QuoterId.ORACLE
-      : poolInfo.quoterType.endsWith("omm_v2::OracleQuoterV2")
-        ? QuoterId.ORACLE_V2
-        : QuoterId.CPMM;
-
-    const bTokenTypeA = poolInfo.coinTypeA;
-    const bTokenTypeB = poolInfo.coinTypeB;
-    const bTokenTypes: [string, string] = [bTokenTypeA, bTokenTypeB];
-
-    const coinTypeA = bTokenTypeCoinTypeMap[bTokenTypeA];
-    const coinTypeB = bTokenTypeCoinTypeMap[bTokenTypeB];
-    const coinTypes: [string, string] = [coinTypeA, coinTypeB];
-
-    const balanceA = new BigNumber(redeemQuote.withdrawA.toString()).div(
-      10 ** coinMetadataMap[coinTypes[0]].decimals,
+    const stakingYieldAprPercent: BigNumber = getPoolStakingYieldAprPercent(
+      pool,
+      lstAprPercentMap,
     );
-    const balanceB = new BigNumber(redeemQuote.withdrawB.toString()).div(
-      10 ** coinMetadataMap[coinTypes[1]].decimals,
-    );
-
-    const balances: [BigNumber, BigNumber] = [balanceA, balanceB];
-
-    let priceA = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
-      ? oracleIndexOracleInfoPriceMap[
-          +(pool.quoter as OracleQuoter).oracleIndexA.toString()
-        ].price
-      : (coinTypeOracleInfoPriceMap[coinTypeA]?.price ??
-        suilend.mainMarket.reserveMap[coinTypeA]?.price ??
-        undefined);
-    let priceB = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
-      ? oracleIndexOracleInfoPriceMap[
-          +(pool.quoter as OracleQuoter).oracleIndexB.toString()
-        ].price
-      : (coinTypeOracleInfoPriceMap[coinTypeB]?.price ??
-        suilend.mainMarket.reserveMap[coinTypeB]?.price ??
-        undefined);
-
-    if (priceA === undefined && priceB === undefined) {
-      console.error(
-        `Skipping pool with id ${id}, quoterId ${quoterId} - missing prices for both assets (no Pyth or Switchboard price feed, no Suilend main market reserve) for coinType(s) ${coinTypes.join(", ")}`,
-      );
-      return undefined;
-    } else if (priceA === undefined) {
-      console.warn(
-        `Missing price for coinTypeA ${coinTypeA}, using balance ratio to calculate price (pool with id ${id}, quoterId ${quoterId})`,
-      );
-      console.log(
-        "XXX poolId",
-        pool.id,
-        "balanceA:",
-        balanceA.toString(),
-        "balanceB:",
-        balanceB.toString(),
-      );
-      priceA = !balanceA.eq(0)
-        ? new BigNumber(
-            balanceB.plus(
-              quoterId === QuoterId.CPMM
-                ? new BigNumber(
-                    (pool.quoter as CpQuoter).offset.toString(),
-                  ).div(10 ** coinMetadataMap[coinTypes[1]].decimals)
-                : 0,
-            ),
-          )
-            .div(balanceA)
-            .times(priceB)
-        : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM quoter)
-    } else if (priceB === undefined) {
-      console.warn(
-        `Missing price for coinTypeB ${coinTypeB}, using balance ratio to calculate price (pool with id ${id}, quoterId ${quoterId})`,
-      );
-      priceB = !balanceB.eq(0)
-        ? balanceA.div(balanceB).times(priceA)
-        : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM quoter)
-    }
-    const prices: [BigNumber, BigNumber] = [priceA, priceB];
-    if (quoterId === QuoterId.CPMM)
-      console.log(
-        "xxx prices:",
-        +prices[0].toString(),
-        +prices[1].toString(),
-        pool.id,
-        (pool.quoter as CpQuoter).offset.toString(),
-      );
-
-    const lpSupply = new BigNumber(pool.lpSupply.value.toString()).div(10 ** 9);
-    const tvlUsd = balanceA.times(priceA).plus(balanceB.times(priceB));
-
-    const feeTierPercent = new BigNumber(poolInfo.swapFeeBps).div(100);
-    const protocolFeePercent = new BigNumber(
-      pool.protocolFees.config.feeNumerator.toString(),
-    )
-      .div(pool.protocolFees.config.feeDenominator.toString())
-      .times(feeTierPercent.div(100))
-      .times(100);
-
-    const suilendWeightedAverageDepositAprPercent = tvlUsd.gt(0)
-      ? coinTypes
-          .reduce((acc, coinType, index) => {
-            const bank = bankMap[coinType];
-            if (!bank) return acc;
-
-            return acc.plus(
-              new BigNumber(
-                bank.suilendDepositAprPercent
-                  .times(bank.utilizationPercent)
-                  .div(100),
-              ).times(prices[index].times(balances[index])),
-            );
-          }, new BigNumber(0))
-          .div(tvlUsd)
-      : new BigNumber(0);
 
     return {
-      id,
-      pool,
-      poolInfo,
-      quoterId,
-
-      lpTokenType: poolInfo.lpTokenType,
-      bTokenTypes,
-      coinTypes,
-      balances,
-      prices,
-
-      lpSupply,
-      tvlUsd,
-
-      feeTierPercent,
-      protocolFeePercent,
-
-      suilendWeightedAverageDepositAprPercent,
+      ...pool,
+      volumeUsd_24h: poolStats.volumeUsd_24h[pool.id],
+      aprPercent_24h:
+        poolStats.aprPercent_24h[pool.id] !== undefined &&
+        stakingYieldAprPercent !== undefined
+          ? getPoolTotalAprPercent(
+              poolStats.aprPercent_24h[pool.id].feesAprPercent,
+              pool.suilendWeightedAverageDepositAprPercent,
+              filteredRewards,
+              stakingYieldAprPercent,
+            )
+          : undefined,
     };
+  });
+
+export const getPoolGroups = (
+  poolsWithExtraData: ParsedPool[],
+): PoolGroup[] | undefined => {
+  if (poolsWithExtraData === undefined) return undefined;
+
+  const poolGroupsByPair: Record<string, ParsedPool[]> = {};
+
+  for (const pool of poolsWithExtraData) {
+    const key = `${pool.coinTypes[0]}-${pool.coinTypes[1]}`;
+
+    if (!poolGroupsByPair[key]) poolGroupsByPair[key] = [pool];
+    else poolGroupsByPair[key].push(pool);
   }
+
+  return Object.values(poolGroupsByPair).map((pools) => ({
+    id: uuidv4(),
+    coinTypes: pools[0].coinTypes,
+    pools,
+  }));
+};
+
+export const getFilteredPoolGroups = (
+  coinMetadataMap: AppData["coinMetadataMap"],
+  searchString: string,
+  poolGroups: PoolGroup[] | undefined,
+) => {
+  if (poolGroups === undefined) return undefined;
+  if (searchString === "") return poolGroups;
+
+  return poolGroups
+    .filter((poolGroup) =>
+      [
+        poolGroup.pools.map((pool) => pool.id).join("__"),
+        poolGroup.coinTypes.join("__"),
+        formatPair(
+          poolGroup.coinTypes.map(
+            (coinType) => coinMetadataMap[coinType].symbol,
+          ),
+        ),
+        poolGroup.pools
+          .map((pool) => QUOTER_ID_NAME_MAP[pool.quoterId])
+          .flat()
+          .join("__"),
+      ]
+        .join("____")
+        .toLowerCase()
+        .includes(searchString.toLowerCase()),
+    )
+    .map((poolGroup) => ({
+      ...poolGroup,
+      pools: poolGroup.pools.filter((pool) =>
+        [
+          pool.id,
+          pool.coinTypes.join("__"),
+          formatPair(
+            pool.coinTypes.map((coinType) => coinMetadataMap[coinType].symbol),
+          ),
+          QUOTER_ID_NAME_MAP[pool.quoterId],
+        ]
+          .join("____")
+          .toLowerCase()
+          .includes(searchString.toLowerCase()),
+      ),
+    }));
 };
 
 export const getPoolPrice = (pools: AppData["pools"], coinType: string) => {

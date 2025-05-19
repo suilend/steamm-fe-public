@@ -10,7 +10,12 @@ import BigNumber from "bignumber.js";
 
 import { Token, getToken, isSui } from "@suilend/frontend-sui";
 import { WalletContext } from "@suilend/frontend-sui-next";
-import { Codegen, SteammSDK } from "@suilend/steamm-sdk";
+import {
+  Codegen,
+  QUOTER_ID_NAME_MAP,
+  QuoterId,
+  SteammSDK,
+} from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
 import {
@@ -19,12 +24,14 @@ import {
   generate_bytecode,
 } from "@/lib/createCoin";
 import { BURN_ADDRESS } from "@/lib/launchToken";
-import { QUOTER_ID_NAME_MAP, QuoterId } from "@/lib/types";
 
+export const QUOTER_IDS: QuoterId[] = Object.values(QuoterId);
 export const AMPLIFIERS: number[] = [1, 5, 10, 20, 30, 50, 100];
 export const FEE_TIER_PERCENTS: number[] = [
   1, 5, 10, 20, 25, 30, 50, 100, 200, 1000, 5000,
 ].map((bps) => bps / 100);
+
+export const PUBLIC_QUOTER_IDS: QuoterId[] = [QuoterId.CPMM];
 export const PUBLIC_FEE_TIER_PERCENTS: number[] = [1, 30, 100, 200].map(
   (bps) => bps / 100,
 );

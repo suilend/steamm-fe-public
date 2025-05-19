@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 
 import {
   showErrorToast,
@@ -16,6 +16,8 @@ export default function useFetchUserData() {
   const { suiClient } = useSettingsContext();
   const { address } = useWalletContext();
   const { appData } = useAppContext();
+
+  const { cache } = useSWRConfig();
 
   // Data
   const dataFetcher = async () => {
@@ -94,8 +96,10 @@ export default function useFetchUserData() {
       onSuccess: (data) => {
         console.log("Refreshed user data", data);
       },
-      onError: (err) => {
-        showErrorToast("Failed to refresh user data", err);
+      onError: (err, key) => {
+        const isInitialLoad = cache.get(key)?.data === undefined;
+        if (isInitialLoad) showErrorToast("Failed to fetch user data", err);
+
         console.error(err);
       },
     },

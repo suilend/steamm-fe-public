@@ -25,7 +25,7 @@ export default function Tag({
     <Tooltip title={tooltip}>
       <div
         className={cn(
-          "flex h-5 flex-row items-center gap-1.5 rounded-[10px] bg-card px-2.5 transition-colors group-hover:bg-border",
+          "flex h-5 flex-row items-center gap-1.5 rounded-[10px] bg-card/50 px-2.5 transition-colors group-hover:bg-card",
           className,
         )}
       >
