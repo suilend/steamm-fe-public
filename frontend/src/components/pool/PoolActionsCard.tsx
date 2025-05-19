@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
@@ -15,6 +15,7 @@ import {
 } from "@suilend/frontend-sui";
 import {
   shallowPushQuery,
+  shallowReplaceQuery,
   showErrorToast,
   useSettingsContext,
   useWalletContext,
@@ -77,10 +78,9 @@ enum QueryParams {
 
 interface DepositTabProps {
   onDeposit: () => void;
-  hasNoQuoteAssets: boolean;
 }
 
-function DepositTab({ onDeposit, hasNoQuoteAssets }: DepositTabProps) {
+function DepositTab({ onDeposit }: DepositTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
@@ -245,10 +245,7 @@ function DepositTab({ onDeposit, hasNoQuoteAssets }: DepositTabProps) {
       return { isDisabled: true, title: "Enter an amount" };
     if (Object.values(values).some((value) => new BigNumber(value).lt(0)))
       return { isDisabled: true, title: "Enter a +ve amount" };
-    if (
-      new BigNumber(values[0]).eq(0) ||
-      (!hasNoQuoteAssets && new BigNumber(values[1]).eq(0))
-    )
+    if (Object.values(values).some((value) => new BigNumber(value).eq(0)))
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
     if (quote) {
@@ -1579,11 +1576,14 @@ export default function PoolActionsCard({
   onSwap,
 }: PoolActionsCardProps) {
   const router = useRouter();
-  const queryParams = {
-    [QueryParams.ACTION]: router.query[QueryParams.ACTION] as
-      | Action
-      | undefined,
-  };
+  const queryParams = useMemo(
+    () => ({
+      [QueryParams.ACTION]: router.query[QueryParams.ACTION] as
+        | Action
+        | undefined,
+    }),
+    [router.query],
+  );
 
   const { pool } = usePoolContext();
 
@@ -1595,7 +1595,18 @@ export default function PoolActionsCard({
     queryParams[QueryParams.ACTION] &&
     Object.values(Action).includes(queryParams[QueryParams.ACTION])
       ? queryParams[QueryParams.ACTION]
-      : Action.DEPOSIT;
+      : hasNoQuoteAssets
+        ? Action.SWAP
+        : Action.DEPOSIT;
+  useEffect(() => {
+    if (hasNoQuoteAssets) {
+      if (queryParams[QueryParams.ACTION] !== Action.SWAP)
+        shallowReplaceQuery(router, {
+          ...router.query,
+          [QueryParams.ACTION]: Action.SWAP,
+        });
+    }
+  }, [queryParams, hasNoQuoteAssets, router]);
   const onSelectedActionChange = (action: Action) => {
     shallowPushQuery(router, { ...router.query, [QueryParams.ACTION]: action });
   };
@@ -1606,11 +1617,13 @@ export default function PoolActionsCard({
         {/* Tabs */}
         <div className="flex flex-row">
           {Object.values(Action).map((action) => {
+            if (action === Action.DEPOSIT && hasNoQuoteAssets) return null;
             if (
-              pool.tvlUsd.eq(0) &&
-              [Action.WITHDRAW, Action.SWAP].includes(action)
+              action === Action.WITHDRAW &&
+              (hasNoQuoteAssets || pool.tvlUsd.eq(0))
             )
               return null;
+            if (action === Action.SWAP && pool.tvlUsd.eq(0)) return null;
 
             return (
               <button
@@ -1647,13 +1660,14 @@ export default function PoolActionsCard({
         <SlippagePopover />
       </div>
 
-      {selectedAction === Action.DEPOSIT && (
-        <DepositTab onDeposit={onDeposit} hasNoQuoteAssets={hasNoQuoteAssets} />
+      {selectedAction === Action.DEPOSIT && !hasNoQuoteAssets && (
+        <DepositTab onDeposit={onDeposit} />
       )}
-      {selectedAction === Action.WITHDRAW && (
-        <WithdrawTab onWithdraw={onWithdraw} />
-      )}
-      {selectedAction === Action.SWAP && (
+      {selectedAction === Action.WITHDRAW &&
+        !(hasNoQuoteAssets || pool.tvlUsd.eq(0)) && (
+          <WithdrawTab onWithdraw={onWithdraw} />
+        )}
+      {selectedAction === Action.SWAP && !pool.tvlUsd.eq(0) && (
         <SwapTab onSwap={onSwap} hasNoQuoteAssets={hasNoQuoteAssets} />
       )}
     </div>
