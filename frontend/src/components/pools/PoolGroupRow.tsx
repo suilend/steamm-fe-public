@@ -1,8 +1,7 @@
-import { CSSProperties } from "react";
+import { CSSProperties, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useLocalStorage } from "usehooks-ts";
 
 import { formatPercent, formatUsd } from "@suilend/frontend-sui";
 import {
@@ -29,28 +28,19 @@ interface PoolGroupRowProps {
     Column,
     { cell: CSSProperties; children: CSSProperties }
   >;
-  tableId: string;
   poolGroup: PoolGroup;
   isTvlOnly?: boolean;
 }
 
 export default function PoolGroupRow({
   columnStyleMap,
-  tableId,
   poolGroup,
   isTvlOnly,
 }: PoolGroupRowProps) {
   const { appData } = useLoadedAppContext();
 
   // State
-  const [isExpanded, setIsExpanded] = useLocalStorage<boolean>(
-    `PoolGroupRow_${tableId}_${formatPair(
-      poolGroup.coinTypes.map(
-        (coinType) => appData.coinMetadataMap[coinType].symbol,
-      ),
-    )}_isExpanded`,
-    false,
-  );
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const Chevron = isExpanded ? ChevronUp : ChevronDown;
 
   // Calculations

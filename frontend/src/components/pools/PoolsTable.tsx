@@ -257,7 +257,6 @@ export default function PoolsTable({
                         <PoolGroupRow
                           key={poolGroup.id}
                           columnStyleMap={columnStyleMap}
-                          tableId={tableId}
                           poolGroup={poolGroup}
                           isTvlOnly={isTvlOnly}
                         />

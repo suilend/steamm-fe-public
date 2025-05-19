@@ -417,8 +417,6 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         if ((json as any)?.statusCode === 500)
           throw new Error("Failed to fetch global historical TVL");
 
-        console.log("XXXX tvl", json);
-
         setGlobalHistoricalStats((prev) => ({
           ...prev,
           tvlUsd_7d: json.reduce(
