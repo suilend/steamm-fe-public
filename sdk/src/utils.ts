@@ -125,7 +125,6 @@ export const chunk = <T>(arr: T[], size: number): T[][] =>
  * @param decimalsX The decimal places of token X
  * @param decimalsY The decimal places of token Y
  * @returns The calculated offset as a bigint
- * @throws Error if the result contains a fractional part
  */
 export const computeOptimalOffset = (
   price: number | string,
@@ -151,13 +150,6 @@ export const computeOptimalOffset = (
 
   // Calculate the denominator: 10^pricePrecision
   const denominator = BigInt(10) ** BigInt(pricePrecision);
-
-  // Check if the result will be an integer
-  // if (numerator % denominator !== BigInt(0)) {
-  //   throw new Error(
-  //     "Result contains a fractional part and cannot be represented as an integer offset",
-  //   );
-  // }
 
   // Calculate the final result
   const result = numerator / denominator;
