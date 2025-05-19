@@ -291,6 +291,7 @@ export default function PoolsPage() {
               tableId="featured-pools"
               poolGroups={featuredPoolGroups}
               isFlat
+              noDefaultSort
             />
           </div>
         )}

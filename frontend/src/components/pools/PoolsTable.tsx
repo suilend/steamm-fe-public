@@ -18,6 +18,7 @@ interface PoolsTableProps {
   searchString?: string;
   isFlat?: boolean;
   isTvlOnly?: boolean;
+  noDefaultSort?: boolean;
 }
 
 export default function PoolsTable({
@@ -26,6 +27,7 @@ export default function PoolsTable({
   searchString,
   isFlat,
   isTvlOnly,
+  noDefaultSort,
 }: PoolsTableProps) {
   // Columns
   const columnStyleMap: Record<
@@ -71,7 +73,9 @@ export default function PoolsTable({
 
   const [sortState, setSortState] = useLocalStorage<SortState | undefined>(
     `PoolsTable_${tableId}_sortState`,
-    { column: "tvlUsd", direction: SortDirection.DESC },
+    noDefaultSort
+      ? undefined
+      : { column: "tvlUsd", direction: SortDirection.DESC },
   );
 
   const toggleSortByColumn = (column: SortableColumn) => {
