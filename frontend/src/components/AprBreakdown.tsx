@@ -179,13 +179,14 @@ export default function AprBreakdown({
                           </>
                         }
                       >
-                        <TokenLogos
-                          suilend
-                          coinTypes={[pool.coinTypes[index]]}
+                        <TokenLogo
+                          token={getToken(
+                            pool.coinTypes[index],
+                            appData.coinMetadataMap[pool.coinTypes[index]],
+                          )}
                           size={16}
-                          backgroundColor="hsl(var(--tooltip))"
                         />{" "}
-                        Deposit APR
+                        Suilend deposit APR
                       </BreakdownRow>
                     );
                   })}

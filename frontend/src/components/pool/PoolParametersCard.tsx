@@ -4,6 +4,7 @@ import BigNumber from "bignumber.js";
 
 import {
   formatAddress,
+  formatPercent,
   formatToken,
   formatUsd,
   getToken,
@@ -216,6 +217,33 @@ export default function PoolParametersCard() {
           );
         })}
       </Parameter>
+
+      {pool.coinTypes.some((coinType) =>
+        appData.bankMap[coinType].utilizationPercent.gt(0),
+      ) && (
+        <Parameter label="Bank utilization">
+          {pool.coinTypes
+            .filter((coinType) =>
+              appData.bankMap[coinType].utilizationPercent.gt(0),
+            )
+            .map((coinType) => (
+              <div key={coinType} className="flex flex-row items-center gap-2">
+                <TokenLogo
+                  token={getToken(coinType, appData.coinMetadataMap[coinType])}
+                  size={16}
+                />
+                <p className="text-p2 text-foreground">
+                  {appData.coinMetadataMap[coinType].symbol}
+                </p>
+
+                <p className="text-p2 text-secondary-foreground">
+                  {formatPercent(appData.bankMap[coinType].utilizationPercent)}{" "}
+                  deposited on Suilend
+                </p>
+              </div>
+            ))}
+        </Parameter>
+      )}
 
       {pool.quoterId === QuoterId.ORACLE_V2 && (
         <Parameter label="Amplifier" labelTooltip={AMPLIFIER_TOOLTIP}>
