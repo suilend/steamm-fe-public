@@ -280,7 +280,12 @@ export default function LaunchTokenCard() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    if (isSubmitting) return { isDisabled: true, isLoading: true };
+    if (isSubmitting) {
+      return {
+        isDisabled: true,
+        title: hasFailed ? "Retry" : "Launch token & create pool",
+      };
+    }
     if (hasClearedCache) return { isDisabled: true, isSuccess: true };
 
     // Name
@@ -662,7 +667,7 @@ export default function LaunchTokenCard() {
               >
                 <button
                   className={cn(
-                    "group flex h-6 w-6 flex-row items-center justify-center rounded-sm border transition-colors",
+                    "group flex h-5 w-5 flex-row items-center justify-center rounded-sm border transition-colors",
                     burnLpTokens
                       ? "border-button-1 bg-button-1/25"
                       : "hover:bg-border/50",

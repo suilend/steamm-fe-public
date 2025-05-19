@@ -23,6 +23,7 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { PoolContextProvider, usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { useUserContext } from "@/contexts/UserContext";
+import usePoolCurrentPriceQuote from "@/hooks/usePoolCurrentPrice";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
 import { formatPair } from "@/lib/format";
 import { POOLS_URL } from "@/lib/navigation";
@@ -47,6 +48,14 @@ function PoolPage() {
   // Pair
   const formattedPair = formatPair(
     pool.coinTypes.map((coinType) => appData.coinMetadataMap[coinType].symbol),
+  );
+
+  // Current price
+  const { poolCurrentPriceQuoteMap, fetchPoolCurrentPriceQuote } =
+    usePoolCurrentPriceQuote([pool.id]);
+  const currentPriceQuote = useMemo(
+    () => poolCurrentPriceQuoteMap?.[pool.id],
+    [poolCurrentPriceQuoteMap, pool.id],
   );
 
   // Transaction history
@@ -82,8 +91,9 @@ function PoolPage() {
     refresh();
 
     setTimeout(() => {
-      fetchPoolTransactionHistoryMap([pool.id]);
       fetchRefreshedPool(pool.poolInfo);
+      fetchPoolTransactionHistoryMap([pool.id]);
+      fetchPoolCurrentPriceQuote([pool.id]);
     }, 2000);
   };
 
@@ -91,8 +101,9 @@ function PoolPage() {
     refresh();
 
     setTimeout(() => {
-      fetchPoolTransactionHistoryMap([pool.id]);
       fetchRefreshedPool(pool.poolInfo);
+      fetchPoolTransactionHistoryMap([pool.id]);
+      fetchPoolCurrentPriceQuote([pool.id]);
     }, 2000);
   };
 
@@ -100,8 +111,9 @@ function PoolPage() {
     refresh();
 
     setTimeout(() => {
-      fetchPoolTransactionHistoryMap([pool.id]);
       fetchRefreshedPool(pool.poolInfo);
+      fetchPoolTransactionHistoryMap([pool.id]);
+      fetchPoolCurrentPriceQuote([pool.id]);
     }, 2000);
   };
 
@@ -205,7 +217,7 @@ function PoolPage() {
                 {/* Cards */}
                 <div className="flex w-full flex-col gap-4">
                   <PoolChartCard />
-                  <PoolParametersCard />
+                  <PoolParametersCard currentPriceQuote={currentPriceQuote} />
                 </div>
               </div>
 

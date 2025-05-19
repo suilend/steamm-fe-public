@@ -362,7 +362,12 @@ export default function CreatePoolCard() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    if (isSubmitting) return { isDisabled: true, isLoading: true };
+    if (isSubmitting) {
+      return {
+        isDisabled: true,
+        title: hasFailed ? "Retry" : "Create pool and deposit",
+      };
+    }
     if (hasClearedCache) return { isDisabled: true, isSuccess: true };
 
     if (coinTypes.some((coinType) => coinType === ""))

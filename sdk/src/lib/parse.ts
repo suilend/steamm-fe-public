@@ -245,15 +245,25 @@ export const getParsedPool = (
         `Missing price for coinTypeA ${coinTypeA}, using balance ratio to calculate price (pool with id ${id}, quoterId ${quoterId})`,
       );
       priceA = !balanceA.eq(0)
-        ? balanceB.div(balanceA).times(priceB)
-        : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM pools)
+        ? new BigNumber(
+            balanceB.plus(
+              quoterId === QuoterId.CPMM
+                ? new BigNumber(
+                    (pool.quoter as CpQuoter).offset.toString(),
+                  ).div(10 ** coinMetadataMap[coinTypeB].decimals)
+                : 0,
+            ),
+          )
+            .div(balanceA)
+            .times(priceB) // Assumes the pool is balanced (only true for arb'd CPMM pools)
+        : new BigNumber(0);
     } else if (priceB === undefined) {
       console.warn(
         `Missing price for coinTypeB ${coinTypeB}, using balance ratio to calculate price (pool with id ${id}, quoterId ${quoterId})`,
       );
       priceB = !balanceB.eq(0)
-        ? balanceA.div(balanceB).times(priceA)
-        : new BigNumber(0); // Assumes the pool is balanced (only true for arb'd CPMM pools)
+        ? balanceA.div(balanceB).times(priceA) // Assumes the pool is balanced (only true for arb'd CPMM pools)
+        : new BigNumber(0);
     }
     const prices: [BigNumber, BigNumber] = [priceA, priceB];
 

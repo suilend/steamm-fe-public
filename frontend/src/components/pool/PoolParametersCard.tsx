@@ -1,5 +1,3 @@
-import { useEffect, useRef, useState } from "react";
-
 import BigNumber from "bignumber.js";
 
 import {
@@ -11,7 +9,6 @@ import {
 } from "@suilend/frontend-sui";
 import { useSettingsContext } from "@suilend/frontend-sui-next";
 import { QuoterId, SwapQuote } from "@suilend/steamm-sdk";
-import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
@@ -29,91 +26,16 @@ import { formatAmplifier, formatFeeTier } from "@/lib/format";
 import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
-export default function PoolParametersCard() {
+interface PoolParametersCardProps {
+  currentPriceQuote?: SwapQuote;
+}
+
+export default function PoolParametersCard({
+  currentPriceQuote,
+}: PoolParametersCardProps) {
   const { explorer } = useSettingsContext();
-  const { steammClient, appData } = useLoadedAppContext();
+  const { appData } = useLoadedAppContext();
   const { pool } = usePoolContext();
-
-  // Current price
-  const getOraclePrice = (index: number): BigNumber => {
-    if (![QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId))
-      throw new Error(
-        `Pool with id ${pool.id} has quoterId ${pool.quoterId} - expected ${QuoterId.ORACLE} or ${QuoterId.ORACLE_V2}`,
-      );
-
-    const quoter = pool.pool.quoter as OracleQuoter | OracleQuoterV2;
-    const oracleIndex = +(
-      index === 0 ? quoter.oracleIndexA : quoter.oracleIndexB
-    ).toString();
-
-    return appData.oracleIndexOracleInfoPriceMap[oracleIndex].price;
-  };
-
-  const [quoteMap, setQuoteMap] = useState<Record<string, SwapQuote>>({});
-  const quote =
-    pool.quoterId === QuoterId.CPMM
-      ? quoteMap[pool.id]
-      : ({
-          a2b: true,
-          amountIn: BigInt(
-            new BigNumber(1)
-              .times(10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals)
-              .integerValue(BigNumber.ROUND_DOWN)
-              .toString(),
-          ),
-          amountOut: BigInt(
-            new BigNumber(getOraclePrice(0).div(getOraclePrice(1)))
-              .times(10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals)
-              .integerValue(BigNumber.ROUND_DOWN)
-              .toString(),
-          ),
-          outputFees: {
-            poolFees: BigInt(0),
-            protocolFees: BigInt(0),
-          },
-        } as SwapQuote);
-
-  const isFetchingQuoteMapRef = useRef<Record<string, boolean>>({});
-  useEffect(() => {
-    if (pool.quoterId !== QuoterId.CPMM) return;
-
-    if (isFetchingQuoteMapRef.current[pool.id]) return;
-    isFetchingQuoteMapRef.current = {
-      ...isFetchingQuoteMapRef.current,
-      [pool.id]: true,
-    };
-
-    (async () => {
-      try {
-        const submitAmountA = new BigNumber(
-          new BigNumber(1).div(pool.prices[0]),
-        ) // $1 of asset A (assuming the pool is arb'd, in practice it should be very close to arb'd)
-          .times(10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals)
-          .integerValue(BigNumber.ROUND_DOWN)
-          .toString();
-
-        const quote = await steammClient.Pool.quoteSwap({
-          a2b: true,
-          amountIn: BigInt(submitAmountA),
-          poolInfo: pool.poolInfo,
-          bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
-          bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
-        });
-        setQuoteMap((prev) => ({ ...prev, [pool.id]: quote }));
-      } catch (err) {
-        console.error(err);
-      }
-    })();
-  }, [
-    pool.quoterId,
-    pool.id,
-    pool.prices,
-    appData.coinMetadataMap,
-    pool.coinTypes,
-    steammClient.Pool,
-    pool.poolInfo,
-    appData.bankMap,
-  ]);
 
   return (
     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
@@ -294,7 +216,7 @@ export default function PoolParametersCard() {
           appData.coinMetadataMap[pool.coinTypes[1]],
         )}
         outPrice={pool.prices[1]}
-        quote={quote}
+        quote={currentPriceQuote}
         label="Current price"
       />
 
