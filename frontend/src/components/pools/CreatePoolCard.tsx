@@ -25,7 +25,6 @@ import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/o
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
-import Divider from "@/components/Divider";
 import Parameter from "@/components/Parameter";
 import CreatePoolStepsDialog from "@/components/pools/CreatePoolStepsDialog";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
@@ -571,7 +570,7 @@ export default function CreatePoolCard() {
         reset={reset}
       />
 
-      <div className="flex w-full flex-col gap-4">
+      <div className="flex w-full flex-col gap-6">
         <div
           className={cn(
             "flex w-full flex-col gap-4",
@@ -684,8 +683,6 @@ export default function CreatePoolCard() {
               </div>
             </Parameter>
           </div>
-
-          <Divider />
 
           {/* Quoter */}
           <div className="flex flex-row items-center justify-between">

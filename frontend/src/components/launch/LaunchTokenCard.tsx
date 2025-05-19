@@ -7,9 +7,11 @@ import {
   NORMALIZED_SUI_COINTYPE,
   NORMALIZED_USDC_COINTYPE,
   Token,
+  formatInteger,
   formatNumber,
   formatPercent,
   formatToken,
+  formatUsd,
   getToken,
   isSend,
   isStablecoin,
@@ -155,8 +157,10 @@ export default function LaunchTokenCard() {
       try {
         if (formattedValue === "") return;
         if (isNaN(+formattedValue)) throw new Error("Supply must be a number");
-        if (+formattedValue < 10 ** 3)
-          throw new Error("Supply must be at least 1,000");
+        if (new BigNumber(formattedValue).lt(10 ** 3))
+          throw new Error(`Supply must be at least ${formatInteger(10 ** 3)}`);
+        if (new BigNumber(formattedValue).gt(10 ** 12))
+          throw new Error(`Supply must be at most ${formatInteger(10 ** 12)}`);
 
         setSupply(+formattedValue);
       } catch (err) {
@@ -168,7 +172,7 @@ export default function LaunchTokenCard() {
   );
 
   // State - pool - quote asset
-  const getPrice = useCallback(
+  const getQuotePrice = useCallback(
     (coinType: string) =>
       isSui(coinType) || isLst(coinType)
         ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_SUI_COINTYPE]?.price
@@ -188,14 +192,19 @@ export default function LaunchTokenCard() {
               isSui(coinType) ||
               isStablecoin(coinType) ||
               Object.keys(appData.lstAprPercentMap).includes(coinType)) &&
-            getPrice(coinType) !== undefined,
+            getQuotePrice(coinType) !== undefined,
         )
         .filter(([coinType]) => getBalance(coinType).gt(0))
         .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
         .sort(
           (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
         ),
-    [balancesCoinMetadataMap, getPrice, getBalance, appData.lstAprPercentMap],
+    [
+      balancesCoinMetadataMap,
+      getQuotePrice,
+      getBalance,
+      appData.lstAprPercentMap,
+    ],
   );
 
   const [quoteAssetCoinType, setQuoteAssetCoinType] = useState<
@@ -219,15 +228,15 @@ export default function LaunchTokenCard() {
       .times(DEPOSITED_TOKEN_PERCENT)
       .div(100);
 
-    const quotePrice = getPrice(quoteToken.coinType)!;
+    const quotePrice = getQuotePrice(quoteToken.coinType)!;
 
-    const tokenInitialPriceUsd = INITIAL_TOKEN_MC_USD / +depositedSupply;
-    const tokenInitialPriceQuote = +new BigNumber(tokenInitialPriceUsd).div(
-      quotePrice,
+    const tokenInitialPriceUsd = new BigNumber(INITIAL_TOKEN_MC_USD).div(
+      depositedSupply,
     );
+    const tokenInitialPriceQuote = tokenInitialPriceUsd.div(quotePrice);
 
     return computeOptimalOffset(
-      tokenInitialPriceQuote,
+      +tokenInitialPriceQuote,
       BigInt(
         depositedSupply
           .times(10 ** decimals)
@@ -237,8 +246,7 @@ export default function LaunchTokenCard() {
       decimals,
       quoteToken.decimals,
     );
-  }, [quoteToken, supply, getPrice, decimals]);
-  console.log("xxx offset:", offset);
+  }, [quoteToken, supply, getQuotePrice, decimals]);
 
   // Submit
   const reset = () => {
@@ -549,7 +557,7 @@ export default function LaunchTokenCard() {
         reset={reset}
       />
 
-      <div className="flex w-full flex-col gap-4">
+      <div className="flex w-full flex-col gap-6">
         <div
           className={cn(
             "flex w-full flex-col gap-4",
@@ -601,6 +609,22 @@ export default function LaunchTokenCard() {
               setIconFilename={setIconFilename}
               iconFileSize={iconFileSize}
               setIconFileSize={setIconFileSize}
+            />
+          </div>
+
+          {/* Quote asset */}
+          <div className="flex flex-row justify-between">
+            <p className="text-p2 text-secondary-foreground">Quote asset</p>
+
+            <TokenSelectionDialog
+              triggerClassName="h-6"
+              triggerIconSize={16}
+              triggerLabelSelectedClassName="!text-p2"
+              triggerLabelUnselectedClassName="!text-p2"
+              triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
+              token={quoteToken}
+              tokens={quoteTokens}
+              onSelectToken={(token) => setQuoteAssetCoinType(token.coinType)}
             />
           </div>
 
@@ -684,35 +708,37 @@ export default function LaunchTokenCard() {
 
           <Divider />
 
-          {/* Quote asset */}
-          <div className="flex flex-row justify-between">
-            <p className="text-p2 text-secondary-foreground">Quote asset</p>
-
-            <TokenSelectionDialog
-              triggerClassName="h-6"
-              triggerIconSize={16}
-              triggerLabelSelectedClassName="!text-p2"
-              triggerLabelUnselectedClassName="!text-p2"
-              triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
-              token={quoteToken}
-              tokens={quoteTokens}
-              onSelectToken={(token) => setQuoteAssetCoinType(token.coinType)}
-            />
-          </div>
-
           <div className="flex w-full flex-col gap-2">
             {/* Deposited */}
             <Parameter label="Initial liquidity" isHorizontal>
+              {symbol === "" ? (
+                <p className="text-p2 text-foreground">--</p>
+              ) : (
+                <div className="flex flex-row items-center gap-2">
+                  <p className="text-p2 text-foreground">
+                    {formatToken(
+                      new BigNumber(supply)
+                        .times(DEPOSITED_TOKEN_PERCENT)
+                        .div(100),
+                      { dp: decimals, trimTrailingZeros: true },
+                    )}{" "}
+                    {symbol}
+                  </p>
+
+                  <p className="text-p2 text-secondary-foreground">
+                    {formatPercent(new BigNumber(DEPOSITED_TOKEN_PERCENT), {
+                      dp: 0,
+                    })}{" "}
+                    of supply
+                  </p>
+                </div>
+              )}
+            </Parameter>
+
+            {/* Initial MC */}
+            <Parameter label="Initial market cap (MC)" isHorizontal>
               <p className="text-p2 text-foreground">
-                {formatToken(
-                  new BigNumber(supply).times(DEPOSITED_TOKEN_PERCENT).div(100),
-                  { dp: decimals, trimTrailingZeros: true },
-                )}{" "}
-                {symbol || "tokens"} (
-                {formatPercent(new BigNumber(DEPOSITED_TOKEN_PERCENT), {
-                  dp: 0,
-                })}
-                )
+                {formatUsd(new BigNumber(INITIAL_TOKEN_MC_USD))}
               </p>
             </Parameter>
           </div>
