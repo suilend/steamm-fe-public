@@ -181,9 +181,6 @@ export default function PoolParametersCard() {
                     </BreakdownRow>
                   </div>
                 }
-                contentProps={{
-                  style: { maxWidth: 350 },
-                }}
               >
                 <p
                   className={cn(

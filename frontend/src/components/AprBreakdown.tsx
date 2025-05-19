@@ -66,7 +66,7 @@ export default function AprBreakdown({
     stakingYieldAprPercent !== undefined
       ? getPoolTotalAprPercent(
           poolStats.aprPercent_24h[pool.id].feesAprPercent,
-          pool.suilendWeightedAverageDepositAprPercent,
+          pool.suilendDepositAprPercents,
           filteredRewards,
           stakingYieldAprPercent,
         )
@@ -79,7 +79,9 @@ export default function AprBreakdown({
       <Tooltip
         content={
           perDayRewards.length > 0 ||
-          pool.suilendWeightedAverageDepositAprPercent.gt(0) ||
+          pool.suilendDepositAprPercents.some((aprPercent) =>
+            aprPercent.gt(0),
+          ) ||
           stakingYieldAprPercent.gt(0) ||
           aprRewards.length > 0 ? (
             <div className="flex flex-col gap-3">
@@ -131,7 +133,9 @@ export default function AprBreakdown({
                 {/* feesAprPercent */}
                 <BreakdownRow
                   isLast={
-                    !pool.suilendWeightedAverageDepositAprPercent.gt(0) &&
+                    !pool.suilendDepositAprPercents.some((aprPercent) =>
+                      aprPercent.gt(0),
+                    ) &&
                     !stakingYieldAprPercent.gt(0) &&
                     aprRewards.length === 0
                   }
@@ -143,19 +147,48 @@ export default function AprBreakdown({
                   LP fees
                 </BreakdownRow>
 
-                {/* suilendWeightedAverageDepositAprPercent */}
-                {pool.suilendWeightedAverageDepositAprPercent.gt(0) && (
-                  <BreakdownRow
-                    isLast={
-                      !stakingYieldAprPercent.gt(0) && aprRewards.length === 0
-                    }
-                    value={formatPercent(
-                      pool.suilendWeightedAverageDepositAprPercent,
-                    )}
-                  >
-                    <SuilendLogo size={12} /> Deposit APR
-                  </BreakdownRow>
-                )}
+                {/* suilendDepositAprPercents */}
+                {pool.suilendDepositAprPercents.some((aprPercent) =>
+                  aprPercent.gt(0),
+                ) &&
+                  pool.suilendDepositAprPercents.map((aprPercent, index) => {
+                    if (aprPercent.eq(0)) return null;
+                    return (
+                      <BreakdownRow
+                        key={index}
+                        isLast={
+                          index === pool.suilendDepositAprPercents.length - 1 &&
+                          !stakingYieldAprPercent.gt(0) &&
+                          aprRewards.length === 0
+                        }
+                        value={
+                          <>
+                            {formatPercent(aprPercent)}
+                            {/* <span className="text-p3 text-tertiary-foreground">
+                              {formatPercent(
+                                appData.bankMap[pool.coinTypes[index]]
+                                  .utilizationPercent,
+                              )}
+                              {" at "}
+                              {formatPercent(
+                                appData.bankMap[pool.coinTypes[index]]
+                                  .suilendDepositAprPercent,
+                              )}
+                              {" APR"}
+                            </span> */}
+                          </>
+                        }
+                      >
+                        <TokenLogos
+                          suilend
+                          coinTypes={[pool.coinTypes[index]]}
+                          size={16}
+                          backgroundColor="hsl(var(--tooltip))"
+                        />{" "}
+                        Deposit APR
+                      </BreakdownRow>
+                    );
+                  })}
 
                 {/* LST staking yield */}
                 {stakingYieldAprPercent.gt(0) && (
@@ -207,7 +240,9 @@ export default function AprBreakdown({
             className={cn(
               "!text-p1",
               perDayRewards.length > 0 ||
-                pool.suilendWeightedAverageDepositAprPercent.gt(0) ||
+                pool.suilendDepositAprPercents.some((aprPercent) =>
+                  aprPercent.gt(0),
+                ) ||
                 stakingYieldAprPercent.gt(0) ||
                 aprRewards.length > 0
                 ? perDayRewards.length > 0 || aprRewards.length > 0

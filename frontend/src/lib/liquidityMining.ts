@@ -37,12 +37,13 @@ export const getPoolStakingYieldAprPercent = (
 
 export const getPoolTotalAprPercent = (
   feesAprPercent: BigNumber,
-  suilendWeightedAverageDepositAprPercent: BigNumber,
+  suilendDepositAprPercents: [BigNumber, BigNumber],
   filteredRewards: RewardSummary[],
   stakingYieldAprPercent?: BigNumber,
 ) =>
   feesAprPercent
-    .plus(suilendWeightedAverageDepositAprPercent)
+    .plus(suilendDepositAprPercents[0])
+    .plus(suilendDepositAprPercents[1])
     .plus(getRewardsAprPercent(Side.DEPOSIT, filteredRewards))
     .plus(stakingYieldAprPercent ?? 0);
 

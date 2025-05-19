@@ -55,7 +55,7 @@ export default function SuggestedPools({
                 stakingYieldAprPercent !== undefined
                   ? getPoolTotalAprPercent(
                       poolStats.aprPercent_24h[pool.id].feesAprPercent,
-                      pool.suilendWeightedAverageDepositAprPercent,
+                      pool.suilendDepositAprPercents,
                       filteredRewards,
                       stakingYieldAprPercent,
                     )

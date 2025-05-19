@@ -2,7 +2,7 @@ import { CSSProperties } from "react";
 
 import BigNumber from "bignumber.js";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useLocalStorage } from "usehooks-ts";
+import { useSessionStorage } from "usehooks-ts";
 
 import { formatPercent, formatUsd } from "@suilend/frontend-sui";
 import {
@@ -43,7 +43,7 @@ export default function PoolGroupRow({
   const { appData } = useLoadedAppContext();
 
   // State
-  const [isExpanded, setIsExpanded] = useLocalStorage<boolean>(
+  const [isExpanded, setIsExpanded] = useSessionStorage<boolean>(
     `PoolGroupRow_${tableId}_${formatPair(
       poolGroup.coinTypes.map(
         (coinType) => appData.coinMetadataMap[coinType].symbol,

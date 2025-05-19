@@ -135,7 +135,7 @@ export default function Tooltip({
           style={merge(
             {
               maxWidth:
-                "min(var(--radix-tooltip-content-available-width), 300px)",
+                "min(var(--radix-tooltip-content-available-width), 350px)",
             },
             contentStyle,
           )}
