@@ -118,7 +118,15 @@ export default function PoolParametersCard() {
   return (
     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
       <Parameter label="Assets">
-        <div className="flex flex-row flex-wrap gap-x-6 gap-y-4">
+        <div className="flex flex-row items-center gap-4">
+          <PieChart
+            data={pool.coinTypes.map((coinType, index) => ({
+              label: appData.coinMetadataMap[coinType].symbol,
+              value: +pool.balances[index].times(pool.prices[index]),
+            }))}
+            size={40}
+          />
+
           <div className="flex flex-col gap-1">
             {pool.coinTypes.map((coinType, index) => {
               const accruedLpFees = new BigNumber(
@@ -130,8 +138,15 @@ export default function PoolParametersCard() {
               return (
                 <div
                   key={coinType}
-                  className="flex w-full flex-row items-center gap-2"
+                  className="flex w-full flex-row flex-wrap items-center gap-x-2 gap-y-1"
                 >
+                  <div
+                    className={cn("h-1.5 w-1.5 rounded-[1px]", {
+                      "bg-jordy-blue": index === 0,
+                      "bg-jordy-blue/50": index === 1,
+                    })}
+                  />
+
                   <TokenLogo
                     token={getToken(
                       coinType,
@@ -225,14 +240,6 @@ export default function PoolParametersCard() {
               );
             })}
           </div>
-
-          <PieChart
-            data={pool.coinTypes.map((coinType, index) => ({
-              label: appData.coinMetadataMap[coinType].symbol,
-              value: +pool.balances[index].times(pool.prices[index]),
-            }))}
-            size={46}
-          />
         </div>
       </Parameter>
 
