@@ -1,5 +1,7 @@
 import BigNumber from "bignumber.js";
+import { v4 as uuidv4 } from "uuid";
 
+import { Side, getFilteredRewards } from "@suilend/sdk";
 import {
   ParsedPool,
   PoolInfo,
@@ -9,8 +11,14 @@ import {
 } from "@suilend/steamm-sdk";
 
 import { AppData } from "@/contexts/AppContext";
+import { StatsContext } from "@/contexts/StatsContext";
 import { formatPair } from "@/lib/format";
+import {
+  getPoolStakingYieldAprPercent,
+  getPoolTotalAprPercent,
+} from "@/lib/liquidityMining";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
+import { PoolGroup } from "@/lib/types";
 
 export const AMPLIFIER_TOOLTIP =
   "The amplifier determines the concentration of the pool. Higher values are more suitable for more stable assets, while lower values are more suitable for more volatile assets.";
@@ -53,4 +61,105 @@ export const getAvgPoolPrice = (pools: AppData["pools"], coinType: string) => {
   return poolPrices
     .reduce((acc, poolPrice) => acc.plus(poolPrice), new BigNumber(0))
     .div(poolPrices.length);
+};
+
+export const getPoolsWithExtraData = (
+  {
+    lstAprPercentMap,
+    pools,
+    normalizedPoolRewardMap,
+  }: Pick<AppData, "lstAprPercentMap" | "pools" | "normalizedPoolRewardMap">,
+  poolStats: StatsContext["poolStats"],
+) =>
+  pools.map((pool) => {
+    // Same code as in frontend/src/components/AprBreakdown.tsx
+    const rewards =
+      normalizedPoolRewardMap[pool.lpTokenType]?.[Side.DEPOSIT] ?? [];
+    const filteredRewards = getFilteredRewards(rewards);
+
+    const stakingYieldAprPercent: BigNumber = getPoolStakingYieldAprPercent(
+      pool,
+      lstAprPercentMap,
+    );
+
+    return {
+      ...pool,
+      volumeUsd_24h: poolStats.volumeUsd_24h[pool.id],
+      aprPercent_24h:
+        poolStats.aprPercent_24h[pool.id] !== undefined &&
+        stakingYieldAprPercent !== undefined
+          ? getPoolTotalAprPercent(
+              poolStats.aprPercent_24h[pool.id].feesAprPercent,
+              pool.suilendWeightedAverageDepositAprPercent,
+              filteredRewards,
+              stakingYieldAprPercent,
+            )
+          : undefined,
+    };
+  });
+
+export const getPoolGroups = (
+  poolsWithExtraData: ParsedPool[],
+): PoolGroup[] | undefined => {
+  if (poolsWithExtraData === undefined) return undefined;
+
+  const poolGroupsByPair: Record<string, ParsedPool[]> = {};
+
+  for (const pool of poolsWithExtraData) {
+    const key = `${pool.coinTypes[0]}-${pool.coinTypes[1]}`;
+
+    if (!poolGroupsByPair[key]) poolGroupsByPair[key] = [pool];
+    else poolGroupsByPair[key].push(pool);
+  }
+
+  return Object.values(poolGroupsByPair).map((pools) => ({
+    id: uuidv4(),
+    coinTypes: pools[0].coinTypes,
+    pools,
+  }));
+};
+
+export const getFilteredPoolGroups = (
+  coinMetadataMap: AppData["coinMetadataMap"],
+  searchString: string,
+  poolGroups: PoolGroup[] | undefined,
+) => {
+  if (poolGroups === undefined) return undefined;
+  if (searchString === "") return poolGroups;
+
+  return poolGroups
+    .filter((poolGroup) =>
+      [
+        poolGroup.pools.map((pool) => pool.id).join("__"),
+        poolGroup.coinTypes.join("__"),
+        formatPair(
+          poolGroup.coinTypes.map(
+            (coinType) => coinMetadataMap[coinType].symbol,
+          ),
+        ),
+        poolGroup.pools
+          .map((pool) => QUOTER_ID_NAME_MAP[pool.quoterId])
+          .flat()
+          .join("__"),
+      ]
+        .join("____")
+        .toLowerCase()
+        .includes(searchString.toLowerCase()),
+    )
+    .map((poolGroup) => ({
+      ...poolGroup,
+      pools: poolGroup.pools.filter((pool) =>
+        [
+          pool.id,
+          pool.coinTypes.join("__"),
+          formatPair(
+            pool.coinTypes.map((coinType) => coinMetadataMap[coinType].symbol),
+          ),
+          QUOTER_ID_NAME_MAP[pool.quoterId],
+        ]
+          .join("____")
+          .toLowerCase()
+          .includes(searchString.toLowerCase()),
+      ),
+    }));
 };

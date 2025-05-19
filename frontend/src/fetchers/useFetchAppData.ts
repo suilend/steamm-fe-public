@@ -2,7 +2,7 @@ import { CoinMetadata } from "@mysten/sui/client";
 import { normalizeStructTag } from "@mysten/sui/utils";
 import { SuiPriceServiceConnection } from "@pythnetwork/pyth-sui-js";
 import BigNumber from "bignumber.js";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 
 import {
   NORMALIZED_STEAMM_POINTS_COINTYPE,
@@ -63,6 +63,8 @@ type PoolObj = {
 
 export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
+
+  const { cache } = useSWRConfig();
 
   // Data
   const dataFetcher = async () => {
@@ -516,8 +518,10 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     onSuccess: (data) => {
       console.log("Refreshed app data", data);
     },
-    onError: (err) => {
-      showErrorToast("Failed to refresh app data", err);
+    onError: (err, key) => {
+      const isInitialLoad = cache.get(key)?.data === undefined;
+      if (isInitialLoad) showErrorToast("Failed to fetch app data", err);
+
       console.error(err);
     },
   });

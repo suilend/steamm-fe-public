@@ -22,7 +22,7 @@ const SIX_HOURS_S = ONE_HOUR_S * 6;
 const ONE_DAY_S = SIX_HOURS_S * 4;
 const SEVEN_DAYS_S = ONE_DAY_S * 7;
 
-interface StatsContext {
+export interface StatsContext {
   poolHistoricalStats: {
     tvlUsd_7d: Record<string, ChartData[]>;
     volumeUsd_7d: Record<string, ChartData[]>;
