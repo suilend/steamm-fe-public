@@ -27,6 +27,7 @@ import {
 import {
   DepositQuote,
   ParsedPool,
+  QuoterId,
   RedeemQuote,
   SteammSDK,
   SwapQuote,
@@ -1086,8 +1087,13 @@ function SwapTab({ onSwap }: SwapTabProps) {
   const { getBalance, refresh } = useUserContext();
   const { pool } = usePoolContext();
 
+  const hasNoQuoteAssets =
+    pool.quoterId === QuoterId.CPMM && pool.balances[1].eq(0);
+
   // CoinTypes
-  const [activeCoinIndex, setActiveCoinIndex] = useState<0 | 1>(0);
+  const [activeCoinIndex, setActiveCoinIndex] = useState<0 | 1>(
+    hasNoQuoteAssets ? 1 : 0,
+  );
   const activeCoinType = pool.coinTypes[activeCoinIndex];
   const activeCoinMetadata = appData.coinMetadataMap[activeCoinType];
 
@@ -1436,7 +1442,12 @@ function SwapTab({ onSwap }: SwapTabProps) {
 
   return (
     <>
-      <div className="relative flex w-full min-w-0 flex-col items-center gap-2">
+      <div
+        className={cn(
+          "relative flex w-full min-w-0 flex-col items-center",
+          hasNoQuoteAssets ? "gap-4" : "gap-2",
+        )}
+      >
         <CoinInput
           className="relative z-[1]"
           token={getToken(activeCoinType, activeCoinMetadata)}
@@ -1446,7 +1457,7 @@ function SwapTab({ onSwap }: SwapTabProps) {
           onMaxAmountClick={() => onBalanceClick()}
         />
 
-        <ReverseAssetsButton onClick={reverseAssets} />
+        {!hasNoQuoteAssets && <ReverseAssetsButton onClick={reverseAssets} />}
 
         <CoinInput
           className="relative z-[1]"
