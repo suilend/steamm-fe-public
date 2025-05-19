@@ -4,6 +4,8 @@ import BigNumber from "bignumber.js";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import {
+  NORMALIZED_SUI_COINTYPE,
+  NORMALIZED_USDC_COINTYPE,
   Token,
   formatNumber,
   formatPercent,
@@ -64,6 +66,12 @@ export default function LaunchTokenCard() {
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
+
+  const isLst = useCallback(
+    (coinType: string) =>
+      Object.keys(appData.lstAprPercentMap).includes(coinType),
+    [appData.lstAprPercentMap],
+  );
 
   // State - progress
   const [hasFailed, setHasFailed] = useState<boolean>(false);
@@ -160,22 +168,34 @@ export default function LaunchTokenCard() {
   );
 
   // State - pool - quote asset
+  const getPrice = useCallback(
+    (coinType: string) =>
+      isSui(coinType) || isLst(coinType)
+        ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_SUI_COINTYPE]?.price
+        : isStablecoin(coinType)
+          ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_USDC_COINTYPE]?.price
+          : (appData.coinTypeOracleInfoPriceMap[coinType]?.price ??
+            getAvgPoolPrice(appData.pools, coinType)),
+    [isLst, appData.coinTypeOracleInfoPriceMap, appData.pools],
+  );
+
   const quoteTokens = useMemo(
     () =>
       Object.entries(balancesCoinMetadataMap ?? {})
         .filter(
           ([coinType]) =>
-            isSend(coinType) ||
-            isSui(coinType) ||
-            isStablecoin(coinType) ||
-            Object.keys(appData.lstAprPercentMap).includes(coinType),
+            (isSend(coinType) ||
+              isSui(coinType) ||
+              isStablecoin(coinType) ||
+              Object.keys(appData.lstAprPercentMap).includes(coinType)) &&
+            getPrice(coinType) !== undefined,
         )
         .filter(([coinType]) => getBalance(coinType).gt(0))
         .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
         .sort(
           (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
         ),
-    [balancesCoinMetadataMap, getBalance, appData.lstAprPercentMap],
+    [balancesCoinMetadataMap, getPrice, getBalance, appData.lstAprPercentMap],
   );
 
   const [quoteAssetCoinType, setQuoteAssetCoinType] = useState<
@@ -199,13 +219,15 @@ export default function LaunchTokenCard() {
       .times(DEPOSITED_TOKEN_PERCENT)
       .div(100);
 
-    const quotePrice = getAvgPoolPrice(appData.pools, quoteToken.coinType)!; // TODO: Must have pool for quote token
+    const quotePrice = getPrice(quoteToken.coinType)!;
 
-    const initialPriceUsd = INITIAL_TOKEN_MC_USD / +depositedSupply;
-    const initialPriceQuote = +new BigNumber(initialPriceUsd).div(quotePrice);
+    const tokenInitialPriceUsd = INITIAL_TOKEN_MC_USD / +depositedSupply;
+    const tokenInitialPriceQuote = +new BigNumber(tokenInitialPriceUsd).div(
+      quotePrice,
+    );
 
     return computeOptimalOffset(
-      initialPriceQuote,
+      tokenInitialPriceQuote,
       BigInt(
         depositedSupply
           .times(10 ** decimals)
@@ -215,7 +237,7 @@ export default function LaunchTokenCard() {
       decimals,
       quoteToken.decimals,
     );
-  }, [quoteToken, supply, appData.pools, decimals]);
+  }, [quoteToken, supply, getPrice, decimals]);
   console.log("xxx offset:", offset);
 
   // Submit
