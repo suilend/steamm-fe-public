@@ -36,9 +36,8 @@ export default function PieChart({ data, size }: PieChartProps) {
                 stroke="hsl(var(--background))"
                 strokeWidth={strokeWidth}
               >
-                <Recharts.Cell fill="hsl(var(--a3))" />
-                <Recharts.Cell fill="hsl(var(--a4))" />
-                <Recharts.Cell fill="hsl(var(--a5))" />
+                <Recharts.Cell fill="hsl(var(--jordy-blue))" />
+                <Recharts.Cell fill="hsla(var(--jordy-blue) / 50%)" />
               </Recharts.Pie>
             </Recharts.PieChart>
           </Recharts.ResponsiveContainer>
@@ -50,9 +49,8 @@ export default function PieChart({ data, size }: PieChartProps) {
           <div key={label} className="flex flex-row items-center gap-2">
             <div
               className={cn("h-1.5 w-1.5 rounded-[1px]", {
-                "bg-a3": index === 0,
-                "bg-a4": index === 1,
-                "bg-a5": index === 2,
+                "bg-jordy-blue": index === 0,
+                "bg-jordy-blue/50": index === 1,
               })}
             />
             <p className="text-p2 text-foreground">{label}</p>
