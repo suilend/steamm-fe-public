@@ -4,7 +4,6 @@ import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 
 import BigNumber from "bignumber.js";
-import { ExternalLink } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
 import { formatUsd } from "@suilend/frontend-sui";
@@ -19,13 +18,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { ChartConfig, ChartType, chartStatNameMap } from "@/lib/chart";
-import { CREATE_URL, POOLS_URL } from "@/lib/navigation";
+import { POOLS_URL } from "@/lib/navigation";
 import {
   getFilteredPoolGroups,
   getPoolGroups,
   getPoolsWithExtraData,
 } from "@/lib/pools";
-import { cn, hoverUnderlineClassName } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 enum RhsChartStat {
   VOLUME = "volume",
@@ -189,6 +188,22 @@ export default function PoolsPage() {
         );
 
   // Search
+  // Search - all pools
+  const [allPoolsSearchString, setAllPoolsSearchString] = useState<string>("");
+  const filteredPoolGroups = getFilteredPoolGroups(
+    appData.coinMetadataMap,
+    allPoolsSearchString,
+    poolGroups,
+  );
+
+  const filteredPoolGroupsCount =
+    filteredPoolGroups === undefined
+      ? undefined
+      : filteredPoolGroups.reduce(
+          (acc, poolGroup) => acc + poolGroup.pools.length,
+          0,
+        );
+
   // Search - verified pools
   const [verifiedPoolsSearchString, setVerifiedPoolsSearchString] =
     useState<string>("");
@@ -338,19 +353,39 @@ export default function PoolsPage() {
         </div>
 
         {/* All pools */}
-        <Link
-          className="group flex w-max flex-row items-center gap-3"
-          href={POOLS_URL}
-        >
-          <h2 className="text-h3 text-foreground underline decoration-foreground/50 decoration-1 underline-offset-2 transition-colors group-hover:decoration-foreground">
-            All pools
-          </h2>
-          {poolGroupsCount === undefined ? (
-            <Skeleton className="h-5 w-12" />
-          ) : (
-            <Tag>{poolGroupsCount}</Tag>
-          )}
-        </Link>
+        <div className="flex w-full flex-col gap-6">
+          <div className="flex h-[30px] w-full flex-row items-center justify-between gap-4">
+            <div className="flex flex-row items-center gap-3">
+              <h2 className="text-h3 text-foreground">All pools</h2>
+
+              {poolGroupsCount === undefined ||
+              filteredPoolGroupsCount === undefined ? (
+                <Skeleton className="h-5 w-12" />
+              ) : (
+                <Tag>
+                  {filteredPoolGroupsCount !== poolGroupsCount && (
+                    <>
+                      {filteredPoolGroupsCount}
+                      {"/"}
+                    </>
+                  )}
+                  {poolGroupsCount}
+                </Tag>
+              )}
+            </div>
+
+            <PoolsSearchInput
+              value={allPoolsSearchString}
+              onChange={setAllPoolsSearchString}
+            />
+          </div>
+
+          <PoolsTable
+            tableId="all-pools"
+            poolGroups={filteredPoolGroups}
+            searchString={allPoolsSearchString}
+          />
+        </div>
       </div>
     </>
   );

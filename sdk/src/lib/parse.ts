@@ -91,8 +91,8 @@ export type ParsedPool = {
   suilendWeightedAverageDepositAprPercent: BigNumber;
 
   //
-  volumeUsd_24h?: BigNumber; // Used on Home and Pools pages
-  aprPercent_24h?: BigNumber; // Used on Home, Pools, and Portfolio pages
+  volumeUsd_24h?: BigNumber; // Used on Home page
+  aprPercent_24h?: BigNumber; // Used on Home and Portfolio pages
 };
 
 // Parsers

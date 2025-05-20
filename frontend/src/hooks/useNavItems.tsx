@@ -23,8 +23,8 @@ const useNavItems = () => {
   const { address } = useWalletContext();
 
   const NAV_ITEMS: NavItem[] = [
-    { url: ROOT_URL, title: "Home" },
-    { url: POOLS_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX },
+    { url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX },
+    // { url: POOLS_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX },
     { url: LAUNCH_URL, title: "Launch" },
     { url: CREATE_URL, title: "Create" },
     { url: PORTFOLIO_URL, title: "Portfolio" },
