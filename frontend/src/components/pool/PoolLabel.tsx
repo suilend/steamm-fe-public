@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 interface PoolLabelProps {
   className?: ClassValue;
   headingClassName?: ClassValue;
+  wrap?: boolean;
   isSmall?: boolean;
   isLarge?: boolean;
   pool: ParsedPool;
@@ -22,6 +23,7 @@ interface PoolLabelProps {
 export default function PoolLabel({
   className,
   headingClassName,
+  wrap,
   isSmall,
   isLarge,
   pool,
@@ -33,11 +35,16 @@ export default function PoolLabel({
 
   return (
     <div
-      className={cn("flex flex-row", isSmall ? "gap-2" : "gap-3", className)}
+      className={cn(
+        "flex flex-row",
+        !wrap && "w-max shrink-0",
+        isSmall ? "gap-2" : "gap-3",
+        className,
+      )}
     >
       <div
         className={cn(
-          "flex flex-row items-center",
+          "flex shrink-0 flex-row items-center",
           isSmall ? "h-[21px]" : isLarge ? "h-[36px]" : "h-[24px]",
         )}
       >
@@ -49,7 +56,8 @@ export default function PoolLabel({
 
       <div
         className={cn(
-          "flex flex-row flex-wrap items-center gap-y-1",
+          "flex flex-row items-center gap-y-1",
+          wrap && "flex-wrap",
           isSmall ? "gap-x-2" : "gap-x-3",
         )}
       >

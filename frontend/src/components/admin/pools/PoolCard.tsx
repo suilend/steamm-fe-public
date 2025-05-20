@@ -84,7 +84,7 @@ export default function PoolCard({ pool }: PoolCardProps) {
     <div className="flex w-full flex-col gap-3 rounded-md border p-4">
       {/* Top */}
       <div className="flex w-full flex-row justify-between gap-4">
-        <PoolLabel className="flex-1" pool={pool} />
+        <PoolLabel className="flex-1" wrap pool={pool} />
 
         <div className="flex h-6 flex-row items-center">
           <OpenUrlNewTab url={getPoolUrl(appData, pool)} />

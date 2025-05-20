@@ -143,7 +143,7 @@ function PoolPage() {
             {/* Top */}
             <div className="flex w-full flex-col max-lg:gap-6 lg:flex-row lg:items-center lg:justify-between">
               {/* Title */}
-              <PoolLabel isLarge pool={pool} />
+              <PoolLabel wrap isLarge pool={pool} />
 
               {/* Stats */}
               <div className="grid grid-cols-2 gap-6 md:flex md:flex-row md:gap-12">
