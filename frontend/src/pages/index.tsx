@@ -148,6 +148,11 @@ export default function PoolsPage() {
         ? undefined
         : poolsWithExtraData
             .filter((pool) => featuredPoolIds.includes(pool.id))
+            .sort((a, b) =>
+              featuredPoolIds.indexOf(a.id) > featuredPoolIds.indexOf(b.id)
+                ? 1
+                : -1,
+            ) // Sort by featured pool order on Launchdarkly
             .map((pool) => ({
               id: uuidv4(),
               coinTypes: pool.coinTypes,
