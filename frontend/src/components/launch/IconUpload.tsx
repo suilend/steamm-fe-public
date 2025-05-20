@@ -179,7 +179,7 @@ export default function IconUpload({
 
       <div className="flex w-full flex-row items-center gap-4">
         {/* Icon */}
-        <div className="group relative flex w-max flex-row items-center justify-center rounded-md border border-dashed">
+        <div className="group relative flex w-max flex-row items-center justify-center rounded-md border">
           {isProcessing || iconUrl ? (
             <>
               <button
@@ -189,25 +189,25 @@ export default function IconUpload({
                 <X className="h-4 w-4 text-secondary-foreground transition-colors hover:text-foreground" />
               </button>
 
-              <div className="pointer-events-none relative z-[2] flex h-24 w-24 flex-row items-center justify-center p-2">
+              <div className="pointer-events-none relative z-[2] flex h-32 w-32 flex-row items-center justify-center">
                 {isProcessing ? (
-                  <Skeleton className="h-full w-full" />
+                  <Skeleton className="h-24 w-24" />
                 ) : (
                   <Image
-                    className="h-16 w-16"
+                    className="h-24 w-24"
                     src={iconUrl}
                     alt="Icon"
-                    width={64}
-                    height={64}
+                    width={96}
+                    height={96}
                     quality={100}
                   />
                 )}
               </div>
             </>
           ) : (
-            <div className="pointer-events-none relative z-[2] flex h-24 w-24 flex-col items-center justify-center gap-0.5">
-              <p className="text-p3 text-tertiary-foreground">Drag & drop</p>
-              <p className="text-p3 text-tertiary-foreground">or browse</p>
+            <div className="pointer-events-none relative z-[2] flex h-32 w-32 flex-col items-center justify-center gap-0.5">
+              <p className="text-p2 text-secondary-foreground">Drag & drop</p>
+              <p className="text-p2 text-secondary-foreground">or browse</p>
             </div>
           )}
 

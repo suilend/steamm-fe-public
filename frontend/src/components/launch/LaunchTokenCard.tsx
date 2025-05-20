@@ -236,7 +236,7 @@ export default function LaunchTokenCard() {
     const tokenInitialPriceQuote = tokenInitialPriceUsd.div(quotePrice);
 
     return computeOptimalOffset(
-      +tokenInitialPriceQuote,
+      tokenInitialPriceQuote.toFixed(20, BigNumber.ROUND_DOWN),
       BigInt(
         depositedSupply
           .times(10 ** decimals)
