@@ -597,7 +597,7 @@ export default function LaunchTokenCard() {
                     new BigNumber(BROWSE_MAX_FILE_SIZE_BYTES / 1024 / 1024),
                     { dp: 0 },
                   )} MB.`,
-                  `256x256 or larger recommended`,
+                  `128x128 or larger recommended`,
                 ].join(" ")}
               </p>
             </div>
