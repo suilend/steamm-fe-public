@@ -174,7 +174,6 @@ export const getParsedPool = (
     bTokenTypeCoinTypeMap: Record<string, string>;
     bankMap: Record<string, ParsedBank>;
   },
-
   poolInfo: PoolInfo,
   pool: ParsedPool["pool"],
   redeemQuote: RedeemQuote,
@@ -206,6 +205,7 @@ export const getParsedPool = (
     const coinTypeA = bTokenTypeCoinTypeMap[bTokenTypeA];
     const coinTypeB = bTokenTypeCoinTypeMap[bTokenTypeB];
     const coinTypes: [string, string] = [coinTypeA, coinTypeB];
+    if (coinTypes.some((coinType) => coinType === undefined)) return undefined;
 
     const balanceA = new BigNumber(redeemQuote.withdrawA.toString()).div(
       10 ** coinMetadataMap[coinTypes[0]].decimals,
