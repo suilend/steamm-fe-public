@@ -134,6 +134,12 @@ export default function PortfolioPage() {
                     .div(poolDepositedAmountUsdMap[position.pool.id])
                     .times(100)
                 : undefined,
+            pnlUsd:
+              poolDepositedAmountUsdMap?.[position.pool.id] !== undefined
+                ? position.balanceUsd.minus(
+                    poolDepositedAmountUsdMap[position.pool.id],
+                  )
+                : undefined,
           })),
     [poolPositions, poolDepositedAmountUsdMap],
   );

@@ -12,11 +12,11 @@ export type Column =
   | "pool"
   | "aprPercent_24h"
   | "balance"
-  | "pnlPercent"
+  | "pnl"
   | "stakedPercent"
   | "claimableRewards"
   | "points";
-type SortableColumn = "aprPercent_24h" | "balance" | "pnlPercent";
+type SortableColumn = "aprPercent_24h" | "balance" | "pnl";
 
 interface PoolPositionsTableProps {
   poolPositions?: PoolPosition[];
@@ -58,7 +58,7 @@ export default function PoolPositionsTable({
           paddingRight: 4 * 5, // px
         },
       },
-      pnlPercent: {
+      pnl: {
         cell: {
           textAlign: "right",
         },
@@ -129,8 +129,8 @@ export default function PoolPositionsTable({
         !poolPositions.every(
           (position) => position.balanceUsd !== undefined,
         )) ||
-      (sortState.column === "pnlPercent" &&
-        !poolPositions.every((position) => position.pnlPercent !== undefined))
+      (sortState.column === "pnl" &&
+        !poolPositions.every((position) => position.pnlUsd !== undefined))
     )
       return poolPositions;
 
@@ -147,10 +147,10 @@ export default function PoolPositionsTable({
         return sortState.direction === SortDirection.DESC
           ? +(b.balanceUsd as BigNumber).minus(a.balanceUsd as BigNumber)
           : +(a.balanceUsd as BigNumber).minus(b.balanceUsd as BigNumber);
-      } else if (sortState.column === "pnlPercent") {
+      } else if (sortState.column === "pnl") {
         return sortState.direction === SortDirection.DESC
-          ? +(b.pnlPercent as BigNumber).minus(a.pnlPercent as BigNumber)
-          : +(a.pnlPercent as BigNumber).minus(b.pnlPercent as BigNumber);
+          ? +(b.pnlUsd as BigNumber).minus(a.pnlUsd as BigNumber)
+          : +(a.pnlUsd as BigNumber).minus(b.pnlUsd as BigNumber);
       }
 
       return 0; // Should never reach here
@@ -204,17 +204,17 @@ export default function PoolPositionsTable({
               </HeaderColumn>
 
               <HeaderColumn<Column, SortableColumn>
-                id="pnlPercent"
+                id="pnl"
                 tooltip="PnL is the difference between your current balance and the net amount deposited."
                 sortState={sortState}
                 toggleSortByColumn={
                   !!(poolPositions ?? []).every(
-                    (position) => position.pnlPercent !== undefined,
+                    (position) => position.pnlUsd !== undefined,
                   )
                     ? toggleSortByColumn
                     : undefined
                 }
-                style={columnStyleMap.pnlPercent}
+                style={columnStyleMap.pnl}
               >
                 PnL
               </HeaderColumn>

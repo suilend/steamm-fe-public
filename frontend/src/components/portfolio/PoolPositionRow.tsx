@@ -230,24 +230,44 @@ export default function PoolPositionRow({
       </td>
 
       {/* PnL */}
-      <td className="whitespace-nowrap" style={columnStyleMap.pnlPercent.cell}>
+      <td className="whitespace-nowrap" style={columnStyleMap.pnl.cell}>
         <div
           className="flex min-w-max flex-row items-center py-4"
-          style={columnStyleMap.pnlPercent.children}
+          style={columnStyleMap.pnl.children}
         >
-          {poolPosition.pnlPercent === undefined ? (
-            <Skeleton className="h-[24px] w-16" />
-          ) : (
-            <p
-              className={cn(
-                "!text-p1",
-                poolPosition.pnlPercent.gte(0) ? "text-success" : "text-error",
-              )}
-            >
-              {poolPosition.pnlPercent.gte(0) ? "+" : "-"}
-              {formatPercent(new BigNumber(poolPosition.pnlPercent.abs()))}
-            </p>
-          )}
+          <div className="flex flex-row items-center gap-2">
+            {poolPosition.pnlUsd === undefined ? (
+              <Skeleton className="h-[24px] w-16" />
+            ) : (
+              <p
+                className={cn(
+                  "!text-p1",
+                  poolPosition.pnlUsd.gte(0) ? "text-success" : "text-error",
+                )}
+              >
+                {poolPosition.pnlUsd.gte(0) ? "+" : "-"}
+                {formatUsd(poolPosition.pnlUsd)}
+              </p>
+            )}
+
+            <p className="text-p2 text-secondary-foreground">/</p>
+
+            {poolPosition.pnlPercent === undefined ? (
+              <Skeleton className="h-[24px] w-16" />
+            ) : (
+              <p
+                className={cn(
+                  "!text-p1",
+                  poolPosition.pnlPercent.gte(0)
+                    ? "text-success/75"
+                    : "text-error/75",
+                )}
+              >
+                {poolPosition.pnlPercent.gte(0) ? "+" : "-"}
+                {formatPercent(poolPosition.pnlPercent.abs())}
+              </p>
+            )}
+          </div>
         </div>
       </td>
 

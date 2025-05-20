@@ -129,6 +129,7 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
                 balances,
                 balanceUsd,
                 pnlPercent: undefined, // Fetched separately (BE)
+                pnlUsd: undefined, // Fetched separately (BE)
                 stakedPercent,
                 claimableRewards: Object.fromEntries(
                   Object.entries(userData.poolRewardMap[pool.id] ?? {}).filter(
