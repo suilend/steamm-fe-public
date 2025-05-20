@@ -17,7 +17,6 @@ import {
 import { ParsedPool } from "@suilend/steamm-sdk";
 
 import BreakdownRow from "@/components/BreakdownRow";
-import SuilendLogo from "@/components/SuilendLogo";
 import TokenLogo from "@/components/TokenLogo";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";

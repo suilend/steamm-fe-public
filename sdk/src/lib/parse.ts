@@ -292,13 +292,15 @@ export const getParsedPool = (
           })
         : [new BigNumber(0), new BigNumber(0)]
     ) as [BigNumber, BigNumber];
-    const suilendWeightedAverageDepositAprPercent = suilendDepositAprPercents
-      .reduce(
-        (acc, aprPercent, index) =>
-          acc.plus(aprPercent.times(prices[index].times(balances[index]))),
-        new BigNumber(0),
-      )
-      .div(tvlUsd);
+    const suilendWeightedAverageDepositAprPercent = tvlUsd.gt(0)
+      ? suilendDepositAprPercents
+          .reduce(
+            (acc, aprPercent, index) =>
+              acc.plus(aprPercent.times(prices[index].times(balances[index]))),
+            new BigNumber(0),
+          )
+          .div(tvlUsd)
+      : new BigNumber(0);
 
     return {
       id,
