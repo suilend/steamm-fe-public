@@ -24,7 +24,11 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
         await Promise.all(
           pools.map((pool) =>
             (async () => {
-              if (pool.tvlUsd.eq(0)) {
+              const isCpmmOffsetPool =
+                pool.quoterId === QuoterId.CPMM &&
+                (pool.pool.quoter as CpQuoter).offset.toString() !== "0"; // 0+ quote assets
+
+              if (!isCpmmOffsetPool && pool.tvlUsd.eq(0)) {
                 setPoolCurrentPriceQuoteMap((prev) => ({
                   ...prev,
                   [pool.id]: {
@@ -39,10 +43,6 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
                 }));
                 return;
               }
-
-              const isCpmmOffsetPool =
-                pool.quoterId === QuoterId.CPMM &&
-                (pool.pool.quoter as CpQuoter).offset.toString() !== "0"; // 0+ quote assets
 
               const submitAmount = (
                 isCpmmOffsetPool
@@ -76,6 +76,12 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
                 swapQuote.amountIn = amountOut;
                 swapQuote.amountOut = amountIn;
               }
+
+              if (
+                pool.id ===
+                "0x8e81042fc5d2f65bcd69adcb396ef4c9d5d2cf566bda3d3be4ef11715628e7fe"
+              )
+                console.log("XXX", pool.id, swapQuote);
 
               setPoolCurrentPriceQuoteMap((prev) => ({
                 ...prev,
