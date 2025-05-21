@@ -522,11 +522,7 @@ export class SteammSDK {
           reserveMap: lmMarket_reserveMap,
 
           rewardCoinMetadataMap: lmMarket_rewardCoinMetadataMap,
-        } = await initializeSuilend(
-          this.fullClient,
-          lmMarket_suilendClient,
-          {},
-        );
+        } = await initializeSuilend(this.fullClient, lmMarket_suilendClient);
 
         return {
           mainMarket: {
