@@ -57,6 +57,8 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
 
   const fetchRefreshedPool = useCallback(
     async (_poolInfo: PoolInfo) => {
+      console.log("[fetchRefreshedPool] poolId:", _poolInfo.poolId);
+
       try {
         const pool = await fetchPool(steammClient, _poolInfo);
         const redeemQuote =

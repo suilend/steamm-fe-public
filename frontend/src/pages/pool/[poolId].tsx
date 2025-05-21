@@ -58,6 +58,23 @@ function PoolPage() {
     [poolCurrentPriceQuoteMap, pool.id],
   );
 
+  // Refresh pool and current price (every 30s)
+  const refreshPoolIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    if (refreshPoolIntervalRef.current)
+      clearInterval(refreshPoolIntervalRef.current);
+
+    refreshPoolIntervalRef.current = setInterval(() => {
+      fetchRefreshedPool(pool.poolInfo);
+      fetchPoolCurrentPriceQuote([pool.id]);
+    }, 30 * 1000);
+
+    return () => {
+      if (refreshPoolIntervalRef.current)
+        clearInterval(refreshPoolIntervalRef.current);
+    };
+  }, [fetchRefreshedPool, pool.poolInfo, fetchPoolCurrentPriceQuote, pool.id]);
+
   // Transaction history
   const { poolTransactionHistoryMap, fetchPoolTransactionHistoryMap } =
     usePoolTransactionHistoryMap([pool.id]);

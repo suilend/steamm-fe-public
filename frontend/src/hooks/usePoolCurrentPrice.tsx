@@ -18,6 +18,8 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
 
   const fetchPoolCurrentPriceQuote = useCallback(
     async (_poolIds: string[]) => {
+      console.log("[fetchPoolCurrentPriceQuote] - poolIds:", _poolIds);
+
       const pools = appData.pools.filter((pool) => _poolIds.includes(pool.id));
 
       try {
