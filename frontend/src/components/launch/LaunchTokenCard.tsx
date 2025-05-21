@@ -417,6 +417,11 @@ export default function LaunchTokenCard() {
       return { isDisabled: true, title: "Symbol cannot contain spaces" };
     if (/^\d/.test(symbol))
       return { isDisabled: true, title: "Symbol cannot start with a number" };
+    if (/[^A-Z0-9]/.test(symbol))
+      return {
+        isDisabled: true,
+        title: "Symbol cannot contain special characters",
+      };
     if (symbol.length < 1 || symbol.length > 8)
       return {
         isDisabled: true,
