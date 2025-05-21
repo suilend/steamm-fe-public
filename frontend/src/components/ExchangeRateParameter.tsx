@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { ArrowRightLeft } from "lucide-react";
 
-import { Token, formatToken, formatUsd } from "@suilend/frontend-sui";
+import { Token, formatPrice, formatToken } from "@suilend/frontend-sui";
 import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 
 import Parameter from "@/components/Parameter";
@@ -99,11 +99,10 @@ export default function ExchangeRateParameter({
                 priceLabelClassName,
               )}
             >
-              {formatUsd(
+              {formatPrice(
                 !isInverted
                   ? outPrice.times(quoteRatio!)
                   : inPrice.times(reversedQuoteRatio!),
-                { exact: true },
               )}
             </p>
           )}

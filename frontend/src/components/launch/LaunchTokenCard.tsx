@@ -224,6 +224,42 @@ export default function LaunchTokenCard() {
     }
   }, []);
 
+  // State - token - initial MC
+  const [initialMarketCapRaw, setInitialMarketCapRaw] = useState<string>(
+    INITIAL_TOKEN_MC_USD.toString(),
+  );
+  const [initialMarketCap, setInitialMarketCap] =
+    useState<number>(INITIAL_TOKEN_MC_USD);
+
+  const onInitialMarketCapChange = useCallback((value: string) => {
+    const formattedValue = formatTextInputValue(value, 2);
+    setInitialMarketCapRaw(formattedValue);
+
+    try {
+      if (formattedValue === "") return;
+      if (isNaN(+formattedValue))
+        throw new Error("Initial market cap must be a number");
+      if (new BigNumber(formattedValue).lt(1))
+        throw new Error(
+          `Initial market cap must be at least ${formatUsd(new BigNumber(1), {
+            dp: 0,
+          })}`,
+        );
+      if (new BigNumber(formattedValue).gt(10 ** 9))
+        throw new Error(
+          `Initial market cap must be at most ${formatUsd(
+            new BigNumber(10 ** 9),
+            { dp: 0 },
+          )}`,
+        );
+
+      setInitialMarketCap(+formattedValue);
+    } catch (err) {
+      console.error(err);
+      showErrorToast("Invalid initial market cap", err as Error);
+    }
+  }, []);
+
   // State - pool - quote asset
   const getQuotePrice = useCallback(
     (coinType: string) =>
@@ -284,7 +320,7 @@ export default function LaunchTokenCard() {
 
     const quotePrice = getQuotePrice(quoteToken.coinType)!;
 
-    const tokenInitialPriceUsd = new BigNumber(INITIAL_TOKEN_MC_USD).div(
+    const tokenInitialPriceUsd = new BigNumber(initialMarketCap).div(
       depositedSupply,
     );
     const tokenInitialPriceQuote = tokenInitialPriceUsd.div(quotePrice);
@@ -300,7 +336,14 @@ export default function LaunchTokenCard() {
       decimals,
       quoteToken.decimals,
     );
-  }, [quoteToken, supply, depositedSupplyPercent, getQuotePrice, decimals]);
+  }, [
+    quoteToken,
+    supply,
+    depositedSupplyPercent,
+    getQuotePrice,
+    initialMarketCap,
+    decimals,
+  ]);
 
   // Submit
   const reset = () => {
@@ -334,6 +377,8 @@ export default function LaunchTokenCard() {
     setSupply(DEFAULT_TOKEN_SUPPLY);
     setDepositedSupplyPercentRaw(DEPOSITED_TOKEN_PERCENT.toString());
     setDepositedSupplyPercent(DEPOSITED_TOKEN_PERCENT);
+    setInitialMarketCapRaw(INITIAL_TOKEN_MC_USD.toString());
+    setInitialMarketCap(INITIAL_TOKEN_MC_USD);
 
     // Pool
     setQuoteAssetCoinType(undefined);
@@ -743,18 +788,32 @@ export default function LaunchTokenCard() {
                 />
               </div>
 
-              {/* Optional - Deposited supply % */}
               {isWhitelisted && (
-                <div className="flex w-full flex-col gap-2">
-                  <p className="text-p2 text-secondary-foreground">
-                    Deposited supply %
-                  </p>
-                  <PercentInput
-                    placeholder={depositedSupplyPercent.toString()}
-                    value={depositedSupplyPercentRaw}
-                    onChange={onDepositedSupplyPercentChange}
-                  />
-                </div>
+                <>
+                  {/* Optional - Deposited supply % */}
+                  <div className="flex w-full flex-col gap-2">
+                    <p className="text-p2 text-secondary-foreground">
+                      Deposited supply %
+                    </p>
+                    <PercentInput
+                      placeholder={depositedSupplyPercent.toString()}
+                      value={depositedSupplyPercentRaw}
+                      onChange={onDepositedSupplyPercentChange}
+                    />
+                  </div>
+
+                  {/* Optional - Initial market cap % */}
+                  <div className="flex w-full flex-col gap-2">
+                    <p className="text-p2 text-secondary-foreground">
+                      Initial market cap ($)
+                    </p>
+                    <TextInput
+                      placeholder={initialMarketCap.toString()}
+                      value={initialMarketCapRaw}
+                      onChange={onInitialMarketCapChange}
+                    />
+                  </div>
+                </>
               )}
 
               {/* Optional - Burn LP tokens */}
@@ -812,7 +871,7 @@ export default function LaunchTokenCard() {
             {/* Initial MC */}
             <Parameter label="Initial market cap (MC)" isHorizontal>
               <p className="text-p2 text-foreground">
-                {formatUsd(new BigNumber(INITIAL_TOKEN_MC_USD))}
+                {formatUsd(new BigNumber(initialMarketCap))}
               </p>
             </Parameter>
           </div>
