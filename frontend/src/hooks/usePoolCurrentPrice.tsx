@@ -5,6 +5,7 @@ import { BigNumber } from "bignumber.js";
 
 import { showErrorToast } from "@suilend/frontend-sui-next";
 import { QuoterId, SwapQuote } from "@suilend/steamm-sdk";
+import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
 
 import { useLoadedAppContext } from "@/contexts/AppContext";
 
@@ -23,13 +24,28 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
         await Promise.all(
           pools.map((pool) =>
             (async () => {
-              const hasNoQuoteAssets =
+              if (pool.tvlUsd.eq(0)) {
+                setPoolCurrentPriceQuoteMap((prev) => ({
+                  ...prev,
+                  [pool.id]: {
+                    a2b: true,
+                    amountIn: BigInt(1),
+                    amountOut: BigInt(0),
+                    outputFees: {
+                      protocolFees: BigInt(0),
+                      poolFees: BigInt(0),
+                    },
+                  },
+                }));
+                return;
+              }
+
+              const isCpmmOffsetPool =
                 pool.quoterId === QuoterId.CPMM &&
-                pool.balances[0].gt(0) &&
-                pool.balances[1].eq(0); // New tokens launched on STEAMM (CPMM with offset, 0 quote assets)
+                (pool.pool.quoter as CpQuoter).offset.toString() !== "0"; // 0+ quote assets
 
               const submitAmount = (
-                hasNoQuoteAssets
+                isCpmmOffsetPool
                   ? new BigNumber(1).div(pool.prices[1]) // $1 of quote token
                   : BigNumber.min(
                       pool.balances[0].times(0.1), // 10% of pool balanceA
@@ -39,20 +55,20 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
                 .times(
                   10 **
                     appData.coinMetadataMap[
-                      pool.coinTypes[hasNoQuoteAssets ? 1 : 0]
+                      pool.coinTypes[isCpmmOffsetPool ? 1 : 0]
                     ].decimals,
                 )
                 .integerValue(BigNumber.ROUND_DOWN)
                 .toString();
 
               const swapQuote = await steammClient.Pool.quoteSwap({
-                a2b: !hasNoQuoteAssets,
+                a2b: !isCpmmOffsetPool,
                 amountIn: BigInt(submitAmount),
                 poolInfo: pool.poolInfo,
                 bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
                 bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
               });
-              if (hasNoQuoteAssets) {
+              if (isCpmmOffsetPool) {
                 const amountIn = swapQuote.amountIn;
                 const amountOut = swapQuote.amountOut;
 

@@ -8,7 +8,9 @@ import {
   QUOTER_ID_NAME_MAP,
   QuoterId,
   SteammSDK,
+  SwapQuote,
 } from "@suilend/steamm-sdk";
+import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
 
 import { AppData } from "@/contexts/AppContext";
 import { StatsContext } from "@/contexts/StatsContext";
@@ -166,4 +168,59 @@ export const getFilteredPoolGroups = (
           .includes(searchString.toLowerCase()),
       ),
     }));
+};
+
+export const fetchPoolCurrentPriceQuote = async (
+  steammClient: SteammSDK,
+  { coinMetadataMap, bankMap }: Pick<AppData, "coinMetadataMap" | "bankMap">,
+  pool: ParsedPool,
+): Promise<SwapQuote> => {
+  const isCpmmOffsetPool =
+    pool.quoterId === QuoterId.CPMM &&
+    (pool.pool.quoter as CpQuoter).offset.toString() !== "0"; // 0+ quote assets
+
+  if (!isCpmmOffsetPool && pool.tvlUsd.eq(0)) {
+    const swapQuote = {
+      a2b: true,
+      amountIn: BigInt(1),
+      amountOut: BigInt(0),
+      outputFees: {
+        protocolFees: BigInt(0),
+        poolFees: BigInt(0),
+      },
+    };
+    return swapQuote;
+  }
+
+  const submitAmount = (
+    isCpmmOffsetPool
+      ? new BigNumber(1).div(pool.prices[1]) // $1 of quote token
+      : BigNumber.min(
+          pool.balances[0].times(0.1), // 10% of pool balanceA
+          new BigNumber(1).div(pool.prices[0]), // $1 of base token
+        )
+  )
+    .times(
+      10 ** coinMetadataMap[pool.coinTypes[isCpmmOffsetPool ? 1 : 0]].decimals,
+    )
+    .integerValue(BigNumber.ROUND_DOWN)
+    .toString();
+
+  const swapQuote = await steammClient.Pool.quoteSwap({
+    a2b: !isCpmmOffsetPool,
+    amountIn: BigInt(submitAmount),
+    poolInfo: pool.poolInfo,
+    bankInfoA: bankMap[pool.coinTypes[0]].bankInfo,
+    bankInfoB: bankMap[pool.coinTypes[1]].bankInfo,
+  });
+  if (isCpmmOffsetPool) {
+    const amountIn = swapQuote.amountIn;
+    const amountOut = swapQuote.amountOut;
+
+    swapQuote.a2b = true;
+    swapQuote.amountIn = amountOut;
+    swapQuote.amountOut = amountIn;
+  }
+
+  return swapQuote;
 };

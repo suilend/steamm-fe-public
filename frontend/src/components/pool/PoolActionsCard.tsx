@@ -33,6 +33,7 @@ import {
   SteammSDK,
   SwapQuote,
 } from "@suilend/steamm-sdk";
+import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
@@ -147,13 +148,15 @@ function DepositTab({ onDeposit }: DepositTabProps) {
       [0, 1].map((_index) =>
         _index === index
           ? formatTextInputValue(_value, dps[_index])
-          : formatTextInputValue(
-              new BigNumber(_value || 0)
-                .div(pool.balances[1 - _index])
-                .times(pool.balances[_index])
-                .toFixed(dps[_index], BigNumber.ROUND_DOWN),
-              dps[_index],
-            ),
+          : pool.tvlUsd.eq(0)
+            ? values[_index]
+            : formatTextInputValue(
+                new BigNumber(_value || 0)
+                  .div(pool.balances[1 - _index])
+                  .times(pool.balances[_index])
+                  .toFixed(dps[_index], BigNumber.ROUND_DOWN),
+                dps[_index],
+              ),
       ) as [string, string],
     );
     setLastActiveInputIndex(index);
@@ -171,9 +174,11 @@ function DepositTab({ onDeposit }: DepositTabProps) {
           [_index === 0 ? "depositA" : "depositB"]: BigInt(
             (_index === index
               ? new BigNumber(_value || 0)
-              : new BigNumber(_value || 0)
-                  .div(pool.balances[1 - _index])
-                  .times(pool.balances[_index])
+              : pool.tvlUsd.eq(0)
+                ? new BigNumber(values[_index] || 0)
+                : new BigNumber(_value || 0)
+                    .div(pool.balances[1 - _index])
+                    .times(pool.balances[_index])
             )
               .times(10 ** dps[_index])
               .integerValue(BigNumber.ROUND_DOWN)
@@ -1079,10 +1084,10 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
 
 interface SwapTabProps {
   onSwap: () => void;
-  hasNoQuoteAssets: boolean;
+  isCpmmOffsetPoolWithNoQuoteAssets: boolean;
 }
 
-function SwapTab({ onSwap, hasNoQuoteAssets }: SwapTabProps) {
+function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
   const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
@@ -1091,7 +1096,7 @@ function SwapTab({ onSwap, hasNoQuoteAssets }: SwapTabProps) {
 
   // CoinTypes
   const [activeCoinIndex, setActiveCoinIndex] = useState<0 | 1>(
-    hasNoQuoteAssets ? 1 : 0,
+    isCpmmOffsetPoolWithNoQuoteAssets ? 1 : 0,
   );
   const activeCoinType = pool.coinTypes[activeCoinIndex];
   const activeCoinMetadata = appData.coinMetadataMap[activeCoinType];
@@ -1444,7 +1449,7 @@ function SwapTab({ onSwap, hasNoQuoteAssets }: SwapTabProps) {
       <div
         className={cn(
           "relative flex w-full min-w-0 flex-col items-center",
-          hasNoQuoteAssets ? "gap-4" : "gap-2",
+          isCpmmOffsetPoolWithNoQuoteAssets ? "gap-4" : "gap-2",
         )}
       >
         <CoinInput
@@ -1456,7 +1461,9 @@ function SwapTab({ onSwap, hasNoQuoteAssets }: SwapTabProps) {
           onMaxAmountClick={() => onBalanceClick()}
         />
 
-        {!hasNoQuoteAssets && <ReverseAssetsButton onClick={reverseAssets} />}
+        {!isCpmmOffsetPoolWithNoQuoteAssets && (
+          <ReverseAssetsButton onClick={reverseAssets} />
+        )}
 
         <CoinInput
           className="relative z-[1]"
@@ -1587,28 +1594,34 @@ export default function PoolActionsCard({
 
   const { pool } = usePoolContext();
 
-  const hasNoQuoteAssets =
-    pool.quoterId === QuoterId.CPMM &&
-    pool.balances[0].gt(0) &&
-    pool.balances[1].eq(0); // New tokens launched on STEAMM (CPMM with offset, 0 quote assets)
+  const isCpmmOffsetPool = useMemo(
+    () =>
+      pool.quoterId === QuoterId.CPMM &&
+      (pool.pool.quoter as CpQuoter).offset.toString() !== "0", // 0+ quote assets
+    [pool.quoterId, pool.pool.quoter],
+  );
+  const isCpmmOffsetPoolWithNoQuoteAssets = useMemo(
+    () => isCpmmOffsetPool && pool.balances[1].eq(0),
+    [isCpmmOffsetPool, pool.balances],
+  );
 
   // Tabs
   const selectedAction =
     queryParams[QueryParams.ACTION] &&
     Object.values(Action).includes(queryParams[QueryParams.ACTION])
       ? queryParams[QueryParams.ACTION]
-      : hasNoQuoteAssets
+      : isCpmmOffsetPoolWithNoQuoteAssets
         ? Action.SWAP
         : Action.DEPOSIT;
   useEffect(() => {
-    if (hasNoQuoteAssets) {
+    if (isCpmmOffsetPoolWithNoQuoteAssets) {
       if (queryParams[QueryParams.ACTION] !== Action.SWAP)
         shallowReplaceQuery(router, {
           ...router.query,
           [QueryParams.ACTION]: Action.SWAP,
         });
     }
-  }, [queryParams, hasNoQuoteAssets, router]);
+  }, [queryParams, isCpmmOffsetPoolWithNoQuoteAssets, router]);
   const onSelectedActionChange = (action: Action) => {
     shallowPushQuery(router, { ...router.query, [QueryParams.ACTION]: action });
   };
@@ -1619,17 +1632,16 @@ export default function PoolActionsCard({
         {/* Tabs */}
         <div className="flex flex-row">
           {Object.values(Action).map((action) => {
-            if (action === Action.DEPOSIT && hasNoQuoteAssets) return null;
-            if (
-              action === Action.WITHDRAW &&
-              (hasNoQuoteAssets || pool.tvlUsd.eq(0))
-            )
-              return null;
-            if (
-              action === Action.SWAP &&
-              !(hasNoQuoteAssets || !pool.tvlUsd.eq(0))
-            )
-              return null;
+            if (action === Action.DEPOSIT) {
+              if (isCpmmOffsetPoolWithNoQuoteAssets) return null;
+            }
+            if (action === Action.WITHDRAW) {
+              if (isCpmmOffsetPoolWithNoQuoteAssets || pool.tvlUsd.eq(0))
+                return null;
+            }
+            if (action === Action.SWAP) {
+              if (!isCpmmOffsetPool && pool.tvlUsd.eq(0)) return null;
+            }
 
             return (
               <button
@@ -1666,16 +1678,22 @@ export default function PoolActionsCard({
         <SlippagePopover />
       </div>
 
-      {selectedAction === Action.DEPOSIT && !hasNoQuoteAssets && (
-        <DepositTab onDeposit={onDeposit} />
-      )}
+      {selectedAction === Action.DEPOSIT &&
+        !isCpmmOffsetPoolWithNoQuoteAssets && (
+          <DepositTab onDeposit={onDeposit} />
+        )}
       {selectedAction === Action.WITHDRAW &&
-        !(hasNoQuoteAssets || pool.tvlUsd.eq(0)) && (
+        !(isCpmmOffsetPoolWithNoQuoteAssets || pool.tvlUsd.eq(0)) && (
           <WithdrawTab onWithdraw={onWithdraw} />
         )}
       {selectedAction === Action.SWAP &&
-        !!(hasNoQuoteAssets || !pool.tvlUsd.eq(0)) && (
-          <SwapTab onSwap={onSwap} hasNoQuoteAssets={hasNoQuoteAssets} />
+        !(!isCpmmOffsetPool && pool.tvlUsd.eq(0)) && (
+          <SwapTab
+            onSwap={onSwap}
+            isCpmmOffsetPoolWithNoQuoteAssets={
+              isCpmmOffsetPoolWithNoQuoteAssets
+            }
+          />
         )}
     </div>
   );
