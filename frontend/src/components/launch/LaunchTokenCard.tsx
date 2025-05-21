@@ -283,7 +283,8 @@ export default function LaunchTokenCard() {
             (isSend(coinType) ||
               isSui(coinType) ||
               isStablecoin(coinType) ||
-              Object.keys(appData.lstAprPercentMap).includes(coinType)) &&
+              Object.keys(appData.lstAprPercentMap).includes(coinType) ||
+              appData.coinTypeOracleInfoPriceMap[coinType] !== undefined) &&
             getQuotePrice(coinType) !== undefined,
         )
         .filter(([coinType]) => getBalance(coinType).gt(0))
@@ -293,9 +294,10 @@ export default function LaunchTokenCard() {
         ),
     [
       balancesCoinMetadataMap,
+      appData.lstAprPercentMap,
+      appData.coinTypeOracleInfoPriceMap,
       getQuotePrice,
       getBalance,
-      appData.lstAprPercentMap,
     ],
   );
 

@@ -291,10 +291,16 @@ export default function CreatePoolCard() {
           (isSend(token.coinType) ||
             isSui(token.coinType) ||
             isStablecoin(token.coinType) ||
-            Object.keys(appData.lstAprPercentMap).includes(token.coinType)) &&
+            Object.keys(appData.lstAprPercentMap).includes(token.coinType) ||
+            appData.coinTypeOracleInfoPriceMap[token.coinType] !== undefined) &&
           getQuotePrice(token.coinType) !== undefined,
       ),
-    [baseTokens, appData.lstAprPercentMap, getQuotePrice],
+    [
+      baseTokens,
+      appData.lstAprPercentMap,
+      appData.coinTypeOracleInfoPriceMap,
+      getQuotePrice,
+    ],
   );
 
   const onSelectToken = (token: Token, index: number) => {
