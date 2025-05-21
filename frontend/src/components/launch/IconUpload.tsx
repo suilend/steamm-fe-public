@@ -189,12 +189,12 @@ export default function IconUpload({
                 <X className="h-4 w-4 text-secondary-foreground transition-colors hover:text-foreground" />
               </button>
 
-              <div className="pointer-events-none relative z-[2] flex h-32 w-32 flex-row items-center justify-center">
+              <div className="pointer-events-none relative z-[2] flex h-24 w-24 flex-row items-center justify-center">
                 {isProcessing ? (
-                  <Skeleton className="h-24 w-24" />
+                  <Skeleton className="h-16 w-16" />
                 ) : (
                   <Image
-                    className="h-24 w-24"
+                    className="h-16 w-16"
                     src={iconUrl}
                     alt="Icon"
                     width={96}
@@ -205,9 +205,9 @@ export default function IconUpload({
               </div>
             </>
           ) : (
-            <div className="pointer-events-none relative z-[2] flex h-32 w-32 flex-col items-center justify-center gap-0.5">
-              <p className="text-p2 text-secondary-foreground">Drag & drop</p>
-              <p className="text-p2 text-secondary-foreground">or browse</p>
+            <div className="pointer-events-none relative z-[2] flex h-24 w-24 flex-col items-center justify-center gap-0.5">
+              <p className="text-p3 text-secondary-foreground">Drag & drop</p>
+              <p className="text-p3 text-secondary-foreground">or browse</p>
             </div>
           )}
 

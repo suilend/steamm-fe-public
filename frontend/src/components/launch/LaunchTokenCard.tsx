@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
+import { useFlags } from "launchdarkly-react-client-sdk";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import {
@@ -28,6 +29,7 @@ import Divider from "@/components/Divider";
 import IconUpload from "@/components/launch/IconUpload";
 import LaunchTokenStepsDialog from "@/components/launch/LaunchTokenStepsDialog";
 import Parameter from "@/components/Parameter";
+import PercentInput from "@/components/PercentInput";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
 import TextInput from "@/components/TextInput";
@@ -44,7 +46,11 @@ import {
   getBTokenAndBankForToken,
   hasBTokenAndBankForToken,
 } from "@/lib/createPool";
-import { formatPair, formatTextInputValue } from "@/lib/format";
+import {
+  formatPair,
+  formatPercentInputValue,
+  formatTextInputValue,
+} from "@/lib/format";
 import {
   BLACKLISTED_WORDS,
   BROWSE_MAX_FILE_SIZE_BYTES,
@@ -69,6 +75,16 @@ export default function LaunchTokenCard() {
   const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
+  const flags = useFlags();
+  const isWhitelisted = useMemo(
+    () =>
+      !!address &&
+      (address === ADMIN_ADDRESS ||
+        (flags?.steammCreatePoolWhitelist ?? []).includes(address)),
+    [address, flags?.steammCreatePoolWhitelist],
+  );
+
+  // LST
   const isLst = useCallback(
     (coinType: string) =>
       Object.keys(appData.lstAprPercentMap).includes(coinType),
@@ -171,6 +187,43 @@ export default function LaunchTokenCard() {
     [decimals],
   );
 
+  // State - token - deposited supply %
+  const [depositedSupplyPercentRaw, setDepositedSupplyPercentRaw] =
+    useState<string>(DEPOSITED_TOKEN_PERCENT.toString());
+  const [depositedSupplyPercent, setDepositedSupplyPercent] = useState<number>(
+    DEPOSITED_TOKEN_PERCENT,
+  );
+
+  const onDepositedSupplyPercentChange = useCallback((value: string) => {
+    const formattedValue = formatPercentInputValue(value, 2);
+    setDepositedSupplyPercentRaw(formattedValue);
+
+    try {
+      if (formattedValue === "") return;
+      if (isNaN(+formattedValue))
+        throw new Error("Deposited supply % must be a number");
+      if (new BigNumber(formattedValue).lt(1))
+        throw new Error(
+          `Deposited supply % must be at least ${formatPercent(
+            new BigNumber(1),
+            { dp: 0 },
+          )}`,
+        );
+      if (new BigNumber(formattedValue).gt(100))
+        throw new Error(
+          `Deposited supply % must be at most ${formatPercent(
+            new BigNumber(100),
+            { dp: 0 },
+          )}`,
+        );
+
+      setDepositedSupplyPercent(+formattedValue);
+    } catch (err) {
+      console.error(err);
+      showErrorToast("Invalid deposited supply %", err as Error);
+    }
+  }, []);
+
   // State - pool - quote asset
   const getQuotePrice = useCallback(
     (coinType: string) =>
@@ -221,11 +274,12 @@ export default function LaunchTokenCard() {
   // State - pool - burn LP tokens
   const [burnLpTokens, setBurnLpTokens] = useState<boolean>(false);
 
+  // Offset
   const offset: bigint | undefined = useMemo(() => {
     if (quoteToken === undefined) return undefined;
 
     const depositedSupply = new BigNumber(supply)
-      .times(DEPOSITED_TOKEN_PERCENT)
+      .times(depositedSupplyPercent)
       .div(100);
 
     const quotePrice = getQuotePrice(quoteToken.coinType)!;
@@ -246,7 +300,7 @@ export default function LaunchTokenCard() {
       decimals,
       quoteToken.decimals,
     );
-  }, [quoteToken, supply, getQuotePrice, decimals]);
+  }, [quoteToken, supply, depositedSupplyPercent, getQuotePrice, decimals]);
 
   // Submit
   const reset = () => {
@@ -278,6 +332,8 @@ export default function LaunchTokenCard() {
     setDecimals(DEFAULT_TOKEN_DECIMALS);
     setSupplyRaw(DEFAULT_TOKEN_SUPPLY.toString());
     setSupply(DEFAULT_TOKEN_SUPPLY);
+    setDepositedSupplyPercentRaw(DEPOSITED_TOKEN_PERCENT.toString());
+    setDepositedSupplyPercent(DEPOSITED_TOKEN_PERCENT);
 
     // Pool
     setQuoteAssetCoinType(undefined);
@@ -348,6 +404,10 @@ export default function LaunchTokenCard() {
 
     // Supply
     if (supplyRaw === "") return { isDisabled: true, title: "Enter a supply" };
+
+    // Deposited supply %
+    if (depositedSupplyPercentRaw === "")
+      return { isDisabled: true, title: "Enter deposited supply %" };
 
     //
 
@@ -491,7 +551,7 @@ export default function LaunchTokenCard() {
       // 5) Create pool and deposit initial liquidity (1 transaction)
       const values = [
         new BigNumber(supply)
-          .times(DEPOSITED_TOKEN_PERCENT)
+          .times(depositedSupplyPercent)
           .div(100)
           .toFixed(decimals, BigNumber.ROUND_DOWN),
         "0",
@@ -683,6 +743,20 @@ export default function LaunchTokenCard() {
                 />
               </div>
 
+              {/* Optional - Deposited supply % */}
+              {isWhitelisted && (
+                <div className="flex w-full flex-col gap-2">
+                  <p className="text-p2 text-secondary-foreground">
+                    Deposited supply %
+                  </p>
+                  <PercentInput
+                    placeholder={depositedSupplyPercent.toString()}
+                    value={depositedSupplyPercentRaw}
+                    onChange={onDepositedSupplyPercentChange}
+                  />
+                </div>
+              )}
+
               {/* Optional - Burn LP tokens */}
               <Parameter
                 label="Burn LP tokens"
@@ -718,7 +792,7 @@ export default function LaunchTokenCard() {
                   <p className="text-p2 text-foreground">
                     {formatToken(
                       new BigNumber(supply)
-                        .times(DEPOSITED_TOKEN_PERCENT)
+                        .times(depositedSupplyPercent)
                         .div(100),
                       { dp: decimals, trimTrailingZeros: true },
                     )}{" "}
@@ -726,7 +800,7 @@ export default function LaunchTokenCard() {
                   </p>
 
                   <p className="text-p2 text-secondary-foreground">
-                    {formatPercent(new BigNumber(DEPOSITED_TOKEN_PERCENT), {
+                    {formatPercent(new BigNumber(depositedSupplyPercent), {
                       dp: 0,
                     })}{" "}
                     of supply
