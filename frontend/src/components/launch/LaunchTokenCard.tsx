@@ -260,6 +260,9 @@ export default function LaunchTokenCard() {
     }
   }, []);
 
+  // State - token - non-mintable
+  const [nonMintable, setNonMintable] = useState<boolean>(true);
+
   // State - pool - quote asset
   const getQuotePrice = useCallback(
     (coinType: string) =>
@@ -379,6 +382,7 @@ export default function LaunchTokenCard() {
     setDepositedSupplyPercent(DEPOSITED_TOKEN_PERCENT);
     setInitialMarketCapRaw(INITIAL_TOKEN_MC_USD.toString());
     setInitialMarketCap(INITIAL_TOKEN_MC_USD);
+    setNonMintable(true);
 
     // Pool
     setQuoteAssetCoinType(undefined);
@@ -515,6 +519,7 @@ export default function LaunchTokenCard() {
           _createTokenResult,
           supply,
           decimals,
+          nonMintable,
           address,
           signExecuteAndWaitForTransaction,
         );
@@ -813,6 +818,27 @@ export default function LaunchTokenCard() {
                       onChange={onInitialMarketCapChange}
                     />
                   </div>
+
+                  {/* Optional - Non-mintable */}
+                  <Parameter
+                    label="Non-mintable"
+                    labelTooltip="Make the token non-mintable after minting the initial supply."
+                    isHorizontal
+                  >
+                    <button
+                      className={cn(
+                        "group flex h-5 w-5 flex-row items-center justify-center rounded-sm border transition-colors",
+                        nonMintable
+                          ? "border-button-1 bg-button-1/25"
+                          : "hover:bg-border/50",
+                      )}
+                      onClick={() => setNonMintable(!nonMintable)}
+                    >
+                      {nonMintable && (
+                        <Check className="h-4 w-4 text-foreground" />
+                      )}
+                    </button>
+                  </Parameter>
                 </>
               )}
 

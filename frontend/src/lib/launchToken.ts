@@ -174,6 +174,7 @@ export const mintToken = async (
   createTokenResult: CreateCoinResult,
   supply: number,
   decimals: number,
+  nonMintable: boolean,
   address: string,
   signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
 ): Promise<MintTokenResult> => {
@@ -206,7 +207,7 @@ export const mintToken = async (
       transaction.object(createTokenResult.treasuryCapId),
       transaction.object(createTokenResult.upgradeCapId),
     ],
-    BURN_ADDRESS,
+    nonMintable ? BURN_ADDRESS : address,
   );
 
   const res = await signExecuteAndWaitForTransaction(transaction);
