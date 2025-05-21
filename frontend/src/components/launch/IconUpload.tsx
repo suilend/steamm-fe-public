@@ -118,6 +118,7 @@ export default function IconUpload({
 
   const handleFile = async (file: File) => {
     try {
+      reset();
       setIsProcessing(true);
 
       // Validate file type
@@ -192,7 +193,7 @@ export default function IconUpload({
 
               <div className="pointer-events-none relative z-[2] flex h-24 w-24">
                 {isProcessing && (
-                  <Skeleton className="bg-white absolute left-4 top-4 z-[1] h-16 w-16" />
+                  <Skeleton className="absolute left-4 top-4 z-[1] h-16 w-16" />
                 )}
                 {!!iconUrl && (
                   <Image
