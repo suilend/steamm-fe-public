@@ -143,9 +143,8 @@ export default function IconUpload({
       console.error(err);
       showErrorToast("Failed to upload image", err as Error);
 
-      reset();
-    } finally {
       setIsProcessing(false);
+      reset();
     }
   };
 
@@ -180,26 +179,30 @@ export default function IconUpload({
       <div className="flex w-full flex-row items-center gap-4">
         {/* Icon */}
         <div className="group relative flex w-max flex-row items-center justify-center rounded-md border">
-          {isProcessing || iconUrl ? (
+          {isProcessing || !!iconUrl ? (
             <>
-              <button
-                className="absolute right-1 top-1 z-[3] rounded-md border bg-background p-1 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
-                onClick={reset}
-              >
-                <X className="h-4 w-4 text-secondary-foreground transition-colors hover:text-foreground" />
-              </button>
+              {!isProcessing && !!iconUrl && (
+                <button
+                  className="absolute right-1 top-1 z-[3] rounded-md border bg-background p-1 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
+                  onClick={reset}
+                >
+                  <X className="h-4 w-4 text-secondary-foreground transition-colors hover:text-foreground" />
+                </button>
+              )}
 
-              <div className="pointer-events-none relative z-[2] flex h-24 w-24 flex-row items-center justify-center">
-                {isProcessing ? (
-                  <Skeleton className="h-16 w-16" />
-                ) : (
+              <div className="pointer-events-none relative z-[2] flex h-24 w-24">
+                {isProcessing && (
+                  <Skeleton className="bg-white absolute left-4 top-4 z-[1] h-16 w-16" />
+                )}
+                {!!iconUrl && (
                   <Image
-                    className="h-16 w-16"
+                    className="absolute left-4 top-4 z-[2] h-16 w-16"
                     src={iconUrl}
                     alt="Icon"
-                    width={96}
-                    height={96}
+                    width={64}
+                    height={64}
                     quality={100}
+                    onLoad={() => setIsProcessing(false)}
                   />
                 )}
               </div>
