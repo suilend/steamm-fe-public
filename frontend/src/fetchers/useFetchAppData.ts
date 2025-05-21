@@ -60,7 +60,7 @@ type PoolObj = {
     | Pool<string, string, CpQuoter, string>
     | Pool<string, string, OracleQuoter, string>
     | Pool<string, string, OracleQuoterV2, string>;
-  redeemQuote: RedeemQuote;
+  redeemQuote: RedeemQuote | null;
 };
 
 export default function useFetchAppData(steammClient: SteammSDK) {
@@ -359,16 +359,22 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             if (TEST_POOL_IDS.includes(poolInfo.poolId)) continue; // Filter out test pools
 
             const pool = await fetchPool(steammClient, poolInfo);
-            const redeemQuote = await steammClient.Pool.quoteRedeem({
-              lpTokens: pool.lpSupply.value,
-              poolInfo,
-              bankInfoA: bankObjs.find(
-                (bankObj) => bankObj.bankInfo.btokenType === poolInfo.coinTypeA,
-              )!.bankInfo,
-              bankInfoB: bankObjs.find(
-                (bankObj) => bankObj.bankInfo.btokenType === poolInfo.coinTypeB,
-              )!.bankInfo,
-            });
+            const redeemQuote =
+              new BigNumber(pool.balanceA.value.toString()).eq(0) &&
+              new BigNumber(pool.balanceB.value.toString()).eq(0)
+                ? null
+                : await steammClient.Pool.quoteRedeem({
+                    lpTokens: pool.lpSupply.value,
+                    poolInfo,
+                    bankInfoA: bankObjs.find(
+                      (bankObj) =>
+                        bankObj.bankInfo.btokenType === poolInfo.coinTypeA,
+                    )!.bankInfo,
+                    bankInfoB: bankObjs.find(
+                      (bankObj) =>
+                        bankObj.bankInfo.btokenType === poolInfo.coinTypeB,
+                    )!.bankInfo,
+                  });
 
             poolObjs.push({ poolInfo, pool, redeemQuote });
           }

@@ -58,16 +58,22 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
     async (_poolInfo: PoolInfo) => {
       try {
         const pool = await fetchPool(steammClient, _poolInfo);
-        const redeemQuote = await steammClient.Pool.quoteRedeem({
-          lpTokens: pool.lpSupply.value,
-          poolInfo: _poolInfo,
-          bankInfoA:
-            appData.bankMap[appData.bTokenTypeCoinTypeMap[_poolInfo.coinTypeA]]
-              .bankInfo,
-          bankInfoB:
-            appData.bankMap[appData.bTokenTypeCoinTypeMap[_poolInfo.coinTypeB]]
-              .bankInfo,
-        });
+        const redeemQuote =
+          new BigNumber(pool.balanceA.value.toString()).eq(0) &&
+          new BigNumber(pool.balanceB.value.toString()).eq(0)
+            ? null
+            : await steammClient.Pool.quoteRedeem({
+                lpTokens: pool.lpSupply.value,
+                poolInfo: _poolInfo,
+                bankInfoA:
+                  appData.bankMap[
+                    appData.bTokenTypeCoinTypeMap[_poolInfo.coinTypeA]
+                  ].bankInfo,
+                bankInfoB:
+                  appData.bankMap[
+                    appData.bTokenTypeCoinTypeMap[_poolInfo.coinTypeB]
+                  ].bankInfo,
+              });
 
         const parsedPool = getParsedPool(appData, _poolInfo, pool, redeemQuote);
         if (parsedPool === undefined) return;

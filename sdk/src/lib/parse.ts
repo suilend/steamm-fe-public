@@ -176,7 +176,7 @@ export const getParsedPool = (
   },
   poolInfo: PoolInfo,
   pool: ParsedPool["pool"],
-  redeemQuote: RedeemQuote,
+  redeemQuote: RedeemQuote | null,
 ): ParsedPool | undefined => {
   {
     const {
@@ -207,12 +207,18 @@ export const getParsedPool = (
     const coinTypes: [string, string] = [coinTypeA, coinTypeB];
     if (coinTypes.some((coinType) => coinType === undefined)) return undefined;
 
-    const balanceA = new BigNumber(redeemQuote.withdrawA.toString()).div(
-      10 ** coinMetadataMap[coinTypes[0]].decimals,
-    );
-    const balanceB = new BigNumber(redeemQuote.withdrawB.toString()).div(
-      10 ** coinMetadataMap[coinTypes[1]].decimals,
-    );
+    const balanceA =
+      redeemQuote === null
+        ? new BigNumber(0)
+        : new BigNumber(redeemQuote.withdrawA.toString()).div(
+            10 ** coinMetadataMap[coinTypes[0]].decimals,
+          );
+    const balanceB =
+      redeemQuote === null
+        ? new BigNumber(0)
+        : new BigNumber(redeemQuote.withdrawB.toString()).div(
+            10 ** coinMetadataMap[coinTypes[1]].decimals,
+          );
 
     const balances: [BigNumber, BigNumber] = [balanceA, balanceB];
 

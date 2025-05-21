@@ -24,7 +24,9 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
           pools.map((pool) =>
             (async () => {
               const hasNoQuoteAssets =
-                pool.quoterId === QuoterId.CPMM && pool.balances[1].eq(0); // New tokens launched on STEAMM (CPMM with offset, 0 quote assets)
+                pool.quoterId === QuoterId.CPMM &&
+                pool.balances[0].gt(0) &&
+                pool.balances[1].eq(0); // New tokens launched on STEAMM (CPMM with offset, 0 quote assets)
 
               const submitAmount = (
                 hasNoQuoteAssets

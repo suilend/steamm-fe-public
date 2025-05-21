@@ -41,13 +41,15 @@ export default function PoolParametersCard({
     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
       <Parameter label="Assets">
         <div className="flex flex-row items-center gap-4">
-          <PieChart
-            data={pool.coinTypes.map((coinType, index) => ({
-              label: appData.coinMetadataMap[coinType].symbol,
-              value: +pool.balances[index].times(pool.prices[index]),
-            }))}
-            size={40}
-          />
+          {pool.tvlUsd.gt(0) && (
+            <PieChart
+              data={pool.coinTypes.map((coinType, index) => ({
+                label: appData.coinMetadataMap[coinType].symbol,
+                value: +pool.balances[index].times(pool.prices[index]),
+              }))}
+              size={40}
+            />
+          )}
 
           <div className="flex flex-col gap-1">
             {pool.coinTypes.map((coinType, index) => {
@@ -62,12 +64,14 @@ export default function PoolParametersCard({
                   key={coinType}
                   className="flex w-full flex-row flex-wrap items-center gap-x-2 gap-y-1"
                 >
-                  <div
-                    className={cn("h-1.5 w-1.5 rounded-[1px]", {
-                      "bg-jordy-blue": index === 0,
-                      "bg-jordy-blue/50": index === 1,
-                    })}
-                  />
+                  {pool.tvlUsd.gt(0) && (
+                    <div
+                      className={cn("h-1.5 w-1.5 rounded-[1px]", {
+                        "bg-jordy-blue": index === 0,
+                        "bg-jordy-blue/50": index === 1,
+                      })}
+                    />
+                  )}
 
                   <TokenLogo
                     token={getToken(

@@ -1588,7 +1588,9 @@ export default function PoolActionsCard({
   const { pool } = usePoolContext();
 
   const hasNoQuoteAssets =
-    pool.quoterId === QuoterId.CPMM && pool.balances[1].eq(0); // New tokens launched on STEAMM (CPMM with offset, 0 quote assets)
+    pool.quoterId === QuoterId.CPMM &&
+    pool.balances[0].gt(0) &&
+    pool.balances[1].eq(0); // New tokens launched on STEAMM (CPMM with offset, 0 quote assets)
 
   // Tabs
   const selectedAction =
@@ -1623,7 +1625,11 @@ export default function PoolActionsCard({
               (hasNoQuoteAssets || pool.tvlUsd.eq(0))
             )
               return null;
-            if (action === Action.SWAP && pool.tvlUsd.eq(0)) return null;
+            if (
+              action === Action.SWAP &&
+              !(hasNoQuoteAssets || !pool.tvlUsd.eq(0))
+            )
+              return null;
 
             return (
               <button
@@ -1667,9 +1673,10 @@ export default function PoolActionsCard({
         !(hasNoQuoteAssets || pool.tvlUsd.eq(0)) && (
           <WithdrawTab onWithdraw={onWithdraw} />
         )}
-      {selectedAction === Action.SWAP && !pool.tvlUsd.eq(0) && (
-        <SwapTab onSwap={onSwap} hasNoQuoteAssets={hasNoQuoteAssets} />
-      )}
+      {selectedAction === Action.SWAP &&
+        !!(hasNoQuoteAssets || !pool.tvlUsd.eq(0)) && (
+          <SwapTab onSwap={onSwap} hasNoQuoteAssets={hasNoQuoteAssets} />
+        )}
     </div>
   );
 }
