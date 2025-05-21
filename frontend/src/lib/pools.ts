@@ -30,16 +30,13 @@ const getPoolSlug = (appData: AppData, pool: ParsedPool) =>
 export const getPoolUrl = (appData: AppData, pool: ParsedPool) =>
   `${POOL_URL_PREFIX}/${pool.id}-${getPoolSlug(appData, pool)}`;
 
-export const getQuoterId = (poolInfo: PoolInfo) =>
-  poolInfo.quoterType.endsWith("omm::OracleQuoter")
+export const fetchPool = (steammClient: SteammSDK, poolInfo: PoolInfo) => {
+  const id = poolInfo.poolId;
+  const quoterId = poolInfo.quoterType.endsWith("omm::OracleQuoter")
     ? QuoterId.ORACLE
     : poolInfo.quoterType.endsWith("omm_v2::OracleQuoterV2")
       ? QuoterId.ORACLE_V2
       : QuoterId.CPMM;
-
-export const fetchPool = (steammClient: SteammSDK, poolInfo: PoolInfo) => {
-  const id = poolInfo.poolId;
-  const quoterId = getQuoterId(poolInfo);
 
   return quoterId === QuoterId.ORACLE
     ? steammClient.fullClient.fetchOraclePool(id)

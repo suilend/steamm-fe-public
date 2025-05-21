@@ -5,7 +5,6 @@ import { BigNumber } from "bignumber.js";
 
 import { showErrorToast } from "@suilend/frontend-sui-next";
 import { QuoterId, SwapQuote } from "@suilend/steamm-sdk";
-import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
 
 import { useLoadedAppContext } from "@/contexts/AppContext";
 
@@ -26,11 +25,7 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
         await Promise.all(
           pools.map((pool) =>
             (async () => {
-              const isCpmmOffsetPool =
-                pool.quoterId === QuoterId.CPMM &&
-                (pool.pool.quoter as CpQuoter).offset.toString() !== "0"; // 0+ quote assets
-
-              if (!isCpmmOffsetPool && pool.tvlUsd.eq(0)) {
+              if (pool.quoterId !== QuoterId.V_CPMM && pool.tvlUsd.eq(0)) {
                 setPoolCurrentPriceQuoteMap((prev) => ({
                   ...prev,
                   [pool.id]: {
@@ -47,7 +42,7 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
               }
 
               const submitAmount = (
-                isCpmmOffsetPool
+                pool.quoterId === QuoterId.V_CPMM
                   ? new BigNumber(1).div(pool.prices[1]) // $1 of quote token
                   : BigNumber.min(
                       pool.balances[0].times(0.1), // 10% of pool balanceA
@@ -57,20 +52,20 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
                 .times(
                   10 **
                     appData.coinMetadataMap[
-                      pool.coinTypes[isCpmmOffsetPool ? 1 : 0]
+                      pool.coinTypes[pool.quoterId === QuoterId.V_CPMM ? 1 : 0]
                     ].decimals,
                 )
                 .integerValue(BigNumber.ROUND_DOWN)
                 .toString();
 
               const swapQuote = await steammClient.Pool.quoteSwap({
-                a2b: !isCpmmOffsetPool,
+                a2b: pool.quoterId !== QuoterId.V_CPMM,
                 amountIn: BigInt(submitAmount),
                 poolInfo: pool.poolInfo,
                 bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
                 bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
               });
-              if (isCpmmOffsetPool) {
+              if (pool.quoterId === QuoterId.V_CPMM) {
                 const amountIn = swapQuote.amountIn;
                 const amountOut = swapQuote.amountOut;
 
@@ -78,12 +73,6 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
                 swapQuote.amountIn = amountOut;
                 swapQuote.amountOut = amountIn;
               }
-
-              if (
-                pool.id ===
-                "0x8e81042fc5d2f65bcd69adcb396ef4c9d5d2cf566bda3d3be4ef11715628e7fe"
-              )
-                console.log("XXX", pool.id, swapQuote);
 
               setPoolCurrentPriceQuoteMap((prev) => ({
                 ...prev,

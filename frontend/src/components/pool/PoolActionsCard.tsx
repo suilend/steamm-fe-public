@@ -33,7 +33,6 @@ import {
   SteammSDK,
   SwapQuote,
 } from "@suilend/steamm-sdk";
-import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
@@ -1594,15 +1593,9 @@ export default function PoolActionsCard({
 
   const { pool } = usePoolContext();
 
-  const isCpmmOffsetPool = useMemo(
-    () =>
-      pool.quoterId === QuoterId.CPMM &&
-      (pool.pool.quoter as CpQuoter).offset.toString() !== "0", // 0+ quote assets
-    [pool.quoterId, pool.pool.quoter],
-  );
   const isCpmmOffsetPoolWithNoQuoteAssets = useMemo(
-    () => isCpmmOffsetPool && pool.balances[1].eq(0),
-    [isCpmmOffsetPool, pool.balances],
+    () => pool.quoterId === QuoterId.V_CPMM && pool.balances[1].eq(0),
+    [pool.quoterId, pool.balances],
   );
 
   // Tabs
@@ -1640,7 +1633,8 @@ export default function PoolActionsCard({
                 return null;
             }
             if (action === Action.SWAP) {
-              if (!isCpmmOffsetPool && pool.tvlUsd.eq(0)) return null;
+              if (pool.quoterId !== QuoterId.V_CPMM && pool.tvlUsd.eq(0))
+                return null;
             }
 
             return (
@@ -1687,7 +1681,7 @@ export default function PoolActionsCard({
           <WithdrawTab onWithdraw={onWithdraw} />
         )}
       {selectedAction === Action.SWAP &&
-        !(!isCpmmOffsetPool && pool.tvlUsd.eq(0)) && (
+        !(pool.quoterId !== QuoterId.V_CPMM && pool.tvlUsd.eq(0)) && (
           <SwapTab
             onSwap={onSwap}
             isCpmmOffsetPoolWithNoQuoteAssets={

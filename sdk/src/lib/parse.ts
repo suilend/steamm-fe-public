@@ -19,13 +19,15 @@ import { Pool } from "../_codegen/_generated/steamm/pool/structs";
 
 export enum QuoterId {
   CPMM = "cpmm",
+  V_CPMM = "v_cpmm",
   ORACLE = "oracle",
   ORACLE_V2 = "oracle_v2",
 }
 export const QUOTER_ID_NAME_MAP: Record<QuoterId, string> = {
   [QuoterId.CPMM]: "CPMM",
+  [QuoterId.V_CPMM]: "vCPMM",
   [QuoterId.ORACLE]: "Oracle V1",
-  [QuoterId.ORACLE_V2]: "Oracle V2",
+  [QuoterId.ORACLE_V2]: "OMM",
 };
 
 export enum OracleType {
@@ -196,7 +198,9 @@ export const getParsedPool = (
       ? QuoterId.ORACLE
       : poolInfo.quoterType.endsWith("omm_v2::OracleQuoterV2")
         ? QuoterId.ORACLE_V2
-        : QuoterId.CPMM;
+        : (pool.quoter as CpQuoter).offset.toString() !== "0"
+          ? QuoterId.V_CPMM
+          : QuoterId.CPMM;
 
     const bTokenTypeA = poolInfo.coinTypeA;
     const bTokenTypeB = poolInfo.coinTypeB;
@@ -253,7 +257,7 @@ export const getParsedPool = (
       priceA = !balanceA.eq(0)
         ? new BigNumber(
             balanceB.plus(
-              quoterId === QuoterId.CPMM
+              quoterId === QuoterId.V_CPMM
                 ? new BigNumber(
                     (pool.quoter as CpQuoter).offset.toString(),
                   ).div(10 ** coinMetadataMap[coinTypeB].decimals)
