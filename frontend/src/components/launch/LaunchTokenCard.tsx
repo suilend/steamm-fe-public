@@ -803,7 +803,7 @@ export default function LaunchTokenCard() {
                   {/* Optional - Deposited supply % */}
                   <div className="flex w-full flex-col gap-2">
                     <p className="text-p2 text-secondary-foreground">
-                      Deposited supply %
+                      Deposited supply (%)
                     </p>
                     <PercentInput
                       placeholder={depositedSupplyPercent.toString()}
@@ -812,7 +812,7 @@ export default function LaunchTokenCard() {
                     />
                   </div>
 
-                  {/* Optional - Initial market cap % */}
+                  {/* Optional - Initial market cap */}
                   <div className="flex w-full flex-col gap-2">
                     <p className="text-p2 text-secondary-foreground">
                       Initial market cap ($)

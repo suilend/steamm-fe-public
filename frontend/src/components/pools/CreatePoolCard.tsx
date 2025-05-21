@@ -1,10 +1,15 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
+import { Check } from "lucide-react";
 
 import {
+  NORMALIZED_SUI_COINTYPE,
+  NORMALIZED_USDC_COINTYPE,
   Token,
+  formatPrice,
+  formatToken,
   getToken,
   isSend,
   isStablecoin,
@@ -20,6 +25,7 @@ import {
   ParsedPool,
   QUOTER_ID_NAME_MAP,
   QuoterId,
+  computeOptimalOffset,
 } from "@suilend/steamm-sdk";
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
@@ -28,6 +34,8 @@ import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import Parameter from "@/components/Parameter";
 import CreatePoolStepsDialog from "@/components/pools/CreatePoolStepsDialog";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
+import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
+import TextInput from "@/components/TextInput";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
@@ -57,7 +65,7 @@ import {
   formatTextInputValue,
 } from "@/lib/format";
 import { API_URL } from "@/lib/navigation";
-import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
+import { AMPLIFIER_TOOLTIP, getAvgPoolPrice } from "@/lib/pools";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
@@ -75,6 +83,13 @@ export default function CreatePoolCard() {
       (address === ADMIN_ADDRESS ||
         (flags?.steammCreatePoolWhitelist ?? []).includes(address)),
     [address, flags?.steammCreatePoolWhitelist],
+  );
+
+  // LST
+  const isLst = useCallback(
+    (coinType: string) =>
+      Object.keys(appData.lstAprPercentMap).includes(coinType),
+    [appData.lstAprPercentMap],
   );
 
   // State - progress
@@ -258,16 +273,28 @@ export default function CreatePoolCard() {
     ],
   );
 
+  const getQuotePrice = useCallback(
+    (coinType: string) =>
+      isSui(coinType) || isLst(coinType)
+        ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_SUI_COINTYPE]?.price
+        : isStablecoin(coinType)
+          ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_USDC_COINTYPE]?.price
+          : (appData.coinTypeOracleInfoPriceMap[coinType]?.price ??
+            getAvgPoolPrice(appData.pools, coinType)),
+    [isLst, appData.coinTypeOracleInfoPriceMap, appData.pools],
+  );
+
   const quoteTokens = useMemo(
     () =>
       baseTokens.filter(
         (token) =>
-          isSend(token.coinType) ||
-          isSui(token.coinType) ||
-          isStablecoin(token.coinType) ||
-          Object.keys(appData.lstAprPercentMap).includes(token.coinType),
+          (isSend(token.coinType) ||
+            isSui(token.coinType) ||
+            isStablecoin(token.coinType) ||
+            Object.keys(appData.lstAprPercentMap).includes(token.coinType)) &&
+          getQuotePrice(token.coinType) !== undefined,
       ),
-    [baseTokens, appData.lstAprPercentMap],
+    [baseTokens, appData.lstAprPercentMap, getQuotePrice],
   );
 
   const onSelectToken = (token: Token, index: number) => {
@@ -304,6 +331,76 @@ export default function CreatePoolCard() {
   const [feeTierPercent, setFeeTierPercent] = useState<number | undefined>(
     undefined,
   );
+
+  // CPMM offset
+  const [useCpmmOffset, setUseCpmmOffset] = useState<boolean>(false);
+  const [initialMarketCapUsd, setInitialMarketCapUsd] = useState<string>("");
+
+  const onUseCpmmOffsetChange = () => {
+    const newValue = !useCpmmOffset;
+    if (newValue) {
+      setValues((prev) => [prev[0], "0"] as [string, string]);
+      onSelectQuoter(QuoterId.CPMM);
+
+      setUseCpmmOffset(true);
+      setInitialMarketCapUsd("");
+    } else {
+      setValues((prev) => [prev[0], ""] as [string, string]);
+      setQuoterId(undefined);
+
+      setUseCpmmOffset(false);
+      setInitialMarketCapUsd("");
+    }
+  };
+
+  const onInitialMarketCapUsdChange = useCallback((value: string) => {
+    const formattedValue = formatTextInputValue(value, 2);
+    setInitialMarketCapUsd(formattedValue);
+  }, []);
+
+  // CPMM offset - compute
+  const {
+    cpmmOffset,
+    tokenInitialPriceQuote,
+  }: {
+    cpmmOffset: bigint | undefined;
+    tokenInitialPriceQuote: BigNumber | undefined;
+  } = useMemo(() => {
+    if (
+      coinTypes.some((coinType) => coinType === "") ||
+      values[0] === "" ||
+      initialMarketCapUsd === ""
+    )
+      return { cpmmOffset: undefined, tokenInitialPriceQuote: undefined };
+
+    const quotePrice = getQuotePrice(coinTypes[1])!;
+
+    const tokenInitialPriceUsd = new BigNumber(initialMarketCapUsd).div(
+      values[0],
+    );
+    const tokenInitialPriceQuote = tokenInitialPriceUsd.div(quotePrice);
+
+    return {
+      cpmmOffset: computeOptimalOffset(
+        tokenInitialPriceQuote.toFixed(20, BigNumber.ROUND_DOWN),
+        BigInt(
+          new BigNumber(values[0])
+            .times(10 ** balancesCoinMetadataMap![coinTypes[0]].decimals)
+            .integerValue(BigNumber.ROUND_DOWN)
+            .toString(),
+        ),
+        balancesCoinMetadataMap![coinTypes[0]].decimals,
+        balancesCoinMetadataMap![coinTypes[1]].decimals,
+      ),
+      tokenInitialPriceQuote,
+    };
+  }, [
+    coinTypes,
+    values,
+    initialMarketCapUsd,
+    getQuotePrice,
+    balancesCoinMetadataMap,
+  ]);
 
   // Existing pools
   const existingPools: ParsedPool[] = useMemo(
@@ -355,6 +452,9 @@ export default function CreatePoolCard() {
     setQuoterId(undefined);
     setAmplifier(undefined);
     setFeeTierPercent(undefined);
+
+    setUseCpmmOffset(false);
+    setInitialMarketCapUsd("");
   };
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -371,11 +471,19 @@ export default function CreatePoolCard() {
 
     if (coinTypes.some((coinType) => coinType === ""))
       return { isDisabled: true, title: "Select tokens" };
-    if (values.some((value) => value === ""))
+    if (useCpmmOffset ? values[0] === "" : values.some((value) => value === ""))
       return { isDisabled: true, title: "Enter amounts" };
-    if (Object.values(values).some((value) => new BigNumber(value).lt(0)))
+    if (
+      useCpmmOffset
+        ? new BigNumber(values[0]).lt(0)
+        : Object.values(values).some((value) => new BigNumber(value).lt(0))
+    )
       return { isDisabled: true, title: "Enter a +ve amounts" };
-    if (Object.values(values).some((value) => new BigNumber(value).eq(0)))
+    if (
+      useCpmmOffset
+        ? new BigNumber(values[0]).eq(0)
+        : Object.values(values).some((value) => new BigNumber(value).eq(0))
+    )
       return { isDisabled: true, title: "Enter a non-zero amounts" };
     if (quoterId === undefined)
       return { isDisabled: true, title: "Select a quoter" };
@@ -516,7 +624,7 @@ export default function CreatePoolCard() {
           tokens,
           values,
           quoterId,
-          undefined,
+          useCpmmOffset ? cpmmOffset : undefined,
           amplifier,
           feeTierPercent,
           bTokens,
@@ -602,138 +710,226 @@ export default function CreatePoolCard() {
             />
           </div>
 
+          {isWhitelisted && (
+            <>
+              {/* Use CPMM offset */}
+              <Parameter label="Use CPMM offset" isHorizontal>
+                <button
+                  className={cn(
+                    "group flex h-5 w-5 flex-row items-center justify-center rounded-sm border transition-colors",
+                    useCpmmOffset
+                      ? "border-button-1 bg-button-1/25"
+                      : "hover:bg-border/50",
+                  )}
+                  onClick={onUseCpmmOffsetChange}
+                >
+                  {useCpmmOffset && (
+                    <Check className="h-4 w-4 text-foreground" />
+                  )}
+                </button>
+              </Parameter>
+
+              {useCpmmOffset && (
+                <>
+                  {/* Quote asset */}
+                  <div className="flex flex-row justify-between">
+                    <p className="text-p2 text-secondary-foreground">
+                      Quote asset
+                    </p>
+
+                    <TokenSelectionDialog
+                      triggerClassName="h-6"
+                      triggerIconSize={16}
+                      triggerLabelSelectedClassName="!text-p2"
+                      triggerLabelUnselectedClassName="!text-p2"
+                      triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
+                      token={
+                        coinTypes[1] !== ""
+                          ? getToken(
+                              coinTypes[1],
+                              balancesCoinMetadataMap![coinTypes[1]],
+                            )
+                          : undefined
+                      }
+                      tokens={quoteTokens}
+                      onSelectToken={(token) => onSelectToken(token, 1)}
+                    />
+                  </div>
+
+                  {/* Initial market cap */}
+                  <div className="flex w-full flex-col gap-2">
+                    <p className="text-p2 text-secondary-foreground">
+                      Initial market cap ($)
+                    </p>
+                    <TextInput
+                      placeholder={initialMarketCapUsd.toString()}
+                      value={initialMarketCapUsd}
+                      onChange={onInitialMarketCapUsdChange}
+                    />
+                  </div>
+                </>
+              )}
+            </>
+          )}
+
           {/* Quote */}
-          <div className="flex w-full flex-col gap-3">
-            <div className="flex w-full flex-col gap-1">
-              <p className="text-p2 text-secondary-foreground">Quote asset</p>
-              <p className="text-p3 text-tertiary-foreground">
-                SUI or stablecoins (e.g. USDC, USDT) are usually used as the
-                quote asset.
-              </p>
+          {!useCpmmOffset && (
+            <div className="flex w-full flex-col gap-3">
+              <div className="flex w-full flex-col gap-1">
+                <p className="text-p2 text-secondary-foreground">Quote asset</p>
+                <p className="text-p3 text-tertiary-foreground">
+                  SUI or stablecoins (e.g. USDC, USDT) are usually used as the
+                  quote asset.
+                </p>
+              </div>
+              <CoinInput
+                token={
+                  coinTypes[1] !== ""
+                    ? getToken(
+                        coinTypes[1],
+                        balancesCoinMetadataMap![coinTypes[1]],
+                      )
+                    : undefined
+                }
+                value={values[1]}
+                usdValue={birdeyeUsdValues[1]}
+                onChange={(value) => onValueChange(value, 1)}
+                onMaxAmountClick={
+                  coinTypes[1] !== "" ? () => onBalanceClick(1) : undefined
+                }
+                tokens={quoteTokens}
+                onSelectToken={(token) => onSelectToken(token, 1)}
+              />
             </div>
-            <CoinInput
-              token={
-                coinTypes[1] !== ""
-                  ? getToken(
-                      coinTypes[1],
-                      balancesCoinMetadataMap![coinTypes[1]],
-                    )
-                  : undefined
-              }
-              value={values[1]}
-              usdValue={birdeyeUsdValues[1]}
-              onChange={(value) => onValueChange(value, 1)}
-              onMaxAmountClick={
-                coinTypes[1] !== "" ? () => onBalanceClick(1) : undefined
-              }
-              tokens={quoteTokens}
-              onSelectToken={(token) => onSelectToken(token, 1)}
-            />
-          </div>
+          )}
 
           <div className="flex w-full flex-col gap-2">
             {/* Initial price */}
             <Parameter label="Initial price" isHorizontal>
-              <p className="text-p2 text-foreground">
-                {coinTypes.every((coinType) => coinType !== "") &&
-                values.every((value) => value !== "")
-                  ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${new BigNumber(
-                      new BigNumber(values[1]).div(values[0]),
-                    ).toFixed(
-                      balancesCoinMetadataMap![coinTypes[1]].decimals,
-                      BigNumber.ROUND_DOWN,
-                    )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
-                  : "--"}
-              </p>
-            </Parameter>
-
-            {/* Market price */}
-            <Parameter label="Market price (Birdeye)" isHorizontal>
-              <div className="flex flex-col items-end gap-1.5">
+              <div className="flex flex-row items-center gap-2">
                 <p className="text-p2 text-foreground">
-                  {coinTypes.every((coinType) => coinType !== "") ? (
-                    birdeyeRatio === undefined ? (
-                      <Skeleton className="h-[21px] w-24" />
-                    ) : birdeyeRatio === null ? (
-                      "--"
-                    ) : (
-                      `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${birdeyeRatio.toFixed(
-                        balancesCoinMetadataMap![coinTypes[1]].decimals,
-                        BigNumber.ROUND_DOWN,
-                      )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
-                    )
-                  ) : (
-                    "--"
-                  )}
+                  {!useCpmmOffset
+                    ? coinTypes.every((coinType) => coinType !== "") &&
+                      values.every((value) => value !== "")
+                      ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${new BigNumber(
+                          new BigNumber(values[1]).div(values[0]),
+                        ).toFixed(
+                          balancesCoinMetadataMap![coinTypes[1]].decimals,
+                          BigNumber.ROUND_DOWN,
+                        )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
+                      : "--"
+                    : tokenInitialPriceQuote !== undefined
+                      ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${formatToken(tokenInitialPriceQuote, { dp: balancesCoinMetadataMap![coinTypes[1]].decimals })} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
+                      : "--"}
                 </p>
 
-                {coinTypes.every((coinType) => coinType !== "") &&
-                  (birdeyeRatio === undefined ? (
-                    <Skeleton className="h-[24px] w-16" />
-                  ) : birdeyeRatio === null ? null : (
-                    <button
-                      className="group flex h-6 flex-row items-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80"
-                      onClick={onUseBirdeyePriceClick}
-                    >
-                      <p className="text-p3 text-button-2-foreground">
-                        Use market price
+                {!useCpmmOffset
+                  ? null
+                  : tokenInitialPriceQuote !== undefined && (
+                      <p className="text-p2 text-secondary-foreground">
+                        {formatPrice(
+                          tokenInitialPriceQuote.times(
+                            getQuotePrice(coinTypes[1]),
+                          ),
+                        )}
                       </p>
-                    </button>
-                  ))}
+                    )}
               </div>
             </Parameter>
+
+            {!useCpmmOffset && (
+              // Market price
+              <Parameter label="Market price (Birdeye)" isHorizontal>
+                <div className="flex flex-col items-end gap-1.5">
+                  <p className="text-p2 text-foreground">
+                    {coinTypes.every((coinType) => coinType !== "") ? (
+                      birdeyeRatio === undefined ? (
+                        <Skeleton className="h-[21px] w-24" />
+                      ) : birdeyeRatio === null ? (
+                        "--"
+                      ) : (
+                        `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${birdeyeRatio.toFixed(
+                          balancesCoinMetadataMap![coinTypes[1]].decimals,
+                          BigNumber.ROUND_DOWN,
+                        )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
+                      )
+                    ) : (
+                      "--"
+                    )}
+                  </p>
+
+                  {coinTypes.every((coinType) => coinType !== "") &&
+                    (birdeyeRatio === undefined ? (
+                      <Skeleton className="h-[24px] w-16" />
+                    ) : birdeyeRatio === null ? null : (
+                      <button
+                        className="group flex h-6 flex-row items-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80"
+                        onClick={onUseBirdeyePriceClick}
+                      >
+                        <p className="text-p3 text-button-2-foreground">
+                          Use market price
+                        </p>
+                      </button>
+                    ))}
+                </div>
+              </Parameter>
+            )}
           </div>
 
           {/* Quoter */}
-          <div className="flex flex-row items-center justify-between">
-            <p className="text-p2 text-secondary-foreground">Quoter</p>
+          {!useCpmmOffset && (
+            <div className="flex flex-row items-center justify-between">
+              <p className="text-p2 text-secondary-foreground">Quoter</p>
 
-            <div className="flex flex-row gap-1">
-              {QUOTER_IDS.filter((_quoterId) =>
-                isWhitelisted ? true : PUBLIC_QUOTER_IDS.includes(_quoterId),
-              ).map((_quoterId) => {
-                const hasExistingPool =
-                  hasExistingPoolForQuoterFeeTierAndAmplifier(
-                    _quoterId,
-                    feeTierPercent,
-                    amplifier,
-                  );
+              <div className="flex flex-row gap-1">
+                {QUOTER_IDS.filter((_quoterId) =>
+                  isWhitelisted ? true : PUBLIC_QUOTER_IDS.includes(_quoterId),
+                ).map((_quoterId) => {
+                  const hasExistingPool =
+                    hasExistingPoolForQuoterFeeTierAndAmplifier(
+                      _quoterId,
+                      feeTierPercent,
+                      amplifier,
+                    );
 
-                return (
-                  <div key={_quoterId} className="w-max">
-                    <Tooltip
-                      title={hasExistingPool ? existingPoolTooltip : undefined}
-                    >
-                      <div className="w-max">
-                        <button
-                          key={_quoterId}
-                          className={cn(
-                            "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
-                            _quoterId === quoterId
-                              ? "cursor-default border-button-1 bg-button-1/25"
-                              : "hover:bg-border/50",
-                          )}
-                          onClick={() => onSelectQuoter(_quoterId)}
-                          disabled={hasExistingPool}
-                        >
-                          <p
+                  return (
+                    <div key={_quoterId} className="w-max">
+                      <Tooltip
+                        title={
+                          hasExistingPool ? existingPoolTooltip : undefined
+                        }
+                      >
+                        <div className="w-max">
+                          <button
+                            key={_quoterId}
                             className={cn(
-                              "!text-p2 transition-colors",
+                              "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
                               _quoterId === quoterId
-                                ? "text-foreground"
-                                : "text-secondary-foreground group-hover:text-foreground",
+                                ? "cursor-default border-button-1 bg-button-1/25"
+                                : "hover:bg-border/50",
                             )}
+                            onClick={() => onSelectQuoter(_quoterId)}
+                            disabled={hasExistingPool}
                           >
-                            {QUOTER_ID_NAME_MAP[_quoterId]}
-                          </p>
-                        </button>
-                      </div>
-                    </Tooltip>
-                  </div>
-                );
-              })}
+                            <p
+                              className={cn(
+                                "!text-p2 transition-colors",
+                                _quoterId === quoterId
+                                  ? "text-foreground"
+                                  : "text-secondary-foreground group-hover:text-foreground",
+                              )}
+                            >
+                              {QUOTER_ID_NAME_MAP[_quoterId]}
+                            </p>
+                          </button>
+                        </div>
+                      </Tooltip>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Amplifier */}
           {quoterId === QuoterId.ORACLE_V2 && (
