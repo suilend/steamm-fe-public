@@ -43,7 +43,7 @@ export default function PoolsPage() {
       | undefined,
   };
 
-  const { appData, featuredPoolIds, verifiedPoolIds } = useLoadedAppContext();
+  const { appData, featuredPoolIds, verifiedCoinTypes } = useLoadedAppContext();
   const { poolStats, globalHistoricalStats, globalStats } = useStatsContext();
 
   // TVL
@@ -165,19 +165,25 @@ export default function PoolsPage() {
   // Verified pools (groups)
   const verifiedPoolGroups = useMemo(
     () =>
-      verifiedPoolIds === undefined || poolGroups === undefined
+      verifiedCoinTypes === undefined || poolGroups === undefined
         ? undefined
         : poolGroups
             .filter((poolGroup) =>
-              poolGroup.pools.some((pool) => verifiedPoolIds.includes(pool.id)),
+              poolGroup.pools.some((pool) =>
+                pool.coinTypes.every((coinType) =>
+                  verifiedCoinTypes.includes(coinType),
+                ),
+              ),
             )
             .map((poolGroup) => ({
               ...poolGroup,
               pools: poolGroup.pools.filter((pool) =>
-                verifiedPoolIds.includes(pool.id),
+                pool.coinTypes.every((coinType) =>
+                  verifiedCoinTypes.includes(coinType),
+                ),
               ),
             })),
-    [verifiedPoolIds, poolGroups],
+    [verifiedCoinTypes, poolGroups],
   );
   const verifiedPoolGroupsCount =
     verifiedPoolGroups === undefined

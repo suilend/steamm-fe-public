@@ -1,7 +1,7 @@
 import { CSSProperties } from "react";
 
 import BigNumber from "bignumber.js";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { BadgeCheck, ChevronDown, ChevronUp } from "lucide-react";
 import { useSessionStorage } from "usehooks-ts";
 
 import { formatPercent, formatUsd } from "@suilend/frontend-sui";
@@ -40,7 +40,11 @@ export default function PoolGroupRow({
   poolGroup,
   isTvlOnly,
 }: PoolGroupRowProps) {
-  const { appData } = useLoadedAppContext();
+  const { appData, verifiedCoinTypes } = useLoadedAppContext();
+
+  const isVerified = poolGroup.coinTypes.every((coinType) =>
+    verifiedCoinTypes?.includes(coinType),
+  );
 
   // State
   const [isExpanded, setIsExpanded] = useSessionStorage<boolean>(
@@ -128,13 +132,21 @@ export default function PoolGroupRow({
             </Tag>
 
             <TokenLogos coinTypes={poolGroup.coinTypes} size={20} />
-            <p className="text-p1 text-foreground">
-              {formatPair(
-                poolGroup.coinTypes.map(
-                  (coinType) => appData.coinMetadataMap[coinType].symbol,
-                ),
+
+            <div className="flex flex-row items-center gap-1.5">
+              <p className="text-p1 text-foreground">
+                {formatPair(
+                  poolGroup.coinTypes.map(
+                    (coinType) => appData.coinMetadataMap[coinType].symbol,
+                  ),
+                )}
+              </p>
+              {isVerified && (
+                <Tooltip title="Verified asset pair">
+                  <BadgeCheck className="h-4 w-4 text-verified" />
+                </Tooltip>
               )}
-            </p>
+            </div>
           </div>
         </td>
 

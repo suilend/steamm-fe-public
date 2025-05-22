@@ -28,10 +28,13 @@ export default function PoolLabel({
   isLarge,
   pool,
 }: PoolLabelProps) {
-  const { appData, verifiedPoolIds } = useLoadedAppContext();
+  const { appData, verifiedCoinTypes } = useLoadedAppContext();
+
+  const isVerified = pool.coinTypes.every((coinType) =>
+    verifiedCoinTypes?.includes(coinType),
+  );
 
   const Heading = isLarge ? "h1" : "p";
-  const isVerified = verifiedPoolIds?.includes(pool.id);
 
   return (
     <div
@@ -81,7 +84,7 @@ export default function PoolLabel({
             )}
           </Heading>
           {isVerified && (
-            <Tooltip title="Verified pool">
+            <Tooltip title="Verified asset pair">
               <BadgeCheck
                 className={cn(
                   "text-verified",

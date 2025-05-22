@@ -94,7 +94,7 @@ interface AppContext {
   setSlippagePercent: (slippagePercent: number) => void;
 
   featuredPoolIds: string[] | undefined;
-  verifiedPoolIds: string[] | undefined;
+  verifiedCoinTypes: string[] | undefined;
 }
 type LoadedAppContext = AppContext & {
   steammClient: SteammSDK;
@@ -115,7 +115,7 @@ const AppContext = createContext<AppContext>({
   },
 
   featuredPoolIds: undefined,
-  verifiedPoolIds: undefined,
+  verifiedCoinTypes: undefined,
 });
 
 export const useAppContext = () => useContext(AppContext);
@@ -161,10 +161,13 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     [flags?.steammFeaturedPoolIds],
   );
 
-  // Verified pools
-  const verifiedPoolIds: string[] | undefined = useMemo(
-    () => flags?.steammVerifiedPoolIds ?? [],
-    [flags?.steammVerifiedPoolIds],
+  // Verified coinTypes
+  const verifiedCoinTypes: string[] | undefined = useMemo(
+    () => [
+      ...Object.keys(appData?.suilend.mainMarket.reserveMap ?? {}),
+      ...(flags?.steammVerifiedCoinTypes ?? []),
+    ],
+    [flags?.steammVerifiedCoinTypes, appData?.suilend.mainMarket.reserveMap],
   );
 
   // Context
@@ -179,7 +182,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       setSlippagePercent,
 
       featuredPoolIds,
-      verifiedPoolIds,
+      verifiedCoinTypes,
     }),
     [
       steammClient,
@@ -188,7 +191,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       slippagePercent,
       setSlippagePercent,
       featuredPoolIds,
-      verifiedPoolIds,
+      verifiedCoinTypes,
     ],
   );
 
