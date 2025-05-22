@@ -6,7 +6,7 @@ import { ChevronRight } from "lucide-react";
 
 import { formatUsd } from "@suilend/frontend-sui";
 import { useWalletContext } from "@suilend/frontend-sui-next";
-import { ParsedPool } from "@suilend/steamm-sdk";
+import { ParsedPool, QuoterId } from "@suilend/steamm-sdk";
 
 import AprBreakdown from "@/components/AprBreakdown";
 import PoolActionsCard from "@/components/pool/PoolActionsCard";
@@ -242,6 +242,16 @@ function PoolPage() {
               <div className="flex flex-col gap-6 max-md:w-full md:flex-1 lg:max-w-lg lg:flex-[2]">
                 {/* Cards */}
                 <div className="flex w-full flex-col gap-4">
+                  {/* Oracle V1 */}
+                  {pool.quoterId === QuoterId.ORACLE && (
+                    <div className="flex w-full flex-row items-center justify-between gap-4 rounded-md border border-warning bg-warning/25 px-5 py-2">
+                      <p className="text-p2 text-foreground">
+                        Oracle V1 pools are deprecated and in withdraw-only
+                        mode.
+                      </p>
+                    </div>
+                  )}
+
                   <PoolPositionCard />
                   <PoolActionsCard
                     key={pool.id}

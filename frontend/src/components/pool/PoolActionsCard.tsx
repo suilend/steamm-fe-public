@@ -1605,7 +1605,9 @@ export default function PoolActionsCard({
       ? queryParams[QueryParams.ACTION]
       : isCpmmOffsetPoolWithNoQuoteAssets
         ? Action.SWAP
-        : Action.DEPOSIT;
+        : pool.quoterId === QuoterId.ORACLE
+          ? Action.WITHDRAW
+          : Action.DEPOSIT;
   useEffect(() => {
     if (isCpmmOffsetPoolWithNoQuoteAssets) {
       if (queryParams[QueryParams.ACTION] !== Action.SWAP)
@@ -1613,8 +1615,17 @@ export default function PoolActionsCard({
           ...router.query,
           [QueryParams.ACTION]: Action.SWAP,
         });
+    } else if (pool.quoterId === QuoterId.ORACLE) {
+      if (
+        queryParams[QueryParams.ACTION] !== Action.WITHDRAW &&
+        queryParams[QueryParams.ACTION] !== Action.SWAP
+      )
+        shallowReplaceQuery(router, {
+          ...router.query,
+          [QueryParams.ACTION]: Action.WITHDRAW,
+        });
     }
-  }, [queryParams, isCpmmOffsetPoolWithNoQuoteAssets, router]);
+  }, [isCpmmOffsetPoolWithNoQuoteAssets, queryParams, router, pool.quoterId]);
   const onSelectedActionChange = (action: Action) => {
     shallowPushQuery(router, { ...router.query, [QueryParams.ACTION]: action });
   };
@@ -1626,7 +1637,11 @@ export default function PoolActionsCard({
         <div className="flex flex-row">
           {Object.values(Action).map((action) => {
             if (action === Action.DEPOSIT) {
-              if (isCpmmOffsetPoolWithNoQuoteAssets) return null;
+              if (
+                pool.quoterId === QuoterId.ORACLE ||
+                isCpmmOffsetPoolWithNoQuoteAssets
+              )
+                return null;
             }
             if (action === Action.WITHDRAW) {
               if (isCpmmOffsetPoolWithNoQuoteAssets || pool.tvlUsd.eq(0))
@@ -1673,9 +1688,9 @@ export default function PoolActionsCard({
       </div>
 
       {selectedAction === Action.DEPOSIT &&
-        !isCpmmOffsetPoolWithNoQuoteAssets && (
-          <DepositTab onDeposit={onDeposit} />
-        )}
+        !(
+          pool.quoterId === QuoterId.ORACLE || isCpmmOffsetPoolWithNoQuoteAssets
+        ) && <DepositTab onDeposit={onDeposit} />}
       {selectedAction === Action.WITHDRAW &&
         !(isCpmmOffsetPoolWithNoQuoteAssets || pool.tvlUsd.eq(0)) && (
           <WithdrawTab onWithdraw={onWithdraw} />

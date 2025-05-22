@@ -1,7 +1,6 @@
 import { Loader2 } from "lucide-react";
 
 import { formatToken, formatUsd, getToken } from "@suilend/frontend-sui";
-import { QuoterId } from "@suilend/steamm-sdk";
 
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
@@ -50,15 +49,6 @@ export default function PoolPositionCard() {
             </button>
           </div>
         )}
-
-      {/* Oracle V1 LP tokens */}
-      {pool.quoterId === QuoterId.ORACLE && poolPosition !== undefined && (
-        <div className="flex w-full flex-row items-center justify-between gap-4 rounded-md border border-warning bg-warning/25 px-5 py-2">
-          <p className="text-p2 text-foreground">
-            Consider migrating your liquidity to an OMM pool.
-          </p>
-        </div>
-      )}
 
       <div className="flex w-full flex-col gap-1 rounded-md border p-5">
         <p className="text-p2 text-secondary-foreground">Your balance</p>
