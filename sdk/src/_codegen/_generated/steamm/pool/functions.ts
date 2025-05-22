@@ -50,7 +50,7 @@ export function setDepositLimit(
     arguments: [
       obj(tx, args.pool),
       obj(tx, args.globalAdmin),
-      pure(tx, args.k, `u64`),
+      pure(tx, args.k, `u128`),
     ],
   });
 }
