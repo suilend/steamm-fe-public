@@ -166,14 +166,12 @@ export class PoolAbi {
       k: args.k,
     };
 
-    const [coinA, coinB] = Codegen.Pool.setDepositLimit(
+    Codegen.Pool.setDepositLimit(
       tx,
       this.poolTypes(),
       callArgs,
       this.publishedAt,
     );
-
-    return [coinA, coinB];
   }
 
   public migrate(
