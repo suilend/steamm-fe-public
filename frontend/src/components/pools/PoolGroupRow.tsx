@@ -106,7 +106,10 @@ export default function PoolGroupRow({
         onClick={() => setIsExpanded((prev) => !prev)}
       >
         {/* Pool */}
-        <td className="whitespace-nowrap" style={columnStyleMap.pool.cell}>
+        <td
+          className="whitespace-nowrap align-middle"
+          style={columnStyleMap.pool.cell}
+        >
           <div
             className="flex min-w-max flex-row items-center gap-3"
             style={columnStyleMap.pool.children}
@@ -151,7 +154,10 @@ export default function PoolGroupRow({
         </td>
 
         {/* TVL */}
-        <td className="whitespace-nowrap" style={columnStyleMap.tvlUsd.cell}>
+        <td
+          className="whitespace-nowrap align-middle"
+          style={columnStyleMap.tvlUsd.cell}
+        >
           <div
             className="flex min-w-max flex-row items-center"
             style={columnStyleMap.tvlUsd.children}
@@ -171,7 +177,7 @@ export default function PoolGroupRow({
         {/* Volume */}
         {!isTvlOnly && (
           <td
-            className="whitespace-nowrap"
+            className="whitespace-nowrap align-middle"
             style={columnStyleMap.volumeUsd_24h.cell}
           >
             <div
@@ -200,7 +206,7 @@ export default function PoolGroupRow({
         {/* APR */}
         {!isTvlOnly && (
           <td
-            className="whitespace-nowrap"
+            className="whitespace-nowrap align-middle"
             style={columnStyleMap.aprPercent_24h.cell}
           >
             <div
@@ -208,7 +214,7 @@ export default function PoolGroupRow({
               style={columnStyleMap.aprPercent_24h.children}
             >
               <div className="flex flex-row items-center gap-2">
-                <p className="w-max whitespace-nowrap text-p3 text-tertiary-foreground">
+                <p className="w-max whitespace-nowrap align-middle text-p3 text-tertiary-foreground">
                   Up to
                 </p>
 
