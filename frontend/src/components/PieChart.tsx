@@ -26,14 +26,14 @@ function TooltipContent({ value, coordinate }: TooltipContentProps) {
         className="text-[10px] text-foreground"
         style={{
           textShadow: [
-            "1.41421px 0px 0 hsla(var(--background) / 25%)",
-            "1px -1px 0 hsla(var(--background) / 25%)",
-            "0px -1.41422px 0 hsla(var(--background) / 25%)",
-            "-1px -1px 0 hsla(var(--background) / 25%)",
-            "-1.41422px 0 0 hsla(var(--background) / 25%)",
-            "-1px 1px 0 hsla(var(--background) / 25%)",
-            "0 1.41421px 0 hsla(var(--background) / 25%)",
-            "1px 1px 0 hsla(var(--background) / 25%)",
+            "1.41421px 0px 0 hsla(var(--background) / 50%)",
+            "1px -1px 0 hsla(var(--background) / 50%)",
+            "0px -1.41422px 0 hsla(var(--background) / 50%)",
+            "-1px -1px 0 hsla(var(--background) / 50%)",
+            "-1.41422px 0 0 hsla(var(--background) / 50%)",
+            "-1px 1px 0 hsla(var(--background) / 50%)",
+            "0 1.41421px 0 hsla(var(--background) / 50%)",
+            "1px 1px 0 hsla(var(--background) / 50%)",
           ].join(", "),
         }}
       >
@@ -73,6 +73,7 @@ export default function PieChart({ data, size }: PieChartProps) {
             }}
           >
             <Recharts.Pie
+              className="!outline-none"
               isAnimationActive={false}
               data={processedData}
               dataKey="value"
@@ -82,8 +83,14 @@ export default function PieChart({ data, size }: PieChartProps) {
               stroke="hsl(var(--background))"
               strokeWidth={strokeWidth}
             >
-              <Recharts.Cell fill="hsl(var(--jordy-blue))" />
-              <Recharts.Cell fill="hsla(var(--jordy-blue) / 50%)" />
+              <Recharts.Cell
+                className="!outline-none"
+                fill="hsl(var(--jordy-blue))"
+              />
+              <Recharts.Cell
+                className="!outline-none"
+                fill="hsla(var(--jordy-blue) / 50%)"
+              />
             </Recharts.Pie>
             <Recharts.Tooltip
               isAnimationActive={false}
