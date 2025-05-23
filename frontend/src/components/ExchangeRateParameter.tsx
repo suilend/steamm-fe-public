@@ -61,11 +61,7 @@ export default function ExchangeRateParameter({
       {isFetchingQuote || !quote ? (
         <Skeleton className="h-[21px] w-48" />
       ) : (
-        <button
-          className="group flex w-max flex-row items-center gap-2"
-          onClick={() => setIsInverted((prev) => !prev)}
-          disabled={!isDefined}
-        >
+        <div className="flex w-full flex-row items-center gap-2">
           <p className={cn("!text-p2 text-foreground", labelClassName)}>
             {isDefined ? (
               !isInverted ? (
@@ -108,9 +104,14 @@ export default function ExchangeRateParameter({
           )}
 
           {isDefined && (
-            <ArrowRightLeft className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
+            <button
+              className="group h-4 w-4 flex-1"
+              onClick={() => setIsInverted((prev) => !prev)}
+            >
+              <ArrowRightLeft className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
+            </button>
           )}
-        </button>
+        </div>
       )}
     </Parameter>
   );
