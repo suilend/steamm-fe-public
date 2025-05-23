@@ -126,13 +126,15 @@ export default function PortfolioPage() {
             ...position,
             pnlPercent:
               poolDepositedAmountUsdMap?.[position.pool.id] !== undefined
-                ? new BigNumber(
-                    position.balanceUsd.minus(
-                      poolDepositedAmountUsdMap[position.pool.id],
-                    ),
-                  )
-                    .div(poolDepositedAmountUsdMap[position.pool.id])
-                    .times(100)
+                ? poolDepositedAmountUsdMap[position.pool.id].eq(0)
+                  ? null
+                  : new BigNumber(
+                      position.balanceUsd.minus(
+                        poolDepositedAmountUsdMap[position.pool.id],
+                      ),
+                    )
+                      .div(poolDepositedAmountUsdMap[position.pool.id])
+                      .times(100)
                 : undefined,
             pnlUsd:
               poolDepositedAmountUsdMap?.[position.pool.id] !== undefined

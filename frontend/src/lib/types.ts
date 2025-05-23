@@ -17,7 +17,7 @@ export type PoolPosition = {
   pool: ParsedPool;
   balances: [BigNumber, BigNumber];
   balanceUsd: BigNumber;
-  pnlPercent?: BigNumber; // Fetched separately (BE)
+  pnlPercent?: BigNumber | null; // Fetched separately (BE)
   pnlUsd?: BigNumber; // Fetched separately (BE)
   stakedPercent: BigNumber;
   claimableRewards: Record<string, BigNumber>;

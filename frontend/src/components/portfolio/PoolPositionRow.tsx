@@ -246,7 +246,7 @@ export default function PoolPositionRow({
                 )}
               >
                 {poolPosition.pnlUsd.gte(0) ? "+" : "-"}
-                {formatUsd(poolPosition.pnlUsd)}
+                {formatUsd(poolPosition.pnlUsd.abs())}
               </p>
             )}
 
@@ -254,6 +254,8 @@ export default function PoolPositionRow({
 
             {poolPosition.pnlPercent === undefined ? (
               <Skeleton className="h-[24px] w-16" />
+            ) : poolPosition.pnlPercent === null ? (
+              <p className="text-p1 text-foreground">--</p>
             ) : (
               <p
                 className={cn(
