@@ -4,8 +4,11 @@ import BigNumber from "bignumber.js";
 import * as Recharts from "recharts";
 
 import { formatPercent } from "@suilend/frontend-sui";
+import useIsTouchscreen from "@suilend/frontend-sui-next/hooks/useIsTouchscreen";
 
 import { Skeleton } from "@/components/ui/skeleton";
+
+const STROKE_WIDTH = 1;
 
 interface TooltipContentProps {
   value: number;
@@ -49,7 +52,7 @@ interface PieChartProps {
 }
 
 export default function PieChart({ data, size }: PieChartProps) {
-  const strokeWidth = 1;
+  const isTouchscreen = useIsTouchscreen();
 
   const processedData = useMemo(() => {
     if (data === undefined) return undefined;
@@ -78,10 +81,10 @@ export default function PieChart({ data, size }: PieChartProps) {
               data={processedData}
               dataKey="value"
               nameKey="label"
-              outerRadius={(size - 2 * (strokeWidth / 2)) / 2}
+              outerRadius={(size - 2 * (STROKE_WIDTH / 2)) / 2}
               legendType="none"
               stroke="hsl(var(--background))"
-              strokeWidth={strokeWidth}
+              strokeWidth={STROKE_WIDTH}
             >
               <Recharts.Cell
                 className="!outline-none"
@@ -94,7 +97,7 @@ export default function PieChart({ data, size }: PieChartProps) {
             </Recharts.Pie>
             <Recharts.Tooltip
               isAnimationActive={false}
-              trigger="hover"
+              trigger={isTouchscreen ? "click" : "hover"}
               wrapperStyle={{
                 transform: undefined,
                 position: undefined,
