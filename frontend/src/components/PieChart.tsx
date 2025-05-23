@@ -23,7 +23,7 @@ function TooltipContent({ value, coordinate }: TooltipContentProps) {
       }}
     >
       <p
-        className="text-[10px] text-foreground"
+        className="text-p3 text-foreground"
         style={{
           textShadow: [
             "1.41421px 0px 0 hsla(var(--background) / 50%)",
