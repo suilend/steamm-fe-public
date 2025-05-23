@@ -12,9 +12,10 @@ import {
 import BigNumber from "bignumber.js";
 import { startOfHour } from "date-fns";
 
+import { API_URL } from "@suilend/frontend-sui";
+
 import { useAppContext } from "@/contexts/AppContext";
 import { ChartData } from "@/lib/chart";
-import { API_URL } from "@/lib/navigation";
 
 const FIFTEEN_MINUTES_S = 15 * 60;
 const ONE_HOUR_S = FIFTEEN_MINUTES_S * 4;

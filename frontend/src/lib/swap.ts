@@ -1,9 +1,8 @@
 import BigNumber from "bignumber.js";
 
-import { Token } from "@suilend/frontend-sui";
+import { API_URL, Token } from "@suilend/frontend-sui";
 import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 
-import { API_URL } from "@/lib/navigation";
 import { HistorySwap, HistoryTransactionType } from "@/lib/types";
 
 export const PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD = 2;

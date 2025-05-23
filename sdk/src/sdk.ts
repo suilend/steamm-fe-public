@@ -7,6 +7,7 @@ import {
 import BigNumber from "bignumber.js";
 
 import {
+  API_URL,
   NORMALIZED_STEAMM_POINTS_COINTYPE,
   getCoinMetadataMap,
   isSteammPoints,
@@ -23,7 +24,7 @@ import {
 
 import { BankAbi, BankScript, PoolAbi, PoolScript } from "./abis";
 import { PYTH_STATE_ID, WORMHOLE_STATE_ID } from "./config";
-import { API_URL, ASSETS_URL } from "./lib/constants";
+import { ASSETS_URL } from "./lib/constants";
 import {
   BankObj,
   OracleType,

@@ -1,4 +1,5 @@
-import { API_URL } from "@/lib/navigation";
+import { API_URL } from "@suilend/frontend-sui";
+
 import {
   HistoryDeposit,
   HistoryTransactionType,

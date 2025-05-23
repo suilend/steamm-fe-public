@@ -5,6 +5,7 @@ import { useFlags } from "launchdarkly-react-client-sdk";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import {
+  API_URL,
   NORMALIZED_SUI_COINTYPE,
   NORMALIZED_USDC_COINTYPE,
   Token,
@@ -64,7 +65,6 @@ import {
   createToken,
   mintToken,
 } from "@/lib/launchToken";
-import { API_URL } from "@/lib/navigation";
 import { getAvgPoolPrice } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";

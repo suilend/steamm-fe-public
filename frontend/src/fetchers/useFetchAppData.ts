@@ -5,6 +5,7 @@ import BigNumber from "bignumber.js";
 import useSWR, { useSWRConfig } from "swr";
 
 import {
+  API_URL,
   NORMALIZED_STEAMM_POINTS_COINTYPE,
   getCoinMetadataMap,
 } from "@suilend/frontend-sui";
@@ -39,7 +40,6 @@ import { AppData } from "@/contexts/AppContext";
 import { ASSETS_URL } from "@/lib/constants";
 import { formatPair } from "@/lib/format";
 import { normalizeRewards } from "@/lib/liquidityMining";
-import { API_URL } from "@/lib/navigation";
 import { OracleType } from "@/lib/oracles";
 import { fetchPool } from "@/lib/pools";
 

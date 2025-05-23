@@ -5,6 +5,7 @@ import { useFlags } from "launchdarkly-react-client-sdk";
 import { Check } from "lucide-react";
 
 import {
+  API_URL,
   NORMALIZED_SUI_COINTYPE,
   NORMALIZED_USDC_COINTYPE,
   Token,
@@ -64,7 +65,6 @@ import {
   formatPair,
   formatTextInputValue,
 } from "@/lib/format";
-import { API_URL } from "@/lib/navigation";
 import { AMPLIFIER_TOOLTIP, getAvgPoolPrice } from "@/lib/pools";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
