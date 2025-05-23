@@ -8,7 +8,7 @@ export default function PointsHeader() {
           <div
             className="absolute inset-0 z-[1]"
             style={{
-              backgroundImage: `url('${ASSETS_URL}/points/header.png')`,
+              backgroundImage: `url('${ASSETS_URL}/points/header-s2.png')`,
               backgroundPosition: "center",
               backgroundSize: "cover",
               backgroundRepeat: "no-repeat",
