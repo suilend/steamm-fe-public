@@ -97,7 +97,10 @@ export default function TransactionHistoryRow({
       )}
     >
       {/* Date */}
-      <td className="whitespace-nowrap" style={columnStyleMap.date.cell}>
+      <td
+        className="whitespace-nowrap align-middle"
+        style={columnStyleMap.date.cell}
+      >
         <div
           className="flex min-w-max flex-row items-center py-3"
           style={columnStyleMap.date.children}
@@ -113,7 +116,10 @@ export default function TransactionHistoryRow({
       </td>
 
       {/* Type */}
-      <td className="whitespace-nowrap" style={columnStyleMap.type.cell}>
+      <td
+        className="whitespace-nowrap align-middle"
+        style={columnStyleMap.type.cell}
+      >
         <div
           className="flex min-w-max flex-row items-center py-3"
           style={columnStyleMap.type.children}
@@ -134,7 +140,10 @@ export default function TransactionHistoryRow({
 
       {/* Pool */}
       {hasPoolColumn && (
-        <td className="whitespace-nowrap" style={columnStyleMap.pool.cell}>
+        <td
+          className="whitespace-nowrap align-middle"
+          style={columnStyleMap.pool.cell}
+        >
           <div
             className="flex min-w-max flex-row items-center gap-3 py-3"
             style={columnStyleMap.pool.children}
@@ -153,7 +162,10 @@ export default function TransactionHistoryRow({
       )}
 
       {/* Amounts */}
-      <td className="whitespace-nowrap" style={columnStyleMap.amounts.cell}>
+      <td
+        className="whitespace-nowrap align-middle"
+        style={columnStyleMap.amounts.cell}
+      >
         <div
           className="flex min-w-max flex-row items-center gap-3 py-3"
           style={columnStyleMap.amounts.children}
@@ -235,7 +247,10 @@ export default function TransactionHistoryRow({
       </td>
 
       {/* Digest */}
-      <td className="whitespace-nowrap" style={columnStyleMap.digest.cell}>
+      <td
+        className="whitespace-nowrap align-middle"
+        style={columnStyleMap.digest.cell}
+      >
         <div
           className="flex min-w-max flex-row items-center py-3"
           style={columnStyleMap.digest.children}

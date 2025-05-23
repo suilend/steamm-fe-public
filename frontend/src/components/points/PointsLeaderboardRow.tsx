@@ -40,7 +40,10 @@ export default function PointsLeaderboardRow({
   return (
     <tr className="h-[calc(45px+1px)] border-x border-b bg-background">
       {/* Rank */}
-      <td className="whitespace-nowrap" style={columnStyleMap.rank.cell}>
+      <td
+        className="whitespace-nowrap align-middle"
+        style={columnStyleMap.rank.cell}
+      >
         <div
           className="flex min-w-max flex-row items-center gap-2"
           style={columnStyleMap.rank.children}
@@ -69,7 +72,10 @@ export default function PointsLeaderboardRow({
       </td>
 
       {/* Address */}
-      <td className="whitespace-nowrap" style={columnStyleMap.address.cell}>
+      <td
+        className="whitespace-nowrap align-middle"
+        style={columnStyleMap.address.cell}
+      >
         <div
           className="flex min-w-max flex-row items-center gap-2"
           style={columnStyleMap.address.children}
@@ -93,7 +99,10 @@ export default function PointsLeaderboardRow({
       </td>
 
       {/* Total points */}
-      <td className="whitespace-nowrap" style={columnStyleMap.totalPoints.cell}>
+      <td
+        className="whitespace-nowrap align-middle"
+        style={columnStyleMap.totalPoints.cell}
+      >
         <div
           className="flex min-w-max flex-row items-center gap-2"
           style={columnStyleMap.totalPoints.children}
@@ -125,7 +134,7 @@ export default function PointsLeaderboardRow({
 
       {/* Points per day */}
       <td
-        className="whitespace-nowrap"
+        className="whitespace-nowrap align-middle"
         style={columnStyleMap.pointsPerDay.cell}
       >
         <div

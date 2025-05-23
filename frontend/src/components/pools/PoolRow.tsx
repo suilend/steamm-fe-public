@@ -1,5 +1,5 @@
-import { CSSProperties } from "react";
 import Link from "next/link";
+import { CSSProperties } from "react";
 
 import { formatUsd } from "@suilend/frontend-sui";
 import { ParsedPool } from "@suilend/steamm-sdk";
@@ -32,20 +32,22 @@ export default function PoolRow({
   isLastPoolInGroup,
 }: PoolRowProps) {
   const { appData } = useLoadedAppContext();
-  const poolUrl = getPoolUrl(appData, pool);
 
   return (
-    <Link href={poolUrl} className="contents">
+    <Link href={getPoolUrl(appData, pool)} className="contents">
       <tr
         className={cn(
           "group h-[calc(56px+1px)] cursor-pointer border-x border-b bg-background transition-colors",
           isInsideGroup
             ? "shadow-[inset_2px_0_0_0px_hsl(var(--button-1))] hover:bg-tertiary/50"
-            : "hover:bg-tertiary"
+            : "hover:bg-tertiary",
         )}
       >
         {/* Pool */}
-        <td className="align-middle whitespace-nowrap" style={columnStyleMap.pool.cell}>
+        <td
+          className="whitespace-nowrap align-middle"
+          style={columnStyleMap.pool.cell}
+        >
           <div
             className="flex min-w-max flex-row items-center gap-3"
             style={columnStyleMap.pool.children}
@@ -69,13 +71,18 @@ export default function PoolRow({
         </td>
 
         {/* TVL */}
-        <td className="align-middle whitespace-nowrap" style={columnStyleMap.tvlUsd.cell}>
+        <td
+          className="whitespace-nowrap align-middle"
+          style={columnStyleMap.tvlUsd.cell}
+        >
           <div
             className="flex min-w-max flex-row items-center"
             style={columnStyleMap.tvlUsd.children}
           >
             <Tooltip title={formatUsd(pool.tvlUsd, { exact: true })}>
-              <p className="text-p1 text-foreground">{formatUsd(pool.tvlUsd)}</p>
+              <p className="text-p1 text-foreground">
+                {formatUsd(pool.tvlUsd)}
+              </p>
             </Tooltip>
           </div>
         </td>
@@ -83,7 +90,7 @@ export default function PoolRow({
         {/* Volume */}
         {!isTvlOnly && (
           <td
-            className="align-middle whitespace-nowrap"
+            className="whitespace-nowrap align-middle"
             style={columnStyleMap.volumeUsd_24h.cell}
           >
             <div
@@ -106,7 +113,7 @@ export default function PoolRow({
         {/* APR */}
         {!isTvlOnly && (
           <td
-            className="align-middle whitespace-nowrap"
+            className="whitespace-nowrap align-middle"
             style={columnStyleMap.aprPercent_24h.cell}
           >
             <div
