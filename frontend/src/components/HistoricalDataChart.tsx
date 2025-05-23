@@ -171,7 +171,7 @@ export default function HistoricalDataChart({
           (acc, category) => ({
             ...acc,
             [category]: d[category],
-            [`${category}_normalized`]: d[category] - minY * 0.95,
+            [`${category}_scaled`]: d[category] - minY * 0.75,
           }),
           {},
         ),
@@ -189,7 +189,7 @@ export default function HistoricalDataChart({
       ? []
       : processedData.length > 0
         ? Object.keys(processedData[0]).filter(
-            (key) => key !== "timestampS" && !key.endsWith("_normalized"),
+            (key) => key !== "timestampS" && !key.endsWith("_scaled"),
           )
         : [];
 
@@ -435,7 +435,7 @@ export default function HistoricalDataChart({
                       </linearGradient>
                     </defs>
                     {sortedCategories.map((category, categoryIndex) => {
-                      const dataKey = `${category}_normalized`;
+                      const dataKey = `${category}_scaled`;
                       return (
                         <Recharts.Area
                           key={dataKey}
