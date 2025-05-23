@@ -160,10 +160,19 @@ export default function HistoricalDataChart({
         ),
       }));
     } else {
+      const totals = data.map((d) =>
+        categories.reduce((acc, category) => acc + d[category], 0),
+      );
+      const minY = Math.min(...totals);
+
       return data.map((d) => ({
         timestampS: d.timestampS,
         ...categories.reduce(
-          (acc, category) => ({ ...acc, [category]: d[category] }),
+          (acc, category) => ({
+            ...acc,
+            [category]: d[category],
+            [`${category}_normalized`]: d[category] - minY * 0.95,
+          }),
           {},
         ),
       }));
@@ -179,7 +188,9 @@ export default function HistoricalDataChart({
     processedData === undefined
       ? []
       : processedData.length > 0
-        ? Object.keys(processedData[0]).filter((key) => key !== "timestampS")
+        ? Object.keys(processedData[0]).filter(
+            (key) => key !== "timestampS" && !key.endsWith("_normalized"),
+          )
         : [];
 
   const processedDataWithTotals:
@@ -423,27 +434,29 @@ export default function HistoricalDataChart({
                         />
                       </linearGradient>
                     </defs>
-                    {sortedCategories.map((category, categoryIndex) => (
-                      <Recharts.Area
-                        key={category}
-                        type="monotone"
-                        dataKey={category}
-                        stackId="1"
-                        isAnimationActive={false}
-                        fill={
-                          sortedCategories.length > 1
-                            ? `hsl(var(--a${sortedCategories.length - categoryIndex}))`
-                            : `url(#${gradientId})`
-                        }
-                        fillOpacity={1}
-                        stroke={
-                          sortedCategories.length > 1
-                            ? "hsl(var(--background))"
-                            : "hsl(var(--jordy-blue))"
-                        }
-                        strokeWidth={sortedCategories.length > 1 ? 3 : 2}
-                      />
-                    ))}
+                    {sortedCategories.map((category, categoryIndex) => {
+                      const dataKey = `${category}_normalized`;
+                      return (
+                        <Recharts.Area
+                          key={dataKey}
+                          dataKey={dataKey}
+                          stackId="1"
+                          isAnimationActive={false}
+                          fill={
+                            sortedCategories.length > 1
+                              ? `hsl(var(--a${sortedCategories.length - categoryIndex}))`
+                              : `url(#${gradientId})`
+                          }
+                          fillOpacity={1}
+                          stroke={
+                            sortedCategories.length > 1
+                              ? "hsl(var(--background))"
+                              : "hsl(var(--jordy-blue))"
+                          }
+                          strokeWidth={sortedCategories.length > 1 ? 3 : 2}
+                        />
+                      );
+                    })}
                     <Recharts.Tooltip
                       isAnimationActive={false}
                       cursor={{
