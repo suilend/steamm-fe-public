@@ -83,6 +83,10 @@ export default function OracleCard({
       </div>
 
       <div className="flex w-full flex-col gap-2">
+        <Parameter label="Index" isHorizontal>
+          {oracleInfo.oracleIndex}
+        </Parameter>
+
         <Parameter label="Symbol" isHorizontal>
           {pythPriceIdentifierSymbolMap?.[priceIdentifier] === undefined ? (
             <Skeleton className="h-[21px] w-24" />
