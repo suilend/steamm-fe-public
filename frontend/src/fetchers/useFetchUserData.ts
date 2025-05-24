@@ -92,7 +92,7 @@ export default function useFetchUserData() {
     !appData ? null : `userData-${address}`,
     dataFetcher,
     {
-      refreshInterval: 30 * 1000,
+      refreshInterval: 60 * 1000,
       onSuccess: (data) => {
         console.log("Refreshed user data", data);
       },

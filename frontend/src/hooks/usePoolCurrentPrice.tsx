@@ -5,6 +5,8 @@ import { BigNumber } from "bignumber.js";
 
 import { showErrorToast } from "@suilend/frontend-sui-next";
 import { QuoterId, SwapQuote } from "@suilend/steamm-sdk";
+import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
+import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 
 import { useLoadedAppContext } from "@/contexts/AppContext";
 
@@ -25,6 +27,7 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
         await Promise.all(
           pools.map((pool) =>
             (async () => {
+              // Non-vCPMM and 0 TVL
               if (pool.quoterId !== QuoterId.V_CPMM && pool.tvlUsd.eq(0)) {
                 setPoolCurrentPriceQuoteMap((prev) => ({
                   ...prev,
@@ -41,37 +44,95 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
                 return;
               }
 
-              const submitAmount = (
-                pool.quoterId === QuoterId.V_CPMM
-                  ? new BigNumber(1).div(pool.prices[1]) // $1 of quote token
-                  : BigNumber.min(
-                      pool.balances[0].times(0.1), // 10% of pool balanceA
-                      new BigNumber(1).div(pool.prices[0]), // $1 of base token
-                    )
-              )
-                .times(
-                  10 **
-                    appData.coinMetadataMap[
-                      pool.coinTypes[pool.quoterId === QuoterId.V_CPMM ? 1 : 0]
-                    ].decimals,
+              // CPMM (TVL > 0)
+              let swapQuote: SwapQuote;
+              if (pool.quoterId === QuoterId.CPMM) {
+                const submitAmount = BigNumber.min(
+                  pool.balances[0].times(0.1), // 10% of pool balanceA
+                  new BigNumber(1).div(pool.prices[0]), // $1 of base token
                 )
-                .integerValue(BigNumber.ROUND_DOWN)
-                .toString();
+                  .times(
+                    10 ** appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+                  )
+                  .integerValue(BigNumber.ROUND_DOWN)
+                  .toString();
 
-              const swapQuote = await steammClient.Pool.quoteSwap({
-                a2b: pool.quoterId !== QuoterId.V_CPMM,
-                amountIn: BigInt(submitAmount),
-                poolInfo: pool.poolInfo,
-                bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
-                bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
-              });
-              if (pool.quoterId === QuoterId.V_CPMM) {
+                swapQuote = await steammClient.Pool.quoteSwap({
+                  a2b: true,
+                  amountIn: BigInt(submitAmount),
+                  poolInfo: pool.poolInfo,
+                  bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
+                  bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
+                });
+              }
+
+              // vCPMM (TVL > 0)
+              else if (pool.quoterId === QuoterId.V_CPMM) {
+                const submitAmount = new BigNumber(
+                  new BigNumber(1).div(pool.prices[1]), // $1 of quote token
+                )
+                  .times(
+                    10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals,
+                  )
+                  .integerValue(BigNumber.ROUND_DOWN)
+                  .toString();
+
+                swapQuote = await steammClient.Pool.quoteSwap({
+                  a2b: false,
+                  amountIn: BigInt(submitAmount),
+                  poolInfo: pool.poolInfo,
+                  bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
+                  bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
+                });
+
+                // Reverse the swap quote to a2b
                 const amountIn = swapQuote.amountIn;
                 const amountOut = swapQuote.amountOut;
 
                 swapQuote.a2b = true;
                 swapQuote.amountIn = amountOut;
                 swapQuote.amountOut = amountIn;
+              }
+
+              // Oracle V1, OMM (TVL > 0)
+              else {
+                const getOraclePrice = (index: number): BigNumber => {
+                  const quoter = pool.pool.quoter as
+                    | OracleQuoter
+                    | OracleQuoterV2;
+                  const oracleIndex = +(
+                    index === 0 ? quoter.oracleIndexA : quoter.oracleIndexB
+                  ).toString();
+
+                  return appData.oracleIndexOracleInfoPriceMap[oracleIndex]
+                    .price;
+                };
+
+                swapQuote = {
+                  a2b: true,
+                  amountIn: BigInt(
+                    new BigNumber(1)
+                      .times(
+                        10 **
+                          appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+                      )
+                      .integerValue(BigNumber.ROUND_DOWN)
+                      .toString(),
+                  ),
+                  amountOut: BigInt(
+                    new BigNumber(getOraclePrice(0).div(getOraclePrice(1)))
+                      .times(
+                        10 **
+                          appData.coinMetadataMap[pool.coinTypes[1]].decimals,
+                      )
+                      .integerValue(BigNumber.ROUND_DOWN)
+                      .toString(),
+                  ),
+                  outputFees: {
+                    poolFees: BigInt(0),
+                    protocolFees: BigInt(0),
+                  },
+                };
               }
 
               setPoolCurrentPriceQuoteMap((prev) => ({
@@ -95,6 +156,7 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
       appData.coinMetadataMap,
       steammClient.Pool,
       appData.bankMap,
+      appData.oracleIndexOracleInfoPriceMap,
     ],
   );
 

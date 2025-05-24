@@ -58,7 +58,7 @@ function PoolPage() {
     [poolCurrentPriceQuoteMap, pool.id],
   );
 
-  // Refresh pool and current price (every 30s)
+  // Refresh pool and current price (every 15s)
   const refreshPoolIntervalRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
     if (refreshPoolIntervalRef.current)
@@ -67,7 +67,7 @@ function PoolPage() {
     refreshPoolIntervalRef.current = setInterval(() => {
       fetchRefreshedPool(pool.poolInfo);
       fetchPoolCurrentPriceQuote([pool.id]);
-    }, 30 * 1000);
+    }, 15 * 1000);
 
     return () => {
       if (refreshPoolIntervalRef.current)
@@ -109,8 +109,8 @@ function PoolPage() {
 
     setTimeout(() => {
       fetchRefreshedPool(pool.poolInfo);
-      fetchPoolTransactionHistoryMap([pool.id]);
       fetchPoolCurrentPriceQuote([pool.id]);
+      fetchPoolTransactionHistoryMap([pool.id]);
     }, 2000);
   };
 
@@ -119,8 +119,8 @@ function PoolPage() {
 
     setTimeout(() => {
       fetchRefreshedPool(pool.poolInfo);
-      fetchPoolTransactionHistoryMap([pool.id]);
       fetchPoolCurrentPriceQuote([pool.id]);
+      fetchPoolTransactionHistoryMap([pool.id]);
     }, 2000);
   };
 
@@ -129,8 +129,8 @@ function PoolPage() {
 
     setTimeout(() => {
       fetchRefreshedPool(pool.poolInfo);
-      fetchPoolTransactionHistoryMap([pool.id]);
       fetchPoolCurrentPriceQuote([pool.id]);
+      fetchPoolTransactionHistoryMap([pool.id]);
     }, 2000);
   };
 
