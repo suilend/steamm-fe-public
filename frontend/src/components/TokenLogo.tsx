@@ -1,4 +1,5 @@
-import Image from "next/image";
+import NextImage from "next/image";
+import { useEffect, useRef, useState } from "react";
 
 import { ClassValue } from "clsx";
 
@@ -14,22 +15,54 @@ interface TokenLogoProps {
 }
 
 export default function TokenLogo({ className, token, size }: TokenLogoProps) {
+  const loadedCoinTypesRef = useRef<string[]>([]);
+  const [isLoadedMap, setIsLoadedMap] = useState<Record<string, boolean>>({});
+
+  const [hasErrorMap, setHasErrorMap] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!token) return;
+    if (!token.iconUrl || token.iconUrl === "" || token.iconUrl === "TODO")
+      return;
+
+    if (loadedCoinTypesRef.current.includes(token.coinType)) return;
+    loadedCoinTypesRef.current.push(token.coinType);
+
+    const image = new Image();
+    image.src = token.iconUrl;
+    image.onload = () => {
+      setIsLoadedMap((prev) => ({ ...prev, [token.coinType]: true }));
+    };
+    image.onerror = () => {
+      console.error(
+        `Failed to load iconUrl for ${token.coinType}: ${token.iconUrl}`,
+      );
+      setIsLoadedMap((prev) => ({ ...prev, [token.coinType]: false }));
+    };
+  }, [token]);
+
   if (!token)
     return (
       <Skeleton
-        className={cn("shrink-0 rounded-[50%]", className)}
+        className={cn("shrink-0 rounded-[50%] border", className)}
         style={{ width: size, height: size }}
       />
     );
-  if (!token.iconUrl || token.iconUrl === "" || token.iconUrl === "TODO")
+  if (
+    !token.iconUrl ||
+    token.iconUrl === "" ||
+    token.iconUrl === "TODO" ||
+    !isLoadedMap[token.coinType] ||
+    hasErrorMap[token.coinType]
+  )
     return (
       <div
-        className={cn("shrink-0 rounded-[50%] bg-card", className)}
+        className={cn("shrink-0 rounded-[50%] border", className)}
         style={{ width: size, height: size }}
       />
     );
   return (
-    <Image
+    <NextImage
       className={cn("shrink-0 rounded-[50%]", className)}
       src={token.iconUrl}
       alt={`${token.symbol} logo`}
@@ -37,6 +70,9 @@ export default function TokenLogo({ className, token, size }: TokenLogoProps) {
       height={size}
       style={{ width: size, height: size }}
       quality={100}
+      onError={() =>
+        setHasErrorMap((prev) => ({ ...prev, [token.coinType]: true }))
+      }
     />
   );
 }
