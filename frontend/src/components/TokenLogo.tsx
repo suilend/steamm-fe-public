@@ -16,8 +16,6 @@ interface TokenLogoProps {
 
 export default function TokenLogo({ className, token, size }: TokenLogoProps) {
   const loadedCoinTypesRef = useRef<string[]>([]);
-  const [isLoadedMap, setIsLoadedMap] = useState<Record<string, boolean>>({});
-
   const [hasErrorMap, setHasErrorMap] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -30,14 +28,11 @@ export default function TokenLogo({ className, token, size }: TokenLogoProps) {
 
     const image = new Image();
     image.src = token.iconUrl;
-    image.onload = () => {
-      setIsLoadedMap((prev) => ({ ...prev, [token.coinType]: true }));
-    };
     image.onerror = () => {
       console.error(
         `Failed to load iconUrl for ${token.coinType}: ${token.iconUrl}`,
       );
-      setIsLoadedMap((prev) => ({ ...prev, [token.coinType]: false }));
+      setHasErrorMap((prev) => ({ ...prev, [token.coinType]: true }));
     };
   }, [token]);
 
@@ -52,7 +47,6 @@ export default function TokenLogo({ className, token, size }: TokenLogoProps) {
     !token.iconUrl ||
     token.iconUrl === "" ||
     token.iconUrl === "TODO" ||
-    !isLoadedMap[token.coinType] ||
     hasErrorMap[token.coinType]
   )
     return (

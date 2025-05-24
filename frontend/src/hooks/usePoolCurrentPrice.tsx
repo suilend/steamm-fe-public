@@ -94,7 +94,7 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
                 swapQuote.amountOut = amountIn;
               }
 
-              // Oracle V1, OMM (TVL > 0)
+              // OMMv0.1, OMM (TVL > 0)
               else {
                 const getOraclePrice = (index: number): BigNumber => {
                   const quoter = pool.pool.quoter as

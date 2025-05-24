@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 
 import { formatToken, formatUsd, getToken } from "@suilend/frontend-sui";
 import {
@@ -16,10 +16,12 @@ import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
 import OpenUrlNewTab from "@/components/OpenUrlNewTab";
 import Parameter from "@/components/Parameter";
 import PoolLabel from "@/components/pool/PoolLabel";
+import SuilendLogo from "@/components/SuilendLogo";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
+import { SUILEND_URL } from "@/lib/navigation";
 import { getPoolUrl } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 
@@ -33,6 +35,69 @@ export default function PoolCard({ pool }: PoolCardProps) {
   const { steammClient, appData } = useLoadedAppContext();
   const { refresh } = useUserContext();
 
+  // Suilend LM
+  const [isCreatingSuilendLmReserve, setIsCreatingSuilendLmReserve] =
+    useState<boolean>(false);
+
+  const createSuilendLmReserve = async () => {
+    if (address !== ADMIN_ADDRESS) return;
+
+    try {
+      setIsCreatingSuilendLmReserve(true);
+
+      const transaction = new Transaction();
+
+      const decimals = appData.coinMetadataMap[pool.lpTokenType].decimals;
+
+      await appData.suilend.lmMarket.suilendClient.createReserve(
+        appData.suilend.lmMarket.lendingMarket.ownerCapId,
+        transaction,
+        "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a",
+        pool.lpTokenType,
+        {
+          openLtvPct: Number(0),
+          closeLtvPct: Number(0),
+          maxCloseLtvPct: Number(0),
+          borrowWeightBps: BigInt("18446744073709551615"),
+          depositLimit: BigInt(
+            new BigNumber(1000000000).times(10 ** decimals).toString(),
+          ),
+          borrowLimit: BigInt(
+            new BigNumber(0).times(10 ** decimals).toString(),
+          ),
+          liquidationBonusBps: BigInt(300),
+          maxLiquidationBonusBps: BigInt(500),
+          depositLimitUsd: BigInt(1000000000),
+          borrowLimitUsd: BigInt(0),
+          borrowFeeBps: BigInt(30),
+          spreadFeeBps: BigInt(2000),
+          protocolLiquidationFeeBps: BigInt(199),
+          openAttributedBorrowLimitUsd: BigInt(0),
+          closeAttributedBorrowLimitUsd: BigInt(0),
+          interestRateUtils: [0, 100],
+          interestRateAprs: [BigInt(0), BigInt(0)],
+          isolated: false,
+        },
+      );
+
+      const res = await signExecuteAndWaitForTransaction(transaction);
+      const txUrl = explorer.buildTxUrl(res.digest);
+
+      showSuccessTxnToast("Created Suilend LM reserve", txUrl);
+    } catch (err) {
+      showErrorToast(
+        "Failed to create Suilend LM reserve",
+        err as Error,
+        undefined,
+        true,
+      );
+      console.error(err);
+    } finally {
+      setIsCreatingSuilendLmReserve(false);
+      refresh();
+    }
+  };
+
   // Claim fees
   const [isClaimingFees, setIsClaimingFees] = useState<boolean>(false);
 
@@ -40,8 +105,6 @@ export default function PoolCard({ pool }: PoolCardProps) {
     if (address !== ADMIN_ADDRESS) return;
 
     try {
-      if (!address) throw new Error("Wallet not connected");
-
       setIsClaimingFees(true);
 
       const transaction = new Transaction();
@@ -86,8 +149,39 @@ export default function PoolCard({ pool }: PoolCardProps) {
       <div className="flex w-full flex-row justify-between gap-4">
         <PoolLabel className="flex-1" wrap pool={pool} />
 
-        <div className="flex h-6 flex-row items-center">
-          <OpenUrlNewTab url={getPoolUrl(appData, pool)} />
+        <div className="flex h-6 flex-row items-center gap-3">
+          <div className="flex flex-row items-center gap-2">
+            <SuilendLogo size={14} />
+
+            {appData.suilend.lmMarket.reserveMap[pool.lpTokenType] ? (
+              <OpenUrlNewTab
+                className="h-4 w-4"
+                url={`${SUILEND_URL}/admin?${new URLSearchParams({
+                  lendingMarketId: appData.suilend.lmMarket.lendingMarket.id,
+                  tab: "reserves",
+                  coinType: pool.lpTokenType,
+                })}`}
+                tooltip="Manage on Suilend"
+              />
+            ) : (
+              <Tooltip title="Create Suilend LM reserve">
+                <button
+                  className="group/create-pool h-4 w-4 disabled:pointer-events-none disabled:opacity-50"
+                  onClick={createSuilendLmReserve}
+                  disabled={address !== ADMIN_ADDRESS}
+                >
+                  {isCreatingSuilendLmReserve ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-secondary-foreground" />
+                  ) : (
+                    <Plus className="h-4 w-4 text-secondary-foreground transition-colors group-hover/create-pool:text-foreground" />
+                  )}
+                </button>
+              </Tooltip>
+            )}
+          </div>
+
+          <div className="h-4 w-px bg-border" />
+          <OpenUrlNewTab url={getPoolUrl(appData, pool)} tooltip="Go to pool" />
         </div>
       </div>
 

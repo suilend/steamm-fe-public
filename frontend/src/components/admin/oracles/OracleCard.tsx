@@ -78,6 +78,7 @@ export default function OracleCard({
               url={getPythOracleUrl(
                 pythPriceIdentifierSymbolMap[priceIdentifier],
               )}
+              tooltip="Open on Pyth"
             />
           ))}
       </div>
@@ -120,7 +121,10 @@ export default function OracleCard({
 
                 <div className="flex flex-row items-center gap-1">
                   <CopyToClipboardButton value={coinType} />
-                  <OpenUrlNewTab url={explorer.buildCoinUrl(coinType)} />
+                  <OpenUrlNewTab
+                    url={explorer.buildCoinUrl(coinType)}
+                    tooltip={`Open on ${explorer.name}`}
+                  />
                 </div>
               </div>
             ))}

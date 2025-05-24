@@ -5,6 +5,7 @@ import { Copy } from "lucide-react";
 
 import { showErrorToast, showInfoToast } from "@suilend/frontend-sui-next";
 
+import Tooltip from "@/components/Tooltip";
 import { cn } from "@/lib/utils";
 
 interface CopyToClipboardButtonProps {
@@ -34,19 +35,21 @@ export default function CopyToClipboardButton({
   };
 
   return (
-    <button
-      className={cn(
-        "group/copy-to-clipboard flex h-5 w-5 flex-row items-center justify-center",
-        className,
-      )}
-      onClick={copyToClipboard}
-    >
-      <Copy
+    <Tooltip title="Copy to clipboard">
+      <button
         className={cn(
-          "h-4 w-4 text-secondary-foreground transition-colors group-hover/copy-to-clipboard:text-foreground",
-          iconClassName,
+          "group/copy-to-clipboard flex h-5 w-5 flex-row items-center justify-center",
+          className,
         )}
-      />
-    </button>
+        onClick={copyToClipboard}
+      >
+        <Copy
+          className={cn(
+            "h-4 w-4 text-secondary-foreground transition-colors group-hover/copy-to-clipboard:text-foreground",
+            iconClassName,
+          )}
+        />
+      </button>
+    </Tooltip>
   );
 }

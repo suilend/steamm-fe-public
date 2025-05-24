@@ -27,7 +27,7 @@ import {
 dotenv.config();
 
 export async function test() {
-  describe("test oracle V1 swap", async () => {
+  describe("test OMMv0.1 swap", async () => {
     let keypair: Ed25519Keypair;
     let suiTreasuryCap: string;
     let usdcTreasuryCap: string;

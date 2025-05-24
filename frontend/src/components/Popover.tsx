@@ -44,6 +44,7 @@ export default function Popover({
         collisionPadding={16}
         sideOffset={2}
         align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()}
         style={{
           maxWidth: `min(${contentMaxWidth ?? 9999}px, var(--radix-popover-content-available-width))`,
           maxHeight: `min(${contentMaxHeight ?? 9999}px, var(--radix-popper-available-height))`,

@@ -88,7 +88,10 @@ export default function PointsLeaderboardRow({
 
           <div className="flex flex-row items-center gap-1">
             <CopyToClipboardButton value={row.address} />
-            <OpenUrlNewTab url={explorer.buildAddressUrl(row.address)} />
+            <OpenUrlNewTab
+              url={explorer.buildAddressUrl(row.address)}
+              tooltip={`Open on ${explorer.name}`}
+            />
             <OpenUrlNewTab
               url={`${PORTFOLIO_URL}?wallet=${row.address}`}
               Icon={VenetianMask}

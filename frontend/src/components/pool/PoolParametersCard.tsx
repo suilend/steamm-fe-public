@@ -141,7 +141,10 @@ export default function PoolParametersCard({
 
                   <div className="flex flex-row items-center gap-1">
                     <CopyToClipboardButton value={coinType} />
-                    <OpenUrlNewTab url={explorer.buildCoinUrl(coinType)} />
+                    <OpenUrlNewTab
+                      url={explorer.buildCoinUrl(coinType)}
+                      tooltip={`Open on ${explorer.name}`}
+                    />
                   </div>
                 </div>
               );
@@ -220,7 +223,10 @@ export default function PoolParametersCard({
 
           <div className="flex flex-row items-center gap-1">
             <CopyToClipboardButton value={pool.id} />
-            <OpenUrlNewTab url={explorer.buildObjectUrl(pool.id)} />
+            <OpenUrlNewTab
+              url={explorer.buildObjectUrl(pool.id)}
+              tooltip={`Open on ${explorer.name}`}
+            />
           </div>
         </div>
       </Parameter>

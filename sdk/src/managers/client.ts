@@ -424,7 +424,7 @@ export class FullClient extends SuiClient {
 
       return Pool.fromSuiParsedData(parsedTypes, parsedData);
     } catch (error) {
-      console.error("Error fetching Oracle V1 pool:", error);
+      console.error("Error fetching OMMv0.1 pool:", error);
       throw error;
     }
   }

@@ -26,7 +26,7 @@ export enum QuoterId {
 export const QUOTER_ID_NAME_MAP: Record<QuoterId, string> = {
   [QuoterId.CPMM]: "CPMM",
   [QuoterId.V_CPMM]: "vCPMM",
-  [QuoterId.ORACLE]: "Oracle V1",
+  [QuoterId.ORACLE]: "OMMv0.1",
   [QuoterId.ORACLE_V2]: "OMM",
 };
 
