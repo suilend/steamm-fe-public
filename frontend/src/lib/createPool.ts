@@ -28,7 +28,7 @@ import { BURN_ADDRESS } from "@/lib/launchToken";
 export const QUOTER_IDS: QuoterId[] = Object.values(QuoterId).filter(
   (quoterId) => quoterId !== QuoterId.V_CPMM,
 );
-export const AMPLIFIERS: number[] = [1, 5, 10, 20, 30, 50, 100];
+export const AMPLIFIERS: number[] = [1, 5, 10, 20, 30, 50, 100, 1000];
 export const FEE_TIER_PERCENTS: number[] = [
   1, 5, 10, 20, 25, 30, 50, 100, 200, 1000, 5000,
 ].map((bps) => bps / 100);
