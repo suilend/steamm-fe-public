@@ -46,6 +46,7 @@ import { fetchPool } from "@/lib/pools";
 const TEST_BANK_COIN_TYPES: string[] = [];
 const TEST_POOL_IDS: string[] = [
   "0x933a0929120061c9922b404f2425d2c2de7fcf059547d2dcd55759c7fda79063", // LOLS2 ($250K MC)
+  "0x68b579df0062ec3606655220d79e3a155a9b31ea4e1c1dbc9d09c1b353772376", // SCL ($1M MC)
 ];
 
 type BankObj = {
