@@ -72,7 +72,7 @@ import { cn } from "@/lib/utils";
 export default function LaunchTokenCard() {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData } = useLoadedAppContext();
+  const { steammClient, appData, isLst } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
   const flags = useFlags();
@@ -82,13 +82,6 @@ export default function LaunchTokenCard() {
       (address === ADMIN_ADDRESS ||
         (flags?.steammCreatePoolWhitelist ?? []).includes(address)),
     [address, flags?.steammCreatePoolWhitelist],
-  );
-
-  // LST
-  const isLst = useCallback(
-    (coinType: string) =>
-      Object.keys(appData.lstAprPercentMap).includes(coinType),
-    [appData.lstAprPercentMap],
   );
 
   // State - progress

@@ -90,6 +90,8 @@ interface AppContext {
   appData: AppData | undefined;
   refreshAppData: () => Promise<void>;
 
+  isLst: (coinType: string) => boolean;
+
   slippagePercent: number;
   setSlippagePercent: (slippagePercent: number) => void;
 
@@ -106,6 +108,10 @@ const AppContext = createContext<AppContext>({
   steammClient: undefined,
   appData: undefined,
   refreshAppData: async () => {
+    throw Error("AppContextProvider not initialized");
+  },
+
+  isLst: () => {
     throw Error("AppContextProvider not initialized");
   },
 
@@ -148,6 +154,13 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     await mutateAppData();
   }, [mutateAppData]);
 
+  // LST
+  const isLst = useCallback(
+    (coinType: string) =>
+      Object.keys(appData?.lstAprPercentMap ?? {}).includes(coinType),
+    [appData?.lstAprPercentMap],
+  );
+
   // Slippage
   const [slippagePercent, setSlippagePercent] = useLocalStorage<number>(
     "slippagePercent",
@@ -178,6 +191,8 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       appData,
       refreshAppData,
 
+      isLst,
+
       slippagePercent,
       setSlippagePercent,
 
@@ -188,6 +203,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       steammClient,
       appData,
       refreshAppData,
+      isLst,
       slippagePercent,
       setSlippagePercent,
       featuredPoolIds,
