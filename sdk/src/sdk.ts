@@ -1,6 +1,7 @@
 import { Signer } from "@mysten/sui/cryptography";
 import { normalizeStructTag } from "@mysten/sui/utils";
 import {
+  PriceFeed,
   SuiPriceServiceConnection,
   SuiPythClient,
 } from "@pythnetwork/pyth-sui-js";
@@ -552,6 +553,7 @@ export class SteammSDK {
         const [oracleIndexOracleInfoPriceMap, COINTYPE_ORACLE_INDEX_MAP] =
           await Promise.all([
             // OracleInfos
+            // OracleInfos
             (async () => {
               const pythConnection = new SuiPriceServiceConnection(
                 "https://hermes.pyth.network",
@@ -559,54 +561,86 @@ export class SteammSDK {
 
               const oracleInfos = await this.fetchOracleData();
 
+              const pythOracleInfos = oracleInfos.filter(
+                (oracleInfo) => oracleInfo.oracleType === OracleType.PYTH,
+              );
+              const switchboardOracleInfos = oracleInfos.filter(
+                (oracleInfo) =>
+                  oracleInfo.oracleType === OracleType.SWITCHBOARD,
+              );
+
+              const oracleIndexToPythPriceIdentifierMap: Record<
+                number,
+                string
+              > = Object.fromEntries(
+                pythOracleInfos.map((oracleInfo) => [
+                  oracleInfo.oracleIndex,
+                  typeof oracleInfo.oracleIdentifier === "string"
+                    ? oracleInfo.oracleIdentifier
+                    : toHexString(oracleInfo.oracleIdentifier),
+                ]) as [number, string][],
+              );
+              const oracleIndexToSwitchboardPriceIdentifierMap: Record<
+                number,
+                string
+              > = Object.fromEntries(
+                switchboardOracleInfos.map(
+                  (oracleInfo) => [oracleInfo.oracleIndex, ""], // TODO: Parse Switchboard price identifier
+                ) as [number, string][],
+              );
+
+              const pythPriceFeeds =
+                (await pythConnection.getLatestPriceFeeds(
+                  Object.values(oracleIndexToPythPriceIdentifierMap),
+                )) ?? [];
+              const switchboardPriceFeeds: any[] = [];
+
+              const oracleIndexToPythPriceFeedMap: Record<number, PriceFeed> =
+                Object.keys(oracleIndexToPythPriceIdentifierMap).reduce(
+                  (acc, oracleIndexStr, index) => {
+                    const pythPriceFeed = pythPriceFeeds[index];
+                    if (!pythPriceFeed) return acc;
+
+                    return { ...acc, [+oracleIndexStr]: pythPriceFeed };
+                  },
+                  {} as Record<number, PriceFeed>,
+                );
+              const oracleIndexToSwitchboardPriceFeedMap: Record<number, any> =
+                {};
+
               const oracleIndexOracleInfoPriceEntries: [
                 number,
                 { oracleInfo: OracleInfo; price: BigNumber },
-              ][] = await Promise.all(
-                oracleInfos.map((oracleInfo, index) =>
-                  (async () => {
-                    const priceIdentifier =
-                      oracleInfo.oracleType === OracleType.PYTH
-                        ? typeof oracleInfo.oracleIdentifier === "string"
-                          ? oracleInfo.oracleIdentifier
-                          : toHexString(oracleInfo.oracleIdentifier)
-                        : ""; // TODO: Parse Switchboard price identifier
+              ][] = oracleInfos.map((oracleInfo) => {
+                if (oracleInfo.oracleType === OracleType.PYTH) {
+                  const pythPriceFeed =
+                    oracleIndexToPythPriceFeedMap[oracleInfo.oracleIndex];
 
-                    if (oracleInfo.oracleType === OracleType.PYTH) {
-                      const pythPriceFeeds =
-                        (await pythConnection.getLatestPriceFeeds([
-                          priceIdentifier,
-                        ])) ?? [];
-
-                      return [
-                        +index,
-                        {
-                          oracleInfo,
-                          price: new BigNumber(
-                            pythPriceFeeds[0]
-                              .getPriceUnchecked()
-                              .getPriceAsNumberUnchecked(),
-                          ),
-                        },
-                      ];
-                    } else if (
-                      oracleInfo.oracleType === OracleType.SWITCHBOARD
-                    ) {
-                      return [
-                        +index,
-                        {
-                          oracleInfo,
-                          price: new BigNumber(0.000001), // TODO: Fetch Switchboard price
-                        },
-                      ];
-                    } else {
-                      throw new Error(
-                        `Unknown oracle type: ${oracleInfo.oracleType}`,
-                      );
-                    }
-                  })(),
-                ),
-              );
+                  return [
+                    +oracleInfo.oracleIndex,
+                    {
+                      oracleInfo,
+                      price: new BigNumber(
+                        pythPriceFeed
+                          .getPriceUnchecked()
+                          .getPriceAsNumberUnchecked(),
+                      ),
+                    },
+                  ];
+                } else if (oracleInfo.oracleType === OracleType.SWITCHBOARD) {
+                  return [
+                    +oracleInfo.oracleIndex,
+                    {
+                      oracleInfo,
+                      price: new BigNumber(0.000001), // TODO: Fetch Switchboard price
+                    },
+                  ];
+                } else {
+                  throw new Error(
+                    `Unknown oracle type: ${oracleInfo.oracleType}`,
+                  );
+                }
+              });
 
               return Object.fromEntries(oracleIndexOracleInfoPriceEntries);
             })(),
