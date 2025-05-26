@@ -25,7 +25,7 @@ import { useStatsContext } from "@/contexts/StatsContext";
 import { useUserContext } from "@/contexts/UserContext";
 import usePoolCurrentPriceQuote from "@/hooks/usePoolCurrentPrice";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
-import { formatPair } from "@/lib/format";
+import { formatFeeTier, formatPair } from "@/lib/format";
 import { POOLS_URL, ROOT_URL } from "@/lib/navigation";
 
 function PoolPage() {
@@ -137,7 +137,10 @@ function PoolPage() {
   return (
     <>
       <Head>
-        <title>STEAMM | {formattedPair}</title>
+        <title>
+          STEAMM | {formattedPair} {QUOTER_ID_NAME_MAP[pool.quoterId]}{" "}
+          {formatFeeTier(pool.feeTierPercent)}
+        </title>
       </Head>
 
       <div className="flex w-full flex-col gap-4">

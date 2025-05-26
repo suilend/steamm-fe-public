@@ -502,7 +502,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         getParsedPool(
           {
             coinMetadataMap,
-            lstAprPercentMap,
             oracleIndexOracleInfoPriceMap,
             coinTypeOracleInfoPriceMap,
             bTokenTypeCoinTypeMap,

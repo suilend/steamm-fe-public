@@ -6,8 +6,6 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import {
   API_URL,
-  NORMALIZED_SUI_COINTYPE,
-  NORMALIZED_USDC_COINTYPE,
   Token,
   formatInteger,
   formatNumber,
@@ -15,9 +13,6 @@ import {
   formatToken,
   formatUsd,
   getToken,
-  isSend,
-  isStablecoin,
-  isSui,
 } from "@suilend/frontend-sui";
 import {
   showErrorToast,
@@ -65,14 +60,13 @@ import {
   createToken,
   mintToken,
 } from "@/lib/launchToken";
-import { getAvgPoolPrice } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
 
 export default function LaunchTokenCard() {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, isLst } = useLoadedAppContext();
+  const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
   const flags = useFlags();
@@ -258,40 +252,20 @@ export default function LaunchTokenCard() {
 
   // State - pool - quote asset
   const getQuotePrice = useCallback(
-    (coinType: string) =>
-      isSui(coinType) || isLst(coinType)
-        ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_SUI_COINTYPE]?.price
-        : isStablecoin(coinType)
-          ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_USDC_COINTYPE]?.price
-          : (appData.coinTypeOracleInfoPriceMap[coinType]?.price ??
-            getAvgPoolPrice(appData.pools, coinType)),
-    [isLst, appData.coinTypeOracleInfoPriceMap, appData.pools],
+    (coinType: string) => appData.coinTypeOracleInfoPriceMap[coinType]?.price,
+    [appData.coinTypeOracleInfoPriceMap],
   );
 
   const quoteTokens = useMemo(
     () =>
       Object.entries(balancesCoinMetadataMap ?? {})
-        .filter(
-          ([coinType]) =>
-            (isSend(coinType) ||
-              isSui(coinType) ||
-              isStablecoin(coinType) ||
-              Object.keys(appData.lstAprPercentMap).includes(coinType) ||
-              appData.coinTypeOracleInfoPriceMap[coinType] !== undefined) &&
-            getQuotePrice(coinType) !== undefined,
-        )
+        .filter(([coinType]) => getQuotePrice(coinType) !== undefined)
         .filter(([coinType]) => getBalance(coinType).gt(0))
         .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
         .sort(
           (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
         ),
-    [
-      balancesCoinMetadataMap,
-      appData.lstAprPercentMap,
-      appData.coinTypeOracleInfoPriceMap,
-      getQuotePrice,
-      getBalance,
-    ],
+    [balancesCoinMetadataMap, getQuotePrice, getBalance],
   );
 
   const [quoteAssetCoinType, setQuoteAssetCoinType] = useState<

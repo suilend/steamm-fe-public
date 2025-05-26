@@ -6,14 +6,10 @@ import { Check } from "lucide-react";
 
 import {
   API_URL,
-  NORMALIZED_SUI_COINTYPE,
-  NORMALIZED_USDC_COINTYPE,
   Token,
   formatPrice,
   formatToken,
   getToken,
-  isSend,
-  isStablecoin,
   isSui,
 } from "@suilend/frontend-sui";
 import {
@@ -65,7 +61,7 @@ import {
   formatPair,
   formatTextInputValue,
 } from "@/lib/format";
-import { AMPLIFIER_TOOLTIP, getAvgPoolPrice } from "@/lib/pools";
+import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
 import { getBirdeyeRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
@@ -73,7 +69,7 @@ import { cn, hoverUnderlineClassName } from "@/lib/utils";
 export default function CreatePoolCard() {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, isLst } = useLoadedAppContext();
+  const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
   const flags = useFlags();
@@ -267,33 +263,14 @@ export default function CreatePoolCard() {
   );
 
   const getQuotePrice = useCallback(
-    (coinType: string) =>
-      isSui(coinType) || isLst(coinType)
-        ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_SUI_COINTYPE]?.price
-        : isStablecoin(coinType)
-          ? appData.coinTypeOracleInfoPriceMap[NORMALIZED_USDC_COINTYPE]?.price
-          : (appData.coinTypeOracleInfoPriceMap[coinType]?.price ??
-            getAvgPoolPrice(appData.pools, coinType)),
-    [isLst, appData.coinTypeOracleInfoPriceMap, appData.pools],
+    (coinType: string) => appData.coinTypeOracleInfoPriceMap[coinType]?.price,
+    [appData.coinTypeOracleInfoPriceMap],
   );
 
   const quoteTokens = useMemo(
     () =>
-      baseTokens.filter(
-        (token) =>
-          (isSend(token.coinType) ||
-            isSui(token.coinType) ||
-            isStablecoin(token.coinType) ||
-            Object.keys(appData.lstAprPercentMap).includes(token.coinType) ||
-            appData.coinTypeOracleInfoPriceMap[token.coinType] !== undefined) &&
-          getQuotePrice(token.coinType) !== undefined,
-      ),
-    [
-      baseTokens,
-      appData.lstAprPercentMap,
-      appData.coinTypeOracleInfoPriceMap,
-      getQuotePrice,
-    ],
+      baseTokens.filter((token) => getQuotePrice(token.coinType) !== undefined),
+    [baseTokens, getQuotePrice],
   );
 
   const onSelectToken = (token: Token, index: number) => {

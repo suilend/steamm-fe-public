@@ -786,7 +786,6 @@ export class SteammSDK {
         getParsedPool(
           {
             coinMetadataMap,
-            lstAprPercentMap,
             oracleIndexOracleInfoPriceMap,
             coinTypeOracleInfoPriceMap,
             bTokenTypeCoinTypeMap,

@@ -1,13 +1,6 @@
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
 
-import {
-  NORMALIZED_SUI_COINTYPE,
-  NORMALIZED_USDC_COINTYPE,
-  isStablecoin,
-  isSui,
-} from "@suilend/frontend-sui";
-
 import { BankInfo, OracleInfo, PoolInfo, RedeemQuote } from "..";
 import { Bank } from "../_codegen/_generated/steamm/bank/structs";
 import { CpQuoter } from "../_codegen/_generated/steamm/cpmm/structs";
@@ -160,7 +153,6 @@ export const getParsedBank = (
 export const getParsedPool = (
   data: {
     coinMetadataMap: Record<string, CoinMetadata>;
-    lstAprPercentMap: Record<string, BigNumber>;
 
     // Oracles
     oracleIndexOracleInfoPriceMap: Record<
@@ -183,15 +175,11 @@ export const getParsedPool = (
   {
     const {
       coinMetadataMap,
-      lstAprPercentMap,
       oracleIndexOracleInfoPriceMap,
       coinTypeOracleInfoPriceMap,
       bTokenTypeCoinTypeMap,
       bankMap,
     } = data;
-
-    const isLst = (coinType: string) =>
-      Object.keys(lstAprPercentMap).includes(coinType);
 
     const id = poolInfo.poolId;
     const quoterId = poolInfo.quoterType.endsWith("omm::OracleQuoter")
@@ -230,20 +218,12 @@ export const getParsedPool = (
       ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexA.toString()
         ].price
-      : isSui(coinTypeA) || isLst(coinTypeA)
-        ? coinTypeOracleInfoPriceMap[NORMALIZED_SUI_COINTYPE]?.price
-        : isStablecoin(coinTypeA)
-          ? coinTypeOracleInfoPriceMap[NORMALIZED_USDC_COINTYPE]?.price
-          : coinTypeOracleInfoPriceMap[coinTypeA]?.price;
+      : coinTypeOracleInfoPriceMap[coinTypeA]?.price;
     let priceB = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
       ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexB.toString()
         ].price
-      : isSui(coinTypeB) || isLst(coinTypeB)
-        ? coinTypeOracleInfoPriceMap[NORMALIZED_SUI_COINTYPE]?.price
-        : isStablecoin(coinTypeB)
-          ? coinTypeOracleInfoPriceMap[NORMALIZED_USDC_COINTYPE]?.price
-          : coinTypeOracleInfoPriceMap[coinTypeB]?.price;
+      : coinTypeOracleInfoPriceMap[coinTypeB]?.price;
 
     if (priceA === undefined && priceB === undefined) {
       console.error(
