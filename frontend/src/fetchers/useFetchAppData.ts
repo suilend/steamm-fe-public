@@ -557,9 +557,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
   };
 
   const { data, mutate } = useSWR<AppData>("appData", dataFetcher, {
-    refreshInterval: 15 * 1000,
+    refreshInterval: 30 * 1000,
     onSuccess: (data) => {
-      console.log("Refreshed app data", data);
+      console.log("Fetched app data", data);
     },
     onError: (err, key) => {
       const isInitialLoad = cache.get(key)?.data === undefined;
