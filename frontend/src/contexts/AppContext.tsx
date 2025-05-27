@@ -3,19 +3,14 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useRef,
-  useState,
 } from "react";
 
 import { CoinMetadata } from "@mysten/sui/client";
-import { normalizeStructTag } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
 import { useLocalStorage } from "usehooks-ts";
 
-import { API_URL } from "@suilend/frontend-sui";
 import {
   useSettingsContext,
   useWalletContext,
@@ -68,6 +63,7 @@ export interface AppData {
 
   coinMetadataMap: Record<string, CoinMetadata>;
   lstAprPercentMap: Record<string, BigNumber>;
+  steammLaunchCoinTypes: string[];
 
   // Oracles
   oracleIndexOracleInfoPriceMap: Record<
@@ -102,7 +98,6 @@ interface AppContext {
 
   featuredPoolIds: string[] | undefined;
   verifiedCoinTypes: string[] | undefined;
-  steammLaunchCoinTypes: string[] | undefined;
 }
 type LoadedAppContext = AppContext & {
   steammClient: SteammSDK;
@@ -128,7 +123,6 @@ const AppContext = createContext<AppContext>({
 
   featuredPoolIds: undefined,
   verifiedCoinTypes: undefined,
-  steammLaunchCoinTypes: undefined,
 });
 
 export const useAppContext = () => useContext(AppContext);
@@ -168,33 +162,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     [appData?.lstAprPercentMap],
   );
 
-  // STEAMM Launch CoinTypes (won't throw on error)
-
-  const [steammLaunchCoinTypes, setSteammLaunchCoinTypes] = useState<
-    string[] | undefined
-  >(undefined);
-
-  const fetchSteammLaunchCoinTypes = useCallback(async () => {
-    try {
-      const coinTypesRes = await fetch(`${API_URL}/steamm/cointypes/all`);
-      const coinTypesJson: string[] = await coinTypesRes.json();
-      if ((coinTypesRes as any)?.statusCode === 500)
-        throw new Error("Failed to fetch STEAMM Launch tokens");
-
-      setSteammLaunchCoinTypes(coinTypesJson.map(normalizeStructTag));
-    } catch (err) {
-      console.error(err);
-    }
-  }, []);
-
-  const didFetchSteammLaunchCoinTypes = useRef<boolean>(false);
-  useEffect(() => {
-    if (didFetchSteammLaunchCoinTypes.current) return;
-    didFetchSteammLaunchCoinTypes.current = true;
-
-    fetchSteammLaunchCoinTypes();
-  }, [fetchSteammLaunchCoinTypes]);
-
   // Slippage
   const [slippagePercent, setSlippagePercent] = useLocalStorage<number>(
     "slippagePercent",
@@ -232,7 +199,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
 
       featuredPoolIds,
       verifiedCoinTypes,
-      steammLaunchCoinTypes,
     }),
     [
       steammClient,
@@ -243,7 +209,6 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       setSlippagePercent,
       featuredPoolIds,
       verifiedCoinTypes,
-      steammLaunchCoinTypes,
     ],
   );
 

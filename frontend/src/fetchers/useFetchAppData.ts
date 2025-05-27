@@ -74,6 +74,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const [
       suilend,
       lstAprPercentMap,
+      steammLaunchCoinTypes,
       {
         oracleIndexOracleInfoPriceMap,
         COINTYPE_ORACLE_INDEX_MAP,
@@ -189,10 +190,25 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             Object.entries(lstAprPercentMapJson).map(
               ([coinType, aprPercent]) => [coinType, new BigNumber(aprPercent)],
             ),
-          ) as AppData["lstAprPercentMap"];
+          );
         } catch (err) {
           console.error(err);
-          return {} as AppData["lstAprPercentMap"];
+          return {};
+        }
+      })(),
+
+      // STEAMM Launch tokens (won't throw on error)
+      (async () => {
+        try {
+          const coinTypesRes = await fetch(`${API_URL}/steamm/cointypes/all`);
+          const coinTypesJson: string[] = await coinTypesRes.json();
+          if ((coinTypesRes as any)?.statusCode === 500)
+            throw new Error("Failed to fetch STEAMM Launch tokens");
+
+          return coinTypesJson.map(normalizeStructTag);
+        } catch (err) {
+          console.error(err);
+          return [];
         }
       })(),
 
@@ -542,6 +558,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
       coinMetadataMap,
       lstAprPercentMap,
+      steammLaunchCoinTypes,
 
       oracleIndexOracleInfoPriceMap,
       COINTYPE_ORACLE_INDEX_MAP,

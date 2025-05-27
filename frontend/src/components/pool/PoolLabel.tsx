@@ -28,14 +28,13 @@ export default function PoolLabel({
   isLarge,
   pool,
 }: PoolLabelProps) {
-  const { appData, verifiedCoinTypes, steammLaunchCoinTypes } =
-    useLoadedAppContext();
+  const { appData, verifiedCoinTypes } = useLoadedAppContext();
 
   const isVerified = pool.coinTypes.every((coinType) =>
     verifiedCoinTypes?.includes(coinType),
   );
   const isSteammLaunchToken = pool.coinTypes.some((coinType) =>
-    steammLaunchCoinTypes?.includes(coinType),
+    appData.steammLaunchCoinTypes.includes(coinType),
   );
 
   const Heading = isLarge ? "h1" : "p";

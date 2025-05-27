@@ -42,14 +42,13 @@ export default function PoolGroupRow({
   poolGroup,
   isTvlOnly,
 }: PoolGroupRowProps) {
-  const { appData, verifiedCoinTypes, steammLaunchCoinTypes } =
-    useLoadedAppContext();
+  const { appData, verifiedCoinTypes } = useLoadedAppContext();
 
   const isVerified = poolGroup.coinTypes.every((coinType) =>
     verifiedCoinTypes?.includes(coinType),
   );
   const isSteammLaunchToken = poolGroup.coinTypes.some((coinType) =>
-    steammLaunchCoinTypes?.includes(coinType),
+    appData.steammLaunchCoinTypes.includes(coinType),
   );
 
   // State
