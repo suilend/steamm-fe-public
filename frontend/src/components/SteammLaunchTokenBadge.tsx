@@ -12,7 +12,7 @@ export default function SteammLaunchTokenBadge({
   isLarge,
 }: SteammLaunchTokenBadgeProps) {
   return (
-    <Tooltip title="STEAMM Launch token">
+    <Tooltip title="Launched on STEAMM">
       <div
         className={cn(
           "flex shrink-0 flex-row items-center justify-center rounded-full border border-button-1 bg-button-1/25",
