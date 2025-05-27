@@ -1,7 +1,7 @@
 import { CSSProperties } from "react";
 
 import BigNumber from "bignumber.js";
-import { BadgeCheck, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useSessionStorage } from "usehooks-ts";
 
 import { formatPercent, formatUsd } from "@suilend/frontend-sui";
@@ -15,10 +15,12 @@ import {
 
 import PoolRow from "@/components/pools/PoolRow";
 import { Column } from "@/components/pools/PoolsTable";
+import SteammLaunchTokenBadge from "@/components/SteammLaunchTokenBadge";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { formatPair } from "@/lib/format";
 import { PoolGroup } from "@/lib/types";
@@ -40,10 +42,14 @@ export default function PoolGroupRow({
   poolGroup,
   isTvlOnly,
 }: PoolGroupRowProps) {
-  const { appData, verifiedCoinTypes } = useLoadedAppContext();
+  const { appData, verifiedCoinTypes, steammLaunchCoinTypes } =
+    useLoadedAppContext();
 
   const isVerified = poolGroup.coinTypes.every((coinType) =>
     verifiedCoinTypes?.includes(coinType),
+  );
+  const isSteammLaunchToken = poolGroup.coinTypes.some((coinType) =>
+    steammLaunchCoinTypes?.includes(coinType),
   );
 
   // State
@@ -145,11 +151,11 @@ export default function PoolGroupRow({
                     ),
                   )}
                 </p>
-                {isVerified && (
-                  <Tooltip title="Verified asset pair">
-                    <BadgeCheck className="h-4 w-4 text-verified" />
-                  </Tooltip>
-                )}
+
+                <div className="flex flex-row items-center gap-1">
+                  {isVerified && <VerifiedBadge />}
+                  {isSteammLaunchToken && <SteammLaunchTokenBadge />}
+                </div>
               </div>
             </div>
           </div>

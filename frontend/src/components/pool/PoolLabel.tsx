@@ -1,12 +1,12 @@
 import { ClassValue } from "clsx";
-import { BadgeCheck } from "lucide-react";
 
 import { ParsedPool } from "@suilend/steamm-sdk";
 
 import PoolTypeTag from "@/components/pool/PoolTypeTag";
+import SteammLaunchTokenBadge from "@/components/SteammLaunchTokenBadge";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
-import Tooltip from "@/components/Tooltip";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -28,10 +28,14 @@ export default function PoolLabel({
   isLarge,
   pool,
 }: PoolLabelProps) {
-  const { appData, verifiedCoinTypes } = useLoadedAppContext();
+  const { appData, verifiedCoinTypes, steammLaunchCoinTypes } =
+    useLoadedAppContext();
 
   const isVerified = pool.coinTypes.every((coinType) =>
     verifiedCoinTypes?.includes(coinType),
+  );
+  const isSteammLaunchToken = pool.coinTypes.some((coinType) =>
+    steammLaunchCoinTypes?.includes(coinType),
   );
 
   const Heading = isLarge ? "h1" : "p";
@@ -83,16 +87,15 @@ export default function PoolLabel({
               ),
             )}
           </Heading>
-          {isVerified && (
-            <Tooltip title="Verified asset pair">
-              <BadgeCheck
-                className={cn(
-                  "text-verified",
-                  isSmall ? "h-3.5 w-3.5" : isLarge ? "h-6 w-6" : "h-4 w-4",
-                )}
-              />
-            </Tooltip>
-          )}
+
+          <div className="flex flex-row items-center gap-1">
+            {isVerified && (
+              <VerifiedBadge isSmall={isSmall} isLarge={isLarge} />
+            )}
+            {isSteammLaunchToken && (
+              <SteammLaunchTokenBadge isSmall={isSmall} isLarge={isLarge} />
+            )}
+          </div>
         </div>
 
         <div className="flex flex-row items-center gap-px">
