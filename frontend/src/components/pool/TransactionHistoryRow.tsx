@@ -105,13 +105,15 @@ export default function TransactionHistoryRow({
           className="flex min-w-max flex-row items-center py-3"
           style={columnStyleMap.date.children}
         >
-          <p className="text-p2 text-secondary-foreground">
-            {prevTransaction?.timestamp !== transaction.timestamp &&
-              format(
-                new Date(+transaction.timestamp * 1000),
-                "yyyy-MM-dd hh:mm:ss",
-              )}
-          </p>
+          <div className="w-max">
+            <p className="text-p2 text-secondary-foreground">
+              {prevTransaction?.timestamp !== transaction.timestamp &&
+                format(
+                  new Date(+transaction.timestamp * 1000),
+                  "yyyy-MM-dd hh:mm:ss",
+                )}
+            </p>
+          </div>
         </div>
       </td>
 
@@ -124,17 +126,20 @@ export default function TransactionHistoryRow({
           className="flex min-w-max flex-row items-center py-3"
           style={columnStyleMap.type.children}
         >
-          <p className="text-p2 text-foreground">
-            {transaction.type === HistoryTransactionType.DEPOSIT ? (
-              "Deposit"
-            ) : transaction.type === HistoryTransactionType.WITHDRAW ? (
-              "Withdraw"
-            ) : (
-              <>
-                {prevTransaction?.timestamp !== transaction.timestamp && "Swap"}
-              </>
-            )}
-          </p>
+          <div className="w-max">
+            <p className="text-p2 text-foreground">
+              {transaction.type === HistoryTransactionType.DEPOSIT ? (
+                "Deposit"
+              ) : transaction.type === HistoryTransactionType.WITHDRAW ? (
+                "Withdraw"
+              ) : (
+                <>
+                  {prevTransaction?.timestamp !== transaction.timestamp &&
+                    "Swap"}
+                </>
+              )}
+            </p>
+          </div>
         </div>
       </td>
 
@@ -145,18 +150,20 @@ export default function TransactionHistoryRow({
           style={columnStyleMap.pool.cell}
         >
           <div
-            className="flex min-w-max flex-row items-center gap-3 py-3"
+            className="flex min-w-max flex-row items-center py-3"
             style={columnStyleMap.pool.children}
           >
-            <PoolLabel isSmall pool={pool} />
+            <div className="flex w-max flex-row items-center gap-3">
+              <PoolLabel isSmall pool={pool} />
 
-            <Link
-              className="block flex flex-col justify-center text-secondary-foreground transition-colors hover:text-foreground"
-              href={getPoolUrl(appData, pool)}
-              target="_blank"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </Link>
+              <Link
+                className="block flex flex-col justify-center text-secondary-foreground transition-colors hover:text-foreground"
+                href={getPoolUrl(appData, pool)}
+                target="_blank"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </td>
       )}
@@ -167,82 +174,85 @@ export default function TransactionHistoryRow({
         style={columnStyleMap.amounts.cell}
       >
         <div
-          className="flex min-w-max flex-row items-center gap-3 py-3"
+          className="flex min-w-max flex-row items-center py-3"
           style={columnStyleMap.amounts.children}
         >
-          {transaction.type === HistoryTransactionType.DEPOSIT ||
-          transaction.type === HistoryTransactionType.WITHDRAW ? (
-            <div className="flex flex-row items-center gap-2">
-              {pool.coinTypes.map((coinType, index) => {
-                const amount =
-                  transaction.type === HistoryTransactionType.DEPOSIT
-                    ? new BigNumber(
-                        index === 0
-                          ? transaction.deposit_a
-                          : transaction.deposit_b,
-                      ).div(10 ** appData.coinMetadataMap[coinType].decimals)
-                    : new BigNumber(
-                        index === 0
-                          ? transaction.withdraw_a
-                          : transaction.withdraw_b,
-                      ).div(10 ** appData.coinMetadataMap[coinType].decimals);
+          <div className="w-max">
+            {transaction.type === HistoryTransactionType.DEPOSIT ||
+            transaction.type === HistoryTransactionType.WITHDRAW ? (
+              <div className="flex flex-row items-center gap-2">
+                {pool.coinTypes.map((coinType, index) => {
+                  const amount =
+                    transaction.type === HistoryTransactionType.DEPOSIT
+                      ? new BigNumber(
+                          index === 0
+                            ? transaction.deposit_a
+                            : transaction.deposit_b,
+                        ).div(10 ** appData.coinMetadataMap[coinType].decimals)
+                      : new BigNumber(
+                          index === 0
+                            ? transaction.withdraw_a
+                            : transaction.withdraw_b,
+                        ).div(10 ** appData.coinMetadataMap[coinType].decimals);
 
-                return (
-                  <Fragment key={coinType}>
-                    <div className="flex flex-row items-center gap-2">
-                      <TokenLogo
-                        token={getToken(
-                          coinType,
-                          appData.coinMetadataMap[coinType],
-                        )}
-                        size={16}
-                      />
-                      <Tooltip
-                        title={`${formatToken(amount, {
-                          dp: appData.coinMetadataMap[coinType].decimals,
-                        })} ${appData.coinMetadataMap[coinType].symbol}`}
-                      >
-                        <p className="text-p2 text-foreground">
-                          {formatToken(amount, { exact: false })}{" "}
-                          {appData.coinMetadataMap[coinType].symbol}
-                        </p>
-                      </Tooltip>
-                    </div>
+                  return (
+                    <Fragment key={coinType}>
+                      <div className="flex flex-row items-center gap-2">
+                        <TokenLogo
+                          token={getToken(
+                            coinType,
+                            appData.coinMetadataMap[coinType],
+                          )}
+                          size={16}
+                        />
+                        <Tooltip
+                          title={`${formatToken(amount, {
+                            dp: appData.coinMetadataMap[coinType].decimals,
+                          })} ${appData.coinMetadataMap[coinType].symbol}`}
+                        >
+                          <p className="text-p2 text-foreground">
+                            {formatToken(amount, { exact: false })}{" "}
+                            {appData.coinMetadataMap[coinType].symbol}
+                          </p>
+                        </Tooltip>
+                      </div>
 
-                    {index === 0 && (
-                      <Plus className="h-4 w-4 text-tertiary-foreground" />
-                    )}
-                  </Fragment>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="flex flex-row items-center gap-2">
-              {[0, 1].map((index) => {
-                const token = getSwapTransactionTokens()[index];
-                const amount = getSwapTransactionAmounts()[index];
+                      {index === 0 && (
+                        <Plus className="h-4 w-4 text-tertiary-foreground" />
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-row items-center gap-2">
+                {[0, 1].map((index) => {
+                  const token = getSwapTransactionTokens()[index];
+                  const amount = getSwapTransactionAmounts()[index];
 
-                return (
-                  <Fragment key={index}>
-                    <div className="flex flex-row items-center gap-2">
-                      <TokenLogo token={token} size={16} />
-                      <Tooltip
-                        title={formatToken(amount, { dp: token.decimals })}
-                      >
-                        <p className="text-p2 text-foreground">
-                          {formatToken(amount, { exact: false })} {token.symbol}
-                        </p>
-                      </Tooltip>
-                    </div>
+                  return (
+                    <Fragment key={index}>
+                      <div className="flex flex-row items-center gap-2">
+                        <TokenLogo token={token} size={16} />
+                        <Tooltip
+                          title={formatToken(amount, { dp: token.decimals })}
+                        >
+                          <p className="text-p2 text-foreground">
+                            {formatToken(amount, { exact: false })}{" "}
+                            {token.symbol}
+                          </p>
+                        </Tooltip>
+                      </div>
 
-                    {index === 0 && (
-                      <ArrowRight className="h-4 w-4 text-tertiary-foreground" />
-                    )}
-                  </Fragment>
-                );
-              })}
-            </div>
-          )}
+                      {index === 0 && (
+                        <ArrowRight className="h-4 w-4 text-tertiary-foreground" />
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </td>
 
@@ -255,15 +265,17 @@ export default function TransactionHistoryRow({
           className="flex min-w-max flex-row items-center py-3"
           style={columnStyleMap.digest.children}
         >
-          {prevTransaction?.timestamp !== transaction.timestamp && (
-            <Link
-              className="block flex flex-col justify-center text-secondary-foreground transition-colors hover:text-foreground"
-              href={explorer.buildTxUrl(transaction.digest)}
-              target="_blank"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </Link>
-          )}
+          <div className="w-max">
+            {prevTransaction?.timestamp !== transaction.timestamp && (
+              <Link
+                className="block flex flex-col justify-center text-secondary-foreground transition-colors hover:text-foreground"
+                href={explorer.buildTxUrl(transaction.digest)}
+                target="_blank"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Link>
+            )}
+          </div>
         </div>
       </td>
     </tr>

@@ -111,44 +111,46 @@ export default function PoolGroupRow({
           style={columnStyleMap.pool.cell}
         >
           <div
-            className="flex min-w-max flex-row items-center gap-3"
+            className="flex min-w-max flex-row items-center"
             style={columnStyleMap.pool.children}
           >
-            <Tag
-              className={cn(
-                "min-w-[50px] group-hover:bg-border/50",
-                isExpanded && "bg-border group-hover:bg-border",
-              )}
-              labelClassName={cn("w-max", isExpanded && "text-foreground")}
-              startDecorator={
-                <Chevron
-                  className={cn(
-                    "h-4 w-4 transition-colors",
-                    isExpanded
-                      ? "text-foreground"
-                      : "text-secondary-foreground group-hover:text-foreground",
-                  )}
-                />
-              }
-            >
-              {poolGroup.pools.length}
-            </Tag>
-
-            <TokenLogos coinTypes={poolGroup.coinTypes} size={20} />
-
-            <div className="flex flex-row items-center gap-1.5">
-              <p className="text-p1 text-foreground">
-                {formatPair(
-                  poolGroup.coinTypes.map(
-                    (coinType) => appData.coinMetadataMap[coinType].symbol,
-                  ),
+            <div className="flex w-max flex-row items-center gap-3">
+              <Tag
+                className={cn(
+                  "min-w-[50px] group-hover:bg-border/50",
+                  isExpanded && "bg-border group-hover:bg-border",
                 )}
-              </p>
-              {isVerified && (
-                <Tooltip title="Verified asset pair">
-                  <BadgeCheck className="h-4 w-4 text-verified" />
-                </Tooltip>
-              )}
+                labelClassName={cn("w-max", isExpanded && "text-foreground")}
+                startDecorator={
+                  <Chevron
+                    className={cn(
+                      "h-4 w-4 transition-colors",
+                      isExpanded
+                        ? "text-foreground"
+                        : "text-secondary-foreground group-hover:text-foreground",
+                    )}
+                  />
+                }
+              >
+                {poolGroup.pools.length}
+              </Tag>
+
+              <TokenLogos coinTypes={poolGroup.coinTypes} size={20} />
+
+              <div className="flex flex-row items-center gap-1.5">
+                <p className="text-p1 text-foreground">
+                  {formatPair(
+                    poolGroup.coinTypes.map(
+                      (coinType) => appData.coinMetadataMap[coinType].symbol,
+                    ),
+                  )}
+                </p>
+                {isVerified && (
+                  <Tooltip title="Verified asset pair">
+                    <BadgeCheck className="h-4 w-4 text-verified" />
+                  </Tooltip>
+                )}
+              </div>
             </div>
           </div>
         </td>
@@ -162,7 +164,7 @@ export default function PoolGroupRow({
             className="flex min-w-max flex-row items-center"
             style={columnStyleMap.tvlUsd.children}
           >
-            <div className="flex flex-row items-center gap-2">
+            <div className="flex w-max flex-row items-center gap-2">
               <p className="text-p3 text-tertiary-foreground">Total</p>
 
               <Tooltip title={formatUsd(totalTvlUsd, { exact: true })}>
@@ -184,7 +186,7 @@ export default function PoolGroupRow({
               className="flex min-w-max flex-row items-center"
               style={columnStyleMap.volumeUsd_24h.children}
             >
-              <div className="flex flex-row items-center gap-2">
+              <div className="flex w-max flex-row items-center gap-2">
                 <p className="text-p3 text-tertiary-foreground">Total</p>
 
                 {totalVolumeUsd_24h === undefined ? (
@@ -213,7 +215,7 @@ export default function PoolGroupRow({
               className="flex min-w-max flex-row items-center"
               style={columnStyleMap.aprPercent_24h.children}
             >
-              <div className="flex flex-row items-center gap-2">
+              <div className="flex w-max flex-row items-center gap-2">
                 <p className="w-max whitespace-nowrap align-middle text-p3 text-tertiary-foreground">
                   Up to
                 </p>
