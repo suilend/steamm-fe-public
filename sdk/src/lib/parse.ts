@@ -28,6 +28,8 @@ export enum OracleType {
   SWITCHBOARD = "switchboard",
 }
 
+export type OracleObj = OracleInfo;
+
 export type BankObj = {
   bankInfo: BankInfo;
   bank: Bank<string, string, string>;
@@ -58,7 +60,7 @@ export type PoolObj = {
     | Pool<string, string, CpQuoter, string>
     | Pool<string, string, OracleQuoter, string>
     | Pool<string, string, OracleQuoterV2, string>;
-  redeemQuote: RedeemQuote;
+  redeemQuote: RedeemQuote | null;
 };
 
 export type ParsedPool = {

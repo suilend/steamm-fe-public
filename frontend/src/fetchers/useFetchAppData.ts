@@ -19,22 +19,17 @@ import {
 } from "@suilend/sdk";
 import {
   BETA_CONFIG,
-  BankInfo,
+  BankObj,
   MAINNET_CONFIG,
   OracleInfo,
+  OracleObj,
   ParsedBank,
   ParsedPool,
-  PoolInfo,
-  RedeemQuote,
+  PoolObj,
   SteammSDK,
   getParsedBank,
   getParsedPool,
 } from "@suilend/steamm-sdk";
-import { Bank } from "@suilend/steamm-sdk/_codegen/_generated/steamm/bank/structs";
-import { CpQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/cpmm/structs";
-import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
-import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
-import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
 import { AppData } from "@/contexts/AppContext";
 import { ASSETS_URL } from "@/lib/constants";
@@ -48,21 +43,6 @@ const TEST_POOL_IDS: string[] = [
   "0x933a0929120061c9922b404f2425d2c2de7fcf059547d2dcd55759c7fda79063", // LOLS2 ($250K MC)
   "0x68b579df0062ec3606655220d79e3a155a9b31ea4e1c1dbc9d09c1b353772376", // SCL ($1M MC)
 ];
-
-type BankObj = {
-  bankInfo: BankInfo;
-  bank: Bank<string, string, string>;
-  totalFunds: number;
-};
-
-type PoolObj = {
-  poolInfo: PoolInfo;
-  pool:
-    | Pool<string, string, CpQuoter, string>
-    | Pool<string, string, OracleQuoter, string>
-    | Pool<string, string, OracleQuoterV2, string>;
-  redeemQuote: RedeemQuote | null;
-};
 
 export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
@@ -229,16 +209,19 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               await Promise.all([
                 // OracleInfos
                 (async () => {
-                  const pythConnection = new SuiPriceServiceConnection(
-                    "https://hermes.pyth.network",
+                  const oraclesRes = await fetch(
+                    `${API_URL}/steamm/oracles/all`,
                   );
+                  const oraclesJson: OracleObj[] = await oraclesRes.json();
+                  if ((oraclesJson as any)?.statusCode === 500)
+                    throw new Error("Failed to fetch oracles");
 
-                  const oracleInfos = await steammClient.fetchOracleData();
+                  const oracleObjs: OracleObj[] = oraclesJson;
 
-                  const pythOracleInfos = oracleInfos.filter(
+                  const pythOracleInfos = oracleObjs.filter(
                     (oracleInfo) => oracleInfo.oracleType === OracleType.PYTH,
                   );
-                  const switchboardOracleInfos = oracleInfos.filter(
+                  const switchboardOracleInfos = oracleObjs.filter(
                     (oracleInfo) =>
                       oracleInfo.oracleType === OracleType.SWITCHBOARD,
                   );
@@ -262,6 +245,11 @@ export default function useFetchAppData(steammClient: SteammSDK) {
                       (oracleInfo) => [oracleInfo.oracleIndex, ""], // TODO: Parse Switchboard price identifier
                     ) as [number, string][],
                   );
+
+                  const pythConnection = new SuiPriceServiceConnection(
+                    "https://hermes.pyth.network",
+                  );
+                  // TODO: Switchboard price connection
 
                   const pythPriceFeeds =
                     (await pythConnection.getLatestPriceFeeds(
@@ -289,7 +277,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
                   const oracleIndexOracleInfoPriceEntries: [
                     number,
                     { oracleInfo: OracleInfo; price: BigNumber },
-                  ][] = oracleInfos.map((oracleInfo) => {
+                  ][] = oracleObjs.map((oracleInfo) => {
                     if (oracleInfo.oracleType === OracleType.PYTH) {
                       const pythPriceFeed =
                         oracleIndexToPythPriceFeedMap[oracleInfo.oracleIndex];
@@ -362,6 +350,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           // Banks
           (async () => {
             const bankObjs: BankObj[] = [];
+
             if (process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true") {
               const bankInfos = Object.values(
                 await steammClient.fetchBankData(),
@@ -404,6 +393,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
         // Pools
         const poolObjs: PoolObj[] = [];
+
         if (process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true") {
           const poolInfos = await steammClient.fetchPoolData();
 

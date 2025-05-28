@@ -28,6 +28,7 @@ import { PYTH_STATE_ID, WORMHOLE_STATE_ID } from "./config";
 import { ASSETS_URL } from "./lib/constants";
 import {
   BankObj,
+  OracleObj,
   OracleType,
   ParsedBank,
   ParsedPool,
@@ -41,6 +42,7 @@ import { PoolManager } from "./managers/pool";
 import { Router } from "./managers/router";
 import {
   ApiBankCache,
+  ApiOracleCache,
   ApiPoolCache,
   BankCache,
   BankInfo,
@@ -111,6 +113,7 @@ export class SteammSDK {
   protected _pythConnection: SuiPriceServiceConnection;
   testConfig?: TestConfig;
 
+  protected _apiOracles?: ApiOracleCache;
   protected _apiPools?: ApiPoolCache;
   protected _apiBanks?: ApiBankCache;
 
@@ -555,16 +558,27 @@ export class SteammSDK {
             // OracleInfos
             // OracleInfos
             (async () => {
-              const pythConnection = new SuiPriceServiceConnection(
-                "https://hermes.pyth.network",
-              );
+              let oracleObjs: OracleObj[] = [];
 
-              const oracleInfos = await this.fetchOracleData();
+              if (
+                this._apiOracles !== undefined &&
+                Date.now() <= this._apiOracles.updatedAt + 5 * 60 * 1000 // 5 minutes
+              ) {
+                oracleObjs = this._apiOracles.oracleObjs;
+              } else {
+                const oraclesRes = await fetch(`${API_URL}/steamm/oracles/all`);
+                const oraclesJson: OracleObj[] = await oraclesRes.json();
+                if ((oraclesJson as any)?.statusCode === 500)
+                  throw new Error("Failed to fetch oracles");
 
-              const pythOracleInfos = oracleInfos.filter(
+                oracleObjs = oraclesJson;
+                this._apiOracles = { oracleObjs, updatedAt: Date.now() };
+              }
+
+              const pythOracleInfos = oracleObjs.filter(
                 (oracleInfo) => oracleInfo.oracleType === OracleType.PYTH,
               );
-              const switchboardOracleInfos = oracleInfos.filter(
+              const switchboardOracleInfos = oracleObjs.filter(
                 (oracleInfo) =>
                   oracleInfo.oracleType === OracleType.SWITCHBOARD,
               );
@@ -589,6 +603,11 @@ export class SteammSDK {
                 ) as [number, string][],
               );
 
+              const pythConnection = new SuiPriceServiceConnection(
+                "https://hermes.pyth.network",
+              );
+              // TODO: Switchboard price connection
+
               const pythPriceFeeds =
                 (await pythConnection.getLatestPriceFeeds(
                   Object.values(oracleIndexToPythPriceIdentifierMap),
@@ -611,7 +630,7 @@ export class SteammSDK {
               const oracleIndexOracleInfoPriceEntries: [
                 number,
                 { oracleInfo: OracleInfo; price: BigNumber },
-              ][] = oracleInfos.map((oracleInfo) => {
+              ][] = oracleObjs.map((oracleInfo) => {
                 if (oracleInfo.oracleType === OracleType.PYTH) {
                   const pythPriceFeed =
                     oracleIndexToPythPriceFeedMap[oracleInfo.oracleIndex];

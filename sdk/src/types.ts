@@ -1,4 +1,4 @@
-import { BankObj, PoolObj } from "./lib";
+import { BankObj, OracleObj, PoolObj } from "./lib";
 
 export type SdkOptions = {
   fullRpcUrl: string;
@@ -349,6 +349,11 @@ export type Package<T = undefined> = {
    */
   config?: T;
 };
+
+export interface ApiOracleCache {
+  oracleObjs: OracleObj[];
+  updatedAt: number;
+}
 
 export interface ApiPoolCache {
   poolObjs: PoolObj[];
