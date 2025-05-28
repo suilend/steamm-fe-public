@@ -75,10 +75,9 @@ export default function AddOracleCard() {
       // Clear cache
       try {
         await fetch(`${API_URL}/steamm/oracles/clear-cache`);
-        await new Promise((resolve) => setTimeout(resolve, 2000));
       } catch (err) {
         showErrorToast("Failed to clear cache", err as Error);
-        console.error("Failed to clear cache", err);
+        console.error(err);
       }
     } catch (err) {
       showErrorToast("Failed to add oracle", err as Error, undefined, true);
