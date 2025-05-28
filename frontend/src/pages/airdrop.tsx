@@ -1,7 +1,7 @@
 import Head from "next/head";
 import { ChangeEvent, useMemo, useState } from "react";
 
-import { SuiTransactionBlockResponse } from "@mysten/sui/client";
+import { SuiClient, SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
@@ -10,49 +10,133 @@ import { chunk } from "lodash";
 
 import {
   NORMALIZED_SUI_COINTYPE,
+  Token,
   formatToken,
+  getBalanceChange,
   getToken,
   isSui,
 } from "@suilend/frontend-sui";
 import {
   showErrorToast,
+  showSuccessToast,
   useSettingsContext,
   useWalletContext,
 } from "@suilend/frontend-sui-next";
 
 import AirdropAddressAmountTable from "@/components/airdrop/AirdropAddressAmountTable";
+import OpenUrlNewTab from "@/components/OpenUrlNewTab";
 import Parameter from "@/components/Parameter";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
+import { AirdropRow, Batch } from "@/lib/airdrop";
 import { showSuccessTxnToast } from "@/lib/toasts";
 
 const VALID_MIME_TYPES = ["text/csv"];
-const TRANSFERS_PER_BATCH = 1;
-const GAS_PER_BATCH = 0.01 + 0.001 * TRANSFERS_PER_BATCH;
+const TRANSFERS_PER_BATCH = 400; // Max = 512 (if no other MOVE calls in the transaction)
+const getBatchTransactionGas = (transferCount: number) =>
+  Math.max(0.02, 0.0016 * transferCount);
+
+const executeBatchTransaction = async (
+  suiClient: SuiClient,
+  token: Token,
+  serverlessKeypair: Ed25519Keypair,
+  batch: Batch,
+) => {
+  const serverlessAddress = serverlessKeypair.toSuiAddress();
+
+  // 1) Create transaction
+  const transaction = new Transaction();
+  transaction.setSender(serverlessAddress);
+
+  for (const row of batch) {
+    const tokenCoin = coinWithBalance({
+      balance: BigInt(
+        BigNumber(row.amount)
+          .times(10 ** token.decimals)
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString(),
+      ),
+      type: token.coinType,
+      useGasCoin: isSui(token.coinType),
+    })(transaction);
+
+    transaction.transferObjects([tokenCoin], row.address);
+  }
+
+  // 2) Sign transaction
+  const builtTransaction = await transaction.build({
+    client: suiClient,
+  });
+  const signedTransaction =
+    await serverlessKeypair.signTransaction(builtTransaction);
+
+  // 3) Execute signed transaction
+  const res1 = await suiClient.executeTransactionBlock({
+    transactionBlock: signedTransaction.bytes,
+    signature: signedTransaction.signature,
+  });
+
+  const res2 = await suiClient.waitForTransaction({
+    digest: res1.digest,
+  });
+
+  return { transaction, signedTransaction, res1, res2 };
+};
+
+const executeReturnGasTransaction = async (
+  suiClient: SuiClient,
+  address: string,
+  serverlessKeypair: Ed25519Keypair,
+) => {
+  const serverlessAddress = serverlessKeypair.toSuiAddress();
+
+  // 1) Create transaction
+  const transaction = new Transaction();
+  transaction.setSender(serverlessAddress);
+
+  transaction.transferObjects([transaction.gas], address);
+
+  // 2) Sign transaction
+  const builtTransaction = await transaction.build({
+    client: suiClient,
+  });
+  const signedTransaction =
+    await serverlessKeypair.signTransaction(builtTransaction);
+
+  // 3) Execute signed transaction
+  const res1 = await suiClient.executeTransactionBlock({
+    transactionBlock: signedTransaction.bytes,
+    signature: signedTransaction.signature,
+  });
+
+  const res2 = await suiClient.waitForTransaction({
+    digest: res1.digest,
+    options: {
+      showBalanceChanges: true,
+    },
+  });
+
+  return { transaction, signedTransaction, res1, res2 };
+};
 
 export default function AirdropPage() {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData } = useLoadedAppContext();
+  const { appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
   const [addressAmountRows, setAddressAmountRows] = useState<
-    { address: string; amount: string }[] | undefined
+    AirdropRow[] | undefined
   >(undefined);
 
-  const totalTokenAmount: number = useMemo(
-    () => (addressAmountRows ?? []).reduce((acc, row) => acc + +row.amount, 0),
-    [addressAmountRows],
-  );
-  const totalGasAmount: number = useMemo(
-    () =>
-      chunk(addressAmountRows ?? [], TRANSFERS_PER_BATCH).length *
-      GAS_PER_BATCH,
-    [addressAmountRows],
-  );
-  console.log("XXX", { totalTokenAmount, totalGasAmount, GAS_PER_BATCH });
+  const [batchTransactionResults, setBatchTransactionResults] = useState<
+    { batch: Batch; res: SuiTransactionBlockResponse }[] | undefined
+  >(undefined);
+  const [returnGasTransactionResult, setReturnGasTransactionResult] = useState<
+    { res: SuiTransactionBlockResponse } | undefined
+  >(undefined);
 
   // Token
   const tokens = useMemo(
@@ -93,12 +177,14 @@ export default function AirdropPage() {
 
         const text = e.target?.result as string;
 
-        const records: { address: string; amount: string }[] = parse(text, {
+        const records: Omit<AirdropRow, "number">[] = parse(text, {
           columns: true,
           delimiter: ",",
           skip_empty_lines: true,
         });
-        setAddressAmountRows(records);
+        setAddressAmountRows(
+          records.map((record, index) => ({ number: index + 1, ...record })),
+        );
       };
       reader.onerror = () => {
         throw new Error("Failed to upload image");
@@ -119,6 +205,28 @@ export default function AirdropPage() {
     await handleFile(file);
   };
 
+  // Calcs
+  const totalTokenAmount =
+    token === undefined
+      ? undefined
+      : (addressAmountRows ?? []).reduce(
+          (acc, row) =>
+            acc.plus(
+              new BigNumber(row.amount).decimalPlaces(
+                token.decimals,
+                BigNumber.ROUND_DOWN,
+              ),
+            ),
+          new BigNumber(0),
+        );
+  const totalGasAmount = chunk(
+    addressAmountRows ?? [],
+    TRANSFERS_PER_BATCH,
+  ).reduce(
+    (acc, batch) => acc.plus(getBatchTransactionGas(batch.length)),
+    new BigNumber(0),
+  );
+
   // Submit
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -136,12 +244,12 @@ export default function AirdropPage() {
     if (addressAmountRows.length === 0)
       return { isDisabled: true, title: "Upload a non-empty CSV file" };
 
-    if (getBalance(token.coinType).lt(totalTokenAmount))
+    if (getBalance(token.coinType).lt(totalTokenAmount!))
       return { isDisabled: true, title: `Insufficient ${token.symbol}` };
 
     if (
       getBalance(NORMALIZED_SUI_COINTYPE).lt(
-        new BigNumber(isSui(token.coinType) ? totalTokenAmount : 0).plus(
+        new BigNumber(isSui(token.coinType) ? totalTokenAmount! : 0).plus(
           totalGasAmount,
         ),
       )
@@ -150,7 +258,7 @@ export default function AirdropPage() {
 
     return {
       isDisabled: false,
-      title: "Send tokens",
+      title: "Airdrop",
     };
   })();
 
@@ -173,7 +281,7 @@ export default function AirdropPage() {
 
       const tokenCoin = coinWithBalance({
         balance: BigInt(
-          BigNumber(totalTokenAmount)
+          totalTokenAmount!
             .times(10 ** token.decimals)
             .integerValue(BigNumber.ROUND_DOWN)
             .toString(),
@@ -183,7 +291,7 @@ export default function AirdropPage() {
       })(transaction);
       const gasCoin = coinWithBalance({
         balance: BigInt(
-          BigNumber(totalGasAmount)
+          totalGasAmount
             .times(
               10 ** appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE].decimals,
             )
@@ -200,70 +308,64 @@ export default function AirdropPage() {
       const txUrl = explorer.buildTxUrl(res.digest);
 
       showSuccessTxnToast(
-        `Started airdropping ${formatToken(new BigNumber(totalTokenAmount), {
+        `Airdropping ${formatToken(totalTokenAmount!, {
           dp: token.decimals,
           trimTrailingZeros: true,
         })} ${token.symbol} to ${addressAmountRows.length} addresses`,
         txUrl,
-        {
-          description: `Airdropping ${token.symbol} to ${addressAmountRows?.length} addresses`,
-        },
       );
 
-      // 3) Create serverless transactions
-      const serverlessTransactions: Transaction[] = [];
+      // 3) Create and send serverless transactions (TODO: Move to serverless function)
+      // 3.1) Create and send transaction for each batch
       const batches = chunk(addressAmountRows, TRANSFERS_PER_BATCH);
-
-      for (const batch of batches) {
-        const transaction = new Transaction();
-        transaction.setSender(serverlessAddress);
-
-        for (const row of batch) {
-          const tokenCoin = coinWithBalance({
-            balance: BigInt(
-              BigNumber(row.amount)
-                .times(10 ** token.decimals)
-                .integerValue(BigNumber.ROUND_DOWN)
-                .toString(),
-            ),
-            type: token.coinType,
-            useGasCoin: isSui(token.coinType),
-          })(transaction);
-
-          transaction.transferObjects([tokenCoin], address);
-        }
-
-        serverlessTransactions.push(transaction);
+      for (let i = 0; i < batches.length; i++) {
+        const { res2 } = await executeBatchTransaction(
+          suiClient,
+          token,
+          serverlessKeypair,
+          batches[i],
+        );
+        setBatchTransactionResults((prev) => [
+          ...(prev ?? []),
+          { batch: batches[i], res: res2 },
+        ]);
       }
 
-      // 3.1) Sign serverless transactions
-      const signedServerlessTransactions = await Promise.all(
-        serverlessTransactions.map((transaction) =>
-          (async () => {
-            const builtTransaction = await transaction.build({
-              client: suiClient,
-            });
-            return serverlessKeypair.signTransaction(builtTransaction);
-          })(),
+      // 3.2) Refund unused SUI to user
+      const { res2: returnGasTransactionRes } =
+        await executeReturnGasTransaction(
+          suiClient,
+          address,
+          serverlessKeypair,
+        );
+      setReturnGasTransactionResult({ res: returnGasTransactionRes });
+
+      const returnGasTransactionBalanceChangeSui = getBalanceChange(
+        returnGasTransactionRes,
+        address,
+        getToken(
+          NORMALIZED_SUI_COINTYPE,
+          appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE],
         ),
       );
 
-      // 3.2) Execute serverless transactions (TODO: Move to serverless function)
-      const serverlessTransactionResponses = await Promise.all(
-        signedServerlessTransactions.map(({ bytes, signature }) =>
-          suiClient.executeTransactionBlock({
-            transactionBlock: bytes,
-            signature,
-          }),
-        ),
-      );
-
-      console.log(
-        "XXX serverlessTransactionResponses:",
-        serverlessTransactionResponses,
+      showSuccessToast(
+        `Airdropped ${formatToken(totalTokenAmount!, {
+          dp: token.decimals,
+          trimTrailingZeros: true,
+        })} ${token.symbol} to ${addressAmountRows.length} addresses`,
+        {
+          description:
+            returnGasTransactionBalanceChangeSui === undefined
+              ? undefined
+              : `${formatToken(returnGasTransactionBalanceChangeSui, {
+                  dp: appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE].decimals,
+                  trimTrailingZeros: true,
+                })} unused SUI was refunded`,
+        },
       );
     } catch (err) {
-      showErrorToast("Failed to send tokens", err as Error, undefined, true);
+      showErrorToast("Failed to airdrop", err as Error, undefined, true);
       console.error(err);
     } finally {
       setIsSubmitting(false);
@@ -324,6 +426,47 @@ export default function AirdropPage() {
             onClick={onSubmitClick}
           />
         </div>
+
+        {(batchTransactionResults !== undefined ||
+          returnGasTransactionResult !== undefined) && (
+          <div className="flex w-full flex-col gap-2">
+            {batchTransactionResults !== undefined &&
+              batchTransactionResults.map(({ batch, res }, index) => {
+                const prevTransferred = batchTransactionResults
+                  .slice(0, index)
+                  .reduce((acc, { batch }) => acc + batch.length, 0);
+
+                return (
+                  <div
+                    key={res.digest}
+                    className="flex flex-row items-center gap-2"
+                  >
+                    <p className="text-p2 text-secondary-foreground">
+                      {prevTransferred + 1}–{prevTransferred + batch.length}
+                    </p>
+                    <OpenUrlNewTab
+                      url={explorer.buildTxUrl(res.digest)}
+                      tooltip={`Open on ${explorer.name}`}
+                    />
+                  </div>
+                );
+              })}
+
+            {returnGasTransactionResult !== undefined && (
+              <div className="flex flex-row items-center gap-2">
+                <p className="text-p2 text-secondary-foreground">
+                  Refund unused SUI
+                </p>
+                <OpenUrlNewTab
+                  url={explorer.buildTxUrl(
+                    returnGasTransactionResult.res.digest,
+                  )}
+                  tooltip={`Open on ${explorer.name}`}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </>
   );

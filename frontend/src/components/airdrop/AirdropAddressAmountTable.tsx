@@ -7,14 +7,15 @@ import { Token } from "@suilend/frontend-sui";
 import AirdropAddressAmountRow from "@/components/airdrop/AirdropAddressAmountRow";
 import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AirdropRow } from "@/lib/airdrop";
 import { cn } from "@/lib/utils";
 
-export type Column = "address" | "amount";
+export type Column = "number" | "address" | "amount";
 type SortableColumn = "amount";
 
 interface AirdropAddressAmountTableProps {
   token: Token;
-  rows?: { address: string; amount: string }[];
+  rows?: AirdropRow[];
 }
 
 export default function AirdropAddressAmountTable({
@@ -27,6 +28,13 @@ export default function AirdropAddressAmountTable({
     { cell: CSSProperties; children: CSSProperties }
   > = useMemo(
     () => ({
+      number: {
+        cell: { textAlign: "left" },
+        children: {
+          paddingLeft: 4 * 5, // px
+          justifyContent: "start",
+        },
+      },
       address: {
         cell: { textAlign: "left" },
         children: {
@@ -80,7 +88,7 @@ export default function AirdropAddressAmountTable({
   }, [rows, sortState]);
 
   // Pagination
-  const pageSize = 100;
+  const pageSize = 25;
 
   const [pageIndex, setPageIndex] = useState<number>(0);
   const pageIndexes: number[] | undefined = useMemo(() => {
@@ -140,6 +148,13 @@ export default function AirdropAddressAmountTable({
             <tbody>
               {/* Header */}
               <tr className="h-[calc(1px+40px+1px)] border bg-secondary">
+                <HeaderColumn<Column, SortableColumn>
+                  id="number"
+                  style={columnStyleMap.number}
+                >
+                  #
+                </HeaderColumn>
+
                 <HeaderColumn<Column, SortableColumn>
                   id="address"
                   style={columnStyleMap.address}

@@ -372,10 +372,10 @@ export default function LaunchTokenCard() {
 
     // Name
     if (name === "") return { isDisabled: true, title: "Enter a name" };
-    if (name.length < 3 || name.length > 32)
+    if (name.length < 1 || name.length > 32)
       return {
         isDisabled: true,
-        title: "Name must be between 3 and 32 characters",
+        title: "Name must be between 1 and 32 characters",
       };
 
     // Symbol
