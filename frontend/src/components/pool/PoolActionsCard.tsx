@@ -47,7 +47,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AppData, useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useUserContext } from "@/contexts/UserContext";
-import useBirdeyeUsdPrices from "@/hooks/useBirdeyeUsdPrices";
+import useCachedUsdPrices from "@/hooks/useCachedUsdPrices";
 import { rebalanceBanks } from "@/lib/banks";
 import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
@@ -56,7 +56,7 @@ import {
   getObligationDepositPosition,
   getObligationDepositedAmount,
 } from "@/lib/obligation";
-import { getBirdeyeRatio } from "@/lib/swap";
+import { getCachedUsdPriceRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
 
@@ -1240,19 +1240,19 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
     ],
   );
 
-  // Birdeye USD prices - current
-  const { birdeyeUsdPricesMap } = useBirdeyeUsdPrices(pool.coinTypes);
+  // Cached USD prices - current
+  const { cachedUsdPricesMap } = useCachedUsdPrices(pool.coinTypes);
 
   // Ratios
-  const birdeyeRatio = useMemo(
+  const cachedUsdPriceRatio = useMemo(
     () =>
-      getBirdeyeRatio(
-        birdeyeUsdPricesMap[activeCoinType],
-        birdeyeUsdPricesMap[inactiveCoinType],
+      getCachedUsdPriceRatio(
+        cachedUsdPricesMap[activeCoinType],
+        cachedUsdPricesMap[inactiveCoinType],
       ),
-    [birdeyeUsdPricesMap, activeCoinType, inactiveCoinType],
+    [cachedUsdPricesMap, activeCoinType, inactiveCoinType],
   );
-  // console.log("SwapTab - birdeyeRatio:", birdeyeRatio);
+  // console.log("SwapTab - cachedUsdPriceRatio:", cachedUsdPriceRatio);
 
   // Value - max
   const onBalanceClick = () => {
@@ -1504,7 +1504,7 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
           <PriceDifferenceLabel
             inToken={getToken(activeCoinType, activeCoinMetadata)}
             outToken={getToken(inactiveCoinType, inactiveCoinMetadata)}
-            birdeyeRatio={birdeyeRatio}
+            cachedUsdPriceRatio={cachedUsdPriceRatio}
             isFetchingQuote={isFetchingQuote}
             quote={quote}
           />

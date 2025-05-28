@@ -22,7 +22,7 @@ export const getQuoteRatio = (
       )
     : undefined;
 
-export const getBirdeyeRatio = (
+export const getCachedUsdPriceRatio = (
   inUsdPrice: BigNumber | undefined,
   outUsdPrice: BigNumber | undefined,
 ) =>

@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 interface PriceDifferenceLabelProps {
   inToken: Token;
   outToken: Token;
-  birdeyeRatio?: BigNumber | null;
+  cachedUsdPriceRatio?: BigNumber | null;
   isFetchingQuote: boolean;
   quote?: SwapQuote | MultiSwapQuote;
 }
@@ -22,24 +22,24 @@ interface PriceDifferenceLabelProps {
 export default function PriceDifferenceLabel({
   inToken,
   outToken,
-  birdeyeRatio,
+  cachedUsdPriceRatio,
   isFetchingQuote,
   quote,
 }: PriceDifferenceLabelProps) {
   const quoteRatio = getQuoteRatio(inToken, outToken, quote);
 
-  // Price difference (Birdeye)
+  // Price difference
   const priceDifferencePercent =
-    quoteRatio === undefined || birdeyeRatio === undefined
+    quoteRatio === undefined || cachedUsdPriceRatio === undefined
       ? undefined
-      : birdeyeRatio == null
+      : cachedUsdPriceRatio == null
         ? null
         : BigNumber.max(
             0,
-            birdeyeRatio.eq(0)
+            cachedUsdPriceRatio.eq(0)
               ? new BigNumber(0)
-              : new BigNumber(birdeyeRatio.minus(quoteRatio))
-                  .div(birdeyeRatio)
+              : new BigNumber(cachedUsdPriceRatio.minus(quoteRatio))
+                  .div(cachedUsdPriceRatio)
                   .times(100),
           );
 
@@ -66,7 +66,7 @@ export default function PriceDifferenceLabel({
       {priceDifferencePercent === null
         ? "N/A"
         : formatPercent(BigNumber.max(0, priceDifferencePercent))}{" "}
-      Price difference (Birdeye)
+      Price difference (Noodles/Birdeye)
     </p>
   );
 }

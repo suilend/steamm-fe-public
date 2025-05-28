@@ -43,12 +43,12 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
-import useBirdeyeUsdPrices from "@/hooks/useBirdeyeUsdPrices";
+import useCachedUsdPrices from "@/hooks/useCachedUsdPrices";
 import { rebalanceBanks } from "@/lib/banks";
 import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
 import { formatTextInputValue } from "@/lib/format";
 import { getAvgPoolPrice } from "@/lib/pools";
-import { getBirdeyeRatio } from "@/lib/swap";
+import { getCachedUsdPriceRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { TokenDirection } from "@/lib/types";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
@@ -239,22 +239,22 @@ export default function SwapPage() {
     [isFetchingQuote, outPoolPrice, quote, outCoinMetadata],
   );
 
-  // Birdeye USD prices - current
-  const { birdeyeUsdPricesMap, fetchBirdeyeUsdPrice } = useBirdeyeUsdPrices([
+  // Cached USD prices - current
+  const { cachedUsdPricesMap, fetchCachedUsdPrice } = useCachedUsdPrices([
     inCoinType,
     outCoinType,
   ]);
 
   // Ratios
-  const birdeyeRatio = useMemo(
+  const cachedUsdPriceRatio = useMemo(
     () =>
-      getBirdeyeRatio(
-        birdeyeUsdPricesMap[inCoinType],
-        birdeyeUsdPricesMap[outCoinType],
+      getCachedUsdPriceRatio(
+        cachedUsdPricesMap[inCoinType],
+        cachedUsdPricesMap[outCoinType],
       ),
-    [birdeyeUsdPricesMap, inCoinType, outCoinType],
+    [cachedUsdPricesMap, inCoinType, outCoinType],
   );
-  // console.log("SwapPage - birdeyeRatio:", birdeyeRatio, birdeyeUsdPricesMap);
+  // console.log("SwapPage - cachedUsdPriceRatio:", cachedUsdPriceRatio, cachedUsdPricesMap);
 
   // Value - max
   const onBalanceClick = () => {
@@ -298,10 +298,10 @@ export default function SwapPage() {
         : token.coinType;
     const newOutCoinMetadata = appData.coinMetadataMap[newOutCoinType];
 
-    if (birdeyeUsdPricesMap[newInCoinType] === undefined)
-      fetchBirdeyeUsdPrice(newInCoinType);
-    if (birdeyeUsdPricesMap[newOutCoinType] === undefined)
-      fetchBirdeyeUsdPrice(newOutCoinType);
+    if (cachedUsdPricesMap[newInCoinType] === undefined)
+      fetchCachedUsdPrice(newInCoinType);
+    if (cachedUsdPricesMap[newOutCoinType] === undefined)
+      fetchCachedUsdPrice(newOutCoinType);
 
     shallowPushQuery(router, {
       slug: `${newInCoinMetadata.symbol}-${newOutCoinMetadata.symbol}`,
@@ -607,7 +607,7 @@ export default function SwapPage() {
                 <PriceDifferenceLabel
                   inToken={getToken(inCoinType, inCoinMetadata)}
                   outToken={getToken(outCoinType, outCoinMetadata)}
-                  birdeyeRatio={birdeyeRatio}
+                  cachedUsdPriceRatio={cachedUsdPriceRatio}
                   isFetchingQuote={isFetchingQuote}
                   quote={quote}
                 />

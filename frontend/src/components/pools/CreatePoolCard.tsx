@@ -37,7 +37,7 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
-import useBirdeyeUsdPrices from "@/hooks/useBirdeyeUsdPrices";
+import useCachedUsdPrices from "@/hooks/useCachedUsdPrices";
 import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
 import { CreateCoinResult, initializeCoinCreation } from "@/lib/createCoin";
 import {
@@ -62,7 +62,7 @@ import {
   formatTextInputValue,
 } from "@/lib/format";
 import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
-import { getBirdeyeRatio } from "@/lib/swap";
+import { getCachedUsdPriceRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
@@ -175,36 +175,37 @@ export default function CreatePoolCard() {
     document.getElementById(getCoinInputId(coinType))?.focus();
   };
 
-  // Birdeye USD prices - current
-  const { birdeyeUsdPricesMap, fetchBirdeyeUsdPrice } = useBirdeyeUsdPrices([]);
+  // Cached USD prices - current
+  const { cachedUsdPricesMap, fetchCachedUsdPrice } = useCachedUsdPrices([]);
 
-  const birdeyeUsdValues = useMemo(
+  const cachedUsdValues = useMemo(
     () =>
       coinTypes.map((coinType, index) =>
         coinType !== ""
-          ? birdeyeUsdPricesMap[coinType] === undefined
+          ? cachedUsdPricesMap[coinType] === undefined
             ? undefined
             : new BigNumber(values[index] || 0).times(
-                birdeyeUsdPricesMap[coinType],
+                cachedUsdPricesMap[coinType],
               )
           : "",
       ),
-    [coinTypes, birdeyeUsdPricesMap, values],
+    [coinTypes, cachedUsdPricesMap, values],
   );
 
   // Ratios
-  const birdeyeRatio = useMemo(
+  const cachedUsdPriceRatio = useMemo(
     () =>
-      getBirdeyeRatio(
-        birdeyeUsdPricesMap[coinTypes[0]],
-        birdeyeUsdPricesMap[coinTypes[1]],
+      getCachedUsdPriceRatio(
+        cachedUsdPricesMap[coinTypes[0]],
+        cachedUsdPricesMap[coinTypes[1]],
       ),
-    [birdeyeUsdPricesMap, coinTypes],
+    [cachedUsdPricesMap, coinTypes],
   );
-  // console.log("CreatePoolCard - birdeyeRatio:", birdeyeRatio);
+  // console.log("CreatePoolCard - cachedUsdPriceRatio:", cachedUsdPriceRatio);
 
-  const onUseBirdeyePriceClick = () => {
-    if (birdeyeRatio === undefined || birdeyeRatio === null) return;
+  const onUseMarketPriceClick = () => {
+    if (cachedUsdPriceRatio === undefined || cachedUsdPriceRatio === null)
+      return;
 
     if (lastActiveInputIndex === undefined || lastActiveInputIndex === 0) {
       const valueA = new BigNumber(values[0] || 0).lte(0)
@@ -215,7 +216,7 @@ export default function CreatePoolCard() {
           balancesCoinMetadataMap![coinTypes[0]].decimals,
           BigNumber.ROUND_DOWN,
         ),
-        new BigNumber(valueA.times(birdeyeRatio)).toFixed(
+        new BigNumber(valueA.times(cachedUsdPriceRatio)).toFixed(
           balancesCoinMetadataMap![coinTypes[1]].decimals,
           BigNumber.ROUND_DOWN,
         ),
@@ -225,7 +226,7 @@ export default function CreatePoolCard() {
         ? new BigNumber(1)
         : new BigNumber(values[1]);
       setValues([
-        new BigNumber(valueB.div(birdeyeRatio)).toFixed(
+        new BigNumber(valueB.div(cachedUsdPriceRatio)).toFixed(
           balancesCoinMetadataMap![coinTypes[0]].decimals,
           BigNumber.ROUND_DOWN,
         ),
@@ -288,8 +289,8 @@ export default function CreatePoolCard() {
     ];
 
     for (const coinType of newCoinTypes.filter((coinType) => coinType !== "")) {
-      if (birdeyeUsdPricesMap[coinType] === undefined)
-        fetchBirdeyeUsdPrice(coinType);
+      if (cachedUsdPricesMap[coinType] === undefined)
+        fetchCachedUsdPrice(coinType);
     }
 
     setCoinTypes(newCoinTypes);
@@ -672,7 +673,7 @@ export default function CreatePoolCard() {
                   : undefined
               }
               value={values[0]}
-              usdValue={birdeyeUsdValues[0]}
+              usdValue={cachedUsdValues[0]}
               onChange={(value) => onValueChange(value, 0)}
               onMaxAmountClick={
                 coinTypes[0] !== "" ? () => onBalanceClick(0) : undefined
@@ -764,7 +765,7 @@ export default function CreatePoolCard() {
                     : undefined
                 }
                 value={values[1]}
-                usdValue={birdeyeUsdValues[1]}
+                usdValue={cachedUsdValues[1]}
                 onChange={(value) => onValueChange(value, 1)}
                 onMaxAmountClick={
                   coinTypes[1] !== "" ? () => onBalanceClick(1) : undefined
@@ -809,16 +810,16 @@ export default function CreatePoolCard() {
 
             {!useCpmmOffset && (
               // Market price
-              <Parameter label="Market price (Birdeye)" isHorizontal>
+              <Parameter label="Market price (Noodles/Birdeye)" isHorizontal>
                 <div className="flex flex-col items-end gap-1.5">
                   <p className="text-p2 text-foreground">
                     {coinTypes.every((coinType) => coinType !== "") ? (
-                      birdeyeRatio === undefined ? (
+                      cachedUsdPriceRatio === undefined ? (
                         <Skeleton className="h-[21px] w-24" />
-                      ) : birdeyeRatio === null ? (
+                      ) : cachedUsdPriceRatio === null ? (
                         "--"
                       ) : (
-                        `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${birdeyeRatio.toFixed(
+                        `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${cachedUsdPriceRatio.toFixed(
                           balancesCoinMetadataMap![coinTypes[1]].decimals,
                           BigNumber.ROUND_DOWN,
                         )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
@@ -829,12 +830,12 @@ export default function CreatePoolCard() {
                   </p>
 
                   {coinTypes.every((coinType) => coinType !== "") &&
-                    (birdeyeRatio === undefined ? (
+                    (cachedUsdPriceRatio === undefined ? (
                       <Skeleton className="h-[24px] w-16" />
-                    ) : birdeyeRatio === null ? null : (
+                    ) : cachedUsdPriceRatio === null ? null : (
                       <button
                         className="group flex h-6 flex-row items-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80"
-                        onClick={onUseBirdeyePriceClick}
+                        onClick={onUseMarketPriceClick}
                       >
                         <p className="text-p3 text-button-2-foreground">
                           Use market price
