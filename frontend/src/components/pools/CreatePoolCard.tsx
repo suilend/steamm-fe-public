@@ -310,7 +310,7 @@ export default function CreatePoolCard() {
 
   // CPMM offset
   const [useCpmmOffset, setUseCpmmOffset] = useState<boolean>(false);
-  const [initialMarketCapUsd, setInitialMarketCapUsd] = useState<string>("");
+  const [initialPoolTvlUsd, setInitialPoolTvlUsd] = useState<string>("");
 
   const onUseCpmmOffsetChange = () => {
     const newValue = !useCpmmOffset;
@@ -319,19 +319,19 @@ export default function CreatePoolCard() {
       onSelectQuoter(QuoterId.CPMM);
 
       setUseCpmmOffset(true);
-      setInitialMarketCapUsd("");
+      setInitialPoolTvlUsd("");
     } else {
       setValues((prev) => [prev[0], ""] as [string, string]);
       setQuoterId(undefined);
 
       setUseCpmmOffset(false);
-      setInitialMarketCapUsd("");
+      setInitialPoolTvlUsd("");
     }
   };
 
-  const onInitialMarketCapUsdChange = useCallback((value: string) => {
+  const onInitialPoolTvlUsdChange = useCallback((value: string) => {
     const formattedValue = formatTextInputValue(value, 2);
-    setInitialMarketCapUsd(formattedValue);
+    setInitialPoolTvlUsd(formattedValue);
   }, []);
 
   // CPMM offset - compute
@@ -345,13 +345,13 @@ export default function CreatePoolCard() {
     if (
       coinTypes.some((coinType) => coinType === "") ||
       values[0] === "" ||
-      initialMarketCapUsd === ""
+      initialPoolTvlUsd === ""
     )
       return { cpmmOffset: undefined, tokenInitialPriceQuote: undefined };
 
     const quotePrice = getQuotePrice(coinTypes[1])!;
 
-    const tokenInitialPriceUsd = new BigNumber(initialMarketCapUsd).div(
+    const tokenInitialPriceUsd = new BigNumber(initialPoolTvlUsd).div(
       values[0],
     );
     const tokenInitialPriceQuote = tokenInitialPriceUsd.div(quotePrice);
@@ -373,7 +373,7 @@ export default function CreatePoolCard() {
   }, [
     coinTypes,
     values,
-    initialMarketCapUsd,
+    initialPoolTvlUsd,
     getQuotePrice,
     balancesCoinMetadataMap,
   ]);
@@ -430,7 +430,7 @@ export default function CreatePoolCard() {
     setFeeTierPercent(undefined);
 
     setUseCpmmOffset(false);
-    setInitialMarketCapUsd("");
+    setInitialPoolTvlUsd("");
   };
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -732,15 +732,15 @@ export default function CreatePoolCard() {
                     />
                   </div>
 
-                  {/* Initial market cap */}
+                  {/* Initial pool TVL ($) */}
                   <div className="flex w-full flex-col gap-2">
                     <p className="text-p2 text-secondary-foreground">
-                      Initial market cap ($)
+                      Initial pool TVL ($)
                     </p>
                     <TextInput
-                      placeholder={initialMarketCapUsd.toString()}
-                      value={initialMarketCapUsd}
-                      onChange={onInitialMarketCapUsdChange}
+                      placeholder={initialPoolTvlUsd.toString()}
+                      value={initialPoolTvlUsd}
+                      onChange={onInitialPoolTvlUsdChange}
                     />
                   </div>
                 </>
