@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Transaction } from "@mysten/sui/transactions";
 import { Loader2 } from "lucide-react";
 
+import { API_URL } from "@suilend/frontend-sui";
 import {
   showErrorToast,
   useSettingsContext,
@@ -70,6 +71,15 @@ export default function AddOracleCard() {
 
       // Reset
       setPriceIdentifier("");
+
+      // Clear cache
+      try {
+        await fetch(`${API_URL}/steamm/oracles/clear-cache`);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      } catch (err) {
+        showErrorToast("Failed to clear cache", err as Error);
+        console.error("Failed to clear cache", err);
+      }
     } catch (err) {
       showErrorToast("Failed to add oracle", err as Error, undefined, true);
       console.error(err);
