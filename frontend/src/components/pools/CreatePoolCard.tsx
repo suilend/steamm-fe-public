@@ -334,46 +334,42 @@ export default function CreatePoolCard() {
     setInitialPoolTvlUsd(formattedValue);
   }, []);
 
+  const tokenInitialPriceUsd: BigNumber | undefined = useMemo(
+    () =>
+      new BigNumber(initialPoolTvlUsd || 0).eq(0) ||
+      new BigNumber(values[0] || 0).eq(0)
+        ? undefined
+        : new BigNumber(initialPoolTvlUsd).div(values[0]),
+    [initialPoolTvlUsd, values],
+  );
+
   // CPMM offset - compute
-  const {
-    cpmmOffset,
-    tokenInitialPriceQuote,
-  }: {
-    cpmmOffset: bigint | undefined;
-    tokenInitialPriceQuote: BigNumber | undefined;
-  } = useMemo(() => {
+  const cpmmOffset: bigint | undefined = useMemo(() => {
     if (
       coinTypes.some((coinType) => coinType === "") ||
       values[0] === "" ||
-      initialPoolTvlUsd === ""
+      tokenInitialPriceUsd === undefined
     )
-      return { cpmmOffset: undefined, tokenInitialPriceQuote: undefined };
+      return undefined;
 
     const quotePrice = getQuotePrice(coinTypes[1])!;
-
-    const tokenInitialPriceUsd = new BigNumber(initialPoolTvlUsd).div(
-      values[0],
-    );
     const tokenInitialPriceQuote = tokenInitialPriceUsd.div(quotePrice);
 
-    return {
-      cpmmOffset: computeOptimalOffset(
-        tokenInitialPriceQuote.toFixed(20, BigNumber.ROUND_DOWN),
-        BigInt(
-          new BigNumber(values[0])
-            .times(10 ** balancesCoinMetadataMap![coinTypes[0]].decimals)
-            .integerValue(BigNumber.ROUND_DOWN)
-            .toString(),
-        ),
-        balancesCoinMetadataMap![coinTypes[0]].decimals,
-        balancesCoinMetadataMap![coinTypes[1]].decimals,
+    return computeOptimalOffset(
+      tokenInitialPriceQuote.toFixed(20, BigNumber.ROUND_DOWN),
+      BigInt(
+        new BigNumber(values[0])
+          .times(10 ** balancesCoinMetadataMap![coinTypes[0]].decimals)
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString(),
       ),
-      tokenInitialPriceQuote,
-    };
+      balancesCoinMetadataMap![coinTypes[0]].decimals,
+      balancesCoinMetadataMap![coinTypes[1]].decimals,
+    );
   }, [
     coinTypes,
     values,
-    initialPoolTvlUsd,
+    tokenInitialPriceUsd,
     getQuotePrice,
     balancesCoinMetadataMap,
   ]);
@@ -794,20 +790,18 @@ export default function CreatePoolCard() {
                           BigNumber.ROUND_DOWN,
                         )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
                       : "--"
-                    : tokenInitialPriceQuote !== undefined
-                      ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${formatToken(tokenInitialPriceQuote, { dp: balancesCoinMetadataMap![coinTypes[1]].decimals })} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
+                    : coinTypes.every((coinType) => coinType !== "") &&
+                        tokenInitialPriceUsd !== undefined
+                      ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${formatToken(tokenInitialPriceUsd.div(getQuotePrice(coinTypes[1])), { dp: balancesCoinMetadataMap![coinTypes[1]].decimals })} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
                       : "--"}
                 </p>
 
                 {!useCpmmOffset
                   ? null
-                  : tokenInitialPriceQuote !== undefined && (
+                  : coinTypes.every((coinType) => coinType !== "") &&
+                    tokenInitialPriceUsd !== undefined && (
                       <p className="text-p2 text-secondary-foreground">
-                        {formatPrice(
-                          tokenInitialPriceQuote.times(
-                            getQuotePrice(coinTypes[1]),
-                          ),
-                        )}
+                        {formatPrice(tokenInitialPriceUsd)}
                       </p>
                     )}
               </div>

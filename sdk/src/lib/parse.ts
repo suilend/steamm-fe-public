@@ -220,7 +220,9 @@ export const getParsedPool = (
       ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexA.toString()
         ].price
-      : coinTypeOracleInfoPriceMap[coinTypeA]?.price;
+      : quoterId === QuoterId.CPMM
+        ? coinTypeOracleInfoPriceMap[coinTypeA]?.price
+        : undefined;
     let priceB = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
       ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexB.toString()
