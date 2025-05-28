@@ -68,30 +68,31 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
 
               // vCPMM (TVL > 0)
               else if (pool.quoterId === QuoterId.V_CPMM) {
-                const submitAmount = new BigNumber(
-                  new BigNumber(1).div(pool.prices[1]), // $1 of quote token
-                )
-                  .times(
-                    10 ** appData.coinMetadataMap[pool.coinTypes[1]].decimals,
-                  )
-                  .integerValue(BigNumber.ROUND_DOWN)
-                  .toString();
-
-                swapQuote = await steammClient.Pool.quoteSwap({
-                  a2b: false,
-                  amountIn: BigInt(submitAmount),
-                  poolInfo: pool.poolInfo,
-                  bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
-                  bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
-                });
-
-                // Reverse the swap quote to a2b
-                const amountIn = swapQuote.amountIn;
-                const amountOut = swapQuote.amountOut;
-
-                swapQuote.a2b = true;
-                swapQuote.amountIn = amountOut;
-                swapQuote.amountOut = amountIn;
+                swapQuote = {
+                  a2b: true,
+                  amountIn: BigInt(
+                    new BigNumber(1)
+                      .times(
+                        10 **
+                          appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+                      )
+                      .integerValue(BigNumber.ROUND_DOWN)
+                      .toString(),
+                  ),
+                  amountOut: BigInt(
+                    new BigNumber(pool.prices[0].div(pool.prices[1]))
+                      .times(
+                        10 **
+                          appData.coinMetadataMap[pool.coinTypes[1]].decimals,
+                      )
+                      .integerValue(BigNumber.ROUND_DOWN)
+                      .toString(),
+                  ),
+                  outputFees: {
+                    poolFees: BigInt(0),
+                    protocolFees: BigInt(0),
+                  },
+                };
               }
 
               // OMMv0.1, OMM (TVL > 0)

@@ -10,6 +10,7 @@ import {
   formatInteger,
   formatNumber,
   formatPercent,
+  formatPrice,
   formatToken,
   formatUsd,
   getToken,
@@ -54,7 +55,7 @@ import {
   DEFAULT_TOKEN_SUPPLY,
   DEPOSITED_TOKEN_PERCENT,
   FEE_TIER_PERCENT,
-  INITIAL_TOKEN_MC_USD,
+  INITIAL_TOKEN_FDV_USD,
   MintTokenResult,
   QUOTER_ID,
   createToken,
@@ -211,41 +212,55 @@ export default function LaunchTokenCard() {
     }
   }, []);
 
-  // State - token - initial MC
-  const [initialMarketCapRaw, setInitialMarketCapRaw] = useState<string>(
-    INITIAL_TOKEN_MC_USD.toString(),
+  // State - token - initial FDV
+  const [initialFdvUsdRaw, setInitialFdvUsdRaw] = useState<string>(
+    INITIAL_TOKEN_FDV_USD.toString(),
   );
-  const [initialMarketCap, setInitialMarketCap] =
-    useState<number>(INITIAL_TOKEN_MC_USD);
+  const [initialFdvUsd, setInitialFdvUsd] = useState<number>(
+    INITIAL_TOKEN_FDV_USD,
+  );
 
-  const onInitialMarketCapChange = useCallback((value: string) => {
+  const onInitialFdvUsdChange = useCallback((value: string) => {
     const formattedValue = formatTextInputValue(value, 2);
-    setInitialMarketCapRaw(formattedValue);
+    setInitialFdvUsdRaw(formattedValue);
 
     try {
       if (formattedValue === "") return;
       if (isNaN(+formattedValue))
-        throw new Error("Initial market cap must be a number");
+        throw new Error("Initial FDV must be a number");
       if (new BigNumber(formattedValue).lt(1))
         throw new Error(
-          `Initial market cap must be at least ${formatUsd(new BigNumber(1), {
+          `Initial FDV must be at least ${formatUsd(new BigNumber(1), {
             dp: 0,
           })}`,
         );
       if (new BigNumber(formattedValue).gt(10 ** 9))
         throw new Error(
-          `Initial market cap must be at most ${formatUsd(
-            new BigNumber(10 ** 9),
-            { dp: 0 },
-          )}`,
+          `Initial FDV must be at most ${formatUsd(new BigNumber(10 ** 9), {
+            dp: 0,
+          })}`,
         );
 
-      setInitialMarketCap(+formattedValue);
+      setInitialFdvUsd(+formattedValue);
     } catch (err) {
       console.error(err);
-      showErrorToast("Invalid initial market cap", err as Error);
+      showErrorToast("Invalid initial FDV", err as Error);
     }
   }, []);
+
+  const depositedSupply = useMemo(
+    () => new BigNumber(supply).times(depositedSupplyPercent / 100),
+    [supply, depositedSupplyPercent],
+  );
+  const initialPoolTvlUsd = useMemo(
+    () => new BigNumber(initialFdvUsd).times(depositedSupplyPercent / 100),
+    [initialFdvUsd, depositedSupplyPercent],
+  );
+
+  const tokenInitialPriceUsd = useMemo(
+    () => initialPoolTvlUsd.div(depositedSupply),
+    [initialPoolTvlUsd, depositedSupply],
+  );
 
   // State - token - non-mintable
   const [nonMintable, setNonMintable] = useState<boolean>(true);
@@ -282,19 +297,11 @@ export default function LaunchTokenCard() {
   // State - pool - burn LP tokens
   const [burnLpTokens, setBurnLpTokens] = useState<boolean>(false);
 
-  // Offset
-  const offset: bigint | undefined = useMemo(() => {
+  // CPMM offset
+  const cpmmOffset: bigint | undefined = useMemo(() => {
     if (quoteToken === undefined) return undefined;
 
-    const depositedSupply = new BigNumber(supply)
-      .times(depositedSupplyPercent)
-      .div(100);
-
     const quotePrice = getQuotePrice(quoteToken.coinType)!;
-
-    const tokenInitialPriceUsd = new BigNumber(initialMarketCap).div(
-      depositedSupply,
-    );
     const tokenInitialPriceQuote = tokenInitialPriceUsd.div(quotePrice);
 
     return computeOptimalOffset(
@@ -310,10 +317,9 @@ export default function LaunchTokenCard() {
     );
   }, [
     quoteToken,
-    supply,
-    depositedSupplyPercent,
     getQuotePrice,
-    initialMarketCap,
+    tokenInitialPriceUsd,
+    depositedSupply,
     decimals,
   ]);
 
@@ -349,8 +355,8 @@ export default function LaunchTokenCard() {
     setSupply(DEFAULT_TOKEN_SUPPLY);
     setDepositedSupplyPercentRaw(DEPOSITED_TOKEN_PERCENT.toString());
     setDepositedSupplyPercent(DEPOSITED_TOKEN_PERCENT);
-    setInitialMarketCapRaw(INITIAL_TOKEN_MC_USD.toString());
-    setInitialMarketCap(INITIAL_TOKEN_MC_USD);
+    setInitialFdvUsdRaw(INITIAL_TOKEN_FDV_USD.toString());
+    setInitialFdvUsd(INITIAL_TOKEN_FDV_USD);
     setNonMintable(true);
 
     // Pool
@@ -587,7 +593,7 @@ export default function LaunchTokenCard() {
           tokens,
           values,
           QUOTER_ID,
-          offset,
+          cpmmOffset,
           undefined,
           FEE_TIER_PERCENT,
           bTokens,
@@ -769,7 +775,7 @@ export default function LaunchTokenCard() {
 
               {isWhitelisted && (
                 <>
-                  {/* Optional - Deposited supply % */}
+                  {/* Optional - Deposited supply */}
                   <div className="flex w-full flex-col gap-2">
                     <p className="text-p2 text-secondary-foreground">
                       Deposited supply (%)
@@ -781,15 +787,15 @@ export default function LaunchTokenCard() {
                     />
                   </div>
 
-                  {/* Optional - Initial market cap */}
+                  {/* Optional - Initial FDV */}
                   <div className="flex w-full flex-col gap-2">
                     <p className="text-p2 text-secondary-foreground">
-                      Initial market cap ($)
+                      Initial FDV ($)
                     </p>
                     <TextInput
-                      placeholder={initialMarketCap.toString()}
-                      value={initialMarketCapRaw}
-                      onChange={onInitialMarketCapChange}
+                      placeholder={initialFdvUsd.toString()}
+                      value={initialFdvUsdRaw}
+                      onChange={onInitialFdvUsdChange}
                     />
                   </div>
 
@@ -844,9 +850,7 @@ export default function LaunchTokenCard() {
           <div className="flex w-full flex-col gap-2">
             {/* Deposited */}
             <Parameter label="Initial liquidity" isHorizontal>
-              {symbol === "" ? (
-                <p className="text-p2 text-foreground">--</p>
-              ) : (
+              {symbol !== "" ? (
                 <div className="flex flex-row items-center gap-2">
                   <p className="text-p2 text-foreground">
                     {formatToken(
@@ -865,14 +869,37 @@ export default function LaunchTokenCard() {
                     of supply
                   </p>
                 </div>
+              ) : (
+                <p className="text-p2 text-foreground">--</p>
               )}
             </Parameter>
 
-            {/* Initial MC */}
-            <Parameter label="Initial market cap (MC)" isHorizontal>
-              <p className="text-p2 text-foreground">
-                {formatUsd(new BigNumber(initialMarketCap))}
-              </p>
+            {/* Initial price */}
+            <Parameter label="Initial price" isHorizontal>
+              {symbol !== "" &&
+              tokenInitialPriceUsd !== undefined &&
+              quoteToken !== undefined ? (
+                <div className="flex flex-row items-center gap-2">
+                  <p className="text-p2 text-foreground">
+                    1 {symbol} =
+                    {formatToken(
+                      tokenInitialPriceUsd.div(
+                        getQuotePrice(quoteToken.coinType),
+                      ),
+                      {
+                        dp: balancesCoinMetadataMap![quoteToken.coinType]
+                          .decimals,
+                      },
+                    )}{" "}
+                    {balancesCoinMetadataMap![quoteToken.coinType].symbol}
+                  </p>
+                  <p className="text-p2 text-secondary-foreground">
+                    {formatPrice(tokenInitialPriceUsd)}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-p2 text-foreground">--</p>
+              )}
             </Parameter>
           </div>
         </div>

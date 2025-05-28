@@ -728,7 +728,7 @@ export default function CreatePoolCard() {
                     />
                   </div>
 
-                  {/* Initial pool TVL ($) */}
+                  {/* Initial pool TVL */}
                   <div className="flex w-full flex-col gap-2">
                     <p className="text-p2 text-secondary-foreground">
                       Initial pool TVL ($)
