@@ -44,7 +44,9 @@ export default function ExchangeRateParameter({
   // Ratios
   const quoteRatio = getQuoteRatio(inToken, outToken, quote);
   const reversedQuoteRatio =
-    quoteRatio !== undefined ? quoteRatio.pow(-1) : undefined;
+    quoteRatio !== undefined && !quoteRatio.eq(0)
+      ? quoteRatio.pow(-1)
+      : undefined;
 
   const isDefined =
     quoteRatio !== undefined && reversedQuoteRatio !== undefined;

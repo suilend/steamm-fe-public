@@ -12,9 +12,7 @@ export const getQuoteRatio = (
   outToken: Token,
   quote?: SwapQuote | MultiSwapQuote,
 ) =>
-  quote !== undefined &&
-  !new BigNumber(quote.amountIn.toString()).eq(0) &&
-  !new BigNumber(quote.amountOut.toString()).eq(0)
+  quote !== undefined && !new BigNumber(quote.amountIn.toString()).eq(0)
     ? new BigNumber(
         new BigNumber(quote.amountOut.toString()).div(10 ** outToken.decimals),
       ).div(
