@@ -43,13 +43,10 @@ export default function ExchangeRateParameter({
 }: ExchangeRateParameterProps) {
   // Ratios
   const quoteRatio = getQuoteRatio(inToken, outToken, quote);
-  const reversedQuoteRatio =
+  const invertedQuoteRatio =
     quoteRatio !== undefined && !quoteRatio.eq(0)
       ? quoteRatio.pow(-1)
       : undefined;
-
-  const isDefined =
-    quoteRatio !== undefined && reversedQuoteRatio !== undefined;
 
   // State
   const [isInverted, setIsInverted] = useState<boolean>(!!_isInverted);
@@ -65,54 +62,61 @@ export default function ExchangeRateParameter({
       ) : (
         <div className="flex w-full flex-row items-center gap-2">
           <p className={cn("!text-p2 text-foreground", labelClassName)}>
-            {isDefined ? (
-              !isInverted ? (
-                <>
-                  1 {inToken.symbol}
-                  {" ≈ "}
-                  {formatToken(quoteRatio!, {
-                    dp: outToken.decimals,
-                  })}{" "}
-                  {outToken.symbol}
-                </>
-              ) : (
-                <>
-                  1 {outToken.symbol}
-                  {" ≈ "}
-                  {formatToken(reversedQuoteRatio!, {
-                    dp: inToken.decimals,
-                  })}{" "}
-                  {inToken.symbol}
-                </>
-              )
+            {!isInverted ? (
+              <>
+                1 {inToken.symbol}
+                {" ≈ "}
+                {quoteRatio !== undefined
+                  ? formatToken(quoteRatio, { dp: outToken.decimals })
+                  : "N/A"}{" "}
+                {outToken.symbol}
+              </>
             ) : (
-              "N/A"
+              <>
+                1 {outToken.symbol}
+                {" ≈ "}
+                {invertedQuoteRatio !== undefined
+                  ? formatToken(invertedQuoteRatio, { dp: inToken.decimals })
+                  : "N/A"}{" "}
+                {inToken.symbol}
+              </>
             )}
           </p>
 
-          {isDefined && (
-            <p
-              className={cn(
-                "!text-p2 text-secondary-foreground",
-                priceLabelClassName,
+          {!isInverted ? (
+            <>
+              {quoteRatio !== undefined && (
+                <p
+                  className={cn(
+                    "!text-p2 text-secondary-foreground",
+                    priceLabelClassName,
+                  )}
+                >
+                  {formatPrice(outPrice.times(quoteRatio))}
+                </p>
               )}
-            >
-              {formatPrice(
-                !isInverted
-                  ? outPrice.times(quoteRatio!)
-                  : inPrice.times(reversedQuoteRatio!),
+            </>
+          ) : (
+            <>
+              {invertedQuoteRatio !== undefined && (
+                <p
+                  className={cn(
+                    "!text-p2 text-secondary-foreground",
+                    priceLabelClassName,
+                  )}
+                >
+                  {formatPrice(inPrice.times(invertedQuoteRatio))}
+                </p>
               )}
-            </p>
+            </>
           )}
 
-          {isDefined && (
-            <button
-              className="group h-4 w-4 flex-1"
-              onClick={() => setIsInverted((prev) => !prev)}
-            >
-              <ArrowRightLeft className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
-            </button>
-          )}
+          <button
+            className="group h-4 w-4 flex-1"
+            onClick={() => setIsInverted((prev) => !prev)}
+          >
+            <ArrowRightLeft className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
+          </button>
         </div>
       )}
     </Parameter>

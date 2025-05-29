@@ -1311,6 +1311,13 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
           isDisabled: true,
           title: `Insufficient ${activeCoinMetadata.symbol}`,
         };
+
+      if (new BigNumber(quote.amountOut.toString()).eq(0))
+        return {
+          isDisabled: true,
+          title: "Quote not available",
+          description: `Insufficient ${inactiveCoinMetadata.symbol} liquidity to execute swap`,
+        };
     }
 
     return {
