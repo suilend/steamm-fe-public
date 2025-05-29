@@ -3,8 +3,8 @@ import { useMemo } from "react";
 
 import BigNumber from "bignumber.js";
 
-import { formatUsd } from "@suilend/frontend-sui";
-import { shallowPushQuery } from "@suilend/frontend-sui-next";
+import { formatUsd } from "@suilend/sui-fe";
+import { shallowPushQuery } from "@suilend/sui-fe-next";
 
 import HistoricalDataChart from "@/components/HistoricalDataChart";
 import NoDataIcon from "@/components/icons/NoDataIcon";

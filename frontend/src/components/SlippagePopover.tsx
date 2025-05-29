@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import BigNumber from "bignumber.js";
 import { SlidersHorizontal } from "lucide-react";
 
-import { formatPercent } from "@suilend/frontend-sui";
+import { formatPercent } from "@suilend/sui-fe";
 
 import PercentInput from "@/components/PercentInput";
 import Popover from "@/components/Popover";

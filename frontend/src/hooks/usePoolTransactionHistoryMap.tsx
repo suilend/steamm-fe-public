@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Sentry from "@sentry/nextjs";
 import pLimit from "p-limit";
 
-import { showErrorToast, useWalletContext } from "@suilend/frontend-sui-next";
+import { showErrorToast, useWalletContext } from "@suilend/sui-fe-next";
 
 import { fetchHistoricalLpTransactions } from "@/lib/lp";
 import { fetchHistoricalSwapTransactions } from "@/lib/swap";

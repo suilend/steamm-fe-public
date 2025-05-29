@@ -5,7 +5,7 @@ import BigNumber from "bignumber.js";
 import {
   NORMALIZED_STEAMM_POINTS_COINTYPE,
   isSteammPoints,
-} from "@suilend/frontend-sui";
+} from "@suilend/sui-fe";
 import {
   Side,
   getFilteredRewards,

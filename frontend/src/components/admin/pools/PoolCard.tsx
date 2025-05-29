@@ -4,12 +4,12 @@ import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 import { Loader2, Plus } from "lucide-react";
 
-import { formatToken, formatUsd, getToken } from "@suilend/frontend-sui";
+import { formatToken, formatUsd, getToken } from "@suilend/sui-fe";
 import {
   showErrorToast,
   useSettingsContext,
   useWalletContext,
-} from "@suilend/frontend-sui-next";
+} from "@suilend/sui-fe-next";
 import { BankAbi, ParsedPool } from "@suilend/steamm-sdk";
 import { ADMIN_ADDRESS } from "@suilend/steamm-sdk";
 

@@ -15,7 +15,7 @@ import {
   SettingsContextProvider,
   WalletContextProvider,
   useSettingsContext,
-} from "@suilend/frontend-sui-next";
+} from "@suilend/sui-fe-next";
 
 import Layout from "@/components/Layout";
 import Toaster from "@/components/Toaster";

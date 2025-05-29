@@ -5,7 +5,7 @@ import {
   showErrorToast,
   useSettingsContext,
   useWalletContext,
-} from "@suilend/frontend-sui-next";
+} from "@suilend/sui-fe-next";
 import { Side, formatRewards, initializeObligations } from "@suilend/sdk";
 
 import { useAppContext } from "@/contexts/AppContext";

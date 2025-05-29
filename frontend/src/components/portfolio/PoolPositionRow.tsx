@@ -14,12 +14,12 @@ import {
   formatToken,
   formatUsd,
   getToken,
-} from "@suilend/frontend-sui";
+} from "@suilend/sui-fe";
 import {
   showErrorToast,
   useSettingsContext,
   useWalletContext,
-} from "@suilend/frontend-sui-next";
+} from "@suilend/sui-fe-next";
 
 import AprBreakdown from "@/components/AprBreakdown";
 import PoolLabel from "@/components/pool/PoolLabel";

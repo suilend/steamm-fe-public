@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useSessionStorage } from "usehooks-ts";
 
-import { formatPercent, formatUsd } from "@suilend/frontend-sui";
+import { formatPercent, formatUsd } from "@suilend/sui-fe";
 import {
   RewardSummary,
   Side,

@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 
-import { formatUsd } from "@suilend/frontend-sui";
+import { formatUsd } from "@suilend/sui-fe";
 
 export type ViewBox = {
   width: number;

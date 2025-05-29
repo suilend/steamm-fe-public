@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 
-import { API_URL, Token } from "@suilend/frontend-sui";
+import { API_URL, Token } from "@suilend/sui-fe";
 import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 
 import { HistorySwap, HistoryTransactionType } from "@/lib/types";

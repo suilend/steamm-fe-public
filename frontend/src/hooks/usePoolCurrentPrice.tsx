@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { BigNumber } from "bignumber.js";
 
-import { showErrorToast } from "@suilend/frontend-sui-next";
+import { showErrorToast } from "@suilend/sui-fe-next";
 import { QuoterId, SwapQuote } from "@suilend/steamm-sdk";
 import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";

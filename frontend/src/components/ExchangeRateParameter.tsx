@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { ArrowRightLeft } from "lucide-react";
 
-import { Token, formatPrice, formatToken } from "@suilend/frontend-sui";
+import { Token, formatPrice, formatToken } from "@suilend/sui-fe";
 import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 
 import Parameter from "@/components/Parameter";

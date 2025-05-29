@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CSSProperties } from "react";
 
-import { formatUsd } from "@suilend/frontend-sui";
+import { formatUsd } from "@suilend/sui-fe";
 import { ParsedPool } from "@suilend/steamm-sdk";
 
 import AprBreakdown from "@/components/AprBreakdown";

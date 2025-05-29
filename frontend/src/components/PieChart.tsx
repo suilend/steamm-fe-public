@@ -3,8 +3,8 @@ import { useMemo } from "react";
 import BigNumber from "bignumber.js";
 import * as Recharts from "recharts";
 
-import { formatPercent } from "@suilend/frontend-sui";
-import useIsTouchscreen from "@suilend/frontend-sui-next/hooks/useIsTouchscreen";
+import { formatPercent } from "@suilend/sui-fe";
+import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 
 import { Skeleton } from "@/components/ui/skeleton";
 

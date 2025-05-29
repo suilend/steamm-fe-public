@@ -7,8 +7,8 @@ import {
   formatAddress,
   formatInteger,
   formatToken,
-} from "@suilend/frontend-sui";
-import { useSettingsContext } from "@suilend/frontend-sui-next";
+} from "@suilend/sui-fe";
+import { useSettingsContext } from "@suilend/sui-fe-next";
 
 import { Column } from "@/components/airdrop/AirdropAddressAmountTable";
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";

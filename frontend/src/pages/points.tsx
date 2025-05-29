@@ -1,6 +1,6 @@
 import Head from "next/head";
 
-import { useWalletContext } from "@suilend/frontend-sui-next";
+import { useWalletContext } from "@suilend/sui-fe-next";
 
 import PointsHeader from "@/components/points/PointsHeader";
 import PointsLeaderboardTable from "@/components/points/PointsLeaderboardTable";

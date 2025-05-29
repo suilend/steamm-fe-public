@@ -2,7 +2,7 @@ import { CSSProperties, useMemo, useState } from "react";
 
 import { useLocalStorage } from "usehooks-ts";
 
-import { Token } from "@suilend/frontend-sui";
+import { Token } from "@suilend/sui-fe";
 
 import AirdropAddressAmountRow from "@/components/airdrop/AirdropAddressAmountRow";
 import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";

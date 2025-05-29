@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { Wallet } from "lucide-react";
 
-import { Token, formatToken, formatUsd } from "@suilend/frontend-sui";
+import { Token, formatToken, formatUsd } from "@suilend/sui-fe";
 
 import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
 import TokenLogo from "@/components/TokenLogo";

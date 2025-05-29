@@ -1,7 +1,7 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
 
-import { shallowPushQuery } from "@suilend/frontend-sui-next";
+import { shallowPushQuery } from "@suilend/sui-fe-next";
 
 import BanksTab from "@/components/admin/banks/BanksTab";
 import OraclesTab from "@/components/admin/oracles/OraclesTab";

@@ -3,12 +3,12 @@ import { useState } from "react";
 import { Transaction } from "@mysten/sui/transactions";
 import { Loader2 } from "lucide-react";
 
-import { API_URL } from "@suilend/frontend-sui";
+import { API_URL } from "@suilend/sui-fe";
 import {
   showErrorToast,
   useSettingsContext,
   useWalletContext,
-} from "@suilend/frontend-sui-next";
+} from "@suilend/sui-fe-next";
 import { ADMIN_ADDRESS, addOracleToRegistry } from "@suilend/steamm-sdk";
 
 import Parameter from "@/components/Parameter";

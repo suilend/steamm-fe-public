@@ -3,7 +3,7 @@ import { MouseEvent } from "react";
 import { ClassValue } from "clsx";
 import { Copy } from "lucide-react";
 
-import { showErrorToast, showInfoToast } from "@suilend/frontend-sui-next";
+import { showErrorToast, showInfoToast } from "@suilend/sui-fe-next";
 
 import Tooltip from "@/components/Tooltip";
 import { cn } from "@/lib/utils";

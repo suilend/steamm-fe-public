@@ -1,4 +1,4 @@
-import { API_URL } from "@suilend/frontend-sui";
+import { API_URL } from "@suilend/sui-fe";
 
 import {
   HistoryDeposit,

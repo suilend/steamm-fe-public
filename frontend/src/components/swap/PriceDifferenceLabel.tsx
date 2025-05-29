@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 import { AlertTriangle, Info } from "lucide-react";
 
-import { Token, formatPercent } from "@suilend/frontend-sui";
+import { Token, formatPercent } from "@suilend/sui-fe";
 import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 
 import { Skeleton } from "@/components/ui/skeleton";

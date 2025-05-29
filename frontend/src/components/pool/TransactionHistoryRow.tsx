@@ -5,8 +5,8 @@ import BigNumber from "bignumber.js";
 import { format } from "date-fns";
 import { ArrowRight, ExternalLink, Plus } from "lucide-react";
 
-import { formatToken, getToken } from "@suilend/frontend-sui";
-import { useSettingsContext } from "@suilend/frontend-sui-next";
+import { formatToken, getToken } from "@suilend/sui-fe";
+import { useSettingsContext } from "@suilend/sui-fe-next";
 
 import PoolLabel from "@/components/pool/PoolLabel";
 import { Column } from "@/components/pool/TransactionHistoryTable";

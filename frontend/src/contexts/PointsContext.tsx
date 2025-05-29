@@ -11,8 +11,8 @@ import {
 
 import BigNumber from "bignumber.js";
 
-import { API_URL } from "@suilend/frontend-sui";
-import { useWalletContext } from "@suilend/frontend-sui-next";
+import { API_URL } from "@suilend/sui-fe";
+import { useWalletContext } from "@suilend/sui-fe-next";
 
 export interface LeaderboardRowData {
   rank: number;

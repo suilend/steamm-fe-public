@@ -12,7 +12,7 @@ import {
 import BigNumber from "bignumber.js";
 import { startOfHour } from "date-fns";
 
-import { API_URL } from "@suilend/frontend-sui";
+import { API_URL } from "@suilend/sui-fe";
 
 import { useAppContext } from "@/contexts/AppContext";
 import { ChartData } from "@/lib/chart";

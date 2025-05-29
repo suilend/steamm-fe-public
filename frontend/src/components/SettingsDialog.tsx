@@ -2,8 +2,8 @@ import { useState } from "react";
 
 import { Settings } from "lucide-react";
 
-import { EXPLORERS, ExplorerId, RPCS, RpcId } from "@suilend/frontend-sui";
-import { useSettingsContext } from "@suilend/frontend-sui-next";
+import { EXPLORERS, ExplorerId, RPCS, RpcId } from "@suilend/sui-fe";
+import { useSettingsContext } from "@suilend/sui-fe-next";
 
 import Dialog from "@/components/Dialog";
 import SelectPopover from "@/components/SelectPopover";

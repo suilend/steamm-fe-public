@@ -6,8 +6,8 @@ import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import { v4 as uuidv4 } from "uuid";
 
-import { formatUsd } from "@suilend/frontend-sui";
-import { shallowPushQuery } from "@suilend/frontend-sui-next";
+import { formatUsd } from "@suilend/sui-fe";
+import { shallowPushQuery } from "@suilend/sui-fe-next";
 
 import Divider from "@/components/Divider";
 import HistoricalDataChart from "@/components/HistoricalDataChart";

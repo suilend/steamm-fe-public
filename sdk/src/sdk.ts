@@ -12,7 +12,7 @@ import {
   NORMALIZED_STEAMM_POINTS_COINTYPE,
   getCoinMetadataMap,
   isSteammPoints,
-} from "@suilend/frontend-sui";
+} from "@suilend/sui-fe";
 import {
   ParsedObligation,
   Side,

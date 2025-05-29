@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef } from "react";
 
 import { ChevronRight } from "lucide-react";
 
-import { formatUsd } from "@suilend/frontend-sui";
-import { useWalletContext } from "@suilend/frontend-sui-next";
+import { formatUsd } from "@suilend/sui-fe";
+import { useWalletContext } from "@suilend/sui-fe-next";
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@suilend/steamm-sdk";
 
 import AprBreakdown from "@/components/AprBreakdown";

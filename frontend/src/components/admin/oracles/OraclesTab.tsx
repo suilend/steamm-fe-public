@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import useCoinMetadataMap from "@suilend/frontend-sui-next/hooks/useCoinMetadataMap";
+import useCoinMetadataMap from "@suilend/sui-fe-next/hooks/useCoinMetadataMap";
 
 import AddOracleCard from "@/components/admin/oracles/AddOracleCard";
 import OracleCard from "@/components/admin/oracles/OracleCard";

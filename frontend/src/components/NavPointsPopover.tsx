@@ -9,7 +9,7 @@ import {
   formatPoints,
   formatRank,
   getToken,
-} from "@suilend/frontend-sui";
+} from "@suilend/sui-fe";
 
 import Popover from "@/components/Popover";
 import TokenLogo from "@/components/TokenLogo";

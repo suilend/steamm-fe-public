@@ -7,7 +7,7 @@ import {
   formatToken,
   getToken,
   isSteammPoints,
-} from "@suilend/frontend-sui";
+} from "@suilend/sui-fe";
 import {
   Side,
   getDedupedAprRewards,

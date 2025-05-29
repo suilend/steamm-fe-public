@@ -4,7 +4,7 @@ import { SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { ExternalLink } from "lucide-react";
 import { Check, Loader2 } from "lucide-react";
 
-import { useSettingsContext } from "@suilend/frontend-sui-next";
+import { useSettingsContext } from "@suilend/sui-fe-next";
 
 import { cn } from "@/lib/utils";
 

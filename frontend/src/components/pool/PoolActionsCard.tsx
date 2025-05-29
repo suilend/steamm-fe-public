@@ -12,14 +12,14 @@ import {
   getBalanceChange,
   getToken,
   isSui,
-} from "@suilend/frontend-sui";
+} from "@suilend/sui-fe";
 import {
   shallowPushQuery,
   shallowReplaceQuery,
   showErrorToast,
   useSettingsContext,
   useWalletContext,
-} from "@suilend/frontend-sui-next";
+} from "@suilend/sui-fe-next";
 import {
   ParsedObligation,
   createObligationIfNoneExists,

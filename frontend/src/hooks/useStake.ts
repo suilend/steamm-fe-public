@@ -8,7 +8,7 @@ import {
   showErrorToast,
   useSettingsContext,
   useWalletContext,
-} from "@suilend/frontend-sui-next";
+} from "@suilend/sui-fe-next";
 import {
   createObligationIfNoneExists,
   sendObligationToUser,

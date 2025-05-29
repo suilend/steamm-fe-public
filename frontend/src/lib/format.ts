@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 
-import { formatInteger, formatNumber } from "@suilend/frontend-sui";
+import { formatInteger, formatNumber } from "@suilend/sui-fe";
 
 export const formatPair = (symbols: string[]) => symbols.join("-");
 

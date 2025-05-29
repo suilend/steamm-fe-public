@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
 
-import { getPrice as fetchCachedPrice } from "@suilend/frontend-sui";
+import { getPrice as fetchCachedPrice } from "@suilend/sui-fe";
 
 const useCachedUsdPrices = (initialCoinTypes: string[]) => {
   const [cachedUsdPricesMap, setCachedUsdPriceMap] = useState<

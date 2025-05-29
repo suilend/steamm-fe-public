@@ -1,6 +1,6 @@
 import { Loader2 } from "lucide-react";
 
-import { formatToken, formatUsd, getToken } from "@suilend/frontend-sui";
+import { formatToken, formatUsd, getToken } from "@suilend/sui-fe";
 
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";

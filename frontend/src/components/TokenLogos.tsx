@@ -1,6 +1,6 @@
 import { CSSProperties } from "react";
 
-import { getToken } from "@suilend/frontend-sui";
+import { getToken } from "@suilend/sui-fe";
 
 import SuilendLogo from "@/components/SuilendLogo";
 import TokenLogo from "@/components/TokenLogo";

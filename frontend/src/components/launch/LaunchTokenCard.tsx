@@ -14,12 +14,12 @@ import {
   formatToken,
   formatUsd,
   getToken,
-} from "@suilend/frontend-sui";
+} from "@suilend/sui-fe";
 import {
   showErrorToast,
   useSettingsContext,
   useWalletContext,
-} from "@suilend/frontend-sui-next";
+} from "@suilend/sui-fe-next";
 import { ADMIN_ADDRESS, computeOptimalOffset } from "@suilend/steamm-sdk";
 
 import Divider from "@/components/Divider";

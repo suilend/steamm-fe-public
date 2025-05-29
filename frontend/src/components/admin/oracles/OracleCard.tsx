@@ -3,8 +3,8 @@ import Image from "next/image";
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
 
-import { formatId, formatPrice, getToken } from "@suilend/frontend-sui";
-import { useSettingsContext } from "@suilend/frontend-sui-next";
+import { formatId, formatPrice, getToken } from "@suilend/sui-fe";
+import { useSettingsContext } from "@suilend/sui-fe-next";
 import { OracleInfo } from "@suilend/steamm-sdk";
 
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";

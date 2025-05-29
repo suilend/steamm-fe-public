@@ -15,13 +15,13 @@ import {
   getBalanceChange,
   getToken,
   isSui,
-} from "@suilend/frontend-sui";
+} from "@suilend/sui-fe";
 import {
   showErrorToast,
   showSuccessToast,
   useSettingsContext,
   useWalletContext,
-} from "@suilend/frontend-sui-next";
+} from "@suilend/sui-fe-next";
 
 import AirdropAddressAmountTable from "@/components/airdrop/AirdropAddressAmountTable";
 import OpenUrlNewTab from "@/components/OpenUrlNewTab";

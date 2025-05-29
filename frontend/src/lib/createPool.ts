@@ -8,8 +8,8 @@ import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID, normalizeStructTag } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 
-import { Token, getToken, isSui } from "@suilend/frontend-sui";
-import { WalletContext } from "@suilend/frontend-sui-next";
+import { Token, getToken, isSui } from "@suilend/sui-fe";
+import { WalletContext } from "@suilend/sui-fe-next";
 import {
   Codegen,
   QUOTER_ID_NAME_MAP,

@@ -14,7 +14,7 @@ import { useLocalStorage } from "usehooks-ts";
 import {
   useSettingsContext,
   useWalletContext,
-} from "@suilend/frontend-sui-next";
+} from "@suilend/sui-fe-next";
 import {
   ParsedLendingMarket,
   ParsedReserve,

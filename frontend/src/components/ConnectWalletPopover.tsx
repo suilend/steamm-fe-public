@@ -6,9 +6,9 @@ import {
   Wallet,
   WalletType,
   useWalletContext,
-} from "@suilend/frontend-sui-next";
-import useIsAndroid from "@suilend/frontend-sui-next/hooks/useIsAndroid";
-import useIsiOS from "@suilend/frontend-sui-next/hooks/useIsiOS";
+} from "@suilend/sui-fe-next";
+import useIsAndroid from "@suilend/sui-fe-next/hooks/useIsAndroid";
+import useIsiOS from "@suilend/sui-fe-next/hooks/useIsiOS";
 
 import Popover from "@/components/Popover";
 import { cn } from "@/lib/utils";

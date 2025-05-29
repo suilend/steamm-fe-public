@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 
 import { RotateCw } from "lucide-react";
 
-import { useWalletContext } from "@suilend/frontend-sui-next";
+import { useWalletContext } from "@suilend/sui-fe-next";
 
 import ConnectWalletButton from "@/components/ConnectWalletButton";
 import Container from "@/components/Container";

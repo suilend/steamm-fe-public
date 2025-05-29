@@ -10,7 +10,7 @@ import {
 import { Transaction } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
-import { WalletContext } from "@suilend/frontend-sui-next";
+import { WalletContext } from "@suilend/sui-fe-next";
 
 import { LAUNCH_TOKEN_PACKAGE_ID } from "@/lib/launchToken";
 

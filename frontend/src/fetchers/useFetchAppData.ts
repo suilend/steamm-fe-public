@@ -8,8 +8,8 @@ import {
   API_URL,
   NORMALIZED_STEAMM_POINTS_COINTYPE,
   getCoinMetadataMap,
-} from "@suilend/frontend-sui";
-import { showErrorToast, useSettingsContext } from "@suilend/frontend-sui-next";
+} from "@suilend/sui-fe";
+import { showErrorToast, useSettingsContext } from "@suilend/sui-fe-next";
 import {
   SuilendClient,
   formatRewards,
