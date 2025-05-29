@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
 
@@ -10,11 +8,12 @@ import { useSettingsContext } from "@suilend/sui-fe-next";
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import OpenUrlNewTab from "@/components/OpenUrlNewTab";
 import Parameter from "@/components/Parameter";
+import PythLogo from "@/components/PythLogo";
+import SwitchboardLogo from "@/components/SwitchboardLogo";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { SUILEND_ASSETS_URL } from "@/lib/constants";
 import {
   OracleType,
   getPythOracleUrl,
@@ -44,24 +43,11 @@ export default function OracleCard({
       {/* Top */}
       <div className="flex w-full flex-row items-center justify-between">
         <div className="flex flex-row items-center gap-2">
-          {oracleInfo.oracleType === OracleType.PYTH && (
-            <Image
-              src={`${SUILEND_ASSETS_URL}/partners/Pyth.png`}
-              alt="Pyth logo"
-              width={24}
-              height={24}
-              quality={100}
-            />
-          )}
-          {oracleInfo.oracleType === OracleType.SWITCHBOARD && (
-            <Image
-              src={`${SUILEND_ASSETS_URL}/partners/Switchboard.png`}
-              alt="Switchboard logo"
-              width={24}
-              height={24}
-              quality={100}
-            />
-          )}
+          {oracleInfo.oracleType === OracleType.PYTH ? (
+            <PythLogo size={24} />
+          ) : oracleInfo.oracleType === OracleType.SWITCHBOARD ? (
+            <SwitchboardLogo size={24} />
+          ) : null}
 
           <Tooltip title={`0x${priceIdentifier}`}>
             <p className="text-h3 text-foreground">
@@ -70,14 +56,16 @@ export default function OracleCard({
           </Tooltip>
         </div>
 
-        {oracleInfo.oracleType === OracleType.PYTH && (
+        {oracleInfo.oracleType === OracleType.PYTH ? (
           <OpenUrlNewTab
             url={getPythOracleUrl(
               appData.pythPriceIdentifierSymbolMap[priceIdentifier],
             )}
             tooltip="Open on Pyth"
           />
-        )}
+        ) : oracleInfo.oracleType === OracleType.SWITCHBOARD ? (
+          <></> // TODO
+        ) : null}
       </div>
 
       <div className="flex w-full flex-col gap-2">

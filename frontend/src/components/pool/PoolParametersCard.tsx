@@ -1,6 +1,7 @@
 import BigNumber from "bignumber.js";
 
 import { QuoterId, SwapQuote } from "@suilend/steamm-sdk";
+import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 import {
@@ -18,11 +19,18 @@ import ExchangeRateParameter from "@/components/ExchangeRateParameter";
 import OpenUrlNewTab from "@/components/OpenUrlNewTab";
 import Parameter from "@/components/Parameter";
 import PieChart from "@/components/PieChart";
+import PythLogo from "@/components/PythLogo";
+import SwitchboardLogo from "@/components/SwitchboardLogo";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { formatAmplifier, formatFeeTier } from "@/lib/format";
+import {
+  OracleType,
+  getPythOracleUrl,
+  parseOraclePriceIdentifier,
+} from "@/lib/oracles";
 import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
@@ -39,6 +47,7 @@ export default function PoolParametersCard({
 
   return (
     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
+      {/* Assets */}
       <Parameter label="Assets">
         <div className="flex flex-row items-center gap-4">
           {pool.tvlUsd.gt(0) && (
@@ -153,6 +162,58 @@ export default function PoolParametersCard({
         </div>
       </Parameter>
 
+      {/* Oracles */}
+      {[QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId) && (
+        <Parameter label="Oracles">
+          {pool.coinTypes.map((coinType, index) => {
+            const quoter = pool.pool.quoter as OracleQuoterV2 | OracleQuoter;
+            const oracleIndex =
+              index === 0 ? quoter.oracleIndexA : quoter.oracleIndexB;
+            const oracleInfo =
+              appData.oracleIndexOracleInfoPriceMap[+oracleIndex.toString()];
+
+            const priceIdentifier = parseOraclePriceIdentifier(
+              oracleInfo.oracleInfo,
+            );
+
+            return (
+              <div key={coinType} className="flex flex-row items-center gap-2">
+                <TokenLogo
+                  token={getToken(coinType, appData.coinMetadataMap[coinType])}
+                  size={16}
+                />
+
+                <div className="flex flex-row items-center gap-1.5">
+                  <p className="text-p2 text-foreground">
+                    {appData.pythPriceIdentifierSymbolMap[priceIdentifier]}
+                  </p>
+
+                  {oracleInfo.oracleInfo.oracleType === OracleType.PYTH ? (
+                    <PythLogo size={16} />
+                  ) : oracleInfo.oracleInfo.oracleType ===
+                    OracleType.SWITCHBOARD ? (
+                    <SwitchboardLogo size={16} />
+                  ) : null}
+                </div>
+
+                {oracleInfo.oracleInfo.oracleType === OracleType.PYTH ? (
+                  <OpenUrlNewTab
+                    url={getPythOracleUrl(
+                      appData.pythPriceIdentifierSymbolMap[priceIdentifier],
+                    )}
+                    tooltip="Open on Pyth"
+                  />
+                ) : oracleInfo.oracleInfo.oracleType ===
+                  OracleType.SWITCHBOARD ? (
+                  <></> // TODO
+                ) : null}
+              </div>
+            );
+          })}
+        </Parameter>
+      )}
+
+      {/* Bank utilization */}
       {pool.coinTypes.some((coinType) =>
         appData.bankMap[coinType].suilendDepositAprPercent.gt(0),
       ) && (
@@ -167,11 +228,8 @@ export default function PoolParametersCard({
                   token={getToken(coinType, appData.coinMetadataMap[coinType])}
                   size={16}
                 />
-                <p className="text-p2 text-foreground">
-                  {appData.coinMetadataMap[coinType].symbol}
-                </p>
 
-                <p className="text-p2 text-secondary-foreground">
+                <p className="text-p2 text-foreground">
                   {formatPercent(appData.bankMap[coinType].utilizationPercent)}{" "}
                   deposited on Suilend
                 </p>
@@ -180,6 +238,7 @@ export default function PoolParametersCard({
         </Parameter>
       )}
 
+      {/* Amplifier */}
       {pool.quoterId === QuoterId.ORACLE_V2 && (
         <Parameter label="Amplifier" labelTooltip={AMPLIFIER_TOOLTIP}>
           <p className="text-p2 text-foreground">
@@ -194,12 +253,14 @@ export default function PoolParametersCard({
         </Parameter>
       )}
 
+      {/* Fee tier */}
       <Parameter label="Fee tier">
         <p className="text-p2 text-foreground">
           {formatFeeTier(pool.feeTierPercent)}
         </p>
       </Parameter>
 
+      {/* Current price */}
       <ExchangeRateParameter
         inToken={getToken(
           pool.coinTypes[0],
@@ -215,6 +276,7 @@ export default function PoolParametersCard({
         label="Current price"
       />
 
+      {/* Address */}
       <Parameter label="Address">
         <div className="flex flex-row items-center gap-2">
           <Tooltip title={pool.id}>
