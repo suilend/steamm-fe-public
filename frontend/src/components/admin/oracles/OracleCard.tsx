@@ -13,6 +13,7 @@ import Parameter from "@/components/Parameter";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLoadedAppContext } from "@/contexts/AppContext";
 import { SUILEND_ASSETS_URL } from "@/lib/constants";
 import {
   OracleType,
@@ -21,7 +22,6 @@ import {
 } from "@/lib/oracles";
 
 interface OracleCardProps {
-  pythPriceIdentifierSymbolMap: Record<string, string> | undefined;
   coinMetadataMap: Record<string, CoinMetadata>;
   coinTypes: string[];
   oracleInfo: OracleInfo;
@@ -29,13 +29,13 @@ interface OracleCardProps {
 }
 
 export default function OracleCard({
-  pythPriceIdentifierSymbolMap,
   coinMetadataMap,
   coinTypes,
   oracleInfo,
   price,
 }: OracleCardProps) {
   const { explorer } = useSettingsContext();
+  const { appData } = useLoadedAppContext();
 
   const priceIdentifier = parseOraclePriceIdentifier(oracleInfo);
 
@@ -70,17 +70,14 @@ export default function OracleCard({
           </Tooltip>
         </div>
 
-        {oracleInfo.oracleType === OracleType.PYTH &&
-          (pythPriceIdentifierSymbolMap?.[priceIdentifier] === undefined ? (
-            <Skeleton className="h-5 w-5" />
-          ) : (
-            <OpenUrlNewTab
-              url={getPythOracleUrl(
-                pythPriceIdentifierSymbolMap[priceIdentifier],
-              )}
-              tooltip="Open on Pyth"
-            />
-          ))}
+        {oracleInfo.oracleType === OracleType.PYTH && (
+          <OpenUrlNewTab
+            url={getPythOracleUrl(
+              appData.pythPriceIdentifierSymbolMap[priceIdentifier],
+            )}
+            tooltip="Open on Pyth"
+          />
+        )}
       </div>
 
       <div className="flex w-full flex-col gap-2">
@@ -89,13 +86,9 @@ export default function OracleCard({
         </Parameter>
 
         <Parameter label="Symbol" isHorizontal>
-          {pythPriceIdentifierSymbolMap?.[priceIdentifier] === undefined ? (
-            <Skeleton className="h-[21px] w-24" />
-          ) : (
-            <p className="text-p2 text-foreground">
-              {pythPriceIdentifierSymbolMap[priceIdentifier]}
-            </p>
-          )}
+          <p className="text-p2 text-foreground">
+            {appData.pythPriceIdentifierSymbolMap[priceIdentifier]}
+          </p>
         </Parameter>
 
         <Parameter label="Price" isHorizontal>

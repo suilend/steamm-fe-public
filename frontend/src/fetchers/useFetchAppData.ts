@@ -55,6 +55,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       suilend,
       lstAprPercentMap,
       steammLaunchCoinTypes,
+      pythPriceIdentifierSymbolMap,
       {
         oracleIndexOracleInfoPriceMap,
         COINTYPE_ORACLE_INDEX_MAP,
@@ -189,6 +190,27 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         } catch (err) {
           console.error(err);
           return [];
+        }
+      })(),
+
+      // Pyth price identifier -> symbol map
+      (async () => {
+        try {
+          const res = await fetch(
+            "https://hermes.pyth.network/v2/price_feeds?asset_type=crypto",
+          );
+          const json: {
+            id: string;
+            attributes: { symbol: string };
+          }[] = await res.json();
+
+          return json.reduce(
+            (acc, d) => ({ ...acc, [d.id]: d.attributes.symbol }),
+            {} as Record<string, string>,
+          );
+        } catch (err) {
+          console.error(err);
+          return {};
         }
       })(),
 
@@ -549,6 +571,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       coinMetadataMap,
       lstAprPercentMap,
       steammLaunchCoinTypes,
+      pythPriceIdentifierSymbolMap,
 
       oracleIndexOracleInfoPriceMap,
       COINTYPE_ORACLE_INDEX_MAP,

@@ -1,14 +1,13 @@
-import Image from "next/image";
-
 import { ClassValue } from "clsx";
 
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@suilend/steamm-sdk";
 import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 
+import PythLogo from "@/components/PythLogo";
+import SwitchboardLogo from "@/components/SwitchboardLogo";
 import Tag from "@/components/Tag";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { SUILEND_ASSETS_URL } from "@/lib/constants";
 import { OracleType } from "@/lib/oracles";
 
 interface PoolTypeTagProps {
@@ -40,39 +39,22 @@ export default function PoolTypeTag({ className, pool }: PoolTypeTagProps) {
       className={className}
       tooltip={
         [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId)
-          ? [
-              "Powered by",
-              [
-                getIsOracleType(OracleType.PYTH) ? "Pyth" : null,
-                getIsOracleType(OracleType.SWITCHBOARD) ? "Switchboard" : null,
-              ]
-                .filter(Boolean)
-                .join(" and "),
-            ].join(" ")
+          ? `Powered by ${[
+              getIsOracleType(OracleType.PYTH) ? "Pyth" : null,
+              getIsOracleType(OracleType.SWITCHBOARD) ? "Switchboard" : null,
+            ]
+              .filter(Boolean)
+              .join(" and ")}`
           : undefined
       }
       endDecorator={
         [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId) ? (
-          <>
-            {getIsOracleType(OracleType.PYTH) && (
-              <Image
-                src={`${SUILEND_ASSETS_URL}/partners/Pyth.png`}
-                alt="Pyth logo"
-                width={12}
-                height={12}
-                quality={100}
-              />
-            )}
+          <div className="flex flex-row gap-1">
+            {getIsOracleType(OracleType.PYTH) && <PythLogo size={12} />}
             {getIsOracleType(OracleType.SWITCHBOARD) && (
-              <Image
-                src={`${SUILEND_ASSETS_URL}/partners/Switchboard.png`}
-                alt="Switchboard logo"
-                width={12}
-                height={12}
-                quality={100}
-              />
+              <SwitchboardLogo size={12} />
             )}
-          </>
+          </div>
         ) : undefined
       }
     >
