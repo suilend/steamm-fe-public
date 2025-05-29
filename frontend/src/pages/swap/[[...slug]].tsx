@@ -495,159 +495,174 @@ export default function SwapPage() {
     [appData.pools, inCoinType, outCoinType],
   );
 
+  // TEMP
+  const isUnderConstruction = true;
+
   return (
     <>
       <Head>
         <title>STEAMM | Swap</title>
       </Head>
 
-      <div className="flex w-full max-w-md flex-col gap-8">
-        <div className="flex w-full flex-col gap-6">
-          <div className="flex w-full flex-row items-center justify-between">
-            <h1 className="text-h1 text-foreground">Swap</h1>
-            <SlippagePopover />
-          </div>
-
-          <div className="flex w-full flex-col gap-4">
-            <div className="relative flex w-full min-w-0 flex-col items-center gap-2">
-              <CoinInput
-                className="relative z-[1]"
-                autoFocus
-                token={getToken(inCoinType, inCoinMetadata)}
-                value={value}
-                usdValue={inUsdValue}
-                onChange={(value) => onValueChange(value)}
-                onMaxAmountClick={() => onBalanceClick()}
-                tokens={tokens}
-                onSelectToken={(token) =>
-                  onSelectToken(token, TokenDirection.IN)
-                }
-              />
-
-              <ReverseAssetsButton onClick={reverseAssets} />
-
-              <CoinInput
-                className="relative z-[1]"
-                token={getToken(outCoinType, outCoinMetadata)}
-                value={
-                  isFetchingQuote
-                    ? undefined
-                    : quote
-                      ? formatTextInputValue(
-                          new BigNumber(quote.amountOut.toString())
-                            .div(10 ** outCoinMetadata.decimals)
-                            .toFixed(
-                              outCoinMetadata.decimals,
-                              BigNumber.ROUND_DOWN,
-                            ),
-                          outCoinMetadata.decimals,
-                        )
-                      : ""
-                }
-                usdValue={outUsdValue}
-                tokens={tokens}
-                onSelectToken={(token) =>
-                  onSelectToken(token, TokenDirection.OUT)
-                }
-              />
-            </div>
-
-            {(isFetchingQuote || quote) && (
-              <div className="flex w-full flex-col gap-2">
-                <div className="flex w-full flex-row items-center justify-between">
-                  <ExchangeRateParameter
-                    className="w-max"
-                    labelClassName="text-secondary-foreground"
-                    inToken={getToken(inCoinType, inCoinMetadata)}
-                    inPrice={inPoolPrice}
-                    outToken={getToken(outCoinType, outCoinMetadata)}
-                    outPrice={outPoolPrice}
-                    isFetchingQuote={isFetchingQuote}
-                    quote={quote}
-                    isInverted
-                    label=""
-                  />
-
-                  {isFetchingQuote || !quote || !route ? (
-                    <Skeleton className="h-[21px] w-16" />
-                  ) : (
-                    <Tooltip
-                      content={
-                        <div className="flex flex-row items-center gap-1">
-                          {flattenedRoute!.map((r, index) => (
-                            <Fragment key={r.bTokenType}>
-                              <p className="text-p3 text-foreground">
-                                {
-                                  appData.coinMetadataMap[
-                                    appData.bTokenTypeCoinTypeMap[r.bTokenType]
-                                  ].symbol
-                                }
-                              </p>
-                              {index !== flattenedRoute!.length - 1 && (
-                                <ArrowRight className="h-3 w-3 text-foreground" />
-                              )}
-                            </Fragment>
-                          ))}
-                        </div>
-                      }
-                    >
-                      <p
-                        className={cn(
-                          "text-p2 text-secondary-foreground decoration-secondary-foreground/50",
-                          hoverUnderlineClassName,
-                        )}
-                      >
-                        {route.length} hop
-                        {route.length > 1 && "s"}
-                      </p>
-                    </Tooltip>
-                  )}
-                </div>
-
-                <PriceDifferenceLabel
-                  inToken={getToken(inCoinType, inCoinMetadata)}
-                  outToken={getToken(outCoinType, outCoinMetadata)}
-                  cachedUsdPriceRatio={cachedUsdPriceRatio}
-                  isFetchingQuote={isFetchingQuote}
-                  quote={quote}
-                />
-              </div>
-            )}
-
-            <SubmitButton
-              submitButtonState={submitButtonState}
-              onClick={onSubmitClick}
-            />
-
-            {(isFetchingQuote || quote) && (
-              <div className="flex w-full flex-col gap-2">
-                <Parameter label="Minimum inflow" isHorizontal>
-                  {isFetchingQuote || !quote ? (
-                    <Skeleton className="h-[21px] w-24" />
-                  ) : (
-                    <p className="text-p2 text-foreground">
-                      {formatToken(
-                        new BigNumber(quote.amountOut.toString())
-                          .div(1 + slippagePercent / 100)
-                          .div(10 ** outCoinMetadata.decimals),
-                        { dp: outCoinMetadata.decimals },
-                      )}{" "}
-                      {outCoinMetadata.symbol}
-                    </p>
-                  )}
-                </Parameter>
-              </div>
-            )}
+      {isUnderConstruction ? (
+        <div className="flex w-full max-w-md flex-col gap-8">
+          <div className="flex w-full flex-row items-center justify-between gap-4 rounded-md border border-warning bg-warning/25 px-5 py-2">
+            <p className="text-p2 text-foreground">
+              This page is currently under construction.
+            </p>
           </div>
         </div>
+      ) : (
+        <div className="flex w-full max-w-md flex-col gap-8">
+          <div className="flex w-full flex-col gap-6">
+            <div className="flex w-full flex-row items-center justify-between">
+              <h1 className="text-h1 text-foreground">Swap</h1>
+              <SlippagePopover />
+            </div>
 
-        <SuggestedPools
-          tableId="swap"
-          title="Suggested pools"
-          pools={suggestedPools}
-          isTvlOnly
-        />
-      </div>
+            <div className="flex w-full flex-col gap-4">
+              <div className="relative flex w-full min-w-0 flex-col items-center gap-2">
+                <CoinInput
+                  className="relative z-[1]"
+                  autoFocus
+                  token={getToken(inCoinType, inCoinMetadata)}
+                  value={value}
+                  usdValue={inUsdValue}
+                  onChange={(value) => onValueChange(value)}
+                  onMaxAmountClick={() => onBalanceClick()}
+                  tokens={tokens}
+                  onSelectToken={(token) =>
+                    onSelectToken(token, TokenDirection.IN)
+                  }
+                />
+
+                <ReverseAssetsButton onClick={reverseAssets} />
+
+                <CoinInput
+                  className="relative z-[1]"
+                  token={getToken(outCoinType, outCoinMetadata)}
+                  value={
+                    isFetchingQuote
+                      ? undefined
+                      : quote
+                        ? formatTextInputValue(
+                            new BigNumber(quote.amountOut.toString())
+                              .div(10 ** outCoinMetadata.decimals)
+                              .toFixed(
+                                outCoinMetadata.decimals,
+                                BigNumber.ROUND_DOWN,
+                              ),
+                            outCoinMetadata.decimals,
+                          )
+                        : ""
+                  }
+                  usdValue={outUsdValue}
+                  tokens={tokens}
+                  onSelectToken={(token) =>
+                    onSelectToken(token, TokenDirection.OUT)
+                  }
+                />
+              </div>
+
+              {(isFetchingQuote || quote) && (
+                <div className="flex w-full flex-col gap-2">
+                  <div className="flex w-full flex-row items-center justify-between">
+                    <ExchangeRateParameter
+                      className="w-max"
+                      labelClassName="text-secondary-foreground"
+                      inToken={getToken(inCoinType, inCoinMetadata)}
+                      inPrice={inPoolPrice}
+                      outToken={getToken(outCoinType, outCoinMetadata)}
+                      outPrice={outPoolPrice}
+                      isFetchingQuote={isFetchingQuote}
+                      quote={quote}
+                      isInverted
+                      label=""
+                    />
+
+                    {isFetchingQuote || !quote || !route ? (
+                      <Skeleton className="h-[21px] w-16" />
+                    ) : (
+                      <Tooltip
+                        content={
+                          <div className="flex flex-row items-center gap-1">
+                            {flattenedRoute!.map((r, index) => (
+                              <Fragment key={r.bTokenType}>
+                                <p className="text-p3 text-foreground">
+                                  {
+                                    appData.coinMetadataMap[
+                                      appData.bTokenTypeCoinTypeMap[
+                                        r.bTokenType
+                                      ]
+                                    ].symbol
+                                  }
+                                </p>
+                                {index !== flattenedRoute!.length - 1 && (
+                                  <ArrowRight className="h-3 w-3 text-foreground" />
+                                )}
+                              </Fragment>
+                            ))}
+                          </div>
+                        }
+                      >
+                        <p
+                          className={cn(
+                            "text-p2 text-secondary-foreground decoration-secondary-foreground/50",
+                            hoverUnderlineClassName,
+                          )}
+                        >
+                          {route.length} hop
+                          {route.length > 1 && "s"}
+                        </p>
+                      </Tooltip>
+                    )}
+                  </div>
+
+                  <PriceDifferenceLabel
+                    inToken={getToken(inCoinType, inCoinMetadata)}
+                    outToken={getToken(outCoinType, outCoinMetadata)}
+                    cachedUsdPriceRatio={cachedUsdPriceRatio}
+                    isFetchingQuote={isFetchingQuote}
+                    quote={quote}
+                  />
+                </div>
+              )}
+
+              <SubmitButton
+                submitButtonState={submitButtonState}
+                onClick={onSubmitClick}
+              />
+
+              {(isFetchingQuote || quote) && (
+                <div className="flex w-full flex-col gap-2">
+                  <Parameter label="Minimum inflow" isHorizontal>
+                    {isFetchingQuote || !quote ? (
+                      <Skeleton className="h-[21px] w-24" />
+                    ) : (
+                      <p className="text-p2 text-foreground">
+                        {formatToken(
+                          new BigNumber(quote.amountOut.toString())
+                            .div(1 + slippagePercent / 100)
+                            .div(10 ** outCoinMetadata.decimals),
+                          { dp: outCoinMetadata.decimals },
+                        )}{" "}
+                        {outCoinMetadata.symbol}
+                      </p>
+                    )}
+                  </Parameter>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <SuggestedPools
+            tableId="swap"
+            title="Suggested pools"
+            pools={suggestedPools}
+            isTvlOnly
+          />
+        </div>
+      )}
     </>
   );
 }
