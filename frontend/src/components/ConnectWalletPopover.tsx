@@ -2,11 +2,7 @@ import Image from "next/image";
 
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-import {
-  Wallet,
-  WalletType,
-  useWalletContext,
-} from "@suilend/sui-fe-next";
+import { Wallet, WalletType, useWalletContext } from "@suilend/sui-fe-next";
 import useIsAndroid from "@suilend/sui-fe-next/hooks/useIsAndroid";
 import useIsiOS from "@suilend/sui-fe-next/hooks/useIsiOS";
 

@@ -3,14 +3,14 @@ import { PropsWithChildren, createContext, useContext, useMemo } from "react";
 import BigNumber from "bignumber.js";
 
 import {
-  NORMALIZED_STEAMM_POINTS_COINTYPE,
-  isSteammPoints,
-} from "@suilend/sui-fe";
-import {
   Side,
   getFilteredRewards,
   getStakingYieldAprPercent,
 } from "@suilend/sdk";
+import {
+  NORMALIZED_STEAMM_POINTS_COINTYPE,
+  isSteammPoints,
+} from "@suilend/sui-fe";
 
 import { useAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";

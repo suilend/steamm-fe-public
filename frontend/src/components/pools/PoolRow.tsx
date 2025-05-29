@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { CSSProperties } from "react";
 
-import { formatUsd } from "@suilend/sui-fe";
 import { ParsedPool } from "@suilend/steamm-sdk";
+import { formatUsd } from "@suilend/sui-fe";
 
 import AprBreakdown from "@/components/AprBreakdown";
 import PoolLabel from "@/components/pool/PoolLabel";

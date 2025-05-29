@@ -4,6 +4,7 @@ import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
+import { ADMIN_ADDRESS, computeOptimalOffset } from "@suilend/steamm-sdk";
 import {
   API_URL,
   Token,
@@ -20,7 +21,6 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/sui-fe-next";
-import { ADMIN_ADDRESS, computeOptimalOffset } from "@suilend/steamm-sdk";
 
 import Divider from "@/components/Divider";
 import IconUpload from "@/components/launch/IconUpload";

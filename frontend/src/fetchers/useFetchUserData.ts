@@ -1,12 +1,12 @@
 import BigNumber from "bignumber.js";
 import useSWR, { useSWRConfig } from "swr";
 
+import { Side, formatRewards, initializeObligations } from "@suilend/sdk";
 import {
   showErrorToast,
   useSettingsContext,
   useWalletContext,
 } from "@suilend/sui-fe-next";
-import { Side, formatRewards, initializeObligations } from "@suilend/sdk";
 
 import { useAppContext } from "@/contexts/AppContext";
 import { UserData } from "@/contexts/UserContext";

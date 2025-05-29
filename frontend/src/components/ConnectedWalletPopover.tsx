@@ -4,10 +4,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, VenetianMask } from "lucide-react";
 
 import { formatAddress } from "@suilend/sui-fe";
-import {
-  useSettingsContext,
-  useWalletContext,
-} from "@suilend/sui-fe-next";
+import { useSettingsContext, useWalletContext } from "@suilend/sui-fe-next";
 
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import OpenUrlNewTab from "@/components/OpenUrlNewTab";

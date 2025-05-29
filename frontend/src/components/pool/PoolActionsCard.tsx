@@ -7,6 +7,19 @@ import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
 
 import {
+  ParsedObligation,
+  createObligationIfNoneExists,
+  sendObligationToUser,
+} from "@suilend/sdk";
+import {
+  DepositQuote,
+  ParsedPool,
+  QuoterId,
+  RedeemQuote,
+  SteammSDK,
+  SwapQuote,
+} from "@suilend/steamm-sdk";
+import {
   MAX_U64,
   formatToken,
   getBalanceChange,
@@ -20,19 +33,6 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/sui-fe-next";
-import {
-  ParsedObligation,
-  createObligationIfNoneExists,
-  sendObligationToUser,
-} from "@suilend/sdk";
-import {
-  DepositQuote,
-  ParsedPool,
-  QuoterId,
-  RedeemQuote,
-  SteammSDK,
-  SwapQuote,
-} from "@suilend/steamm-sdk";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";

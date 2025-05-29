@@ -4,7 +4,6 @@ import BigNumber from "bignumber.js";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useSessionStorage } from "usehooks-ts";
 
-import { formatPercent, formatUsd } from "@suilend/sui-fe";
 import {
   RewardSummary,
   Side,
@@ -12,6 +11,7 @@ import {
   getDedupedPerDayRewards,
   getFilteredRewards,
 } from "@suilend/sdk";
+import { formatPercent, formatUsd } from "@suilend/sui-fe";
 
 import PoolRow from "@/components/pools/PoolRow";
 import { Column } from "@/components/pools/PoolsTable";

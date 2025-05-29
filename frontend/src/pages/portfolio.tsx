@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 import { Loader2 } from "lucide-react";
 
+import { ClaimRewardsReward, RewardSummary, Side } from "@suilend/sdk";
 import {
   NORMALIZED_STEAMM_POINTS_COINTYPE,
   formatPercent,
@@ -20,7 +21,6 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/sui-fe-next";
-import { ClaimRewardsReward, RewardSummary, Side } from "@suilend/sdk";
 
 import Divider from "@/components/Divider";
 import TransactionHistoryTable from "@/components/pool/TransactionHistoryTable";

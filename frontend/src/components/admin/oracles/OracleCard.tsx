@@ -3,9 +3,9 @@ import Image from "next/image";
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
 
+import { OracleInfo } from "@suilend/steamm-sdk";
 import { formatId, formatPrice, getToken } from "@suilend/sui-fe";
 import { useSettingsContext } from "@suilend/sui-fe-next";
-import { OracleInfo } from "@suilend/steamm-sdk";
 
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import OpenUrlNewTab from "@/components/OpenUrlNewTab";

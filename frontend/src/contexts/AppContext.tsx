@@ -12,10 +12,6 @@ import { useFlags } from "launchdarkly-react-client-sdk";
 import { useLocalStorage } from "usehooks-ts";
 
 import {
-  useSettingsContext,
-  useWalletContext,
-} from "@suilend/sui-fe-next";
-import {
   ParsedLendingMarket,
   ParsedReserve,
   RewardMap,
@@ -30,6 +26,7 @@ import {
   ParsedPool,
   SteammSDK,
 } from "@suilend/steamm-sdk";
+import { useSettingsContext, useWalletContext } from "@suilend/sui-fe-next";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
 

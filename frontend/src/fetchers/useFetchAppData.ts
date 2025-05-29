@@ -5,12 +5,6 @@ import BigNumber from "bignumber.js";
 import useSWR, { useSWRConfig } from "swr";
 
 import {
-  API_URL,
-  NORMALIZED_STEAMM_POINTS_COINTYPE,
-  getCoinMetadataMap,
-} from "@suilend/sui-fe";
-import { showErrorToast, useSettingsContext } from "@suilend/sui-fe-next";
-import {
   SuilendClient,
   formatRewards,
   initializeSuilend,
@@ -30,6 +24,12 @@ import {
   getParsedBank,
   getParsedPool,
 } from "@suilend/steamm-sdk";
+import {
+  API_URL,
+  NORMALIZED_STEAMM_POINTS_COINTYPE,
+  getCoinMetadataMap,
+} from "@suilend/sui-fe";
+import { showErrorToast, useSettingsContext } from "@suilend/sui-fe-next";
 
 import { AppData } from "@/contexts/AppContext";
 import { ASSETS_URL } from "@/lib/constants";

@@ -1,5 +1,8 @@
 import BigNumber from "bignumber.js";
 
+import { QuoterId, SwapQuote } from "@suilend/steamm-sdk";
+import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
+import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 import {
   formatAddress,
   formatPercent,
@@ -8,9 +11,6 @@ import {
   getToken,
 } from "@suilend/sui-fe";
 import { useSettingsContext } from "@suilend/sui-fe-next";
-import { QuoterId, SwapQuote } from "@suilend/steamm-sdk";
-import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
-import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 
 import BreakdownRow from "@/components/BreakdownRow";
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";

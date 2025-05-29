@@ -5,14 +5,14 @@ import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 
 import {
+  createObligationIfNoneExists,
+  sendObligationToUser,
+} from "@suilend/sdk";
+import {
   showErrorToast,
   useSettingsContext,
   useWalletContext,
 } from "@suilend/sui-fe-next";
-import {
-  createObligationIfNoneExists,
-  sendObligationToUser,
-} from "@suilend/sdk";
 
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";

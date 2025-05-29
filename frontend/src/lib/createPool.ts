@@ -8,14 +8,14 @@ import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID, normalizeStructTag } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 
-import { Token, getToken, isSui } from "@suilend/sui-fe";
-import { WalletContext } from "@suilend/sui-fe-next";
 import {
   Codegen,
   QUOTER_ID_NAME_MAP,
   QuoterId,
   SteammSDK,
 } from "@suilend/steamm-sdk";
+import { Token, getToken, isSui } from "@suilend/sui-fe";
+import { WalletContext } from "@suilend/sui-fe-next";
 
 import { AppData } from "@/contexts/AppContext";
 import {

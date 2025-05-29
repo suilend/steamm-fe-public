@@ -9,11 +9,11 @@ import {
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
 
+import { ParsedObligation, RewardMap } from "@suilend/sdk";
+import { ObligationOwnerCap } from "@suilend/sdk/_generated/suilend/lending-market/structs";
 import useFetchBalances from "@suilend/sui-fe-next/fetchers/useFetchBalances";
 import useCoinMetadataMap from "@suilend/sui-fe-next/hooks/useCoinMetadataMap";
 import useRefreshOnBalancesChange from "@suilend/sui-fe-next/hooks/useRefreshOnBalancesChange";
-import { ParsedObligation, RewardMap } from "@suilend/sdk";
-import { ObligationOwnerCap } from "@suilend/sdk/_generated/suilend/lending-market/structs";
 
 import { useAppContext } from "@/contexts/AppContext";
 import useFetchUserData from "@/fetchers/useFetchUserData";

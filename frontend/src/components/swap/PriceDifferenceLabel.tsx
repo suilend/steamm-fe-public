@@ -1,8 +1,8 @@
 import BigNumber from "bignumber.js";
 import { AlertTriangle, Info } from "lucide-react";
 
-import { Token, formatPercent } from "@suilend/sui-fe";
 import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
+import { Token, formatPercent } from "@suilend/sui-fe";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import {
