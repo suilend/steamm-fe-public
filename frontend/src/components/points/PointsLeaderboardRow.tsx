@@ -140,42 +140,6 @@ export default function PointsLeaderboardRow({
           </div>
         </div>
       </td>
-
-      {/* Points per day */}
-      <td
-        className="whitespace-nowrap align-middle"
-        style={columnStyleMap.pointsPerDay.cell}
-      >
-        <div
-          className="flex min-w-max flex-row items-center"
-          style={columnStyleMap.pointsPerDay.children}
-        >
-          <div className="flex w-max flex-row items-center gap-2">
-            <TokenLogo
-              token={getToken(
-                NORMALIZED_STEAMM_POINTS_COINTYPE,
-                appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE],
-              )}
-              size={16}
-            />
-            <Tooltip
-              title={`${formatPoints(
-                row.pointsPerDay.eq(-1) ? new BigNumber(0) : row.pointsPerDay,
-                {
-                  dp: appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE]
-                    .decimals,
-                },
-              )} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
-            >
-              <p className="text-p2 text-foreground">
-                {formatPoints(
-                  row.pointsPerDay.eq(-1) ? new BigNumber(0) : row.pointsPerDay,
-                )}
-              </p>
-            </Tooltip>
-          </div>
-        </div>
-      </td>
     </tr>
   );
 }

@@ -26,14 +26,12 @@ interface PoolPositionsContext {
   poolPositions: PoolPosition[] | undefined;
 
   totalPoints: BigNumber | undefined;
-  pointsPerDay: BigNumber | undefined;
 }
 
 const PoolPositionsContext = createContext<PoolPositionsContext>({
   poolPositions: undefined,
 
   totalPoints: undefined,
-  pointsPerDay: undefined,
 });
 
 export const usePoolPositionsContext = () => useContext(PoolPositionsContext);
@@ -140,15 +138,6 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
                   userData.poolRewardMap[pool.id]?.[
                     NORMALIZED_STEAMM_POINTS_COINTYPE
                   ] ?? new BigNumber(0),
-                pointsPerDay: (
-                  appData.normalizedPoolRewardMap[pool.lpTokenType]?.[
-                    Side.DEPOSIT
-                  ].find((reward) =>
-                    isSteammPoints(reward.stats.rewardCoinType),
-                  )?.stats.perDay ?? new BigNumber(0)
-                )
-                  .times(balanceUsd)
-                  .times(stakedPercent.div(100)),
               };
             })
             .filter(Boolean) as PoolPosition[]),
@@ -172,26 +161,14 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
     [appData, userData],
   );
 
-  const pointsPerDay: BigNumber | undefined = useMemo(
-    () =>
-      poolPositions === undefined
-        ? undefined
-        : poolPositions.reduce(
-            (acc, position) => acc.plus(position.pointsPerDay),
-            new BigNumber(0),
-          ),
-    [poolPositions],
-  );
-
   // Context
   const contextValue: PoolPositionsContext = useMemo(
     () => ({
       poolPositions,
 
       totalPoints,
-      pointsPerDay,
     }),
-    [poolPositions, totalPoints, pointsPerDay],
+    [poolPositions, totalPoints],
   );
 
   return (

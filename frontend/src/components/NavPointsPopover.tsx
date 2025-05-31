@@ -23,7 +23,7 @@ import { cn, hoverUnderlineClassName } from "@/lib/utils";
 export default function NavPointsPopover() {
   const { appData } = useAppContext();
 
-  const { totalPoints, pointsPerDay } = usePoolPositionsContext();
+  const { totalPoints } = usePoolPositionsContext();
   const { updatedAt, addressRow } = usePointsContext();
 
   // State
@@ -157,47 +157,6 @@ export default function NavPointsPopover() {
                   >
                     <p className="!text-p2 text-foreground">
                       {formatPoints(totalPoints)}
-                    </p>
-                  </Tooltip>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Points per day */}
-          <div className="flex flex-row items-center justify-between gap-4">
-            <p className="text-p2 text-secondary-foreground">Points per day</p>
-            <div className="flex flex-row items-center gap-2">
-              {pointsPerDay === undefined ? (
-                <Skeleton className="h-[21px] w-12" />
-              ) : (
-                <>
-                  <TokenLogo
-                    token={
-                      appData === undefined
-                        ? undefined
-                        : getToken(
-                            NORMALIZED_STEAMM_POINTS_COINTYPE,
-                            appData.coinMetadataMap[
-                              NORMALIZED_STEAMM_POINTS_COINTYPE
-                            ],
-                          )
-                    }
-                    size={16}
-                  />
-                  <Tooltip
-                    title={
-                      appData === undefined
-                        ? undefined
-                        : `${formatPoints(pointsPerDay, {
-                            dp: appData.coinMetadataMap[
-                              NORMALIZED_STEAMM_POINTS_COINTYPE
-                            ].decimals,
-                          })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`
-                    }
-                  >
-                    <p className="!text-p2 text-foreground">
-                      {formatPoints(pointsPerDay)}
                     </p>
                   </Tooltip>
                 </>

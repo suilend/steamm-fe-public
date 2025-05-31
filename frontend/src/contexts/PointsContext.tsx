@@ -17,7 +17,6 @@ import { useWalletContext } from "@suilend/sui-fe-next";
 export interface LeaderboardRowData {
   rank: number;
   address: string;
-  pointsPerDay: BigNumber;
   totalPoints: BigNumber;
 }
 
@@ -56,7 +55,6 @@ export function PointsContextProvider({ children }: PropsWithChildren) {
         json.rows.map((row: any) => ({
           rank: row.rank,
           address: row.address,
-          pointsPerDay: new BigNumber(row.pointsPerDay),
           totalPoints: new BigNumber(row.totalPoints),
         })),
       );
@@ -82,7 +80,6 @@ export function PointsContextProvider({ children }: PropsWithChildren) {
       leaderboardRows.find((row) => row.address === address) ?? {
         rank: -1,
         address,
-        pointsPerDay: new BigNumber(-1),
         totalPoints: new BigNumber(-1),
       }
     );

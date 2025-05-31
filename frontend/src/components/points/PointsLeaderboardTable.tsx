@@ -8,8 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LeaderboardRowData } from "@/contexts/PointsContext";
 import { cn } from "@/lib/utils";
 
-export type Column = "rank" | "address" | "totalPoints" | "pointsPerDay";
-type SortableColumn = "totalPoints" | "pointsPerDay";
+export type Column = "rank" | "address" | "totalPoints";
+type SortableColumn = "totalPoints";
 
 interface PointsLeaderboardTableProps {
   tableId: string;
@@ -52,13 +52,6 @@ export default function PointsLeaderboardTable({
           justifyContent: "end",
         },
       },
-      pointsPerDay: {
-        cell: { textAlign: "right" },
-        children: {
-          paddingRight: 4 * 5, // px
-          justifyContent: "end",
-        },
-      },
     }),
     [],
   );
@@ -91,10 +84,6 @@ export default function PointsLeaderboardTable({
         return sortState.direction === SortDirection.DESC
           ? +b.totalPoints.minus(a.totalPoints)
           : +a.totalPoints.minus(b.totalPoints);
-      } else if (sortState.column === "pointsPerDay") {
-        return sortState.direction === SortDirection.DESC
-          ? +b.pointsPerDay.minus(a.pointsPerDay)
-          : +a.pointsPerDay.minus(b.pointsPerDay);
       }
 
       return 0; // Should never reach here
@@ -185,17 +174,6 @@ export default function PointsLeaderboardTable({
                   style={columnStyleMap.totalPoints}
                 >
                   Total points
-                </HeaderColumn>
-
-                <HeaderColumn<Column, SortableColumn>
-                  id="pointsPerDay"
-                  sortState={disableSorting ? undefined : sortState}
-                  toggleSortByColumn={
-                    disableSorting ? undefined : toggleSortByColumn
-                  }
-                  style={columnStyleMap.pointsPerDay}
-                >
-                  Points per day
                 </HeaderColumn>
               </tr>
 

@@ -22,7 +22,6 @@ export type PoolPosition = {
   stakedPercent: BigNumber;
   claimableRewards: Record<string, BigNumber>;
   totalPoints: BigNumber;
-  pointsPerDay: BigNumber;
 };
 
 export enum HistoryTransactionType {
