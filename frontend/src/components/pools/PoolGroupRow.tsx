@@ -47,9 +47,8 @@ export default function PoolGroupRow({
   const isVerified = poolGroup.coinTypes.every((coinType) =>
     verifiedCoinTypes?.includes(coinType),
   );
-  const isSteammLaunchToken = poolGroup.coinTypes.some((coinType) =>
-    appData.steammLaunchCoinTypes.includes(coinType),
-  );
+  const isSteammLaunchToken = (coinType: string) =>
+    appData.steammLaunchCoinTypes.includes(coinType);
 
   // State
   const [isExpanded, setIsExpanded] = useSessionStorage<boolean>(
@@ -143,18 +142,23 @@ export default function PoolGroupRow({
               <TokenLogos coinTypes={poolGroup.coinTypes} size={20} />
 
               <div className="flex flex-row items-center gap-1.5">
-                <p className="text-p1 text-foreground">
-                  {formatPair(
-                    poolGroup.coinTypes.map(
-                      (coinType) => appData.coinMetadataMap[coinType].symbol,
-                    ),
-                  )}
+                <p className="flex w-max flex-row items-center text-p1 text-foreground">
+                  <div className="flex flex-row items-center gap-1.5">
+                    {appData.coinMetadataMap[poolGroup.coinTypes[0]].symbol}
+                    {isSteammLaunchToken(poolGroup.coinTypes[0]) && (
+                      <SteammLaunchTokenBadge />
+                    )}
+                  </div>
+                  {"-"}
+                  <div className="flex flex-row items-center gap-1.5">
+                    {appData.coinMetadataMap[poolGroup.coinTypes[1]].symbol}
+                    {isSteammLaunchToken(poolGroup.coinTypes[1]) && (
+                      <SteammLaunchTokenBadge />
+                    )}
+                  </div>
                 </p>
 
-                <div className="flex flex-row items-center gap-1">
-                  {isVerified && <VerifiedBadge />}
-                  {isSteammLaunchToken && <SteammLaunchTokenBadge />}
-                </div>
+                {isVerified && <VerifiedBadge />}
               </div>
             </div>
           </div>

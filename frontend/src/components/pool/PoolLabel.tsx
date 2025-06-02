@@ -8,7 +8,7 @@ import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { formatFeeTier, formatPair } from "@/lib/format";
+import { formatFeeTier } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 interface PoolLabelProps {
@@ -33,9 +33,8 @@ export default function PoolLabel({
   const isVerified = pool.coinTypes.every((coinType) =>
     verifiedCoinTypes?.includes(coinType),
   );
-  const isSteammLaunchToken = pool.coinTypes.some((coinType) =>
-    appData.steammLaunchCoinTypes.includes(coinType),
-  );
+  const isSteammLaunchToken = (coinType: string) =>
+    appData.steammLaunchCoinTypes.includes(coinType);
 
   const Heading = isLarge ? "h1" : "p";
 
@@ -75,26 +74,37 @@ export default function PoolLabel({
         >
           <Heading
             className={cn(
-              "text-foreground",
+              "flex w-max flex-row items-center text-foreground",
               isSmall ? "text-p2" : isLarge ? "text-h2" : "text-p1",
               headingClassName,
             )}
           >
-            {formatPair(
-              pool.coinTypes.map(
-                (coinType) => appData.coinMetadataMap[coinType].symbol,
-              ),
-            )}
+            <div
+              className={cn(
+                "flex flex-row items-center",
+                isSmall ? "gap-1" : isLarge ? "gap-2" : "gap-1.5",
+              )}
+            >
+              {appData.coinMetadataMap[pool.coinTypes[0]].symbol}
+              {isSteammLaunchToken(pool.coinTypes[0]) && (
+                <SteammLaunchTokenBadge isSmall={isSmall} isLarge={isLarge} />
+              )}
+            </div>
+            {"-"}
+            <div
+              className={cn(
+                "flex flex-row items-center",
+                isSmall ? "gap-1" : isLarge ? "gap-2" : "gap-1.5",
+              )}
+            >
+              {appData.coinMetadataMap[pool.coinTypes[1]].symbol}
+              {isSteammLaunchToken(pool.coinTypes[1]) && (
+                <SteammLaunchTokenBadge isSmall={isSmall} isLarge={isLarge} />
+              )}
+            </div>
           </Heading>
 
-          <div className="flex flex-row items-center gap-1">
-            {isVerified && (
-              <VerifiedBadge isSmall={isSmall} isLarge={isLarge} />
-            )}
-            {isSteammLaunchToken && (
-              <SteammLaunchTokenBadge isSmall={isSmall} isLarge={isLarge} />
-            )}
-          </div>
+          {isVerified && <VerifiedBadge isSmall={isSmall} isLarge={isLarge} />}
         </div>
 
         <div className="flex flex-row items-center gap-px">
