@@ -7,10 +7,7 @@ import {
   getFilteredRewards,
   getStakingYieldAprPercent,
 } from "@suilend/sdk";
-import {
-  NORMALIZED_STEAMM_POINTS_COINTYPE,
-  isSteammPoints,
-} from "@suilend/sui-fe";
+import { isSteammPoints } from "@suilend/sui-fe";
 
 import { useAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
@@ -24,14 +21,10 @@ import { PoolPosition } from "@/lib/types";
 
 interface PoolPositionsContext {
   poolPositions: PoolPosition[] | undefined;
-
-  totalPoints: BigNumber | undefined;
 }
 
 const PoolPositionsContext = createContext<PoolPositionsContext>({
   poolPositions: undefined,
-
-  totalPoints: undefined,
 });
 
 export const usePoolPositionsContext = () => useContext(PoolPositionsContext);
@@ -134,41 +127,18 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
                     ([coinType, amount]) => !isSteammPoints(coinType),
                   ),
                 ),
-                totalPoints:
-                  userData.poolRewardMap[pool.id]?.[
-                    NORMALIZED_STEAMM_POINTS_COINTYPE
-                  ] ?? new BigNumber(0),
               };
             })
             .filter(Boolean) as PoolPosition[]),
     [appData, userData, getBalance, poolStats.aprPercent_24h],
   );
 
-  // Points
-  const totalPoints: BigNumber | undefined = useMemo(
-    () =>
-      appData === undefined || userData === undefined
-        ? undefined
-        : appData.pools.reduce(
-            (acc, pool) =>
-              acc.plus(
-                userData.poolRewardMap[pool.id]?.[
-                  NORMALIZED_STEAMM_POINTS_COINTYPE
-                ] ?? new BigNumber(0),
-              ),
-            new BigNumber(0),
-          ),
-    [appData, userData],
-  );
-
   // Context
   const contextValue: PoolPositionsContext = useMemo(
     () => ({
       poolPositions,
-
-      totalPoints,
     }),
-    [poolPositions, totalPoints],
+    [poolPositions],
   );
 
   return (

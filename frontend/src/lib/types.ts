@@ -21,7 +21,6 @@ export type PoolPosition = {
   pnlUsd?: BigNumber; // Fetched separately (BE)
   stakedPercent: BigNumber;
   claimableRewards: Record<string, BigNumber>;
-  totalPoints: BigNumber;
 };
 
 export enum HistoryTransactionType {

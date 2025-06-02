@@ -8,12 +8,6 @@ import {
 import BigNumber from "bignumber.js";
 
 import {
-  API_URL,
-  NORMALIZED_STEAMM_POINTS_COINTYPE,
-  getCoinMetadataMap,
-  isSteammPoints,
-} from "@suilend/sui-fe";
-import {
   ParsedObligation,
   Side,
   SuilendClient,
@@ -22,6 +16,12 @@ import {
   initializeSuilend,
   toHexString,
 } from "@suilend/sdk";
+import {
+  API_URL,
+  NORMALIZED_STEAMM_POINTS_COINTYPE,
+  getCoinMetadataMap,
+  isSteammPoints,
+} from "@suilend/sui-fe";
 
 import { BankAbi, BankScript, PoolAbi, PoolScript } from "./abis";
 import { PYTH_STATE_ID, WORMHOLE_STATE_ID } from "./config";
@@ -454,7 +454,6 @@ export class SteammSDK {
    * - LP token balances (both in wallet and deposited in lending markets)
    * - Underlying asset balances (tokenA and tokenB) based on the user's share of the pool
    * - Claimable rewards across all relevant protocols
-   * - Total STEAMM points accumulated
    *
    * The method aggregates data from multiple sources:
    * - Pool and bank information from STEAMM protocol
@@ -471,7 +470,6 @@ export class SteammSDK {
    *   balanceA: BigNumber;         - User's share of token A in the pool (normalized by decimals)
    *   balanceB: BigNumber;         - User's share of token B in the pool (normalized by decimals)
    *   claimableRewards: Record<string, BigNumber>; - Map of claimable rewards by coin type
-   *   totalPoints: BigNumber;      - Total STEAMM points accumulated
    * }>>} Array of user position objects for each pool where the user has a position
    * @throws Will throw an error if there's a problem fetching the underlying data
    */
@@ -484,7 +482,6 @@ export class SteammSDK {
       balanceA: BigNumber;
       balanceB: BigNumber;
       claimableRewards: Record<string, BigNumber>;
-      totalPoints: BigNumber;
     }[]
   > {
     // Setup
@@ -914,7 +911,6 @@ export class SteammSDK {
       balanceA: BigNumber;
       balanceB: BigNumber;
       claimableRewards: Record<string, BigNumber>;
-      totalPoints: BigNumber;
     }[] = [];
 
     for (const pool of pools) {
@@ -955,9 +951,6 @@ export class SteammSDK {
             ([coinType, amount]) => !isSteammPoints(coinType),
           ),
         ),
-        totalPoints:
-          poolRewardMap[pool.id]?.[NORMALIZED_STEAMM_POINTS_COINTYPE] ??
-          new BigNumber(0),
       });
     }
 

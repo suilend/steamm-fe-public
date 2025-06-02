@@ -14,8 +14,7 @@ export type Column =
   | "balance"
   | "pnl"
   | "stakedPercent"
-  | "claimableRewards"
-  | "points";
+  | "claimableRewards";
 type SortableColumn = "aprPercent_24h" | "balance" | "pnl";
 
 interface PoolPositionsTableProps {
@@ -77,15 +76,6 @@ export default function PoolPositionsTable({
         },
       },
       claimableRewards: {
-        cell: {
-          textAlign: "right",
-        },
-        children: {
-          justifyContent: "end",
-          paddingRight: 4 * 5, // px
-        },
-      },
-      points: {
         cell: {
           textAlign: "right",
         },
@@ -231,13 +221,6 @@ export default function PoolPositionsTable({
                 style={columnStyleMap.claimableRewards}
               >
                 Claimable rewards
-              </HeaderColumn>
-
-              <HeaderColumn<Column, SortableColumn>
-                id="points"
-                style={columnStyleMap.points}
-              >
-                Points
               </HeaderColumn>
             </tr>
 

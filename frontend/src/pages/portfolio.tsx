@@ -8,9 +8,7 @@ import { Loader2 } from "lucide-react";
 
 import { ClaimRewardsReward, RewardSummary, Side } from "@suilend/sdk";
 import {
-  NORMALIZED_STEAMM_POINTS_COINTYPE,
   formatPercent,
-  formatPoints,
   formatToken,
   formatUsd,
   getToken,
@@ -43,7 +41,7 @@ export default function PortfolioPage() {
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { appData } = useLoadedAppContext();
   const { userData, refresh } = useUserContext();
-  const { poolPositions, totalPoints } = usePoolPositionsContext();
+  const { poolPositions } = usePoolPositionsContext();
 
   // Pool positions - Deposited USD for PnL calc. (BE)
   const { poolTransactionHistoryMap } = usePoolTransactionHistoryMap(
@@ -339,7 +337,7 @@ export default function PortfolioPage() {
             <Divider className="h-auto w-px max-md:hidden" />
 
             {/* Claimable rewards */}
-            <div className="max-md:w-full max-md:border-r md:flex-1">
+            <div className="max-md:col-span-2 max-md:w-full md:flex-1">
               <div className="flex w-full flex-col gap-1 p-5">
                 <p className="text-p2 text-secondary-foreground">
                   Claimable rewards
@@ -418,43 +416,6 @@ export default function PortfolioPage() {
                       <p className="text-h3 text-foreground">--</p>
                     )}
                   </>
-                )}
-              </div>
-            </div>
-
-            <Divider className="h-auto w-px max-md:hidden" />
-
-            {/* Points */}
-            <div className="max-md:w-full md:flex-1">
-              <div className="flex w-full flex-col gap-1 p-5">
-                <p className="text-p2 text-secondary-foreground">Points</p>
-
-                {totalPoints === undefined ? (
-                  <Skeleton className="h-[30px] w-20" />
-                ) : (
-                  <div className="flex w-max flex-row items-center gap-2">
-                    <TokenLogo
-                      token={getToken(
-                        NORMALIZED_STEAMM_POINTS_COINTYPE,
-                        appData.coinMetadataMap[
-                          NORMALIZED_STEAMM_POINTS_COINTYPE
-                        ],
-                      )}
-                      size={20}
-                    />
-
-                    <Tooltip
-                      title={`${formatPoints(totalPoints, {
-                        dp: appData.coinMetadataMap[
-                          NORMALIZED_STEAMM_POINTS_COINTYPE
-                        ].decimals,
-                      })} ${appData.coinMetadataMap[NORMALIZED_STEAMM_POINTS_COINTYPE].symbol}`}
-                    >
-                      <p className="text-h3 text-foreground">
-                        {formatPoints(totalPoints)}
-                      </p>
-                    </Tooltip>
-                  </div>
                 )}
               </div>
             </div>
