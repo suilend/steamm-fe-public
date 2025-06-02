@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import { Menu, X } from "lucide-react";
 
-import NavPointsPopover from "@/components/NavPointsPopover";
 import Popover from "@/components/Popover";
 import useNavItems from "@/hooks/useNavItems";
 import { cn } from "@/lib/utils";
@@ -41,10 +40,6 @@ export default function NavPopover() {
       }
     >
       <div className="relative flex w-full flex-col gap-3">
-        <div className="absolute right-0 top-0 z-[2] sm:hidden">
-          <NavPointsPopover />
-        </div>
-
         {navItems.map((item) => {
           const isSelected =
             router.asPath.split("?")[0] === item.url ||

@@ -3,12 +3,9 @@ import { useRouter } from "next/router";
 
 import { RotateCw } from "lucide-react";
 
-import { useWalletContext } from "@suilend/sui-fe-next";
-
 import ConnectWalletButton from "@/components/ConnectWalletButton";
 import Container from "@/components/Container";
 import Logo from "@/components/Logo";
-import NavPointsPopover from "@/components/NavPointsPopover";
 import NavPopover from "@/components/NavPopover";
 import SettingsDialog from "@/components/SettingsDialog";
 import { useUserContext } from "@/contexts/UserContext";
@@ -21,7 +18,6 @@ const NAV_HEIGHT = 64; // px
 export default function Nav() {
   const router = useRouter();
 
-  const { address } = useWalletContext();
   const { refresh } = useUserContext();
 
   // Items
@@ -99,14 +95,6 @@ export default function Nav() {
                 </button>
 
                 <SettingsDialog />
-              </div>
-
-              <div className="flex shrink-0 flex-row items-center gap-2">
-                {address && (
-                  <div className="max-sm:hidden">
-                    <NavPointsPopover />
-                  </div>
-                )}
                 <ConnectWalletButton />
               </div>
 
