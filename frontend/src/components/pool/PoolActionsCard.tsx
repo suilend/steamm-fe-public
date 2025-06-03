@@ -118,31 +118,31 @@ function DepositTab({ onDeposit }: DepositTabProps) {
   const smartMaxValues = pool.tvlUsd.eq(0)
     ? maxValues
     : depositedIndexes.length === 1
-    ? maxValues
-    : [
-        BigNumber.min(
-          maxValues[0],
-          new BigNumber(
-            maxValues[1].div(pool.balances[1]).times(pool.balances[0]),
-          )
-            .div(1 + slippagePercent / 100)
-            .decimalPlaces(
-              appData.coinMetadataMap[pool.coinTypes[1]].decimals,
-              BigNumber.ROUND_DOWN,
-            ),
-        ),
-        BigNumber.min(
-          maxValues[1],
-          new BigNumber(
-            maxValues[0].div(pool.balances[0]).times(pool.balances[1]),
-          )
-            .div(1 + slippagePercent / 100)
-            .decimalPlaces(
-              appData.coinMetadataMap[pool.coinTypes[0]].decimals,
-              BigNumber.ROUND_DOWN,
-            ),
-        ),
-      ];
+      ? maxValues
+      : [
+          BigNumber.min(
+            maxValues[0],
+            new BigNumber(
+              maxValues[1].div(pool.balances[1]).times(pool.balances[0]),
+            )
+              .div(1 + slippagePercent / 100)
+              .decimalPlaces(
+                appData.coinMetadataMap[pool.coinTypes[1]].decimals,
+                BigNumber.ROUND_DOWN,
+              ),
+          ),
+          BigNumber.min(
+            maxValues[1],
+            new BigNumber(
+              maxValues[0].div(pool.balances[0]).times(pool.balances[1]),
+            )
+              .div(1 + slippagePercent / 100)
+              .decimalPlaces(
+                appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+                BigNumber.ROUND_DOWN,
+              ),
+          ),
+        ];
 
   const [values, setValues] = useState<[string, string]>(["", ""]);
   const [lastActiveInputIndex, setLastActiveInputIndex] = useState<
@@ -315,49 +315,125 @@ function DepositTab({ onDeposit }: DepositTabProps) {
         appData.coinMetadataMap[coinTypeB],
       ];
 
-      const submitAmountA = new BigNumber(quote.depositA.toString())
-        .times(
-          lastActiveInputIndex === 0 || pool.tvlUsd.eq(0)
-            ? 1
-            : 1 + slippagePercent / 100,
-        )
-        .integerValue(BigNumber.ROUND_DOWN)
-        .toString();
-      const submitAmountB = new BigNumber(quote.depositB.toString())
-        .times(
-          lastActiveInputIndex === 1 || pool.tvlUsd.eq(0)
-            ? 1
-            : 1 + slippagePercent / 100,
-        )
-        .integerValue(BigNumber.ROUND_DOWN)
-        .toString();
+      const banks = [appData.bankMap[coinTypeA], appData.bankMap[coinTypeB]];
 
       const transaction = new Transaction();
 
-      // Deposit into pool
-      const coinA = coinWithBalance({
-        balance: BigInt(submitAmountA),
-        type: coinTypeA,
-        useGasCoin: isSui(coinTypeA),
-      })(transaction);
-      const coinB = coinWithBalance({
-        balance: BigInt(submitAmountB),
-        type: coinTypeB,
-        useGasCoin: isSui(coinTypeB),
-      })(transaction);
+      let depositCoinA, depositCoinB;
+      if (depositedIndexes.length === 1) {
+        // Swap
+        const index = depositedIndexes[0];
 
-      const banks = [appData.bankMap[coinTypeA], appData.bankMap[coinTypeB]];
+        const amountIn = new BigNumber(
+          index === 0 ? quote.depositA.toString() : quote.depositB.toString(),
+        )
+          .times(0.5)
+          .integerValue(BigNumber.ROUND_DOWN);
+        // const notSwappedAmount = new BigNumber(
+        //   index === 0 ? quote.depositA.toString() : quote.depositB.toString(),
+        // ).minus(amountIn);
+
+        const swapQuote = await steammClient.Pool.quoteSwap({
+          a2b: index === 0,
+          amountIn: BigInt(amountIn.toString()),
+          poolInfo: pool.poolInfo,
+          bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
+          bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
+        });
+        console.log("XXX swapQuote:", swapQuote);
+        return;
+        const swapCoinA =
+          index === 0
+            ? coinWithBalance({
+                balance: swapQuote.amountIn,
+                type: coinTypeA,
+                useGasCoin: isSui(coinTypeA),
+              })(transaction)
+            : steammClient.fullClient.zeroCoin(transaction, coinTypeA);
+        const swapCoinB =
+          index === 0
+            ? steammClient.fullClient.zeroCoin(transaction, coinTypeB)
+            : coinWithBalance({
+                balance: swapQuote.amountIn,
+                type: coinTypeB,
+                useGasCoin: isSui(coinTypeB),
+              })(transaction);
+
+        await steammClient.Pool.swap(transaction, {
+          coinA: swapCoinA,
+          coinB: swapCoinB,
+          a2b: swapQuote.a2b,
+          amountIn: swapQuote.amountIn,
+          minAmountOut: BigInt(0),
+          poolInfo: pool.poolInfo,
+          bankInfoA: banks[0].bankInfo,
+          bankInfoB: banks[1].bankInfo,
+        });
+
+        // Deposit
+        depositCoinA =
+          index === 0
+            ? transaction.mergeCoins(
+                coinWithBalance({
+                  balance: BigInt(notSwappedAmount.toString()),
+                  type: coinTypeA,
+                  useGasCoin: isSui(coinTypeA),
+                })(transaction),
+                swapCoinA,
+              )
+            : swapCoinA;
+        depositCoinB =
+          index === 0
+            ? swapCoinB
+            : transaction.mergeCoins(
+                coinWithBalance({
+                  balance: BigInt(notSwappedAmount.toString()),
+                  type: coinTypeB,
+                  useGasCoin: isSui(coinTypeB),
+                })(transaction),
+                swapCoinB,
+              );
+      } else {
+        // Deposit into pool
+        const submitAmountA = new BigNumber(quote.depositA.toString())
+          .times(
+            lastActiveInputIndex === 0 || pool.tvlUsd.eq(0)
+              ? 1
+              : 1 + slippagePercent / 100,
+          )
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString();
+        const submitAmountB = new BigNumber(quote.depositB.toString())
+          .times(
+            lastActiveInputIndex === 1 || pool.tvlUsd.eq(0)
+              ? 1
+              : 1 + slippagePercent / 100,
+          )
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString();
+
+        depositCoinA = coinWithBalance({
+          balance: BigInt(submitAmountA),
+          type: coinTypeA,
+          useGasCoin: isSui(coinTypeA),
+        })(transaction);
+        depositCoinB = coinWithBalance({
+          balance: BigInt(submitAmountB),
+          type: coinTypeB,
+          useGasCoin: isSui(coinTypeB),
+        })(transaction);
+      }
 
       const [lpCoin] = await steammClient.Pool.depositLiquidity(transaction, {
-        coinA,
-        coinB,
+        coinA: depositCoinA,
+        coinB: depositCoinB,
         maxA: BigInt(submitAmountA),
         maxB: BigInt(submitAmountB),
         poolInfo: pool.poolInfo,
         bankInfoA: banks[0].bankInfo,
         bankInfoB: banks[1].bankInfo,
       });
-      transaction.transferObjects([coinA, coinB], address);
+      transaction.transferObjects([depositCoinA, depositCoinB], address);
 
       // rebalanceBanks(banks, steammClient, transaction);
 
@@ -509,11 +585,11 @@ function DepositTab({ onDeposit }: DepositTabProps) {
             <CoinInput
               key={coinType}
               token={getToken(coinType, appData.coinMetadataMap[coinType])}
-          value={values[index]}
-          usdValue={usdValues[index]}
-          onChange={(_value) => onValueChange(_value, index)}
-          onMaxAmountClick={() => onBalanceClick(index)}
-        />
+              value={values[index]}
+              usdValue={usdValues[index]}
+              onChange={(_value) => onValueChange(_value, index)}
+              onMaxAmountClick={() => onBalanceClick(index)}
+            />
           )}
         </Fragment>
       ))}
