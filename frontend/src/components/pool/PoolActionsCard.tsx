@@ -1,5 +1,12 @@
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
@@ -87,6 +94,9 @@ function DepositTab({ onDeposit }: DepositTabProps) {
   const { getBalance, userData, refresh } = useUserContext();
   const { pool } = usePoolContext();
 
+  // Deposited assets
+  const [depositedIndexes, setDepositedIndexes] = useState<number[]>([0, 1]);
+
   // Value
   const dps = [
     appData.coinMetadataMap[pool.coinTypes[0]].decimals,
@@ -106,6 +116,8 @@ function DepositTab({ onDeposit }: DepositTabProps) {
     ),
   ) as [BigNumber, BigNumber];
   const smartMaxValues = pool.tvlUsd.eq(0)
+    ? maxValues
+    : depositedIndexes.length === 1
     ? maxValues
     : [
         BigNumber.min(
@@ -207,15 +219,17 @@ function DepositTab({ onDeposit }: DepositTabProps) {
   const onSliderValueChange = (percent: string) => {
     const formattedValue = formatPercentInputValue(percent, 1);
 
+    const index = depositedIndexes.length === 1 ? depositedIndexes[0] : 0;
+
     onValueChange(
-      smartMaxValues[0]
+      smartMaxValues[index]
         .times(formattedValue || "0")
         .div(100)
         .toFixed(
-          appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+          appData.coinMetadataMap[pool.coinTypes[index]].decimals,
           BigNumber.ROUND_DOWN,
         ),
-      0,
+      index,
     );
 
     setSliderValue(formattedValue);
@@ -245,16 +259,18 @@ function DepositTab({ onDeposit }: DepositTabProps) {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
 
-    if (Object.values(values).some((value) => value === ""))
+    if (values.some((value) => value === ""))
       return { isDisabled: true, title: "Enter an amount" };
-    if (Object.values(values).some((value) => new BigNumber(value).lt(0)))
+    if (values.some((value) => new BigNumber(value).lt(0)))
       return { isDisabled: true, title: "Enter a +ve amount" };
-    if (Object.values(values).some((value) => new BigNumber(value).eq(0)))
+    if (values.some((value) => new BigNumber(value).eq(0)))
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
     if (quote) {
       for (let i = 0; i < pool.coinTypes.length; i++) {
         const coinType = pool.coinTypes[i];
+        if (depositedIndexes.length === 1 && i !== depositedIndexes[0])
+          continue;
 
         if (
           getBalance(coinType).lt(
@@ -444,18 +460,62 @@ function DepositTab({ onDeposit }: DepositTabProps) {
 
   return (
     <>
-      {[0, 1].map((index) => (
-        <CoinInput
-          key={index}
-          token={getToken(
-            pool.coinTypes[index],
-            appData.coinMetadataMap[pool.coinTypes[index]],
-          )}
+      {/* Deposited assets */}
+      {pool.tvlUsd.gt(0) && (
+        <div className="flex flex-row gap-1">
+          {pool.coinTypes.map((coinType, index) => (
+            <button
+              key={coinType}
+              className={cn(
+                "group flex h-10 w-max flex-row items-center rounded-md border px-3 transition-colors",
+                depositedIndexes.includes(index)
+                  ? "border-button-1 bg-button-1/25"
+                  : "hover:bg-border/50",
+              )}
+              onClick={() =>
+                setDepositedIndexes((prev) =>
+                  prev.includes(index)
+                    ? prev.length === 1
+                      ? [1 - index]
+                      : prev.filter((_index) => _index !== index)
+                    : [...prev, index],
+                )
+              }
+            >
+              <div className="flex flex-row items-center gap-2">
+                <TokenLogo
+                  token={getToken(coinType, appData.coinMetadataMap[coinType])}
+                  size={16}
+                />
+                <p
+                  className={cn(
+                    "!text-p2 transition-colors",
+                    depositedIndexes.includes(index)
+                      ? "text-foreground"
+                      : "text-secondary-foreground group-hover:text-foreground",
+                  )}
+                >
+                  {appData.coinMetadataMap[coinType].symbol}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {pool.coinTypes.map((coinType, index) => (
+        <Fragment key={index}>
+          {depositedIndexes.includes(index) && (
+            <CoinInput
+              key={coinType}
+              token={getToken(coinType, appData.coinMetadataMap[coinType])}
           value={values[index]}
           usdValue={usdValues[index]}
           onChange={(_value) => onValueChange(_value, index)}
           onMaxAmountClick={() => onBalanceClick(index)}
         />
+          )}
+        </Fragment>
       ))}
 
       {/* Slider */}
@@ -523,6 +583,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
       )}
 
       <SubmitButton
+        className="mt-2"
         submitButtonState={submitButtonState}
         onClick={onSubmitClick}
       />
@@ -1074,6 +1135,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
       )}
 
       <SubmitButton
+        className="mt-2"
         submitButtonState={submitButtonState}
         onClick={onSubmitClick}
       />
@@ -1519,6 +1581,7 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
       )}
 
       <SubmitButton
+        className="mt-2"
         submitButtonState={submitButtonState}
         onClick={onSubmitClick}
       />
