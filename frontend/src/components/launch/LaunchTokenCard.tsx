@@ -6,7 +6,6 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { ADMIN_ADDRESS, computeOptimalOffset } from "@suilend/steamm-sdk";
 import {
-  API_URL,
   Token,
   formatInteger,
   formatNumber,
@@ -109,7 +108,6 @@ export default function LaunchTokenCard() {
   const [createPoolResult, setCreatePoolResult] = useState<
     CreatePoolAndDepositInitialLiquidityResult | undefined
   >(undefined);
-  const [hasClearedCache, setHasClearedCache] = useState<boolean>(false);
 
   // State - token
   const [showOptional, setShowOptional] = useState<boolean>(false);
@@ -333,7 +331,6 @@ export default function LaunchTokenCard() {
     setBTokensAndBankIds([undefined, undefined]);
     setCreateLpTokenResult(undefined);
     setCreatePoolResult(undefined);
-    setHasClearedCache(false);
 
     // Token
     setShowOptional(false);
@@ -374,7 +371,7 @@ export default function LaunchTokenCard() {
         title: hasFailed ? "Retry" : "Launch token & create pool",
       };
     }
-    if (hasClearedCache) return { isDisabled: true, isSuccess: true };
+    if (!!createPoolResult) return { isDisabled: true, isSuccess: true };
 
     // Name
     if (name === "") return { isDisabled: true, title: "Enter a name" };
@@ -609,14 +606,6 @@ export default function LaunchTokenCard() {
         setCreatePoolResult(_createPoolResult);
       }
 
-      const _hasClearedCache = hasClearedCache;
-      if (!_hasClearedCache) {
-        await fetch(`${API_URL}/steamm/clear-cache`);
-
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        setHasClearedCache(true);
-      }
-
       const txUrl = explorer.buildTxUrl(_createPoolResult.res.digest);
       showSuccessTxnToast(`Launched ${symbol}`, txUrl, {
         description: `Created ${formatPair(tokens.map((token) => token.symbol))} pool and deposited initial liquidity`,
@@ -632,7 +621,7 @@ export default function LaunchTokenCard() {
     }
   };
 
-  const isStepsDialogOpen = isSubmitting || hasClearedCache;
+  const isStepsDialogOpen = isSubmitting || !!createPoolResult;
 
   return (
     <>
@@ -643,7 +632,6 @@ export default function LaunchTokenCard() {
         bTokensAndBankIds={bTokensAndBankIds}
         createdLpToken={createLpTokenResult}
         createPoolResult={createPoolResult}
-        hasClearedCache={hasClearedCache}
         reset={reset}
       />
 
@@ -910,7 +898,7 @@ export default function LaunchTokenCard() {
             onClick={onSubmitClick}
           />
 
-          {hasFailed && !hasClearedCache && (
+          {hasFailed && !createPoolResult && (
             <button
               className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
               onClick={reset}

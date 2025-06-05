@@ -14,7 +14,6 @@ import {
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 import {
-  API_URL,
   Token,
   formatPrice,
   formatToken,
@@ -104,7 +103,6 @@ export default function CreatePoolCard() {
   const [createPoolResult, setCreatePoolResult] = useState<
     CreatePoolAndDepositInitialLiquidityResult | undefined
   >(undefined);
-  const [hasClearedCache, setHasClearedCache] = useState<boolean>(false);
 
   // CoinTypes
   const [coinTypes, setCoinTypes] = useState<[string, string]>(["", ""]);
@@ -414,7 +412,6 @@ export default function CreatePoolCard() {
     setBTokensAndBankIds([undefined, undefined]);
     setCreateLpTokenResult(undefined);
     setCreatePoolResult(undefined);
-    setHasClearedCache(false);
 
     // Pool
     setCoinTypes(["", ""]);
@@ -440,7 +437,7 @@ export default function CreatePoolCard() {
         title: hasFailed ? "Retry" : "Create pool and deposit",
       };
     }
-    if (hasClearedCache) return { isDisabled: true, isSuccess: true };
+    if (!!createPoolResult) return { isDisabled: true, isSuccess: true };
 
     if (coinTypes.some((coinType) => coinType === ""))
       return { isDisabled: true, title: "Select tokens" };
@@ -613,14 +610,6 @@ export default function CreatePoolCard() {
         setCreatePoolResult(_createPoolResult);
       }
 
-      const _hasClearedCache = hasClearedCache;
-      if (!_hasClearedCache) {
-        await fetch(`${API_URL}/steamm/clear-cache`);
-
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        setHasClearedCache(true);
-      }
-
       const txUrl = explorer.buildTxUrl(_createPoolResult.res.digest);
       showSuccessTxnToast(
         `Created ${formatPair(tokens.map((token) => token.symbol))} ${QUOTER_ID_NAME_MAP[quoterId]} ${formatFeeTier(new BigNumber(feeTierPercent))} pool`,
@@ -638,7 +627,7 @@ export default function CreatePoolCard() {
     }
   };
 
-  const isStepsDialogOpen = isSubmitting || hasClearedCache;
+  const isStepsDialogOpen = isSubmitting || !!createPoolResult;
 
   return (
     <>
@@ -647,7 +636,6 @@ export default function CreatePoolCard() {
         bTokensAndBankIds={bTokensAndBankIds}
         createdLpToken={createLpTokenResult}
         createPoolResult={createPoolResult}
-        hasClearedCache={hasClearedCache}
         reset={reset}
       />
 
@@ -1026,7 +1014,7 @@ export default function CreatePoolCard() {
             onClick={onSubmitClick}
           />
 
-          {hasFailed && !hasClearedCache && (
+          {hasFailed && !createPoolResult && (
             <button
               className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
               onClick={reset}

@@ -6,7 +6,6 @@ import { ExternalLink } from "lucide-react";
 
 import Dialog from "@/components/Dialog";
 import Step from "@/components/Step";
-import SubmitButton from "@/components/SubmitButton";
 import { CreateCoinResult } from "@/lib/createCoin";
 import {
   CreateBTokenAndBankForTokenResult,
@@ -31,7 +30,6 @@ interface CreatePoolStepsDialogProps {
   ];
   createdLpToken: CreateCoinResult | undefined;
   createPoolResult: CreatePoolAndDepositInitialLiquidityResult | undefined;
-  hasClearedCache: boolean;
   reset: () => void;
 }
 
@@ -40,7 +38,6 @@ export default function CreatePoolStepsDialog({
   bTokensAndBankIds,
   createdLpToken,
   createPoolResult,
-  hasClearedCache,
   reset,
 }: CreatePoolStepsDialogProps) {
   const currentStep: number = useMemo(() => {
@@ -57,12 +54,12 @@ export default function CreatePoolStepsDialog({
     <Dialog
       rootProps={{
         open: isOpen,
-        onOpenChange: !hasClearedCache ? undefined : reset,
+        onOpenChange: !createPoolResult ? undefined : reset,
       }}
       headerProps={{
         title: { children: "Create pool" },
         description: "Don't close the window or refresh the page",
-        showCloseButton: !hasClearedCache ? false : true,
+        showCloseButton: !createPoolResult ? false : true,
       }}
       dialogContentInnerClassName="max-w-sm"
     >
@@ -105,25 +102,16 @@ export default function CreatePoolStepsDialog({
           </div>
         </div>
 
-        {createPoolResult &&
-          (!hasClearedCache ? (
-            <SubmitButton
-              submitButtonState={{
-                isLoading: true,
-                isDisabled: true,
-              }}
-              onClick={() => {}}
-            />
-          ) : (
-            <Link
-              className="flex h-14 w-full flex-row items-center justify-center gap-2 rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80"
-              href={`${POOL_URL_PREFIX}/${createPoolResult.poolId}`} // Should always be defined
-              target="_blank"
-            >
-              <p className="text-p1 text-button-1-foreground">Go to pool</p>
-              <ExternalLink className="h-4 w-4 text-button-1-foreground" />
-            </Link>
-          ))}
+        {!!createPoolResult && (
+          <Link
+            className="flex h-14 w-full flex-row items-center justify-center gap-2 rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80"
+            href={`${POOL_URL_PREFIX}/${createPoolResult.poolId}`} // Should always be defined
+            target="_blank"
+          >
+            <p className="text-p1 text-button-1-foreground">Go to pool</p>
+            <ExternalLink className="h-4 w-4 text-button-1-foreground" />
+          </Link>
+        )}
       </div>
     </Dialog>
   );

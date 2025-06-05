@@ -37,7 +37,7 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
-import { rebalanceBanks } from "@/lib/banks";
+import { patchBank, rebalanceBanks } from "@/lib/banks";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
 import { getAvgPoolPrice } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
@@ -141,6 +141,9 @@ export default function BankCard({ bank }: BankCardProps) {
             : undefined,
         },
       );
+
+      // Patch
+      await patchBank(bank);
     } catch (err) {
       showErrorToast(
         !bank.bank.lending
@@ -207,6 +210,9 @@ export default function BankCard({ bank }: BankCardProps) {
         `Set ${appData.coinMetadataMap[bank.coinType].symbol} bank min. token block size to ${minTokenBlockSize}`,
         txUrl,
       );
+
+      // Patch
+      await patchBank(bank);
     } catch (err) {
       showErrorToast(
         "Failed to set min. token block size",
@@ -239,6 +245,9 @@ export default function BankCard({ bank }: BankCardProps) {
         `Rebalanced ${appData.coinMetadataMap[bank.coinType].symbol} bank`,
         txUrl,
       );
+
+      // Patch
+      await patchBank(bank);
     } catch (err) {
       showErrorToast("Failed to rebalance bank", err as Error, undefined, true);
       console.error(err);
