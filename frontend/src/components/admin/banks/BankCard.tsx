@@ -20,6 +20,7 @@ import {
   formatUsd,
   getToken,
   isSendPoints,
+  isSui,
 } from "@suilend/sui-fe";
 import {
   showErrorToast,
@@ -125,7 +126,11 @@ export default function BankCard({ bank }: BankCardProps) {
             .toFixed(0),
         });
       }
-      // rebalanceBanks([bank], steammClient, transaction);
+      rebalanceBanks(
+        [bank].filter((b) => !isSui(b.coinType)),
+        steammClient,
+        transaction,
+      );
 
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
@@ -201,7 +206,11 @@ export default function BankCard({ bank }: BankCardProps) {
           .integerValue(BigNumber.ROUND_DOWN)
           .toString(),
       });
-      // rebalanceBanks([bank], steammClient, transaction);
+      rebalanceBanks(
+        [bank].filter((b) => !isSui(b.coinType)),
+        steammClient,
+        transaction,
+      );
 
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);

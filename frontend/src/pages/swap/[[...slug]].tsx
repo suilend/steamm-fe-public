@@ -415,7 +415,11 @@ export default function SwapPage() {
       transaction.transferObjects([coinIn], address);
 
       const banks = [appData.bankMap[inCoinType], appData.bankMap[outCoinType]];
-      rebalanceBanks(banks, steammClient, transaction);
+      rebalanceBanks(
+        banks.filter((b) => !isSui(b.coinType)),
+        steammClient,
+        transaction,
+      );
 
       const res = await signExecuteAndWaitForTransaction(transaction, {
         auction: true,
