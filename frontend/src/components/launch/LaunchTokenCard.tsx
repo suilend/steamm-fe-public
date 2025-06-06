@@ -393,6 +393,7 @@ export default function LaunchTokenCard() {
         title: hasFailed ? "Retry" : "Launch token & create pool",
       };
     }
+    if (hasFailed) return { isDisabled: false, title: "Retry" };
     if (!!returnAllOwnedObjectsAndSuiToUserResult)
       return { isDisabled: true, isSuccess: true };
 
@@ -471,9 +472,6 @@ export default function LaunchTokenCard() {
 
     if (quoteAssetCoinType === undefined)
       return { isDisabled: true, title: "Select a quote asset" };
-
-    // Failed
-    if (hasFailed) return { isDisabled: false, title: "Retry" };
 
     return {
       isDisabled: false,
