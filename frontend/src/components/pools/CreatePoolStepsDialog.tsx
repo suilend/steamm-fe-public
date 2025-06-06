@@ -12,10 +12,15 @@ import {
   CreatePoolAndDepositInitialLiquidityResult,
 } from "@/lib/createPool";
 import { GetBTokenAndBankForTokenResult } from "@/lib/createPool";
+import {
+  FundKeypairResult,
+  ReturnAllOwnedObjectsAndSuiToUserResult,
+} from "@/lib/keypair";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 
 interface CreatePoolStepsDialogProps {
   isOpen: boolean;
+  fundKeypairResult: FundKeypairResult | undefined;
   bTokensAndBankIds: [
     (
       | GetBTokenAndBankForTokenResult
@@ -30,36 +35,53 @@ interface CreatePoolStepsDialogProps {
   ];
   createdLpToken: CreateCoinResult | undefined;
   createPoolResult: CreatePoolAndDepositInitialLiquidityResult | undefined;
+  returnAllOwnedObjectsAndSuiToUserResult:
+    | ReturnAllOwnedObjectsAndSuiToUserResult
+    | undefined;
   reset: () => void;
 }
 
 export default function CreatePoolStepsDialog({
   isOpen,
+  fundKeypairResult,
   bTokensAndBankIds,
   createdLpToken,
   createPoolResult,
+  returnAllOwnedObjectsAndSuiToUserResult,
   reset,
 }: CreatePoolStepsDialogProps) {
   const currentStep: number = useMemo(() => {
+    if (fundKeypairResult === undefined) return 1;
     if (
       bTokensAndBankIds.some((bTokenAndBankId) => bTokenAndBankId === undefined)
     )
-      return 1;
-    if (createdLpToken === undefined) return 2;
-    if (createPoolResult === undefined) return 3;
+      return 2;
+    if (createdLpToken === undefined) return 3;
+    if (createPoolResult === undefined) return 4;
+    if (returnAllOwnedObjectsAndSuiToUserResult === undefined) return 5;
     return 99;
-  }, [bTokensAndBankIds, createdLpToken, createPoolResult]);
+  }, [
+    fundKeypairResult,
+    bTokensAndBankIds,
+    createdLpToken,
+    createPoolResult,
+    returnAllOwnedObjectsAndSuiToUserResult,
+  ]);
 
   return (
     <Dialog
       rootProps={{
         open: isOpen,
-        onOpenChange: !createPoolResult ? undefined : reset,
+        onOpenChange: !returnAllOwnedObjectsAndSuiToUserResult
+          ? undefined
+          : reset,
       }}
       headerProps={{
         title: { children: "Create pool" },
         description: "Don't close the window or refresh the page",
-        showCloseButton: !createPoolResult ? false : true,
+        showCloseButton: !returnAllOwnedObjectsAndSuiToUserResult
+          ? false
+          : true,
       }}
       dialogContentInnerClassName="max-w-sm"
     >
@@ -70,9 +92,16 @@ export default function CreatePoolStepsDialog({
           <div className="flex w-full flex-col gap-3">
             <Step
               number={1}
-              title="Create bTokens and banks"
+              title="Setup"
               isCompleted={currentStep > 1}
               isCurrent={currentStep === 1}
+              res={fundKeypairResult ? [fundKeypairResult.res] : []}
+            />
+            <Step
+              number={2}
+              title="Create bTokens and banks"
+              isCompleted={currentStep > 2}
+              isCurrent={currentStep === 2}
               res={bTokensAndBankIds.reduce((acc, bTokenAndBankId) => {
                 if (bTokenAndBankId === undefined) return acc;
 
@@ -86,26 +115,37 @@ export default function CreatePoolStepsDialog({
               }, [] as SuiTransactionBlockResponse[])}
             />
             <Step
-              number={2}
+              number={3}
               title="Create LP token"
-              isCompleted={currentStep > 2}
-              isCurrent={currentStep === 2}
+              isCompleted={currentStep > 3}
+              isCurrent={currentStep === 3}
               res={createdLpToken ? [createdLpToken.res] : []}
             />
             <Step
-              number={3}
+              number={4}
               title="Create pool and deposit initial liquidity"
-              isCompleted={currentStep > 3}
-              isCurrent={currentStep === 3}
+              isCompleted={currentStep > 4}
+              isCurrent={currentStep === 4}
               res={createPoolResult ? [createPoolResult.res] : []}
+            />
+            <Step
+              number={5}
+              title="Finalize"
+              isCompleted={currentStep > 5}
+              isCurrent={currentStep === 5}
+              res={
+                returnAllOwnedObjectsAndSuiToUserResult
+                  ? [returnAllOwnedObjectsAndSuiToUserResult.res]
+                  : []
+              }
             />
           </div>
         </div>
 
-        {!!createPoolResult && (
+        {!!returnAllOwnedObjectsAndSuiToUserResult && (
           <Link
             className="flex h-14 w-full flex-row items-center justify-center gap-2 rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80"
-            href={`${POOL_URL_PREFIX}/${createPoolResult.poolId}`} // Should always be defined
+            href={`${POOL_URL_PREFIX}/${createPoolResult!.poolId}`} // Should always be defined
             target="_blank"
           >
             <p className="text-p1 text-button-1-foreground">Go to pool</p>

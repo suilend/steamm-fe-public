@@ -4,6 +4,7 @@ import {
   SuiObjectChange,
   SuiTransactionBlockResponse,
 } from "@mysten/sui/client";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID, normalizeStructTag } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
@@ -15,7 +16,6 @@ import {
   SteammSDK,
 } from "@suilend/steamm-sdk";
 import { Token, getToken, isSui } from "@suilend/sui-fe";
-import { WalletContext } from "@suilend/sui-fe-next";
 
 import { AppData } from "@/contexts/AppContext";
 import {
@@ -23,6 +23,7 @@ import {
   createCoin,
   generate_bytecode,
 } from "@/lib/createCoin";
+import { keypairSignExecuteAndWaitForTransaction } from "@/lib/keypair";
 import { BURN_ADDRESS } from "@/lib/launchToken";
 
 export const QUOTER_IDS: QuoterId[] = Object.values(QuoterId).filter(
@@ -103,8 +104,8 @@ export const createBTokenAndBankForToken = async (
   token: Token,
   steammClient: SteammSDK,
   appData: AppData,
-  address: string,
-  signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
+  keypair: Ed25519Keypair,
+  suiClient: SuiClient,
 ): Promise<CreateBTokenAndBankForTokenResult> => {
   if (hasBTokenAndBankForToken(token, appData))
     throw new Error("BToken and bank already exist for token");
@@ -123,8 +124,8 @@ export const createBTokenAndBankForToken = async (
       B_TOKEN_DESCRIPTION,
       B_TOKEN_IMAGE_URL,
     ),
-    address,
-    signExecuteAndWaitForTransaction,
+    keypair,
+    suiClient,
   );
 
   const createdBToken = getToken(createBTokenResult.coinType, {
@@ -147,6 +148,7 @@ export const createBTokenAndBankForToken = async (
   );
 
   const createBankTransaction = new Transaction();
+  createBankTransaction.setSender(keypair.toSuiAddress());
 
   await steammClient.Bank.createBank(createBankTransaction, {
     coinType: token.coinType,
@@ -156,8 +158,10 @@ export const createBTokenAndBankForToken = async (
     bTokenMetadataId: createBTokenResult.coinMetadataId,
   });
 
-  const createBankRes = await signExecuteAndWaitForTransaction(
+  const createBankRes = await keypairSignExecuteAndWaitForTransaction(
     createBankTransaction,
+    keypair,
+    suiClient,
   );
 
   const createBankEvents: SuiEvent[] = (createBankRes.events ?? []).filter(
@@ -188,8 +192,8 @@ export const createBTokenAndBankForToken = async (
 // LP token
 export const createLpToken = async (
   bTokens: [Token, Token],
-  address: string,
-  signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
+  keypair: Ed25519Keypair,
+  suiClient: SuiClient,
 ): Promise<CreateCoinResult> => {
   console.log("[createLpToken] Creating LP token for bTokens", bTokens);
 
@@ -202,8 +206,8 @@ export const createLpToken = async (
       LP_TOKEN_DESCRIPTION,
       LP_TOKEN_IMAGE_URL,
     ),
-    address,
-    signExecuteAndWaitForTransaction,
+    keypair,
+    suiClient,
   );
 
   return createLpTokenResult;
@@ -227,8 +231,8 @@ export const createPoolAndDepositInitialLiquidity = async (
   burnLpTokens: boolean,
   steammClient: SteammSDK,
   appData: AppData,
-  address: string,
-  signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
+  keypair: Ed25519Keypair,
+  suiClient: SuiClient,
 ): Promise<CreatePoolAndDepositInitialLiquidityResult> => {
   console.log(
     "[createPoolAndDepositInitialLiquidity] Creating pool and depositing initial liquidity",
@@ -275,6 +279,7 @@ export const createPoolAndDepositInitialLiquidity = async (
   console.log("[createPoolAndDepositInitialLiquidity] Creating pool");
 
   const transaction = new Transaction();
+  transaction.setSender(keypair.toSuiAddress());
 
   const createPoolBaseArgs = {
     bTokenTypeA: bTokens[0].coinType,
@@ -379,8 +384,11 @@ export const createPoolAndDepositInitialLiquidity = async (
     },
     steammClient.scriptInfo.publishedAt,
   );
-  transaction.transferObjects([coinA, coinB], address);
-  transaction.transferObjects([lpCoin], !burnLpTokens ? address : BURN_ADDRESS); // Burn LP tokens if `burnLpTokens` is true
+  transaction.transferObjects([coinA, coinB], keypair.toSuiAddress());
+  transaction.transferObjects(
+    [lpCoin],
+    !burnLpTokens ? keypair.toSuiAddress() : BURN_ADDRESS,
+  ); // Burn LP tokens if `burnLpTokens` is true
 
   // 3) Share pool
   const sharePoolBaseArgs = {
@@ -408,7 +416,11 @@ export const createPoolAndDepositInitialLiquidity = async (
     transaction,
   );
 
-  const res = await signExecuteAndWaitForTransaction(transaction);
+  const res = await keypairSignExecuteAndWaitForTransaction(
+    transaction,
+    keypair,
+    suiClient,
+  );
 
   // Get created pool id from transaction
   const createdPoolObjectChange: SuiObjectChange | undefined =

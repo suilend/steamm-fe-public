@@ -12,7 +12,6 @@ import {
   NORMALIZED_SUI_COINTYPE,
   Token,
   formatToken,
-  getBalanceChange,
   getToken,
   isSui,
 } from "@suilend/sui-fe";
@@ -31,24 +30,32 @@ import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import { AirdropRow, Batch } from "@/lib/airdrop";
-import { showSuccessTxnToast } from "@/lib/toasts";
+import {
+  FundKeypairResult,
+  ReturnAllOwnedObjectsAndSuiToUserResult,
+  createKeypair,
+  fundKeypair,
+  keypairSignExecuteAndWaitForTransaction,
+  returnAllOwnedObjectsAndSuiToUser,
+} from "@/lib/keypair";
 
 const VALID_MIME_TYPES = ["text/csv"];
 const TRANSFERS_PER_BATCH = 400; // Max = 512 (if no other MOVE calls in the transaction)
 const getBatchTransactionGas = (transferCount: number) =>
   Math.max(0.02, 0.0016 * transferCount);
 
-const executeBatchTransaction = async (
-  suiClient: SuiClient,
+type MakeBatchTransferResult = {
+  batch: Batch;
+  res: SuiTransactionBlockResponse;
+};
+const makeBatchTransfer = async (
   token: Token,
-  serverlessKeypair: Ed25519Keypair,
   batch: Batch,
-) => {
-  const serverlessAddress = serverlessKeypair.toSuiAddress();
-
-  // 1) Create transaction
+  keypair: Ed25519Keypair,
+  suiClient: SuiClient,
+): Promise<MakeBatchTransferResult> => {
   const transaction = new Transaction();
-  transaction.setSender(serverlessAddress);
+  transaction.setSender(keypair.toSuiAddress());
 
   for (const row of batch) {
     const tokenCoin = coinWithBalance({
@@ -65,60 +72,13 @@ const executeBatchTransaction = async (
     transaction.transferObjects([tokenCoin], row.address);
   }
 
-  // 2) Sign transaction
-  const builtTransaction = await transaction.build({
-    client: suiClient,
-  });
-  const signedTransaction =
-    await serverlessKeypair.signTransaction(builtTransaction);
+  const res = await keypairSignExecuteAndWaitForTransaction(
+    transaction,
+    keypair,
+    suiClient,
+  );
 
-  // 3) Execute signed transaction
-  const res1 = await suiClient.executeTransactionBlock({
-    transactionBlock: signedTransaction.bytes,
-    signature: signedTransaction.signature,
-  });
-
-  const res2 = await suiClient.waitForTransaction({
-    digest: res1.digest,
-  });
-
-  return { transaction, signedTransaction, res1, res2 };
-};
-
-const executeReturnGasTransaction = async (
-  suiClient: SuiClient,
-  address: string,
-  serverlessKeypair: Ed25519Keypair,
-) => {
-  const serverlessAddress = serverlessKeypair.toSuiAddress();
-
-  // 1) Create transaction
-  const transaction = new Transaction();
-  transaction.setSender(serverlessAddress);
-
-  transaction.transferObjects([transaction.gas], address);
-
-  // 2) Sign transaction
-  const builtTransaction = await transaction.build({
-    client: suiClient,
-  });
-  const signedTransaction =
-    await serverlessKeypair.signTransaction(builtTransaction);
-
-  // 3) Execute signed transaction
-  const res1 = await suiClient.executeTransactionBlock({
-    transactionBlock: signedTransaction.bytes,
-    signature: signedTransaction.signature,
-  });
-
-  const res2 = await suiClient.waitForTransaction({
-    digest: res1.digest,
-    options: {
-      showBalanceChanges: true,
-    },
-  });
-
-  return { transaction, signedTransaction, res1, res2 };
+  return { batch, res };
 };
 
 export default function AirdropPage() {
@@ -131,12 +91,16 @@ export default function AirdropPage() {
     AirdropRow[] | undefined
   >(undefined);
 
-  const [batchTransactionResults, setBatchTransactionResults] = useState<
-    { batch: Batch; res: SuiTransactionBlockResponse }[] | undefined
+  const [fundKeypairResult, setFundKeypairResult] = useState<
+    FundKeypairResult | undefined
   >(undefined);
-  const [returnGasTransactionResult, setReturnGasTransactionResult] = useState<
-    { res: SuiTransactionBlockResponse } | undefined
+  const [makeBatchTransferResults, setMakeBatchTransferResults] = useState<
+    MakeBatchTransferResult[] | undefined
   >(undefined);
+  const [
+    returnAllOwnedObjectsAndSuiToUserResult,
+    setReturnAllOwnedObjectsAndSuiToUserResult,
+  ] = useState<ReturnAllOwnedObjectsAndSuiToUserResult | undefined>(undefined);
 
   // Token
   const tokens = useMemo(
@@ -158,6 +122,10 @@ export default function AirdropPage() {
 
   // CSV
   const reset = () => {
+    setFundKeypairResult(undefined);
+    setMakeBatchTransferResults(undefined);
+    setReturnAllOwnedObjectsAndSuiToUserResult(undefined);
+
     setAddressAmountRows(undefined);
     (document.getElementById("csv-upload") as HTMLInputElement).value = "";
   };
@@ -244,17 +212,21 @@ export default function AirdropPage() {
     if (addressAmountRows.length === 0)
       return { isDisabled: true, title: "Upload a non-empty CSV file" };
 
-    if (getBalance(token.coinType).lt(totalTokenAmount!))
-      return { isDisabled: true, title: `Insufficient ${token.symbol}` };
+    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(totalGasAmount))
+      return {
+        isDisabled: true,
+        title: `${formatToken(totalGasAmount, {
+          dp: appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE].decimals,
+          trimTrailingZeros: true,
+        })} SUI should be saved for gas`,
+      };
 
     if (
-      getBalance(NORMALIZED_SUI_COINTYPE).lt(
-        new BigNumber(isSui(token.coinType) ? totalTokenAmount! : 0).plus(
-          totalGasAmount,
-        ),
+      getBalance(token.coinType).lt(
+        totalTokenAmount!.plus(isSui(token.coinType) ? totalGasAmount : 0),
       )
     )
-      return { isDisabled: true, title: "Insufficient SUI" };
+      return { isDisabled: true, title: `Insufficient ${token.symbol}` };
 
     return {
       isDisabled: false,
@@ -271,82 +243,57 @@ export default function AirdropPage() {
 
       setIsSubmitting(true);
 
-      // 1) Generate serverless keypair
-      const serverlessKeypair = new Ed25519Keypair();
-      const serverlessAddress = serverlessKeypair.toSuiAddress();
-      const serverlessPrivateKey = serverlessKeypair.getSecretKey();
+      // 1) Generate and fund keypair
+      // 1.1) Generate
+      const { keypair } = createKeypair();
 
-      // 2) Fund serverless account
-      const transaction = new Transaction();
-
-      const tokenCoin = coinWithBalance({
-        balance: BigInt(
-          totalTokenAmount!
-            .times(10 ** token.decimals)
-            .integerValue(BigNumber.ROUND_DOWN)
-            .toString(),
-        ),
-        type: token.coinType,
-        useGasCoin: isSui(token.coinType),
-      })(transaction);
-      const gasCoin = coinWithBalance({
-        balance: BigInt(
-          totalGasAmount
-            .times(
-              10 ** appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE].decimals,
-            )
-            .integerValue(BigNumber.ROUND_DOWN)
-            .toString(),
-        ),
-        type: NORMALIZED_SUI_COINTYPE,
-        useGasCoin: true,
-      })(transaction);
-
-      transaction.transferObjects([tokenCoin, gasCoin], serverlessAddress);
-
-      const res = await signExecuteAndWaitForTransaction(transaction);
-      const txUrl = explorer.buildTxUrl(res.digest);
-
-      showSuccessTxnToast(
-        `Airdropping ${formatToken(totalTokenAmount!, {
-          dp: token.decimals,
-          trimTrailingZeros: true,
-        })} ${token.symbol} to ${addressAmountRows.length} addresses`,
-        txUrl,
+      // 1.2) Fund
+      const fundKeypairResult = await fundKeypair(
+        [
+          {
+            ...token,
+            amount: totalTokenAmount!.plus(
+              isSui(token.coinType) ? totalGasAmount : 0,
+            ),
+          },
+          ...(isSui(token.coinType)
+            ? []
+            : [
+                {
+                  ...getToken(
+                    NORMALIZED_SUI_COINTYPE,
+                    appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE],
+                  ),
+                  amount: totalGasAmount,
+                },
+              ]),
+        ],
+        keypair,
+        signExecuteAndWaitForTransaction,
       );
+      setFundKeypairResult(fundKeypairResult);
 
-      // 3) Create and send serverless transactions (TODO: Move to serverless function)
-      // 3.1) Create and send transaction for each batch
+      // 2) Create and send keypair transactions (TODO: Move to serverless function)
+      // 2.1) Create and send transaction for each batch
       const batches = chunk(addressAmountRows, TRANSFERS_PER_BATCH);
       for (let i = 0; i < batches.length; i++) {
-        const { res2 } = await executeBatchTransaction(
-          suiClient,
+        const makeBatchTransferResult = await makeBatchTransfer(
           token,
-          serverlessKeypair,
           batches[i],
+          keypair,
+          suiClient,
         );
-        setBatchTransactionResults((prev) => [
+        setMakeBatchTransferResults((prev) => [
           ...(prev ?? []),
-          { batch: batches[i], res: res2 },
+          makeBatchTransferResult,
         ]);
       }
 
-      // 3.2) Refund unused SUI to user
-      const { res2: returnGasTransactionRes } =
-        await executeReturnGasTransaction(
-          suiClient,
-          address,
-          serverlessKeypair,
-        );
-      setReturnGasTransactionResult({ res: returnGasTransactionRes });
-
-      const returnGasTransactionBalanceChangeSui = getBalanceChange(
-        returnGasTransactionRes,
-        address,
-        getToken(
-          NORMALIZED_SUI_COINTYPE,
-          appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE],
-        ),
+      // 2.2) Return unused SUI to user
+      const returnAllOwnedObjectsAndSuiToUserResult =
+        await returnAllOwnedObjectsAndSuiToUser(address, keypair, suiClient);
+      setReturnAllOwnedObjectsAndSuiToUserResult(
+        returnAllOwnedObjectsAndSuiToUserResult,
       );
 
       showSuccessToast(
@@ -354,15 +301,6 @@ export default function AirdropPage() {
           dp: token.decimals,
           trimTrailingZeros: true,
         })} ${token.symbol} to ${addressAmountRows.length} addresses`,
-        {
-          description:
-            returnGasTransactionBalanceChangeSui === undefined
-              ? undefined
-              : `${formatToken(returnGasTransactionBalanceChangeSui, {
-                  dp: appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE].decimals,
-                  trimTrailingZeros: true,
-                })} unused SUI was refunded`,
-        },
       );
     } catch (err) {
       showErrorToast("Failed to airdrop", err as Error, undefined, true);
@@ -427,39 +365,51 @@ export default function AirdropPage() {
           />
         </div>
 
-        {(batchTransactionResults !== undefined ||
-          returnGasTransactionResult !== undefined) && (
+        {(fundKeypairResult !== undefined ||
+          makeBatchTransferResults !== undefined ||
+          returnAllOwnedObjectsAndSuiToUserResult !== undefined) && (
           <div className="flex w-full flex-col gap-2">
-            {batchTransactionResults !== undefined &&
-              batchTransactionResults.map(({ batch, res }, index) => {
-                const prevTransferred = batchTransactionResults
+            {fundKeypairResult !== undefined && (
+              <div className="flex flex-row items-center gap-2">
+                <p className="text-p2 text-secondary-foreground">Setup</p>
+                <OpenUrlNewTab
+                  url={explorer.buildTxUrl(fundKeypairResult.res.digest)}
+                  tooltip={`Open on ${explorer.name}`}
+                />
+              </div>
+            )}
+
+            {makeBatchTransferResults !== undefined &&
+              makeBatchTransferResults.map((makeBatchTransferResult, index) => {
+                const prevTransferred = makeBatchTransferResults
                   .slice(0, index)
                   .reduce((acc, { batch }) => acc + batch.length, 0);
 
                 return (
                   <div
-                    key={res.digest}
+                    key={makeBatchTransferResult.res.digest}
                     className="flex flex-row items-center gap-2"
                   >
                     <p className="text-p2 text-secondary-foreground">
-                      {prevTransferred + 1}–{prevTransferred + batch.length}
+                      {prevTransferred + 1}–
+                      {prevTransferred + makeBatchTransferResult.batch.length}
                     </p>
                     <OpenUrlNewTab
-                      url={explorer.buildTxUrl(res.digest)}
+                      url={explorer.buildTxUrl(
+                        makeBatchTransferResult.res.digest,
+                      )}
                       tooltip={`Open on ${explorer.name}`}
                     />
                   </div>
                 );
               })}
 
-            {returnGasTransactionResult !== undefined && (
+            {returnAllOwnedObjectsAndSuiToUserResult !== undefined && (
               <div className="flex flex-row items-center gap-2">
-                <p className="text-p2 text-secondary-foreground">
-                  Refund unused SUI
-                </p>
+                <p className="text-p2 text-secondary-foreground">Finalize</p>
                 <OpenUrlNewTab
                   url={explorer.buildTxUrl(
-                    returnGasTransactionResult.res.digest,
+                    returnAllOwnedObjectsAndSuiToUserResult.res.digest,
                   )}
                   tooltip={`Open on ${explorer.name}`}
                 />

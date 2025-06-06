@@ -230,7 +230,7 @@ export const getParsedPool = (
       : coinTypeOracleInfoPriceMap[coinTypeB]?.price;
 
     if (priceA === undefined && priceB === undefined) {
-      console.error(
+      console.warn(
         `Skipping pool with id ${id}, quoterId ${quoterId} - missing prices for both assets (no Pyth or Switchboard price feed) for coinType(s) ${coinTypes.join(", ")}`,
       );
       return undefined;

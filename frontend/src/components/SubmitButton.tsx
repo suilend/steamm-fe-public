@@ -33,7 +33,7 @@ export default function SubmitButton({
             {submitButtonState.title}
           </p>
           {submitButtonState.description && (
-            <p className="text-p3 text-button-1-foreground/75">
+            <p className="-mt-0.5 text-p3 text-button-1-foreground/75">
               {submitButtonState.description}
             </p>
           )}

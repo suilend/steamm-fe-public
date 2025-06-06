@@ -1,11 +1,13 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { ADMIN_ADDRESS, computeOptimalOffset } from "@suilend/steamm-sdk";
 import {
+  NORMALIZED_SUI_COINTYPE,
   Token,
   formatInteger,
   formatNumber,
@@ -17,6 +19,7 @@ import {
 } from "@suilend/sui-fe";
 import {
   showErrorToast,
+  showSuccessToast,
   useSettingsContext,
   useWalletContext,
 } from "@suilend/sui-fe-next";
@@ -48,6 +51,13 @@ import {
   formatTextInputValue,
 } from "@/lib/format";
 import {
+  FundKeypairResult,
+  ReturnAllOwnedObjectsAndSuiToUserResult,
+  createKeypair,
+  fundKeypair,
+  returnAllOwnedObjectsAndSuiToUser,
+} from "@/lib/keypair";
+import {
   BLACKLISTED_WORDS,
   BROWSE_MAX_FILE_SIZE_BYTES,
   DEFAULT_TOKEN_DECIMALS,
@@ -60,11 +70,12 @@ import {
   createToken,
   mintToken,
 } from "@/lib/launchToken";
-import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
 
+const REQUIRED_SUI_AMOUNT = new BigNumber(0.2);
+
 export default function LaunchTokenCard() {
-  const { explorer, suiClient } = useSettingsContext();
+  const { suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
@@ -81,6 +92,10 @@ export default function LaunchTokenCard() {
   // State - progress
   const [hasFailed, setHasFailed] = useState<boolean>(false);
 
+  const [keypair, setKeypair] = useState<Ed25519Keypair | undefined>(undefined);
+  const [fundKeypairResult, setFundKeypairResult] = useState<
+    FundKeypairResult | undefined
+  >(undefined);
   const [createTokenResult, setCreateTokenResult] = useState<
     CreateCoinResult | undefined
   >(undefined);
@@ -108,6 +123,10 @@ export default function LaunchTokenCard() {
   const [createPoolResult, setCreatePoolResult] = useState<
     CreatePoolAndDepositInitialLiquidityResult | undefined
   >(undefined);
+  const [
+    returnAllOwnedObjectsAndSuiToUserResult,
+    setReturnAllOwnedObjectsAndSuiToUserResult,
+  ] = useState<ReturnAllOwnedObjectsAndSuiToUserResult | undefined>(undefined);
 
   // State - token
   const [showOptional, setShowOptional] = useState<boolean>(false);
@@ -326,11 +345,14 @@ export default function LaunchTokenCard() {
     // Progress
     setHasFailed(false);
 
+    setKeypair(undefined);
+    setFundKeypairResult(undefined);
     setCreateTokenResult(undefined);
     setMintTokenResult(undefined);
     setBTokensAndBankIds([undefined, undefined]);
     setCreateLpTokenResult(undefined);
     setCreatePoolResult(undefined);
+    setReturnAllOwnedObjectsAndSuiToUserResult(undefined);
 
     // Token
     setShowOptional(false);
@@ -371,7 +393,8 @@ export default function LaunchTokenCard() {
         title: hasFailed ? "Retry" : "Launch token & create pool",
       };
     }
-    if (!!createPoolResult) return { isDisabled: true, isSuccess: true };
+    if (!!returnAllOwnedObjectsAndSuiToUserResult)
+      return { isDisabled: true, isSuccess: true };
 
     // Name
     if (name === "") return { isDisabled: true, title: "Enter a name" };
@@ -437,6 +460,15 @@ export default function LaunchTokenCard() {
 
     //
 
+    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(REQUIRED_SUI_AMOUNT))
+      return {
+        isDisabled: true,
+        title: `${formatToken(REQUIRED_SUI_AMOUNT, {
+          dp: appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE].decimals,
+          trimTrailingZeros: true,
+        })} SUI should be saved for gas`,
+      };
+
     if (quoteAssetCoinType === undefined)
       return { isDisabled: true, title: "Select a quote asset" };
 
@@ -463,7 +495,35 @@ export default function LaunchTokenCard() {
 
       await initializeCoinCreation();
 
-      // 1) Create token
+      // 1) Generate and fund keypair
+      // 1.1) Generate
+      let _keypair = keypair;
+      if (_keypair === undefined) {
+        _keypair = createKeypair().keypair;
+        setKeypair(_keypair);
+      }
+
+      // 1.2) Fund
+      let _fundKeypairResult = fundKeypairResult;
+      if (_fundKeypairResult === undefined) {
+        _fundKeypairResult = await fundKeypair(
+          [
+            {
+              ...getToken(
+                NORMALIZED_SUI_COINTYPE,
+                appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE],
+              ),
+              amount: REQUIRED_SUI_AMOUNT,
+            },
+          ],
+          _keypair,
+          signExecuteAndWaitForTransaction,
+        );
+        setFundKeypairResult(_fundKeypairResult);
+      }
+
+      // 2) Create and send keypair transactions
+      // 2.1) Create token
       let _createTokenResult = createTokenResult;
       if (_createTokenResult === undefined) {
         _createTokenResult = await createToken(
@@ -472,8 +532,8 @@ export default function LaunchTokenCard() {
           description,
           iconUrl,
           decimals,
-          address,
-          signExecuteAndWaitForTransaction,
+          _keypair,
+          suiClient,
         );
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setCreateTokenResult(_createTokenResult);
@@ -489,7 +549,7 @@ export default function LaunchTokenCard() {
       });
       const tokens = [createdToken, quoteToken] as [Token, Token];
 
-      // 2) Mint token
+      // 2.2) Mint token
       let _mintTokenResult = mintTokenResult;
       if (_mintTokenResult === undefined) {
         _mintTokenResult = await mintToken(
@@ -497,14 +557,14 @@ export default function LaunchTokenCard() {
           supply,
           decimals,
           nonMintable,
-          address,
-          signExecuteAndWaitForTransaction,
+          _keypair,
+          suiClient,
         );
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setMintTokenResult(_mintTokenResult);
       }
 
-      // 3) Get/create bTokens and banks (2 transactions for each missing bToken+bank pair = 0, 2, or 4 transactions in total)
+      // 2.3) Get/create bTokens and banks (2 transactions for each missing bToken+bank pair = 0, 2, or 4 transactions in total)
       const _bTokensAndBankIds = bTokensAndBankIds;
       if (
         _bTokensAndBankIds.some(
@@ -527,8 +587,8 @@ export default function LaunchTokenCard() {
                     tokens[index],
                     steammClient,
                     appData,
-                    address,
-                    signExecuteAndWaitForTransaction,
+                    _keypair,
+                    suiClient,
                   );
                   await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -563,19 +623,19 @@ export default function LaunchTokenCard() {
         (bTokenAndBankId) => bTokenAndBankId!.bankId,
       ) as [string, string];
 
-      // 4) Create LP token (1 transaction)
+      // 2.4) Create LP token (1 transaction)
       let _createLpTokenResult = createLpTokenResult;
       if (_createLpTokenResult === undefined) {
         _createLpTokenResult = await createLpToken(
           bTokens,
-          address,
-          signExecuteAndWaitForTransaction,
+          _keypair,
+          suiClient,
         );
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setCreateLpTokenResult(_createLpTokenResult);
       }
 
-      // 5) Create pool and deposit initial liquidity (1 transaction)
+      // 2.5) Create pool and deposit initial liquidity (1 transaction)
       const values = [
         new BigNumber(supply)
           .times(depositedSupplyPercent)
@@ -599,15 +659,25 @@ export default function LaunchTokenCard() {
           burnLpTokens,
           steammClient,
           appData,
-          address,
-          signExecuteAndWaitForTransaction,
+          _keypair,
+          suiClient,
         );
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setCreatePoolResult(_createPoolResult);
       }
 
-      const txUrl = explorer.buildTxUrl(_createPoolResult.res.digest);
-      showSuccessTxnToast(`Launched ${symbol}`, txUrl, {
+      // 2.6) Return objects and unused SUI to user
+      let _returnAllOwnedObjectsAndSuiToUserResult =
+        returnAllOwnedObjectsAndSuiToUserResult;
+      if (_returnAllOwnedObjectsAndSuiToUserResult === undefined) {
+        _returnAllOwnedObjectsAndSuiToUserResult =
+          await returnAllOwnedObjectsAndSuiToUser(address, _keypair, suiClient);
+        setReturnAllOwnedObjectsAndSuiToUserResult(
+          _returnAllOwnedObjectsAndSuiToUserResult,
+        );
+      }
+
+      showSuccessToast(`Launched ${symbol}`, {
         description: `Created ${formatPair(tokens.map((token) => token.symbol))} pool and deposited initial liquidity`,
       });
     } catch (err) {
@@ -621,17 +691,22 @@ export default function LaunchTokenCard() {
     }
   };
 
-  const isStepsDialogOpen = isSubmitting || !!createPoolResult;
+  const isStepsDialogOpen =
+    isSubmitting || !!returnAllOwnedObjectsAndSuiToUserResult;
 
   return (
     <>
       <LaunchTokenStepsDialog
         isOpen={isStepsDialogOpen}
+        fundKeypairResult={fundKeypairResult}
         createTokenResult={createTokenResult}
         mintTokenResult={mintTokenResult}
         bTokensAndBankIds={bTokensAndBankIds}
         createdLpToken={createLpTokenResult}
         createPoolResult={createPoolResult}
+        returnAllOwnedObjectsAndSuiToUserResult={
+          returnAllOwnedObjectsAndSuiToUserResult
+        }
         reset={reset}
       />
 
@@ -898,7 +973,7 @@ export default function LaunchTokenCard() {
             onClick={onSubmitClick}
           />
 
-          {hasFailed && !createPoolResult && (
+          {hasFailed && !returnAllOwnedObjectsAndSuiToUserResult && (
             <button
               className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
               onClick={reset}
