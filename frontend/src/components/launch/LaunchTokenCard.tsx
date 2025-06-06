@@ -245,9 +245,9 @@ export default function LaunchTokenCard() {
       if (formattedValue === "") return;
       if (isNaN(+formattedValue))
         throw new Error("Initial FDV must be a number");
-      if (new BigNumber(formattedValue).lt(1))
+      if (new BigNumber(formattedValue).lt(1000))
         throw new Error(
-          `Initial FDV must be at least ${formatUsd(new BigNumber(1), {
+          `Initial FDV must be at least ${formatUsd(new BigNumber(10 ** 3), {
             dp: 0,
           })}`,
         );
@@ -963,6 +963,13 @@ export default function LaunchTokenCard() {
               ) : (
                 <p className="text-p2 text-foreground">--</p>
               )}
+            </Parameter>
+
+            {/* Initial FDV */}
+            <Parameter label="Initial FDV" isHorizontal>
+              <p className="text-p2 text-foreground">
+                {formatUsd(new BigNumber(initialFdvUsd))}
+              </p>
             </Parameter>
           </div>
         </div>
