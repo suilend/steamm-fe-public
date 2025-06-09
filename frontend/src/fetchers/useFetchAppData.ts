@@ -440,7 +440,13 @@ export default function useFetchAppData(steammClient: SteammSDK) {
                     )!.bankInfo,
                   });
 
-            poolObjs.push({ poolInfo, pool, redeemQuote });
+            poolObjs.push({
+              poolInfo,
+              pool,
+              redeemQuote,
+              priceA: null,
+              priceB: null,
+            });
           }
         } else {
           const poolsRes = await fetch(`${API_URL}/steamm/pools/all`);
@@ -531,13 +537,14 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           {
             coinMetadataMap,
             oracleIndexOracleInfoPriceMap,
-            coinTypeOracleInfoPriceMap,
             bTokenTypeCoinTypeMap,
             bankMap,
           },
           poolObj.poolInfo,
           poolObj.pool,
           poolObj.redeemQuote,
+          poolObj.priceA,
+          poolObj.priceB,
         ),
       )
       .filter(Boolean) as ParsedPool[];

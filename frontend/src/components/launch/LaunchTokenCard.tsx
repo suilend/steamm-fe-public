@@ -70,6 +70,7 @@ import {
   createToken,
   mintToken,
 } from "@/lib/launchToken";
+import { getAvgPoolPrice } from "@/lib/pools";
 import { cn } from "@/lib/utils";
 
 const REQUIRED_SUI_AMOUNT = new BigNumber(0.2);
@@ -283,21 +284,19 @@ export default function LaunchTokenCard() {
   const [nonMintable, setNonMintable] = useState<boolean>(true);
 
   // State - pool - quote asset
-  const getQuotePrice = useCallback(
-    (coinType: string) => appData.coinTypeOracleInfoPriceMap[coinType]?.price,
-    [appData.coinTypeOracleInfoPriceMap],
-  );
-
   const quoteTokens = useMemo(
     () =>
       Object.entries(balancesCoinMetadataMap ?? {})
-        .filter(([coinType]) => getQuotePrice(coinType) !== undefined)
         .filter(([coinType]) => getBalance(coinType).gt(0))
+        .filter(
+          ([coinType]) =>
+            getAvgPoolPrice(appData.pools, coinType) !== undefined,
+        )
         .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
         .sort(
           (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
         ),
-    [balancesCoinMetadataMap, getQuotePrice, getBalance],
+    [balancesCoinMetadataMap, getBalance, appData.pools],
   );
 
   const [quoteAssetCoinType, setQuoteAssetCoinType] = useState<
@@ -318,7 +317,7 @@ export default function LaunchTokenCard() {
   const cpmmOffset: bigint | undefined = useMemo(() => {
     if (quoteToken === undefined) return undefined;
 
-    const quotePrice = getQuotePrice(quoteToken.coinType)!;
+    const quotePrice = getAvgPoolPrice(appData.pools, quoteToken.coinType)!;
     const tokenInitialPriceQuote = tokenInitialPriceUsd.div(quotePrice);
 
     return computeOptimalOffset(
@@ -334,7 +333,7 @@ export default function LaunchTokenCard() {
     );
   }, [
     quoteToken,
-    getQuotePrice,
+    appData.pools,
     tokenInitialPriceUsd,
     depositedSupply,
     decimals,
@@ -945,7 +944,7 @@ export default function LaunchTokenCard() {
                     1 {symbol} =
                     {formatToken(
                       tokenInitialPriceUsd.div(
-                        getQuotePrice(quoteToken.coinType),
+                        getAvgPoolPrice(appData.pools, quoteToken.coinType)!,
                       ),
                       {
                         dp: balancesCoinMetadataMap![quoteToken.coinType]

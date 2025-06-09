@@ -61,6 +61,8 @@ export type PoolObj = {
     | Pool<string, string, OracleQuoter, string>
     | Pool<string, string, OracleQuoterV2, string>;
   redeemQuote: RedeemQuote | null;
+  priceA: string | null;
+  priceB: string | null;
 };
 
 export type ParsedPool = {
@@ -161,10 +163,6 @@ export const getParsedPool = (
       number,
       { oracleInfo: OracleInfo; price: BigNumber }
     >;
-    coinTypeOracleInfoPriceMap: Record<
-      string,
-      { oracleInfo: OracleInfo; price: BigNumber }
-    >;
 
     // Banks
     bTokenTypeCoinTypeMap: Record<string, string>;
@@ -173,12 +171,13 @@ export const getParsedPool = (
   poolInfo: PoolInfo,
   pool: ParsedPool["pool"],
   redeemQuote: RedeemQuote | null,
+  _priceA: string | null,
+  _priceB: string | null,
 ): ParsedPool | undefined => {
   {
     const {
       coinMetadataMap,
       oracleIndexOracleInfoPriceMap,
-      coinTypeOracleInfoPriceMap,
       bTokenTypeCoinTypeMap,
       bankMap,
     } = data;
@@ -216,49 +215,16 @@ export const getParsedPool = (
 
     const balances: [BigNumber, BigNumber] = [balanceA, balanceB];
 
-    let priceA = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
+    const priceA = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
       ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexA.toString()
         ].price
-      : quoterId === QuoterId.CPMM
-        ? coinTypeOracleInfoPriceMap[coinTypeA]?.price
-        : undefined;
-    let priceB = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
+      : new BigNumber(_priceA !== null ? _priceA : 10 ** -12);
+    const priceB = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
       ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexB.toString()
         ].price
-      : coinTypeOracleInfoPriceMap[coinTypeB]?.price;
-
-    if (priceA === undefined && priceB === undefined) {
-      console.warn(
-        `Skipping pool with id ${id}, quoterId ${quoterId} - missing prices for both assets (no Pyth or Switchboard price feed) for coinType(s) ${coinTypes.join(", ")}`,
-      );
-      return undefined;
-    } else if (priceA === undefined) {
-      console.warn(
-        `Missing price for coinTypeA ${coinTypeA}, using balance ratio to calculate price (pool with id ${id}, quoterId ${quoterId})`,
-      );
-      priceA = !balanceA.eq(0)
-        ? new BigNumber(
-            balanceB.plus(
-              quoterId === QuoterId.V_CPMM
-                ? new BigNumber(
-                    (pool.quoter as CpQuoter).offset.toString(),
-                  ).div(10 ** coinMetadataMap[coinTypeB].decimals)
-                : 0,
-            ),
-          )
-            .div(balanceA)
-            .times(priceB) // Assumes the pool is balanced (only true for arb'd CPMM pools)
-        : new BigNumber(0);
-    } else if (priceB === undefined) {
-      console.warn(
-        `Missing price for coinTypeB ${coinTypeB}, using balance ratio to calculate price (pool with id ${id}, quoterId ${quoterId})`,
-      );
-      priceB = !balanceB.eq(0)
-        ? balanceA.div(balanceB).times(priceA) // Assumes the pool is balanced (only true for arb'd CPMM pools)
-        : new BigNumber(0);
-    }
+      : new BigNumber(_priceB !== null ? _priceB : 10 ** -12);
     const prices: [BigNumber, BigNumber] = [priceA, priceB];
 
     const lpSupply = new BigNumber(pool.lpSupply.value.toString()).div(10 ** 9);

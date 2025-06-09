@@ -65,7 +65,7 @@ function PoolPage() {
       clearInterval(refreshPoolIntervalRef.current);
 
     refreshPoolIntervalRef.current = setInterval(() => {
-      fetchRefreshedPool(pool.poolInfo);
+      fetchRefreshedPool(pool);
       fetchPoolCurrentPriceQuote([pool.id]);
     }, 15 * 1000);
 
@@ -73,7 +73,7 @@ function PoolPage() {
       if (refreshPoolIntervalRef.current)
         clearInterval(refreshPoolIntervalRef.current);
     };
-  }, [fetchRefreshedPool, pool.poolInfo, fetchPoolCurrentPriceQuote, pool.id]);
+  }, [fetchRefreshedPool, pool, fetchPoolCurrentPriceQuote]);
 
   // Transaction history
   const { poolTransactionHistoryMap, fetchPoolTransactionHistoryMap } =
@@ -108,7 +108,7 @@ function PoolPage() {
     refresh();
 
     setTimeout(() => {
-      fetchRefreshedPool(pool.poolInfo);
+      fetchRefreshedPool(pool);
       fetchPoolCurrentPriceQuote([pool.id]);
       fetchPoolTransactionHistoryMap([pool.id]);
     }, 2000);
@@ -118,7 +118,7 @@ function PoolPage() {
     refresh();
 
     setTimeout(() => {
-      fetchRefreshedPool(pool.poolInfo);
+      fetchRefreshedPool(pool);
       fetchPoolCurrentPriceQuote([pool.id]);
       fetchPoolTransactionHistoryMap([pool.id]);
     }, 2000);
@@ -128,7 +128,7 @@ function PoolPage() {
     refresh();
 
     setTimeout(() => {
-      fetchRefreshedPool(pool.poolInfo);
+      fetchRefreshedPool(pool);
       fetchPoolCurrentPriceQuote([pool.id]);
       fetchPoolTransactionHistoryMap([pool.id]);
     }, 2000);

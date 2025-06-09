@@ -70,7 +70,7 @@ import {
   fundKeypair,
   returnAllOwnedObjectsAndSuiToUser,
 } from "@/lib/keypair";
-import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
+import { AMPLIFIER_TOOLTIP, getAvgPoolPrice } from "@/lib/pools";
 import { getCachedUsdPriceRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
@@ -281,15 +281,12 @@ export default function CreatePoolCard() {
     ],
   );
 
-  const getQuotePrice = useCallback(
-    (coinType: string) => appData.coinTypeOracleInfoPriceMap[coinType]?.price,
-    [appData.coinTypeOracleInfoPriceMap],
-  );
-
   const quoteTokens = useMemo(
     () =>
-      baseTokens.filter((token) => getQuotePrice(token.coinType) !== undefined),
-    [baseTokens, getQuotePrice],
+      baseTokens.filter(
+        (token) => getAvgPoolPrice(appData.pools, token.coinType) !== undefined,
+      ),
+    [baseTokens, appData.pools],
   );
 
   const onSelectToken = (token: Token, index: number) => {
@@ -371,7 +368,7 @@ export default function CreatePoolCard() {
     )
       return undefined;
 
-    const quotePrice = getQuotePrice(coinTypes[1])!;
+    const quotePrice = getAvgPoolPrice(appData.pools, coinTypes[1])!;
     const tokenInitialPriceQuote = tokenInitialPriceUsd.div(quotePrice);
 
     return computeOptimalOffset(
@@ -389,7 +386,7 @@ export default function CreatePoolCard() {
     coinTypes,
     values,
     tokenInitialPriceUsd,
-    getQuotePrice,
+    appData.pools,
     balancesCoinMetadataMap,
   ]);
 
@@ -911,7 +908,14 @@ export default function CreatePoolCard() {
                       : "--"
                     : coinTypes.every((coinType) => coinType !== "") &&
                         tokenInitialPriceUsd !== undefined
-                      ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${formatToken(tokenInitialPriceUsd.div(getQuotePrice(coinTypes[1])), { dp: balancesCoinMetadataMap![coinTypes[1]].decimals })} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
+                      ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${formatToken(
+                          tokenInitialPriceUsd.div(
+                            getAvgPoolPrice(appData.pools, coinTypes[1])!,
+                          ),
+                          {
+                            dp: balancesCoinMetadataMap![coinTypes[1]].decimals,
+                          },
+                        )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
                       : "--"}
                 </p>
 
