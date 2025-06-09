@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { ChangeEvent, useMemo, useState } from "react";
 
+import { useSignPersonalMessage } from "@mysten/dapp-kit";
 import { SuiClient, SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
@@ -33,6 +34,7 @@ import { AirdropRow, Batch } from "@/lib/airdrop";
 import {
   FundKeypairResult,
   ReturnAllOwnedObjectsAndSuiToUserResult,
+  checkIfKeypairCanBeUsed,
   createKeypair,
   fundKeypair,
   keypairSignExecuteAndWaitForTransaction,
@@ -83,7 +85,8 @@ const makeBatchTransfer = async (
 
 export default function AirdropPage() {
   const { explorer, suiClient } = useSettingsContext();
-  const { address, signExecuteAndWaitForTransaction } = useWalletContext();
+  const { account, address, signExecuteAndWaitForTransaction } =
+    useWalletContext();
   const { appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
@@ -234,20 +237,25 @@ export default function AirdropPage() {
     };
   })();
 
+  const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const onSubmitClick = async () => {
     if (submitButtonState.isDisabled) return;
     if (!addressAmountRows || !token) return; // Should not happen
 
     try {
-      if (!address) throw new Error("Wallet not connected");
+      if (!account?.publicKey || !address)
+        throw new Error("Wallet not connected");
 
       setIsSubmitting(true);
 
       // 1) Generate and fund keypair
       // 1.1) Generate
-      const { keypair } = createKeypair();
+      const { keypair } = await createKeypair(account, signPersonalMessage);
 
-      // 1.2) Fund
+      // 1.2) Check
+      await checkIfKeypairCanBeUsed([], keypair, suiClient);
+
+      // 1.3) Fund
       const fundKeypairResult = await fundKeypair(
         [
           {

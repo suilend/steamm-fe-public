@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { useSignPersonalMessage } from "@mysten/dapp-kit";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
@@ -53,6 +54,7 @@ import {
 import {
   FundKeypairResult,
   ReturnAllOwnedObjectsAndSuiToUserResult,
+  checkIfKeypairCanBeUsed,
   createKeypair,
   fundKeypair,
   returnAllOwnedObjectsAndSuiToUser,
@@ -77,7 +79,8 @@ const REQUIRED_SUI_AMOUNT = new BigNumber(0.2);
 
 export default function LaunchTokenCard() {
   const { suiClient } = useSettingsContext();
-  const { address, signExecuteAndWaitForTransaction } = useWalletContext();
+  const { account, address, signExecuteAndWaitForTransaction } =
+    useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
@@ -128,6 +131,31 @@ export default function LaunchTokenCard() {
     returnAllOwnedObjectsAndSuiToUserResult,
     setReturnAllOwnedObjectsAndSuiToUserResult,
   ] = useState<ReturnAllOwnedObjectsAndSuiToUserResult | undefined>(undefined);
+
+  const currentFlowDigests = useMemo(
+    () =>
+      [
+        fundKeypairResult?.res.digest,
+        createTokenResult?.res.digest,
+        mintTokenResult?.res.digest,
+        ...(bTokensAndBankIds ?? [])
+          .filter((x) => !!x && "createBankRes" in x)
+          .flatMap((x) => [
+            x.createBTokenResult.res.digest,
+            x.createBankRes.digest,
+          ]),
+        createLpTokenResult?.res.digest,
+        createPoolResult?.res.digest,
+      ].filter(Boolean) as string[],
+    [
+      fundKeypairResult,
+      createTokenResult,
+      mintTokenResult,
+      bTokensAndBankIds,
+      createLpTokenResult,
+      createPoolResult,
+    ],
+  );
 
   // State - token
   const [showOptional, setShowOptional] = useState<boolean>(false);
@@ -478,12 +506,14 @@ export default function LaunchTokenCard() {
     };
   })();
 
+  const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const onSubmitClick = async () => {
     if (submitButtonState.isDisabled) return;
     if (!quoteToken) return; // Should not happen
 
     try {
-      if (!address) throw new Error("Wallet not connected");
+      if (!account?.publicKey || !address)
+        throw new Error("Wallet not connected");
 
       setIsSubmitting(true);
 
@@ -496,11 +526,14 @@ export default function LaunchTokenCard() {
       // 1.1) Generate
       let _keypair = keypair;
       if (_keypair === undefined) {
-        _keypair = createKeypair().keypair;
+        _keypair = (await createKeypair(account, signPersonalMessage)).keypair;
         setKeypair(_keypair);
       }
 
-      // 1.2) Fund
+      // 1.2) Check
+      await checkIfKeypairCanBeUsed(currentFlowDigests, _keypair, suiClient);
+
+      // 1.3) Fund
       let _fundKeypairResult = fundKeypairResult;
       if (_fundKeypairResult === undefined) {
         _fundKeypairResult = await fundKeypair(

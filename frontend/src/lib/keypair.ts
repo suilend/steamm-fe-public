@@ -1,19 +1,101 @@
 import { SuiClient, SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
+import { fromBase64, toHex } from "@mysten/sui/utils";
+import {
+  SuiSignPersonalMessageMethod,
+  WalletAccount,
+} from "@mysten/wallet-standard";
 import BigNumber from "bignumber.js";
 
 import { Token, isSui } from "@suilend/sui-fe";
 import { WalletContext } from "@suilend/sui-fe-next";
 
-import { getAllOwnedObjects } from "@/lib/transactions";
+import {
+  getAllOwnedObjects,
+  getMostRecentFromAddressTransaction,
+} from "@/lib/transactions";
 
-export const createKeypair = () => {
-  const keypair = new Ed25519Keypair();
+const KEYPAIR_SEED_MESSAGE = "steamm-wallet-verification";
+export const createKeypair = async (
+  account: WalletAccount,
+  signPersonalMessage: SuiSignPersonalMessageMethod,
+) => {
+  const message = Buffer.from(KEYPAIR_SEED_MESSAGE);
+  const { signature } = await signPersonalMessage({
+    message,
+    account,
+  });
+  const signatureBytes = fromBase64(signature);
+  const signatureHex = toHex(signatureBytes);
+
+  const keypair = Ed25519Keypair.deriveKeypairFromSeed(signatureHex);
   const address = keypair.toSuiAddress();
   const privateKey = keypair.getSecretKey();
+  console.log("[createKeypair] keypair:", keypair, "address:", address);
 
   return { keypair, address, privateKey };
+};
+
+export const checkIfKeypairCanBeUsed = async (
+  currentFlowDigests: string[],
+  keypair: Ed25519Keypair,
+  suiClient: SuiClient,
+): Promise<void> => {
+  const ownedObjectIds = (
+    await getAllOwnedObjects(suiClient, keypair.toSuiAddress())
+  ).map((obj) => obj.data?.objectId as string);
+  console.log("[checkIfKeypairCanBeUsed] ownedObjectIds:", ownedObjectIds);
+
+  if (ownedObjectIds.length === 0) {
+    // Empty wallet
+    // CONTINUE
+  } else {
+    const mostRecentFromAddressTransaction =
+      await getMostRecentFromAddressTransaction(
+        suiClient,
+        keypair.toSuiAddress(),
+      );
+    console.log(
+      "[checkIfKeypairCanBeUsed] mostRecentFromAddressTransaction:",
+      mostRecentFromAddressTransaction,
+      "currentFlowDigests:",
+      currentFlowDigests,
+    );
+
+    if (mostRecentFromAddressTransaction === undefined) {
+      // Non-empty wallet with no FROM transactions
+      // CONTINUE
+    } else {
+      // Non-empty wallet with FROM transactions
+      if (
+        currentFlowDigests.includes(mostRecentFromAddressTransaction.digest)
+      ) {
+        // Retrying current flow
+        // CONTINUE
+      } else {
+        // Previous flow
+        const timestampMs = mostRecentFromAddressTransaction.timestampMs;
+        const isRecent =
+          !!timestampMs && +timestampMs > Date.now() - 1000 * 60 * 5; // Less than 5 minutes ago
+        console.log(
+          "[checkIfKeypairCanBeUsed] isRecent:",
+          isRecent,
+          timestampMs,
+          Date.now() - 1000 * 60 * 5,
+        );
+
+        if (isRecent) {
+          // Previous flow may be ongoing
+          // STOP
+          throw new Error("Please wait for previous flow to complete");
+        } else {
+          // Previous flow stopped before completion
+          // CONTINUE
+        }
+      }
+    }
+  }
 };
 
 export const keypairSignExecuteAndWaitForTransaction = async (
@@ -61,10 +143,11 @@ export const fundKeypair = async (
   signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
 ) => {
   console.log(
-    `[fundKeypair] tokens: ${tokens.map((t) => ({
+    "[fundKeypair] tokens:",
+    tokens.map((t) => ({
       coinType: t.coinType,
       amount: t.amount.toString(),
-    }))}`,
+    })),
   );
 
   const fundKeypairTransaction = new Transaction();

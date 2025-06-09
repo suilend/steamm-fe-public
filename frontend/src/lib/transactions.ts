@@ -1,10 +1,14 @@
-import { SuiClient } from "@mysten/sui/client";
+import {
+  SuiClient,
+  SuiObjectResponse,
+  SuiTransactionBlockResponse,
+} from "@mysten/sui/client";
 
 export const getAllOwnedObjects = async (
   suiClient: SuiClient,
   address: string,
-) => {
-  const allObjs = [];
+): Promise<SuiObjectResponse[]> => {
+  const allObjs: SuiObjectResponse[] = [];
   let cursor = null;
   let hasNextPage = true;
   while (hasNextPage) {
@@ -20,4 +24,30 @@ export const getAllOwnedObjects = async (
   }
 
   return allObjs;
+};
+
+export const getMostRecentFromAddressTransaction = async (
+  suiClient: SuiClient,
+  address: string,
+): Promise<SuiTransactionBlockResponse | undefined> => {
+  const allTransactions: SuiTransactionBlockResponse[] = [];
+  let cursor = null;
+  let hasNextPage = true;
+  while (hasNextPage) {
+    const transactions = await suiClient.queryTransactionBlocks({
+      filter: { FromAddress: address },
+      cursor,
+      limit: 1,
+      order: "descending",
+      options: {
+        showEvents: true,
+      },
+    });
+
+    allTransactions.push(...transactions.data);
+    cursor = transactions.nextCursor;
+    hasNextPage = transactions.hasNextPage;
+  }
+
+  return allTransactions[0];
 };

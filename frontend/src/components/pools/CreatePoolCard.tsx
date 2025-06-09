@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { useSignPersonalMessage } from "@mysten/dapp-kit";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
-import { Check, Loader2 } from "lucide-react";
+import { Check } from "lucide-react";
 
 import {
   ADMIN_ADDRESS,
@@ -66,20 +67,21 @@ import {
 import {
   FundKeypairResult,
   ReturnAllOwnedObjectsAndSuiToUserResult,
+  checkIfKeypairCanBeUsed,
   createKeypair,
   fundKeypair,
   returnAllOwnedObjectsAndSuiToUser,
 } from "@/lib/keypair";
 import { AMPLIFIER_TOOLTIP, getAvgPoolPrice } from "@/lib/pools";
 import { getCachedUsdPriceRatio } from "@/lib/swap";
-import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
 const REQUIRED_SUI_AMOUNT = new BigNumber(0.1);
 
 export default function CreatePoolCard() {
-  const { explorer, suiClient } = useSettingsContext();
-  const { address, signExecuteAndWaitForTransaction } = useWalletContext();
+  const { suiClient } = useSettingsContext();
+  const { account, address, signExecuteAndWaitForTransaction } =
+    useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
@@ -123,6 +125,27 @@ export default function CreatePoolCard() {
     returnAllOwnedObjectsAndSuiToUserResult,
     setReturnAllOwnedObjectsAndSuiToUserResult,
   ] = useState<ReturnAllOwnedObjectsAndSuiToUserResult | undefined>(undefined);
+
+  const currentFlowDigests = useMemo(
+    () =>
+      [
+        fundKeypairResult?.res.digest,
+        ...(bTokensAndBankIds ?? [])
+          .filter((x) => !!x && "createBankRes" in x)
+          .flatMap((x) => [
+            x.createBTokenResult.res.digest,
+            x.createBankRes.digest,
+          ]),
+        createLpTokenResult?.res.digest,
+        createPoolResult?.res.digest,
+      ].filter(Boolean) as string[],
+    [
+      fundKeypairResult,
+      bTokensAndBankIds,
+      createLpTokenResult,
+      createPoolResult,
+    ],
+  );
 
   // CoinTypes
   const [coinTypes, setCoinTypes] = useState<[string, string]>(["", ""]);
@@ -532,12 +555,14 @@ export default function CreatePoolCard() {
     };
   })();
 
+  const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const onSubmitClick = async () => {
     if (submitButtonState.isDisabled) return;
     if (!quoterId || !feeTierPercent) return;
 
     try {
-      if (!address) throw new Error("Wallet not connected");
+      if (!account?.publicKey || !address)
+        throw new Error("Wallet not connected");
 
       setIsSubmitting(true);
 
@@ -554,11 +579,14 @@ export default function CreatePoolCard() {
       // 1.1) Generate
       let _keypair = keypair;
       if (_keypair === undefined) {
-        _keypair = createKeypair().keypair;
+        _keypair = (await createKeypair(account, signPersonalMessage)).keypair;
         setKeypair(_keypair);
       }
 
-      // 1.2) Fund
+      // 1.2) Check
+      await checkIfKeypairCanBeUsed(currentFlowDigests, _keypair, suiClient);
+
+      // 1.3) Fund
       let _fundKeypairResult = fundKeypairResult;
       if (_fundKeypairResult === undefined) {
         _fundKeypairResult = await fundKeypair(
@@ -706,47 +734,6 @@ export default function CreatePoolCard() {
       setIsSubmitting(false);
       refresh();
     }
-  };
-
-  // Start over
-  const [isStartOverSubmitting, setIsStartOverSubmitting] =
-    useState<boolean>(false);
-  const isStartOverRetrieving = !!address && !!keypair && !!fundKeypairResult;
-
-  const onStartOverClick = async () => {
-    // Return objects and unused SUI to user
-    if (isStartOverRetrieving) {
-      try {
-        setIsStartOverSubmitting(true);
-
-        const { res } = await returnAllOwnedObjectsAndSuiToUser(
-          address,
-          keypair,
-          suiClient,
-        );
-        const txUrl = explorer.buildTxUrl(res.digest);
-
-        showSuccessTxnToast(
-          "Retrieved tokens, unused SUI, and any created objects",
-          txUrl,
-        );
-      } catch (err) {
-        showErrorToast(
-          "Failed to retrieve tokens, unused SUI, and any created objects",
-          err as Error,
-          undefined,
-          true,
-        );
-        console.error(err);
-
-        return;
-      } finally {
-        setIsStartOverSubmitting(false);
-        refresh();
-      }
-    }
-
-    reset();
   };
 
   const isStepsDialogOpen =
@@ -1150,28 +1137,12 @@ export default function CreatePoolCard() {
 
           {hasFailed && !returnAllOwnedObjectsAndSuiToUserResult && (
             <button
-              className={cn(
-                "group flex h-10 w-full flex-row items-center justify-center rounded-md px-3 transition-colors",
-                isStartOverRetrieving
-                  ? "bg-error/25 hover:bg-error/50 disabled:pointer-events-none disabled:opacity-50"
-                  : "border hover:bg-border/50",
-              )}
-              disabled={isStartOverRetrieving && isStartOverSubmitting}
-              onClick={onStartOverClick}
+              className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
+              onClick={reset}
             >
-              {isStartOverRetrieving ? (
-                isStartOverSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-foreground" />
-                ) : (
-                  <p className="text-p2 text-foreground">
-                    Retrieve tokens, unused SUI, and any created objects
-                  </p>
-                )
-              ) : (
-                <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
-                  Start over
-                </p>
-              )}
+              <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
+                Start over
+              </p>
             </button>
           )}
         </div>
