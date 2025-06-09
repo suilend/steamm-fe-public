@@ -694,7 +694,7 @@ export default function CreatePoolCard() {
       }
 
       showSuccessToast(
-        `Created ${formatPair(tokens.map((token) => token.symbol))} ${QUOTER_ID_NAME_MAP[quoterId]} ${formatFeeTier(new BigNumber(feeTierPercent))} pool`,
+        `Created ${formatPair(tokens.map((token) => token.symbol))} ${QUOTER_ID_NAME_MAP[useCpmmOffset ? QuoterId.V_CPMM : quoterId]} ${formatFeeTier(new BigNumber(feeTierPercent))} pool`,
         { description: "Deposited initial liquidity" },
       );
     } catch (err) {
