@@ -43,7 +43,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const VALID_MIME_TYPES = ["text/csv"];
-const TRANSFERS_PER_BATCH = 100; // Max = 512 (if no other MOVE calls in the transaction)
+const TRANSFERS_PER_BATCH = 500; // Max = 512 (if no other MOVE calls in the transaction)
 const getBatchTransactionGas = (transferCount: number) =>
   Math.max(0.02, 0.0016 * transferCount);
 
