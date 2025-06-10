@@ -93,7 +93,7 @@ export default function LaunchTokenCard() {
     [address, flags?.steammCreatePoolWhitelist],
   );
 
-  // State - progress
+  // Progress
   const [hasFailed, setHasFailed] = useState<boolean>(false);
 
   const [keypair, setKeypair] = useState<Ed25519Keypair | undefined>(undefined);

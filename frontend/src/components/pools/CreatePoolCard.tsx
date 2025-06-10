@@ -94,7 +94,7 @@ export default function CreatePoolCard() {
     [address, flags?.steammCreatePoolWhitelist],
   );
 
-  // State - progress
+  // Progress
   const [hasFailed, setHasFailed] = useState<boolean>(false);
 
   const [keypair, setKeypair] = useState<Ed25519Keypair | undefined>(undefined);
@@ -516,10 +516,7 @@ export default function CreatePoolCard() {
         amplifier,
       )
     )
-      return {
-        isDisabled: true,
-        title: "Pool already exists",
-      };
+      return { isDisabled: true, title: "Pool already exists" };
 
     //
 

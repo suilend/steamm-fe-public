@@ -88,7 +88,7 @@ export default function AirdropAddressAmountTable({
   }, [rows, sortState]);
 
   // Pagination
-  const pageSize = 25;
+  const pageSize = 5;
 
   const [pageIndex, setPageIndex] = useState<number>(0);
   const pageIndexes: number[] | undefined = useMemo(() => {
@@ -138,9 +138,9 @@ export default function AirdropAddressAmountTable({
   );
 
   return (
-    <>
+    <div className="w-full">
       {/* Table */}
-      <div className="relative w-full overflow-hidden rounded-md">
+      <div className="relative z-[2] w-full overflow-hidden rounded-md">
         <div className="pointer-events-none absolute inset-0 z-[2] rounded-md border" />
 
         <div className="relative z-[1] w-full overflow-auto">
@@ -209,12 +209,12 @@ export default function AirdropAddressAmountTable({
 
       {/* Pagination */}
       {pageIndexes && pageIndexes.length > 1 && (
-        <div className="flex w-full flex-row items-center justify-center gap-2">
+        <div className="relative z-[1] -mt-4 flex w-full flex-row items-center justify-center gap-2 rounded-b-md bg-border/25 pb-4 pt-8">
           {pageIndexes.map((_pageIndex) => (
             <button
               key={_pageIndex}
               className={cn(
-                "flex h-10 w-10 flex-row items-center justify-center rounded-md border transition-colors",
+                "flex h-10 min-w-10 flex-row items-center justify-center rounded-md border px-2.5 transition-colors",
                 _pageIndex === pageIndex
                   ? "cursor-default border-button-1 bg-button-1/25"
                   : "hover:bg-border/50",
@@ -230,6 +230,6 @@ export default function AirdropAddressAmountTable({
           ))}
         </div>
       )}
-    </>
+    </div>
   );
 }

@@ -14,6 +14,13 @@ interface StepProps {
   isCompleted?: boolean;
   isCurrent?: boolean;
   res?: SuiTransactionBlockResponse[];
+  subSteps?: {
+    number: number;
+    title: string;
+    isCompleted?: boolean;
+    isCurrent?: boolean;
+    res?: SuiTransactionBlockResponse[];
+  }[];
 }
 
 export default function Step({
@@ -22,11 +29,12 @@ export default function Step({
   isCurrent,
   isCompleted,
   res,
+  subSteps,
 }: StepProps) {
   const { explorer } = useSettingsContext();
 
   return (
-    <div className="flex w-full flex-row items-center gap-3">
+    <div className="flex w-full flex-row gap-3">
       <div
         className={cn(
           "flex h-6 w-6 flex-row items-center justify-center rounded-full",
@@ -46,30 +54,65 @@ export default function Step({
         )}
       </div>
 
-      <div className="flex flex-row items-center gap-2">
-        <p
-          className={cn(
-            "!text-p1 transition-colors",
-            isCurrent ? "text-foreground" : "text-secondary-foreground",
-          )}
-        >
-          {title}
-        </p>
+      <div className="flex flex-1 flex-col gap-1">
+        <div className="flex w-full flex-row items-center gap-2">
+          <p
+            className={cn(
+              "!text-p1 transition-colors",
+              isCurrent ? "text-foreground" : "text-secondary-foreground",
+            )}
+          >
+            {title}
+          </p>
 
-        {isCompleted && (
-          <div className="flex flex-row items-center gap-1">
-            {(res ?? []).map((r, index) => (
-              <Link
-                key={index}
-                className="block flex flex-col justify-center text-secondary-foreground transition-colors hover:text-foreground"
-                href={explorer.buildTxUrl(r.digest)}
-                target="_blank"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Link>
-            ))}
+          {(res ?? []).length > 0 && (
+            <div className="flex flex-row items-center gap-1">
+              {(res ?? []).map((r, index) => (
+                <Link
+                  key={index}
+                  className="block flex flex-col justify-center text-secondary-foreground transition-colors hover:text-foreground"
+                  href={explorer.buildTxUrl(r.digest)}
+                  target="_blank"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {(subSteps ?? []).map((subStep) => (
+          <div
+            key={subStep.number}
+            className="flex w-full flex-row items-center gap-2"
+          >
+            <p
+              className={cn(
+                "!text-p2 transition-colors",
+                subStep.isCurrent
+                  ? "animate-pulse text-foreground"
+                  : "text-secondary-foreground",
+              )}
+            >
+              {subStep.title}
+            </p>
+
+            {(subStep.res ?? []).length > 0 && (
+              <div className="flex flex-row items-center gap-1">
+                {(subStep.res ?? []).map((r, index) => (
+                  <Link
+                    key={index}
+                    className="block flex flex-col justify-center text-secondary-foreground transition-colors hover:text-foreground"
+                    href={explorer.buildTxUrl(r.digest)}
+                    target="_blank"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        ))}
       </div>
     </div>
   );

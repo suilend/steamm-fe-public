@@ -77,12 +77,12 @@ export const checkIfKeypairCanBeUsed = async (
         // Previous flow
         const timestampMs = mostRecentFromAddressTransaction.timestampMs;
         const isRecent =
-          !!timestampMs && +timestampMs > Date.now() - 1000 * 60 * 5; // Less than 5 minutes ago
+          !!timestampMs && +timestampMs > Date.now() - 1000 * 60 * 2; // Less than 2 minutes ago
         console.log(
           "[checkIfKeypairCanBeUsed] isRecent:",
           isRecent,
           timestampMs,
-          Date.now() - 1000 * 60 * 5,
+          Date.now() - 1000 * 60 * 2,
         );
 
         if (isRecent) {
