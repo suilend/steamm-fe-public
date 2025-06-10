@@ -157,43 +157,92 @@ export default function LaunchTokenCard() {
     ],
   );
 
-  // State - token
-  const [showOptional, setShowOptional] = useState<boolean>(false);
-
+  // State
   const [name, setName] = useState<string>("");
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const [symbol, setSymbol] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
 
   const [iconUrl, setIconUrl] = useState<string>("");
   const [iconFilename, setIconFilename] = useState<string>("");
   const [iconFileSize, setIconFileSize] = useState<string>("");
 
-  // State - token - decimals
+  // State - quote asset
+  const quoteTokens = useMemo(
+    () =>
+      Object.entries(balancesCoinMetadataMap ?? {})
+        .filter(([coinType]) => getBalance(coinType).gt(0))
+        .filter(
+          ([coinType]) =>
+            getAvgPoolPrice(appData.pools, coinType) !== undefined,
+        )
+        .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
+        .sort(
+          (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
+        ),
+    [balancesCoinMetadataMap, getBalance, appData.pools],
+  );
+
+  const [quoteAssetCoinType, setQuoteAssetCoinType] = useState<
+    string | undefined
+  >(undefined);
+  const onSelectQuoteToken = (token: Token) => {
+    setQuoteAssetCoinType(token.coinType);
+
+    if (token.decimals < decimals) {
+      setDecimalsRaw(token.decimals.toString());
+      setDecimals(token.decimals);
+    }
+  };
+
+  const quoteToken =
+    quoteAssetCoinType !== undefined
+      ? getToken(
+          quoteAssetCoinType,
+          balancesCoinMetadataMap![quoteAssetCoinType],
+        )
+      : undefined;
+
+  // State - optional
+  const [showOptional, setShowOptional] = useState<boolean>(false);
+
+  // State - optional - description
+  const [description, setDescription] = useState<string>("");
+
+  // State - optional - decimals
   const [decimalsRaw, setDecimalsRaw] = useState<string>(
     DEFAULT_TOKEN_DECIMALS.toString(),
   );
   const [decimals, setDecimals] = useState<number>(DEFAULT_TOKEN_DECIMALS);
 
-  const onDecimalsChange = useCallback((value: string) => {
-    const formattedValue = formatTextInputValue(value, 0);
-    setDecimalsRaw(formattedValue);
+  const onDecimalsChange = useCallback(
+    (value: string) => {
+      const formattedValue = formatTextInputValue(value, 0);
+      setDecimalsRaw(formattedValue);
 
-    try {
-      if (formattedValue === "") return;
-      if (isNaN(+formattedValue)) throw new Error("Decimals must be a number");
-      if (+formattedValue < 1 || +formattedValue > 9)
-        throw new Error("Decimals must be between 1 and 9");
+      try {
+        if (formattedValue === "") return;
+        if (isNaN(+formattedValue))
+          throw new Error("Decimals must be a number");
+        if (+formattedValue < 0 || +formattedValue > 9)
+          throw new Error("Decimals must be between 0 and 9");
+        if (quoteToken && +formattedValue > quoteToken.decimals)
+          throw new Error(
+            quoteToken.decimals === 0
+              ? `Decimals must be ${quoteToken.decimals}`
+              : `Decimals must be ${quoteToken.decimals} or less`,
+          );
 
-      setDecimals(+formattedValue);
-    } catch (err) {
-      console.error(err);
-      showErrorToast("Invalid decimals", err as Error);
-    }
-  }, []);
+        setDecimals(+formattedValue);
+      } catch (err) {
+        console.error(err);
+        showErrorToast("Invalid decimals", err as Error);
+      }
+    },
+    [quoteToken],
+  );
 
-  // State - token - supply
+  // State - optional - supply
   const [supplyRaw, setSupplyRaw] = useState<string>(
     DEFAULT_TOKEN_SUPPLY.toString(),
   );
@@ -221,7 +270,7 @@ export default function LaunchTokenCard() {
     [decimals],
   );
 
-  // State - token - deposited supply %
+  // State - optional - deposited supply %
   const [depositedSupplyPercentRaw, setDepositedSupplyPercentRaw] =
     useState<string>(DEPOSITED_TOKEN_PERCENT.toString());
   const [depositedSupplyPercent, setDepositedSupplyPercent] = useState<number>(
@@ -258,7 +307,7 @@ export default function LaunchTokenCard() {
     }
   }, []);
 
-  // State - token - initial FDV
+  // State - optional - initial FDV
   const [initialFdvUsdRaw, setInitialFdvUsdRaw] = useState<string>(
     INITIAL_TOKEN_FDV_USD.toString(),
   );
@@ -308,37 +357,10 @@ export default function LaunchTokenCard() {
     [initialPoolTvlUsd, depositedSupply],
   );
 
-  // State - token - non-mintable
+  // State - optional - non-mintable
   const [nonMintable, setNonMintable] = useState<boolean>(true);
 
-  // State - pool - quote asset
-  const quoteTokens = useMemo(
-    () =>
-      Object.entries(balancesCoinMetadataMap ?? {})
-        .filter(([coinType]) => getBalance(coinType).gt(0))
-        .filter(
-          ([coinType]) =>
-            getAvgPoolPrice(appData.pools, coinType) !== undefined,
-        )
-        .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
-        .sort(
-          (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
-        ),
-    [balancesCoinMetadataMap, getBalance, appData.pools],
-  );
-
-  const [quoteAssetCoinType, setQuoteAssetCoinType] = useState<
-    string | undefined
-  >(undefined);
-  const quoteToken =
-    quoteAssetCoinType !== undefined
-      ? getToken(
-          quoteAssetCoinType,
-          balancesCoinMetadataMap![quoteAssetCoinType],
-        )
-      : undefined;
-
-  // State - pool - burn LP tokens
+  // State - optional - burn LP tokens
   const [burnLpTokens, setBurnLpTokens] = useState<boolean>(false);
 
   // CPMM offset
@@ -381,32 +403,38 @@ export default function LaunchTokenCard() {
     setCreatePoolResult(undefined);
     setReturnAllOwnedObjectsAndSuiToUserResult(undefined);
 
-    // Token
-    setShowOptional(false);
-
+    // State
     setName("");
     setTimeout(() => nameInputRef.current?.focus(), 100); // After dialog is closed
 
     setSymbol("");
-    setDescription("");
 
     setIconUrl("");
     setIconFilename("");
     setIconFileSize("");
     (document.getElementById("icon-upload") as HTMLInputElement).value = "";
 
+    setQuoteAssetCoinType(undefined);
+
+    // State - optional
+    setShowOptional(false);
+
+    setDescription("");
+
     setDecimalsRaw(DEFAULT_TOKEN_DECIMALS.toString());
     setDecimals(DEFAULT_TOKEN_DECIMALS);
+
     setSupplyRaw(DEFAULT_TOKEN_SUPPLY.toString());
     setSupply(DEFAULT_TOKEN_SUPPLY);
+
     setDepositedSupplyPercentRaw(DEPOSITED_TOKEN_PERCENT.toString());
     setDepositedSupplyPercent(DEPOSITED_TOKEN_PERCENT);
+
     setInitialFdvUsdRaw(INITIAL_TOKEN_FDV_USD.toString());
     setInitialFdvUsd(INITIAL_TOKEN_FDV_USD);
+
     setNonMintable(true);
 
-    // Pool
-    setQuoteAssetCoinType(undefined);
     setBurnLpTokens(false);
   };
 
@@ -465,15 +493,19 @@ export default function LaunchTokenCard() {
       };
     // Don't enforce symbol uniqueness
 
+    // Icon
+    if (iconUrl === "") return { isDisabled: true, title: "Upload an icon" };
+
+    // Quote asset
+    if (quoteAssetCoinType === undefined)
+      return { isDisabled: true, title: "Select a quote asset" };
+
     // Description
     if (description.length > 256)
       return {
         isDisabled: true,
         title: "Description must be 256 characters or less",
       };
-
-    // Icon
-    if (iconUrl === "") return { isDisabled: true, title: "Upload an icon" };
 
     // Decimals
     if (decimalsRaw === "")
@@ -486,6 +518,10 @@ export default function LaunchTokenCard() {
     if (depositedSupplyPercentRaw === "")
       return { isDisabled: true, title: "Enter deposited supply %" };
 
+    // Initial FDV
+    if (initialFdvUsdRaw === "")
+      return { isDisabled: true, title: "Enter initial FDV" };
+
     //
 
     if (getBalance(NORMALIZED_SUI_COINTYPE).lt(REQUIRED_SUI_AMOUNT))
@@ -496,9 +532,6 @@ export default function LaunchTokenCard() {
           trimTrailingZeros: true,
         })} SUI should be saved for gas`,
       };
-
-    if (quoteAssetCoinType === undefined)
-      return { isDisabled: true, title: "Select a quote asset" };
 
     return {
       isDisabled: false,
@@ -807,7 +840,7 @@ export default function LaunchTokenCard() {
               triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
               token={quoteToken}
               tokens={quoteTokens}
-              onSelectToken={(token) => setQuoteAssetCoinType(token.coinType)}
+              onSelectToken={(token) => onSelectQuoteToken(token)}
             />
           </div>
 
@@ -974,7 +1007,8 @@ export default function LaunchTokenCard() {
               quoteToken !== undefined ? (
                 <div className="flex flex-row items-center gap-2">
                   <p className="text-p2 text-foreground">
-                    1 {symbol} =
+                    1 {symbol}
+                    {" = "}
                     {formatToken(
                       tokenInitialPriceUsd.div(
                         getAvgPoolPrice(appData.pools, quoteToken.coinType)!,
