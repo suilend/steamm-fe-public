@@ -1,9 +1,8 @@
-import { ChangeEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useSignPersonalMessage } from "@mysten/dapp-kit";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import BigNumber from "bignumber.js";
-import { parse } from "csv-parse/sync";
 import { chunk } from "lodash";
 
 import {
@@ -19,8 +18,8 @@ import {
   useWalletContext,
 } from "@suilend/sui-fe-next";
 
-import AirdropAddressAmountTable from "@/components/airdrop/AirdropAddressAmountTable";
 import AirdropStepsDialog from "@/components/airdrop/AirdropStepsDialog";
+import CsvUpload from "@/components/airdrop/CsvUpload";
 import Divider from "@/components/Divider";
 import Parameter from "@/components/Parameter";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
@@ -42,7 +41,6 @@ import {
 } from "@/lib/keypair";
 import { cn } from "@/lib/utils";
 
-const VALID_MIME_TYPES = ["text/csv"];
 const TRANSFERS_PER_BATCH = 500; // Max = 512 (if no other MOVE calls in the transaction)
 const getBatchTransactionGas = (transferCount: number) =>
   Math.max(0.02, 0.0016 * transferCount);
@@ -97,94 +95,20 @@ export default function AirdropCard() {
       : undefined;
 
   // State - CSV
-  const [isLoadingCsv, setIsLoadingCsv] = useState<boolean>(false);
+  const [csvRows, setCsvRows] = useState<AirdropRow[] | undefined>(undefined);
+  const [csvFilename, setCsvFilename] = useState<string>("");
+  const [csvFileSize, setCsvFileSize] = useState<string>("");
 
-  const [addressAmountRows, setAddressAmountRows] = useState<
-    AirdropRow[] | undefined
-  >(undefined);
   const batches = useMemo(
-    () => chunk(addressAmountRows ?? [], TRANSFERS_PER_BATCH),
-    [addressAmountRows],
+    () => chunk(csvRows ?? [], TRANSFERS_PER_BATCH),
+    [csvRows],
   );
-
-  const resetCsv = () => {
-    setIsLoadingCsv(false);
-    (document.getElementById("csv-upload") as HTMLInputElement).value = "";
-
-    setAddressAmountRows(undefined);
-  };
-
-  const handleFile = async (file: File) => {
-    try {
-      setIsLoadingCsv(true);
-      setAddressAmountRows(undefined);
-
-      // Validate file type
-      if (!VALID_MIME_TYPES.includes(file.type))
-        throw new Error("Please upload a CSV file");
-
-      // Read file
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        // const base64String = e.target?.result as string;
-
-        const text = e.target?.result as string;
-
-        const records: { [key: string]: string }[] = parse(text, {
-          columns: true,
-          delimiter: ",",
-          skip_empty_lines: true,
-        });
-
-        if (records.length === 0) throw new Error("No rows found");
-        if (Object.keys(records[0]).length !== 2)
-          throw new Error(
-            "Each row must have exactly 2 columns (address, amount)",
-          );
-
-        const parsedRecords: AirdropRow[] = records.map((record, index) => {
-          const addressKey = Object.keys(record)[0];
-          const amountKey = Object.keys(record)[1];
-
-          return {
-            number: index + 1,
-            address: record[addressKey],
-            amount: record[amountKey],
-          };
-        });
-
-        setTimeout(() => {
-          setIsLoadingCsv(false);
-          setAddressAmountRows(parsedRecords);
-        }, 250);
-      };
-      reader.onerror = () => {
-        throw new Error("Failed to upload CSV file");
-      };
-      reader.readAsText(file);
-    } catch (err) {
-      console.error(err);
-      showErrorToast("Failed to upload CSV file", err as Error);
-
-      resetCsv();
-    }
-  };
-
-  const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      resetCsv();
-      return;
-    }
-
-    await handleFile(file);
-  };
 
   // Calcs
   const totalTokenAmount =
     token === undefined
       ? undefined
-      : (addressAmountRows ?? []).reduce(
+      : (csvRows ?? []).reduce(
           (acc, row) =>
             acc.plus(
               new BigNumber(row.amount).decimalPlaces(
@@ -194,10 +118,7 @@ export default function AirdropCard() {
             ),
           new BigNumber(0),
         );
-  const totalGasAmount = chunk(
-    addressAmountRows ?? [],
-    TRANSFERS_PER_BATCH,
-  ).reduce(
+  const totalGasAmount = chunk(csvRows ?? [], TRANSFERS_PER_BATCH).reduce(
     (acc, batch) => acc.plus(getBatchTransactionGas(batch.length)),
     new BigNumber(0),
   );
@@ -214,7 +135,10 @@ export default function AirdropCard() {
     // State
     setCoinType(undefined);
 
-    resetCsv();
+    setCsvRows(undefined);
+    setCsvFilename("");
+    setCsvFileSize("");
+    (document.getElementById("csv-upload") as HTMLInputElement).value = "";
   };
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -232,7 +156,7 @@ export default function AirdropCard() {
       return { isDisabled: true, title: "Select a token" };
 
     // CSV
-    if (addressAmountRows === undefined)
+    if (csvRows === undefined)
       return { isDisabled: true, title: "Upload a CSV file" };
 
     //
@@ -262,7 +186,7 @@ export default function AirdropCard() {
   const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const onSubmitClick = async () => {
     if (submitButtonState.isDisabled) return;
-    if (!token || addressAmountRows === undefined) return; // Should not happen
+    if (!token || csvRows === undefined) return; // Should not happen
 
     try {
       if (!account?.publicKey || !address)
@@ -356,8 +280,8 @@ export default function AirdropCard() {
         `Airdropped ${formatToken(totalTokenAmount!, {
           dp: token.decimals,
           trimTrailingZeros: true,
-        })} ${token.symbol} to ${addressAmountRows.length} ${
-          addressAmountRows.length === 1 ? "address" : "addresses"
+        })} ${token.symbol} to ${csvRows.length} ${
+          csvRows.length === 1 ? "address" : "addresses"
         }`,
       );
     } catch (err) {
@@ -412,29 +336,16 @@ export default function AirdropCard() {
           </div>
 
           {/* CSV */}
-          <Parameter
-            className="gap-3"
-            labelContainerClassName="flex-col gap-1 items-start"
-            label="CSV file"
-            labelEndDecorator="Address & amount columns, comma-separated"
-          >
-            <input
-              id="csv-upload"
-              type="file"
-              accept={VALID_MIME_TYPES.join(",")}
-              onChange={handleFileSelect}
-              disabled={isLoadingCsv}
-            />
-          </Parameter>
-
-          {/* Preview */}
-          {token !== undefined &&
-            (isLoadingCsv || addressAmountRows !== undefined) && (
-              <AirdropAddressAmountTable
-                token={token}
-                rows={addressAmountRows}
-              />
-            )}
+          <CsvUpload
+            isDragAndDropDisabled={hasFailed || isStepsDialogOpen}
+            token={token}
+            csvRows={csvRows}
+            setCsvRows={setCsvRows}
+            csvFilename={csvFilename}
+            setCsvFilename={setCsvFilename}
+            csvFileSize={csvFileSize}
+            setCsvFileSize={setCsvFileSize}
+          />
 
           <Divider />
 
@@ -456,10 +367,8 @@ export default function AirdropCard() {
 
             {/* Recipients */}
             <Parameter label="Recipients" isHorizontal>
-              {addressAmountRows !== undefined ? (
-                <p className="text-p2 text-foreground">
-                  {addressAmountRows.length}
-                </p>
+              {csvRows !== undefined ? (
+                <p className="text-p2 text-foreground">{csvRows.length}</p>
               ) : (
                 <p className="text-p2 text-foreground">--</p>
               )}
@@ -471,7 +380,7 @@ export default function AirdropCard() {
               isHorizontal
               labelEndDecorator={`${TRANSFERS_PER_BATCH} transfers per batch`}
             >
-              {addressAmountRows !== undefined ? (
+              {csvRows !== undefined ? (
                 <p className="text-p2 text-foreground">{batches.length}</p>
               ) : (
                 <p className="text-p2 text-foreground">--</p>
@@ -480,7 +389,7 @@ export default function AirdropCard() {
 
             {/* Max fee */}
             <Parameter label="Max fee" isHorizontal>
-              {addressAmountRows !== undefined ? (
+              {csvRows !== undefined ? (
                 <p className="text-p2 text-foreground">
                   {formatToken(totalGasAmount, {
                     dp: appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE]
