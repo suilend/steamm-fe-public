@@ -187,8 +187,6 @@ export default function CreatePoolCard() {
   >(undefined);
 
   const onValueChange = (_value: string, index: number, coinType?: string) => {
-    console.log("onValueChange - _value:", _value, "index:", index);
-
     const formattedValue = formatTextInputValue(
       _value,
       (coinType ?? coinTypes[index])
@@ -201,7 +199,7 @@ export default function CreatePoolCard() {
       index === 0 ? values[1] : formattedValue,
     ];
     setValues(newValues);
-    setLastActiveInputIndex(index);
+    if (formattedValue !== "") setLastActiveInputIndex(index);
   };
 
   // Values - max
@@ -336,7 +334,7 @@ export default function CreatePoolCard() {
 
     setTimeout(() => {
       document.getElementById(getCoinInputId(newCoinTypes[index]))?.focus();
-    }, 250);
+    }, 500);
   };
 
   // Amplifier
