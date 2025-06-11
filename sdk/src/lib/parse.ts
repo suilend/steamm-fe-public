@@ -215,16 +215,41 @@ export const getParsedPool = (
 
     const balances: [BigNumber, BigNumber] = [balanceA, balanceB];
 
-    const priceA = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
+    let priceA: BigNumber | null = [
+      QuoterId.ORACLE,
+      QuoterId.ORACLE_V2,
+    ].includes(quoterId)
       ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexA.toString()
         ].price
-      : new BigNumber(_priceA !== null ? _priceA : 10 ** -12);
-    const priceB = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
+      : _priceA !== null
+        ? new BigNumber(_priceA)
+        : null;
+    const priceB: BigNumber = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(
+      quoterId,
+    )
       ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexB.toString()
         ].price
       : new BigNumber(_priceB !== null ? _priceB : 10 ** -12);
+
+    if (priceA === null) {
+      // CPMM or vCPMM
+      priceA = !balanceA.eq(0)
+        ? new BigNumber(
+            balanceB.plus(
+              quoterId === QuoterId.V_CPMM
+                ? new BigNumber(
+                    (pool.quoter as CpQuoter).offset.toString(),
+                  ).div(10 ** coinMetadataMap[coinTypeB].decimals)
+                : 0,
+            ),
+          )
+            .div(balanceA)
+            .times(priceB) // Assumes the pool is balanced (only true for arb'd CPMM pools)
+        : new BigNumber(10 ** -12);
+    }
+
     const prices: [BigNumber, BigNumber] = [priceA, priceB];
 
     const lpSupply = new BigNumber(pool.lpSupply.value.toString()).div(10 ** 9);
