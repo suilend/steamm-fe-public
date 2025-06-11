@@ -128,6 +128,7 @@ export default function AirdropCard() {
     // Progress
     setHasFailed(false);
 
+    setKeypair(undefined);
     setFundKeypairResult(undefined);
     setMakeBatchTransferResults(undefined);
     setReturnAllOwnedObjectsAndSuiToUserResult(undefined);
