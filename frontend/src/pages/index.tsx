@@ -232,7 +232,7 @@ export default function PoolsPage() {
         <title>STEAMM</title>
       </Head>
 
-      <div className="flex w-full flex-col gap-8">
+      <div className="flex w-full max-w-6xl flex-col gap-8">
         {/* Stats */}
         <div className="flex w-full flex-row items-stretch rounded-md border">
           {/* TVL */}
