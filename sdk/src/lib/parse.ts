@@ -61,6 +61,9 @@ export type PoolObj = {
     | Pool<string, string, OracleQuoter, string>
     | Pool<string, string, OracleQuoterV2, string>;
   redeemQuote: RedeemQuote | null;
+  priceA: string | null;
+  priceB: string | null;
+  isInitialLpTokenBurned: boolean | null;
 };
 
 export type ParsedPool = {
@@ -79,6 +82,7 @@ export type ParsedPool = {
   prices: [BigNumber, BigNumber];
 
   lpSupply: BigNumber;
+  isInitialLpTokenBurned: boolean | null;
   tvlUsd: BigNumber;
 
   feeTierPercent: BigNumber;
@@ -161,27 +165,28 @@ export const getParsedPool = (
       number,
       { oracleInfo: OracleInfo; price: BigNumber }
     >;
-    coinTypeOracleInfoPriceMap: Record<
-      string,
-      { oracleInfo: OracleInfo; price: BigNumber }
-    >;
 
     // Banks
     bTokenTypeCoinTypeMap: Record<string, string>;
     bankMap: Record<string, ParsedBank>;
   },
-  poolInfo: PoolInfo,
-  pool: ParsedPool["pool"],
-  redeemQuote: RedeemQuote | null,
+  poolObj: PoolObj,
 ): ParsedPool | undefined => {
   {
     const {
       coinMetadataMap,
       oracleIndexOracleInfoPriceMap,
-      coinTypeOracleInfoPriceMap,
       bTokenTypeCoinTypeMap,
       bankMap,
     } = data;
+    const {
+      poolInfo,
+      pool,
+      redeemQuote,
+      priceA: _priceA,
+      priceB: _priceB,
+      isInitialLpTokenBurned,
+    } = poolObj;
 
     const id = poolInfo.poolId;
     const quoterId = poolInfo.quoterType.endsWith("omm::OracleQuoter")
@@ -216,28 +221,26 @@ export const getParsedPool = (
 
     const balances: [BigNumber, BigNumber] = [balanceA, balanceB];
 
-    let priceA = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
+    let priceA: BigNumber | null = [
+      QuoterId.ORACLE,
+      QuoterId.ORACLE_V2,
+    ].includes(quoterId)
       ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexA.toString()
         ].price
-      : quoterId === QuoterId.CPMM
-        ? coinTypeOracleInfoPriceMap[coinTypeA]?.price
-        : undefined;
-    let priceB = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)
+      : _priceA !== null
+        ? new BigNumber(_priceA)
+        : null;
+    const priceB: BigNumber = [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(
+      quoterId,
+    )
       ? oracleIndexOracleInfoPriceMap[
           +(pool.quoter as OracleQuoter).oracleIndexB.toString()
         ].price
-      : coinTypeOracleInfoPriceMap[coinTypeB]?.price;
+      : new BigNumber(_priceB !== null ? _priceB : 10 ** -12);
 
-    if (priceA === undefined && priceB === undefined) {
-      console.error(
-        `Skipping pool with id ${id}, quoterId ${quoterId} - missing prices for both assets (no Pyth or Switchboard price feed) for coinType(s) ${coinTypes.join(", ")}`,
-      );
-      return undefined;
-    } else if (priceA === undefined) {
-      console.warn(
-        `Missing price for coinTypeA ${coinTypeA}, using balance ratio to calculate price (pool with id ${id}, quoterId ${quoterId})`,
-      );
+    if (priceA === null) {
+      // CPMM or vCPMM
       priceA = !balanceA.eq(0)
         ? new BigNumber(
             balanceB.plus(
@@ -250,15 +253,9 @@ export const getParsedPool = (
           )
             .div(balanceA)
             .times(priceB) // Assumes the pool is balanced (only true for arb'd CPMM pools)
-        : new BigNumber(0);
-    } else if (priceB === undefined) {
-      console.warn(
-        `Missing price for coinTypeB ${coinTypeB}, using balance ratio to calculate price (pool with id ${id}, quoterId ${quoterId})`,
-      );
-      priceB = !balanceB.eq(0)
-        ? balanceA.div(balanceB).times(priceA) // Assumes the pool is balanced (only true for arb'd CPMM pools)
-        : new BigNumber(0);
+        : new BigNumber(10 ** -12);
     }
+
     const prices: [BigNumber, BigNumber] = [priceA, priceB];
 
     const lpSupply = new BigNumber(pool.lpSupply.value.toString()).div(10 ** 9);
@@ -309,6 +306,7 @@ export const getParsedPool = (
       prices,
 
       lpSupply,
+      isInitialLpTokenBurned,
       tvlUsd,
 
       feeTierPercent,

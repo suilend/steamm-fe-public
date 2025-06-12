@@ -1,8 +1,9 @@
-import { ReactNode, forwardRef } from "react";
+import { ReactNode, forwardRef, useEffect, useRef } from "react";
 
 import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { Wallet } from "lucide-react";
+import mergeRefs from "merge-refs";
 
 import { Token, formatToken, formatUsd } from "@suilend/sui-fe";
 
@@ -55,6 +56,13 @@ const CoinInput = forwardRef<HTMLInputElement, CoinInputProps>(
       onMaxAmountClick !== undefined;
     const hasDialog = tokens !== undefined && onSelectToken !== undefined;
 
+    // Autofocus
+    const inputRef = useRef<HTMLInputElement>(null);
+    const mergedRef = mergeRefs(ref, inputRef);
+    useEffect(() => {
+      if (autoFocus) inputRef.current?.focus();
+    }, [autoFocus]);
+
     return (
       <div
         className={cn(
@@ -70,7 +78,7 @@ const CoinInput = forwardRef<HTMLInputElement, CoinInputProps>(
             <Skeleton className="h-[36px] w-40 bg-border/50" />
           ) : (
             <input
-              ref={ref}
+              ref={mergedRef}
               id={token ? getCoinInputId(token.coinType) : undefined}
               className="w-full min-w-0 !border-0 !bg-[transparent] px-0 text-left !text-h2 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               autoFocus={autoFocus}

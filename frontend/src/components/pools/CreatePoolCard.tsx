@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { useSignPersonalMessage } from "@mysten/dapp-kit";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
 import { Check } from "lucide-react";
@@ -14,7 +16,7 @@ import {
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 import {
-  API_URL,
+  NORMALIZED_SUI_COINTYPE,
   Token,
   formatPrice,
   formatToken,
@@ -23,6 +25,7 @@ import {
 } from "@suilend/sui-fe";
 import {
   showErrorToast,
+  showSuccessToast,
   useSettingsContext,
   useWalletContext,
 } from "@suilend/sui-fe-next";
@@ -61,14 +64,24 @@ import {
   formatPair,
   formatTextInputValue,
 } from "@/lib/format";
-import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
+import {
+  FundKeypairResult,
+  ReturnAllOwnedObjectsAndSuiToUserResult,
+  checkIfKeypairCanBeUsed,
+  createKeypair,
+  fundKeypair,
+  returnAllOwnedObjectsAndSuiToUser,
+} from "@/lib/keypair";
+import { AMPLIFIER_TOOLTIP, getAvgPoolPrice } from "@/lib/pools";
 import { getCachedUsdPriceRatio } from "@/lib/swap";
-import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
+const REQUIRED_SUI_AMOUNT = new BigNumber(0.1);
+
 export default function CreatePoolCard() {
-  const { explorer, suiClient } = useSettingsContext();
-  const { address, signExecuteAndWaitForTransaction } = useWalletContext();
+  const { suiClient } = useSettingsContext();
+  const { account, address, signExecuteAndWaitForTransaction } =
+    useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
@@ -81,9 +94,13 @@ export default function CreatePoolCard() {
     [address, flags?.steammCreatePoolWhitelist],
   );
 
-  // State - progress
+  // Progress
   const [hasFailed, setHasFailed] = useState<boolean>(false);
 
+  const [keypair, setKeypair] = useState<Ed25519Keypair | undefined>(undefined);
+  const [fundKeypairResult, setFundKeypairResult] = useState<
+    FundKeypairResult | undefined
+  >(undefined);
   const [bTokensAndBankIds, setBTokensAndBankIds] = useState<
     [
       (
@@ -104,7 +121,31 @@ export default function CreatePoolCard() {
   const [createPoolResult, setCreatePoolResult] = useState<
     CreatePoolAndDepositInitialLiquidityResult | undefined
   >(undefined);
-  const [hasClearedCache, setHasClearedCache] = useState<boolean>(false);
+  const [
+    returnAllOwnedObjectsAndSuiToUserResult,
+    setReturnAllOwnedObjectsAndSuiToUserResult,
+  ] = useState<ReturnAllOwnedObjectsAndSuiToUserResult | undefined>(undefined);
+
+  const currentFlowDigests = useMemo(
+    () =>
+      [
+        fundKeypairResult?.res.digest,
+        ...(bTokensAndBankIds ?? [])
+          .filter((x) => !!x && "createBankRes" in x)
+          .flatMap((x) => [
+            x.createBTokenResult.res.digest,
+            x.createBankRes.digest,
+          ]),
+        createLpTokenResult?.res.digest,
+        createPoolResult?.res.digest,
+      ].filter(Boolean) as string[],
+    [
+      fundKeypairResult,
+      bTokensAndBankIds,
+      createLpTokenResult,
+      createPoolResult,
+    ],
+  );
 
   // CoinTypes
   const [coinTypes, setCoinTypes] = useState<[string, string]>(["", ""]);
@@ -146,8 +187,6 @@ export default function CreatePoolCard() {
   >(undefined);
 
   const onValueChange = (_value: string, index: number, coinType?: string) => {
-    console.log("onValueChange - _value:", _value, "index:", index);
-
     const formattedValue = formatTextInputValue(
       _value,
       (coinType ?? coinTypes[index])
@@ -160,7 +199,7 @@ export default function CreatePoolCard() {
       index === 0 ? values[1] : formattedValue,
     ];
     setValues(newValues);
-    setLastActiveInputIndex(index);
+    if (formattedValue !== "") setLastActiveInputIndex(index);
   };
 
   // Values - max
@@ -263,15 +302,12 @@ export default function CreatePoolCard() {
     ],
   );
 
-  const getQuotePrice = useCallback(
-    (coinType: string) => appData.coinTypeOracleInfoPriceMap[coinType]?.price,
-    [appData.coinTypeOracleInfoPriceMap],
-  );
-
   const quoteTokens = useMemo(
     () =>
-      baseTokens.filter((token) => getQuotePrice(token.coinType) !== undefined),
-    [baseTokens, getQuotePrice],
+      baseTokens.filter(
+        (token) => getAvgPoolPrice(appData.pools, token.coinType) !== undefined,
+      ),
+    [baseTokens, appData.pools],
   );
 
   const onSelectToken = (token: Token, index: number) => {
@@ -298,7 +334,7 @@ export default function CreatePoolCard() {
 
     setTimeout(() => {
       document.getElementById(getCoinInputId(newCoinTypes[index]))?.focus();
-    }, 250);
+    }, 500);
   };
 
   // Amplifier
@@ -353,7 +389,7 @@ export default function CreatePoolCard() {
     )
       return undefined;
 
-    const quotePrice = getQuotePrice(coinTypes[1])!;
+    const quotePrice = getAvgPoolPrice(appData.pools, coinTypes[1])!;
     const tokenInitialPriceQuote = tokenInitialPriceUsd.div(quotePrice);
 
     return computeOptimalOffset(
@@ -371,7 +407,7 @@ export default function CreatePoolCard() {
     coinTypes,
     values,
     tokenInitialPriceUsd,
-    getQuotePrice,
+    appData.pools,
     balancesCoinMetadataMap,
   ]);
 
@@ -411,10 +447,12 @@ export default function CreatePoolCard() {
     // Progress
     setHasFailed(false);
 
+    setKeypair(undefined);
+    setFundKeypairResult(undefined);
     setBTokensAndBankIds([undefined, undefined]);
     setCreateLpTokenResult(undefined);
     setCreatePoolResult(undefined);
-    setHasClearedCache(false);
+    setReturnAllOwnedObjectsAndSuiToUserResult(undefined);
 
     // Pool
     setCoinTypes(["", ""]);
@@ -440,7 +478,9 @@ export default function CreatePoolCard() {
         title: hasFailed ? "Retry" : "Create pool and deposit",
       };
     }
-    if (hasClearedCache) return { isDisabled: true, isSuccess: true };
+    if (hasFailed) return { isDisabled: false, title: "Retry" };
+    if (!!returnAllOwnedObjectsAndSuiToUserResult)
+      return { isDisabled: true, isSuccess: true };
 
     if (coinTypes.some((coinType) => coinType === ""))
       return { isDisabled: true, title: "Select tokens" };
@@ -474,26 +514,35 @@ export default function CreatePoolCard() {
         amplifier,
       )
     )
-      return {
-        isDisabled: true,
-        title: "Pool already exists",
-      };
+      return { isDisabled: true, title: "Pool already exists" };
 
     //
+
+    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(REQUIRED_SUI_AMOUNT))
+      return {
+        isDisabled: true,
+        title: `${formatToken(REQUIRED_SUI_AMOUNT, {
+          dp: appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE].decimals,
+          trimTrailingZeros: true,
+        })} SUI should be saved for gas`,
+      };
 
     for (let i = 0; i < coinTypes.length; i++) {
       const coinType = coinTypes[i];
       const coinMetadata = balancesCoinMetadataMap![coinType];
 
-      if (getBalance(coinType).lt(values[i]))
+      if (
+        getBalance(coinType).lt(
+          new BigNumber(values[i]).plus(
+            isSui(coinType) ? REQUIRED_SUI_AMOUNT : 0,
+          ),
+        )
+      )
         return {
           isDisabled: true,
           title: `Insufficient ${coinMetadata.symbol}`,
         };
     }
-
-    // Failed
-    if (hasFailed) return { isDisabled: false, title: "Retry" };
 
     return {
       isDisabled: false,
@@ -501,12 +550,14 @@ export default function CreatePoolCard() {
     };
   })();
 
+  const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const onSubmitClick = async () => {
     if (submitButtonState.isDisabled) return;
     if (!quoterId || !feeTierPercent) return;
 
     try {
-      if (!address) throw new Error("Wallet not connected");
+      if (!account?.publicKey || !address)
+        throw new Error("Wallet not connected");
 
       setIsSubmitting(true);
 
@@ -519,7 +570,48 @@ export default function CreatePoolCard() {
 
       await initializeCoinCreation();
 
-      // 1) Get/create bTokens and banks (2 transactions for each missing bToken+bank pair = 0, 2, or 4 transactions in total)
+      // 1) Generate and fund keypair
+      // 1.1) Generate
+      let _keypair = keypair;
+      if (_keypair === undefined) {
+        _keypair = (await createKeypair(account, signPersonalMessage)).keypair;
+        setKeypair(_keypair);
+      }
+
+      // 1.2) Check
+      await checkIfKeypairCanBeUsed(currentFlowDigests, _keypair, suiClient);
+
+      // 1.3) Fund
+      let _fundKeypairResult = fundKeypairResult;
+      if (_fundKeypairResult === undefined) {
+        _fundKeypairResult = await fundKeypair(
+          [
+            ...tokens.map((token, index) => ({
+              ...token,
+              amount: new BigNumber(values[index]).plus(
+                isSui(token.coinType) ? REQUIRED_SUI_AMOUNT : 0,
+              ),
+            })),
+            ...(tokens.some((token) => isSui(token.coinType))
+              ? []
+              : [
+                  {
+                    ...getToken(
+                      NORMALIZED_SUI_COINTYPE,
+                      appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE],
+                    ),
+                    amount: REQUIRED_SUI_AMOUNT,
+                  },
+                ]),
+          ],
+          _keypair,
+          signExecuteAndWaitForTransaction,
+        );
+        setFundKeypairResult(_fundKeypairResult);
+      }
+
+      // 2) Create and send keypair transactions
+      // 2.1) Get/create bTokens and banks (2 transactions for each missing bToken+bank pair = 0, 2, or 4 transactions in total)
       const _bTokensAndBankIds = bTokensAndBankIds;
       if (
         _bTokensAndBankIds.some(
@@ -542,8 +634,8 @@ export default function CreatePoolCard() {
                     tokens[index],
                     steammClient,
                     appData,
-                    address,
-                    signExecuteAndWaitForTransaction,
+                    _keypair,
+                    suiClient,
                   );
                   await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -578,19 +670,19 @@ export default function CreatePoolCard() {
         (bTokenAndBankId) => bTokenAndBankId!.bankId,
       ) as [string, string];
 
-      // 2) Create LP token (1 transaction)
+      // 2.2) Create LP token (1 transaction)
       let _createLpTokenResult = createLpTokenResult;
       if (_createLpTokenResult === undefined) {
         _createLpTokenResult = await createLpToken(
           bTokens,
-          address,
-          signExecuteAndWaitForTransaction,
+          _keypair,
+          suiClient,
         );
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setCreateLpTokenResult(_createLpTokenResult);
       }
 
-      // 3) Create pool and deposit initial liquidity (1 transaction)
+      // 2.3) Create pool and deposit initial liquidity (1 transaction)
       let _createPoolResult = createPoolResult;
       if (_createPoolResult === undefined) {
         _createPoolResult = await createPoolAndDepositInitialLiquidity(
@@ -606,25 +698,26 @@ export default function CreatePoolCard() {
           false,
           steammClient,
           appData,
-          address,
-          signExecuteAndWaitForTransaction,
+          _keypair,
+          suiClient,
         );
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setCreatePoolResult(_createPoolResult);
       }
 
-      const _hasClearedCache = hasClearedCache;
-      if (!_hasClearedCache) {
-        await fetch(`${API_URL}/steamm/clear-cache`);
-
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        setHasClearedCache(true);
+      // 2.4) Return objects and unused SUI to user
+      let _returnAllOwnedObjectsAndSuiToUserResult =
+        returnAllOwnedObjectsAndSuiToUserResult;
+      if (_returnAllOwnedObjectsAndSuiToUserResult === undefined) {
+        _returnAllOwnedObjectsAndSuiToUserResult =
+          await returnAllOwnedObjectsAndSuiToUser(address, _keypair, suiClient);
+        setReturnAllOwnedObjectsAndSuiToUserResult(
+          _returnAllOwnedObjectsAndSuiToUserResult,
+        );
       }
 
-      const txUrl = explorer.buildTxUrl(_createPoolResult.res.digest);
-      showSuccessTxnToast(
-        `Created ${formatPair(tokens.map((token) => token.symbol))} ${QUOTER_ID_NAME_MAP[quoterId]} ${formatFeeTier(new BigNumber(feeTierPercent))} pool`,
-        txUrl,
+      showSuccessToast(
+        `Created ${formatPair(tokens.map((token) => token.symbol))} ${QUOTER_ID_NAME_MAP[useCpmmOffset ? QuoterId.V_CPMM : quoterId]} ${formatFeeTier(new BigNumber(feeTierPercent))} pool`,
         { description: "Deposited initial liquidity" },
       );
     } catch (err) {
@@ -638,16 +731,20 @@ export default function CreatePoolCard() {
     }
   };
 
-  const isStepsDialogOpen = isSubmitting || hasClearedCache;
+  const isStepsDialogOpen =
+    isSubmitting || !!returnAllOwnedObjectsAndSuiToUserResult;
 
   return (
     <>
       <CreatePoolStepsDialog
         isOpen={isStepsDialogOpen}
+        fundKeypairResult={fundKeypairResult}
         bTokensAndBankIds={bTokensAndBankIds}
         createdLpToken={createLpTokenResult}
         createPoolResult={createPoolResult}
-        hasClearedCache={hasClearedCache}
+        returnAllOwnedObjectsAndSuiToUserResult={
+          returnAllOwnedObjectsAndSuiToUserResult
+        }
         reset={reset}
       />
 
@@ -793,7 +890,14 @@ export default function CreatePoolCard() {
                       : "--"
                     : coinTypes.every((coinType) => coinType !== "") &&
                         tokenInitialPriceUsd !== undefined
-                      ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${formatToken(tokenInitialPriceUsd.div(getQuotePrice(coinTypes[1])), { dp: balancesCoinMetadataMap![coinTypes[1]].decimals })} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
+                      ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${formatToken(
+                          tokenInitialPriceUsd.div(
+                            getAvgPoolPrice(appData.pools, coinTypes[1])!,
+                          ),
+                          {
+                            dp: balancesCoinMetadataMap![coinTypes[1]].decimals,
+                          },
+                        )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
                       : "--"}
                 </p>
 
@@ -1025,7 +1129,7 @@ export default function CreatePoolCard() {
             onClick={onSubmitClick}
           />
 
-          {hasFailed && !hasClearedCache && (
+          {hasFailed && !returnAllOwnedObjectsAndSuiToUserResult && (
             <button
               className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
               onClick={reset}

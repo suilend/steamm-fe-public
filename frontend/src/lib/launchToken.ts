@@ -1,16 +1,17 @@
-import { SuiTransactionBlockResponse } from "@mysten/sui/client";
+import { SuiClient, SuiTransactionBlockResponse } from "@mysten/sui/client";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 
 import { QuoterId } from "@suilend/steamm-sdk";
 import { formatNumber } from "@suilend/sui-fe";
-import { WalletContext } from "@suilend/sui-fe-next";
 
 import {
   CreateCoinResult,
   createCoin,
   generate_bytecode,
 } from "@/lib/createCoin";
+import { keypairSignExecuteAndWaitForTransaction } from "@/lib/keypair";
 
 // Token
 export const LAUNCH_TOKEN_PACKAGE_ID =
@@ -145,8 +146,8 @@ export const createToken = async (
   description: string,
   iconUrl: string,
   decimals: number,
-  address: string,
-  signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
+  keypair: Ed25519Keypair,
+  suiClient: SuiClient,
 ): Promise<CreateCoinResult> => {
   console.log("[createToken] Creating token");
 
@@ -161,8 +162,8 @@ export const createToken = async (
       decimals,
       { isLaunchToken: true },
     ),
-    address,
-    signExecuteAndWaitForTransaction,
+    keypair,
+    suiClient,
     { isLaunchToken: true },
   );
 
@@ -175,8 +176,8 @@ export const mintToken = async (
   supply: number,
   decimals: number,
   nonMintable: boolean,
-  address: string,
-  signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
+  keypair: Ed25519Keypair,
+  suiClient: SuiClient,
 ): Promise<MintTokenResult> => {
   console.log("[mintToken] Minting");
 
@@ -188,7 +189,9 @@ export const mintToken = async (
   );
 
   const transaction = new Transaction();
+  transaction.setSender(keypair.toSuiAddress());
 
+  // Mint
   const mintedCoin = transaction.moveCall({
     target: `${LAUNCH_TOKEN_PACKAGE_ID}::token_emitter::mint`,
     arguments: [
@@ -199,7 +202,7 @@ export const mintToken = async (
   });
 
   // Transfer the minted coins to the creator's address
-  transaction.transferObjects([mintedCoin], address);
+  transaction.transferObjects([mintedCoin], keypair.toSuiAddress());
 
   // Make the token non-mintable
   transaction.transferObjects(
@@ -207,10 +210,14 @@ export const mintToken = async (
       transaction.object(createTokenResult.treasuryCapId),
       transaction.object(createTokenResult.upgradeCapId),
     ],
-    nonMintable ? BURN_ADDRESS : address,
+    nonMintable ? BURN_ADDRESS : keypair.toSuiAddress(),
   );
 
-  const res = await signExecuteAndWaitForTransaction(transaction);
+  const res = await keypairSignExecuteAndWaitForTransaction(
+    transaction,
+    keypair,
+    suiClient,
+  );
 
   return { res };
 };

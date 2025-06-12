@@ -1,12 +1,14 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { useSignPersonalMessage } from "@mysten/dapp-kit";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { ADMIN_ADDRESS, computeOptimalOffset } from "@suilend/steamm-sdk";
 import {
-  API_URL,
+  NORMALIZED_SUI_COINTYPE,
   Token,
   formatInteger,
   formatNumber,
@@ -18,6 +20,7 @@ import {
 } from "@suilend/sui-fe";
 import {
   showErrorToast,
+  showSuccessToast,
   useSettingsContext,
   useWalletContext,
 } from "@suilend/sui-fe-next";
@@ -49,6 +52,14 @@ import {
   formatTextInputValue,
 } from "@/lib/format";
 import {
+  FundKeypairResult,
+  ReturnAllOwnedObjectsAndSuiToUserResult,
+  checkIfKeypairCanBeUsed,
+  createKeypair,
+  fundKeypair,
+  returnAllOwnedObjectsAndSuiToUser,
+} from "@/lib/keypair";
+import {
   BLACKLISTED_WORDS,
   BROWSE_MAX_FILE_SIZE_BYTES,
   DEFAULT_TOKEN_DECIMALS,
@@ -61,12 +72,15 @@ import {
   createToken,
   mintToken,
 } from "@/lib/launchToken";
-import { showSuccessTxnToast } from "@/lib/toasts";
+import { getAvgPoolPrice } from "@/lib/pools";
 import { cn } from "@/lib/utils";
 
+const REQUIRED_SUI_AMOUNT = new BigNumber(0.2);
+
 export default function LaunchTokenCard() {
-  const { explorer, suiClient } = useSettingsContext();
-  const { address, signExecuteAndWaitForTransaction } = useWalletContext();
+  const { suiClient } = useSettingsContext();
+  const { account, address, signExecuteAndWaitForTransaction } =
+    useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
@@ -79,9 +93,13 @@ export default function LaunchTokenCard() {
     [address, flags?.steammCreatePoolWhitelist],
   );
 
-  // State - progress
+  // Progress
   const [hasFailed, setHasFailed] = useState<boolean>(false);
 
+  const [keypair, setKeypair] = useState<Ed25519Keypair | undefined>(undefined);
+  const [fundKeypairResult, setFundKeypairResult] = useState<
+    FundKeypairResult | undefined
+  >(undefined);
   const [createTokenResult, setCreateTokenResult] = useState<
     CreateCoinResult | undefined
   >(undefined);
@@ -109,45 +127,122 @@ export default function LaunchTokenCard() {
   const [createPoolResult, setCreatePoolResult] = useState<
     CreatePoolAndDepositInitialLiquidityResult | undefined
   >(undefined);
-  const [hasClearedCache, setHasClearedCache] = useState<boolean>(false);
+  const [
+    returnAllOwnedObjectsAndSuiToUserResult,
+    setReturnAllOwnedObjectsAndSuiToUserResult,
+  ] = useState<ReturnAllOwnedObjectsAndSuiToUserResult | undefined>(undefined);
 
-  // State - token
-  const [showOptional, setShowOptional] = useState<boolean>(false);
+  const currentFlowDigests = useMemo(
+    () =>
+      [
+        fundKeypairResult?.res.digest,
+        createTokenResult?.res.digest,
+        mintTokenResult?.res.digest,
+        ...(bTokensAndBankIds ?? [])
+          .filter((x) => !!x && "createBankRes" in x)
+          .flatMap((x) => [
+            x.createBTokenResult.res.digest,
+            x.createBankRes.digest,
+          ]),
+        createLpTokenResult?.res.digest,
+        createPoolResult?.res.digest,
+      ].filter(Boolean) as string[],
+    [
+      fundKeypairResult,
+      createTokenResult,
+      mintTokenResult,
+      bTokensAndBankIds,
+      createLpTokenResult,
+      createPoolResult,
+    ],
+  );
 
+  // State
   const [name, setName] = useState<string>("");
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const [symbol, setSymbol] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
 
   const [iconUrl, setIconUrl] = useState<string>("");
   const [iconFilename, setIconFilename] = useState<string>("");
   const [iconFileSize, setIconFileSize] = useState<string>("");
 
-  // State - token - decimals
+  // State - quote asset
+  const quoteTokens = useMemo(
+    () =>
+      Object.entries(balancesCoinMetadataMap ?? {})
+        .filter(([coinType]) => getBalance(coinType).gt(0))
+        .filter(
+          ([coinType]) =>
+            getAvgPoolPrice(appData.pools, coinType) !== undefined,
+        )
+        .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
+        .sort(
+          (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
+        ),
+    [balancesCoinMetadataMap, getBalance, appData.pools],
+  );
+
+  const [quoteAssetCoinType, setQuoteAssetCoinType] = useState<
+    string | undefined
+  >(undefined);
+  const onSelectQuoteToken = (token: Token) => {
+    setQuoteAssetCoinType(token.coinType);
+
+    if (token.decimals < decimals) {
+      setDecimalsRaw(token.decimals.toString());
+      setDecimals(token.decimals);
+    }
+  };
+
+  const quoteToken =
+    quoteAssetCoinType !== undefined
+      ? getToken(
+          quoteAssetCoinType,
+          balancesCoinMetadataMap![quoteAssetCoinType],
+        )
+      : undefined;
+
+  // State - optional
+  const [showOptional, setShowOptional] = useState<boolean>(false);
+
+  // State - optional - description
+  const [description, setDescription] = useState<string>("");
+
+  // State - optional - decimals
   const [decimalsRaw, setDecimalsRaw] = useState<string>(
     DEFAULT_TOKEN_DECIMALS.toString(),
   );
   const [decimals, setDecimals] = useState<number>(DEFAULT_TOKEN_DECIMALS);
 
-  const onDecimalsChange = useCallback((value: string) => {
-    const formattedValue = formatTextInputValue(value, 0);
-    setDecimalsRaw(formattedValue);
+  const onDecimalsChange = useCallback(
+    (value: string) => {
+      const formattedValue = formatTextInputValue(value, 0);
+      setDecimalsRaw(formattedValue);
 
-    try {
-      if (formattedValue === "") return;
-      if (isNaN(+formattedValue)) throw new Error("Decimals must be a number");
-      if (+formattedValue < 1 || +formattedValue > 9)
-        throw new Error("Decimals must be between 1 and 9");
+      try {
+        if (formattedValue === "") return;
+        if (isNaN(+formattedValue))
+          throw new Error("Decimals must be a number");
+        if (+formattedValue < 0 || +formattedValue > 9)
+          throw new Error("Decimals must be between 0 and 9");
+        if (quoteToken && +formattedValue > quoteToken.decimals)
+          throw new Error(
+            quoteToken.decimals === 0
+              ? `Decimals must be ${quoteToken.decimals}`
+              : `Decimals must be ${quoteToken.decimals} or less`,
+          );
 
-      setDecimals(+formattedValue);
-    } catch (err) {
-      console.error(err);
-      showErrorToast("Invalid decimals", err as Error);
-    }
-  }, []);
+        setDecimals(+formattedValue);
+      } catch (err) {
+        console.error(err);
+        showErrorToast("Invalid decimals", err as Error);
+      }
+    },
+    [quoteToken],
+  );
 
-  // State - token - supply
+  // State - optional - supply
   const [supplyRaw, setSupplyRaw] = useState<string>(
     DEFAULT_TOKEN_SUPPLY.toString(),
   );
@@ -175,7 +270,7 @@ export default function LaunchTokenCard() {
     [decimals],
   );
 
-  // State - token - deposited supply %
+  // State - optional - deposited supply %
   const [depositedSupplyPercentRaw, setDepositedSupplyPercentRaw] =
     useState<string>(DEPOSITED_TOKEN_PERCENT.toString());
   const [depositedSupplyPercent, setDepositedSupplyPercent] = useState<number>(
@@ -212,7 +307,7 @@ export default function LaunchTokenCard() {
     }
   }, []);
 
-  // State - token - initial FDV
+  // State - optional - initial FDV
   const [initialFdvUsdRaw, setInitialFdvUsdRaw] = useState<string>(
     INITIAL_TOKEN_FDV_USD.toString(),
   );
@@ -228,9 +323,9 @@ export default function LaunchTokenCard() {
       if (formattedValue === "") return;
       if (isNaN(+formattedValue))
         throw new Error("Initial FDV must be a number");
-      if (new BigNumber(formattedValue).lt(1))
+      if (new BigNumber(formattedValue).lt(1000))
         throw new Error(
-          `Initial FDV must be at least ${formatUsd(new BigNumber(1), {
+          `Initial FDV must be at least ${formatUsd(new BigNumber(10 ** 3), {
             dp: 0,
           })}`,
         );
@@ -262,46 +357,17 @@ export default function LaunchTokenCard() {
     [initialPoolTvlUsd, depositedSupply],
   );
 
-  // State - token - non-mintable
+  // State - optional - non-mintable
   const [nonMintable, setNonMintable] = useState<boolean>(true);
 
-  // State - pool - quote asset
-  const getQuotePrice = useCallback(
-    (coinType: string) => appData.coinTypeOracleInfoPriceMap[coinType]?.price,
-    [appData.coinTypeOracleInfoPriceMap],
-  );
-
-  const quoteTokens = useMemo(
-    () =>
-      Object.entries(balancesCoinMetadataMap ?? {})
-        .filter(([coinType]) => getQuotePrice(coinType) !== undefined)
-        .filter(([coinType]) => getBalance(coinType).gt(0))
-        .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
-        .sort(
-          (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
-        ),
-    [balancesCoinMetadataMap, getQuotePrice, getBalance],
-  );
-
-  const [quoteAssetCoinType, setQuoteAssetCoinType] = useState<
-    string | undefined
-  >(undefined);
-  const quoteToken =
-    quoteAssetCoinType !== undefined
-      ? getToken(
-          quoteAssetCoinType,
-          balancesCoinMetadataMap![quoteAssetCoinType],
-        )
-      : undefined;
-
-  // State - pool - burn LP tokens
+  // State - optional - burn LP tokens
   const [burnLpTokens, setBurnLpTokens] = useState<boolean>(false);
 
   // CPMM offset
   const cpmmOffset: bigint | undefined = useMemo(() => {
     if (quoteToken === undefined) return undefined;
 
-    const quotePrice = getQuotePrice(quoteToken.coinType)!;
+    const quotePrice = getAvgPoolPrice(appData.pools, quoteToken.coinType)!;
     const tokenInitialPriceQuote = tokenInitialPriceUsd.div(quotePrice);
 
     return computeOptimalOffset(
@@ -317,7 +383,7 @@ export default function LaunchTokenCard() {
     );
   }, [
     quoteToken,
-    getQuotePrice,
+    appData.pools,
     tokenInitialPriceUsd,
     depositedSupply,
     decimals,
@@ -328,39 +394,47 @@ export default function LaunchTokenCard() {
     // Progress
     setHasFailed(false);
 
+    setKeypair(undefined);
+    setFundKeypairResult(undefined);
     setCreateTokenResult(undefined);
     setMintTokenResult(undefined);
     setBTokensAndBankIds([undefined, undefined]);
     setCreateLpTokenResult(undefined);
     setCreatePoolResult(undefined);
-    setHasClearedCache(false);
+    setReturnAllOwnedObjectsAndSuiToUserResult(undefined);
 
-    // Token
-    setShowOptional(false);
-
+    // State
     setName("");
     setTimeout(() => nameInputRef.current?.focus(), 100); // After dialog is closed
 
     setSymbol("");
-    setDescription("");
 
     setIconUrl("");
     setIconFilename("");
     setIconFileSize("");
     (document.getElementById("icon-upload") as HTMLInputElement).value = "";
 
+    setQuoteAssetCoinType(undefined);
+
+    // State - optional
+    setShowOptional(false);
+
+    setDescription("");
+
     setDecimalsRaw(DEFAULT_TOKEN_DECIMALS.toString());
     setDecimals(DEFAULT_TOKEN_DECIMALS);
+
     setSupplyRaw(DEFAULT_TOKEN_SUPPLY.toString());
     setSupply(DEFAULT_TOKEN_SUPPLY);
+
     setDepositedSupplyPercentRaw(DEPOSITED_TOKEN_PERCENT.toString());
     setDepositedSupplyPercent(DEPOSITED_TOKEN_PERCENT);
+
     setInitialFdvUsdRaw(INITIAL_TOKEN_FDV_USD.toString());
     setInitialFdvUsd(INITIAL_TOKEN_FDV_USD);
+
     setNonMintable(true);
 
-    // Pool
-    setQuoteAssetCoinType(undefined);
     setBurnLpTokens(false);
   };
 
@@ -374,7 +448,9 @@ export default function LaunchTokenCard() {
         title: hasFailed ? "Retry" : "Launch token & create pool",
       };
     }
-    if (hasClearedCache) return { isDisabled: true, isSuccess: true };
+    if (hasFailed) return { isDisabled: false, title: "Retry" };
+    if (!!returnAllOwnedObjectsAndSuiToUserResult)
+      return { isDisabled: true, isSuccess: true };
 
     // Name
     if (name === "") return { isDisabled: true, title: "Enter a name" };
@@ -417,15 +493,19 @@ export default function LaunchTokenCard() {
       };
     // Don't enforce symbol uniqueness
 
+    // Icon
+    if (iconUrl === "") return { isDisabled: true, title: "Upload an icon" };
+
+    // Quote asset
+    if (quoteAssetCoinType === undefined)
+      return { isDisabled: true, title: "Select a quote asset" };
+
     // Description
     if (description.length > 256)
       return {
         isDisabled: true,
         title: "Description must be 256 characters or less",
       };
-
-    // Icon
-    if (iconUrl === "") return { isDisabled: true, title: "Upload an icon" };
 
     // Decimals
     if (decimalsRaw === "")
@@ -438,13 +518,20 @@ export default function LaunchTokenCard() {
     if (depositedSupplyPercentRaw === "")
       return { isDisabled: true, title: "Enter deposited supply %" };
 
+    // Initial FDV
+    if (initialFdvUsdRaw === "")
+      return { isDisabled: true, title: "Enter initial FDV" };
+
     //
 
-    if (quoteAssetCoinType === undefined)
-      return { isDisabled: true, title: "Select a quote asset" };
-
-    // Failed
-    if (hasFailed) return { isDisabled: false, title: "Retry" };
+    if (getBalance(NORMALIZED_SUI_COINTYPE).lt(REQUIRED_SUI_AMOUNT))
+      return {
+        isDisabled: true,
+        title: `${formatToken(REQUIRED_SUI_AMOUNT, {
+          dp: appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE].decimals,
+          trimTrailingZeros: true,
+        })} SUI should be saved for gas`,
+      };
 
     return {
       isDisabled: false,
@@ -452,12 +539,14 @@ export default function LaunchTokenCard() {
     };
   })();
 
+  const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const onSubmitClick = async () => {
     if (submitButtonState.isDisabled) return;
     if (!quoteToken) return; // Should not happen
 
     try {
-      if (!address) throw new Error("Wallet not connected");
+      if (!account?.publicKey || !address)
+        throw new Error("Wallet not connected");
 
       setIsSubmitting(true);
 
@@ -466,7 +555,38 @@ export default function LaunchTokenCard() {
 
       await initializeCoinCreation();
 
-      // 1) Create token
+      // 1) Generate and fund keypair
+      // 1.1) Generate
+      let _keypair = keypair;
+      if (_keypair === undefined) {
+        _keypair = (await createKeypair(account, signPersonalMessage)).keypair;
+        setKeypair(_keypair);
+      }
+
+      // 1.2) Check
+      await checkIfKeypairCanBeUsed(currentFlowDigests, _keypair, suiClient);
+
+      // 1.3) Fund
+      let _fundKeypairResult = fundKeypairResult;
+      if (_fundKeypairResult === undefined) {
+        _fundKeypairResult = await fundKeypair(
+          [
+            {
+              ...getToken(
+                NORMALIZED_SUI_COINTYPE,
+                appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE],
+              ),
+              amount: REQUIRED_SUI_AMOUNT,
+            },
+          ],
+          _keypair,
+          signExecuteAndWaitForTransaction,
+        );
+        setFundKeypairResult(_fundKeypairResult);
+      }
+
+      // 2) Create and send keypair transactions
+      // 2.1) Create token
       let _createTokenResult = createTokenResult;
       if (_createTokenResult === undefined) {
         _createTokenResult = await createToken(
@@ -475,8 +595,8 @@ export default function LaunchTokenCard() {
           description,
           iconUrl,
           decimals,
-          address,
-          signExecuteAndWaitForTransaction,
+          _keypair,
+          suiClient,
         );
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setCreateTokenResult(_createTokenResult);
@@ -492,7 +612,7 @@ export default function LaunchTokenCard() {
       });
       const tokens = [createdToken, quoteToken] as [Token, Token];
 
-      // 2) Mint token
+      // 2.2) Mint token
       let _mintTokenResult = mintTokenResult;
       if (_mintTokenResult === undefined) {
         _mintTokenResult = await mintToken(
@@ -500,14 +620,14 @@ export default function LaunchTokenCard() {
           supply,
           decimals,
           nonMintable,
-          address,
-          signExecuteAndWaitForTransaction,
+          _keypair,
+          suiClient,
         );
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setMintTokenResult(_mintTokenResult);
       }
 
-      // 3) Get/create bTokens and banks (2 transactions for each missing bToken+bank pair = 0, 2, or 4 transactions in total)
+      // 2.3) Get/create bTokens and banks (2 transactions for each missing bToken+bank pair = 0, 2, or 4 transactions in total)
       const _bTokensAndBankIds = bTokensAndBankIds;
       if (
         _bTokensAndBankIds.some(
@@ -530,8 +650,8 @@ export default function LaunchTokenCard() {
                     tokens[index],
                     steammClient,
                     appData,
-                    address,
-                    signExecuteAndWaitForTransaction,
+                    _keypair,
+                    suiClient,
                   );
                   await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -566,19 +686,19 @@ export default function LaunchTokenCard() {
         (bTokenAndBankId) => bTokenAndBankId!.bankId,
       ) as [string, string];
 
-      // 4) Create LP token (1 transaction)
+      // 2.4) Create LP token (1 transaction)
       let _createLpTokenResult = createLpTokenResult;
       if (_createLpTokenResult === undefined) {
         _createLpTokenResult = await createLpToken(
           bTokens,
-          address,
-          signExecuteAndWaitForTransaction,
+          _keypair,
+          suiClient,
         );
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setCreateLpTokenResult(_createLpTokenResult);
       }
 
-      // 5) Create pool and deposit initial liquidity (1 transaction)
+      // 2.5) Create pool and deposit initial liquidity (1 transaction)
       const values = [
         new BigNumber(supply)
           .times(depositedSupplyPercent)
@@ -602,23 +722,25 @@ export default function LaunchTokenCard() {
           burnLpTokens,
           steammClient,
           appData,
-          address,
-          signExecuteAndWaitForTransaction,
+          _keypair,
+          suiClient,
         );
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setCreatePoolResult(_createPoolResult);
       }
 
-      const _hasClearedCache = hasClearedCache;
-      if (!_hasClearedCache) {
-        await fetch(`${API_URL}/steamm/clear-cache`);
-
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        setHasClearedCache(true);
+      // 2.6) Return objects and unused SUI to user
+      let _returnAllOwnedObjectsAndSuiToUserResult =
+        returnAllOwnedObjectsAndSuiToUserResult;
+      if (_returnAllOwnedObjectsAndSuiToUserResult === undefined) {
+        _returnAllOwnedObjectsAndSuiToUserResult =
+          await returnAllOwnedObjectsAndSuiToUser(address, _keypair, suiClient);
+        setReturnAllOwnedObjectsAndSuiToUserResult(
+          _returnAllOwnedObjectsAndSuiToUserResult,
+        );
       }
 
-      const txUrl = explorer.buildTxUrl(_createPoolResult.res.digest);
-      showSuccessTxnToast(`Launched ${symbol}`, txUrl, {
+      showSuccessToast(`Launched ${symbol}`, {
         description: `Created ${formatPair(tokens.map((token) => token.symbol))} pool and deposited initial liquidity`,
       });
     } catch (err) {
@@ -632,18 +754,22 @@ export default function LaunchTokenCard() {
     }
   };
 
-  const isStepsDialogOpen = isSubmitting || hasClearedCache;
+  const isStepsDialogOpen =
+    isSubmitting || !!returnAllOwnedObjectsAndSuiToUserResult;
 
   return (
     <>
       <LaunchTokenStepsDialog
         isOpen={isStepsDialogOpen}
+        fundKeypairResult={fundKeypairResult}
         createTokenResult={createTokenResult}
         mintTokenResult={mintTokenResult}
         bTokensAndBankIds={bTokensAndBankIds}
         createdLpToken={createLpTokenResult}
         createPoolResult={createPoolResult}
-        hasClearedCache={hasClearedCache}
+        returnAllOwnedObjectsAndSuiToUserResult={
+          returnAllOwnedObjectsAndSuiToUserResult
+        }
         reset={reset}
       />
 
@@ -714,7 +840,7 @@ export default function LaunchTokenCard() {
               triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
               token={quoteToken}
               tokens={quoteTokens}
-              onSelectToken={(token) => setQuoteAssetCoinType(token.coinType)}
+              onSelectToken={(token) => onSelectQuoteToken(token)}
             />
           </div>
 
@@ -881,10 +1007,11 @@ export default function LaunchTokenCard() {
               quoteToken !== undefined ? (
                 <div className="flex flex-row items-center gap-2">
                   <p className="text-p2 text-foreground">
-                    1 {symbol} =
+                    1 {symbol}
+                    {" = "}
                     {formatToken(
                       tokenInitialPriceUsd.div(
-                        getQuotePrice(quoteToken.coinType),
+                        getAvgPoolPrice(appData.pools, quoteToken.coinType)!,
                       ),
                       {
                         dp: balancesCoinMetadataMap![quoteToken.coinType]
@@ -901,6 +1028,13 @@ export default function LaunchTokenCard() {
                 <p className="text-p2 text-foreground">--</p>
               )}
             </Parameter>
+
+            {/* Initial FDV */}
+            <Parameter label="Initial FDV" isHorizontal>
+              <p className="text-p2 text-foreground">
+                {formatUsd(new BigNumber(initialFdvUsd))}
+              </p>
+            </Parameter>
           </div>
         </div>
 
@@ -910,7 +1044,7 @@ export default function LaunchTokenCard() {
             onClick={onSubmitClick}
           />
 
-          {hasFailed && !hasClearedCache && (
+          {hasFailed && !returnAllOwnedObjectsAndSuiToUserResult && (
             <button
               className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
               onClick={reset}

@@ -803,13 +803,10 @@ export class SteammSDK {
           {
             coinMetadataMap,
             oracleIndexOracleInfoPriceMap,
-            coinTypeOracleInfoPriceMap,
             bTokenTypeCoinTypeMap,
             bankMap,
           },
-          poolObj.poolInfo,
-          poolObj.pool,
-          poolObj.redeemQuote,
+          poolObj,
         ),
       )
       .filter(Boolean) as ParsedPool[];

@@ -124,7 +124,7 @@ export default function PoolChartCard() {
         formatCategory={(category) => category}
       />
 
-      <div className="absolute right-5 top-5 z-[2] flex flex-row gap-1">
+      <div className="absolute left-5 top-5 z-[2] flex h-[21px] flex-row items-center gap-1 bg-background sm:left-auto sm:right-5">
         {Object.values(ChartStat).map((chartStat) => (
           <button
             key={chartStat}
@@ -138,7 +138,7 @@ export default function PoolChartCard() {
           >
             <p
               className={cn(
-                "!text-p3 transition-colors",
+                "!text-p2 transition-colors sm:!text-p3",
                 selectedChartStat === chartStat
                   ? "text-foreground"
                   : "text-secondary-foreground group-hover:text-foreground",

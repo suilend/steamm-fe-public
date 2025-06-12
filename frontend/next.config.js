@@ -22,6 +22,7 @@ module.exports = {
       },
     ],
   },
+  devIndicators: false,
   webpack: (config) => {
     config.resolve.fallback = { fs: false };
 

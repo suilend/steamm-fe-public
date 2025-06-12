@@ -18,7 +18,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { ChartConfig, ChartType, chartStatNameMap } from "@/lib/chart";
-import { POOLS_URL } from "@/lib/navigation";
 import {
   getFilteredPoolGroups,
   getPoolGroups,
@@ -235,10 +234,10 @@ export default function PoolsPage() {
 
       <div className="flex w-full flex-col gap-8">
         {/* Stats */}
-        <div className="flex w-full flex-col rounded-md border md:flex-row md:items-stretch">
+        <div className="flex w-full flex-row items-stretch rounded-md border">
           {/* TVL */}
           <div className="flex-1">
-            <div className="w-full p-5">
+            <div className="w-full p-5 pr-3 sm:pr-5">
               <HistoricalDataChart
                 title="TVL"
                 value={
@@ -253,11 +252,11 @@ export default function PoolsPage() {
             </div>
           </div>
 
-          <Divider className="bg-border/25 md:h-auto md:w-px" />
+          <Divider className="h-auto w-px bg-border/25 max-sm:hidden" />
 
           {/* Volume */}
           <div className="flex-1">
-            <div className="relative w-full p-5">
+            <div className="relative w-full p-5 pl-3 sm:pl-5">
               <HistoricalDataChart
                 className="relative z-[1]"
                 title={rhsChartConfig.title}
@@ -270,7 +269,7 @@ export default function PoolsPage() {
                 formatCategory={(category) => category}
               />
 
-              <div className="absolute right-5 top-5 z-[2] flex flex-row gap-1">
+              <div className="absolute left-3 top-5 z-[2] flex h-[21px] flex-row items-center gap-1 bg-background sm:left-auto sm:right-5">
                 {Object.values(RhsChartStat).map((rhsChartStat) => (
                   <button
                     key={rhsChartStat}
@@ -284,7 +283,7 @@ export default function PoolsPage() {
                   >
                     <p
                       className={cn(
-                        "!text-p3 transition-colors",
+                        "!text-p2 transition-colors sm:!text-p3",
                         selectedRhsChartStat === rhsChartStat
                           ? "text-foreground"
                           : "text-secondary-foreground group-hover:text-foreground",

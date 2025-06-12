@@ -435,7 +435,11 @@ function DepositTab({ onDeposit }: DepositTabProps) {
       });
       transaction.transferObjects([depositCoinA, depositCoinB], address);
 
-      // rebalanceBanks(banks, steammClient, transaction);
+      rebalanceBanks(
+        banks.filter((b) => !isSui(b.coinType)),
+        steammClient,
+        transaction,
+      );
 
       // Stake LP tokens (if reserve exists)
       if (!!appData.suilend.lmMarket.reserveMap[pool.lpTokenType]) {
@@ -1022,7 +1026,11 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
     });
     transaction.transferObjects([coinA, coinB], address);
 
-    // rebalanceBanks(banks, steammClient, transaction);
+    rebalanceBanks(
+      banks.filter((b) => !isSui(b.coinType)),
+      steammClient,
+      transaction,
+    );
 
     return transaction;
   };
@@ -1519,7 +1527,11 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
       });
       transaction.transferObjects([coinA, coinB], address);
 
-      // rebalanceBanks(banks, steammClient, transaction);
+      rebalanceBanks(
+        banks.filter((b) => !isSui(b.coinType)),
+        steammClient,
+        transaction,
+      );
 
       const res = await signExecuteAndWaitForTransaction(transaction, {
         auction: true,

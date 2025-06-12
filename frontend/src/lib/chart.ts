@@ -12,7 +12,7 @@ export type ViewBox = {
 };
 
 export const getTooltipStyle = (width: number, viewBox: ViewBox, x: number) => {
-  const top = viewBox.top;
+  const top = viewBox.top - 10;
   let left: string | number = "auto";
   let right: string | number = "auto";
   const sideOffset = 2 * 4; // px

@@ -4,14 +4,15 @@ import init, {
 } from "@mysten/move-bytecode-template";
 import { bcs } from "@mysten/sui/bcs";
 import {
+  SuiClient,
   SuiObjectChange,
   SuiTransactionBlockResponse,
 } from "@mysten/sui/client";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
-import { WalletContext } from "@suilend/sui-fe-next";
-
+import { keypairSignExecuteAndWaitForTransaction } from "@/lib/keypair";
 import { LAUNCH_TOKEN_PACKAGE_ID } from "@/lib/launchToken";
 
 export const generate_bytecode = (
@@ -37,7 +38,7 @@ export const generate_bytecode = (
   const bytecode = Buffer.from(
     !options?.isLaunchToken
       ? "oRzrCwYAAAAKAQAMAgweAyonBFEIBVlMB6UBywEI8AJgBtADXQqtBAUMsgQoABABCwIGAhECEgITAAICAAEBBwEAAAIADAEAAQIDDAEAAQQEAgAFBQcAAAkAAQABDwUGAQACBwgJAQIDDAUBAQwDDQ0BAQwEDgoLAAUKAwQAAQQCBwQMAwICCAAHCAQAAQsCAQgAAQoCAQgFAQkAAQsBAQkAAQgABwkAAgoCCgIKAgsBAQgFBwgEAgsDAQkACwIBCQABBggEAQUBCwMBCAACCQAFDENvaW5NZXRhZGF0YQZPcHRpb24IVEVNUExBVEULVHJlYXN1cnlDYXAJVHhDb250ZXh0A1VybARjb2luD2NyZWF0ZV9jdXJyZW5jeQtkdW1teV9maWVsZARpbml0FW5ld191bnNhZmVfZnJvbV9ieXRlcwZvcHRpb24TcHVibGljX3NoYXJlX29iamVjdA9wdWJsaWNfdHJhbnNmZXIGc2VuZGVyBHNvbWUIdGVtcGxhdGUIdHJhbnNmZXIKdHhfY29udGV4dAN1cmwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAQkKAgUEVE1QTAoCDg1UZW1wbGF0ZSBDb2luCgIaGVRlbXBsYXRlIENvaW4gRGVzY3JpcHRpb24KAiEgaHR0cHM6Ly9leGFtcGxlLmNvbS90ZW1wbGF0ZS5wbmcAAgEIAQAAAAACEgsABwAHAQcCBwMHBBEGOAAKATgBDAILAS4RBTgCCwI4AwIA="
-      : "oRzrCwYAAAAKAQAMAgwYAyQbBD8GBUVAB4UBsgEItwJgBpcDXQr0AwUM+QMrAAwBBQEOAQ8BEAINAAECAAEADAEAAQECDAEAAQMDAgAEBAcAAAgAAQACCgsBAQwDCwgJAAQJAwQABQYGBwECBAUBCgECAggABwgDAAELAQEIAAEKAgEIBAEIAAcJAAIKAgoCCgIIBAcIAwILAgEJAAsBAQkAAQYIAwEFAQsCAQgAAgkABQxDb2luTWV0YWRhdGEIVEVNUExBVEULVHJlYXN1cnlDYXAJVHhDb250ZXh0A1VybARjb2luD2NyZWF0ZV9jdXJyZW5jeQtkdW1teV9maWVsZARpbml0FW5ld191bnNhZmVfZnJvbV9ieXRlcw9wdWJsaWNfdHJhbnNmZXIGc2VuZGVyCHRlbXBsYXRlDXRva2VuX2VtaXR0ZXIIdHJhbnNmZXIKdHhfY29udGV4dAN1cmwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC9AVLTJZ+pkFzRT9ZOg7JjLaqNRY1y8QS9P31+AS7mNsCAQkKAgUEVE1QTAoCDg1UZW1wbGF0ZSBDb2luCgIaGVRlbXBsYXRlIENvaW4gRGVzY3JpcHRpb24KAiEgaHR0cHM6Ly9leGFtcGxlLmNvbS90ZW1wbGF0ZS5wbmcAAgEHAQAAAAACFAsABwAHAQcCBwMHBBEDCgE4AAwCCgEuEQI4AQsCCwEuEQI4AgIA",
+      : "oRzrCwYAAAAKAQAMAgwYAyQhBEUGBUtDB44BxgEI1AJgBrQDXQqRBAUMlgQmAA0BBQEPARABEQIOAAECAAEADAEAAQECDAEAAQMDAgAEBAcAAAgAAQACCgwBAQwCCwsBAQwDDAgJAAQJAwQABQYGBwECBQUCCgECAggABwgDAAELAQEIAAEKAgEIBAEIAAcJAAIKAgoCCgIIBAcIAwILAgEJAAsBAQkAAQYIAwEFAQsCAQgAAgkABQEJAAxDb2luTWV0YWRhdGEIVEVNUExBVEULVHJlYXN1cnlDYXAJVHhDb250ZXh0A1VybARjb2luD2NyZWF0ZV9jdXJyZW5jeQtkdW1teV9maWVsZARpbml0FW5ld191bnNhZmVfZnJvbV9ieXRlcxNwdWJsaWNfc2hhcmVfb2JqZWN0D3B1YmxpY190cmFuc2ZlcgZzZW5kZXIIdGVtcGxhdGUNdG9rZW5fZW1pdHRlcgh0cmFuc2Zlcgp0eF9jb250ZXh0A3VybAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAL0BUtMln6mQXNFP1k6DsmMtqo1FjXLxBL0/fX4BLuY2wIBCQoCBQRUTVBMCgIODVRlbXBsYXRlIENvaW4KAhoZVGVtcGxhdGUgQ29pbiBEZXNjcmlwdGlvbgoCISBodHRwczovL2V4YW1wbGUuY29tL3RlbXBsYXRlLnBuZwACAQcBAAAAAAIRCwAHAAcBBwIHAwcEEQQKATgADAILAS4RAzgBCwI4AgIA",
     "base64",
   );
 
@@ -97,13 +98,14 @@ export type CreateCoinResult = {
 };
 export const createCoin = async (
   bytecode: Uint8Array<ArrayBufferLike>,
-  address: string,
-  signExecuteAndWaitForTransaction: WalletContext["signExecuteAndWaitForTransaction"],
+  keypair: Ed25519Keypair,
+  suiClient: SuiClient,
   options?: { isLaunchToken?: boolean },
 ): Promise<CreateCoinResult> => {
   console.log("[createCoin] Creating coin");
 
   const transaction = new Transaction();
+  transaction.setSender(keypair.toSuiAddress());
 
   const [upgradeCap] = transaction.publish({
     modules: [[...bytecode]],
@@ -115,9 +117,16 @@ export const createCoin = async (
           normalizeSuiAddress(LAUNCH_TOKEN_PACKAGE_ID),
         ],
   });
-  transaction.transferObjects([upgradeCap], transaction.pure.address(address));
+  transaction.transferObjects(
+    [upgradeCap],
+    transaction.pure.address(keypair.toSuiAddress()),
+  );
 
-  const res = await signExecuteAndWaitForTransaction(transaction);
+  const res = await keypairSignExecuteAndWaitForTransaction(
+    transaction,
+    keypair,
+    suiClient,
+  );
 
   // Get UpgradeCap id from transaction
   const upgradeCapChange: SuiObjectChange | undefined = res.objectChanges?.find(
