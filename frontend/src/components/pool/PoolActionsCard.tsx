@@ -8,14 +8,25 @@ import {
   useState,
 } from "react";
 
+import { setSuiClient as set7kSdkSuiClient } from "@7kprotocol/sdk-ts/cjs";
+import {
+  AggregatorClient as CetusSdk,
+  Env,
+} from "@cetusprotocol/aggregator-sdk";
+import { AggregatorQuoter as FlowXAggregatorQuoter } from "@flowx-finance/sdk";
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
+import { Aftermath as AftermathSdk } from "aftermath-ts-sdk";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
 
 import {
   ParsedObligation,
+  QuoteProvider,
+  StandardizedQuote,
   createObligationIfNoneExists,
+  fetchAggQuotesAll,
+  getSwapTransaction,
   sendObligationToUser,
 } from "@suilend/sdk";
 import {
@@ -55,8 +66,11 @@ import { AppData, useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useCachedUsdPrices from "@/hooks/useCachedUsdPrices";
+import { _7K_PARTNER_ADDRESS } from "@/lib/7k";
 import { rebalanceBanks } from "@/lib/banks";
+import { CETUS_PARTNER_ID } from "@/lib/cetus";
 import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
+import { FLOWX_PARTNER_ID } from "@/lib/flowx";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
 import {
   getIndexesOfObligationsWithDeposit,
@@ -88,11 +102,59 @@ interface DepositTabProps {
 }
 
 function DepositTab({ onDeposit }: DepositTabProps) {
-  const { explorer } = useSettingsContext();
+  const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
   const { getBalance, userData, refresh } = useUserContext();
   const { pool } = usePoolContext();
+
+  // send.ag
+  // SDKs
+  const aftermathSdk = useMemo(() => {
+    const sdk = new AftermathSdk("MAINNET");
+    sdk.init();
+    return sdk;
+  }, []);
+
+  const cetusSdk = useMemo(() => {
+    const sdk = new CetusSdk({
+      endpoint: "https://api-sui.cetus.zone/router_v2/find_routes",
+      signer: address,
+      client: suiClient,
+      env: Env.Mainnet,
+    });
+    return sdk;
+  }, [address, suiClient]);
+
+  useEffect(() => {
+    set7kSdkSuiClient(suiClient);
+  }, [suiClient]);
+
+  const flowXSdk = useMemo(() => {
+    const sdk = new FlowXAggregatorQuoter("mainnet");
+    return sdk;
+  }, []);
+
+  // Config
+  const sdkMap = useMemo(
+    () => ({
+      [QuoteProvider.AFTERMATH]: aftermathSdk,
+      [QuoteProvider.CETUS]: cetusSdk,
+      [QuoteProvider.FLOWX]: flowXSdk,
+    }),
+    [aftermathSdk, cetusSdk, flowXSdk],
+  );
+
+  const activeProviders = useMemo(
+    () => [
+      QuoteProvider.AFTERMATH,
+      QuoteProvider.CETUS,
+      QuoteProvider._7K,
+      QuoteProvider.FLOWX,
+      // QuoteProvider.OKX_DEX,
+    ],
+    [],
+  );
 
   // Deposited assets
   const [depositedIndexes, setDepositedIndexes] = useState<number[]>([0, 1]);
@@ -317,85 +379,92 @@ function DepositTab({ onDeposit }: DepositTabProps) {
 
       const banks = [appData.bankMap[coinTypeA], appData.bankMap[coinTypeB]];
 
-      const transaction = new Transaction();
+      let transaction = new Transaction();
 
+      let submitAmountA, submitAmountB;
       let depositCoinA, depositCoinB;
       if (depositedIndexes.length === 1) {
         // Swap
         const index = depositedIndexes[0];
 
-        const amountIn = new BigNumber(
+        const swapAmountIn = new BigNumber(
           index === 0 ? quote.depositA.toString() : quote.depositB.toString(),
         )
           .times(0.5)
-          .integerValue(BigNumber.ROUND_DOWN);
-        // const notSwappedAmount = new BigNumber(
-        //   index === 0 ? quote.depositA.toString() : quote.depositB.toString(),
-        // ).minus(amountIn);
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString();
+        const depositAmountIn = new BigNumber(
+          index === 0 ? quote.depositA.toString() : quote.depositB.toString(),
+        )
+          .minus(swapAmountIn)
+          .toString();
 
-        const swapQuote = await steammClient.Pool.quoteSwap({
-          a2b: index === 0,
-          amountIn: BigInt(amountIn.toString()),
-          poolInfo: pool.poolInfo,
-          bankInfoA: appData.bankMap[pool.coinTypes[0]].bankInfo,
-          bankInfoB: appData.bankMap[pool.coinTypes[1]].bankInfo,
-        });
-        console.log("XXX swapQuote:", swapQuote);
-        return;
-        const swapCoinA =
+        const swapQuotes = await fetchAggQuotesAll(
+          sdkMap,
+          activeProviders,
           index === 0
-            ? coinWithBalance({
-                balance: swapQuote.amountIn,
-                type: coinTypeA,
-                useGasCoin: isSui(coinTypeA),
-              })(transaction)
-            : steammClient.fullClient.zeroCoin(transaction, coinTypeA);
-        const swapCoinB =
+            ? getToken(coinTypeA, coinMetadataA)
+            : getToken(coinTypeB, coinMetadataB),
           index === 0
-            ? steammClient.fullClient.zeroCoin(transaction, coinTypeB)
-            : coinWithBalance({
-                balance: swapQuote.amountIn,
-                type: coinTypeB,
-                useGasCoin: isSui(coinTypeB),
-              })(transaction);
+            ? getToken(coinTypeB, coinMetadataB)
+            : getToken(coinTypeA, coinMetadataA),
+          swapAmountIn,
+        );
 
-        await steammClient.Pool.swap(transaction, {
-          coinA: swapCoinA,
-          coinB: swapCoinB,
-          a2b: swapQuote.a2b,
-          amountIn: swapQuote.amountIn,
-          minAmountOut: BigInt(0),
-          poolInfo: pool.poolInfo,
-          bankInfoA: banks[0].bankInfo,
-          bankInfoB: banks[1].bankInfo,
-        });
+        const sortedSwapQuotes = (
+          swapQuotes.filter(Boolean) as StandardizedQuote[]
+        )
+          .slice()
+          .sort((a, b) => +b.out.amount.minus(a.out.amount));
+        if (sortedSwapQuotes.length === 0)
+          throw new Error("No swap quotes found");
 
-        // Deposit
+        const swapQuote = sortedSwapQuotes[0]; // Best quote by amount out
+
+        const { transaction: _transaction, coinOut: swapCoinOut } =
+          await getSwapTransaction(
+            suiClient,
+            address,
+            swapQuote,
+            slippagePercent,
+            sdkMap,
+            {
+              [QuoteProvider.CETUS]: CETUS_PARTNER_ID,
+              [QuoteProvider._7K]: _7K_PARTNER_ADDRESS,
+              [QuoteProvider.FLOWX]: FLOWX_PARTNER_ID,
+            },
+            transaction,
+            undefined,
+          );
+        if (!swapCoinOut) throw new Error("Missing coin to deposit");
+
+        transaction = _transaction;
+
+        // Deposit into pool
+        submitAmountA =
+          index === 0 ? depositAmountIn : swapQuote.out.amount.toString();
+        submitAmountB =
+          index === 0 ? swapQuote.out.amount.toString() : depositAmountIn;
+
         depositCoinA =
           index === 0
-            ? transaction.mergeCoins(
-                coinWithBalance({
-                  balance: BigInt(notSwappedAmount.toString()),
-                  type: coinTypeA,
-                  useGasCoin: isSui(coinTypeA),
-                })(transaction),
-                swapCoinA,
-              )
-            : swapCoinA;
+            ? coinWithBalance({
+                type: coinTypeA,
+                balance: BigInt(depositAmountIn),
+                useGasCoin: isSui(coinTypeA),
+              })(transaction)
+            : swapCoinOut;
         depositCoinB =
           index === 0
-            ? swapCoinB
-            : transaction.mergeCoins(
-                coinWithBalance({
-                  balance: BigInt(notSwappedAmount.toString()),
-                  type: coinTypeB,
-                  useGasCoin: isSui(coinTypeB),
-                })(transaction),
-                swapCoinB,
-              );
+            ? swapCoinOut
+            : coinWithBalance({
+                type: coinTypeB,
+                balance: BigInt(depositAmountIn),
+                useGasCoin: isSui(coinTypeB),
+              })(transaction);
       } else {
         // Deposit into pool
-        const submitAmountA = new BigNumber(quote.depositA.toString())
+        submitAmountA = new BigNumber(quote.depositA.toString())
           .times(
             lastActiveInputIndex === 0 || pool.tvlUsd.eq(0)
               ? 1
@@ -403,7 +472,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
           )
           .integerValue(BigNumber.ROUND_DOWN)
           .toString();
-        const submitAmountB = new BigNumber(quote.depositB.toString())
+        submitAmountB = new BigNumber(quote.depositB.toString())
           .times(
             lastActiveInputIndex === 1 || pool.tvlUsd.eq(0)
               ? 1

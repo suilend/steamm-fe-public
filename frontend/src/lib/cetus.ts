@@ -1,0 +1,2 @@
+export const CETUS_PARTNER_ID =
+  "0x73d10d84520e640f58254a30474478333dd3f08fa7ed2f28cfabdcc9504dc248";
