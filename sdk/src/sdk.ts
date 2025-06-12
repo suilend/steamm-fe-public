@@ -806,11 +806,7 @@ export class SteammSDK {
             bTokenTypeCoinTypeMap,
             bankMap,
           },
-          poolObj.poolInfo,
-          poolObj.pool,
-          poolObj.redeemQuote,
-          poolObj.priceA,
-          poolObj.priceB,
+          poolObj,
         ),
       )
       .filter(Boolean) as ParsedPool[];

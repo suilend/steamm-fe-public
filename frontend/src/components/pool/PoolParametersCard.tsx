@@ -276,6 +276,17 @@ export default function PoolParametersCard({
         label="Current price"
       />
 
+      {/*  Initial liquidity locked */}
+      <Parameter label="Initial liquidity locked">
+        <p className="text-p2 text-foreground">
+          {pool.isInitialLpTokenBurned === null
+            ? "N/A"
+            : pool.isInitialLpTokenBurned
+              ? "Yes"
+              : "No"}
+        </p>
+      </Parameter>
+
       {/* Address */}
       <Parameter label="Address">
         <div className="flex flex-row items-center gap-2">

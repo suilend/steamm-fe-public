@@ -71,14 +71,14 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
                 bankInfoB: appData.bankMap[_existingPool.coinTypes[1]].bankInfo,
               });
 
-        const parsedPool = getParsedPool(
-          appData,
-          _existingPool.poolInfo, // Existing poolInfo
+        const parsedPool = getParsedPool(appData, {
+          poolInfo: _existingPool.poolInfo, // Existing poolInfo
           pool,
           redeemQuote,
-          _existingPool.prices[0].toString(), // Existing prices
-          _existingPool.prices[1].toString(), // Existing prices
-        );
+          priceA: _existingPool.prices[0].toString(), // Existing prices
+          priceB: _existingPool.prices[1].toString(), // Existing prices
+          isInitialLpTokenBurned: _existingPool.isInitialLpTokenBurned, // Existing isInitialLpTokenBurned
+        });
         if (parsedPool === undefined) return;
 
         setRefreshedPoolMap((prev) => ({

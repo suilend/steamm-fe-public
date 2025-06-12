@@ -446,6 +446,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               redeemQuote,
               priceA: null,
               priceB: null,
+              isInitialLpTokenBurned: null,
             });
           }
         } else {
@@ -540,11 +541,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
             bTokenTypeCoinTypeMap,
             bankMap,
           },
-          poolObj.poolInfo,
-          poolObj.pool,
-          poolObj.redeemQuote,
-          poolObj.priceA,
-          poolObj.priceB,
+          poolObj,
         ),
       )
       .filter(Boolean) as ParsedPool[];

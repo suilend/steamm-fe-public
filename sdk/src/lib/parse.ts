@@ -63,6 +63,7 @@ export type PoolObj = {
   redeemQuote: RedeemQuote | null;
   priceA: string | null;
   priceB: string | null;
+  isInitialLpTokenBurned: boolean | null;
 };
 
 export type ParsedPool = {
@@ -81,6 +82,7 @@ export type ParsedPool = {
   prices: [BigNumber, BigNumber];
 
   lpSupply: BigNumber;
+  isInitialLpTokenBurned: boolean | null;
   tvlUsd: BigNumber;
 
   feeTierPercent: BigNumber;
@@ -168,11 +170,7 @@ export const getParsedPool = (
     bTokenTypeCoinTypeMap: Record<string, string>;
     bankMap: Record<string, ParsedBank>;
   },
-  poolInfo: PoolInfo,
-  pool: ParsedPool["pool"],
-  redeemQuote: RedeemQuote | null,
-  _priceA: string | null,
-  _priceB: string | null,
+  poolObj: PoolObj,
 ): ParsedPool | undefined => {
   {
     const {
@@ -181,6 +179,14 @@ export const getParsedPool = (
       bTokenTypeCoinTypeMap,
       bankMap,
     } = data;
+    const {
+      poolInfo,
+      pool,
+      redeemQuote,
+      priceA: _priceA,
+      priceB: _priceB,
+      isInitialLpTokenBurned,
+    } = poolObj;
 
     const id = poolInfo.poolId;
     const quoterId = poolInfo.quoterType.endsWith("omm::OracleQuoter")
@@ -300,6 +306,7 @@ export const getParsedPool = (
       prices,
 
       lpSupply,
+      isInitialLpTokenBurned,
       tvlUsd,
 
       feeTierPercent,
