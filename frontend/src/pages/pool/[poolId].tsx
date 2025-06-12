@@ -26,7 +26,7 @@ import { useUserContext } from "@/contexts/UserContext";
 import usePoolCurrentPriceQuote from "@/hooks/usePoolCurrentPrice";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
 import { formatFeeTier, formatPair } from "@/lib/format";
-import { POOLS_URL, ROOT_URL } from "@/lib/navigation";
+import { ROOT_URL } from "@/lib/navigation";
 
 function PoolPage() {
   const { address } = useWalletContext();

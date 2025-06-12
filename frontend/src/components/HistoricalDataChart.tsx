@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import NoDataIcon from "@/components/icons/NoDataIcon";
 import { Skeleton } from "@/components/ui/skeleton";
+import useBreakpoint from "@/hooks/useBreakpoint";
 import {
   ChartConfig,
   ChartData,
@@ -103,11 +104,13 @@ function TooltipContent({
 
 interface HistoricalDataChartProps extends ChartConfig {
   className?: ClassValue;
+  chartClassName?: ClassValue;
   formatCategory: (category: string) => string | undefined;
 }
 
 export default function HistoricalDataChart({
   className,
+  chartClassName,
   title,
   value,
   valuePeriodDays,
@@ -117,6 +120,8 @@ export default function HistoricalDataChart({
   formatValue,
   formatCategory,
 }: HistoricalDataChartProps) {
+  const { sm, md } = useBreakpoint();
+
   const gradientId = useRef<string>(uuidv4()).current;
 
   // Data
@@ -232,8 +237,9 @@ export default function HistoricalDataChart({
       : Math.max(...processedDataWithTotals.map((d) => d[TOTAL]));
 
   // Ticks
-  const ticksX = Array.from({ length: 5 }).map((_, index, array) =>
-    Math.round(minX + ((maxX - minX) / (array.length - 1)) * index),
+  const ticksX = Array.from({ length: md ? 5 : sm ? 3 : 2 }).map(
+    (_, index, array) =>
+      Math.round(minX + ((maxX - minX) / (array.length - 1)) * index),
   );
 
   return (
@@ -291,9 +297,9 @@ export default function HistoricalDataChart({
       </div>
 
       {/* Bottom */}
-      <div className="flex w-full flex-col">
+      <div className={cn("flex w-full flex-col", chartClassName)}>
         {/* Chart */}
-        <div className="h-[120px] transform-gpu md:h-[180px]">
+        <div className="h-[120px] transform-gpu sm:h-[180px]">
           {processedData === undefined ||
           processedData.every((d) =>
             categories.every((category) => d[category] === 0),
@@ -379,7 +385,7 @@ export default function HistoricalDataChart({
                     {processedData.map((d) => (
                       <div
                         key={d.timestampS}
-                        className="group flex flex-1 flex-row justify-center px-[2px]"
+                        className="group flex flex-1 flex-row justify-center px-[1px] sm:px-[2px]"
                       >
                         <div className="flex h-full w-full max-w-[8px] flex-col-reverse items-center gap-[2px]">
                           {sortedCategories.map((category, categoryIndex) => (
