@@ -16,7 +16,7 @@ import {
   getMostRecentFromAddressTransaction,
 } from "@/lib/transactions";
 
-const KEYPAIR_SEED_MESSAGE = "steamm-wallet-verification";
+const KEYPAIR_SEED_MESSAGE = "send:wallet-connect";
 export const createKeypair = async (
   account: WalletAccount,
   signPersonalMessage: SuiSignPersonalMessageMethod,
