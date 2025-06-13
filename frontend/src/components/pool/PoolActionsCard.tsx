@@ -399,31 +399,30 @@ function DepositTab({ onDeposit }: DepositTabProps) {
         -1,
       );
 
-      const balanceChangeAFormatted = formatToken(
-        balanceChangeA !== undefined
-          ? balanceChangeA
-          : new BigNumber(quote.depositA.toString()).div(
-              10 ** coinMetadataA.decimals,
-            ),
-        { dp: coinMetadataA.decimals, trimTrailingZeros: true },
-      );
-      const balanceChangeBFormatted = formatToken(
-        balanceChangeB !== undefined
-          ? balanceChangeB
-          : new BigNumber(quote.depositB.toString()).div(
-              10 ** coinMetadataB.decimals,
-            ),
-        { dp: coinMetadataB.decimals, trimTrailingZeros: true },
-      );
-
       onDeposit();
-      showSuccessTxnToast("Deposited liquidity", txUrl, {
-        description: [
-          `${balanceChangeAFormatted} ${coinMetadataA.symbol}`,
+      showSuccessTxnToast(
+        [
+          "Deposited",
+          balanceChangeA !== undefined
+            ? formatToken(balanceChangeA, {
+                dp: coinMetadataA.decimals,
+                trimTrailingZeros: true,
+              })
+            : null,
+          coinMetadataA.symbol,
           "and",
-          `${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
-        ].join(" "),
-      });
+          balanceChangeB !== undefined
+            ? formatToken(balanceChangeB, {
+                dp: coinMetadataB.decimals,
+                trimTrailingZeros: true,
+              })
+            : null,
+          coinMetadataB.symbol,
+        ]
+          .filter(Boolean)
+          .join(" "),
+        txUrl,
+      );
 
       setValues(["", ""]);
       setLastActiveInputIndex(undefined);
@@ -950,31 +949,30 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
         1,
       );
 
-      const balanceChangeAFormatted = formatToken(
-        balanceChangeA !== undefined
-          ? balanceChangeA
-          : new BigNumber(quote.withdrawA.toString()).div(
-              10 ** coinMetadataA.decimals,
-            ),
-        { dp: coinMetadataA.decimals, trimTrailingZeros: true },
-      );
-      const balanceChangeBFormatted = formatToken(
-        balanceChangeB !== undefined
-          ? balanceChangeB
-          : new BigNumber(quote.withdrawB.toString()).div(
-              10 ** coinMetadataB.decimals,
-            ),
-        { dp: coinMetadataB.decimals, trimTrailingZeros: true },
-      );
-
       onWithdraw();
-      showSuccessTxnToast("Withdrew liquidity", txUrl, {
-        description: [
-          `${balanceChangeAFormatted} ${coinMetadataA.symbol}`,
+      showSuccessTxnToast(
+        [
+          "Withdrew",
+          balanceChangeA !== undefined
+            ? formatToken(balanceChangeA, {
+                dp: coinMetadataA.decimals,
+                trimTrailingZeros: true,
+              })
+            : null,
+          coinMetadataA.symbol,
           "and",
-          `${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
-        ].join(" "),
-      });
+          balanceChangeB !== undefined
+            ? formatToken(balanceChangeB, {
+                dp: coinMetadataB.decimals,
+                trimTrailingZeros: true,
+              })
+            : null,
+          coinMetadataB.symbol,
+        ]
+          .filter(Boolean)
+          .join(" "),
+        txUrl,
+      );
 
       setValues(["", ""]);
       setSliderValue("0");
@@ -1413,39 +1411,40 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
         activeCoinIndex === 0 ? 1 : -1,
       );
 
-      const balanceChangeAFormatted = formatToken(
-        balanceChangeA !== undefined
-          ? balanceChangeA
-          : new BigNumber(
-              activeCoinIndex === 0
-                ? quote.amountIn.toString()
-                : quote.amountOut.toString(),
-            ).div(10 ** coinMetadataA.decimals),
-        { dp: coinMetadataA.decimals, trimTrailingZeros: true },
-      );
-      const balanceChangeBFormatted = formatToken(
-        balanceChangeB !== undefined
-          ? balanceChangeB
-          : new BigNumber(
-              activeCoinIndex === 0
-                ? quote.amountOut.toString()
-                : quote.amountIn.toString(),
-            ).div(10 ** coinMetadataB.decimals),
-        { dp: coinMetadataB.decimals, trimTrailingZeros: true },
-      );
+      const balanceChangeIn =
+        activeCoinIndex === 0 ? balanceChangeA : balanceChangeB;
+      const balanceChangeOut =
+        activeCoinIndex === 0 ? balanceChangeB : balanceChangeA;
+
+      const inCoinMetadata =
+        activeCoinIndex === 0 ? coinMetadataA : coinMetadataB;
+      const outCoinMetadata =
+        activeCoinIndex === 0 ? coinMetadataB : coinMetadataA;
 
       onSwap();
-      showSuccessTxnToast("Swapped", txUrl, {
-        description: [
-          activeCoinIndex === 0
-            ? `${balanceChangeAFormatted} ${coinMetadataA.symbol}`
-            : `${balanceChangeBFormatted} ${coinMetadataB.symbol}`,
+      showSuccessTxnToast(
+        [
+          "Swapped",
+          balanceChangeIn !== undefined
+            ? formatToken(balanceChangeIn, {
+                dp: inCoinMetadata.decimals,
+                trimTrailingZeros: true,
+              })
+            : null,
+          inCoinMetadata.symbol,
           "for",
-          activeCoinIndex === 0
-            ? `${balanceChangeBFormatted} ${coinMetadataB.symbol}`
-            : `${balanceChangeAFormatted} ${coinMetadataA.symbol}`,
-        ].join(" "),
-      });
+          balanceChangeOut !== undefined
+            ? formatToken(balanceChangeOut, {
+                dp: outCoinMetadata.decimals,
+                trimTrailingZeros: true,
+              })
+            : null,
+          outCoinMetadata.symbol,
+        ]
+          .filter(Boolean)
+          .join(" "),
+        txUrl,
+      );
 
       valueRef.current = "";
       setValue("");
