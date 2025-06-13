@@ -2,7 +2,8 @@ import BigNumber from "bignumber.js";
 
 import { formatInteger, formatNumber } from "@suilend/sui-fe";
 
-export const formatPair = (symbols: string[]) => symbols.join("-");
+export const formatPair = (symbols: string[], separator = "-") =>
+  symbols.join(separator);
 
 export const formatAmplifier = (amplifier: BigNumber) =>
   `${formatNumber(amplifier, { exact: true, trimTrailingZeros: true })}`;

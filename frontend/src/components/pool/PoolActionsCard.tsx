@@ -1650,7 +1650,7 @@ export default function PoolActionsCard({
   };
 
   return (
-    <div className="flex w-full flex-col gap-4 rounded-md border p-5">
+    <div className="flex flex-col gap-4 rounded-md border px-4 py-5 max-sm:-mx-4 sm:w-full sm:px-5">
       <div className="flex w-full flex-row justify-between">
         {/* Tabs */}
         <div className="flex flex-row">

@@ -111,20 +111,23 @@ export default function PoolChartCard() {
   );
 
   return (
-    <div className="relative w-full rounded-md border p-5">
+    <div className="relative rounded-md border px-4 py-5 max-sm:-mx-4 sm:w-full sm:px-5">
       <HistoricalDataChart
         className="relative z-[1]"
+        topLeftClassName="max-sm:gap-2"
+        titleClassName="max-sm:!h-6"
         title={chartConfig.title}
         value={chartConfig.value}
         valuePeriodDays={chartConfig.valuePeriodDays}
         chartType={chartConfig.chartType}
         data={chartConfig.data}
         dataPeriodDays={chartConfig.dataPeriodDays}
+        ticksXSm={3}
         formatValue={chartConfig.formatValue}
         formatCategory={(category) => category}
       />
 
-      <div className="absolute left-5 top-5 z-[2] flex h-[21px] flex-row items-center gap-1 bg-background sm:left-auto sm:right-5">
+      <div className="absolute left-4 top-5 z-[2] flex flex-row items-center gap-1 bg-background sm:left-auto sm:right-5">
         {Object.values(ChartStat).map((chartStat) => (
           <button
             key={chartStat}

@@ -50,7 +50,7 @@ export default function PoolPositionCard() {
           </div>
         )}
 
-      <div className="flex w-full flex-col gap-1 rounded-md border p-5">
+      <div className="flex flex-col gap-1 rounded-md border px-4 py-5 max-sm:-mx-4 sm:w-full sm:px-5">
         <p className="text-p2 text-secondary-foreground">Your balance</p>
         {poolPosition === undefined ? (
           <Skeleton className="h-[36px] w-20" />

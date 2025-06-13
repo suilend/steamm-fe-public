@@ -1,7 +1,7 @@
 import { useMemo, useRef } from "react";
 
 import { ClassValue } from "clsx";
-import { format } from "date-fns";
+import { formatDate } from "date-fns";
 import * as Recharts from "recharts";
 import { v4 as uuidv4 } from "uuid";
 
@@ -62,9 +62,9 @@ function TooltipContent({
     >
       <div className="flex flex-col gap-1">
         <p className="text-p2 text-secondary-foreground">
-          {format(
+          {formatDate(
             new Date(d.timestampS * 1000),
-            dataPeriodDays === 1 ? "h:mm a" : "d MMM h:mm a",
+            dataPeriodDays === 1 ? "H:mm" : "d MMM H:mm",
           )}
         </p>
         {sortedCategories.map((category, categoryIndex) => {
@@ -104,12 +104,17 @@ function TooltipContent({
 
 interface HistoricalDataChartProps extends ChartConfig {
   className?: ClassValue;
+  topLeftClassName?: ClassValue;
+  titleClassName?: ClassValue;
   chartClassName?: ClassValue;
+  ticksXSm?: number;
   formatCategory: (category: string) => string | undefined;
 }
 
 export default function HistoricalDataChart({
   className,
+  topLeftClassName,
+  titleClassName,
   chartClassName,
   title,
   value,
@@ -117,6 +122,7 @@ export default function HistoricalDataChart({
   chartType,
   data,
   dataPeriodDays,
+  ticksXSm,
   formatValue,
   formatCategory,
 }: HistoricalDataChartProps) {
@@ -237,7 +243,7 @@ export default function HistoricalDataChart({
       : Math.max(...processedDataWithTotals.map((d) => d[TOTAL]));
 
   // Ticks
-  const ticksX = Array.from({ length: md ? 5 : sm ? 3 : 2 }).map(
+  const ticksX = Array.from({ length: md ? 5 : sm ? 3 : (ticksXSm ?? 2) }).map(
     (_, index, array) =>
       Math.round(minX + ((maxX - minX) / (array.length - 1)) * index),
   );
@@ -247,9 +253,16 @@ export default function HistoricalDataChart({
       {/* Top */}
       <div className="flex flex-row items-start justify-between">
         {/* Top left */}
-        <div className="flex flex-col gap-1">
+        <div className={cn("flex flex-col gap-1", topLeftClassName)}>
           <div className="flex flex-row items-baseline gap-1.5">
-            <p className="text-p2 text-secondary-foreground">{title}</p>
+            <p
+              className={cn(
+                "!text-p2 text-secondary-foreground",
+                titleClassName,
+              )}
+            >
+              {title}
+            </p>
             {valuePeriodDays !== undefined && (
               <p className="text-p3 text-tertiary-foreground">
                 {valuePeriodDays === 1 ? "24H" : `${valuePeriodDays}D`}
@@ -309,7 +322,7 @@ export default function HistoricalDataChart({
                 "flex h-full w-full flex-col justify-center bg-card/50",
                 processedData === undefined && "animate-pulse",
               )}
-              style={{ paddingTop: 12 + 18 }}
+              style={{ paddingTop: 8 + 18 }}
             >
               {processedData !== undefined &&
                 processedData.every((d) =>
@@ -515,18 +528,18 @@ export default function HistoricalDataChart({
               "w-full bg-card/50",
               processedData === undefined && "animate-pulse",
             )}
-            style={{ height: 12 + 18 }}
+            style={{ height: 8 + 18 }}
           />
         ) : (
           <div
             className="flex w-full flex-row justify-between"
-            style={{ paddingTop: 12 }}
+            style={{ paddingTop: 8 }}
           >
             {ticksX.map((tickX) => (
               <p key={tickX} className="text-p3 text-tertiary-foreground">
-                {format(
+                {formatDate(
                   new Date(tickX * 1000),
-                  dataPeriodDays === 1 ? "h:mm a" : "d MMM",
+                  dataPeriodDays === 1 ? "H:mm" : "d MMM",
                 )}
               </p>
             ))}

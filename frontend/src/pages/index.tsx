@@ -234,10 +234,10 @@ export default function PoolsPage() {
 
       <div className="flex w-full max-w-6xl flex-col gap-8">
         {/* Stats */}
-        <div className="flex w-full flex-row items-stretch rounded-md border">
+        <div className="flex flex-row items-stretch gap-1 max-sm:-mx-4 sm:w-full sm:gap-5">
           {/* TVL */}
-          <div className="flex-1">
-            <div className="w-full p-5 pr-3 sm:pr-5">
+          <div className="flex-1 rounded-md border">
+            <div className="w-full px-4 pb-4 pt-5 sm:px-5 sm:pb-5">
               <HistoricalDataChart
                 title="TVL"
                 value={
@@ -252,13 +252,13 @@ export default function PoolsPage() {
             </div>
           </div>
 
-          <Divider className="h-auto w-px bg-border/25 max-sm:hidden" />
-
           {/* Volume */}
-          <div className="flex-1">
-            <div className="relative w-full p-5 pl-3 sm:pl-5">
+          <div className="flex-1 rounded-md border">
+            <div className="relative w-full px-4 pb-4 pt-5 sm:px-5 sm:pb-5">
               <HistoricalDataChart
                 className="relative z-[1]"
+                topLeftClassName="max-sm:gap-2"
+                titleClassName="max-sm:!h-6"
                 title={rhsChartConfig.title}
                 value={rhsChartConfig.value}
                 valuePeriodDays={rhsChartConfig.valuePeriodDays}
@@ -269,7 +269,7 @@ export default function PoolsPage() {
                 formatCategory={(category) => category}
               />
 
-              <div className="absolute left-3 top-5 z-[2] flex h-[21px] flex-row items-center gap-1 bg-background sm:left-auto sm:right-5">
+              <div className="absolute left-4 top-5 z-[2] flex flex-row items-center gap-1 bg-background sm:left-auto sm:right-5">
                 {Object.values(RhsChartStat).map((rhsChartStat) => (
                   <button
                     key={rhsChartStat}

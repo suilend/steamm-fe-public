@@ -138,10 +138,17 @@ export const getFilteredPoolGroups = (
             (coinType) => coinMetadataMap[coinType].symbol,
           ),
         ),
-        poolGroup.pools
-          .map((pool) => QUOTER_ID_NAME_MAP[pool.quoterId])
-          .flat()
-          .join("__"),
+        formatPair(
+          poolGroup.coinTypes.map(
+            (coinType) => coinMetadataMap[coinType].symbol,
+          ),
+          " ",
+        ),
+        Array.from(
+          new Set(
+            poolGroup.pools.map((pool) => QUOTER_ID_NAME_MAP[pool.quoterId]),
+          ),
+        ).join("__"),
       ]
         .join("____")
         .toLowerCase()
@@ -155,6 +162,10 @@ export const getFilteredPoolGroups = (
           pool.coinTypes.join("__"),
           formatPair(
             pool.coinTypes.map((coinType) => coinMetadataMap[coinType].symbol),
+          ),
+          formatPair(
+            pool.coinTypes.map((coinType) => coinMetadataMap[coinType].symbol),
+            " ",
           ),
           QUOTER_ID_NAME_MAP[pool.quoterId],
         ]
