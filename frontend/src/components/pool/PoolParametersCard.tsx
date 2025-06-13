@@ -46,7 +46,7 @@ export default function PoolParametersCard({
   const { pool } = usePoolContext();
 
   return (
-    <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
+    <div className="grid grid-cols-1 gap-x-6 gap-y-6 rounded-md border px-4 py-5 max-sm:-mx-4 sm:w-full sm:px-5">
       {/* Assets */}
       <Parameter label="Assets">
         <div className="flex flex-row items-center gap-4">
@@ -276,16 +276,23 @@ export default function PoolParametersCard({
         label="Current price"
       />
 
-      {/*  Initial liquidity locked */}
-      <Parameter label="Initial liquidity locked">
-        <p className="text-p2 text-foreground">
-          {pool.isInitialLpTokenBurned === null
-            ? "N/A"
-            : pool.isInitialLpTokenBurned
-              ? "Yes"
-              : "No"}
-        </p>
-      </Parameter>
+      {/* Initial liquidity locked (1+ STEAMM-launched token and vCPMM only) */}
+      {pool.coinTypes.some((coinType) =>
+        appData.steammLaunchCoinTypes.includes(coinType),
+      ) &&
+        pool.quoterId === QuoterId.V_CPMM && (
+          <Parameter label="Initial liquidity locked">
+            <p className="text-p2 text-foreground">
+              {pool.isInitialLpTokenBurned === null
+                ? "N/A"
+                : pool.isInitialLpTokenBurned
+                  ? pool.initialLpTokensMinted !== null
+                    ? `${formatPercent(pool.initialLpTokensMinted.div(pool.lpSupply).times(100), { dp: 0 })} of pool`
+                    : "Yes"
+                  : "No"}
+            </p>
+          </Parameter>
+        )}
 
       {/* Address */}
       <Parameter label="Address">

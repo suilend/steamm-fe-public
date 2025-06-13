@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CSSProperties, Fragment } from "react";
 
 import BigNumber from "bignumber.js";
-import { format } from "date-fns";
+import { formatDate } from "date-fns";
 import { ArrowRight, ExternalLink, Plus } from "lucide-react";
 
 import { formatToken, getToken } from "@suilend/sui-fe";
@@ -108,9 +108,9 @@ export default function TransactionHistoryRow({
           <div className="w-max">
             <p className="text-p2 text-secondary-foreground">
               {prevTransaction?.timestamp !== transaction.timestamp &&
-                format(
+                formatDate(
                   new Date(+transaction.timestamp * 1000),
-                  "yyyy-MM-dd hh:mm:ss",
+                  "yyyy-MM-dd HH:mm:ss",
                 )}
             </p>
           </div>

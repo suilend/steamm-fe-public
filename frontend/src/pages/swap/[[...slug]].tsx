@@ -439,30 +439,29 @@ export default function SwapPage() {
         1,
       );
 
-      const balanceChangeInFormatted = formatToken(
-        balanceChangeIn !== undefined
-          ? balanceChangeIn
-          : new BigNumber(quote.amountIn.toString()).div(
-              10 ** inCoinMetadata.decimals,
-            ),
-        { dp: inCoinMetadata.decimals, trimTrailingZeros: true },
-      );
-      const balanceChangeOutFormatted = formatToken(
-        balanceChangeOut !== undefined
-          ? balanceChangeOut
-          : new BigNumber(quote.amountOut.toString()).div(
-              10 ** outCoinMetadata.decimals,
-            ),
-        { dp: outCoinMetadata.decimals, trimTrailingZeros: true },
-      );
-
-      showSuccessTxnToast("Swapped", txUrl, {
-        description: [
-          `${balanceChangeInFormatted} ${inCoinMetadata.symbol}`,
+      showSuccessTxnToast(
+        [
+          "Swapped",
+          balanceChangeIn !== undefined
+            ? formatToken(balanceChangeIn, {
+                dp: inCoinMetadata.decimals,
+                trimTrailingZeros: true,
+              })
+            : null,
+          inCoinMetadata.symbol,
           "for",
-          `${balanceChangeOutFormatted} ${outCoinMetadata.symbol}`,
-        ].join(" "),
-      });
+          balanceChangeOut !== undefined
+            ? formatToken(balanceChangeOut, {
+                dp: outCoinMetadata.decimals,
+                trimTrailingZeros: true,
+              })
+            : null,
+          outCoinMetadata.symbol,
+        ]
+          .filter(Boolean)
+          .join(" "),
+        txUrl,
+      );
       valueRef.current = "";
       setValue("");
       setQuote(undefined);
