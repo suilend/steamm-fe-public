@@ -16,12 +16,18 @@ import {
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 import {
+  FundKeypairResult,
   NORMALIZED_SUI_COINTYPE,
+  ReturnAllOwnedObjectsAndSuiToUserResult,
   Token,
+  checkIfKeypairCanBeUsed,
+  createKeypair,
   formatPrice,
   formatToken,
+  fundKeypair,
   getToken,
   isSui,
+  returnAllOwnedObjectsAndSuiToUser,
 } from "@suilend/sui-fe";
 import {
   showErrorToast,
@@ -64,14 +70,6 @@ import {
   formatPair,
   formatTextInputValue,
 } from "@/lib/format";
-import {
-  FundKeypairResult,
-  ReturnAllOwnedObjectsAndSuiToUserResult,
-  checkIfKeypairCanBeUsed,
-  createKeypair,
-  fundKeypair,
-  returnAllOwnedObjectsAndSuiToUser,
-} from "@/lib/keypair";
 import { AMPLIFIER_TOOLTIP, getAvgPoolPrice } from "@/lib/pools";
 import { getCachedUsdPriceRatio } from "@/lib/swap";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";

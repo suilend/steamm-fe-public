@@ -1,14 +1,14 @@
 import { useMemo } from "react";
 
-import { Token } from "@suilend/sui-fe";
+import {
+  FundKeypairResult,
+  ReturnAllOwnedObjectsAndSuiToUserResult,
+  Token,
+} from "@suilend/sui-fe";
 
 import Dialog from "@/components/Dialog";
 import Step from "@/components/Step";
 import { Batch, MakeBatchTransferResult } from "@/lib/airdrop";
-import {
-  FundKeypairResult,
-  ReturnAllOwnedObjectsAndSuiToUserResult,
-} from "@/lib/keypair";
 
 interface AirdropStepsDialogProps {
   isOpen: boolean;

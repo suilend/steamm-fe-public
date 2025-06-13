@@ -3,9 +3,11 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 
-import { Token, isSui } from "@suilend/sui-fe";
-
-import { keypairSignExecuteAndWaitForTransaction } from "@/lib/keypair";
+import {
+  Token,
+  isSui,
+  keypairSignExecuteAndWaitForTransaction,
+} from "@suilend/sui-fe";
 
 export type AirdropRow = { number: number; address: string; amount: string };
 export type Batch = AirdropRow[];

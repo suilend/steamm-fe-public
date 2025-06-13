@@ -12,7 +12,8 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
-import { keypairSignExecuteAndWaitForTransaction } from "@/lib/keypair";
+import { keypairSignExecuteAndWaitForTransaction } from "@suilend/sui-fe";
+
 import { LAUNCH_TOKEN_PACKAGE_ID } from "@/lib/launchToken";
 
 export const generate_bytecode = (

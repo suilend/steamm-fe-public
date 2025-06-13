@@ -4,127 +4,20 @@ import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 
 import { QuoterId } from "@suilend/steamm-sdk";
-import { formatNumber } from "@suilend/sui-fe";
+import {
+  formatNumber,
+  keypairSignExecuteAndWaitForTransaction,
+} from "@suilend/sui-fe";
 
 import {
   CreateCoinResult,
   createCoin,
   generate_bytecode,
 } from "@/lib/createCoin";
-import { keypairSignExecuteAndWaitForTransaction } from "@/lib/keypair";
 
 // Token
 export const LAUNCH_TOKEN_PACKAGE_ID =
   "0xf4054b4c967ea64173453f593a0ec98cb6aa351635cbc412f4fdf5f804bb98db";
-
-export const BLACKLISTED_WORDS = [
-  // Sui
-  "sui",
-  "suilend",
-  "springsui",
-  "steamm",
-  "root",
-  "rootlet",
-  "rootlets",
-  "send",
-
-  // Test
-  "test",
-  "temp",
-  "dummy",
-
-  // Brands
-  "bnb",
-  "bn",
-  "okx",
-  "x",
-  "coin",
-  "coinbase",
-
-  // Inappropriate
-  "anal",
-  "anus",
-  "ass",
-  "asshole",
-  "bitch",
-  "bitching",
-  "boob",
-  "boobs",
-  "butt",
-  "butthole",
-  "butts",
-  "cheat",
-  "cheater",
-  "cock",
-  "cockhead",
-  "cocaine",
-  "crack",
-  "cracker",
-  "cunt",
-  "cunty",
-  "cum",
-  "cumshot",
-  "death",
-  "dead",
-  "die",
-  "dick",
-  "dickhead",
-  "drug",
-  "drugs",
-  "fake",
-  "fraud",
-  "fuck",
-  "fucker",
-  "fucking",
-  "hack",
-  "hacker",
-  "hate",
-  "heroin",
-  "hitler",
-  "hax",
-  "haxor",
-  "jizz",
-  "kill",
-  "meth",
-  "naked",
-  "nazi",
-  "nude",
-  "nudes",
-  "pedo",
-  "pedophile",
-  "penis",
-  "pirate",
-  "piracy",
-  "porn",
-  "porno",
-  "pussy",
-  "pussycat",
-  "racism",
-  "racist",
-  "scam",
-  "scammer",
-  "sex",
-  "sexism",
-  "sexist",
-  "shit",
-  "shitter",
-  "shitting",
-  "slut",
-  "slutty",
-  "sperm",
-  "steal",
-  "terror",
-  "terrorist",
-  "thief",
-  "thieves",
-  "tit",
-  "tits",
-  "vagina",
-  "weed",
-  "whore",
-  "whoring",
-  "xxx",
-];
 
 export const DEFAULT_TOKEN_DECIMALS = 6;
 export const DEFAULT_TOKEN_SUPPLY = 10 ** 9; // 1B

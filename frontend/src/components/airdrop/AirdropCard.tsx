@@ -6,10 +6,16 @@ import BigNumber from "bignumber.js";
 import { chunk } from "lodash";
 
 import {
+  FundKeypairResult,
   NORMALIZED_SUI_COINTYPE,
+  ReturnAllOwnedObjectsAndSuiToUserResult,
+  checkIfKeypairCanBeUsed,
+  createKeypair,
   formatToken,
+  fundKeypair,
   getToken,
   isSui,
+  returnAllOwnedObjectsAndSuiToUser,
 } from "@suilend/sui-fe";
 import {
   showErrorToast,
@@ -31,14 +37,6 @@ import {
   MakeBatchTransferResult,
   makeBatchTransfer,
 } from "@/lib/airdrop";
-import {
-  FundKeypairResult,
-  ReturnAllOwnedObjectsAndSuiToUserResult,
-  checkIfKeypairCanBeUsed,
-  createKeypair,
-  fundKeypair,
-  returnAllOwnedObjectsAndSuiToUser,
-} from "@/lib/keypair";
 import { cn } from "@/lib/utils";
 
 const TRANSFERS_PER_BATCH = 500; // Max = 512 (if no other MOVE calls in the transaction)

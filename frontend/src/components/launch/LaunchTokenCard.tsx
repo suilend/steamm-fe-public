@@ -8,15 +8,22 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { ADMIN_ADDRESS, computeOptimalOffset } from "@suilend/steamm-sdk";
 import {
+  BLACKLISTED_WORDS,
+  FundKeypairResult,
   NORMALIZED_SUI_COINTYPE,
+  ReturnAllOwnedObjectsAndSuiToUserResult,
   Token,
+  checkIfKeypairCanBeUsed,
+  createKeypair,
   formatInteger,
   formatNumber,
   formatPercent,
   formatPrice,
   formatToken,
   formatUsd,
+  fundKeypair,
   getToken,
+  returnAllOwnedObjectsAndSuiToUser,
 } from "@suilend/sui-fe";
 import {
   showErrorToast,
@@ -52,15 +59,6 @@ import {
   formatTextInputValue,
 } from "@/lib/format";
 import {
-  FundKeypairResult,
-  ReturnAllOwnedObjectsAndSuiToUserResult,
-  checkIfKeypairCanBeUsed,
-  createKeypair,
-  fundKeypair,
-  returnAllOwnedObjectsAndSuiToUser,
-} from "@/lib/keypair";
-import {
-  BLACKLISTED_WORDS,
   BROWSE_MAX_FILE_SIZE_BYTES,
   DEFAULT_TOKEN_DECIMALS,
   DEFAULT_TOKEN_SUPPLY,

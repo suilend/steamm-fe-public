@@ -15,7 +15,12 @@ import {
   QuoterId,
   SteammSDK,
 } from "@suilend/steamm-sdk";
-import { Token, getToken, isSui } from "@suilend/sui-fe";
+import {
+  Token,
+  getToken,
+  isSui,
+  keypairSignExecuteAndWaitForTransaction,
+} from "@suilend/sui-fe";
 
 import { AppData } from "@/contexts/AppContext";
 import {
@@ -23,7 +28,6 @@ import {
   createCoin,
   generate_bytecode,
 } from "@/lib/createCoin";
-import { keypairSignExecuteAndWaitForTransaction } from "@/lib/keypair";
 import { BURN_ADDRESS } from "@/lib/launchToken";
 
 export const QUOTER_IDS: QuoterId[] = Object.values(QuoterId).filter(

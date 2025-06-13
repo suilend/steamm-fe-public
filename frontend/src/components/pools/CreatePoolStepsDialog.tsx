@@ -4,6 +4,11 @@ import { useMemo } from "react";
 import { SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { ExternalLink } from "lucide-react";
 
+import {
+  FundKeypairResult,
+  ReturnAllOwnedObjectsAndSuiToUserResult,
+} from "@suilend/sui-fe";
+
 import Dialog from "@/components/Dialog";
 import Step from "@/components/Step";
 import { CreateCoinResult } from "@/lib/createCoin";
@@ -12,10 +17,6 @@ import {
   CreatePoolAndDepositInitialLiquidityResult,
 } from "@/lib/createPool";
 import { GetBTokenAndBankForTokenResult } from "@/lib/createPool";
-import {
-  FundKeypairResult,
-  ReturnAllOwnedObjectsAndSuiToUserResult,
-} from "@/lib/keypair";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 
 interface CreatePoolStepsDialogProps {
