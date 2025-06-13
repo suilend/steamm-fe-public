@@ -1,7 +1,8 @@
 import BigNumber from "bignumber.js";
 import { AlertTriangle, Info } from "lucide-react";
 
-import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
+import { StandardizedQuote } from "@suilend/sdk";
+import { SwapQuote } from "@suilend/steamm-sdk";
 import { Token, formatPercent } from "@suilend/sui-fe";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,7 +17,7 @@ interface PriceDifferenceLabelProps {
   outToken: Token;
   cachedUsdPriceRatio?: BigNumber | null;
   isFetchingQuote: boolean;
-  quote?: SwapQuote | MultiSwapQuote;
+  quote?: SwapQuote | StandardizedQuote;
 }
 
 export default function PriceDifferenceLabel({
