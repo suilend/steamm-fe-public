@@ -78,6 +78,10 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
           priceA: _existingPool.prices[0].toString(), // Existing prices
           priceB: _existingPool.prices[1].toString(), // Existing prices
           isInitialLpTokenBurned: _existingPool.isInitialLpTokenBurned, // Existing isInitialLpTokenBurned
+          initialLpTokensMinted:
+            _existingPool.initialLpTokensMinted === null
+              ? _existingPool.initialLpTokensMinted
+              : _existingPool.initialLpTokensMinted.times(10 ** 9).toString(), // Existing initialLpTokensMinted
         });
         if (parsedPool === undefined) return;
 

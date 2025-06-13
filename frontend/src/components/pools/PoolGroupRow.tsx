@@ -15,7 +15,6 @@ import { formatPercent, formatUsd } from "@suilend/sui-fe";
 
 import PoolRow from "@/components/pools/PoolRow";
 import { Column } from "@/components/pools/PoolsTable";
-import SteammLaunchTokenBadge from "@/components/SteammLaunchTokenBadge";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
@@ -47,8 +46,6 @@ export default function PoolGroupRow({
   const isVerified = poolGroup.coinTypes.every((coinType) =>
     verifiedCoinTypes?.includes(coinType),
   );
-  const isSteammLaunchToken = (coinType: string) =>
-    appData.steammLaunchCoinTypes.includes(coinType);
 
   // State
   const [isExpanded, setIsExpanded] = useSessionStorage<boolean>(
@@ -143,19 +140,11 @@ export default function PoolGroupRow({
 
               <div className="flex flex-row items-center gap-1.5">
                 <p className="flex w-max flex-row items-center text-p1 text-foreground">
-                  <div className="flex flex-row items-center gap-1.5">
-                    {appData.coinMetadataMap[poolGroup.coinTypes[0]].symbol}
-                    {isSteammLaunchToken(poolGroup.coinTypes[0]) && (
-                      <SteammLaunchTokenBadge />
-                    )}
-                  </div>
-                  {"-"}
-                  <div className="flex flex-row items-center gap-1.5">
-                    {appData.coinMetadataMap[poolGroup.coinTypes[1]].symbol}
-                    {isSteammLaunchToken(poolGroup.coinTypes[1]) && (
-                      <SteammLaunchTokenBadge />
-                    )}
-                  </div>
+                  {formatPair(
+                    poolGroup.coinTypes.map(
+                      (coinType) => appData.coinMetadataMap[coinType].symbol,
+                    ),
+                  )}
                 </p>
 
                 {isVerified && <VerifiedBadge />}

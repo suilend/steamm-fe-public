@@ -64,6 +64,7 @@ export type PoolObj = {
   priceA: string | null;
   priceB: string | null;
   isInitialLpTokenBurned: boolean | null;
+  initialLpTokensMinted: string | null;
 };
 
 export type ParsedPool = {
@@ -83,6 +84,7 @@ export type ParsedPool = {
 
   lpSupply: BigNumber;
   isInitialLpTokenBurned: boolean | null;
+  initialLpTokensMinted: BigNumber | null;
   tvlUsd: BigNumber;
 
   feeTierPercent: BigNumber;
@@ -186,6 +188,7 @@ export const getParsedPool = (
       priceA: _priceA,
       priceB: _priceB,
       isInitialLpTokenBurned,
+      initialLpTokensMinted,
     } = poolObj;
 
     const id = poolInfo.poolId;
@@ -307,6 +310,10 @@ export const getParsedPool = (
 
       lpSupply,
       isInitialLpTokenBurned,
+      initialLpTokensMinted:
+        initialLpTokensMinted === null
+          ? null
+          : new BigNumber(initialLpTokensMinted).div(10 ** 9),
       tvlUsd,
 
       feeTierPercent,
