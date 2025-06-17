@@ -38,7 +38,7 @@ export default function PoolLabel({
   return (
     <div
       className={cn(
-        "flex flex-row",
+        "flex h-max flex-row",
         !wrap && "w-max shrink-0",
         isSmall ? "gap-2" : "gap-3",
         className,

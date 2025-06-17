@@ -27,7 +27,9 @@ export default function Parameter({
     <div
       className={cn(
         "flex w-full",
-        isHorizontal ? "flex-row justify-between gap-4" : "flex-col gap-1",
+        isHorizontal
+          ? "flex-row items-center justify-between gap-4"
+          : "flex-col gap-1",
         className,
       )}
     >
