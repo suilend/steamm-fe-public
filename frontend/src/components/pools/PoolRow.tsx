@@ -35,7 +35,7 @@ export default function PoolRow({
 }: PoolRowProps) {
   const { appData } = useLoadedAppContext();
 
-  const { sm, md } = useBreakpoint();
+  const { md } = useBreakpoint();
 
   return (
     <Link href={getPoolUrl(appData, pool)} className="contents">
@@ -78,18 +78,7 @@ export default function PoolRow({
               ) : (
                 <div className="flex w-full flex-col gap-3">
                   {/* Top */}
-                  <div className="flex w-full flex-row justify-between gap-4">
-                    <PoolLabel className="flex-1" wrap pool={pool} />
-
-                    <Parameter
-                      className="w-max items-end"
-                      label="APR"
-                      labelEndDecorator="24H"
-                      isHorizontal={sm}
-                    >
-                      <AprBreakdown valueClassName="!text-p2" pool={pool} />
-                    </Parameter>
-                  </div>
+                  <PoolLabel className="w-full" wrap pool={pool} />
 
                   {/* Stats */}
                   <div className="flex w-full flex-col gap-2">
@@ -119,6 +108,11 @@ export default function PoolRow({
                           </p>
                         </Tooltip>
                       )}
+                    </Parameter>
+
+                    {/* APR */}
+                    <Parameter label="APR" labelEndDecorator="24H" isHorizontal>
+                      <AprBreakdown valueClassName="!text-p2" pool={pool} />
                     </Parameter>
                   </div>
                 </div>
