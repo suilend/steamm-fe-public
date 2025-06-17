@@ -295,7 +295,11 @@ export default function PoolPositionRow({
               ] ? (
                 <div className="flex flex-col items-end gap-1">
                   <p className="text-p1 text-foreground">
-                    {formatPercent(stakedPercent)}
+                    {stakedPercent.eq(0)
+                      ? "Not staked"
+                      : stakedPercent.eq(100)
+                        ? "Staked"
+                        : `${formatPercent(stakedPercent)} staked`}
                   </p>
 
                   <div className="flex flex-row items-center gap-2">
