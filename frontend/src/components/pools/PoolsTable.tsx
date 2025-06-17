@@ -154,69 +154,67 @@ export default function PoolsTable({
         <table className="w-full">
           <tbody>
             {/* Header */}
-            <tr className="h-[calc(1px+40px+1px)] border bg-secondary">
-              <HeaderColumn<Column, SortableColumn>
-                id="pool"
-                style={columnStyleMap.pool}
-              >
-                Pool
-              </HeaderColumn>
+            {md && (
+              <tr className="h-[calc(1px+40px+1px)] border bg-secondary">
+                <HeaderColumn<Column, SortableColumn>
+                  id="pool"
+                  style={columnStyleMap.pool}
+                >
+                  Pool
+                </HeaderColumn>
 
-              {md && (
-                <>
+                <HeaderColumn<Column, SortableColumn>
+                  id="tvlUsd"
+                  sortState={sortState}
+                  toggleSortByColumn={toggleSortByColumn}
+                  style={columnStyleMap.tvlUsd}
+                >
+                  TVL
+                </HeaderColumn>
+
+                {!isTvlOnly && (
                   <HeaderColumn<Column, SortableColumn>
-                    id="tvlUsd"
+                    id="volumeUsd_24h"
                     sortState={sortState}
-                    toggleSortByColumn={toggleSortByColumn}
-                    style={columnStyleMap.tvlUsd}
+                    toggleSortByColumn={
+                      (poolGroups ?? []).every(
+                        (poolGroup) =>
+                          !!poolGroup.pools.every(
+                            (pool) => pool.volumeUsd_24h !== undefined,
+                          ),
+                      )
+                        ? toggleSortByColumn
+                        : undefined
+                    }
+                    titleEndDecorator="24H"
+                    style={columnStyleMap.volumeUsd_24h}
                   >
-                    TVL
+                    Volume
                   </HeaderColumn>
+                )}
 
-                  {!isTvlOnly && (
-                    <HeaderColumn<Column, SortableColumn>
-                      id="volumeUsd_24h"
-                      sortState={sortState}
-                      toggleSortByColumn={
-                        (poolGroups ?? []).every(
-                          (poolGroup) =>
-                            !!poolGroup.pools.every(
-                              (pool) => pool.volumeUsd_24h !== undefined,
-                            ),
-                        )
-                          ? toggleSortByColumn
-                          : undefined
-                      }
-                      titleEndDecorator="24H"
-                      style={columnStyleMap.volumeUsd_24h}
-                    >
-                      Volume
-                    </HeaderColumn>
-                  )}
-
-                  {!isTvlOnly && (
-                    <HeaderColumn<Column, SortableColumn>
-                      id="aprPercent_24h"
-                      sortState={sortState}
-                      toggleSortByColumn={
-                        (poolGroups ?? []).every(
-                          (poolGroup) =>
-                            !!poolGroup.pools.every(
-                              (pool) => pool.aprPercent_24h !== undefined,
-                            ),
-                        )
-                          ? toggleSortByColumn
-                          : undefined
-                      }
-                      titleEndDecorator="24H"
-                      style={columnStyleMap.aprPercent_24h}
-                    >
-                      APR
-                    </HeaderColumn>
-                  )}
-                </>
-              )}
-            </tr>
+                {!isTvlOnly && (
+                  <HeaderColumn<Column, SortableColumn>
+                    id="aprPercent_24h"
+                    sortState={sortState}
+                    toggleSortByColumn={
+                      (poolGroups ?? []).every(
+                        (poolGroup) =>
+                          !!poolGroup.pools.every(
+                            (pool) => pool.aprPercent_24h !== undefined,
+                          ),
+                      )
+                        ? toggleSortByColumn
+                        : undefined
+                    }
+                    titleEndDecorator="24H"
+                    style={columnStyleMap.aprPercent_24h}
+                  >
+                    APR
+                  </HeaderColumn>
+                )}
+              </tr>
+            )}
 
             {/* Rows */}
             {sortedPoolGroups === undefined ? (
