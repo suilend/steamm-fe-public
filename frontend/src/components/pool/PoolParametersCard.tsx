@@ -46,7 +46,7 @@ export default function PoolParametersCard({
   const { pool } = usePoolContext();
 
   return (
-    <div className="grid grid-cols-1 gap-x-6 gap-y-6 rounded-md border px-4 py-5 max-sm:-mx-4 sm:w-full sm:px-5">
+    <div className="grid w-full grid-cols-1 gap-x-6 gap-y-6 rounded-md border p-5">
       {/* Assets */}
       <Parameter label="Assets">
         <div className="flex flex-row items-center gap-4">

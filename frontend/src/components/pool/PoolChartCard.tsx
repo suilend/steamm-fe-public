@@ -7,8 +7,6 @@ import { formatUsd } from "@suilend/sui-fe";
 import { shallowPushQuery } from "@suilend/sui-fe-next";
 
 import HistoricalDataChart from "@/components/HistoricalDataChart";
-import NoDataIcon from "@/components/icons/NoDataIcon";
-import { Skeleton } from "@/components/ui/skeleton";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { ChartConfig, ChartType, chartStatNameMap } from "@/lib/chart";
@@ -111,10 +109,11 @@ export default function PoolChartCard() {
   );
 
   return (
-    <div className="relative rounded-md border px-4 py-5 max-sm:-mx-4 sm:w-full sm:px-5">
+    <div className="relative w-full rounded-md border p-5">
       <HistoricalDataChart
         className="relative z-[1]"
         topLeftClassName="max-sm:gap-2"
+        titleContainerClassName="max-sm:opacity-0"
         titleClassName="max-sm:!h-6"
         title={chartConfig.title}
         value={chartConfig.value}
@@ -127,7 +126,8 @@ export default function PoolChartCard() {
         formatCategory={(category) => category}
       />
 
-      <div className="absolute left-4 top-5 z-[2] flex flex-row items-center gap-1 bg-background sm:left-auto sm:right-5">
+      <div className="absolute inset-x-0 top-5 z-[2] flex flex-row items-center gap-1 max-sm:overflow-x-auto sm:justify-end">
+        <div className="-mr-1 h-1 w-5 shrink-0" />
         {Object.values(ChartStat).map((chartStat) => (
           <button
             key={chartStat}
@@ -139,18 +139,28 @@ export default function PoolChartCard() {
             )}
             onClick={() => onSelectedChartStatChange(chartStat)}
           >
-            <p
-              className={cn(
-                "!text-p2 transition-colors sm:!text-p3",
-                selectedChartStat === chartStat
-                  ? "text-foreground"
-                  : "text-secondary-foreground group-hover:text-foreground",
+            <div className="flex flex-row items-baseline gap-1.5">
+              <p
+                className={cn(
+                  "!text-p2 transition-colors sm:!text-p3",
+                  selectedChartStat === chartStat
+                    ? "text-foreground"
+                    : "text-secondary-foreground group-hover:text-foreground",
+                )}
+              >
+                {chartStatNameMap[chartStat]}
+              </p>
+              {chartConfigMap[chartStat].valuePeriodDays !== undefined && (
+                <p className="text-p3 text-tertiary-foreground sm:hidden">
+                  {chartConfigMap[chartStat].valuePeriodDays === 1
+                    ? "24H"
+                    : `${chartConfigMap[chartStat].valuePeriodDays}D`}
+                </p>
               )}
-            >
-              {chartStatNameMap[chartStat]}
-            </p>
+            </div>
           </button>
         ))}
+        <div className="-ml-1 h-1 w-5 shrink-0" />
       </div>
     </div>
   );

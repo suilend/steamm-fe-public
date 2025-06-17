@@ -105,6 +105,7 @@ function TooltipContent({
 interface HistoricalDataChartProps extends ChartConfig {
   className?: ClassValue;
   topLeftClassName?: ClassValue;
+  titleContainerClassName?: ClassValue;
   titleClassName?: ClassValue;
   chartClassName?: ClassValue;
   ticksXSm?: number;
@@ -114,6 +115,7 @@ interface HistoricalDataChartProps extends ChartConfig {
 export default function HistoricalDataChart({
   className,
   topLeftClassName,
+  titleContainerClassName,
   titleClassName,
   chartClassName,
   title,
@@ -254,7 +256,12 @@ export default function HistoricalDataChart({
       <div className="flex flex-row items-start justify-between">
         {/* Top left */}
         <div className={cn("flex flex-col gap-1", topLeftClassName)}>
-          <div className="flex flex-row items-baseline gap-1.5">
+          <div
+            className={cn(
+              "flex flex-row items-baseline gap-1.5",
+              titleContainerClassName,
+            )}
+          >
             <p
               className={cn(
                 "!text-p2 text-secondary-foreground",

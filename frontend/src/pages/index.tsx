@@ -1,5 +1,4 @@
 import Head from "next/head";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 
@@ -9,7 +8,6 @@ import { v4 as uuidv4 } from "uuid";
 import { formatUsd } from "@suilend/sui-fe";
 import { shallowPushQuery } from "@suilend/sui-fe-next";
 
-import Divider from "@/components/Divider";
 import HistoricalDataChart from "@/components/HistoricalDataChart";
 import PoolsSearchInput from "@/components/pools/PoolsSearchInput";
 import PoolsTable from "@/components/pools/PoolsTable";
@@ -234,10 +232,10 @@ export default function PoolsPage() {
 
       <div className="flex w-full max-w-6xl flex-col gap-8">
         {/* Stats */}
-        <div className="flex flex-row items-stretch gap-1 max-sm:-mx-4 sm:w-full sm:gap-5">
+        <div className="flex w-full flex-row items-stretch gap-1 sm:gap-5">
           {/* TVL */}
           <div className="flex-1 rounded-md border">
-            <div className="w-full px-4 pb-4 pt-5 sm:px-5 sm:pb-5">
+            <div className="w-full p-5">
               <HistoricalDataChart
                 title="TVL"
                 value={
@@ -254,10 +252,11 @@ export default function PoolsPage() {
 
           {/* Volume */}
           <div className="flex-1 rounded-md border">
-            <div className="relative w-full px-4 pb-4 pt-5 sm:px-5 sm:pb-5">
+            <div className="relative w-full p-5">
               <HistoricalDataChart
                 className="relative z-[1]"
                 topLeftClassName="max-sm:gap-2"
+                titleContainerClassName="max-sm:opacity-0"
                 titleClassName="max-sm:!h-6"
                 title={rhsChartConfig.title}
                 value={rhsChartConfig.value}
@@ -269,7 +268,8 @@ export default function PoolsPage() {
                 formatCategory={(category) => category}
               />
 
-              <div className="absolute left-4 top-5 z-[2] flex flex-row items-center gap-1 bg-background sm:left-auto sm:right-5">
+              <div className="absolute inset-x-0 top-5 z-[2] flex flex-row items-center gap-1 max-sm:overflow-x-auto sm:justify-end">
+                <div className="-mr-1 h-1 w-5 shrink-0" />
                 {Object.values(RhsChartStat).map((rhsChartStat) => (
                   <button
                     key={rhsChartStat}
@@ -281,18 +281,29 @@ export default function PoolsPage() {
                     )}
                     onClick={() => onSelectedRhsChartStatChange(rhsChartStat)}
                   >
-                    <p
-                      className={cn(
-                        "!text-p2 transition-colors sm:!text-p3",
-                        selectedRhsChartStat === rhsChartStat
-                          ? "text-foreground"
-                          : "text-secondary-foreground group-hover:text-foreground",
+                    <div className="flex flex-row items-baseline gap-1.5">
+                      <p
+                        className={cn(
+                          "!text-p2 transition-colors sm:!text-p3",
+                          selectedRhsChartStat === rhsChartStat
+                            ? "text-foreground"
+                            : "text-secondary-foreground group-hover:text-foreground",
+                        )}
+                      >
+                        {chartStatNameMap[rhsChartStat]}
+                      </p>
+                      {rhsChartConfigMap[rhsChartStat].valuePeriodDays !==
+                        undefined && (
+                        <p className="text-p3 text-tertiary-foreground sm:hidden">
+                          {rhsChartConfigMap[rhsChartStat].valuePeriodDays === 1
+                            ? "24H"
+                            : `${rhsChartConfigMap[rhsChartStat].valuePeriodDays}D`}
+                        </p>
                       )}
-                    >
-                      {chartStatNameMap[rhsChartStat]}
-                    </p>
+                    </div>
                   </button>
                 ))}
+                <div className="-ml-1 h-1 w-5 shrink-0" />
               </div>
             </div>
           </div>
