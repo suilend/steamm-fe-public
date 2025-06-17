@@ -40,7 +40,9 @@ export interface AppData {
       refreshedRawReserves: Reserve<string>[];
       reserveMap: Record<string, ParsedReserve>;
 
+      activeRewardCoinTypes: string[];
       rewardCoinMetadataMap: Record<string, CoinMetadata>;
+
       rewardPriceMap: Record<string, BigNumber | undefined>;
 
       depositAprPercentMap: Record<string, BigNumber>;
@@ -53,7 +55,9 @@ export interface AppData {
       refreshedRawReserves: Reserve<string>[];
       reserveMap: Record<string, ParsedReserve>;
 
+      activeRewardCoinTypes: string[];
       rewardCoinMetadataMap: Record<string, CoinMetadata>;
+
       rewardPriceMap: Record<string, BigNumber | undefined>;
     };
   };

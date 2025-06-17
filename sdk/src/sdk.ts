@@ -503,10 +503,7 @@ export class SteammSDK {
       // Suilend
       (async () => {
         // Suilend - Main market
-        const mainMarket_reserveDepositAprPercentMap: Record<
-          string,
-          BigNumber
-        > = {}; // Not needed for this use case
+        const mainMarket_depositAprPercentMap: Record<string, BigNumber> = {}; // Not needed for this use case
 
         // Suilend - LM market
         const lmMarket_suilendClient = await SuilendClient.initialize(
@@ -528,7 +525,7 @@ export class SteammSDK {
 
         return {
           mainMarket: {
-            depositAprPercentMap: mainMarket_reserveDepositAprPercentMap,
+            depositAprPercentMap: mainMarket_depositAprPercentMap,
           },
           lmMarket: {
             suilendClient: lmMarket_suilendClient,

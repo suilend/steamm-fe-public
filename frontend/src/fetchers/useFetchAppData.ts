@@ -66,93 +66,106 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     ] = await Promise.all([
       // Suilend
       (async () => {
-        // Suilend - Main market
-        const mainMarket_suilendClient = await SuilendClient.initialize(
-          process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-            ? BETA_CONFIG.packages.suilend.config!.lendingMarketId // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
-            : MAINNET_CONFIG.packages.suilend.config!.lendingMarketId,
-          process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-            ? BETA_CONFIG.packages.suilend.config!.lendingMarketType // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
-            : MAINNET_CONFIG.packages.suilend.config!.lendingMarketType,
-          suiClient,
-        );
+        const [mainMarket, lmMarket] = await Promise.all([
+          // Suilend - Main market
+          (async () => {
+            const suilendClient = await SuilendClient.initialize(
+              process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+                ? BETA_CONFIG.packages.suilend.config!.lendingMarketId // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
+                : MAINNET_CONFIG.packages.suilend.config!.lendingMarketId,
+              process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+                ? BETA_CONFIG.packages.suilend.config!.lendingMarketType // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
+                : MAINNET_CONFIG.packages.suilend.config!.lendingMarketType,
+              suiClient,
+            );
 
-        const {
-          lendingMarket: mainMarket_lendingMarket,
+            const {
+              lendingMarket,
 
-          refreshedRawReserves: mainMarket_refreshedRawReserves,
-          reserveMap: mainMarket_reserveMap,
+              refreshedRawReserves,
+              reserveMap,
 
-          activeRewardCoinTypes: mainMarket_activeRewardCoinTypes,
-          rewardCoinMetadataMap: mainMarket_rewardCoinMetadataMap,
-        } = await initializeSuilend(suiClient, mainMarket_suilendClient);
+              activeRewardCoinTypes,
+              rewardCoinMetadataMap,
+            } = await initializeSuilend(suiClient, suilendClient);
 
-        const { rewardPriceMap: mainMarket_rewardPriceMap } =
-          await initializeSuilendRewards(
-            mainMarket_reserveMap,
-            mainMarket_activeRewardCoinTypes,
-          );
+            const { rewardPriceMap } = await initializeSuilendRewards(
+              reserveMap,
+              activeRewardCoinTypes,
+            );
 
-        const mainMarket_reserveDepositAprPercentMap: Record<
-          string,
-          BigNumber
-        > = Object.fromEntries(
-          Object.entries(mainMarket_reserveMap).map(([coinType, reserve]) => [
-            coinType,
-            reserve.depositAprPercent,
-          ]),
-        );
+            const depositAprPercentMap: Record<string, BigNumber> =
+              Object.fromEntries(
+                Object.entries(reserveMap).map(([coinType, reserve]) => [
+                  coinType,
+                  reserve.depositAprPercent,
+                ]),
+              );
 
-        // Suilend - LM market
-        const lmMarket_suilendClient = await SuilendClient.initialize(
-          process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-            ? "0xb1d89cf9082cedce09d3647f0ebda4a8b5db125aff5d312a8bfd7eefa715bd35" // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
-            : "0xc1888ec1b81a414e427a44829310508352aec38252ee0daa9f8b181b6947de9f",
-          process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-            ? "0xdeeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP"
-            : "0x0a071f4976abae1a7f722199cf0bfcbe695ef9408a878e7d12a7ca87b7e582a6::lp_rewards::LP_REWARDS",
-          suiClient,
-        );
+            return {
+              suilendClient,
 
-        const {
-          lendingMarket: lmMarket_lendingMarket,
+              lendingMarket,
 
-          refreshedRawReserves: lmMarket_refreshedRawReserves,
-          reserveMap: lmMarket_reserveMap,
+              refreshedRawReserves,
+              reserveMap,
 
-          activeRewardCoinTypes: lmMarket_activeRewardCoinTypes,
-          rewardCoinMetadataMap: lmMarket_rewardCoinMetadataMap,
-        } = await initializeSuilend(suiClient, lmMarket_suilendClient);
+              activeRewardCoinTypes,
+              rewardCoinMetadataMap,
+
+              rewardPriceMap,
+
+              depositAprPercentMap,
+            };
+          })(),
+
+          // Suilend - LM market
+          (async () => {
+            const suilendClient = await SuilendClient.initialize(
+              process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+                ? "0xb1d89cf9082cedce09d3647f0ebda4a8b5db125aff5d312a8bfd7eefa715bd35" // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
+                : "0xc1888ec1b81a414e427a44829310508352aec38252ee0daa9f8b181b6947de9f",
+              process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+                ? "0xdeeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP"
+                : "0x0a071f4976abae1a7f722199cf0bfcbe695ef9408a878e7d12a7ca87b7e582a6::lp_rewards::LP_REWARDS",
+              suiClient,
+            );
+
+            const {
+              lendingMarket,
+
+              refreshedRawReserves,
+              reserveMap,
+
+              activeRewardCoinTypes,
+              rewardCoinMetadataMap,
+            } = await initializeSuilend(suiClient, suilendClient);
+
+            return {
+              suilendClient,
+
+              lendingMarket,
+
+              refreshedRawReserves,
+              reserveMap,
+
+              activeRewardCoinTypes,
+              rewardCoinMetadataMap,
+            };
+          })(),
+        ]);
 
         const { rewardPriceMap: lmMarket_rewardPriceMap } =
           await initializeSuilendRewards(
-            { ...mainMarket_reserveMap, ...lmMarket_reserveMap }, // Use main market reserve map prices for LM rewards
-            lmMarket_activeRewardCoinTypes,
+            { ...mainMarket.reserveMap, ...lmMarket.reserveMap }, // Use main market reserve map prices for LM rewards
+            lmMarket.activeRewardCoinTypes,
           );
 
         return {
-          mainMarket: {
-            suilendClient: mainMarket_suilendClient,
-
-            lendingMarket: mainMarket_lendingMarket,
-
-            refreshedRawReserves: mainMarket_refreshedRawReserves,
-            reserveMap: mainMarket_reserveMap,
-
-            rewardCoinMetadataMap: mainMarket_rewardCoinMetadataMap,
-            rewardPriceMap: mainMarket_rewardPriceMap,
-
-            depositAprPercentMap: mainMarket_reserveDepositAprPercentMap,
-          },
+          mainMarket,
           lmMarket: {
-            suilendClient: lmMarket_suilendClient,
+            ...lmMarket,
 
-            lendingMarket: lmMarket_lendingMarket,
-
-            refreshedRawReserves: lmMarket_refreshedRawReserves,
-            reserveMap: lmMarket_reserveMap,
-
-            rewardCoinMetadataMap: lmMarket_rewardCoinMetadataMap,
             rewardPriceMap: lmMarket_rewardPriceMap,
           },
         };
