@@ -128,7 +128,6 @@ export default function SearchDialog() {
         ? prev.filter((_value) => _value !== value)
         : [...prev, value],
     );
-    inputRef.current?.focus();
   }, []);
 
   const [quoterIds, setQuoterIds] = useState<QuoterId[]>([]);
@@ -138,7 +137,6 @@ export default function SearchDialog() {
         ? prev.filter((_value) => _value !== value)
         : [...prev, value],
     );
-    inputRef.current?.focus();
   }, []);
 
   const feeTierOptions: SelectPopoverOption[] = useMemo(
