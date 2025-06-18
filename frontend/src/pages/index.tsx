@@ -1,26 +1,23 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import BigNumber from "bignumber.js";
 import { v4 as uuidv4 } from "uuid";
 
+import { ParsedPool } from "@suilend/steamm-sdk";
 import { formatUsd } from "@suilend/sui-fe";
 import { shallowPushQuery } from "@suilend/sui-fe-next";
 
 import HistoricalDataChart from "@/components/HistoricalDataChart";
-import PoolsSearchInput from "@/components/pools/PoolsSearchInput";
 import PoolsTable from "@/components/pools/PoolsTable";
 import Tag from "@/components/Tag";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { ChartConfig, ChartType, chartStatNameMap } from "@/lib/chart";
-import {
-  getFilteredPoolGroups,
-  getPoolGroups,
-  getPoolsWithExtraData,
-} from "@/lib/pools";
+import { getPoolGroups, getPoolsWithExtraData } from "@/lib/pools";
+import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 enum RhsChartStat {
@@ -109,7 +106,7 @@ export default function PoolsPage() {
   );
 
   // Pools
-  const poolsWithExtraData = useMemo(
+  const poolsWithExtraData: ParsedPool[] = useMemo(
     () =>
       getPoolsWithExtraData(
         {
@@ -127,20 +124,15 @@ export default function PoolsPage() {
     ],
   );
 
-  // Group pools by pair
-  const poolGroups = useMemo(
+  const poolGroups: PoolGroup[] = useMemo(
     () => getPoolGroups(poolsWithExtraData),
     [poolsWithExtraData],
   );
-  const poolGroupsCount =
-    poolGroups === undefined
-      ? undefined
-      : poolGroups.reduce((acc, poolGroup) => acc + poolGroup.pools.length, 0);
 
   // Featured pools (flat)
   const featuredPoolGroups = useMemo(
     () =>
-      featuredPoolIds === undefined || poolsWithExtraData === undefined
+      featuredPoolIds === undefined
         ? undefined
         : poolsWithExtraData
             .filter((pool) => featuredPoolIds.includes(pool.id))
@@ -162,7 +154,7 @@ export default function PoolsPage() {
   // Verified pools (groups)
   const verifiedPoolGroups = useMemo(
     () =>
-      verifiedCoinTypes === undefined || poolGroups === undefined
+      verifiedCoinTypes === undefined
         ? undefined
         : poolGroups
             .filter((poolGroup) =>
@@ -186,40 +178,6 @@ export default function PoolsPage() {
     verifiedPoolGroups === undefined
       ? undefined
       : verifiedPoolGroups.reduce(
-          (acc, poolGroup) => acc + poolGroup.pools.length,
-          0,
-        );
-
-  // Search
-  // Search - all pools
-  const [allPoolsSearchString, setAllPoolsSearchString] = useState<string>("");
-  const filteredPoolGroups = getFilteredPoolGroups(
-    appData.coinMetadataMap,
-    allPoolsSearchString,
-    poolGroups,
-  );
-
-  const filteredPoolGroupsCount =
-    filteredPoolGroups === undefined
-      ? undefined
-      : filteredPoolGroups.reduce(
-          (acc, poolGroup) => acc + poolGroup.pools.length,
-          0,
-        );
-
-  // Search - verified pools
-  const [verifiedPoolsSearchString, setVerifiedPoolsSearchString] =
-    useState<string>("");
-  const filteredVerifiedPoolGroups = getFilteredPoolGroups(
-    appData.coinMetadataMap,
-    verifiedPoolsSearchString,
-    verifiedPoolGroups,
-  );
-
-  const filteredVerifiedPoolGroupsCount =
-    filteredVerifiedPoolGroups === undefined
-      ? undefined
-      : filteredVerifiedPoolGroups.reduce(
           (acc, poolGroup) => acc + poolGroup.pools.length,
           0,
         );
@@ -334,72 +292,19 @@ export default function PoolsPage() {
 
         {/* Verified pools */}
         <div className="flex w-full flex-col gap-6">
-          <div className="flex h-[30px] w-full flex-row items-center justify-between gap-4">
-            <div className="flex flex-row items-center gap-3">
-              <h2 className="text-h3 text-foreground">Verified pools</h2>
+          <div className="flex w-full flex-row items-center gap-3">
+            <h2 className="text-h3 text-foreground">Verified pools</h2>
 
-              {verifiedPoolGroupsCount === undefined ||
-              filteredVerifiedPoolGroupsCount === undefined ? (
-                <Skeleton className="h-5 w-12" />
-              ) : (
-                <Tag>
-                  {filteredVerifiedPoolGroupsCount !==
-                    verifiedPoolGroupsCount && (
-                    <>
-                      {filteredVerifiedPoolGroupsCount}
-                      {"/"}
-                    </>
-                  )}
-                  {verifiedPoolGroupsCount}
-                </Tag>
-              )}
-            </div>
-
-            <PoolsSearchInput
-              value={verifiedPoolsSearchString}
-              onChange={setVerifiedPoolsSearchString}
-            />
+            {verifiedPoolGroupsCount === undefined ? (
+              <Skeleton className="h-5 w-12" />
+            ) : (
+              <Tag>{verifiedPoolGroupsCount}</Tag>
+            )}
           </div>
 
           <PoolsTable
             tableId="verified-pools"
-            poolGroups={filteredVerifiedPoolGroups}
-            searchString={verifiedPoolsSearchString}
-          />
-        </div>
-
-        {/* All pools */}
-        <div className="flex w-full flex-col gap-6">
-          <div className="flex h-[30px] w-full flex-row items-center justify-between gap-4">
-            <div className="flex flex-row items-center gap-3">
-              <h2 className="text-h3 text-foreground">All pools</h2>
-
-              {poolGroupsCount === undefined ||
-              filteredPoolGroupsCount === undefined ? (
-                <Skeleton className="h-5 w-12" />
-              ) : (
-                <Tag>
-                  {filteredPoolGroupsCount !== poolGroupsCount && (
-                    <>
-                      {filteredPoolGroupsCount}
-                      {"/"}
-                    </>
-                  )}
-                  {poolGroupsCount}
-                </Tag>
-              )}
-            </div>
-
-            <PoolsSearchInput
-              value={allPoolsSearchString}
-              onChange={setAllPoolsSearchString}
-            />
-          </div>
-
-          <PoolsTable
-            tableId="all-pools"
-            poolGroups={filteredPoolGroups}
-            searchString={allPoolsSearchString}
+            poolGroups={verifiedPoolGroups}
           />
         </div>
       </div>

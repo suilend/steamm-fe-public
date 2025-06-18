@@ -101,9 +101,7 @@ export const getPoolsWithExtraData = (
 
 export const getPoolGroups = (
   poolsWithExtraData: ParsedPool[],
-): PoolGroup[] | undefined => {
-  if (poolsWithExtraData === undefined) return undefined;
-
+): PoolGroup[] => {
   const poolGroupsByPair: Record<string, ParsedPool[]> = {};
 
   for (const pool of poolsWithExtraData) {
@@ -123,9 +121,8 @@ export const getPoolGroups = (
 export const getFilteredPoolGroups = (
   coinMetadataMap: AppData["coinMetadataMap"],
   searchString: string,
-  poolGroups: PoolGroup[] | undefined,
+  poolGroups: PoolGroup[],
 ) => {
-  if (poolGroups === undefined) return undefined;
   if (searchString === "") return poolGroups;
 
   return poolGroups

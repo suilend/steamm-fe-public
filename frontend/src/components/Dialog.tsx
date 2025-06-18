@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 interface DialogProps extends PropsWithChildren {
   rootProps?: DialogRootProps;
   trigger?: ReactNode;
-  headerProps?: DialogHeaderProps;
+  headerProps?: { children?: ReactNode } | DialogHeaderProps;
   dialogContentProps?: DialogContentProps;
   drawerContentProps?: DrawerContentProps;
   dialogContentInnerClassName?: ClassValue;
@@ -73,7 +73,12 @@ export default function Dialog({
               dialogContentInnerClassName,
             )}
           >
-            {headerProps && <DialogHeader {...headerProps} />}
+            {headerProps &&
+              ("children" in headerProps ? (
+                headerProps.children
+              ) : (
+                <DialogHeader {...(headerProps as DialogHeaderProps)} />
+              ))}
             <div
               className={cn(
                 "relative flex flex-col gap-4 overflow-y-auto p-5 pt-0",
@@ -100,9 +105,15 @@ export default function Dialog({
         thumbClassName="hidden"
         {...restDrawerContentProps}
       >
-        {headerProps && (
-          <DialogHeader {...headerProps} showCloseButton={false} />
-        )}
+        {headerProps &&
+          ("children" in headerProps ? (
+            headerProps.children
+          ) : (
+            <DialogHeader
+              {...(headerProps as DialogHeaderProps)}
+              showCloseButton={false}
+            />
+          ))}
         <div
           className={cn(
             "relative flex flex-col gap-4 overflow-y-auto p-5 pt-0",

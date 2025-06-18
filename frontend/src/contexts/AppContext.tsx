@@ -100,6 +100,9 @@ interface AppContext {
 
   featuredPoolIds: string[] | undefined;
   verifiedCoinTypes: string[] | undefined;
+
+  recentPoolIds: string[];
+  addRecentPoolId: (poolId: string) => void;
 }
 type LoadedAppContext = AppContext & {
   steammClient: SteammSDK;
@@ -125,6 +128,11 @@ const AppContext = createContext<AppContext>({
 
   featuredPoolIds: undefined,
   verifiedCoinTypes: undefined,
+
+  recentPoolIds: [],
+  addRecentPoolId: () => {
+    throw Error("AppContextProvider not initialized");
+  },
 });
 
 export const useAppContext = () => useContext(AppContext);
@@ -186,6 +194,20 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     [flags?.steammVerifiedCoinTypes, appData?.suilend.mainMarket.reserveMap],
   );
 
+  // Recent pools
+  const [recentPoolIds, setRecentPoolIds] = useLocalStorage<string[]>(
+    "recentPoolIds",
+    [],
+  );
+  const addRecentPoolId = useCallback(
+    (poolId: string) => {
+      setRecentPoolIds((prev) =>
+        [poolId, ...prev.filter((id) => id !== poolId)].slice(0, 10),
+      );
+    },
+    [setRecentPoolIds],
+  );
+
   // Context
   const contextValue: AppContext = useMemo(
     () => ({
@@ -201,6 +223,9 @@ export function AppContextProvider({ children }: PropsWithChildren) {
 
       featuredPoolIds,
       verifiedCoinTypes,
+
+      recentPoolIds,
+      addRecentPoolId,
     }),
     [
       steammClient,
@@ -211,6 +236,8 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       setSlippagePercent,
       featuredPoolIds,
       verifiedCoinTypes,
+      recentPoolIds,
+      addRecentPoolId,
     ],
   );
 

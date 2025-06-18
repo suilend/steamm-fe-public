@@ -24,7 +24,7 @@ export default function TitleWithIcon({
   return (
     <p
       className={cn(
-        "flex flex-row items-center gap-2 !text-h3 text-foreground",
+        "flex flex-row items-center gap-2.5 !text-h3 text-foreground",
         className,
       )}
       style={style}

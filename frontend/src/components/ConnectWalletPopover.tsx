@@ -88,7 +88,7 @@ export default function ConnectWalletPopover() {
         maxWidth: 280,
       }}
       trigger={
-        <button className="group flex h-10 flex-row items-center gap-2 rounded-md border bg-card px-3">
+        <button className="group flex h-10 flex-row items-center gap-2 rounded-md bg-card px-3">
           <p
             className={cn(
               "!text-p2 transition-colors",

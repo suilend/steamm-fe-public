@@ -7,7 +7,9 @@ import ConnectWalletButton from "@/components/ConnectWalletButton";
 import Container from "@/components/Container";
 import Logo from "@/components/Logo";
 import NavPopover from "@/components/NavPopover";
+import SearchDialog from "@/components/SearchDialog";
 import SettingsDialog from "@/components/SettingsDialog";
+import { useAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useNavItems from "@/hooks/useNavItems";
 import { ROOT_URL } from "@/lib/navigation";
@@ -18,6 +20,7 @@ const NAV_HEIGHT = 64; // px
 export default function Nav() {
   const router = useRouter();
 
+  const { appData } = useAppContext();
   const { refresh } = useUserContext();
 
   // Items
@@ -45,7 +48,7 @@ export default function Nav() {
       >
         <Container>
           <div
-            className="flex w-full flex-row items-center justify-between gap-4"
+            className="flex w-full flex-row items-center justify-between gap-2"
             style={{ height: `${NAV_HEIGHT}px` }}
           >
             {/* Start */}
@@ -85,7 +88,7 @@ export default function Nav() {
             </div>
 
             {/* End */}
-            <div className="flex min-w-0 flex-row items-center gap-4">
+            <div className="flex min-w-0 flex-row items-center gap-3">
               <div className="flex shrink-0 flex-row items-center gap-2">
                 <button
                   className="group flex h-5 w-5 flex-row items-center justify-center"
@@ -93,12 +96,15 @@ export default function Nav() {
                 >
                   <RotateCw className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
                 </button>
-
                 <SettingsDialog />
-                <ConnectWalletButton />
               </div>
 
-              <div className="lg:hidden">
+              <div className="shrink-0 max-md:-ml-1 md:-mr-1">
+                {appData && <SearchDialog />}
+              </div>
+              <ConnectWalletButton />
+
+              <div className="shrink-0 lg:hidden">
                 <NavPopover />
               </div>
             </div>

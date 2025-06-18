@@ -30,11 +30,15 @@ import { ROOT_URL } from "@/lib/navigation";
 
 function PoolPage() {
   const { address } = useWalletContext();
-  const { appData } = useLoadedAppContext();
+  const { appData, addRecentPoolId } = useLoadedAppContext();
   const { poolStats, fetchPoolHistoricalStats } = useStatsContext();
   const { refresh } = useUserContext();
 
   const { pool, fetchRefreshedPool } = usePoolContext();
+
+  useEffect(() => {
+    addRecentPoolId(pool.id);
+  }, [addRecentPoolId, pool.id]);
 
   // Fetch historical stats
   const hasFetchedPoolHistoricalStatsRef = useRef<Record<string, boolean>>({});
