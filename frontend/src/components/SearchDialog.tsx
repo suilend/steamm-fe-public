@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
-import { Search, X } from "lucide-react";
+import { Eraser, Search, X } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@suilend/steamm-sdk";
@@ -268,11 +268,13 @@ export default function SearchDialog() {
             <div className="flex w-full flex-col">
               <div className="relative flex h-16 w-full shrink-0 flex-row items-center">
                 <Search className="absolute left-5 top-1/2 z-[3] h-5 w-5 -translate-y-1/2 text-secondary-foreground" />
-                {rawSearchString !== "" && (
+                {showSearchResults && (
                   <button
                     className="group absolute top-1/2 z-[2] flex h-8 w-8 -translate-y-1/2 flex-row items-center justify-center"
                     onClick={() => {
                       onRawSearchStringChange("", true);
+                      setFeeTiers([]);
+                      setQuoterIds([]);
                       inputRef.current?.focus();
                     }}
                     style={{
@@ -287,7 +289,7 @@ export default function SearchDialog() {
                   autoFocus
                   className={cn(
                     "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] !text-h3 text-foreground !outline-0 placeholder:text-tertiary-foreground",
-                    rawSearchString !== "" ? "pr-10" : "pr-5",
+                    showSearchResults ? "pr-10" : "pr-5",
                   )}
                   type="text"
                   placeholder="Search pools"
@@ -295,15 +297,14 @@ export default function SearchDialog() {
                   onChange={(e) => onRawSearchStringChange(e.target.value)}
                   style={{
                     paddingLeft: (5 + 5 + 2.5) * 4,
-                    paddingRight:
-                      (rawSearchString !== "" ? 2.5 + 5 + 5 : 5) * 4,
+                    paddingRight: (showSearchResults ? 2.5 + 5 + 5 : 5) * 4,
                   }}
                 />
               </div>
 
-              <div className="flex w-full flex-row items-center gap-2 px-5 pb-5">
+              <div className="flex w-full flex-row flex-wrap items-center gap-2 px-5 pb-5">
                 <SelectPopover
-                  className="h-8 w-max"
+                  className="w-max"
                   align="start"
                   options={feeTierOptions}
                   placeholder="All fee tiers"
@@ -313,7 +314,7 @@ export default function SearchDialog() {
                 />
 
                 <SelectPopover
-                  className="h-8 w-max"
+                  className="w-max"
                   align="start"
                   options={quoterIdOptions}
                   placeholder="All quoter types"
@@ -327,6 +328,7 @@ export default function SearchDialog() {
           </>
         ),
       }}
+      drawerContentProps={{ className: "h-dvh" }}
       dialogContentInnerClassName="max-w-4xl h-[800px]"
       dialogContentInnerChildrenWrapperClassName="pt-5 flex-1"
     >
@@ -337,10 +339,21 @@ export default function SearchDialog() {
         )}
       >
         <h2 className="text-p1 text-secondary-foreground">
-          {filteredPoolGroupsCount} search result
-          {filteredPoolGroupsCount !== 1 && "s"}
+          {filteredPoolGroupsCount > 0 ? (
+            <>
+              {filteredPoolGroupsCount} result
+              {filteredPoolGroupsCount !== 1 && "s"}
+            </>
+          ) : (
+            `No results for "${searchString}"`
+          )}
         </h2>
-        <div className="flex min-h-0 w-full flex-1 flex-row items-stretch overflow-hidden">
+        <div
+          className={cn(
+            "flex min-h-0 w-full flex-1 flex-row items-stretch overflow-hidden",
+            filteredPoolGroupsCount === 0 && "hidden",
+          )}
+        >
           <PoolsTable
             className="flex flex-col"
             containerClassName="flex-1"
@@ -348,7 +361,6 @@ export default function SearchDialog() {
             tableId="search-pools"
             poolGroups={filteredPoolGroups}
             searchString={searchString}
-            alwaysShowPagination
             pageSize={10}
           />
         </div>

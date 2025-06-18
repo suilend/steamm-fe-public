@@ -26,7 +26,6 @@ interface PoolsTableProps {
   isTvlOnly?: boolean;
   noDefaultSort?: boolean;
   disableSorting?: boolean;
-  alwaysShowPagination?: boolean;
   pageSize?: number;
 }
 
@@ -41,7 +40,6 @@ export default function PoolsTable({
   isTvlOnly,
   noDefaultSort,
   disableSorting,
-  alwaysShowPagination,
   pageSize = 100,
 }: PoolsTableProps) {
   const { md } = useBreakpoint();
@@ -362,7 +360,7 @@ export default function PoolsTable({
       </div>
 
       {/* Pagination */}
-      {pageIndexes && pageIndexes.length > (alwaysShowPagination ? 0 : 1) && (
+      {pageIndexes && pageIndexes.length > 1 && (
         <div className="relative z-[1] mt-4 flex w-full flex-row items-center justify-center gap-2">
           {pageIndexes.map((_pageIndex) => (
             <button
