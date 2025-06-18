@@ -218,7 +218,7 @@ export default function SearchDialog() {
     .sort((a, b) =>
       recentPoolIds.indexOf(a.id) > recentPoolIds.indexOf(b.id) ? 1 : -1,
     ) // Sort by recent pool order
-    .slice(0, 5) // Limit to 5
+    .slice(0, 10) // Limit to 10
     .map((pool) => ({
       id: uuidv4(),
       coinTypes: pool.coinTypes,
@@ -228,7 +228,7 @@ export default function SearchDialog() {
   // Popular pools (flat)
   const popularPoolGroups = poolsWithExtraData
     .sort((a, b) => +b.tvlUsd - +a.tvlUsd)
-    .slice(0, 5) // Limit to 5
+    .slice(0, 10) // Limit to 10
     .map((pool) => ({
       id: uuidv4(),
       coinTypes: pool.coinTypes,
@@ -372,20 +372,24 @@ export default function SearchDialog() {
           showSearchResults ? "hidden" : "flex min-h-0 flex-1 flex-col gap-4",
         )}
       >
-        <h2 className="text-p1 text-secondary-foreground">Recent pools</h2>
-        <div className="flex min-h-0 w-full flex-1 flex-row items-stretch overflow-hidden">
-          <PoolsTable
-            className="flex flex-col"
-            containerClassName="flex-1"
-            tableContainerClassName="h-full"
-            tableId="recent-pools"
-            poolGroups={recentPoolGroups}
-            isFlat
-            noDefaultSort
-            disableSorting
-            pageSize={10}
-          />
-        </div>
+        {recentPoolGroups.length > 0 && (
+          <>
+            <h2 className="text-p1 text-secondary-foreground">Recent pools</h2>
+            <div className="flex min-h-0 w-full flex-1 flex-row items-stretch overflow-hidden">
+              <PoolsTable
+                className="flex flex-col"
+                containerClassName="flex-1"
+                tableContainerClassName="h-full"
+                tableId="recent-pools"
+                poolGroups={recentPoolGroups}
+                isFlat
+                noDefaultSort
+                disableSorting
+                pageSize={10}
+              />
+            </div>
+          </>
+        )}
 
         <h2 className="text-p1 text-secondary-foreground">Popular pools</h2>
         <div className="flex min-h-0 w-full flex-1 flex-row items-stretch overflow-hidden">
