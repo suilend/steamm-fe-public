@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
-import { Eraser, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
 import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@suilend/steamm-sdk";
@@ -11,7 +11,7 @@ import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@suilend/steamm-sdk";
 import Dialog from "@/components/Dialog";
 import Divider from "@/components/Divider";
 import PoolsTable from "@/components/pools/PoolsTable";
-import SelectPopover from "@/components/SelectPopover";
+import SelectPopover, { SelectPopoverOption } from "@/components/SelectPopover";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import useBreakpoint from "@/hooks/useBreakpoint";
@@ -75,20 +75,17 @@ export default function SearchDialog() {
   // Pools
   const poolsWithExtraData: ParsedPool[] = useMemo(
     () =>
-      getPoolsWithExtraData(
-        {
-          lstAprPercentMap: appData.lstAprPercentMap,
-          pools: appData.pools,
-          normalizedPoolRewardMap: appData.normalizedPoolRewardMap,
-        },
-        poolStats,
-      ),
-    [
-      appData.lstAprPercentMap,
-      appData.pools,
-      appData.normalizedPoolRewardMap,
-      poolStats,
-    ],
+      appData === undefined
+        ? []
+        : getPoolsWithExtraData(
+            {
+              lstAprPercentMap: appData.lstAprPercentMap,
+              pools: appData.pools,
+              normalizedPoolRewardMap: appData.normalizedPoolRewardMap,
+            },
+            poolStats,
+          ),
+    [appData, poolStats],
   );
 
   const poolGroups: PoolGroup[] = useMemo(
@@ -144,63 +141,58 @@ export default function SearchDialog() {
     inputRef.current?.focus();
   }, []);
 
-  const feeTierOptions = useMemo(
+  const feeTierOptions: SelectPopoverOption[] = useMemo(
     () =>
-      FEE_TIER_PERCENTS.filter((feeTier) =>
-        poolsWithExtraData.some((pool) => pool.feeTierPercent.eq(feeTier)),
-      ).map((feeTier) => ({
-        id: feeTier.toString(),
-        name: formatFeeTier(new BigNumber(feeTier)),
-        count: getFilteredPoolGroups(
+      appData === undefined
+        ? []
+        : FEE_TIER_PERCENTS.filter((feeTier) =>
+            poolsWithExtraData.some((pool) => pool.feeTierPercent.eq(feeTier)),
+          ).map((feeTier) => ({
+            id: feeTier.toString(),
+            name: formatFeeTier(new BigNumber(feeTier)),
+            count: getFilteredPoolGroups(
+              appData.coinMetadataMap,
+              poolGroups,
+              searchString,
+              [feeTier],
+              quoterIds,
+            ).reduce((acc, poolGroup) => acc + poolGroup.pools.length, 0),
+          })),
+    [appData, poolsWithExtraData, poolGroups, searchString, quoterIds],
+  );
+
+  const quoterIdOptions: SelectPopoverOption[] = useMemo(
+    () =>
+      appData === undefined
+        ? []
+        : Object.values(QuoterId)
+            .filter((quoterId) =>
+              poolsWithExtraData.some((pool) => pool.quoterId === quoterId),
+            )
+            .map((quoterId) => ({
+              id: quoterId.toString(),
+              name: QUOTER_ID_NAME_MAP[quoterId],
+              count: getFilteredPoolGroups(
+                appData.coinMetadataMap,
+                poolGroups,
+                searchString,
+                feeTiers,
+                [quoterId],
+              ).reduce((acc, poolGroup) => acc + poolGroup.pools.length, 0),
+            })),
+    [appData, poolsWithExtraData, poolGroups, searchString, feeTiers],
+  );
+  // Filter
+  const filteredPoolGroups: PoolGroup[] =
+    appData === undefined
+      ? []
+      : getFilteredPoolGroups(
           appData.coinMetadataMap,
           poolGroups,
           searchString,
-          [feeTier],
+          feeTiers,
           quoterIds,
-        ).reduce((acc, poolGroup) => acc + poolGroup.pools.length, 0),
-      })),
-    [
-      poolsWithExtraData,
-      appData.coinMetadataMap,
-      poolGroups,
-      searchString,
-      quoterIds,
-    ],
-  );
-
-  const quoterIdOptions = useMemo(
-    () =>
-      Object.values(QuoterId)
-        .filter((quoterId) =>
-          poolsWithExtraData.some((pool) => pool.quoterId === quoterId),
-        )
-        .map((quoterId) => ({
-          id: quoterId.toString(),
-          name: QUOTER_ID_NAME_MAP[quoterId],
-          count: getFilteredPoolGroups(
-            appData.coinMetadataMap,
-            poolGroups,
-            searchString,
-            feeTiers,
-            [quoterId],
-          ).reduce((acc, poolGroup) => acc + poolGroup.pools.length, 0),
-        })),
-    [
-      poolsWithExtraData,
-      appData.coinMetadataMap,
-      poolGroups,
-      searchString,
-      feeTiers,
-    ],
-  );
-  // Filter
-  const filteredPoolGroups: PoolGroup[] = getFilteredPoolGroups(
-    appData.coinMetadataMap,
-    poolGroups,
-    searchString,
-    feeTiers,
-    quoterIds,
-  );
+        );
   const filteredPoolGroupsCount = filteredPoolGroups.reduce(
     (acc, poolGroup) => acc + poolGroup.pools.length,
     0,

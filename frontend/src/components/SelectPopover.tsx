@@ -8,10 +8,16 @@ import { formatList } from "@suilend/sui-fe";
 import Popover from "@/components/Popover";
 import { cn } from "@/lib/utils";
 
+export type SelectPopoverOption = {
+  id: string;
+  name: string;
+  count?: number;
+};
+
 interface SelectPopoverProps {
   className?: ClassValue;
   align?: "start" | "end";
-  options: { id: string; name: string; count?: number }[];
+  options: SelectPopoverOption[];
   placeholder?: string;
   values: string[];
   onChange: (id: string) => void;

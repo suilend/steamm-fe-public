@@ -101,11 +101,7 @@ export default function Nav() {
               </div>
 
               <div className="shrink-0 max-md:-ml-1 md:-mr-0.5">
-                {appData ? (
-                  <SearchDialog />
-                ) : (
-                  <Skeleton className="h-5 w-5 md:h-10 md:w-40 md:rounded-md" />
-                )}
+                <SearchDialog />
               </div>
 
               <ConnectWalletButton />
