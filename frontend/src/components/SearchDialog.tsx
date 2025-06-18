@@ -268,13 +268,11 @@ export default function SearchDialog() {
             <div className="flex w-full flex-col">
               <div className="relative flex h-16 w-full shrink-0 flex-row items-center">
                 <Search className="absolute left-5 top-1/2 z-[3] h-5 w-5 -translate-y-1/2 text-secondary-foreground" />
-                {showSearchResults && (
+                {rawSearchString !== "" && (
                   <button
                     className="group absolute top-1/2 z-[2] flex h-8 w-8 -translate-y-1/2 flex-row items-center justify-center"
                     onClick={() => {
                       onRawSearchStringChange("", true);
-                      setFeeTiers([]);
-                      setQuoterIds([]);
                       inputRef.current?.focus();
                     }}
                     style={{
@@ -289,7 +287,7 @@ export default function SearchDialog() {
                   autoFocus
                   className={cn(
                     "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] !text-h3 text-foreground !outline-0 placeholder:text-tertiary-foreground",
-                    showSearchResults ? "pr-10" : "pr-5",
+                    rawSearchString !== "" ? "pr-10" : "pr-5",
                   )}
                   type="text"
                   placeholder="Search pools"
@@ -297,30 +295,35 @@ export default function SearchDialog() {
                   onChange={(e) => onRawSearchStringChange(e.target.value)}
                   style={{
                     paddingLeft: (5 + 5 + 2.5) * 4,
-                    paddingRight: (showSearchResults ? 2.5 + 5 + 5 : 5) * 4,
+                    paddingRight:
+                      (rawSearchString !== "" ? 2.5 + 5 + 5 : 5) * 4,
                   }}
                 />
               </div>
 
               <div className="flex w-full flex-row flex-wrap items-center gap-2 px-5 pb-5">
                 <SelectPopover
-                  className="w-max"
+                  className="w-max min-w-32"
                   align="start"
                   options={feeTierOptions}
                   placeholder="All fee tiers"
                   values={feeTiers.map((feeTier) => feeTier.toString())}
                   onChange={(id: string) => onFeeTierChange(+id)}
                   isMultiSelect
+                  canClear
+                  onClear={() => setFeeTiers([])}
                 />
 
                 <SelectPopover
-                  className="w-max"
+                  className="w-max min-w-32"
                   align="start"
                   options={quoterIdOptions}
                   placeholder="All quoter types"
                   values={quoterIds}
                   onChange={(id: string) => onQuoterIdChange(id as QuoterId)}
                   isMultiSelect
+                  canClear
+                  onClear={() => setQuoterIds([])}
                 />
               </div>
             </div>

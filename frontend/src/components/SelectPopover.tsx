@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { ClassValue } from "clsx";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, X } from "lucide-react";
 
 import { formatList } from "@suilend/sui-fe";
 
@@ -16,6 +16,8 @@ interface SelectPopoverProps {
   values: string[];
   onChange: (id: string) => void;
   isMultiSelect?: boolean;
+  canClear?: boolean;
+  onClear?: () => void;
 }
 
 export default function SelectPopover({
@@ -26,6 +28,8 @@ export default function SelectPopover({
   values,
   onChange,
   isMultiSelect,
+  canClear,
+  onClear,
 }: SelectPopoverProps) {
   // State
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -42,7 +46,7 @@ export default function SelectPopover({
       trigger={
         <button
           className={cn(
-            "group flex h-10 w-full flex-row items-center justify-between gap-2 rounded-md border bg-card px-3",
+            "group/trigger flex h-10 w-full flex-row items-center justify-between gap-2 rounded-md border bg-card px-3",
             className,
           )}
         >
@@ -54,7 +58,7 @@ export default function SelectPopover({
                 : cn(
                     values.length > 0
                       ? "text-foreground"
-                      : "text-secondary-foreground group-hover:text-foreground",
+                      : "text-secondary-foreground group-hover/trigger:text-foreground",
                   ),
             )}
           >
@@ -66,14 +70,27 @@ export default function SelectPopover({
                 )
               : placeholder}
           </p>
-          <Chevron
-            className={cn(
-              "-ml-0.5 h-4 w-4 shrink-0 transition-colors",
-              isOpen
-                ? "text-foreground"
-                : "text-secondary-foreground group-hover:text-foreground",
-            )}
-          />
+          {values.length > 0 && canClear && !!onClear ? (
+            <button
+              className="group -m-2 h-8 w-8 shrink-0 p-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClear();
+                setIsOpen(false);
+              }}
+            >
+              <X className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
+            </button>
+          ) : (
+            <Chevron
+              className={cn(
+                "h-4 w-4 shrink-0 transition-colors",
+                isOpen
+                  ? "text-foreground"
+                  : "text-secondary-foreground group-hover/trigger:text-foreground",
+              )}
+            />
+          )}
         </button>
       }
     >
