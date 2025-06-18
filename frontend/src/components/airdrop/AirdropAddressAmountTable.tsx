@@ -138,7 +138,7 @@ export default function AirdropAddressAmountTable({
   );
 
   return (
-    <div className="w-full">
+    <div className="relative w-full">
       {/* Table */}
       <div className="relative z-[2] w-full overflow-hidden rounded-md">
         <div className="pointer-events-none absolute inset-0 z-[2] rounded-md border" />
@@ -209,7 +209,7 @@ export default function AirdropAddressAmountTable({
 
       {/* Pagination */}
       {pageIndexes && pageIndexes.length > 1 && (
-        <div className="relative z-[1] -mt-4 flex w-full flex-row items-center justify-center gap-2 rounded-b-md bg-border/25 pb-4 pt-8">
+        <div className="relative z-[1] mt-4 flex w-full flex-row items-center justify-center gap-2">
           {pageIndexes.map((_pageIndex) => (
             <button
               key={_pageIndex}

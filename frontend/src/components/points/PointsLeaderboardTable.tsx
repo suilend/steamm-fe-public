@@ -212,7 +212,7 @@ export default function PointsLeaderboardTable({
 
       {/* Pagination */}
       {pageIndexes && pageIndexes.length > 1 && (
-        <div className="relative z-[1] -mt-4 flex w-full flex-row items-center justify-center gap-2 rounded-b-md bg-border/25 pb-4 pt-8">
+        <div className="relative z-[1] mt-4 flex w-full flex-row items-center justify-center gap-2">
           {pageIndexes.map((_pageIndex) => (
             <button
               key={_pageIndex}

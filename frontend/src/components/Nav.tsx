@@ -9,6 +9,7 @@ import Logo from "@/components/Logo";
 import NavPopover from "@/components/NavPopover";
 import SearchDialog from "@/components/SearchDialog";
 import SettingsDialog from "@/components/SettingsDialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useNavItems from "@/hooks/useNavItems";
@@ -99,9 +100,14 @@ export default function Nav() {
                 <SettingsDialog />
               </div>
 
-              <div className="shrink-0 max-md:-ml-1 md:-mr-1">
-                {appData && <SearchDialog />}
+              <div className="shrink-0 max-md:-ml-1 md:-mr-0.5">
+                {appData ? (
+                  <SearchDialog />
+                ) : (
+                  <Skeleton className="h-5 w-5 md:h-10 md:w-40 md:rounded-md" />
+                )}
               </div>
+
               <ConnectWalletButton />
 
               <div className="shrink-0 lg:hidden">
