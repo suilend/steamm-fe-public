@@ -41,7 +41,7 @@ export default function ConnectedWalletPopover() {
         maxWidth: 280,
       }}
       trigger={
-        <button className="group flex h-10 max-w-28 flex-row items-center gap-2 rounded-md border bg-card px-3 md:max-w-40">
+        <button className="group flex h-10 max-w-28 flex-row items-center gap-2 rounded-md bg-card px-3 sm:max-w-40">
           {isImpersonating ? (
             <VenetianMask className="h-4 w-4 shrink-0 text-secondary-foreground" />
           ) : wallet?.iconUrl ? (

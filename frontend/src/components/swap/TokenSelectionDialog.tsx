@@ -304,7 +304,7 @@ export default function TokenSelectionDialog({
             ))
         ) : (
           <p className="text-p2 text-tertiary-foreground">
-            {searchString ? `No matches for "${searchString}"` : "No tokens"}
+            {searchString ? `No results for "${searchString}"` : "No tokens"}
           </p>
         )}
       </div>

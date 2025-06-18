@@ -101,9 +101,7 @@ export const getPoolsWithExtraData = (
 
 export const getPoolGroups = (
   poolsWithExtraData: ParsedPool[],
-): PoolGroup[] | undefined => {
-  if (poolsWithExtraData === undefined) return undefined;
-
+): PoolGroup[] => {
   const poolGroupsByPair: Record<string, ParsedPool[]> = {};
 
   for (const pool of poolsWithExtraData) {
@@ -122,56 +120,72 @@ export const getPoolGroups = (
 
 export const getFilteredPoolGroups = (
   coinMetadataMap: AppData["coinMetadataMap"],
+  poolGroups: PoolGroup[],
   searchString: string,
-  poolGroups: PoolGroup[] | undefined,
+  feeTiers: number[],
+  quoterIds: QuoterId[],
 ) => {
-  if (poolGroups === undefined) return undefined;
-  if (searchString === "") return poolGroups;
+  if (searchString === "" && feeTiers.length === 0 && quoterIds.length === 0)
+    return poolGroups;
 
   return poolGroups
-    .filter((poolGroup) =>
-      [
-        poolGroup.pools.map((pool) => pool.id).join("__"),
-        poolGroup.coinTypes.join("__"),
-        formatPair(
-          poolGroup.coinTypes.map(
-            (coinType) => coinMetadataMap[coinType].symbol,
-          ),
-        ),
-        formatPair(
-          poolGroup.coinTypes.map(
-            (coinType) => coinMetadataMap[coinType].symbol,
-          ),
-          " ",
-        ),
-        Array.from(
-          new Set(
-            poolGroup.pools.map((pool) => QUOTER_ID_NAME_MAP[pool.quoterId]),
-          ),
-        ).join("__"),
-      ]
-        .join("____")
-        .toLowerCase()
-        .includes(searchString.toLowerCase()),
+    .filter(
+      (poolGroup) =>
+        (searchString === "" ||
+          [
+            poolGroup.pools.map((pool) => pool.id).join("__"),
+            poolGroup.coinTypes.join("__"),
+            formatPair(
+              poolGroup.coinTypes.map(
+                (coinType) => coinMetadataMap[coinType].symbol,
+              ),
+            ),
+            formatPair(
+              poolGroup.coinTypes.map(
+                (coinType) => coinMetadataMap[coinType].symbol,
+              ),
+              " ",
+            ),
+          ]
+            .join("____")
+            .toLowerCase()
+            .includes(searchString.toLowerCase())) &&
+        (feeTiers.length === 0 ||
+          feeTiers.some((feeTier) =>
+            poolGroup.pools.some((pool) => pool.feeTierPercent.eq(feeTier)),
+          )) &&
+        (quoterIds.length === 0 ||
+          quoterIds.some((quoterId) =>
+            poolGroup.pools.some((pool) => pool.quoterId === quoterId),
+          )),
     )
     .map((poolGroup) => ({
       ...poolGroup,
-      pools: poolGroup.pools.filter((pool) =>
-        [
-          pool.id,
-          pool.coinTypes.join("__"),
-          formatPair(
-            pool.coinTypes.map((coinType) => coinMetadataMap[coinType].symbol),
-          ),
-          formatPair(
-            pool.coinTypes.map((coinType) => coinMetadataMap[coinType].symbol),
-            " ",
-          ),
-          QUOTER_ID_NAME_MAP[pool.quoterId],
-        ]
-          .join("____")
-          .toLowerCase()
-          .includes(searchString.toLowerCase()),
+      pools: poolGroup.pools.filter(
+        (pool) =>
+          (searchString === "" ||
+            [
+              pool.id,
+              pool.coinTypes.join("__"),
+              formatPair(
+                pool.coinTypes.map(
+                  (coinType) => coinMetadataMap[coinType].symbol,
+                ),
+              ),
+              formatPair(
+                pool.coinTypes.map(
+                  (coinType) => coinMetadataMap[coinType].symbol,
+                ),
+                " ",
+              ),
+            ]
+              .join("____")
+              .toLowerCase()
+              .includes(searchString.toLowerCase())) &&
+          (feeTiers.length === 0 ||
+            feeTiers.some((feeTier) => pool.feeTierPercent.eq(feeTier))) &&
+          (quoterIds.length === 0 ||
+            quoterIds.some((quoterId) => pool.quoterId === quoterId)),
       ),
     }));
 };
