@@ -1,19 +1,27 @@
 import Head from "next/head";
+import { useEffect } from "react";
 
 import { useWalletContext } from "@suilend/sui-fe-next";
 
 import PointsHeader from "@/components/points/PointsHeader";
 import PointsLeaderboardTable from "@/components/points/PointsLeaderboardTable";
-import { usePointsContext } from "@/contexts/PointsContext";
+import {
+  LeaderboardContextProvider,
+  useLeaderboardContext,
+} from "@/contexts/LeaderboardContext";
 
-export default function Points() {
+function Page() {
   const { address } = useWalletContext();
-  const { leaderboardRows, addressRow } = usePointsContext();
+  const { points } = useLeaderboardContext();
+
+  useEffect(() => {
+    points.fetchLeaderboardRows();
+  }, [points]);
 
   return (
     <>
       <Head>
-        <title>STEAMM | Points</title>
+        <title>STEAMM | Leaderboard</title>
       </Head>
 
       <div className="flex w-full flex-col items-center gap-8">
@@ -27,7 +35,11 @@ export default function Points() {
 
             <PointsLeaderboardTable
               tableId="address"
-              rows={addressRow !== undefined ? [addressRow] : undefined}
+              rows={
+                points.addressRow !== undefined
+                  ? [points.addressRow]
+                  : undefined
+              }
               skeletonRows={1}
               disableSorting
             />
@@ -39,10 +51,18 @@ export default function Points() {
 
           <PointsLeaderboardTable
             tableId="leaderboard"
-            rows={leaderboardRows}
+            rows={points.leaderboardRows}
           />
         </div>
       </div>
     </>
+  );
+}
+
+export default function Leaderboard() {
+  return (
+    <LeaderboardContextProvider>
+      <Page />
+    </LeaderboardContextProvider>
   );
 }

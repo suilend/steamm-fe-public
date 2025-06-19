@@ -18,7 +18,7 @@ import { Column } from "@/components/points/PointsLeaderboardTable";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { useLoadedAppContext } from "@/contexts/AppContext";
-import { LeaderboardRowData } from "@/contexts/PointsContext";
+import { PointsLeaderboardRowData } from "@/contexts/LeaderboardContext";
 import { PORTFOLIO_URL } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +27,7 @@ interface PointsLeaderboardRowProps {
     Column,
     { cell: CSSProperties; children: CSSProperties }
   >;
-  row: LeaderboardRowData;
+  row: PointsLeaderboardRowData;
 }
 
 export default function PointsLeaderboardRow({

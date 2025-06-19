@@ -5,7 +5,7 @@ import {
   ADMIN_URL,
   CREATE_URL,
   LAUNCH_URL,
-  POINTS_URL,
+  LEADERBOARD_URL,
   POOL_URL_PREFIX,
   PORTFOLIO_URL,
   ROOT_URL,
@@ -25,9 +25,9 @@ const useNavItems = () => {
     { url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX },
     { url: LAUNCH_URL, title: "Launch" },
     { url: CREATE_URL, title: "Create" },
-    { url: PORTFOLIO_URL, title: "Portfolio" },
     { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
-    { url: POINTS_URL, title: "Points" },
+    { url: LEADERBOARD_URL, title: "Leaderboard" },
+    { url: PORTFOLIO_URL, title: "Portfolio" },
   ];
   const ADMIN_NAV_ITEM: NavItem = {
     url: ADMIN_URL,

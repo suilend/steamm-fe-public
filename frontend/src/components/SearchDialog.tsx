@@ -14,7 +14,6 @@ import PoolsTable from "@/components/pools/PoolsTable";
 import SelectPopover, { SelectPopoverOption } from "@/components/SelectPopover";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
-import useBreakpoint from "@/hooks/useBreakpoint";
 import { FEE_TIER_PERCENTS } from "@/lib/createPool";
 import { formatFeeTier } from "@/lib/format";
 import {
@@ -29,8 +28,6 @@ export default function SearchDialog() {
   const { appData, recentPoolIds } = useLoadedAppContext();
   const { poolStats } = useStatsContext();
   const router = useRouter();
-
-  const { md } = useBreakpoint();
 
   // State
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -229,28 +226,23 @@ export default function SearchDialog() {
     <Dialog
       rootProps={{ open: isOpen, onOpenChange: setIsOpen }}
       trigger={
-        md ? (
-          <button className="group flex h-10 w-40 flex-row items-center justify-between rounded-md border pl-3 pr-2 focus-visible:outline focus-visible:outline-focus">
-            <div className="flex flex-row items-center gap-2">
-              <Search
-                className={cn(
-                  "h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground",
-                )}
-              />
-              <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
-                Search pools
-              </p>
-            </div>
-
-            <div className="flex h-6 w-6 flex-row items-center justify-center rounded-sm bg-card">
-              <p className="text-p2 text-secondary-foreground">/</p>
-            </div>
-          </button>
-        ) : (
-          <button className="group flex h-5 w-5 flex-row items-center justify-center">
+        <button
+          className={cn(
+            "group flex h-5 w-5 flex-row items-center justify-center",
+            "md:h-10 md:w-40 md:justify-between md:rounded-md md:border md:pl-3 md:pr-2 md:focus-visible:outline md:focus-visible:outline-focus",
+          )}
+        >
+          <div className="flex flex-row items-center gap-2">
             <Search className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
-          </button>
-        )
+            <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground max-md:hidden">
+              Search pools
+            </p>
+          </div>
+
+          <div className="flex h-6 w-6 flex-row items-center justify-center rounded-sm bg-card max-md:hidden">
+            <p className="text-p2 text-secondary-foreground">/</p>
+          </div>
+        </button>
       }
       headerProps={{
         children: (
@@ -328,10 +320,10 @@ export default function SearchDialog() {
       {/* Search results */}
       <div
         className={cn(
-          !showSearchResults ? "hidden" : "flex min-h-0 flex-1 flex-col gap-4",
+          !showSearchResults ? "hidden" : "flex min-h-0 flex-1 flex-col gap-5",
         )}
       >
-        <h2 className="text-p1 text-secondary-foreground">
+        <h2 className="-mb-2 text-p1 text-foreground">
           {filteredPoolGroupsCount > 0 ? (
             <>
               {filteredPoolGroupsCount} result
@@ -343,7 +335,7 @@ export default function SearchDialog() {
         </h2>
         <div
           className={cn(
-            "flex min-h-0 w-full flex-1 flex-row items-stretch overflow-hidden",
+            "flex max-h-max min-h-0 w-full flex-1 flex-row items-stretch overflow-hidden",
             filteredPoolGroupsCount === 0 && "hidden",
           )}
         >
@@ -362,13 +354,13 @@ export default function SearchDialog() {
       {/* Recent and popular pools */}
       <div
         className={cn(
-          showSearchResults ? "hidden" : "flex min-h-0 flex-1 flex-col gap-4",
+          showSearchResults ? "hidden" : "flex min-h-0 flex-1 flex-col gap-5",
         )}
       >
         {recentPoolGroups.length > 0 && (
           <>
-            <h2 className="text-p1 text-secondary-foreground">Recent pools</h2>
-            <div className="flex min-h-0 w-full flex-1 flex-row items-stretch overflow-hidden">
+            <h2 className="-mb-2 text-p1 text-foreground">Recent pools</h2>
+            <div className="flex max-h-max min-h-0 w-full flex-1 flex-row items-stretch overflow-hidden">
               <PoolsTable
                 className="flex flex-col"
                 containerClassName="flex-1"
@@ -384,8 +376,8 @@ export default function SearchDialog() {
           </>
         )}
 
-        <h2 className="text-p1 text-secondary-foreground">Popular pools</h2>
-        <div className="flex min-h-0 w-full flex-1 flex-row items-stretch overflow-hidden">
+        <h2 className="-mb-2 text-p1 text-foreground">Popular pools</h2>
+        <div className="flex max-h-max min-h-0 w-full flex-1 flex-row items-stretch overflow-hidden">
           <PoolsTable
             className="flex flex-col"
             containerClassName="flex-1"

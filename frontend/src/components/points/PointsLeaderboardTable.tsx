@@ -5,7 +5,7 @@ import { useLocalStorage } from "usehooks-ts";
 import PointsLeaderboardRow from "@/components/points/PointsLeaderboardRow";
 import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LeaderboardRowData } from "@/contexts/PointsContext";
+import { PointsLeaderboardRowData } from "@/contexts/LeaderboardContext";
 import { cn } from "@/lib/utils";
 
 export type Column = "rank" | "address" | "totalPoints";
@@ -13,7 +13,7 @@ type SortableColumn = "totalPoints";
 
 interface PointsLeaderboardTableProps {
   tableId: string;
-  rows?: LeaderboardRowData[];
+  rows?: PointsLeaderboardRowData[];
   skeletonRows?: number;
   disableSorting?: boolean;
 }
