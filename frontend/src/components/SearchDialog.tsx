@@ -228,8 +228,8 @@ export default function SearchDialog() {
       trigger={
         <button
           className={cn(
-            "group flex h-5 w-5 flex-row items-center justify-center",
-            "md:h-10 md:w-40 md:justify-between md:rounded-md md:border md:pl-3 md:pr-2 md:focus-visible:outline md:focus-visible:outline-focus",
+            "group flex h-5 w-5 flex-row items-center justify-center transition-colors",
+            "md:h-10 md:w-64 md:justify-between md:rounded-md md:border md:pl-3 md:pr-2 md:hover:bg-border/50 md:focus-visible:outline md:focus-visible:outline-focus",
           )}
         >
           <div className="flex flex-row items-center gap-2">
@@ -239,8 +239,10 @@ export default function SearchDialog() {
             </p>
           </div>
 
-          <div className="flex h-6 w-6 flex-row items-center justify-center rounded-sm bg-card max-md:hidden">
-            <p className="text-p2 text-secondary-foreground">/</p>
+          <div className="flex h-6 w-6 flex-row items-center justify-center rounded-sm border max-md:hidden">
+            <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
+              /
+            </p>
           </div>
         </button>
       }

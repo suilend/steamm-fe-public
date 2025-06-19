@@ -4,12 +4,9 @@ import { useWalletContext } from "@suilend/sui-fe-next";
 import {
   ADMIN_URL,
   CREATE_URL,
-  LAUNCH_URL,
   LEADERBOARD_URL,
-  POOL_URL_PREFIX,
   PORTFOLIO_URL,
-  ROOT_URL,
-  SWAP_URL,
+  // SWAP_URL,
 } from "@/lib/navigation";
 
 type NavItem = {
@@ -22,10 +19,8 @@ const useNavItems = () => {
   const { address } = useWalletContext();
 
   const NAV_ITEMS: NavItem[] = [
-    { url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX },
-    { url: LAUNCH_URL, title: "Launch" },
     { url: CREATE_URL, title: "Create" },
-    { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
+    // { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
     { url: LEADERBOARD_URL, title: "Leaderboard" },
     { url: PORTFOLIO_URL, title: "Portfolio" },
   ];
