@@ -17,8 +17,8 @@ enum QueryParams {
 }
 
 const tabNameMap: Record<Tab, string> = {
-  [Tab.TOKEN]: "Token",
-  [Tab.POOL]: "Pool",
+  [Tab.TOKEN]: "Create token",
+  [Tab.POOL]: "Create pool",
 };
 
 export default function CreatePage() {
@@ -78,13 +78,6 @@ export default function CreatePage() {
               "linear-gradient(to right, transparent 0px, black 48px, black calc(100% - 48px), transparent 100%)",
           }}
         />
-
-        {/* Title */}
-        <div className="flex w-full flex-col gap-6">
-          <h1 className="text-h1 text-foreground">
-            {selectedTab === Tab.TOKEN ? "Create token" : "Create pool"}
-          </h1>
-        </div>
 
         {selectedTab === Tab.TOKEN && <LaunchTokenCard />}
         {selectedTab === Tab.POOL && <CreatePoolCard />}
