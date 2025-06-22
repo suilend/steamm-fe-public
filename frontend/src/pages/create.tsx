@@ -45,15 +45,13 @@ export default function CreatePage() {
 
       <div className="flex w-full max-w-md flex-col gap-8">
         {/* Tabs */}
-        <div className="flex w-full flex-row gap-1">
+        <div className="flex w-full flex-row rounded-full bg-border/25">
           {Object.values(Tab).map((tab) => (
             <button
               key={tab}
               className={cn(
-                "group flex h-10 flex-1 flex-row items-center justify-center rounded-full border px-3 transition-colors",
-                tab === selectedTab
-                  ? "border-button-1 bg-button-1/25"
-                  : "hover:bg-border/50",
+                "group flex h-10 flex-1 flex-row items-center justify-center rounded-full border border-[transparent] px-3 transition-colors",
+                tab === selectedTab && "border-button-1 bg-button-1/25",
               )}
               onClick={() => onSelectedTabChange(tab)}
             >
@@ -70,14 +68,6 @@ export default function CreatePage() {
             </button>
           ))}
         </div>
-
-        <div
-          className="-mx-8 h-px bg-border"
-          style={{
-            maskImage:
-              "linear-gradient(to right, transparent 0px, black 48px, black calc(100% - 48px), transparent 100%)",
-          }}
-        />
 
         {selectedTab === Tab.TOKEN && <LaunchTokenCard />}
         {selectedTab === Tab.POOL && <CreatePoolCard />}
