@@ -88,7 +88,7 @@ export default function ConnectWalletPopover() {
         maxWidth: 280,
       }}
       trigger={
-        <button className="group flex h-10 flex-row items-center gap-2 rounded-md bg-card px-3">
+        <button className="group flex h-10 w-full min-w-24 max-w-max flex-row items-center gap-2 rounded-md bg-card px-3">
           <p
             className={cn(
               "!text-p2 transition-colors",
@@ -97,7 +97,7 @@ export default function ConnectWalletPopover() {
                 : "text-secondary-foreground group-hover:text-foreground",
             )}
           >
-            Connect<span className="max-md:hidden"> wallet</span>
+            Connect<span className="max-sm:hidden"> wallet</span>
           </p>
           <Chevron
             className={cn(

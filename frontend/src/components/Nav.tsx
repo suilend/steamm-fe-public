@@ -46,7 +46,7 @@ export default function Nav() {
       >
         <Container>
           <div
-            className="flex w-full flex-row items-center justify-between gap-2"
+            className="flex w-full flex-row items-center justify-between gap-4"
             style={{ height: `${NAV_HEIGHT}px` }}
           >
             {/* Start */}
