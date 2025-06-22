@@ -4,6 +4,8 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
+  useState,
 } from "react";
 
 import { CoinMetadata } from "@mysten/sui/client";
@@ -26,9 +28,11 @@ import {
   ParsedPool,
   SteammSDK,
 } from "@suilend/steamm-sdk";
+import { Token } from "@suilend/sui-fe";
 import { useSettingsContext, useWalletContext } from "@suilend/sui-fe-next";
 
 import useFetchAppData from "@/fetchers/useFetchAppData";
+import { isInvalidIconUrl } from "@/lib/tokens";
 
 export interface AppData {
   suilend: {
@@ -103,6 +107,9 @@ interface AppContext {
 
   recentPoolIds: string[];
   addRecentPoolId: (poolId: string) => void;
+
+  tokenIconImageLoadErrorMap: Record<string, boolean>;
+  loadTokenIconImage: (token: Token) => void;
 }
 type LoadedAppContext = AppContext & {
   steammClient: SteammSDK;
@@ -131,6 +138,11 @@ const AppContext = createContext<AppContext>({
 
   recentPoolIds: [],
   addRecentPoolId: () => {
+    throw Error("AppContextProvider not initialized");
+  },
+
+  tokenIconImageLoadErrorMap: {},
+  loadTokenIconImage: () => {
     throw Error("AppContextProvider not initialized");
   },
 });
@@ -208,6 +220,31 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     [setRecentPoolIds],
   );
 
+  // Token images
+  const [tokenIconImageLoadErrorMap, setTokenIconImageLoadErrorMap] = useState<
+    Record<string, boolean>
+  >({});
+
+  const loadedTokenIconsRef = useRef<string[]>([]);
+  const loadTokenIconImage = useCallback((token: Token) => {
+    if (isInvalidIconUrl(token.iconUrl)) return;
+
+    if (loadedTokenIconsRef.current.includes(token.coinType)) return;
+    loadedTokenIconsRef.current.push(token.coinType);
+
+    const image = new Image();
+    image.src = token.iconUrl!;
+    image.onerror = () => {
+      console.error(
+        `Failed to load iconUrl for ${token.coinType}: ${token.iconUrl}`,
+      );
+      setTokenIconImageLoadErrorMap((prev) => ({
+        ...prev,
+        [token.coinType]: true,
+      }));
+    };
+  }, []);
+
   // Context
   const contextValue: AppContext = useMemo(
     () => ({
@@ -226,6 +263,9 @@ export function AppContextProvider({ children }: PropsWithChildren) {
 
       recentPoolIds,
       addRecentPoolId,
+
+      tokenIconImageLoadErrorMap,
+      loadTokenIconImage,
     }),
     [
       steammClient,
@@ -238,6 +278,8 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       verifiedCoinTypes,
       recentPoolIds,
       addRecentPoolId,
+      tokenIconImageLoadErrorMap,
+      loadTokenIconImage,
     ],
   );
 
