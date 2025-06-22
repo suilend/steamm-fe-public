@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
 import { Search, X } from "lucide-react";
@@ -250,41 +251,41 @@ export default function SearchDialog() {
         children: (
           <>
             <div className="flex w-full flex-col">
-              <div className="relative flex h-16 w-full shrink-0 flex-row items-center">
-                <Search className="absolute left-5 top-1/2 z-[3] h-5 w-5 -translate-y-1/2 text-secondary-foreground" />
-                {rawSearchString !== "" && (
-                  <button
-                    className="group absolute top-1/2 z-[2] flex h-8 w-8 -translate-y-1/2 flex-row items-center justify-center"
-                    onClick={() => {
-                      onRawSearchStringChange("", true);
-                      inputRef.current?.focus();
-                    }}
+              {/* Top */}
+              <div className="flex w-full flex-row items-center gap-4">
+                {/* Input */}
+                <div className="relative h-16 flex-1">
+                  <Search className="pointer-events-none absolute left-5 top-1/2 z-[2] h-5 w-5 -translate-y-1/2 text-secondary-foreground" />
+                  <input
+                    ref={inputRef}
+                    autoFocus
+                    className={cn(
+                      "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] !text-h3 text-foreground !outline-0 placeholder:text-tertiary-foreground",
+                      rawSearchString !== "" ? "pr-10" : "pr-5",
+                    )}
+                    type="text"
+                    placeholder="Search pools"
+                    value={rawSearchString}
+                    onChange={(e) => onRawSearchStringChange(e.target.value)}
                     style={{
-                      right: (5 - (8 - 5) / 2) * 4,
+                      paddingLeft: (5 + 5 + 2.5) * 4,
+                      paddingRight:
+                        (rawSearchString !== "" ? 2.5 + 5 + 5 : 5) * 4,
                     }}
-                  >
-                    <X className="h-5 w-5 text-secondary-foreground transition-colors group-hover:text-foreground" />
-                  </button>
-                )}
-                <input
-                  ref={inputRef}
-                  autoFocus
-                  className={cn(
-                    "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] !text-h3 text-foreground !outline-0 placeholder:text-tertiary-foreground",
-                    rawSearchString !== "" ? "pr-10" : "pr-5",
-                  )}
-                  type="text"
-                  placeholder="Search pools"
-                  value={rawSearchString}
-                  onChange={(e) => onRawSearchStringChange(e.target.value)}
-                  style={{
-                    paddingLeft: (5 + 5 + 2.5) * 4,
-                    paddingRight:
-                      (rawSearchString !== "" ? 2.5 + 5 + 5 : 5) * 4,
-                  }}
-                />
+                  />
+                </div>
+
+                {/* Close button */}
+                <div className="h-5 shrink-0 pr-5">
+                  <DialogPrimitive.Close asChild>
+                    <button className="group">
+                      <X className="h-5 w-5 text-secondary-foreground transition-colors group-hover:text-foreground" />
+                    </button>
+                  </DialogPrimitive.Close>
+                </div>
               </div>
 
+              {/* Bottom */}
               <div className="flex w-full flex-row flex-wrap items-center gap-2 px-5 pb-5">
                 <SelectPopover
                   className="w-max min-w-32"
@@ -315,7 +316,6 @@ export default function SearchDialog() {
           </>
         ),
       }}
-      drawerContentProps={{ className: "h-dvh" }}
       dialogContentInnerClassName="max-w-4xl h-[800px]"
       dialogContentInnerChildrenWrapperClassName="pt-5 flex-1"
     >

@@ -112,7 +112,7 @@ export default function SelectPopover({
             )}
             onClick={() => {
               onChange(option.id);
-              setIsOpen(false);
+              if (!isMultiSelect) setIsOpen(false);
             }}
           >
             <div className="flex flex-row items-baseline gap-1.5">
