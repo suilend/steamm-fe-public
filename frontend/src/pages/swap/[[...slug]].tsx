@@ -30,6 +30,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/sui-fe-next";
+import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
@@ -61,6 +62,8 @@ export default function SwapPage() {
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
   const { getBalance, refresh } = useUserContext();
+
+  const isTouchscreen = useIsTouchscreen();
 
   // CoinTypes
   const [inCoinType, outCoinType] = useMemo(() => {
@@ -527,7 +530,7 @@ export default function SwapPage() {
               <div className="relative flex w-full min-w-0 flex-col items-center gap-2">
                 <CoinInput
                   className="relative z-[1]"
-                  autoFocus
+                  autoFocus={!isTouchscreen}
                   token={getToken(inCoinType, inCoinMetadata)}
                   value={value}
                   usdValue={inUsdValue}

@@ -31,6 +31,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/sui-fe-next";
+import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 
 import Divider from "@/components/Divider";
 import IconUpload from "@/components/launch/IconUpload";
@@ -90,6 +91,8 @@ export default function LaunchTokenCard() {
         (flags?.steammCreatePoolWhitelist ?? []).includes(address)),
     [address, flags?.steammCreatePoolWhitelist],
   );
+
+  const isTouchscreen = useIsTouchscreen();
 
   // Progress
   const [hasFailed, setHasFailed] = useState<boolean>(false);
@@ -784,7 +787,7 @@ export default function LaunchTokenCard() {
               <p className="text-p2 text-secondary-foreground">Name</p>
               <TextInput
                 ref={nameInputRef}
-                autoFocus
+                autoFocus={!isTouchscreen}
                 value={name}
                 onChange={setName}
               />

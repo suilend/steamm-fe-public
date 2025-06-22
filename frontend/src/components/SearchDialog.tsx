@@ -260,7 +260,7 @@ export default function SearchDialog() {
                     ref={inputRef}
                     autoFocus
                     className={cn(
-                      "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] !text-h3 text-foreground !shadow-none !outline-0 placeholder:text-tertiary-foreground",
+                      "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] !text-h3 text-foreground !shadow-none !outline-none placeholder:text-tertiary-foreground",
                       rawSearchString !== "" ? "pr-10" : "pr-5",
                     )}
                     type="text"

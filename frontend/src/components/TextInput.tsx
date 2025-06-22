@@ -49,7 +49,7 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
           ref={ref as any}
           autoFocus={autoFocus}
           className={cn(
-            "block w-full min-w-0 !border-0 !bg-[transparent] px-3 py-2.5 !text-p2 text-foreground !shadow-none !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+            "block w-full min-w-0 !border-0 !bg-[transparent] px-3 py-2.5 !text-p2 text-foreground !shadow-none !outline-none placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
             isTextarea ? "h-auto max-h-32 min-h-10" : "h-full",
             inputClassName,
           )}

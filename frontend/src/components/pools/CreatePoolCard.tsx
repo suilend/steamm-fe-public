@@ -35,6 +35,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/sui-fe-next";
+import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import Parameter from "@/components/Parameter";
@@ -91,6 +92,8 @@ export default function CreatePoolCard() {
         (flags?.steammCreatePoolWhitelist ?? []).includes(address)),
     [address, flags?.steammCreatePoolWhitelist],
   );
+
+  const isTouchscreen = useIsTouchscreen();
 
   // Progress
   const [hasFailed, setHasFailed] = useState<boolean>(false);
@@ -758,7 +761,7 @@ export default function CreatePoolCard() {
             <p className="text-p2 text-secondary-foreground">Base asset</p>
             <CoinInput
               ref={baseAssetCoinInputRef}
-              autoFocus
+              autoFocus={!isTouchscreen}
               token={
                 coinTypes[0] !== ""
                   ? getToken(
