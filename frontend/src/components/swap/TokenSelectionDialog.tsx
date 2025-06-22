@@ -246,7 +246,7 @@ export default function TokenSelectionDialog({
           ref={inputRef}
           autoFocus={!isTouchscreen}
           className={cn(
-            "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] pl-10 text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground",
+            "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] pl-10 text-p2 text-foreground !shadow-none !outline-0 placeholder:text-tertiary-foreground",
             searchString !== "" ? "pr-10" : "pr-4",
           )}
           type="text"

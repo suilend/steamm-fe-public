@@ -80,7 +80,7 @@ const CoinInput = forwardRef<HTMLInputElement, CoinInputProps>(
             <input
               ref={mergedRef}
               id={token ? getCoinInputId(token.coinType) : undefined}
-              className="w-full min-w-0 !border-0 !bg-[transparent] px-0 text-left !text-h2 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="w-full min-w-0 !border-0 !bg-[transparent] px-0 text-left !text-h2 text-foreground !shadow-none !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               autoFocus={autoFocus}
               type="number"
               placeholder="0"

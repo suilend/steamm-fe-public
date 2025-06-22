@@ -495,7 +495,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
 
             <input
               className={cn(
-                "relative z-[4] h-6 w-full min-w-0 appearance-none bg-[transparent] !outline-0 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground",
+                "relative z-[4] h-6 w-full min-w-0 appearance-none bg-[transparent] !shadow-none !outline-0 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground",
                 (+sliderValue === Infinity || isNaN(+sliderValue)) &&
                   "opacity-0",
               )}
@@ -1049,7 +1049,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
 
             <input
               className={cn(
-                "relative z-[4] h-6 w-full min-w-0 appearance-none bg-[transparent] !outline-0 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground",
+                "relative z-[4] h-6 w-full min-w-0 appearance-none bg-[transparent] !shadow-none !outline-0 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground",
                 (+sliderValue === Infinity || isNaN(+sliderValue)) &&
                   "opacity-0",
               )}

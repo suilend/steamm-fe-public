@@ -27,7 +27,7 @@ export default function PercentInput({
       >
         <input
           className={cn(
-            "h-full w-full min-w-0 !border-0 !bg-[transparent] pl-3 pr-8 !text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+            "h-full w-full min-w-0 !border-0 !bg-[transparent] pl-3 pr-8 !text-p2 text-foreground !shadow-none !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
             inputClassName,
           )}
           type="number"
