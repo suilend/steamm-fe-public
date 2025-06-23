@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import DOMPurify from "dompurify";
 import { ChevronDown, ChevronUp, VenetianMask } from "lucide-react";
 
 import { formatAddress } from "@suilend/sui-fe";
@@ -47,7 +48,7 @@ export default function ConnectedWalletPopover() {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               className="h-4 w-4 min-w-4 shrink-0"
-              src={wallet.iconUrl}
+              src={DOMPurify.sanitize(wallet.iconUrl)}
               alt={`${wallet.name} logo`}
               width={16}
               height={16}
