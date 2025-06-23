@@ -249,18 +249,34 @@ export default function AirdropCard() {
             continue;
           }
 
-          const makeBatchTransferResult = await makeBatchTransfer(
-            token,
-            batches[i],
-            _keypair,
-            suiClient,
-          );
+          let numAttempts = 0;
+          while (numAttempts < 10) {
+            try {
+              const makeBatchTransferResult = await makeBatchTransfer(
+                token,
+                batches[i],
+                _keypair,
+                suiClient,
+              );
 
-          _makeBatchTransferResults = [
-            ...(_makeBatchTransferResults ?? []),
-            makeBatchTransferResult,
-          ];
-          setMakeBatchTransferResults(_makeBatchTransferResults);
+              _makeBatchTransferResults = [
+                ...(_makeBatchTransferResults ?? []),
+                makeBatchTransferResult,
+              ];
+              setMakeBatchTransferResults(_makeBatchTransferResults);
+
+              break;
+            } catch (e) {
+              console.log(e);
+            }
+            numAttempts++;
+          }
+
+          if (numAttempts == 10) {
+            throw new Error(
+              "Failed to send transaction for batch 10 times -- aborting!!!!",
+            );
+          }
         }
       }
 
