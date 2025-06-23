@@ -34,8 +34,8 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import {
   AirdropRow,
-  MakeBatchTransferResult,
-  makeBatchTransfer,
+  CreateBatchTransferResult,
+  createBatchTransfer,
 } from "@/lib/airdrop";
 import { cn } from "@/lib/utils";
 
@@ -58,20 +58,28 @@ export default function AirdropCard() {
     FundKeypairResult | undefined
   >(undefined);
   const [makeBatchTransferResults, setMakeBatchTransferResults] = useState<
-    MakeBatchTransferResult[] | undefined
+    CreateBatchTransferResult[] | undefined
   >(undefined);
   const [
     returnAllOwnedObjectsAndSuiToUserResult,
     setReturnAllOwnedObjectsAndSuiToUserResult,
   ] = useState<ReturnAllOwnedObjectsAndSuiToUserResult | undefined>(undefined);
+  // can combine with total number of batches to determine whether
+  // or not we completed all batches for a stored state w/ csv
+  const [nextBatchToExecuteIndex, setnextBatchToExecuteIndex] =
+    useState<number>(0);
+  const [executedBatchDigest, setExecutedBatchDigest] = useState<
+    string | undefined
+  >(undefined);
 
   const currentFlowDigests = useMemo(
     () =>
       [
         fundKeypairResult?.res.digest,
         ...(makeBatchTransferResults ?? []).map((x) => x.res.digest),
+        executedBatchDigest,
       ].filter(Boolean) as string[],
-    [fundKeypairResult, makeBatchTransferResults],
+    [fundKeypairResult, makeBatchTransferResults, executedBatchDigest],
   );
 
   // State - token
@@ -240,7 +248,7 @@ export default function AirdropCard() {
         _makeBatchTransferResults === undefined ||
         _makeBatchTransferResults.length < batches.length
       ) {
-        for (let i = 0; i < batches.length; i++) {
+        for (let i = nextBatchToExecuteIndex; i < batches.length; i++) {
           if (
             _makeBatchTransferResults !== undefined &&
             i <= _makeBatchTransferResults.length - 1
@@ -252,17 +260,45 @@ export default function AirdropCard() {
           let numAttempts = 0;
           while (numAttempts < 10) {
             try {
-              const makeBatchTransferResult = await makeBatchTransfer(
+              const createBatchTransferResult = await createBatchTransfer(
                 token,
                 batches[i],
                 _keypair,
                 suiClient,
               );
+              const signedTransaction =
+                createBatchTransferResult.signedTransaction;
+
+              const res1 = await suiClient.executeTransactionBlock({
+                transactionBlock: signedTransaction.bytes,
+                signature: signedTransaction.signature,
+              });
+              // should probably change to sig so we can check above if transaction was already executed
+              setExecutedBatchDigest(res1.digest);
+
+              // Wait
+              const res2 = await suiClient.waitForTransaction({
+                digest: res1.digest,
+                options: {
+                  showBalanceChanges: true,
+                  showEffects: true,
+                  showEvents: true,
+                  showObjectChanges: true,
+                },
+              });
+              if (
+                res2.effects?.status !== undefined &&
+                res2.effects.status.status === "failure"
+              )
+                throw new Error(
+                  res2.effects.status.error ?? "Transaction failed",
+                );
 
               _makeBatchTransferResults = [
                 ...(_makeBatchTransferResults ?? []),
-                makeBatchTransferResult,
+                createBatchTransferResult,
               ];
+              setnextBatchToExecuteIndex(i + 1);
               setMakeBatchTransferResults(_makeBatchTransferResults);
 
               break;
