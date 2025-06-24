@@ -23,6 +23,7 @@ import {
 } from "@suilend/sui-fe";
 
 import { AppData } from "@/contexts/AppContext";
+import { ASSETS_URL } from "@/lib/constants";
 import {
   CreateCoinResult,
   createCoin,
@@ -50,8 +51,7 @@ const getBTokenType = (token: Token) =>
 const getBTokenName = (token: Token) => `bToken ${token.symbol}`; // E.g. bToken SUI
 const getBTokenSymbol = (token: Token) => `b${token.symbol}`; // E.g. bSUI // Cannot be same as name
 const B_TOKEN_DESCRIPTION = "STEAMM bToken";
-const B_TOKEN_IMAGE_URL =
-  "https://d29k09wtkr1a3e.cloudfront.net/steamm/STEAMM+bToken.svg";
+const B_TOKEN_IMAGE_URL = `${ASSETS_URL}/STEAMM+bToken.svg`;
 
 const getLpTokenModule = (bTokenA: Token, bTokenB: Token) =>
   `steamm_lp_${bTokenA.symbol}_${bTokenB.symbol}`
@@ -66,8 +66,7 @@ const getLpTokenName = (bTokenA: Token, bTokenB: Token) =>
 const getLpTokenSymbol = (bTokenA: Token, bTokenB: Token) =>
   `STEAMM LP ${bTokenA.symbol}-${bTokenB.symbol}`; // E.g. STEAMM LP bSUI-bUSDC // Cannot be same as name
 const LP_TOKEN_DESCRIPTION = "STEAMM LP Token";
-const LP_TOKEN_IMAGE_URL =
-  "https://d29k09wtkr1a3e.cloudfront.net/steamm/STEAMM+LP+Token.svg";
+const LP_TOKEN_IMAGE_URL = `${ASSETS_URL}/STEAMM+LP+Token.svg`;
 
 // bTokens and banks
 export const hasBTokenAndBankForToken = (

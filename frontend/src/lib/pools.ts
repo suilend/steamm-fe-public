@@ -12,6 +12,7 @@ import {
 
 import { AppData } from "@/contexts/AppContext";
 import { StatsContext } from "@/contexts/StatsContext";
+import { ChartPeriod } from "@/lib/chart";
 import { formatPair } from "@/lib/format";
 import {
   getPoolStakingYieldAprPercent,
@@ -85,12 +86,12 @@ export const getPoolsWithExtraData = (
 
     return {
       ...pool,
-      volumeUsd_24h: poolStats.volumeUsd_24h[pool.id],
+      volumeUsd_24h: poolStats.volumeUsd[ChartPeriod.ONE_DAY][pool.id],
       aprPercent_24h:
-        poolStats.aprPercent_24h[pool.id] !== undefined &&
+        poolStats.aprPercent[ChartPeriod.ONE_DAY][pool.id] !== undefined &&
         stakingYieldAprPercent !== undefined
           ? getPoolTotalAprPercent(
-              poolStats.aprPercent_24h[pool.id].feesAprPercent,
+              poolStats.aprPercent[ChartPeriod.ONE_DAY][pool.id].feesAprPercent,
               pool.suilendWeightedAverageDepositAprPercent,
               filteredRewards,
               stakingYieldAprPercent,

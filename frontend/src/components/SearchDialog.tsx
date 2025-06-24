@@ -12,7 +12,7 @@ import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@suilend/steamm-sdk";
 import Dialog from "@/components/Dialog";
 import Divider from "@/components/Divider";
 import PoolsTable from "@/components/pools/PoolsTable";
-import SelectPopover, { SelectPopoverOption } from "@/components/SelectPopover";
+import SelectPopover from "@/components/SelectPopover";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { FEE_TIER_PERCENTS } from "@/lib/createPool";
@@ -22,6 +22,7 @@ import {
   getPoolGroups,
   getPoolsWithExtraData,
 } from "@/lib/pools";
+import { SelectPopoverOption } from "@/lib/select";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 

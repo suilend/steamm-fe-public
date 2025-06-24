@@ -1,5 +1,6 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
+import { useMemo } from "react";
 
 import { shallowPushQuery } from "@suilend/sui-fe-next";
 
@@ -23,9 +24,12 @@ const tabNameMap: Record<Tab, string> = {
 
 export default function CreatePage() {
   const router = useRouter();
-  const queryParams = {
-    [QueryParams.TAB]: router.query[QueryParams.TAB] as Tab | undefined,
-  };
+  const queryParams = useMemo(
+    () => ({
+      [QueryParams.TAB]: router.query[QueryParams.TAB] as Tab | undefined,
+    }),
+    [router.query],
+  );
 
   // Tabs
   const selectedTab =
