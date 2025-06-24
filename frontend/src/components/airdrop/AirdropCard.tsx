@@ -40,7 +40,7 @@ import {
 } from "@/lib/airdrop";
 import { cn } from "@/lib/utils";
 
-const TRANSFERS_PER_BATCH = 60; // Max = 512 (if no other MOVE calls in the transaction)
+const TRANSFERS_PER_BATCH = 500; // Max = 512 (if no other MOVE calls in the transaction)
 const getBatchTransactionGas = (transferCount: number) =>
   Math.max(0.02, 0.0016 * transferCount);
 
@@ -161,6 +161,9 @@ export default function AirdropCard() {
 
     // State
     setCoinType(undefined);
+    setLastExecutedBatchDigest(undefined);
+    setLastBatchExecutedIndex(-1);
+    setLastBatchExecutedAndWaitedIndex(-1);
 
     setCsvRows(undefined);
     setCsvFilename("");
