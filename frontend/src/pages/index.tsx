@@ -21,6 +21,7 @@ import {
   ChartPeriod,
   ChartType,
   chartDataTypeNameMap,
+  chartPeriodNameMap,
 } from "@/lib/chart";
 import { getPoolGroups, getPoolsWithExtraData } from "@/lib/pools";
 import { PoolGroup } from "@/lib/types";
@@ -154,6 +155,10 @@ export default function PoolsPage() {
       getValueFormatter: (dataType: string) => {
         return (value: number) => formatUsd(new BigNumber(value));
       },
+      periodOptions: [ChartPeriod.ONE_WEEK].map((period) => ({
+        id: period,
+        name: chartPeriodNameMap[period],
+      })),
       dataTypeOptions: [ChartDataType.TVL].map((dataType) => ({
         id: dataType,
         name: chartDataTypeNameMap[dataType],
@@ -180,6 +185,10 @@ export default function PoolsPage() {
       getValueFormatter: (dataType: string) => {
         return (value: number) => formatUsd(new BigNumber(value));
       },
+      periodOptions: [ChartPeriod.ONE_WEEK].map((period) => ({
+        id: period,
+        name: chartPeriodNameMap[period],
+      })),
       dataTypeOptions: [ChartDataType.VOLUME, ChartDataType.FEES].map(
         (dataType) => ({
           id: dataType,
