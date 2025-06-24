@@ -40,7 +40,7 @@ import {
 } from "@/lib/airdrop";
 import { cn } from "@/lib/utils";
 
-const TRANSFERS_PER_BATCH = 500; // Max = 512 (if no other MOVE calls in the transaction)
+const TRANSFERS_PER_BATCH = 60; // Max = 512 (if no other MOVE calls in the transaction)
 const getBatchTransactionGas = (transferCount: number) =>
   Math.max(0.02, 0.0016 * transferCount);
 
@@ -57,10 +57,7 @@ export default function AirdropCard() {
     false,
   );
 
-  const [keypair, setKeypair] = useLocalStorage<Ed25519Keypair | undefined>(
-    "airdrop-keypair",
-    undefined,
-  );
+  const [keypair, setKeypair] = useState<Ed25519Keypair | undefined>(undefined);
   const [fundKeypairResult, setFundKeypairResult] = useLocalStorage<
     FundKeypairResult | undefined
   >("airdrop-fundKeypairResults", undefined);
@@ -175,6 +172,9 @@ export default function AirdropCard() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
+    if (lastBatchExecutedIndex > -1) {
+      return { isDisabled: isSubmitting, title: "Resume" };
+    }
     if (isSubmitting)
       return { isDisabled: true, title: hasFailed ? "Retry" : "Airdrop" };
     if (hasFailed) return { isDisabled: false, title: "Retry" };
