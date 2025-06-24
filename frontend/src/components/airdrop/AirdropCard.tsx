@@ -16,6 +16,7 @@ import {
   fundKeypair,
   getToken,
   isSui,
+  keypairWaitForTransaction,
   returnAllOwnedObjectsAndSuiToUser,
 } from "@suilend/sui-fe";
 import {
@@ -36,7 +37,7 @@ import { useUserContext } from "@/contexts/UserContext";
 import {
   AirdropRow,
   MakeBatchTransferResult,
-  createBatchTransfer,
+  makeBatchTransfer,
 } from "@/lib/airdrop";
 import { cn } from "@/lib/utils";
 
@@ -66,28 +67,32 @@ export default function AirdropCard() {
       "airdrop-makeBatchTransferResults",
       undefined,
     );
+  const [lastExecutedBatchTransferDigest, setLastExecutedBatchTransferDigest] =
+    useLocalStorage<string | undefined>(
+      "airdrop-lastExecutedBatchTransferDigest",
+      undefined,
+    );
   const [
     returnAllOwnedObjectsAndSuiToUserResult,
     setReturnAllOwnedObjectsAndSuiToUserResult,
   ] = useState<ReturnAllOwnedObjectsAndSuiToUserResult | undefined>(undefined);
-  // can combine with total number of batches to determine whether
-  // or not we completed all batches for a stored state w/ csv
-  const [lastBatchExecutedAndWaitedIndex, setLastBatchExecutedAndWaitedIndex] =
-    useLocalStorage<number>("airdrop-lastBatchExecutedAndWaitedIndex", -1);
-  const [lastBatchExecutedIndex, setLastBatchExecutedIndex] =
-    useLocalStorage<number>("airdrop-lastBatchExecutedIndex", -1);
-  const [lastExecutedBatchDigest, setLastExecutedBatchDigest] = useLocalStorage<
-    string | undefined
-  >("airdrop-lastExecutedBatchDigest", undefined);
 
   const currentFlowDigests = useMemo(
     () =>
-      [
-        fundKeypairResult?.res.digest,
-        ...(makeBatchTransferResults ?? []).map((x) => x.res.digest),
-        lastExecutedBatchDigest,
-      ].filter(Boolean) as string[],
-    [fundKeypairResult, makeBatchTransferResults, lastExecutedBatchDigest],
+      Array.from(
+        new Set(
+          [
+            fundKeypairResult?.res.digest,
+            ...(makeBatchTransferResults ?? []).map((x) => x.res.digest),
+            lastExecutedBatchTransferDigest, // May overlap with the last entry in `makeBatchTransferResults`
+          ].filter(Boolean) as string[],
+        ),
+      ),
+    [
+      fundKeypairResult,
+      makeBatchTransferResults,
+      lastExecutedBatchTransferDigest,
+    ],
   );
 
   // State - token
@@ -157,13 +162,11 @@ export default function AirdropCard() {
     setKeypair(undefined);
     setFundKeypairResult(undefined);
     setMakeBatchTransferResults(undefined);
+    setLastExecutedBatchTransferDigest(undefined);
     setReturnAllOwnedObjectsAndSuiToUserResult(undefined);
 
     // State
     setCoinType(undefined);
-    setLastExecutedBatchDigest(undefined);
-    setLastBatchExecutedIndex(-1);
-    setLastBatchExecutedAndWaitedIndex(-1);
 
     setCsvRows(undefined);
     setCsvFilename("");
@@ -175,12 +178,9 @@ export default function AirdropCard() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    if (lastBatchExecutedIndex > -1) {
-      return { isDisabled: isSubmitting, title: "Resume" };
-    }
     if (isSubmitting)
-      return { isDisabled: true, title: hasFailed ? "Retry" : "Airdrop" };
-    if (hasFailed) return { isDisabled: false, title: "Retry" };
+      return { isDisabled: true, title: hasFailed ? "Resume" : "Airdrop" };
+    if (hasFailed) return { isDisabled: false, title: "Resume" };
     if (!!returnAllOwnedObjectsAndSuiToUserResult)
       return { isDisabled: true, isSuccess: true };
 
@@ -274,34 +274,7 @@ export default function AirdropCard() {
         _makeBatchTransferResults === undefined ||
         _makeBatchTransferResults.length < batches.length
       ) {
-        // determine the index we should start at based on whether or not
-        // the last transaction landed on chain after being sent to execute
-        let startIndex = 0;
-        if (
-          lastBatchExecutedAndWaitedIndex != lastBatchExecutedIndex &&
-          lastExecutedBatchDigest != undefined // this should always be true if the above 2 are true but is necessary to have compiler stop yelling at me
-        ) {
-          const res2 = await suiClient.waitForTransaction({
-            digest: lastExecutedBatchDigest,
-            options: {
-              showBalanceChanges: true,
-              showEffects: true,
-              showEvents: true,
-              showObjectChanges: true,
-            },
-          });
-          if (
-            res2.effects?.status !== undefined &&
-            res2.effects.status.status === "failure"
-          ) {
-            // transaction didn't execute successfully, retry last transaction executed
-            startIndex = lastBatchExecutedIndex;
-          } else {
-            // transaction did execute successfully, continue to next transaction
-            startIndex = lastBatchExecutedAndWaitedIndex + 1;
-          }
-        }
-        for (let i = startIndex; i < batches.length; i++) {
+        for (let i = 0; i < batches.length; i++) {
           if (
             _makeBatchTransferResults !== undefined &&
             i <= _makeBatchTransferResults.length - 1
@@ -310,43 +283,45 @@ export default function AirdropCard() {
             continue;
           }
 
-          const createBatchTransferResult = await createBatchTransfer(
+          // Will always be undefined unless the last batch transfer failed, or the user
+          // closed the app after executing the last batch transfer but before waiting for it
+          if (lastExecutedBatchTransferDigest !== undefined) {
+            try {
+              // Check if the last executed batch transfer was successful
+              const makeBatchTransferResult: MakeBatchTransferResult = {
+                batch: batches[i],
+                res: await keypairWaitForTransaction(
+                  lastExecutedBatchTransferDigest,
+                  suiClient,
+                ),
+              };
+              _makeBatchTransferResults = [
+                ...(_makeBatchTransferResults ?? []),
+                makeBatchTransferResult,
+              ];
+              setMakeBatchTransferResults(_makeBatchTransferResults);
+              setLastExecutedBatchTransferDigest(undefined);
+
+              continue;
+            } catch (err) {
+              console.error(err);
+              // Attempt the transfer again below
+            }
+          }
+
+          const makeBatchTransferResult = await makeBatchTransfer(
             token,
             batches[i],
             _keypair,
             suiClient,
+            (res) => setLastExecutedBatchTransferDigest(res.digest),
           );
-          const signedTransaction = createBatchTransferResult.signedTransaction;
-
-          const res1 = await suiClient.executeTransactionBlock({
-            transactionBlock: signedTransaction.bytes,
-            signature: signedTransaction.signature,
-          });
-          setLastExecutedBatchDigest(res1.digest);
-          setLastBatchExecutedIndex(i);
-
-          // Wait
-          const res2 = await suiClient.waitForTransaction({
-            digest: res1.digest,
-            options: {
-              showBalanceChanges: true,
-              showEffects: true,
-              showEvents: true,
-              showObjectChanges: true,
-            },
-          });
-          if (
-            res2.effects?.status !== undefined &&
-            res2.effects.status.status === "failure"
-          )
-            throw new Error(res2.effects.status.error ?? "Transaction failed");
-
           _makeBatchTransferResults = [
             ...(_makeBatchTransferResults ?? []),
-            { batch: createBatchTransferResult.batch, res: res2 },
+            makeBatchTransferResult,
           ];
-          setLastBatchExecutedAndWaitedIndex(i);
           setMakeBatchTransferResults(_makeBatchTransferResults);
+          setLastExecutedBatchTransferDigest(undefined);
         }
       }
 
