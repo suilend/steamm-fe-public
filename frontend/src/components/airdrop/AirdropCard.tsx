@@ -4,6 +4,7 @@ import { useSignPersonalMessage } from "@mysten/dapp-kit";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import BigNumber from "bignumber.js";
 import { chunk } from "lodash";
+import { useLocalStorage } from "usehooks-ts";
 
 import {
   FundKeypairResult,
@@ -34,7 +35,7 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import {
   AirdropRow,
-  CreateBatchTransferResult,
+  MakeBatchTransferResult,
   createBatchTransfer,
 } from "@/lib/airdrop";
 import { cn } from "@/lib/utils";
@@ -51,35 +52,45 @@ export default function AirdropCard() {
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
   // Progress
-  const [hasFailed, setHasFailed] = useState<boolean>(false);
+  const [hasFailed, setHasFailed] = useLocalStorage<boolean>(
+    "airdrop-hasFailed",
+    false,
+  );
 
-  const [keypair, setKeypair] = useState<Ed25519Keypair | undefined>(undefined);
-  const [fundKeypairResult, setFundKeypairResult] = useState<
+  const [keypair, setKeypair] = useLocalStorage<Ed25519Keypair | undefined>(
+    "airdrop-keypair",
+    undefined,
+  );
+  const [fundKeypairResult, setFundKeypairResult] = useLocalStorage<
     FundKeypairResult | undefined
-  >(undefined);
-  const [makeBatchTransferResults, setMakeBatchTransferResults] = useState<
-    CreateBatchTransferResult[] | undefined
-  >(undefined);
+  >("airdrop-fundKeypairResults", undefined);
+  const [makeBatchTransferResults, setMakeBatchTransferResults] =
+    useLocalStorage<MakeBatchTransferResult[] | undefined>(
+      "airdrop-makeBatchTransferResults",
+      undefined,
+    );
   const [
     returnAllOwnedObjectsAndSuiToUserResult,
     setReturnAllOwnedObjectsAndSuiToUserResult,
   ] = useState<ReturnAllOwnedObjectsAndSuiToUserResult | undefined>(undefined);
   // can combine with total number of batches to determine whether
   // or not we completed all batches for a stored state w/ csv
-  const [nextBatchToExecuteIndex, setnextBatchToExecuteIndex] =
-    useState<number>(0);
-  const [executedBatchDigest, setExecutedBatchDigest] = useState<
+  const [lastBatchExecutedAndWaitedIndex, setLastBatchExecutedAndWaitedIndex] =
+    useLocalStorage<number>("airdrop-lastBatchExecutedAndWaitedIndex", -1);
+  const [lastBatchExecutedIndex, setLastBatchExecutedIndex] =
+    useLocalStorage<number>("airdrop-lastBatchExecutedIndex", -1);
+  const [lastExecutedBatchDigest, setLastExecutedBatchDigest] = useLocalStorage<
     string | undefined
-  >(undefined);
+  >("airdrop-lastExecutedBatchDigest", undefined);
 
   const currentFlowDigests = useMemo(
     () =>
       [
         fundKeypairResult?.res.digest,
         ...(makeBatchTransferResults ?? []).map((x) => x.res.digest),
-        executedBatchDigest,
+        lastExecutedBatchDigest,
       ].filter(Boolean) as string[],
-    [fundKeypairResult, makeBatchTransferResults, executedBatchDigest],
+    [fundKeypairResult, makeBatchTransferResults, lastExecutedBatchDigest],
   );
 
   // State - token
@@ -94,16 +105,28 @@ export default function AirdropCard() {
     [balancesCoinMetadataMap, getBalance],
   );
 
-  const [coinType, setCoinType] = useState<string | undefined>(undefined);
+  const [coinType, setCoinType] = useLocalStorage<string | undefined>(
+    "airdrop-coinType",
+    undefined,
+  );
   const token =
     coinType !== undefined
       ? getToken(coinType, balancesCoinMetadataMap![coinType])
       : undefined;
 
   // State - CSV
-  const [csvRows, setCsvRows] = useState<AirdropRow[] | undefined>(undefined);
-  const [csvFilename, setCsvFilename] = useState<string>("");
-  const [csvFileSize, setCsvFileSize] = useState<string>("");
+  const [csvRows, setCsvRows] = useLocalStorage<AirdropRow[] | undefined>(
+    "airdrop-csvRows",
+    undefined,
+  );
+  const [csvFilename, setCsvFilename] = useLocalStorage<string>(
+    "airdrop-csvFilename",
+    "",
+  );
+  const [csvFileSize, setCsvFileSize] = useLocalStorage<string>(
+    "airdrop-csvFileSize",
+    "",
+  );
 
   const batches = useMemo(
     () => chunk(csvRows ?? [], TRANSFERS_PER_BATCH),
@@ -248,7 +271,34 @@ export default function AirdropCard() {
         _makeBatchTransferResults === undefined ||
         _makeBatchTransferResults.length < batches.length
       ) {
-        for (let i = nextBatchToExecuteIndex; i < batches.length; i++) {
+        // determine the index we should start at based on whether or not
+        // the last transaction landed on chain after being sent to execute
+        let startIndex = 0;
+        if (
+          lastBatchExecutedAndWaitedIndex != lastBatchExecutedIndex &&
+          lastExecutedBatchDigest != undefined // this should always be true if the above 2 are true but is necessary to have compiler stop yelling at me
+        ) {
+          const res2 = await suiClient.waitForTransaction({
+            digest: lastExecutedBatchDigest,
+            options: {
+              showBalanceChanges: true,
+              showEffects: true,
+              showEvents: true,
+              showObjectChanges: true,
+            },
+          });
+          if (
+            res2.effects?.status !== undefined &&
+            res2.effects.status.status === "failure"
+          ) {
+            // transaction didn't execute successfully, retry last transaction executed
+            startIndex = lastBatchExecutedIndex;
+          } else {
+            // transaction did execute successfully, continue to next transaction
+            startIndex = lastBatchExecutedAndWaitedIndex + 1;
+          }
+        }
+        for (let i = startIndex; i < batches.length; i++) {
           if (
             _makeBatchTransferResults !== undefined &&
             i <= _makeBatchTransferResults.length - 1
@@ -257,62 +307,43 @@ export default function AirdropCard() {
             continue;
           }
 
-          let numAttempts = 0;
-          while (numAttempts < 10) {
-            try {
-              const createBatchTransferResult = await createBatchTransfer(
-                token,
-                batches[i],
-                _keypair,
-                suiClient,
-              );
-              const signedTransaction =
-                createBatchTransferResult.signedTransaction;
+          const createBatchTransferResult = await createBatchTransfer(
+            token,
+            batches[i],
+            _keypair,
+            suiClient,
+          );
+          const signedTransaction = createBatchTransferResult.signedTransaction;
 
-              const res1 = await suiClient.executeTransactionBlock({
-                transactionBlock: signedTransaction.bytes,
-                signature: signedTransaction.signature,
-              });
-              // should probably change to sig so we can check above if transaction was already executed
-              setExecutedBatchDigest(res1.digest);
+          const res1 = await suiClient.executeTransactionBlock({
+            transactionBlock: signedTransaction.bytes,
+            signature: signedTransaction.signature,
+          });
+          setLastExecutedBatchDigest(res1.digest);
+          setLastBatchExecutedIndex(i);
 
-              // Wait
-              const res2 = await suiClient.waitForTransaction({
-                digest: res1.digest,
-                options: {
-                  showBalanceChanges: true,
-                  showEffects: true,
-                  showEvents: true,
-                  showObjectChanges: true,
-                },
-              });
-              if (
-                res2.effects?.status !== undefined &&
-                res2.effects.status.status === "failure"
-              )
-                throw new Error(
-                  res2.effects.status.error ?? "Transaction failed",
-                );
+          // Wait
+          const res2 = await suiClient.waitForTransaction({
+            digest: res1.digest,
+            options: {
+              showBalanceChanges: true,
+              showEffects: true,
+              showEvents: true,
+              showObjectChanges: true,
+            },
+          });
+          if (
+            res2.effects?.status !== undefined &&
+            res2.effects.status.status === "failure"
+          )
+            throw new Error(res2.effects.status.error ?? "Transaction failed");
 
-              _makeBatchTransferResults = [
-                ...(_makeBatchTransferResults ?? []),
-                createBatchTransferResult,
-              ];
-              setnextBatchToExecuteIndex(i + 1);
-              setMakeBatchTransferResults(_makeBatchTransferResults);
-
-              break;
-            } catch (e) {
-              console.log(e);
-            }
-            numAttempts++;
-          }
-
-          if (numAttempts == 10) {
-            throw new Error(
-              "Failed to send transaction for batch 10 times -- aborting!!!!",
-            );
-          }
+          _makeBatchTransferResults = [
+            ...(_makeBatchTransferResults ?? []),
+            { batch: createBatchTransferResult.batch, res: res2 },
+          ];
+          setLastBatchExecutedAndWaitedIndex(i);
+          setMakeBatchTransferResults(_makeBatchTransferResults);
         }
       }
 

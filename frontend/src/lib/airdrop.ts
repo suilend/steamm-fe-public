@@ -1,13 +1,10 @@
 import { SuiClient, SuiTransactionBlockResponse } from "@mysten/sui/client";
+import { SignatureWithBytes } from "@mysten/sui/cryptography";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 
-import {
-  Token,
-  isSui,
-  keypairSignExecuteAndWaitForTransaction,
-} from "@suilend/sui-fe";
+import { Token, isSui } from "@suilend/sui-fe";
 
 export type AirdropRow = { number: number; address: string; amount: string };
 export type Batch = AirdropRow[];
@@ -17,12 +14,16 @@ export type MakeBatchTransferResult = {
   batch: Batch;
   res: SuiTransactionBlockResponse;
 };
-export const makeBatchTransfer = async (
+export type CreateBatchTransferResult = {
+  batch: Batch;
+  signedTransaction: SignatureWithBytes;
+};
+export const createBatchTransfer = async (
   token: Token,
   batch: Batch,
   keypair: Ed25519Keypair,
   suiClient: SuiClient,
-): Promise<MakeBatchTransferResult> => {
+): Promise<CreateBatchTransferResult> => {
   console.log("[makeBatchTransfer]", { token, batch });
 
   const transaction = new Transaction();
@@ -43,11 +44,10 @@ export const makeBatchTransfer = async (
     transaction.transferObjects([tokenCoin], row.address);
   }
 
-  const res = await keypairSignExecuteAndWaitForTransaction(
-    transaction,
-    keypair,
-    suiClient,
-  );
+  const builtTransaction = await transaction.build({
+    client: suiClient,
+  });
+  const signedTransaction = await keypair.signTransaction(builtTransaction);
 
-  return { batch, res };
+  return { batch, signedTransaction };
 };
