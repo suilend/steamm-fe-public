@@ -51,7 +51,7 @@ const getBTokenName = (token: Token) => `bToken ${token.symbol}`; // E.g. bToken
 const getBTokenSymbol = (token: Token) => `b${token.symbol}`; // E.g. bSUI // Cannot be same as name
 const B_TOKEN_DESCRIPTION = "STEAMM bToken";
 const B_TOKEN_IMAGE_URL =
-  "https://suilend-assets.s3.us-east-2.amazonaws.com/steamm/STEAMM+bToken.svg";
+  "https://d29k09wtkr1a3e.cloudfront.net/steamm/STEAMM+bToken.svg";
 
 const getLpTokenModule = (bTokenA: Token, bTokenB: Token) =>
   `steamm_lp_${bTokenA.symbol}_${bTokenB.symbol}`
@@ -67,7 +67,7 @@ const getLpTokenSymbol = (bTokenA: Token, bTokenB: Token) =>
   `STEAMM LP ${bTokenA.symbol}-${bTokenB.symbol}`; // E.g. STEAMM LP bSUI-bUSDC // Cannot be same as name
 const LP_TOKEN_DESCRIPTION = "STEAMM LP Token";
 const LP_TOKEN_IMAGE_URL =
-  "https://suilend-assets.s3.us-east-2.amazonaws.com/steamm/STEAMM+LP+Token.svg";
+  "https://d29k09wtkr1a3e.cloudfront.net/steamm/STEAMM+LP+Token.svg";
 
 // bTokens and banks
 export const hasBTokenAndBankForToken = (
