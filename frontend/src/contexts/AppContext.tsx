@@ -10,7 +10,6 @@ import {
 
 import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
-import DOMPurify from "dompurify";
 import { useFlags } from "launchdarkly-react-client-sdk";
 import { useLocalStorage } from "usehooks-ts";
 
@@ -234,7 +233,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     loadedTokenIconsRef.current.push(token.coinType);
 
     const image = new Image();
-    image.src = DOMPurify.sanitize(token.iconUrl!);
+    image.src = token.iconUrl!;
     image.onerror = () => {
       console.error(
         `Failed to load iconUrl for ${token.coinType}: ${token.iconUrl}`,
