@@ -12,6 +12,7 @@ import { isSteammPoints } from "@suilend/sui-fe";
 import { useAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { useUserContext } from "@/contexts/UserContext";
+import { ChartPeriod } from "@/lib/chart";
 import { getPoolTotalAprPercent } from "@/lib/liquidityMining";
 import {
   getIndexesOfObligationsWithDeposit,
@@ -107,10 +108,11 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
                 pool: {
                   ...pool,
                   aprPercent_24h:
-                    poolStats.aprPercent_24h[pool.id] !== undefined &&
-                    stakingYieldAprPercent !== undefined
+                    poolStats.aprPercent[ChartPeriod.ONE_DAY][pool.id] !==
+                      undefined && stakingYieldAprPercent !== undefined
                       ? getPoolTotalAprPercent(
-                          poolStats.aprPercent_24h[pool.id].feesAprPercent,
+                          poolStats.aprPercent[ChartPeriod.ONE_DAY][pool.id]
+                            .feesAprPercent,
                           pool.suilendWeightedAverageDepositAprPercent,
                           filteredRewards,
                           stakingYieldAprPercent,
@@ -130,7 +132,7 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
               };
             })
             .filter(Boolean) as PoolPosition[]),
-    [appData, userData, getBalance, poolStats.aprPercent_24h],
+    [appData, userData, getBalance, poolStats.aprPercent],
   );
 
   // Context

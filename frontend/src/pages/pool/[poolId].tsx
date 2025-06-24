@@ -25,29 +25,22 @@ import { useStatsContext } from "@/contexts/StatsContext";
 import { useUserContext } from "@/contexts/UserContext";
 import usePoolCurrentPriceQuote from "@/hooks/usePoolCurrentPrice";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
+import { ChartPeriod } from "@/lib/chart";
 import { formatFeeTier, formatPair } from "@/lib/format";
 import { ROOT_URL } from "@/lib/navigation";
 
 function PoolPage() {
   const { address } = useWalletContext();
   const { appData, addRecentPoolId } = useLoadedAppContext();
-  const { poolStats, fetchPoolHistoricalStats } = useStatsContext();
+  const { poolStats } = useStatsContext();
   const { refresh } = useUserContext();
 
   const { pool, fetchRefreshedPool } = usePoolContext();
 
+  // Recent pool
   useEffect(() => {
     addRecentPoolId(pool.id);
   }, [addRecentPoolId, pool.id]);
-
-  // Fetch historical stats
-  const hasFetchedPoolHistoricalStatsRef = useRef<Record<string, boolean>>({});
-  useEffect(() => {
-    if (hasFetchedPoolHistoricalStatsRef.current[pool.id]) return;
-    hasFetchedPoolHistoricalStatsRef.current[pool.id] = true;
-
-    fetchPoolHistoricalStats([pool.id]);
-  }, [pool.id, fetchPoolHistoricalStats]);
 
   // Pair
   const formattedPair = formatPair(
@@ -58,7 +51,7 @@ function PoolPage() {
   const { poolCurrentPriceQuoteMap, fetchPoolCurrentPriceQuote } =
     usePoolCurrentPriceQuote([pool.id]);
   const currentPriceQuote = useMemo(
-    () => poolCurrentPriceQuoteMap?.[pool.id],
+    () => poolCurrentPriceQuoteMap[pool.id],
     [poolCurrentPriceQuoteMap, pool.id],
   );
 
@@ -187,16 +180,20 @@ function PoolPage() {
                     <p className="text-p3 text-tertiary-foreground">24H</p>
                   </div>
 
-                  {poolStats.volumeUsd_24h[pool.id] === undefined ? (
+                  {poolStats.volumeUsd[ChartPeriod.ONE_DAY][pool.id] ===
+                  undefined ? (
                     <Skeleton className="h-[24px] w-16" />
                   ) : (
                     <Tooltip
-                      title={formatUsd(poolStats.volumeUsd_24h[pool.id], {
-                        exact: true,
-                      })}
+                      title={formatUsd(
+                        poolStats.volumeUsd[ChartPeriod.ONE_DAY][pool.id],
+                        { exact: true },
+                      )}
                     >
                       <p className="w-max text-p1 text-foreground">
-                        {formatUsd(poolStats.volumeUsd_24h[pool.id])}
+                        {formatUsd(
+                          poolStats.volumeUsd[ChartPeriod.ONE_DAY][pool.id],
+                        )}
                       </p>
                     </Tooltip>
                   )}
@@ -208,16 +205,20 @@ function PoolPage() {
                     <p className="text-p3 text-tertiary-foreground">24H</p>
                   </div>
 
-                  {poolStats.feesUsd_24h[pool.id] === undefined ? (
+                  {poolStats.feesUsd[ChartPeriod.ONE_DAY][pool.id] ===
+                  undefined ? (
                     <Skeleton className="h-[24px] w-16" />
                   ) : (
                     <Tooltip
-                      title={formatUsd(poolStats.feesUsd_24h[pool.id], {
-                        exact: true,
-                      })}
+                      title={formatUsd(
+                        poolStats.feesUsd[ChartPeriod.ONE_DAY][pool.id],
+                        { exact: true },
+                      )}
                     >
                       <p className="w-max text-p1 text-foreground">
-                        {formatUsd(poolStats.feesUsd_24h[pool.id])}
+                        {formatUsd(
+                          poolStats.feesUsd[ChartPeriod.ONE_DAY][pool.id],
+                        )}
                       </p>
                     </Tooltip>
                   )}

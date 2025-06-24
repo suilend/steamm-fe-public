@@ -59,6 +59,8 @@ import {
   SwapParams,
 } from ".";
 
+const STALENESS_THRESHOLD_SECONDS = 12;
+
 /**
  * Helper class to help interact with pools.
  */
@@ -622,7 +624,7 @@ export async function getOracleArgs(
     console.log("Date now: ", Date.now() / 1000);
     console.log("Publish time: ", publishTime);
     console.log("Staleness: ", stalenessSeconds);
-    if (stalenessSeconds > 15) {
+    if (stalenessSeconds > STALENESS_THRESHOLD_SECONDS) {
       stalePriceIdentifiers.push(feedIdentifiers[priceInfoObjectId]);
     }
   }
@@ -745,7 +747,7 @@ export async function getOracleV2Args(
     console.log("Date now: ", Date.now() / 1000);
     console.log("Publish time: ", publishTime);
     console.log("Staleness: ", stalenessSeconds);
-    if (stalenessSeconds > 15) {
+    if (stalenessSeconds > STALENESS_THRESHOLD_SECONDS) {
       stalePriceIdentifiers.push(feedIdentifiers[priceInfoObjectId]);
     }
   }

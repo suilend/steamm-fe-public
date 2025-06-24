@@ -23,6 +23,7 @@ import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
+import { ChartPeriod } from "@/lib/chart";
 import {
   getPoolStakingYieldAprPercent,
   getPoolTotalAprPercent,
@@ -61,10 +62,10 @@ export default function AprBreakdown({
 
   // Total APR
   const totalAprPercent: BigNumber | undefined =
-    poolStats.aprPercent_24h[pool.id] !== undefined &&
+    poolStats.aprPercent[ChartPeriod.ONE_DAY][pool.id] !== undefined &&
     stakingYieldAprPercent !== undefined
       ? getPoolTotalAprPercent(
-          poolStats.aprPercent_24h[pool.id].feesAprPercent,
+          poolStats.aprPercent[ChartPeriod.ONE_DAY][pool.id].feesAprPercent,
           pool.suilendWeightedAverageDepositAprPercent,
           filteredRewards,
           stakingYieldAprPercent,
@@ -140,7 +141,8 @@ export default function AprBreakdown({
                   }
                   labelEndDecorator="24H"
                   value={formatPercent(
-                    poolStats.aprPercent_24h[pool.id].feesAprPercent,
+                    poolStats.aprPercent[ChartPeriod.ONE_DAY][pool.id]
+                      ?.feesAprPercent ?? new BigNumber(0),
                   )}
                 >
                   LP fees

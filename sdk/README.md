@@ -30,36 +30,30 @@ const pools = await sdk.fetchPoolData([coinType1, coinType2]);
 To deposit liquidity:
 
 ```ts
-await sdk.Pool.depositLiquidityEntry(
-  {
-    pool: pools[0].poolId,
-    coinTypeA,
-    coinTypeB,
-    coinA: usdcCoin,
-    coinB: suiCoin,
-    maxA: BigInt("1000000000000000000"),
-    maxB: BigInt("1000000000000000000"),
-  },
-  tx,
-);
+await sdk.Pool.depositLiquidityEntry(tx, {
+  pool: pools[0].poolId,
+  coinTypeA,
+  coinTypeB,
+  coinA: usdcCoin,
+  coinB: suiCoin,
+  maxA: BigInt("1000000000000000000"),
+  maxB: BigInt("1000000000000000000"),
+});
 ```
 
 To perform a swap:
 
 ```ts
-await sdk.Pool.swapEntry(
-  {
-    pool: pools[0].poolId,
-    coinTypeA,
-    coinTypeB,
-    coinA: usdcCoin,
-    coinB: suiCoin,
-    a2b: false,
-    amountIn: BigInt("10000000000000"),
-    minAmountOut: BigInt("0"),
-  },
-  tx,
-);
+await sdk.Pool.swap(tx, {
+  pool: pools[0].poolId,
+  coinTypeA,
+  coinTypeB,
+  coinA: usdcCoin,
+  coinB: suiCoin,
+  a2b: false,
+  amountIn: BigInt("10000000000000"),
+  minAmountOut: BigInt("0"),
+});
 ```
 
 And to redeem liquidity:

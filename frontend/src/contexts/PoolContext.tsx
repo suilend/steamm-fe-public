@@ -13,17 +13,40 @@ import {
 import BigNumber from "bignumber.js";
 
 import { ParsedPool, getParsedPool } from "@suilend/steamm-sdk";
+import { shallowPushQuery } from "@suilend/sui-fe-next";
 
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import { useStatsContext } from "@/contexts/StatsContext";
+import { ChartDataType, ChartPeriod } from "@/lib/chart";
 import { ROOT_URL } from "@/lib/navigation";
 import { fetchPool } from "@/lib/pools";
 
+enum QueryParams {
+  POOL_ID_WITH_SLUG = "poolId",
+  CHART_DATA_TYPE = "chart",
+  CHART_PERIOD = "period",
+}
+
 interface PoolContext {
+  selectedChartDataType: ChartDataType;
+  onSelectedChartDataTypeChange: (chartDataType: ChartDataType) => void;
+  selectedChartPeriod: ChartPeriod;
+  onSelectedChartPeriodChange: (chartPeriod: ChartPeriod) => void;
+
   pool: ParsedPool;
   fetchRefreshedPool: (existingPool: ParsedPool) => Promise<void>;
 }
 
 const PoolContext = createContext<PoolContext>({
+  selectedChartDataType: ChartDataType.TVL,
+  onSelectedChartDataTypeChange: () => {
+    throw Error("PoolContextProvider not initialized");
+  },
+  selectedChartPeriod: ChartPeriod.ONE_WEEK,
+  onSelectedChartPeriodChange: () => {
+    throw Error("PoolContextProvider not initialized");
+  },
+
   pool: {} as ParsedPool,
   fetchRefreshedPool: async () => {
     throw Error("PoolContextProvider not initialized");
@@ -34,20 +57,92 @@ export const usePoolContext = () => useContext(PoolContext);
 
 export function PoolContextProvider({ children }: PropsWithChildren) {
   const router = useRouter();
-  const poolIdWithSlug = router.query.poolId as string;
-
-  const { steammClient, appData } = useLoadedAppContext();
-
-  // Pool info
-  const poolId = useMemo(
-    () => poolIdWithSlug?.split("-")?.[0],
-    [poolIdWithSlug],
+  const queryParams = useMemo(
+    () => ({
+      [QueryParams.POOL_ID_WITH_SLUG]: router.query[
+        QueryParams.POOL_ID_WITH_SLUG
+      ] as string,
+      [QueryParams.CHART_DATA_TYPE]: router.query[
+        QueryParams.CHART_DATA_TYPE
+      ] as ChartDataType | undefined,
+      [QueryParams.CHART_PERIOD]: router.query[QueryParams.CHART_PERIOD] as
+        | ChartPeriod
+        | undefined,
+    }),
+    [router.query],
   );
 
+  const { steammClient, appData } = useLoadedAppContext();
+  const { fetchPoolHistoricalStats } = useStatsContext();
+
+  // Query params
+  const poolId = useMemo(
+    () => queryParams[QueryParams.POOL_ID_WITH_SLUG]?.split("-")?.[0],
+    [queryParams],
+  );
+
+  const selectedChartDataType = useMemo(
+    () =>
+      queryParams[QueryParams.CHART_DATA_TYPE] &&
+      Object.values(ChartDataType).includes(
+        queryParams[QueryParams.CHART_DATA_TYPE],
+      )
+        ? queryParams[QueryParams.CHART_DATA_TYPE]
+        : ChartDataType.TVL,
+    [queryParams],
+  );
+  const selectedChartPeriod = useMemo(
+    () =>
+      queryParams[QueryParams.CHART_PERIOD] &&
+      Object.values(ChartPeriod).includes(queryParams[QueryParams.CHART_PERIOD])
+        ? queryParams[QueryParams.CHART_PERIOD]
+        : ChartPeriod.ONE_WEEK,
+    [queryParams],
+  );
+
+  const onSelectedChartDataTypeChange = useCallback(
+    (chartDataType: ChartDataType) => {
+      shallowPushQuery(router, {
+        ...router.query,
+        [QueryParams.CHART_DATA_TYPE]: chartDataType,
+      });
+    },
+    [router],
+  );
+  const onSelectedChartPeriodChange = useCallback(
+    (chartPeriod: ChartPeriod) => {
+      shallowPushQuery(router, {
+        ...router.query,
+        [QueryParams.CHART_PERIOD]: chartPeriod,
+      });
+    },
+    [router],
+  );
+
+  // Pool info
   const existingPool: ParsedPool | undefined = useMemo(
     () => appData.pools.find((pool) => pool.id === poolId),
     [appData.pools, poolId],
   );
+
+  // Historical stats
+  const hasFetchedPoolHistoricalStatsMapRef = useRef<
+    Record<string, Record<ChartPeriod, boolean>>
+  >({});
+
+  useEffect(() => {
+    if (
+      hasFetchedPoolHistoricalStatsMapRef.current[poolId]?.[selectedChartPeriod]
+    )
+      return;
+    hasFetchedPoolHistoricalStatsMapRef.current[poolId] =
+      hasFetchedPoolHistoricalStatsMapRef.current[poolId] ??
+      ({} as Record<ChartPeriod, boolean>);
+    hasFetchedPoolHistoricalStatsMapRef.current[poolId][selectedChartPeriod] =
+      true;
+
+    fetchPoolHistoricalStats([poolId], selectedChartPeriod);
+  }, [poolId, selectedChartPeriod, fetchPoolHistoricalStats]);
 
   // Refreshed pool map
   const [refreshedPoolMap, setRefreshedPoolMap] = useState<
@@ -119,10 +214,22 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
   // Context
   const contextValue: PoolContext = useMemo(
     () => ({
-      pool: pool as ParsedPool,
+      selectedChartDataType,
+      onSelectedChartDataTypeChange,
+      selectedChartPeriod,
+      onSelectedChartPeriodChange,
+
+      pool,
       fetchRefreshedPool,
     }),
-    [pool, fetchRefreshedPool],
+    [
+      selectedChartDataType,
+      onSelectedChartDataTypeChange,
+      selectedChartPeriod,
+      onSelectedChartPeriodChange,
+      pool,
+      fetchRefreshedPool,
+    ],
   );
 
   if (pool === undefined) return null; // Display nothing while redirecting to Home page

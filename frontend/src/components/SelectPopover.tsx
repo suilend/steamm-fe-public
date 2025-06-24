@@ -6,17 +6,18 @@ import { Check, ChevronDown, ChevronUp, X } from "lucide-react";
 import { formatList } from "@suilend/sui-fe";
 
 import Popover from "@/components/Popover";
+import { SelectPopoverOption } from "@/lib/select";
 import { cn } from "@/lib/utils";
 
-export type SelectPopoverOption = {
-  id: string;
-  name: string;
-  count?: number;
-};
-
 interface SelectPopoverProps {
+  popoverContentClassName?: ClassValue;
   className?: ClassValue;
+  textClassName?: ClassValue;
+  iconClassName?: ClassValue;
+  optionClassName?: ClassValue;
+  optionTextClassName?: ClassValue;
   align?: "start" | "end";
+  maxWidth?: number;
   options: SelectPopoverOption[];
   placeholder?: string;
   values: string[];
@@ -27,8 +28,14 @@ interface SelectPopoverProps {
 }
 
 export default function SelectPopover({
+  popoverContentClassName,
   className,
+  textClassName,
+  iconClassName,
+  optionClassName,
+  optionTextClassName,
   align,
+  maxWidth,
   options,
   placeholder,
   values,
@@ -46,8 +53,9 @@ export default function SelectPopover({
     <Popover
       rootProps={{ open: isOpen, onOpenChange: setIsOpen }}
       contentProps={{
+        className: cn(popoverContentClassName),
         align: align ?? "end",
-        maxWidth: 280,
+        maxWidth: maxWidth ?? 280,
       }}
       trigger={
         <button
@@ -66,6 +74,7 @@ export default function SelectPopover({
                       ? "text-foreground"
                       : "text-secondary-foreground group-hover/trigger:text-foreground",
                   ),
+              textClassName,
             )}
           >
             {values.length > 0
@@ -94,6 +103,7 @@ export default function SelectPopover({
                 isOpen
                   ? "text-foreground"
                   : "text-secondary-foreground group-hover/trigger:text-foreground",
+                iconClassName,
               )}
             />
           )}
@@ -109,6 +119,7 @@ export default function SelectPopover({
               values.includes(option.id)
                 ? "cursor-default border-button-1 bg-button-1/25"
                 : "hover:bg-border",
+              optionClassName,
             )}
             onClick={() => {
               onChange(option.id);
@@ -122,6 +133,7 @@ export default function SelectPopover({
                   values.includes(option.id)
                     ? "text-foreground"
                     : "text-secondary-foreground group-hover:text-foreground",
+                  optionTextClassName,
                 )}
               >
                 {option.name}

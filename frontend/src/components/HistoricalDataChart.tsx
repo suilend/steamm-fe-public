@@ -1,25 +1,29 @@
 import { useMemo, useRef } from "react";
 
+import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { formatDate } from "date-fns";
 import * as Recharts from "recharts";
 import { v4 as uuidv4 } from "uuid";
 
+import { formatUsd } from "@suilend/sui-fe";
+
 import NoDataIcon from "@/components/icons/NoDataIcon";
+import SelectPopover from "@/components/SelectPopover";
 import { Skeleton } from "@/components/ui/skeleton";
 import useBreakpoint from "@/hooks/useBreakpoint";
 import {
   ChartConfig,
   ChartData,
+  ChartDataType,
+  ChartPeriod,
   ChartType,
-  OTHER_CATEGORY,
   ViewBox,
+  chartPeriodNameMap,
   getTooltipStyle,
 } from "@/lib/chart";
+import { SelectPopoverOption } from "@/lib/select";
 import { cn } from "@/lib/utils";
-
-const TOTAL = "total";
-const MAX_CATEGORIES = 5;
 
 function ActiveBar({ ...props }) {
   return (
@@ -36,20 +40,18 @@ function ActiveBar({ ...props }) {
 }
 
 interface TooltipContentProps {
-  dataPeriodDays: ChartConfig["dataPeriodDays"];
-  formatValue: (value: number) => string;
-  formatCategory: (category: string) => string | undefined;
-  sortedCategories: string[];
+  period: ChartPeriod;
+  valueFormatter: (value: number) => string;
+  category: string;
   d: ChartData;
   viewBox: ViewBox;
   x: number;
 }
 
 function TooltipContent({
-  dataPeriodDays,
-  formatValue,
-  formatCategory,
-  sortedCategories,
+  period,
+  valueFormatter,
+  category,
   d,
   viewBox,
   x,
@@ -64,39 +66,10 @@ function TooltipContent({
         <p className="text-p2 text-secondary-foreground">
           {formatDate(
             new Date(d.timestampS * 1000),
-            dataPeriodDays === 1 ? "H:mm" : "d MMM H:mm",
+            period === ChartPeriod.ONE_DAY ? "H:mm" : "d MMM H:mm",
           )}
         </p>
-        {sortedCategories.map((category, categoryIndex) => {
-          const formattedCategory = formatCategory(category);
-
-          return (
-            <div key={category} className="flex flex-row items-center gap-1.5">
-              {sortedCategories.length > 1 && (
-                <>
-                  <div
-                    className="h-3 w-3 rounded-[2px]"
-                    style={{
-                      backgroundColor: `hsl(var(--a${sortedCategories.length - categoryIndex}))`,
-                    }}
-                  />
-
-                  {formattedCategory === undefined ? (
-                    <Skeleton className="h-[18px] w-10" />
-                  ) : (
-                    <p className="text-p2 text-secondary-foreground">
-                      {formattedCategory}
-                    </p>
-                  )}
-                </>
-              )}
-
-              <p className="text-p2 text-foreground">
-                {formatValue(d[category])}
-              </p>
-            </div>
-          );
-        })}
+        <p className="text-p2 text-foreground">{valueFormatter(d[category])}</p>
       </div>
     </div>
   );
@@ -104,33 +77,52 @@ function TooltipContent({
 
 interface HistoricalDataChartProps extends ChartConfig {
   className?: ClassValue;
-  topLeftClassName?: ClassValue;
-  titleContainerClassName?: ClassValue;
-  titleClassName?: ClassValue;
+  topSelectsClassName?: ClassValue;
   chartClassName?: ClassValue;
   ticksXSm?: number;
-  formatCategory: (category: string) => string | undefined;
+  selectedDataType: ChartDataType;
+  onSelectedDataTypeChange: (dataType: ChartDataType) => void;
+  selectedPeriod: ChartPeriod;
+  onSelectedPeriodChange: (period: ChartPeriod) => void;
 }
 
 export default function HistoricalDataChart({
   className,
-  topLeftClassName,
-  titleContainerClassName,
-  titleClassName,
+  topSelectsClassName,
   chartClassName,
-  title,
-  value,
-  valuePeriodDays,
-  chartType,
-  data,
-  dataPeriodDays,
   ticksXSm,
-  formatValue,
-  formatCategory,
+  selectedDataType,
+  onSelectedDataTypeChange,
+  selectedPeriod,
+  onSelectedPeriodChange,
+  getChartType,
+  getValueFormatter,
+  periodOptions: _periodOptions,
+  dataTypeOptions,
+  totalMap,
+  dataMap,
 }: HistoricalDataChartProps) {
   const { sm, md } = useBreakpoint();
 
   const gradientId = useRef<string>(uuidv4()).current;
+
+  const chartType: ChartType = getChartType(selectedDataType);
+  const valueFormatter: (value: number) => string =
+    getValueFormatter(selectedDataType);
+  const total: BigNumber | undefined =
+    totalMap[selectedDataType]?.[selectedPeriod];
+  const data: ChartData[] | undefined =
+    dataMap[selectedDataType]?.[selectedPeriod];
+
+  const periodOptions: SelectPopoverOption[] = useMemo(
+    () =>
+      _periodOptions ??
+      Object.values(ChartPeriod).map((period) => ({
+        id: period,
+        name: chartPeriodNameMap[period],
+      })),
+    [_periodOptions],
+  );
 
   // Data
   const processedData: ChartData[] | undefined = useMemo(() => {
@@ -141,55 +133,21 @@ export default function HistoricalDataChart({
         ? Object.keys(data[0]).filter((key) => key !== "timestampS")
         : [];
 
-    if (categories.length > MAX_CATEGORIES) {
-      const categoryTotalsMap: Record<string, number> = categories.reduce(
+    const minY = Math.min(
+      ...data.map((d) => categories.map((category) => d[category])).flat(),
+    );
+
+    return data.map((d) => ({
+      timestampS: d.timestampS,
+      ...categories.reduce(
         (acc, category) => ({
           ...acc,
-          [category]: data.reduce((acc2, d) => acc2 + d[category], 0),
+          [category]: d[category],
+          [`${category}_scaled`]: d[category] - minY * 0.75,
         }),
         {},
-      );
-
-      const sortedCategories = categories
-        .slice()
-        .sort((a, b) => categoryTotalsMap[b] - categoryTotalsMap[a]);
-      const topCategories = sortedCategories.slice(0, MAX_CATEGORIES - 1);
-      const otherCategories = sortedCategories.slice(MAX_CATEGORIES - 1);
-
-      return data.map((d) => ({
-        timestampS: d.timestampS,
-        ...[...topCategories, OTHER_CATEGORY].reduce(
-          (acc, category) => ({
-            ...acc,
-            [category]:
-              category !== OTHER_CATEGORY
-                ? d[category]
-                : otherCategories.reduce(
-                    (acc2, otherCategory) => acc2 + d[otherCategory],
-                    0,
-                  ),
-          }),
-          {},
-        ),
-      }));
-    } else {
-      const totals = data.map((d) =>
-        categories.reduce((acc, category) => acc + d[category], 0),
-      );
-      const minY = Math.min(...totals);
-
-      return data.map((d) => ({
-        timestampS: d.timestampS,
-        ...categories.reduce(
-          (acc, category) => ({
-            ...acc,
-            [category]: d[category],
-            [`${category}_scaled`]: d[category] - minY * 0.75,
-          }),
-          {},
-        ),
-      }));
-    }
+      ),
+    }));
   }, [data]);
 
   const timestampsS =
@@ -206,43 +164,19 @@ export default function HistoricalDataChart({
           )
         : [];
 
-  const processedDataWithTotals:
-    | (ChartData & { [TOTAL]: number })[]
-    | undefined =
-    processedData === undefined
-      ? undefined
-      : processedData.map((d) => ({
-          ...d,
-          [TOTAL]: categories.reduce((acc, category) => acc + d[category], 0),
-        }));
-
-  const categoryTotalsMap: Record<string, number> =
-    processedData === undefined
-      ? {}
-      : categories.reduce(
-          (acc, category) => ({
-            ...acc,
-            [category]: processedData.reduce(
-              (acc2, d) => acc2 + d[category],
-              0,
-            ),
-          }),
-          {},
-        );
-  const sortedCategories = categories.slice().sort((a, b) => {
-    if (a === OTHER_CATEGORY) return 1; // Always last
-    return categoryTotalsMap[b] - categoryTotalsMap[a];
-  });
-
   // Min/max
   const minX = Math.min(...timestampsS);
   const maxX = Math.max(...timestampsS);
 
   const minY = 0;
   const maxY =
-    processedDataWithTotals === undefined
+    processedData === undefined
       ? 0
-      : Math.max(...processedDataWithTotals.map((d) => d[TOTAL]));
+      : Math.max(
+          ...processedData
+            .map((d) => categories.map((category) => d[category]))
+            .flat(),
+        );
 
   // Ticks
   const ticksX = Array.from({ length: md ? 5 : sm ? 3 : (ticksXSm ?? 2) }).map(
@@ -253,66 +187,61 @@ export default function HistoricalDataChart({
   return (
     <div className={cn("flex w-full flex-col gap-3", className)}>
       {/* Top */}
-      <div className="flex flex-row items-start justify-between">
-        {/* Top left */}
-        <div className={cn("flex flex-col gap-1", topLeftClassName)}>
-          <div
-            className={cn(
-              "flex flex-row items-baseline gap-1.5",
-              titleContainerClassName,
+      <div className="flex w-full flex-col gap-1">
+        {/* Selects */}
+        <div className={cn("overflow-x-auto", topSelectsClassName)}>
+          <div className="flex w-max flex-row items-center gap-3">
+            {dataTypeOptions.length > 1 ? (
+              <SelectPopover
+                popoverContentClassName="p-0.5 border-none"
+                className="h-6 w-max gap-0.5 border-none bg-[transparent] px-0"
+                textClassName="!text-p2 !text-secondary-foreground"
+                iconClassName="!text-secondary-foreground"
+                optionClassName="h-8 p-2"
+                optionTextClassName="!text-p2"
+                align="start"
+                maxWidth={100}
+                options={dataTypeOptions}
+                values={[selectedDataType]}
+                onChange={(id: string) =>
+                  onSelectedDataTypeChange(id as ChartDataType)
+                }
+              />
+            ) : (
+              <p className="text-p2 text-secondary-foreground">
+                {dataTypeOptions[0].name}
+              </p>
             )}
-          >
-            <p
-              className={cn(
-                "!text-p2 text-secondary-foreground",
-                titleClassName,
-              )}
-            >
-              {title}
-            </p>
-            {valuePeriodDays !== undefined && (
-              <p className="text-p3 text-tertiary-foreground">
-                {valuePeriodDays === 1 ? "24H" : `${valuePeriodDays}D`}
+
+            {periodOptions.length > 1 ? (
+              <SelectPopover
+                popoverContentClassName="p-0.5 border-none"
+                className="h-6 w-max gap-0.5 border-none bg-[transparent] px-0"
+                textClassName="!text-p2 !text-secondary-foreground"
+                iconClassName="!text-secondary-foreground"
+                optionClassName="h-8 p-2"
+                optionTextClassName="!text-p2"
+                align="start"
+                maxWidth={100}
+                options={periodOptions}
+                values={[selectedPeriod]}
+                onChange={(id: string) =>
+                  onSelectedPeriodChange(id as ChartPeriod)
+                }
+              />
+            ) : (
+              <p className="text-p2 text-secondary-foreground">
+                {periodOptions[0].name}
               </p>
             )}
           </div>
-
-          {value === undefined ? (
-            <Skeleton className="h-[36px] w-20" />
-          ) : (
-            <p className="text-h2 text-foreground">{value}</p>
-          )}
         </div>
 
-        {/* Top right */}
-        {sortedCategories.length > 1 && (
-          <div className="flex flex-row flex-wrap justify-end gap-x-3 gap-y-1">
-            {sortedCategories.map((category, categoryIndex) => {
-              const formattedCategory = formatCategory(category);
-
-              return (
-                <div
-                  key={category}
-                  className="flex flex-row items-center gap-1.5"
-                >
-                  <div
-                    className="h-3 w-3 rounded-[2px]"
-                    style={{
-                      backgroundColor: `hsl(var(--a${sortedCategories.length - categoryIndex}))`,
-                    }}
-                  />
-
-                  {formattedCategory === undefined ? (
-                    <Skeleton className="h-[18px] w-10" />
-                  ) : (
-                    <p className="text-p3 text-secondary-foreground">
-                      {formattedCategory}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+        {/* Total */}
+        {total === undefined ? (
+          <Skeleton className="h-[36px] w-20" />
+        ) : (
+          <p className="text-h2 text-foreground">{formatUsd(total)}</p>
         )}
       </div>
 
@@ -359,7 +288,7 @@ export default function HistoricalDataChart({
                       barCategoryGap={0}
                     >
                       <Recharts.Bar
-                        dataKey={sortedCategories[0]}
+                        dataKey={categories[0]}
                         isAnimationActive={false}
                         fill="transparent"
                         activeBar={<ActiveBar />}
@@ -387,10 +316,9 @@ export default function HistoricalDataChart({
 
                           return (
                             <TooltipContent
-                              dataPeriodDays={dataPeriodDays}
-                              formatValue={formatValue}
-                              formatCategory={formatCategory}
-                              sortedCategories={sortedCategories}
+                              period={selectedPeriod}
+                              valueFormatter={valueFormatter}
+                              category={categories[0]}
                               d={payload[0].payload as ChartData}
                               viewBox={viewBox as ViewBox}
                               x={coordinate.x}
@@ -408,21 +336,16 @@ export default function HistoricalDataChart({
                         className="group flex flex-1 flex-row justify-center px-[1px] sm:px-[2px]"
                       >
                         <div className="flex h-full w-full max-w-[8px] flex-col-reverse items-center gap-[2px]">
-                          {sortedCategories.map((category, categoryIndex) => (
-                            <div
-                              key={category}
-                              className="w-full shrink-0 rounded-[2px]"
-                              style={{
-                                backgroundColor:
-                                  sortedCategories.length > 1
-                                    ? `hsl(var(--a${sortedCategories.length - categoryIndex}))`
-                                    : maxY > 0 && d[category] > 0
-                                      ? "hsl(var(--jordy-blue))"
-                                      : "hsla(var(--jordy-blue) / 25%)",
-                                height: `max(2px, calc((100% - ${(sortedCategories.length - 1) * 2}px) * ${maxY === 0 ? 0 : d[category] / maxY}))`,
-                              }}
-                            />
-                          ))}
+                          <div
+                            className="w-full shrink-0 rounded-[2px]"
+                            style={{
+                              backgroundColor:
+                                maxY > 0 && d[categories[0]] > 0
+                                  ? "hsl(var(--jordy-blue))"
+                                  : "hsla(var(--jordy-blue) / 25%)",
+                              height: `max(2px, calc((100% - ${(categories.length - 1) * 2}px) * ${maxY === 0 ? 0 : d[categories[0]] / maxY}))`,
+                            }}
+                          />
                           <div className="w-px flex-1 bg-border opacity-0 group-hover:opacity-100" />
                         </div>
                       </div>
@@ -460,29 +383,15 @@ export default function HistoricalDataChart({
                         />
                       </linearGradient>
                     </defs>
-                    {sortedCategories.map((category, categoryIndex) => {
-                      const dataKey = `${category}_scaled`;
-                      return (
-                        <Recharts.Area
-                          key={dataKey}
-                          dataKey={dataKey}
-                          stackId="1"
-                          isAnimationActive={false}
-                          fill={
-                            sortedCategories.length > 1
-                              ? `hsl(var(--a${sortedCategories.length - categoryIndex}))`
-                              : `url(#${gradientId})`
-                          }
-                          fillOpacity={1}
-                          stroke={
-                            sortedCategories.length > 1
-                              ? "hsl(var(--background))"
-                              : "hsl(var(--jordy-blue))"
-                          }
-                          strokeWidth={sortedCategories.length > 1 ? 3 : 2}
-                        />
-                      );
-                    })}
+                    <Recharts.Area
+                      dataKey={`${categories[0]}_scaled`}
+                      stackId="1"
+                      isAnimationActive={false}
+                      fill={`url(#${gradientId})`}
+                      fillOpacity={1}
+                      stroke="hsl(var(--jordy-blue))"
+                      strokeWidth={2}
+                    />
                     <Recharts.Tooltip
                       isAnimationActive={false}
                       cursor={{
@@ -507,10 +416,9 @@ export default function HistoricalDataChart({
 
                         return (
                           <TooltipContent
-                            dataPeriodDays={dataPeriodDays}
-                            formatValue={formatValue}
-                            formatCategory={formatCategory}
-                            sortedCategories={sortedCategories}
+                            period={selectedPeriod}
+                            valueFormatter={valueFormatter}
+                            category={categories[0]}
                             d={payload[0].payload as ChartData}
                             viewBox={viewBox as ViewBox}
                             x={coordinate.x}
@@ -546,7 +454,7 @@ export default function HistoricalDataChart({
               <p key={tickX} className="text-p3 text-tertiary-foreground">
                 {formatDate(
                   new Date(tickX * 1000),
-                  dataPeriodDays === 1 ? "H:mm" : "d MMM",
+                  selectedPeriod === ChartPeriod.ONE_DAY ? "H:mm" : "d MMM",
                 )}
               </p>
             ))}

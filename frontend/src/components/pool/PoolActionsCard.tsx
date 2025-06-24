@@ -1617,15 +1617,18 @@ export default function PoolActionsCard({
   );
 
   // Tabs
-  const selectedAction =
-    queryParams[QueryParams.ACTION] &&
-    Object.values(Action).includes(queryParams[QueryParams.ACTION])
-      ? queryParams[QueryParams.ACTION]
-      : isCpmmOffsetPoolWithNoQuoteAssets
-        ? Action.SWAP
-        : pool.quoterId === QuoterId.ORACLE
-          ? Action.WITHDRAW
-          : Action.DEPOSIT;
+  const selectedAction = useMemo(
+    () =>
+      queryParams[QueryParams.ACTION] &&
+      Object.values(Action).includes(queryParams[QueryParams.ACTION])
+        ? queryParams[QueryParams.ACTION]
+        : isCpmmOffsetPoolWithNoQuoteAssets
+          ? Action.SWAP
+          : pool.quoterId === QuoterId.ORACLE
+            ? Action.WITHDRAW
+            : Action.DEPOSIT,
+    [queryParams, isCpmmOffsetPoolWithNoQuoteAssets, pool.quoterId],
+  );
   useEffect(() => {
     if (isCpmmOffsetPoolWithNoQuoteAssets) {
       if (queryParams[QueryParams.ACTION] !== Action.SWAP)

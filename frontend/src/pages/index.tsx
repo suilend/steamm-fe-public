@@ -1,6 +1,6 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import BigNumber from "bignumber.js";
 import { v4 as uuidv4 } from "uuid";
@@ -15,33 +15,130 @@ import Tag from "@/components/Tag";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
-import { ChartConfig, ChartType, chartStatNameMap } from "@/lib/chart";
+import {
+  ChartConfig,
+  ChartDataType,
+  ChartPeriod,
+  ChartType,
+  chartDataTypeNameMap,
+  chartPeriodNameMap,
+} from "@/lib/chart";
 import { getPoolGroups, getPoolsWithExtraData } from "@/lib/pools";
 import { PoolGroup } from "@/lib/types";
-import { cn } from "@/lib/utils";
-
-enum RhsChartStat {
-  VOLUME = "volume",
-  FEES = "fees",
-}
 
 enum QueryParams {
-  RHS_CHART_STAT = "rhs-chart",
+  LHS_CHART_PERIOD = "lhs-period",
+  RHS_CHART_DATA_TYPE = "rhs-chart",
+  RHS_CHART_PERIOD = "rhs-period",
 }
 
 export default function PoolsPage() {
   const router = useRouter();
-  const queryParams = {
-    [QueryParams.RHS_CHART_STAT]: router.query[QueryParams.RHS_CHART_STAT] as
-      | RhsChartStat
-      | undefined,
-  };
+  const queryParams = useMemo(
+    () => ({
+      [QueryParams.LHS_CHART_PERIOD]: router.query[
+        QueryParams.LHS_CHART_PERIOD
+      ] as ChartPeriod | undefined,
+      [QueryParams.RHS_CHART_DATA_TYPE]: router.query[
+        QueryParams.RHS_CHART_DATA_TYPE
+      ] as ChartDataType | undefined,
+      [QueryParams.RHS_CHART_PERIOD]: router.query[
+        QueryParams.RHS_CHART_PERIOD
+      ] as ChartPeriod | undefined,
+    }),
+    [router.query],
+  );
 
   const { appData, featuredPoolIds, verifiedCoinTypes } = useLoadedAppContext();
-  const { poolStats, globalHistoricalStats, globalStats } = useStatsContext();
+  const {
+    poolStats,
+    globalHistoricalStats,
+    fetchGlobalHistoricalStats,
+    globalStats,
+  } = useStatsContext();
 
-  // TVL
-  const totalTvlUsd = useMemo(
+  // Query params
+  const selectedLhsChartPeriod = useMemo(
+    () =>
+      queryParams[QueryParams.LHS_CHART_PERIOD] &&
+      Object.values(ChartPeriod).includes(
+        queryParams[QueryParams.LHS_CHART_PERIOD],
+      )
+        ? queryParams[QueryParams.LHS_CHART_PERIOD]
+        : ChartPeriod.ONE_WEEK,
+    [queryParams],
+  );
+  const selectedRhsChartDataType = useMemo(
+    () =>
+      queryParams[QueryParams.RHS_CHART_DATA_TYPE] &&
+      Object.values(ChartDataType).includes(
+        queryParams[QueryParams.RHS_CHART_DATA_TYPE],
+      )
+        ? queryParams[QueryParams.RHS_CHART_DATA_TYPE]
+        : ChartDataType.VOLUME,
+    [queryParams],
+  );
+  const selectedRhsChartPeriod = useMemo(
+    () =>
+      queryParams[QueryParams.RHS_CHART_PERIOD] &&
+      Object.values(ChartPeriod).includes(
+        queryParams[QueryParams.RHS_CHART_PERIOD],
+      )
+        ? queryParams[QueryParams.RHS_CHART_PERIOD]
+        : ChartPeriod.ONE_WEEK,
+    [queryParams],
+  );
+
+  const onSelectedLhsChartPeriodChange = (lhsChartPeriod: ChartPeriod) => {
+    shallowPushQuery(router, {
+      ...router.query,
+      [QueryParams.LHS_CHART_PERIOD]: lhsChartPeriod,
+    });
+  };
+  const onSelectedRhsChartDataTypeChange = (
+    rhsChartDataType: ChartDataType,
+  ) => {
+    shallowPushQuery(router, {
+      ...router.query,
+      [QueryParams.RHS_CHART_DATA_TYPE]: rhsChartDataType,
+    });
+  };
+  const onSelectedRhsChartPeriodChange = (rhsChartPeriod: ChartPeriod) => {
+    shallowPushQuery(router, {
+      ...router.query,
+      [QueryParams.RHS_CHART_PERIOD]: rhsChartPeriod,
+    });
+  };
+
+  // Historical stats
+  const hasFetchedGlobalHistoricalStatsMapRef = useRef<
+    Record<ChartPeriod, boolean>
+  >(
+    Object.values(ChartPeriod).reduce(
+      (acc, period) => ({ ...acc, [period]: false }),
+      {} as Record<ChartPeriod, boolean>,
+    ),
+  );
+
+  useEffect(() => {
+    if (hasFetchedGlobalHistoricalStatsMapRef.current[selectedLhsChartPeriod])
+      return;
+    hasFetchedGlobalHistoricalStatsMapRef.current[selectedLhsChartPeriod] =
+      true;
+
+    fetchGlobalHistoricalStats(selectedLhsChartPeriod);
+  }, [selectedLhsChartPeriod, fetchGlobalHistoricalStats]);
+  useEffect(() => {
+    if (hasFetchedGlobalHistoricalStatsMapRef.current[selectedRhsChartPeriod])
+      return;
+    hasFetchedGlobalHistoricalStatsMapRef.current[selectedRhsChartPeriod] =
+      true;
+
+    fetchGlobalHistoricalStats(selectedRhsChartPeriod);
+  }, [selectedRhsChartPeriod, fetchGlobalHistoricalStats]);
+
+  // LHS
+  const globalTvlUsd = useMemo(
     () =>
       appData.pools.reduce(
         (acc, pool) => acc.plus(pool.tvlUsd),
@@ -50,59 +147,69 @@ export default function PoolsPage() {
     [appData],
   );
 
-  // RHS chart
-  const rhsChartConfigMap: Record<RhsChartStat, ChartConfig> = useMemo(
+  const lhsChartConfig: ChartConfig = useMemo(
     () => ({
-      [RhsChartStat.VOLUME]: {
-        title: chartStatNameMap[RhsChartStat.VOLUME],
-        value:
-          globalStats.volumeUsd_7d === undefined
-            ? undefined
-            : formatUsd(globalStats.volumeUsd_7d),
-        valuePeriodDays: 7,
-        chartType: ChartType.BAR,
-        data: globalHistoricalStats.volumeUsd_7d,
-        dataPeriodDays: 7,
-        formatValue: (value) => formatUsd(new BigNumber(value)),
+      getChartType: (dataType: string) => {
+        return ChartType.LINE;
       },
-      [RhsChartStat.FEES]: {
-        title: chartStatNameMap[RhsChartStat.FEES],
-        value:
-          globalStats.feesUsd_7d === undefined
-            ? undefined
-            : formatUsd(globalStats.feesUsd_7d),
-        valuePeriodDays: 7,
-        chartType: ChartType.BAR,
-        dataPeriodDays: 7,
-        data: globalHistoricalStats.feesUsd_7d,
-        formatValue: (value) => formatUsd(new BigNumber(value)),
+      getValueFormatter: (dataType: string) => {
+        return (value: number) => formatUsd(new BigNumber(value));
+      },
+      periodOptions: [ChartPeriod.ONE_WEEK].map((period) => ({
+        id: period,
+        name: chartPeriodNameMap[period],
+      })),
+      dataTypeOptions: [ChartDataType.TVL].map((dataType) => ({
+        id: dataType,
+        name: chartDataTypeNameMap[dataType],
+      })),
+      totalMap: {
+        [ChartDataType.TVL]: Object.values(ChartPeriod).reduce(
+          (acc, period) => ({ ...acc, [period]: globalTvlUsd }),
+          {} as Record<ChartPeriod, BigNumber | undefined>,
+        ),
+      },
+      dataMap: {
+        [ChartDataType.TVL]: globalHistoricalStats.tvlUsd,
+      },
+    }),
+    [globalTvlUsd, globalHistoricalStats.tvlUsd],
+  );
+
+  // RHS
+  const rhsChartConfig: ChartConfig = useMemo(
+    () => ({
+      getChartType: (dataType: string) => {
+        return ChartType.BAR;
+      },
+      getValueFormatter: (dataType: string) => {
+        return (value: number) => formatUsd(new BigNumber(value));
+      },
+      periodOptions: [ChartPeriod.ONE_WEEK].map((period) => ({
+        id: period,
+        name: chartPeriodNameMap[period],
+      })),
+      dataTypeOptions: [ChartDataType.VOLUME, ChartDataType.FEES].map(
+        (dataType) => ({
+          id: dataType,
+          name: chartDataTypeNameMap[dataType],
+        }),
+      ),
+      totalMap: {
+        [ChartDataType.VOLUME]: globalStats.volumeUsd,
+        [ChartDataType.FEES]: globalStats.feesUsd,
+      },
+      dataMap: {
+        [ChartDataType.VOLUME]: globalHistoricalStats.volumeUsd,
+        [ChartDataType.FEES]: globalHistoricalStats.feesUsd,
       },
     }),
     [
-      globalStats.volumeUsd_7d,
-      globalHistoricalStats.volumeUsd_7d,
-      globalStats.feesUsd_7d,
-      globalHistoricalStats.feesUsd_7d,
+      globalStats.volumeUsd,
+      globalStats.feesUsd,
+      globalHistoricalStats.volumeUsd,
+      globalHistoricalStats.feesUsd,
     ],
-  );
-
-  const selectedRhsChartStat =
-    queryParams[QueryParams.RHS_CHART_STAT] &&
-    Object.values(RhsChartStat).includes(
-      queryParams[QueryParams.RHS_CHART_STAT],
-    )
-      ? queryParams[QueryParams.RHS_CHART_STAT]
-      : RhsChartStat.VOLUME;
-  const onSelectedRhsChartStatChange = (rhsChartStat: RhsChartStat) => {
-    shallowPushQuery(router, {
-      ...router.query,
-      [QueryParams.RHS_CHART_STAT]: rhsChartStat,
-    });
-  };
-
-  const rhsChartConfig = useMemo(
-    () => rhsChartConfigMap[selectedRhsChartStat],
-    [rhsChartConfigMap, selectedRhsChartStat],
   );
 
   // Pools
@@ -192,78 +299,27 @@ export default function PoolsPage() {
         {/* Stats */}
         <div className="flex w-full flex-row items-stretch gap-1 sm:gap-5">
           {/* TVL */}
-          <div className="flex-1 rounded-md border">
-            <div className="w-full p-5">
-              <HistoricalDataChart
-                title="TVL"
-                value={
-                  totalTvlUsd === undefined ? undefined : formatUsd(totalTvlUsd)
-                }
-                chartType={ChartType.LINE}
-                data={globalHistoricalStats.tvlUsd_7d}
-                dataPeriodDays={7}
-                formatValue={(value) => formatUsd(new BigNumber(value))}
-                formatCategory={(category) => category}
-              />
-            </div>
+          <div className="min-w-0 flex-1 rounded-md border p-5">
+            <HistoricalDataChart
+              topSelectsClassName="-mx-5 px-5"
+              selectedDataType={ChartDataType.TVL}
+              onSelectedDataTypeChange={() => {}}
+              selectedPeriod={selectedLhsChartPeriod}
+              onSelectedPeriodChange={onSelectedLhsChartPeriodChange}
+              {...lhsChartConfig}
+            />
           </div>
 
           {/* Volume */}
-          <div className="flex-1 rounded-md border">
-            <div className="relative w-full p-5">
-              <HistoricalDataChart
-                className="relative z-[1]"
-                topLeftClassName="max-sm:gap-2"
-                titleContainerClassName="max-sm:opacity-0"
-                titleClassName="max-sm:!h-6"
-                title={rhsChartConfig.title}
-                value={rhsChartConfig.value}
-                valuePeriodDays={rhsChartConfig.valuePeriodDays}
-                chartType={rhsChartConfig.chartType}
-                data={rhsChartConfig.data}
-                dataPeriodDays={rhsChartConfig.dataPeriodDays}
-                formatValue={rhsChartConfig.formatValue}
-                formatCategory={(category) => category}
-              />
-
-              <div className="absolute inset-x-0 top-5 z-[2] flex flex-row items-center gap-1 max-sm:overflow-x-auto sm:justify-end">
-                <div className="-mr-1 h-1 w-5 shrink-0" />
-                {Object.values(RhsChartStat).map((rhsChartStat) => (
-                  <button
-                    key={rhsChartStat}
-                    className={cn(
-                      "group flex h-6 flex-row items-center rounded-md border px-2 transition-colors",
-                      selectedRhsChartStat === rhsChartStat
-                        ? "cursor-default bg-border"
-                        : "hover:bg-border/50",
-                    )}
-                    onClick={() => onSelectedRhsChartStatChange(rhsChartStat)}
-                  >
-                    <div className="flex flex-row items-baseline gap-1.5">
-                      <p
-                        className={cn(
-                          "!text-p2 transition-colors sm:!text-p3",
-                          selectedRhsChartStat === rhsChartStat
-                            ? "text-foreground"
-                            : "text-secondary-foreground group-hover:text-foreground",
-                        )}
-                      >
-                        {chartStatNameMap[rhsChartStat]}
-                      </p>
-                      {rhsChartConfigMap[rhsChartStat].valuePeriodDays !==
-                        undefined && (
-                        <p className="text-p3 text-tertiary-foreground sm:hidden">
-                          {rhsChartConfigMap[rhsChartStat].valuePeriodDays === 1
-                            ? "24H"
-                            : `${rhsChartConfigMap[rhsChartStat].valuePeriodDays}D`}
-                        </p>
-                      )}
-                    </div>
-                  </button>
-                ))}
-                <div className="-ml-1 h-1 w-5 shrink-0" />
-              </div>
-            </div>
+          <div className="min-w-0 flex-1 rounded-md border p-5">
+            <HistoricalDataChart
+              topSelectsClassName="-mx-5 px-5"
+              selectedDataType={selectedRhsChartDataType}
+              onSelectedDataTypeChange={onSelectedRhsChartDataTypeChange}
+              selectedPeriod={selectedRhsChartPeriod}
+              onSelectedPeriodChange={onSelectedRhsChartPeriodChange}
+              {...rhsChartConfig}
+            />
           </div>
         </div>
 

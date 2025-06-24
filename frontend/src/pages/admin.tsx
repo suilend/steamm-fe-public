@@ -1,5 +1,6 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
+import { useMemo } from "react";
 
 import { shallowPushQuery } from "@suilend/sui-fe-next";
 
@@ -26,16 +27,22 @@ enum QueryParams {
 
 export default function AdminPage() {
   const router = useRouter();
-  const queryParams = {
-    [QueryParams.TAB]: router.query[QueryParams.TAB] as Tab | undefined,
-  };
+  const queryParams = useMemo(
+    () => ({
+      [QueryParams.TAB]: router.query[QueryParams.TAB] as Tab | undefined,
+    }),
+    [router.query],
+  );
 
   // Tabs
-  const selectedTab =
-    queryParams[QueryParams.TAB] &&
-    Object.values(Tab).includes(queryParams[QueryParams.TAB])
-      ? queryParams[QueryParams.TAB]
-      : Tab.POOLS;
+  const selectedTab = useMemo(
+    () =>
+      queryParams[QueryParams.TAB] &&
+      Object.values(Tab).includes(queryParams[QueryParams.TAB])
+        ? queryParams[QueryParams.TAB]
+        : Tab.POOLS,
+    [queryParams],
+  );
   const onSelectedTabChange = (tab: Tab) => {
     shallowPushQuery(router, { ...router.query, [QueryParams.TAB]: tab });
   };
