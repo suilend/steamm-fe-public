@@ -309,19 +309,26 @@ export default function AirdropCard() {
             }
           }
 
-          const makeBatchTransferResult = await makeBatchTransfer(
-            token,
-            batches[i],
-            _keypair,
-            suiClient,
-            (res) => setLastExecutedBatchTransferDigest(res.digest),
-          );
-          _makeBatchTransferResults = [
-            ...(_makeBatchTransferResults ?? []),
-            makeBatchTransferResult,
-          ];
-          setMakeBatchTransferResults(_makeBatchTransferResults);
-          setLastExecutedBatchTransferDigest(undefined);
+          try {
+            const makeBatchTransferResult = await makeBatchTransfer(
+              token,
+              batches[i],
+              _keypair,
+              suiClient,
+              (res) => setLastExecutedBatchTransferDigest(res.digest),
+            );
+            _makeBatchTransferResults = [
+              ...(_makeBatchTransferResults ?? []),
+              makeBatchTransferResult,
+            ];
+            setMakeBatchTransferResults(_makeBatchTransferResults);
+            setLastExecutedBatchTransferDigest(undefined);
+          } catch (err) {
+            console.error(err);
+            setLastExecutedBatchTransferDigest(undefined);
+
+            throw err;
+          }
         }
       }
 
