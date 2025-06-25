@@ -48,7 +48,7 @@ enum LastExecutedDigestType {
   RETURN_ALL_OWNED_OBJECTS_AND_SUI_TO_USER = "returnAllOwnedObjectsAndSuiToUser",
 }
 
-const TRANSFERS_PER_BATCH = 500; // Max = 512 (if no other MOVE calls in the transaction)
+const TRANSFERS_PER_BATCH = 240; // Max = 512 (if no other MOVE calls in the transaction)
 const getBatchTransactionGas = (transferCount: number) =>
   Math.max(0.02, 0.0016 * transferCount);
 
@@ -82,6 +82,12 @@ export default function AirdropCard() {
     returnAllOwnedObjectsAndSuiToUserResult,
     setReturnAllOwnedObjectsAndSuiToUserResult,
   ] = useState<ReturnAllOwnedObjectsAndSuiToUserResult | undefined>(undefined);
+  console.log(
+    "XXX",
+    lastSignedTransaction,
+    fundKeypairResult,
+    makeBatchTransferResults,
+  );
 
   const currentFlowDigests = useMemo(
     () =>
@@ -184,11 +190,12 @@ export default function AirdropCard() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    if (isSubmitting)
-      return { isDisabled: true, title: hasFailed ? "Resume" : "Airdrop" };
-    if (hasFailed) return { isDisabled: false, title: "Resume" };
+    if (isSubmitting) return { isLoading: true, isDisabled: true };
+
+    if (!!lastSignedTransaction) return { isDisabled: false, title: "Resume" };
+    if (hasFailed) return { isDisabled: false, title: "Retry" };
     if (!!returnAllOwnedObjectsAndSuiToUserResult)
-      return { isDisabled: true, isSuccess: true };
+      return { isSuccess: true, isDisabled: true };
 
     // Token
     if (token === undefined)
@@ -248,6 +255,10 @@ export default function AirdropCard() {
         _keypair,
         suiClient,
       );
+      console.log(
+        "[onSubmitClick] lastCurrentFlowTransaction:",
+        lastCurrentFlowTransaction,
+      );
 
       // 1.3) Fund
       let _fundKeypairResult = fundKeypairResult;
@@ -292,7 +303,7 @@ export default function AirdropCard() {
           ) {
             console.log("[onSubmitClick] Skipping batch", i);
             continue;
-          }
+          } else console.log("[onSubmitClick] Processing batch", i);
 
           if (
             lastSignedTransaction?.type ===
@@ -301,6 +312,13 @@ export default function AirdropCard() {
               lastCurrentFlowTransaction?.transaction?.txSignatures ?? []
             ).includes(lastSignedTransaction.signedTransaction.signature)
           ) {
+            console.log(
+              "[onSubmitClick] Verifying batch",
+              i,
+              lastSignedTransaction,
+              lastCurrentFlowTransaction,
+            );
+
             try {
               // Check if the last executed batch transfer was successful
               const makeBatchTransferResult: MakeBatchTransferResult = {
@@ -316,6 +334,7 @@ export default function AirdropCard() {
               ];
               setMakeBatchTransferResults(_makeBatchTransferResults);
               setLastSignedTransaction(undefined);
+              await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait for `setLastSignedTransaction` to take effect
 
               continue;
             } catch (err) {
