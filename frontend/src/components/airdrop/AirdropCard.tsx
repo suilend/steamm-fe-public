@@ -325,7 +325,6 @@ export default function AirdropCard() {
           }
 
           try {
-            throw new Error("test");
             const makeBatchTransferResult = await makeBatchTransfer(
               token,
               batches[i],
@@ -344,10 +343,9 @@ export default function AirdropCard() {
             ];
             setMakeBatchTransferResults(_makeBatchTransferResults);
           } catch (err) {
-            console.error("xxx", err);
+            console.error(err);
             throw err;
           } finally {
-            console.log("[xxx in finally]");
             setLastSignedTransaction(undefined);
           }
         }

@@ -580,7 +580,12 @@ export default function CreatePoolCard() {
       }
 
       // 1.2) Check
-      await checkIfKeypairCanBeUsed(currentFlowDigests, _keypair, suiClient);
+      await checkIfKeypairCanBeUsed(
+        undefined,
+        currentFlowDigests,
+        _keypair,
+        suiClient,
+      );
 
       // 1.3) Fund
       let _fundKeypairResult = fundKeypairResult;
