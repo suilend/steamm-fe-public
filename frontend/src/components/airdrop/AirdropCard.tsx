@@ -42,13 +42,15 @@ import {
 } from "@/lib/airdrop";
 import { cn } from "@/lib/utils";
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 enum LastExecutedDigestType {
   FUND_KEYPAIR = "fundKeypair",
   MAKE_BATCH_TRANSFER = "makeBatchTransfer",
   RETURN_ALL_OWNED_OBJECTS_AND_SUI_TO_USER = "returnAllOwnedObjectsAndSuiToUser",
 }
 
-const TRANSFERS_PER_BATCH = 240; // Max = 512 (if no other MOVE calls in the transaction)
+const TRANSFERS_PER_BATCH = 50; // Max = 512 (if no other MOVE calls in the transaction)
 const getBatchTransactionGas = (transferCount: number) =>
   Math.max(0.02, 0.0016 * transferCount);
 
@@ -60,10 +62,7 @@ export default function AirdropCard() {
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
   // Progress
-  const [hasFailed, setHasFailed] = useLocalStorage<boolean>(
-    "airdrop-hasFailed",
-    false,
-  );
+  const [hasFailed, setHasFailed] = useState<boolean>(false); // Don't use `localStorage` (no need to persist)
   const [lastSignedTransaction, setLastSignedTransaction] = useLocalStorage<
     | { signedTransaction: SignatureWithBytes; type: LastExecutedDigestType }
     | undefined
@@ -82,12 +81,14 @@ export default function AirdropCard() {
     returnAllOwnedObjectsAndSuiToUserResult,
     setReturnAllOwnedObjectsAndSuiToUserResult,
   ] = useState<ReturnAllOwnedObjectsAndSuiToUserResult | undefined>(undefined);
-  console.log(
-    "XXX",
+  console.log("[AirdropCard]", {
+    hasFailed,
     lastSignedTransaction,
+    keypair,
     fundKeypairResult,
     makeBatchTransferResults,
-  );
+    returnAllOwnedObjectsAndSuiToUserResult,
+  });
 
   const currentFlowDigests = useMemo(
     () =>
@@ -96,15 +97,10 @@ export default function AirdropCard() {
           [
             fundKeypairResult?.res.digest,
             ...(makeBatchTransferResults ?? []).map((x) => x.res.digest),
-            returnAllOwnedObjectsAndSuiToUserResult?.res.digest,
           ].filter(Boolean) as string[],
         ),
       ),
-    [
-      fundKeypairResult?.res.digest,
-      makeBatchTransferResults,
-      returnAllOwnedObjectsAndSuiToUserResult?.res.digest,
-    ],
+    [fundKeypairResult?.res.digest, makeBatchTransferResults],
   );
 
   // State - token
@@ -192,8 +188,13 @@ export default function AirdropCard() {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
     if (isSubmitting) return { isLoading: true, isDisabled: true };
 
-    if (!!lastSignedTransaction) return { isDisabled: false, title: "Resume" };
-    if (hasFailed) return { isDisabled: false, title: "Retry" };
+    if (hasFailed && !returnAllOwnedObjectsAndSuiToUserResult)
+      return { isDisabled: false, title: "Retry" };
+    if (
+      currentFlowDigests.length > 0 &&
+      !returnAllOwnedObjectsAndSuiToUserResult
+    )
+      return { isDisabled: false, title: "Resume" };
     if (!!returnAllOwnedObjectsAndSuiToUserResult)
       return { isSuccess: true, isDisabled: true };
 
@@ -261,9 +262,8 @@ export default function AirdropCard() {
       );
 
       // 1.3) Fund
-      let _fundKeypairResult = fundKeypairResult;
-      if (_fundKeypairResult === undefined) {
-        _fundKeypairResult = await fundKeypair(
+      if (fundKeypairResult === undefined) {
+        const _fundKeypairResult = await fundKeypair(
           [
             {
               ...token,
@@ -291,19 +291,29 @@ export default function AirdropCard() {
 
       // 2) Create and send keypair transactions
       // 2.1) Make batch transfers
-      let _makeBatchTransferResults = makeBatchTransferResults;
-      if (
-        _makeBatchTransferResults === undefined ||
-        _makeBatchTransferResults.length < batches.length
-      ) {
+      const makeBatchTransferResultsCount = (makeBatchTransferResults ?? [])
+        .length;
+      console.log(
+        "[onSubmitClick] makeBatchTransferResultsCount:",
+        makeBatchTransferResultsCount,
+        "batches.length:",
+        batches.length,
+      );
+
+      if (makeBatchTransferResultsCount < batches.length) {
         for (let i = 0; i < batches.length; i++) {
-          if (
-            _makeBatchTransferResults !== undefined &&
-            i <= _makeBatchTransferResults.length - 1
-          ) {
-            console.log("[onSubmitClick] Skipping batch", i);
+          const batch = batches[i];
+
+          if (i <= makeBatchTransferResultsCount - 1) {
+            console.log(
+              "[onSubmitClick] Skipping batch transfer, index:",
+              i,
+              makeBatchTransferResultsCount,
+            );
             continue;
-          } else console.log("[onSubmitClick] Processing batch", i);
+          } else {
+            console.log("[onSubmitClick] Processing batch transfer, index:", i);
+          }
 
           if (
             lastSignedTransaction?.type ===
@@ -312,29 +322,27 @@ export default function AirdropCard() {
               lastCurrentFlowTransaction?.transaction?.txSignatures ?? []
             ).includes(lastSignedTransaction.signedTransaction.signature)
           ) {
-            console.log(
-              "[onSubmitClick] Verifying batch",
-              i,
-              lastSignedTransaction,
-              lastCurrentFlowTransaction,
-            );
-
             try {
-              // Check if the last executed batch transfer was successful
-              const makeBatchTransferResult: MakeBatchTransferResult = {
-                batch: batches[i],
+              console.log(
+                "[onSubmitClick] Verifying batch transfer, index:",
+                i,
+                lastSignedTransaction,
+                lastCurrentFlowTransaction,
+              );
+
+              const _makeBatchTransferResult: MakeBatchTransferResult = {
+                batch,
                 res: await keypairWaitForTransaction(
                   lastCurrentFlowTransaction!.digest,
                   suiClient,
                 ),
               };
-              _makeBatchTransferResults = [
-                ...(_makeBatchTransferResults ?? []),
-                makeBatchTransferResult,
-              ];
-              setMakeBatchTransferResults(_makeBatchTransferResults);
+              setMakeBatchTransferResults((prev) => [
+                ...(prev ?? []),
+                _makeBatchTransferResult,
+              ]);
               setLastSignedTransaction(undefined);
-              await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait for `setLastSignedTransaction` to take effect
+              await sleep(1 * 1000); // Wait for `setLastSignedTransaction` to take effect
 
               continue;
             } catch (err) {
@@ -344,37 +352,41 @@ export default function AirdropCard() {
           }
 
           try {
-            const makeBatchTransferResult = await makeBatchTransfer(
+            console.log("[onSubmitClick] Making batch transfer, index:", i);
+
+            const _makeBatchTransferResult = await makeBatchTransfer(
               token,
-              batches[i],
+              batch,
               _keypair,
               suiClient,
               (signedTransaction: SignatureWithBytes) => {
+                console.log(
+                  "[onSubmitClick] Setting batch transfer lastSignedTransaction, index:",
+                  i,
+                );
                 setLastSignedTransaction({
                   signedTransaction,
                   type: LastExecutedDigestType.MAKE_BATCH_TRANSFER,
                 });
               },
             );
-            _makeBatchTransferResults = [
-              ...(_makeBatchTransferResults ?? []),
-              makeBatchTransferResult,
-            ];
-            setMakeBatchTransferResults(_makeBatchTransferResults);
+            setMakeBatchTransferResults((prev) => [
+              ...(prev ?? []),
+              _makeBatchTransferResult,
+            ]);
+            setLastSignedTransaction(undefined);
           } catch (err) {
             console.error(err);
-            throw err;
-          } finally {
             setLastSignedTransaction(undefined);
+
+            throw err;
           }
         }
       }
 
       // 2.2) Return objects and unused SUI to user
-      let _returnAllOwnedObjectsAndSuiToUserResult =
-        returnAllOwnedObjectsAndSuiToUserResult;
-      if (_returnAllOwnedObjectsAndSuiToUserResult === undefined) {
-        _returnAllOwnedObjectsAndSuiToUserResult =
+      if (returnAllOwnedObjectsAndSuiToUserResult === undefined) {
+        const _returnAllOwnedObjectsAndSuiToUserResult =
           await returnAllOwnedObjectsAndSuiToUser(address, _keypair, suiClient);
         setReturnAllOwnedObjectsAndSuiToUserResult(
           _returnAllOwnedObjectsAndSuiToUserResult,
@@ -421,7 +433,8 @@ export default function AirdropCard() {
         <div
           className={cn(
             "flex w-full flex-col gap-4",
-            hasFailed && "pointer-events-none",
+            (hasFailed || currentFlowDigests.length > 0) &&
+              "pointer-events-none",
           )}
         >
           {/* Token */}
@@ -442,7 +455,9 @@ export default function AirdropCard() {
 
           {/* CSV */}
           <CsvUpload
-            isDragAndDropDisabled={hasFailed || isStepsDialogOpen}
+            isDragAndDropDisabled={
+              hasFailed || currentFlowDigests.length > 0 || isStepsDialogOpen
+            }
             token={token}
             csvRows={csvRows}
             setCsvRows={setCsvRows}
@@ -516,16 +531,17 @@ export default function AirdropCard() {
             onClick={onSubmitClick}
           />
 
-          {hasFailed && !returnAllOwnedObjectsAndSuiToUserResult && (
-            <button
-              className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
-              onClick={reset}
-            >
-              <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
-                Start over
-              </p>
-            </button>
-          )}
+          {(hasFailed || currentFlowDigests.length > 0) &&
+            !returnAllOwnedObjectsAndSuiToUserResult && (
+              <button
+                className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
+                onClick={reset}
+              >
+                <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
+                  Start over
+                </p>
+              </button>
+            )}
         </div>
       </div>
     </>
