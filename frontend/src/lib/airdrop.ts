@@ -1,4 +1,5 @@
 import { SuiClient, SuiTransactionBlockResponse } from "@mysten/sui/client";
+import { SignatureWithBytes } from "@mysten/sui/cryptography";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
@@ -22,7 +23,7 @@ export const makeBatchTransfer = async (
   batch: Batch,
   keypair: Ed25519Keypair,
   suiClient: SuiClient,
-  onExecute: (res: SuiTransactionBlockResponse) => void,
+  onSign: (signedTransaction: SignatureWithBytes) => void,
 ): Promise<MakeBatchTransferResult> => {
   console.log("[makeBatchTransfer]", { token, batch });
 
@@ -48,8 +49,7 @@ export const makeBatchTransfer = async (
     transaction,
     keypair,
     suiClient,
-    undefined,
-    onExecute,
+    onSign,
   );
 
   return { batch, res };

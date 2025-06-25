@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { useSignPersonalMessage } from "@mysten/dapp-kit";
+import { SignatureWithBytes } from "@mysten/sui/cryptography";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import BigNumber from "bignumber.js";
 import { chunk } from "lodash";
@@ -41,6 +42,12 @@ import {
 } from "@/lib/airdrop";
 import { cn } from "@/lib/utils";
 
+enum LastExecutedDigestType {
+  FUND_KEYPAIR = "fundKeypair",
+  MAKE_BATCH_TRANSFER = "makeBatchTransfer",
+  RETURN_ALL_OWNED_OBJECTS_AND_SUI_TO_USER = "returnAllOwnedObjectsAndSuiToUser",
+}
+
 const TRANSFERS_PER_BATCH = 500; // Max = 512 (if no other MOVE calls in the transaction)
 const getBatchTransactionGas = (transferCount: number) =>
   Math.max(0.02, 0.0016 * transferCount);
@@ -57,6 +64,10 @@ export default function AirdropCard() {
     "airdrop-hasFailed",
     false,
   );
+  const [lastSignedTransaction, setLastSignedTransaction] = useLocalStorage<
+    | { signedTransaction: SignatureWithBytes; type: LastExecutedDigestType }
+    | undefined
+  >("airdrop-lastSignedTransaction", undefined);
 
   const [keypair, setKeypair] = useState<Ed25519Keypair | undefined>(undefined);
   const [fundKeypairResult, setFundKeypairResult] = useLocalStorage<
@@ -65,11 +76,6 @@ export default function AirdropCard() {
   const [makeBatchTransferResults, setMakeBatchTransferResults] =
     useLocalStorage<MakeBatchTransferResult[] | undefined>(
       "airdrop-makeBatchTransferResults",
-      undefined,
-    );
-  const [lastExecutedBatchTransferDigest, setLastExecutedBatchTransferDigest] =
-    useLocalStorage<string | undefined>(
-      "airdrop-lastExecutedBatchTransferDigest",
       undefined,
     );
   const [
@@ -84,14 +90,14 @@ export default function AirdropCard() {
           [
             fundKeypairResult?.res.digest,
             ...(makeBatchTransferResults ?? []).map((x) => x.res.digest),
-            lastExecutedBatchTransferDigest, // May overlap with the last entry in `makeBatchTransferResults`
+            returnAllOwnedObjectsAndSuiToUserResult?.res.digest,
           ].filter(Boolean) as string[],
         ),
       ),
     [
-      fundKeypairResult,
+      fundKeypairResult?.res.digest,
       makeBatchTransferResults,
-      lastExecutedBatchTransferDigest,
+      returnAllOwnedObjectsAndSuiToUserResult?.res.digest,
     ],
   );
 
@@ -158,11 +164,11 @@ export default function AirdropCard() {
   const reset = () => {
     // Progress
     setHasFailed(false);
+    setLastSignedTransaction(undefined);
 
     setKeypair(undefined);
     setFundKeypairResult(undefined);
     setMakeBatchTransferResults(undefined);
-    setLastExecutedBatchTransferDigest(undefined);
     setReturnAllOwnedObjectsAndSuiToUserResult(undefined);
 
     // State
@@ -236,7 +242,12 @@ export default function AirdropCard() {
       }
 
       // 1.2) Check
-      await checkIfKeypairCanBeUsed(currentFlowDigests, _keypair, suiClient);
+      const { lastCurrentFlowTransaction } = await checkIfKeypairCanBeUsed(
+        lastSignedTransaction?.signedTransaction,
+        currentFlowDigests,
+        _keypair,
+        suiClient,
+      );
 
       // 1.3) Fund
       let _fundKeypairResult = fundKeypairResult;
@@ -283,15 +294,19 @@ export default function AirdropCard() {
             continue;
           }
 
-          // Will always be undefined unless the last batch transfer failed, or the user
-          // closed the app after executing the last batch transfer but before waiting for it
-          if (lastExecutedBatchTransferDigest !== undefined) {
+          if (
+            lastSignedTransaction?.type ===
+              LastExecutedDigestType.MAKE_BATCH_TRANSFER &&
+            (
+              lastCurrentFlowTransaction?.transaction?.txSignatures ?? []
+            ).includes(lastSignedTransaction.signedTransaction.signature)
+          ) {
             try {
               // Check if the last executed batch transfer was successful
               const makeBatchTransferResult: MakeBatchTransferResult = {
                 batch: batches[i],
                 res: await keypairWaitForTransaction(
-                  lastExecutedBatchTransferDigest,
+                  lastCurrentFlowTransaction!.digest,
                   suiClient,
                 ),
               };
@@ -300,7 +315,7 @@ export default function AirdropCard() {
                 makeBatchTransferResult,
               ];
               setMakeBatchTransferResults(_makeBatchTransferResults);
-              setLastExecutedBatchTransferDigest(undefined);
+              setLastSignedTransaction(undefined);
 
               continue;
             } catch (err) {
@@ -310,24 +325,30 @@ export default function AirdropCard() {
           }
 
           try {
+            throw new Error("test");
             const makeBatchTransferResult = await makeBatchTransfer(
               token,
               batches[i],
               _keypair,
               suiClient,
-              (res) => setLastExecutedBatchTransferDigest(res.digest),
+              (signedTransaction: SignatureWithBytes) => {
+                setLastSignedTransaction({
+                  signedTransaction,
+                  type: LastExecutedDigestType.MAKE_BATCH_TRANSFER,
+                });
+              },
             );
             _makeBatchTransferResults = [
               ...(_makeBatchTransferResults ?? []),
               makeBatchTransferResult,
             ];
             setMakeBatchTransferResults(_makeBatchTransferResults);
-            setLastExecutedBatchTransferDigest(undefined);
           } catch (err) {
-            console.error(err);
-            setLastExecutedBatchTransferDigest(undefined);
-
+            console.error("xxx", err);
             throw err;
+          } finally {
+            console.log("[xxx in finally]");
+            setLastSignedTransaction(undefined);
           }
         }
       }
