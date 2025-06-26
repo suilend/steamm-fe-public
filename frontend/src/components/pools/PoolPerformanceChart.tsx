@@ -8,7 +8,7 @@ export default function PoolPerformanceChartCard() {
   const startTimestampS = 0;
   const useHistoricalPrices = false;
   // not todo things
-  const endTimestampS = Math.floor(Date.now() / 1000 / 10_000) * 10_000;
+  const endTimestampS = Math.floor(Date.now() / 1000 / 3_600) * 3_600;
   const intervalS = Math.floor((endTimestampS - startTimestampS) / 100);
   // this should return a set of datapoints
   const theFunction = async () => {
