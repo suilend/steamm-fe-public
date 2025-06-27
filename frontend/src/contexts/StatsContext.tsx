@@ -33,6 +33,7 @@ export interface StatsContext {
     tvlUsd: Record<ChartPeriod, Record<string, ChartData[]>>;
     volumeUsd: Record<ChartPeriod, Record<string, ChartData[]>>;
     feesUsd: Record<ChartPeriod, Record<string, ChartData[]>>;
+    lpTokenValueUsd: Record<ChartPeriod, Record<string, ChartData[]>>;
   };
   fetchPoolHistoricalStats: (poolIds: string[], period: ChartPeriod) => void;
   poolStats: {
@@ -69,6 +70,10 @@ const defaultData = {
       {} as Record<ChartPeriod, Record<string, ChartData[]>>,
     ),
     feesUsd: Object.values(ChartPeriod).reduce(
+      (acc, period) => ({ ...acc, [period]: {} }),
+      {} as Record<ChartPeriod, Record<string, ChartData[]>>,
+    ),
+    lpTokenValueUsd: Object.values(ChartPeriod).reduce(
       (acc, period) => ({ ...acc, [period]: {} }),
       {} as Record<ChartPeriod, Record<string, ChartData[]>>,
     ),
@@ -472,32 +477,31 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         (async () => {
           let startTimestampS, endTimestampS, intervalS;
           if (period === ChartPeriod.ONE_DAY) {
-            startTimestampS = referenceTimestampSRef.current - ONE_DAY_S;
-            endTimestampS = referenceTimestampSRef.current - 1;
+            startTimestampS = hourStartS - ONE_DAY_S;
+            endTimestampS = hourStartS - 1;
             intervalS = ONE_HOUR_S;
           } else if (period === ChartPeriod.ONE_WEEK) {
-            startTimestampS = referenceTimestampSRef.current - SEVEN_DAYS_S;
-            endTimestampS = referenceTimestampSRef.current - 1;
-            intervalS = SIX_HOURS_S;
+            startTimestampS = dayStartS - SEVEN_DAYS_S;
+            endTimestampS = hourStartS - 1;
+            intervalS = ONE_DAY_S;
           } else if (period === ChartPeriod.ONE_MONTH) {
-            startTimestampS = referenceTimestampSRef.current - ONE_MONTH_S;
-            endTimestampS = referenceTimestampSRef.current - 1;
+            startTimestampS = dayStartS - ONE_MONTH_S;
+            endTimestampS = hourStartS - 1;
             intervalS = ONE_DAY_S;
           } else if (period === ChartPeriod.THREE_MONTHS) {
-            startTimestampS = referenceTimestampSRef.current - THREE_MONTHS_S;
-            endTimestampS = referenceTimestampSRef.current - 1;
+            startTimestampS = dayStartS - THREE_MONTHS_S;
+            endTimestampS = hourStartS - 1;
             intervalS = THREE_DAYS_S;
-          } else {
-            return;
           }
-          const [
-            historicalLPTokenRates,
-            historicalCoinTypeAPrices,
-            historicalCoinTypeBPrices,
-            coinTypeAPrice,
-            coinTypeBPrice,
-          ] = await Promise.all([
-            (
+          try {
+            if (
+              startTimestampS === undefined ||
+              endTimestampS === undefined ||
+              intervalS === undefined
+            ) {
+              throw new Error("timestamps cannot be undefined!");
+            }
+            const historicalLPTokenRates: number[][] = await (
               await fetch(
                 `${API_URL}/steamm/historical/lpTokenRates?` +
                   new URLSearchParams({
@@ -505,57 +509,42 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
                     endTimestampS: endTimestampS.toString(),
                     intervalS: intervalS.toString(),
                     poolId,
+                    useHistoricalPrice: false.toString(),
                   }).toString(),
               )
-            ).json(),
-            getHistoryPrice(
-              coinTypeA,
-              intervalS.toString(),
-              startTimestampS,
-              endTimestampS,
-            ),
-            getHistoryPrice(
-              coinTypeB,
-              intervalS.toString(),
-              startTimestampS,
-              endTimestampS,
-            ),
-            getPrice(coinTypeA),
-            getPrice(coinTypeB),
-          ]);
-
-          // shouldn't happen ig
-          // idk how to handle
-          if (
-            coinTypeAPrice == undefined ||
-            coinTypeBPrice == undefined ||
-            historicalCoinTypeAPrices == undefined ||
-            historicalCoinTypeBPrices == undefined
-          ) {
-            return;
-          }
-
-          // get total value of lp token at each historical point
-          if (useHistoricalPrices) {
-            // use historical prices
-            return historicalLPTokenRates.map(
-              ([coinTypeAAmount, cointTypeBAmount]: number[], i: number) => {
-                return (
-                  coinTypeAAmount * historicalCoinTypeAPrices[i].priceUsd +
-                  cointTypeBAmount * historicalCoinTypeBPrices[i].priceUsd
-                );
+            ).json();
+            setPoolHistoricalStats((prev) => ({
+              ...prev,
+              lpTokenValueUsd: {
+                ...prev.lpTokenValueUsd,
+                [period]: {
+                  ...prev.lpTokenValueUsd[period],
+                  [poolId]: historicalLPTokenRates.reduce(
+                    (acc, d) => [
+                      ...acc,
+                      {
+                        timestampS: d[1],
+                        valueUsd: !isNaN(+d[0]) ? +d[0] : 0,
+                      },
+                    ],
+                    [] as ChartData[],
+                  ),
+                },
               },
-            );
-          } else {
-            // just use current price to calculate value of lp token historically
-            return historicalLPTokenRates.map(
-              ([coinTypeAAmount, cointTypeBAmount]: number[]) => {
-                return (
-                  coinTypeAAmount * coinTypeAPrice +
-                  cointTypeBAmount * coinTypeBPrice
-                );
+            }));
+          } catch (err) {
+            console.error(err);
+
+            setPoolHistoricalStats((prev) => ({
+              ...prev,
+              lpTokenValueUsd: {
+                ...prev.lpTokenValueUsd,
+                [period]: {
+                  ...prev.lpTokenValueUsd[period],
+                  [poolId]: [{ timestampS: 0, valueUsd: 0 }],
+                },
               },
-            );
+            }));
           }
         })();
       }
