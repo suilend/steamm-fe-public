@@ -12,7 +12,7 @@ import {
 import BigNumber from "bignumber.js";
 import { startOfHour } from "date-fns";
 
-import { API_URL } from "@suilend/sui-fe";
+import { API_URL, getHistoryPrice, getPrice } from "@suilend/sui-fe";
 
 import { useAppContext } from "@/contexts/AppContext";
 import { ChartData, ChartPeriod } from "@/lib/chart";
@@ -457,6 +457,97 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
                 },
               },
             }));
+          }
+        })();
+
+        // historical LP token values
+        (async () => {
+          let startTimestampS, endTimestampS, intervalS;
+          if (period === ChartPeriod.ONE_DAY) {
+            startTimestampS = referenceTimestampSRef.current - ONE_DAY_S;
+            endTimestampS = referenceTimestampSRef.current - 1;
+            intervalS = ONE_HOUR_S;
+          } else if (period === ChartPeriod.ONE_WEEK) {
+            startTimestampS = referenceTimestampSRef.current - SEVEN_DAYS_S;
+            endTimestampS = referenceTimestampSRef.current - 1;
+            intervalS = SIX_HOURS_S;
+          } else if (period === ChartPeriod.ONE_MONTH) {
+            startTimestampS = referenceTimestampSRef.current - ONE_MONTH_S;
+            endTimestampS = referenceTimestampSRef.current - 1;
+            intervalS = ONE_DAY_S;
+          } else if (period === ChartPeriod.THREE_MONTHS) {
+            startTimestampS = referenceTimestampSRef.current - THREE_MONTHS_S;
+            endTimestampS = referenceTimestampSRef.current - 1;
+            intervalS = THREE_DAYS_S;
+          } else {
+            return;
+          }
+          const [
+            historicalLPTokenRates,
+            historicalCoinTypeAPrices,
+            historicalCoinTypeBPrices,
+            coinTypeAPrice,
+            coinTypeBPrice,
+          ] = await Promise.all([
+            (
+              await fetch(
+                `${API_URL}/steamm/historical/lpTokenRates?` +
+                  new URLSearchParams({
+                    startTimestampS: startTimestampS.toString(),
+                    endTimestampS: endTimestampS.toString(),
+                    intervalS: intervalS.toString(),
+                    poolId,
+                  }).toString(),
+              )
+            ).json(),
+            getHistoryPrice(
+              coinTypeA,
+              intervalS.toString(),
+              startTimestampS,
+              endTimestampS,
+            ),
+            getHistoryPrice(
+              coinTypeB,
+              intervalS.toString(),
+              startTimestampS,
+              endTimestampS,
+            ),
+            getPrice(coinTypeA),
+            getPrice(coinTypeB),
+          ]);
+
+          // shouldn't happen ig
+          // idk how to handle
+          if (
+            coinTypeAPrice == undefined ||
+            coinTypeBPrice == undefined ||
+            historicalCoinTypeAPrices == undefined ||
+            historicalCoinTypeBPrices == undefined
+          ) {
+            return;
+          }
+
+          // get total value of lp token at each historical point
+          if (useHistoricalPrices) {
+            // use historical prices
+            return historicalLPTokenRates.map(
+              ([coinTypeAAmount, cointTypeBAmount]: number[], i: number) => {
+                return (
+                  coinTypeAAmount * historicalCoinTypeAPrices[i].priceUsd +
+                  cointTypeBAmount * historicalCoinTypeBPrices[i].priceUsd
+                );
+              },
+            );
+          } else {
+            // just use current price to calculate value of lp token historically
+            return historicalLPTokenRates.map(
+              ([coinTypeAAmount, cointTypeBAmount]: number[]) => {
+                return (
+                  coinTypeAAmount * coinTypeAPrice +
+                  cointTypeBAmount * coinTypeBPrice
+                );
+              },
+            );
           }
         })();
       }
