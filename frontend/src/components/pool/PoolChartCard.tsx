@@ -70,7 +70,12 @@ export default function PoolChartCard() {
         [ChartDataType.LP_VALUE]: Object.values(ChartPeriod).reduce(
           (acc, period) => ({
             ...acc,
-            [period]: poolStats.lpTokenValueUsd[period][pool.id],
+            [period]: pool.prices[0]
+              .multipliedBy(pool.balances[0])
+              .plus(pool.prices[1].multipliedBy(pool.balances[1]))
+              .dividedBy(pool.lpSupply)
+              .dividedBy(2),
+            // why does this work???
           }),
           {} as Record<ChartPeriod, BigNumber | undefined>,
         ),

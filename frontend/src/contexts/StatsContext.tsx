@@ -44,7 +44,6 @@ export interface StatsContext {
       ChartPeriod.ONE_DAY,
       Record<string, { feesAprPercent: BigNumber }>
     >;
-    lpTokenValueUsd: Record<ChartPeriod, Record<string, BigNumber>>;
   };
 
   globalHistoricalStats: {
@@ -589,24 +588,6 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           ),
         }),
         {} as StatsContext["poolStats"]["feesUsd"],
-      ),
-      lpTokenValueUsd: Object.values(ChartPeriod).reduce(
-        (acc, period) => ({
-          ...acc,
-          [period]: Object.entries(
-            poolHistoricalStats.lpTokenValueUsd[period],
-          ).reduce(
-            (acc2, [poolId, data]) => ({
-              ...acc2,
-              [poolId]: data.reduce(
-                (acc3, d) => acc3.plus(d.valueUsd),
-                new BigNumber(0),
-              ),
-            }),
-            {} as StatsContext["poolStats"]["lpTokenValueUsd"][ChartPeriod],
-          ),
-        }),
-        {} as StatsContext["poolStats"]["lpTokenValueUsd"],
       ),
       aprPercent: {
         [ChartPeriod.ONE_DAY]: {},
