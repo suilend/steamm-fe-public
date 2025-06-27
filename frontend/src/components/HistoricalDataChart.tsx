@@ -74,7 +74,6 @@ interface HistoricalDataChartProps extends ChartConfig {
   className?: ClassValue;
   topSelectsClassName?: ClassValue;
   chartClassName?: ClassValue;
-  ticksXSm?: number;
   selectedDataType: ChartDataType;
   onSelectedDataTypeChange: (dataType: ChartDataType) => void;
   selectedPeriod: ChartPeriod;
@@ -86,7 +85,6 @@ export default function HistoricalDataChart({
   className,
   topSelectsClassName,
   chartClassName,
-  ticksXSm,
   selectedDataType,
   onSelectedDataTypeChange,
   selectedPeriod,
@@ -469,10 +467,10 @@ export default function HistoricalDataChart({
                     Math.ceil(
                       timestampsS.length /
                         (selectedPeriod === ChartPeriod.ONE_DAY
-                          ? isFullWidth
+                          ? isFullWidth || md
                             ? 6
                             : 4
-                          : isFullWidth
+                          : isFullWidth || md
                             ? 8
                             : 6),
                     ) ===
