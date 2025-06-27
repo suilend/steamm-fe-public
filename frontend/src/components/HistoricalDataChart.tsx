@@ -40,7 +40,6 @@ function ActiveBar({ ...props }) {
 }
 
 interface TooltipContentProps {
-  period: ChartPeriod;
   valueFormatter: (value: number) => string;
   category: string;
   d: ChartData;
@@ -49,7 +48,6 @@ interface TooltipContentProps {
 }
 
 function TooltipContent({
-  period,
   valueFormatter,
   category,
   d,
@@ -64,10 +62,7 @@ function TooltipContent({
     >
       <div className="flex flex-col gap-1">
         <p className="text-p2 text-secondary-foreground">
-          {formatDate(
-            new Date(d.timestampS * 1000),
-            period === ChartPeriod.ONE_DAY ? "H:mm" : "d MMM H:mm",
-          )}
+          {formatDate(new Date(d.timestampS * 1000), "d MMM HH:mm")}
         </p>
         <p className="text-p2 text-foreground">{valueFormatter(d[category])}</p>
       </div>
@@ -79,22 +74,22 @@ interface HistoricalDataChartProps extends ChartConfig {
   className?: ClassValue;
   topSelectsClassName?: ClassValue;
   chartClassName?: ClassValue;
-  ticksXSm?: number;
   selectedDataType: ChartDataType;
   onSelectedDataTypeChange: (dataType: ChartDataType) => void;
   selectedPeriod: ChartPeriod;
   onSelectedPeriodChange: (period: ChartPeriod) => void;
+  isFullWidth: boolean;
 }
 
 export default function HistoricalDataChart({
   className,
   topSelectsClassName,
   chartClassName,
-  ticksXSm,
   selectedDataType,
   onSelectedDataTypeChange,
   selectedPeriod,
   onSelectedPeriodChange,
+  isFullWidth,
   getChartType,
   getValueFormatter,
   periodOptions: _periodOptions,
@@ -177,12 +172,6 @@ export default function HistoricalDataChart({
             .map((d) => categories.map((category) => d[category]))
             .flat(),
         );
-
-  // Ticks
-  const ticksX = Array.from({ length: md ? 5 : sm ? 3 : (ticksXSm ?? 2) }).map(
-    (_, index, array) =>
-      Math.round(minX + ((maxX - minX) / (array.length - 1)) * index),
-  );
 
   return (
     <div className={cn("flex w-full flex-col gap-3", className)}>
@@ -275,7 +264,14 @@ export default function HistoricalDataChart({
           ) : (
             <>
               {chartType === ChartType.BAR ? (
-                <div className="relative -mx-[2px] h-full">
+                <div
+                  className={cn(
+                    "relative h-full",
+                    isFullWidth
+                      ? "-mx-[2px] sm:-mx-[4px]"
+                      : "-mx-[1px] sm:-mx-[2px]",
+                  )}
+                >
                   <Recharts.ResponsiveContainer className="absolute inset-0 z-[2]">
                     <Recharts.BarChart
                       data={processedData}
@@ -316,7 +312,6 @@ export default function HistoricalDataChart({
 
                           return (
                             <TooltipContent
-                              period={selectedPeriod}
                               valueFormatter={valueFormatter}
                               category={categories[0]}
                               d={payload[0].payload as ChartData}
@@ -333,9 +328,14 @@ export default function HistoricalDataChart({
                     {processedData.map((d) => (
                       <div
                         key={d.timestampS}
-                        className="group flex flex-1 flex-row justify-center px-[1px] sm:px-[2px]"
+                        className={cn(
+                          "group flex flex-1 flex-row justify-center",
+                          isFullWidth
+                            ? "px-[2px] sm:px-[4px]"
+                            : "px-[1px] sm:px-[2px]",
+                        )}
                       >
-                        <div className="flex h-full w-full max-w-[8px] flex-col-reverse items-center gap-[2px]">
+                        <div className="flex h-full w-full max-w-[36px] flex-col-reverse items-center gap-[2px]">
                           <div
                             className="w-full shrink-0 rounded-[2px]"
                             style={{
@@ -416,7 +416,6 @@ export default function HistoricalDataChart({
 
                         return (
                           <TooltipContent
-                            period={selectedPeriod}
                             valueFormatter={valueFormatter}
                             category={categories[0]}
                             d={payload[0].payload as ChartData}
@@ -447,16 +446,44 @@ export default function HistoricalDataChart({
           />
         ) : (
           <div
-            className="flex w-full flex-row justify-between"
-            style={{ paddingTop: 8 }}
+            className={cn(
+              "flex flex-row",
+              chartType === ChartType.BAR
+                ? cn(
+                    isFullWidth
+                      ? "-mx-[2px] sm:-mx-[4px]"
+                      : "-mx-[1px] sm:-mx-[2px]",
+                  )
+                : "w-full",
+            )}
+            style={{ paddingTop: 8, height: 8 + 18 }}
           >
-            {ticksX.map((tickX) => (
-              <p key={tickX} className="text-p3 text-tertiary-foreground">
-                {formatDate(
-                  new Date(tickX * 1000),
-                  selectedPeriod === ChartPeriod.ONE_DAY ? "H:mm" : "d MMM",
+            {timestampsS.map((timestampS, index) => (
+              <div
+                key={timestampS}
+                className={cn(
+                  "relative flex h-full flex-1 flex-row justify-center opacity-0",
+                  index %
+                    Math.ceil(
+                      timestampsS.length /
+                        (selectedPeriod === ChartPeriod.ONE_DAY
+                          ? isFullWidth || md
+                            ? 6
+                            : 4
+                          : isFullWidth || md
+                            ? 8
+                            : 6),
+                    ) ===
+                    0 && "opacity-100",
                 )}
-              </p>
+              >
+                <p className="absolute inset-y-0 left-1/2 w-[80px] -translate-x-1/2 text-center text-p3 text-tertiary-foreground">
+                  {formatDate(
+                    new Date(timestampS * 1000),
+                    selectedPeriod === ChartPeriod.ONE_DAY ? "HH:mm" : "dd",
+                  )}
+                </p>
+              </div>
             ))}
           </div>
         )}

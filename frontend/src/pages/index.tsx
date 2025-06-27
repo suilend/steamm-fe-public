@@ -306,6 +306,7 @@ export default function PoolsPage() {
               onSelectedDataTypeChange={() => {}}
               selectedPeriod={selectedLhsChartPeriod}
               onSelectedPeriodChange={onSelectedLhsChartPeriodChange}
+              isFullWidth={false}
               {...lhsChartConfig}
             />
           </div>
@@ -318,6 +319,7 @@ export default function PoolsPage() {
               onSelectedDataTypeChange={onSelectedRhsChartDataTypeChange}
               selectedPeriod={selectedRhsChartPeriod}
               onSelectedPeriodChange={onSelectedRhsChartPeriodChange}
+              isFullWidth={false}
               {...rhsChartConfig}
             />
           </div>
