@@ -99,6 +99,7 @@ export default function PoolChartCard() {
         onSelectedDataTypeChange={onSelectedChartDataTypeChange}
         selectedPeriod={selectedChartPeriod}
         onSelectedPeriodChange={onSelectedChartPeriodChange}
+        isFullWidth
         {...chartConfig}
       />
     </div>
