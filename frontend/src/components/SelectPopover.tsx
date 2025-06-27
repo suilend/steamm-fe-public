@@ -17,6 +17,7 @@ interface SelectPopoverProps {
   optionClassName?: ClassValue;
   optionTextClassName?: ClassValue;
   align?: "start" | "end";
+  alignOffset?: number;
   maxWidth?: number;
   options: SelectPopoverOption[];
   placeholder?: string;
@@ -35,6 +36,7 @@ export default function SelectPopover({
   optionClassName,
   optionTextClassName,
   align,
+  alignOffset,
   maxWidth,
   options,
   placeholder,
@@ -55,6 +57,7 @@ export default function SelectPopover({
       contentProps={{
         className: cn(popoverContentClassName),
         align: align ?? "end",
+        alignOffset,
         maxWidth: maxWidth ?? 280,
       }}
       trigger={
