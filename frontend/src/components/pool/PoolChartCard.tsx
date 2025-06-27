@@ -31,7 +31,11 @@ export default function PoolChartCard() {
   const chartConfig: ChartConfig = useMemo(
     () => ({
       getChartType: (dataType: string) => {
-        if (dataType === ChartDataType.TVL) return ChartType.LINE;
+        if (
+          dataType === ChartDataType.TVL ||
+          dataType === ChartDataType.LP_VALUE
+        )
+          return ChartType.LINE;
         return ChartType.BAR;
       },
       getValueFormatter: (dataType: string) => {
@@ -63,6 +67,13 @@ export default function PoolChartCard() {
           }),
           {} as Record<ChartPeriod, BigNumber | undefined>,
         ),
+        [ChartDataType.LP_VALUE]: Object.values(ChartPeriod).reduce(
+          (acc, period) => ({
+            ...acc,
+            [period]: poolStats.lpTokenValueUsd[period][pool.id],
+          }),
+          {} as Record<ChartPeriod, BigNumber | undefined>,
+        ),
       },
       dataMap: {
         [ChartDataType.TVL]: Object.values(ChartPeriod).reduce(
@@ -83,6 +94,13 @@ export default function PoolChartCard() {
           (acc, period) => ({
             ...acc,
             [period]: poolHistoricalStats.feesUsd[period][pool.id],
+          }),
+          {} as Record<ChartPeriod, ChartData[] | undefined>,
+        ),
+        [ChartDataType.LP_VALUE]: Object.values(ChartPeriod).reduce(
+          (acc, period) => ({
+            ...acc,
+            [period]: poolHistoricalStats.lpTokenValueUsd[period][pool.id],
           }),
           {} as Record<ChartPeriod, ChartData[] | undefined>,
         ),

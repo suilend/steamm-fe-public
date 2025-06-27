@@ -44,6 +44,7 @@ export interface StatsContext {
       ChartPeriod.ONE_DAY,
       Record<string, { feesAprPercent: BigNumber }>
     >;
+    lpTokenValueUsd: Record<ChartPeriod, Record<string, BigNumber>>;
   };
 
   globalHistoricalStats: {
@@ -501,9 +502,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             ) {
               throw new Error("timestamps cannot be undefined!");
             }
-            const historicalLPTokenRates: number[][] = await (
+            const historicalLPTokenValues: number[][] = await (
               await fetch(
-                `${API_URL}/steamm/historical/lpTokenRates?` +
+                `${API_URL}/steamm/historical/lpTokenValue?` +
                   new URLSearchParams({
                     startTimestampS: startTimestampS.toString(),
                     endTimestampS: endTimestampS.toString(),
@@ -519,7 +520,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
                 ...prev.lpTokenValueUsd,
                 [period]: {
                   ...prev.lpTokenValueUsd[period],
-                  [poolId]: historicalLPTokenRates.reduce(
+                  [poolId]: historicalLPTokenValues.reduce(
                     (acc, d) => [
                       ...acc,
                       {
@@ -588,6 +589,24 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           ),
         }),
         {} as StatsContext["poolStats"]["feesUsd"],
+      ),
+      lpTokenValueUsd: Object.values(ChartPeriod).reduce(
+        (acc, period) => ({
+          ...acc,
+          [period]: Object.entries(
+            poolHistoricalStats.lpTokenValueUsd[period],
+          ).reduce(
+            (acc2, [poolId, data]) => ({
+              ...acc2,
+              [poolId]: data.reduce(
+                (acc3, d) => acc3.plus(d.valueUsd),
+                new BigNumber(0),
+              ),
+            }),
+            {} as StatsContext["poolStats"]["lpTokenValueUsd"][ChartPeriod],
+          ),
+        }),
+        {} as StatsContext["poolStats"]["lpTokenValueUsd"],
       ),
       aprPercent: {
         [ChartPeriod.ONE_DAY]: {},
