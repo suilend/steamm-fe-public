@@ -211,7 +211,7 @@ export default function CsvUpload({
                 )}
 
                 <div className="pointer-events-none relative z-[1] flex h-24 w-24">
-                  <FileSpreadsheet className="absolute left-4 top-4 h-16 w-16 text-[#34A853]" />
+                  <FileSpreadsheet className="absolute left-4 top-4 h-16 w-16 text-button-1" />
                 </div>
               </>
             ) : (

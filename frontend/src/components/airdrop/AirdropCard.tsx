@@ -52,7 +52,7 @@ enum LastSignedTransactionType {
 
 const TRANSFERS_PER_BATCH = 500; // Max = 512 (if no other MOVE calls in the transaction)
 const getBatchTransactionGas = (transferCount: number) =>
-  Math.max(0.02, 0.0016 * transferCount);
+  Math.max(0.01, 0.0016 * transferCount);
 
 export default function AirdropCard() {
   const { suiClient } = useSettingsContext();
@@ -169,7 +169,6 @@ export default function AirdropCard() {
     setHasFailed(false);
     setLastSignedTransaction(undefined);
 
-    setKeypair(undefined);
     setFundKeypairResult(undefined);
     setMakeBatchTransferResults(undefined);
     setReturnAllOwnedObjectsAndSuiToUserResult(undefined);
