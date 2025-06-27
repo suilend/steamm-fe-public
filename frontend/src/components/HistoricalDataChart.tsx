@@ -40,7 +40,6 @@ function ActiveBar({ ...props }) {
 }
 
 interface TooltipContentProps {
-  period: ChartPeriod;
   valueFormatter: (value: number) => string;
   category: string;
   d: ChartData;
@@ -49,7 +48,6 @@ interface TooltipContentProps {
 }
 
 function TooltipContent({
-  period,
   valueFormatter,
   category,
   d,
@@ -64,10 +62,7 @@ function TooltipContent({
     >
       <div className="flex flex-col gap-1">
         <p className="text-p2 text-secondary-foreground">
-          {formatDate(
-            new Date(d.timestampS * 1000),
-            period === ChartPeriod.ONE_DAY ? "H:mm" : "d MMM H:mm",
-          )}
+          {formatDate(new Date(d.timestampS * 1000), "d MMM H:mm")}
         </p>
         <p className="text-p2 text-foreground">{valueFormatter(d[category])}</p>
       </div>
@@ -316,7 +311,6 @@ export default function HistoricalDataChart({
 
                           return (
                             <TooltipContent
-                              period={selectedPeriod}
                               valueFormatter={valueFormatter}
                               category={categories[0]}
                               d={payload[0].payload as ChartData}
@@ -416,7 +410,6 @@ export default function HistoricalDataChart({
 
                         return (
                           <TooltipContent
-                            period={selectedPeriod}
                             valueFormatter={valueFormatter}
                             category={categories[0]}
                             d={payload[0].payload as ChartData}
