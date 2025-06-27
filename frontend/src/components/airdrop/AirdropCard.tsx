@@ -1,8 +1,7 @@
-import { Dispatch, SetStateAction, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useSignPersonalMessage } from "@mysten/dapp-kit";
 import { SuiTransactionBlockResponse } from "@mysten/sui/client";
-import { SignatureWithBytes } from "@mysten/sui/cryptography";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import BigNumber from "bignumber.js";
 import { chunk } from "lodash";
@@ -13,17 +12,19 @@ import {
   NORMALIZED_SUI_COINTYPE,
   ReturnAllOwnedObjectsAndSuiToUserResult,
   checkIfKeypairCanBeUsed,
+  checkLastTransactionSignature,
   createKeypair,
   formatToken,
   fundKeypair,
   getToken,
   isSui,
-  keypairWaitForTransaction,
+  onSign,
   returnAllOwnedObjectsAndSuiToUser,
 } from "@suilend/sui-fe";
 import {
   showErrorToast,
   showSuccessToast,
+  useLastSignedTransaction,
   useSettingsContext,
   useWalletContext,
 } from "@suilend/sui-fe-next";
@@ -41,100 +42,7 @@ import {
   MakeBatchTransferResult,
   makeBatchTransfer,
 } from "@/lib/airdrop";
-import { cn, sleep } from "@/lib/utils";
-
-////
-
-type LastSignedTransaction<T> = {
-  signedTransaction: SignatureWithBytes;
-  type: T;
-};
-
-async function checkLastTransactionSignature<T>(
-  type: T,
-  lastCurrentFlowTransaction: SuiTransactionBlockResponse | undefined,
-  lastSignedTransaction: LastSignedTransaction<T> | undefined,
-  setLastSignedTransaction: Dispatch<
-    SetStateAction<LastSignedTransaction<T> | undefined>
-  >,
-  validCallback: () => Promise<void>,
-  invalidCallback: () => Promise<void>,
-) {
-  console.log("[checkLastTransactionSignature]", {
-    type,
-    lastCurrentFlowTransaction,
-    lastSignedTransaction,
-  });
-
-  if (
-    lastSignedTransaction?.type === type &&
-    (lastCurrentFlowTransaction?.transaction?.txSignatures ?? []).includes(
-      lastSignedTransaction.signedTransaction.signature,
-    )
-  ) {
-    console.log(
-      "[checkLastTransactionSignature] lastSignedTransaction type and signature MATCH",
-    );
-
-    try {
-      await validCallback();
-      setLastSignedTransaction(undefined);
-      await sleep(500); // Wait for `setLastSignedTransaction` to take effect
-    } catch (err) {
-      console.error("[checkLastTransactionSignature]", err);
-
-      try {
-        await invalidCallback();
-        setLastSignedTransaction(undefined);
-        await sleep(500); // Wait for `setLastSignedTransaction` to take effect
-      } catch (err) {
-        console.error(err);
-        setLastSignedTransaction(undefined);
-        await sleep(500); // Wait for `setLastSignedTransaction` to take effect
-
-        throw err;
-      }
-    }
-  } else {
-    console.log(
-      "[checkLastTransactionSignature] lastSignedTransaction type and signature DO NOT MATCH",
-    );
-
-    try {
-      await invalidCallback();
-      setLastSignedTransaction(undefined);
-      await sleep(500); // Wait for `setLastSignedTransaction` to take effect
-    } catch (err) {
-      console.error(err);
-      setLastSignedTransaction(undefined);
-      await sleep(500); // Wait for `setLastSignedTransaction` to take effect
-
-      throw err;
-    }
-  }
-}
-
-function onSign<T>(
-  type: T,
-  setLastSignedTransaction: Dispatch<
-    SetStateAction<LastSignedTransaction<T> | undefined>
-  >,
-  index?: number,
-) {
-  return (signedTransaction: SignatureWithBytes) => {
-    console.log(
-      `[onSign] Setting setLastSignedTransaction for ${type}${
-        index !== undefined ? ` ${index}` : ""
-      }`,
-    );
-    setLastSignedTransaction({
-      signedTransaction,
-      type,
-    });
-  };
-}
-
-////
+import { cn } from "@/lib/utils";
 
 enum LastSignedTransactionType {
   FUND_KEYPAIR = "fundKeypair",
@@ -142,7 +50,7 @@ enum LastSignedTransactionType {
   RETURN_ALL_OWNED_OBJECTS_AND_SUI_TO_USER = "returnAllOwnedObjectsAndSuiToUser",
 }
 
-const TRANSFERS_PER_BATCH = 50; // Max = 512 (if no other MOVE calls in the transaction)
+const TRANSFERS_PER_BATCH = 500; // Max = 512 (if no other MOVE calls in the transaction)
 const getBatchTransactionGas = (transferCount: number) =>
   Math.max(0.02, 0.0016 * transferCount);
 
@@ -155,9 +63,8 @@ export default function AirdropCard() {
 
   // Progress
   const [hasFailed, setHasFailed] = useState<boolean>(false); // Don't use `localStorage` (no need to persist)
-  const [lastSignedTransaction, setLastSignedTransaction] = useLocalStorage<
-    LastSignedTransaction<LastSignedTransactionType> | undefined
-  >("airdrop-lastSignedTransaction", undefined);
+  const { lastSignedTransactionRef, setLastSignedTransaction } =
+    useLastSignedTransaction<LastSignedTransactionType>("airdrop");
 
   const [keypair, setKeypair] = useState<Ed25519Keypair | undefined>(undefined); // Don't use `localStorage` (shouldn't put private key in localStorage)
   const [fundKeypairResult, setFundKeypairResult] = useLocalStorage<
@@ -175,14 +82,14 @@ export default function AirdropCard() {
     "airdrop-returnAllOwnedObjectsAndSuiToUserResult",
     undefined,
   );
-  console.log("[AirdropCard]", {
-    hasFailed,
-    lastSignedTransaction,
-    keypair,
+  console.log(
+    "[AirdropCard] - fundKeypairResult:",
     fundKeypairResult,
+    "makeBatchTransferResults:",
     makeBatchTransferResults,
+    "returnAllOwnedObjectsAndSuiToUserResult:",
     returnAllOwnedObjectsAndSuiToUserResult,
-  });
+  );
 
   const currentFlowDigests = useMemo(
     () =>
@@ -285,7 +192,8 @@ export default function AirdropCard() {
     if (hasFailed && !returnAllOwnedObjectsAndSuiToUserResult)
       return { isDisabled: false, title: "Retry" };
     if (
-      currentFlowDigests.length > 0 &&
+      (lastSignedTransactionRef.current !== undefined ||
+        currentFlowDigests.length > 0) &&
       !returnAllOwnedObjectsAndSuiToUserResult
     )
       return { isDisabled: false, title: "Resume" };
@@ -335,8 +243,8 @@ export default function AirdropCard() {
 
       setIsSubmitting(true);
 
-      // 1) Generate and fund keypair
-      // 1.1) Generate
+      // 1) Create, check, and fund keypair
+      // 1.1) Create
       let _keypair = keypair;
       if (_keypair === undefined) {
         console.log("[onSubmitClick] createKeypair");
@@ -347,7 +255,7 @@ export default function AirdropCard() {
 
       // 1.2) Check
       const { lastCurrentFlowTransaction } = await checkIfKeypairCanBeUsed(
-        lastSignedTransaction?.signedTransaction,
+        lastSignedTransactionRef.current?.signedTransaction,
         currentFlowDigests,
         _keypair,
         suiClient,
@@ -359,21 +267,15 @@ export default function AirdropCard() {
 
       // 1.3) Fund
       if (fundKeypairResult === undefined) {
-        await checkLastTransactionSignature(
+        await checkLastTransactionSignature<LastSignedTransactionType>(
           LastSignedTransactionType.FUND_KEYPAIR,
           lastCurrentFlowTransaction,
-          lastSignedTransaction,
+          lastSignedTransactionRef.current,
           setLastSignedTransaction,
-          async () => {
+          suiClient,
+          async (res: SuiTransactionBlockResponse) => {
             console.log("[onSubmitClick] fundKeypair - validCallback");
-
-            const _fundKeypairResult: FundKeypairResult = {
-              res: await keypairWaitForTransaction(
-                lastCurrentFlowTransaction!.digest,
-                suiClient,
-              ),
-            };
-            setFundKeypairResult(_fundKeypairResult);
+            setFundKeypairResult({ res });
           },
           async () => {
             console.log("[onSubmitClick] fundKeypair - invalidCallback");
@@ -435,26 +337,19 @@ export default function AirdropCard() {
             );
           }
 
-          await checkLastTransactionSignature(
+          await checkLastTransactionSignature<LastSignedTransactionType>(
             LastSignedTransactionType.MAKE_BATCH_TRANSFER,
             lastCurrentFlowTransaction,
-            lastSignedTransaction,
+            lastSignedTransactionRef.current,
             setLastSignedTransaction,
-            async () => {
+            suiClient,
+            async (res: SuiTransactionBlockResponse) => {
               console.log(
                 `[onSubmitClick] makeBatchTransfer ${i} - validCallback`,
               );
-
-              const _makeBatchTransferResult: MakeBatchTransferResult = {
-                batch,
-                res: await keypairWaitForTransaction(
-                  lastCurrentFlowTransaction!.digest,
-                  suiClient,
-                ),
-              };
               setMakeBatchTransferResults((prev) => [
                 ...(prev ?? []),
-                _makeBatchTransferResult,
+                { batch, res },
               ]);
             },
             async () => {
@@ -483,26 +378,17 @@ export default function AirdropCard() {
 
       // 2.2) Return objects and unused SUI to user
       if (returnAllOwnedObjectsAndSuiToUserResult === undefined) {
-        await checkLastTransactionSignature(
+        await checkLastTransactionSignature<LastSignedTransactionType>(
           LastSignedTransactionType.RETURN_ALL_OWNED_OBJECTS_AND_SUI_TO_USER,
           lastCurrentFlowTransaction,
-          lastSignedTransaction,
+          lastSignedTransactionRef.current,
           setLastSignedTransaction,
-          async () => {
+          suiClient,
+          async (res: SuiTransactionBlockResponse) => {
             console.log(
               "[onSubmitClick] returnAllOwnedObjectsAndSuiToUser - validCallback",
             );
-
-            const _returnAllOwnedObjectsAndSuiToUserResult: ReturnAllOwnedObjectsAndSuiToUserResult =
-              {
-                res: await keypairWaitForTransaction(
-                  lastCurrentFlowTransaction!.digest,
-                  suiClient,
-                ),
-              };
-            setReturnAllOwnedObjectsAndSuiToUserResult(
-              _returnAllOwnedObjectsAndSuiToUserResult,
-            );
+            setReturnAllOwnedObjectsAndSuiToUserResult({ res });
           },
           async () => {
             console.log(
@@ -518,7 +404,7 @@ export default function AirdropCard() {
                   LastSignedTransactionType.RETURN_ALL_OWNED_OBJECTS_AND_SUI_TO_USER,
                   setLastSignedTransaction,
                 ),
-              );
+              ); // Dry run will throw if there is no gas object (i.e. if we've already returned all owned objects and SUI to user)
             setReturnAllOwnedObjectsAndSuiToUserResult(
               _returnAllOwnedObjectsAndSuiToUserResult,
             );
@@ -566,7 +452,9 @@ export default function AirdropCard() {
         <div
           className={cn(
             "flex w-full flex-col gap-4",
-            (hasFailed || currentFlowDigests.length > 0) &&
+            (hasFailed ||
+              lastSignedTransactionRef.current !== undefined ||
+              currentFlowDigests.length > 0) &&
               "pointer-events-none",
           )}
         >
@@ -589,7 +477,10 @@ export default function AirdropCard() {
           {/* CSV */}
           <CsvUpload
             isDragAndDropDisabled={
-              hasFailed || currentFlowDigests.length > 0 || isStepsDialogOpen
+              hasFailed ||
+              lastSignedTransactionRef.current !== undefined ||
+              currentFlowDigests.length > 0 ||
+              isStepsDialogOpen
             }
             token={token}
             csvRows={csvRows}
@@ -664,7 +555,9 @@ export default function AirdropCard() {
             onClick={onSubmitClick}
           />
 
-          {(hasFailed || currentFlowDigests.length > 0) &&
+          {(hasFailed ||
+            lastSignedTransactionRef.current !== undefined ||
+            currentFlowDigests.length > 0) &&
             !returnAllOwnedObjectsAndSuiToUserResult && (
               <button
                 className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
