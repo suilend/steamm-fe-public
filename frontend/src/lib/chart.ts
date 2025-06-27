@@ -52,7 +52,7 @@ export enum ChartPeriod {
   THREE_MONTHS = "3M",
 }
 export const chartPeriodNameMap: Record<ChartPeriod, string> = {
-  [ChartPeriod.ONE_DAY]: "24H",
+  [ChartPeriod.ONE_DAY]: "1D",
   [ChartPeriod.ONE_WEEK]: "1W",
   [ChartPeriod.ONE_MONTH]: "1M",
   [ChartPeriod.THREE_MONTHS]: "3M",

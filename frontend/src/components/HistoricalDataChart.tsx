@@ -97,7 +97,7 @@ export default function HistoricalDataChart({
   totalMap,
   dataMap,
 }: HistoricalDataChartProps) {
-  const { sm, md } = useBreakpoint();
+  const { md } = useBreakpoint();
 
   const gradientId = useRef<string>(uuidv4()).current;
 
@@ -189,6 +189,7 @@ export default function HistoricalDataChart({
                 optionClassName="h-8 p-2"
                 optionTextClassName="!text-p2"
                 align="start"
+                alignOffset={-(2 + 1 + 8)}
                 maxWidth={100}
                 options={dataTypeOptions}
                 values={[selectedDataType]}
@@ -211,6 +212,7 @@ export default function HistoricalDataChart({
                 optionClassName="h-8 p-2"
                 optionTextClassName="!text-p2"
                 align="start"
+                alignOffset={-(2 + 1 + 8)}
                 maxWidth={100}
                 options={periodOptions}
                 values={[selectedPeriod]}
