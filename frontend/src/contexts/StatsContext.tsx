@@ -238,7 +238,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           if (period === ChartPeriod.ONE_DAY) {
             startTimestampS = referenceTimestampSRef.current - ONE_DAY_S;
             endTimestampS = referenceTimestampSRef.current - 1;
-            intervalS = TEN_MINUTES_S;
+            intervalS = FIFTEEN_MINUTES_S;
           } else if (period === ChartPeriod.ONE_WEEK) {
             startTimestampS = referenceTimestampSRef.current - SEVEN_DAYS_S;
             endTimestampS = referenceTimestampSRef.current - 1;
@@ -318,7 +318,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           } else if (period === ChartPeriod.ONE_WEEK) {
             startTimestampS = referenceTimestampSRef.current - SEVEN_DAYS_S;
             endTimestampS = referenceTimestampSRef.current - 1;
-            intervalS = SIX_HOURS_S;
+            intervalS = ONE_DAY_S;
           } else if (period === ChartPeriod.ONE_MONTH) {
             startTimestampS = referenceTimestampSRef.current - ONE_MONTH_S;
             endTimestampS = referenceTimestampSRef.current - 1;
@@ -394,7 +394,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           } else if (period === ChartPeriod.ONE_WEEK) {
             startTimestampS = referenceTimestampSRef.current - SEVEN_DAYS_S;
             endTimestampS = referenceTimestampSRef.current - 1;
-            intervalS = SIX_HOURS_S;
+            intervalS = ONE_DAY_S;
           } else if (period === ChartPeriod.ONE_MONTH) {
             startTimestampS = referenceTimestampSRef.current - ONE_MONTH_S;
             endTimestampS = referenceTimestampSRef.current - 1;
@@ -570,7 +570,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         if (period === ChartPeriod.ONE_DAY) {
           startTimestampS = referenceTimestampSRef.current - ONE_DAY_S;
           endTimestampS = referenceTimestampSRef.current - 1;
-          intervalS = TEN_MINUTES_S;
+          intervalS = FIFTEEN_MINUTES_S;
         } else if (period === ChartPeriod.ONE_WEEK) {
           startTimestampS = referenceTimestampSRef.current - SEVEN_DAYS_S;
           endTimestampS = referenceTimestampSRef.current - 1;
@@ -643,7 +643,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         } else if (period === ChartPeriod.ONE_WEEK) {
           startTimestampS = referenceTimestampSRef.current - SEVEN_DAYS_S;
           endTimestampS = referenceTimestampSRef.current - 1;
-          intervalS = SIX_HOURS_S;
+          intervalS = ONE_DAY_S;
         } else if (period === ChartPeriod.ONE_MONTH) {
           startTimestampS = referenceTimestampSRef.current - ONE_MONTH_S;
           endTimestampS = referenceTimestampSRef.current - 1;
@@ -712,7 +712,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         } else if (period === ChartPeriod.ONE_WEEK) {
           startTimestampS = referenceTimestampSRef.current - SEVEN_DAYS_S;
           endTimestampS = referenceTimestampSRef.current - 1;
-          intervalS = SIX_HOURS_S;
+          intervalS = ONE_DAY_S;
         } else if (period === ChartPeriod.ONE_MONTH) {
           startTimestampS = referenceTimestampSRef.current - ONE_MONTH_S;
           endTimestampS = referenceTimestampSRef.current - 1;
