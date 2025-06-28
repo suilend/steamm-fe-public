@@ -14,6 +14,7 @@ import {
   checkIfKeypairCanBeUsed,
   checkLastTransactionSignature,
   createKeypair,
+  formatInteger,
   formatToken,
   fundKeypair,
   getToken,
@@ -511,65 +512,66 @@ export default function AirdropCard() {
             csvFileSize={csvFileSize}
             setCsvFileSize={setCsvFileSize}
           />
+        </div>
 
-          <Divider />
+        <Divider />
 
-          <div className="flex w-full flex-col gap-2">
-            {/* Airdrop */}
-            <Parameter label="Airdrop" isHorizontal>
-              {token !== undefined && totalTokenAmount !== undefined ? (
-                <p className="text-p2 text-foreground">
-                  {formatToken(totalTokenAmount, {
-                    dp: token.decimals,
-                    trimTrailingZeros: true,
-                  })}{" "}
-                  {token.symbol}
-                </p>
-              ) : (
-                <p className="text-p2 text-foreground">--</p>
-              )}
-            </Parameter>
+        <div className="flex w-full flex-col gap-2">
+          {/* Airdrop */}
+          <Parameter label="Airdrop" isHorizontal>
+            {token !== undefined && totalTokenAmount !== undefined ? (
+              <p className="text-p2 text-foreground">
+                {formatToken(totalTokenAmount, {
+                  dp: token.decimals,
+                  trimTrailingZeros: true,
+                })}{" "}
+                {token.symbol}
+              </p>
+            ) : (
+              <p className="text-p2 text-foreground">--</p>
+            )}
+          </Parameter>
 
-            {/* Recipients */}
-            <Parameter label="Recipients" isHorizontal>
-              {batches !== undefined ? (
-                <p className="text-p2 text-foreground">
-                  {batches.flat().length}
-                </p>
-              ) : (
-                <p className="text-p2 text-foreground">--</p>
-              )}
-            </Parameter>
+          {/* Recipients */}
+          <Parameter label="Recipients" isHorizontal>
+            {batches !== undefined ? (
+              <p className="text-p2 text-foreground">
+                {formatInteger(batches.flat().length)}
+              </p>
+            ) : (
+              <p className="text-p2 text-foreground">--</p>
+            )}
+          </Parameter>
 
-            {/* Batches */}
-            <Parameter
-              label="Batches"
-              isHorizontal
-              labelEndDecorator={`${TRANSFERS_PER_BATCH} transfers per batch`}
-            >
-              {batches !== undefined ? (
-                <p className="text-p2 text-foreground">{batches.length}</p>
-              ) : (
-                <p className="text-p2 text-foreground">--</p>
-              )}
-            </Parameter>
+          {/* Batches */}
+          <Parameter
+            label="Batches"
+            isHorizontal
+            labelEndDecorator={`${formatInteger(TRANSFERS_PER_BATCH)} transfers per batch`}
+          >
+            {batches !== undefined ? (
+              <p className="text-p2 text-foreground">
+                {formatInteger(batches.length)}
+              </p>
+            ) : (
+              <p className="text-p2 text-foreground">--</p>
+            )}
+          </Parameter>
 
-            {/* Max gas fee */}
-            <Parameter label="Max gas fee" isHorizontal>
-              {totalGasAmount !== undefined ? (
-                <p className="text-p2 text-foreground">
-                  {formatToken(totalGasAmount, {
-                    dp: appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE]
-                      .decimals,
-                    trimTrailingZeros: true,
-                  })}{" "}
-                  SUI
-                </p>
-              ) : (
-                <p className="text-p2 text-foreground">--</p>
-              )}
-            </Parameter>
-          </div>
+          {/* Max gas fee */}
+          <Parameter label="Max gas fee" isHorizontal>
+            {totalGasAmount !== undefined ? (
+              <p className="text-p2 text-foreground">
+                {formatToken(totalGasAmount, {
+                  dp: appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE].decimals,
+                  trimTrailingZeros: true,
+                })}{" "}
+                SUI
+              </p>
+            ) : (
+              <p className="text-p2 text-foreground">--</p>
+            )}
+          </Parameter>
         </div>
 
         <div className="flex w-full flex-col gap-1">

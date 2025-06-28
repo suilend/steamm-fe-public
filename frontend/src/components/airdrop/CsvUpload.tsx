@@ -95,7 +95,7 @@ export default function CsvUpload({
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
-          await sleep(250);
+          await sleep(100);
           const text = e.target?.result as string;
 
           const records: { [key: string]: string }[] = parseCsv(text, {
