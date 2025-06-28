@@ -28,7 +28,7 @@
     "@radix-ui/react-tooltip": "^1.1.4",
     "@sentry/nextjs": "^8.38.0",
     "@suilend/sdk": "^1.1.70",
-    "@suilend/sui-fe": "^0.3.3",
+    "@suilend/sui-fe": "^0.3.4",
     "@suilend/sui-fe-next": "^0.1.51",
     "@tanstack/react-table": "^8.20.5",
     "@vercel/analytics": "^1.4.0",

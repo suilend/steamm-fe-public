@@ -530,8 +530,8 @@ export default function AirdropCard() {
               )}
             </Parameter>
 
-            {/* Max fee */}
-            <Parameter label="Max fee" isHorizontal>
+            {/* Max gas fee */}
+            <Parameter label="Max gas fee" isHorizontal>
               {csvRows !== undefined ? (
                 <p className="text-p2 text-foreground">
                   {formatToken(totalGasAmount, {
