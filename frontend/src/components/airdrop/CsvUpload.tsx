@@ -10,6 +10,7 @@ import { showErrorToast } from "@suilend/sui-fe-next";
 import AirdropAddressAmountTable from "@/components/airdrop/AirdropAddressAmountTable";
 import Parameter from "@/components/Parameter";
 import { AirdropRow } from "@/lib/airdrop";
+import { sleep } from "@/lib/utils";
 
 const VALID_MIME_TYPES = ["text/csv"];
 
@@ -92,8 +93,9 @@ export default function CsvUpload({
 
       // Read file
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
+          await sleep(250);
           const text = e.target?.result as string;
 
           const records: { [key: string]: string }[] = parseCsv(text, {

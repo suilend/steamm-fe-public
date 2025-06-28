@@ -11,19 +11,18 @@ import {
 } from "@suilend/sui-fe";
 
 export type AirdropRow = { number: number; address: string; amount: string };
-export type Batch = AirdropRow[];
 
 // Make batch transfer
 const STEAMM_AIRDROPPER_PACKAGE_ID =
   "0x11461c4c04384d13b5ab787ebac3fb063f9d5df6ee63d133e96b79edaf24c744";
 
 export type MakeBatchTransferResult = {
-  batch: Batch;
+  batch: AirdropRow[];
   res: SuiTransactionBlockResponse;
 };
 export const makeBatchTransfer = async (
   token: Token,
-  batch: Batch,
+  batch: AirdropRow[],
   keypair: Ed25519Keypair,
   suiClient: SuiClient,
   onSign: (signedTransaction: SignatureWithBytes) => void,

@@ -126,8 +126,8 @@ export default function AirdropCard() {
       : undefined;
 
   // State - CSV
-  const [csvRows, setCsvRows] = useLocalStorage<AirdropRow[] | undefined>(
-    "airdrop-csvRows",
+  const [batches, setBatches] = useLocalStorage<AirdropRow[][] | undefined>(
+    "airdrop-batches",
     undefined,
   );
   const [csvFilename, setCsvFilename] = useLocalStorage<string>(
@@ -139,28 +139,34 @@ export default function AirdropCard() {
     "",
   );
 
-  const batches = useMemo(
-    () => chunk(csvRows ?? [], TRANSFERS_PER_BATCH),
-    [csvRows],
-  );
-
   // Calcs
-  const totalTokenAmount =
-    token === undefined
-      ? undefined
-      : (csvRows ?? []).reduce(
-          (acc, row) =>
-            acc.plus(
-              new BigNumber(row.amount).decimalPlaces(
-                token.decimals,
-                BigNumber.ROUND_DOWN,
-              ),
+  const totalTokenAmount: BigNumber | undefined = useMemo(
+    () =>
+      token === undefined || batches === undefined
+        ? undefined
+        : batches
+            .flat()
+            .reduce(
+              (acc, row) =>
+                acc.plus(
+                  new BigNumber(row.amount).decimalPlaces(
+                    token.decimals,
+                    BigNumber.ROUND_DOWN,
+                  ),
+                ),
+              new BigNumber(0),
             ),
-          new BigNumber(0),
-        );
-  const totalGasAmount = chunk(csvRows ?? [], TRANSFERS_PER_BATCH).reduce(
-    (acc, batch) => acc.plus(getBatchTransactionGas(batch.length)),
-    new BigNumber(0),
+    [token, batches],
+  );
+  const totalGasAmount: BigNumber | undefined = useMemo(
+    () =>
+      batches === undefined
+        ? undefined
+        : batches.reduce(
+            (acc, batch) => acc.plus(getBatchTransactionGas(batch.length)),
+            new BigNumber(0),
+          ),
+    [batches],
   );
 
   // Submit
@@ -176,7 +182,7 @@ export default function AirdropCard() {
     // State
     setCoinType(undefined);
 
-    setCsvRows(undefined);
+    setBatches(undefined);
     setCsvFilename("");
     setCsvFileSize("");
     (document.getElementById("csv-upload") as HTMLInputElement).value = "";
@@ -204,7 +210,11 @@ export default function AirdropCard() {
       return { isDisabled: true, title: "Select a token" };
 
     // CSV
-    if (csvRows === undefined)
+    if (
+      batches === undefined ||
+      totalTokenAmount === undefined ||
+      totalGasAmount === undefined
+    )
       return { isDisabled: true, title: "Upload a CSV file" };
 
     //
@@ -220,7 +230,7 @@ export default function AirdropCard() {
 
     if (
       getBalance(token.coinType).lt(
-        totalTokenAmount!.plus(isSui(token.coinType) ? totalGasAmount : 0),
+        totalTokenAmount.plus(isSui(token.coinType) ? totalGasAmount : 0),
       )
     )
       return { isDisabled: true, title: `Insufficient ${token.symbol}` };
@@ -234,7 +244,13 @@ export default function AirdropCard() {
   const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const onSubmitClick = async () => {
     if (submitButtonState.isDisabled) return;
-    if (!token || csvRows === undefined) return; // Should not happen
+    if (
+      token === undefined ||
+      batches === undefined ||
+      totalTokenAmount === undefined ||
+      totalGasAmount === undefined
+    )
+      return; // Should not happen
 
     try {
       if (!account?.publicKey || !address)
@@ -283,7 +299,7 @@ export default function AirdropCard() {
               [
                 {
                   ...token,
-                  amount: totalTokenAmount!.plus(
+                  amount: totalTokenAmount.plus(
                     isSui(token.coinType) ? totalGasAmount : 0,
                   ),
                 },
@@ -412,11 +428,11 @@ export default function AirdropCard() {
       }
 
       showSuccessToast(
-        `Airdropped ${formatToken(totalTokenAmount!, {
+        `Airdropped ${formatToken(totalTokenAmount, {
           dp: token.decimals,
           trimTrailingZeros: true,
-        })} ${token.symbol} to ${csvRows.length} ${
-          csvRows.length === 1 ? "address" : "addresses"
+        })} ${token.symbol} to ${batches.flat().length} ${
+          batches.flat().length === 1 ? "address" : "addresses"
         }`,
       );
     } catch (err) {
@@ -438,7 +454,7 @@ export default function AirdropCard() {
       <AirdropStepsDialog
         isOpen={isStepsDialogOpen}
         token={token}
-        batches={batches}
+        batches={batches ?? []}
         fundKeypairResult={fundKeypairResult}
         makeBatchTransferResults={makeBatchTransferResults}
         returnAllOwnedObjectsAndSuiToUserResult={
@@ -482,8 +498,14 @@ export default function AirdropCard() {
               isStepsDialogOpen
             }
             token={token}
-            csvRows={csvRows}
-            setCsvRows={setCsvRows}
+            csvRows={batches === undefined ? undefined : batches.flat()}
+            setCsvRows={(rows: AirdropRow[] | undefined) =>
+              setBatches(
+                rows === undefined
+                  ? undefined
+                  : chunk(rows, TRANSFERS_PER_BATCH),
+              )
+            }
             csvFilename={csvFilename}
             setCsvFilename={setCsvFilename}
             csvFileSize={csvFileSize}
@@ -495,9 +517,9 @@ export default function AirdropCard() {
           <div className="flex w-full flex-col gap-2">
             {/* Airdrop */}
             <Parameter label="Airdrop" isHorizontal>
-              {token !== undefined ? (
+              {token !== undefined && totalTokenAmount !== undefined ? (
                 <p className="text-p2 text-foreground">
-                  {formatToken(totalTokenAmount!, {
+                  {formatToken(totalTokenAmount, {
                     dp: token.decimals,
                     trimTrailingZeros: true,
                   })}{" "}
@@ -510,8 +532,10 @@ export default function AirdropCard() {
 
             {/* Recipients */}
             <Parameter label="Recipients" isHorizontal>
-              {csvRows !== undefined ? (
-                <p className="text-p2 text-foreground">{csvRows.length}</p>
+              {batches !== undefined ? (
+                <p className="text-p2 text-foreground">
+                  {batches.flat().length}
+                </p>
               ) : (
                 <p className="text-p2 text-foreground">--</p>
               )}
@@ -523,7 +547,7 @@ export default function AirdropCard() {
               isHorizontal
               labelEndDecorator={`${TRANSFERS_PER_BATCH} transfers per batch`}
             >
-              {csvRows !== undefined ? (
+              {batches !== undefined ? (
                 <p className="text-p2 text-foreground">{batches.length}</p>
               ) : (
                 <p className="text-p2 text-foreground">--</p>
@@ -532,7 +556,7 @@ export default function AirdropCard() {
 
             {/* Max gas fee */}
             <Parameter label="Max gas fee" isHorizontal>
-              {csvRows !== undefined ? (
+              {totalGasAmount !== undefined ? (
                 <p className="text-p2 text-foreground">
                   {formatToken(totalGasAmount, {
                     dp: appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE]
