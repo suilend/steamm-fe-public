@@ -501,7 +501,10 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             ) {
               throw new Error("timestamps cannot be undefined!");
             }
-            const historicalLPTokenValues: number[][] = await (
+            const historicalLPTokenValues: {
+              usdValue: number;
+              timestampS: number;
+            }[] = await (
               await fetch(
                 `${API_URL}/steamm/historical/lpTokenValue?` +
                   new URLSearchParams({
@@ -509,7 +512,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
                     endTimestampS: endTimestampS.toString(),
                     intervalS: intervalS.toString(),
                     poolId,
-                    useHistoricalPrice: false.toString(),
+                    useHistoricalPrice: true.toString(),
                   }).toString(),
               )
             ).json();
@@ -523,8 +526,8 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
                     (acc, d) => [
                       ...acc,
                       {
-                        timestampS: d[1],
-                        valueUsd: !isNaN(+d[0]) ? +d[0] : 0,
+                        timestampS: d.timestampS,
+                        valueUsd: !isNaN(+d.usdValue) ? +d.usdValue : 0,
                       },
                     ],
                     [] as ChartData[],

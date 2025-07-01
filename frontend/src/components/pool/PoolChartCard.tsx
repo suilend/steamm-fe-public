@@ -73,9 +73,7 @@ export default function PoolChartCard() {
             [period]: pool.prices[0]
               .multipliedBy(pool.balances[0])
               .plus(pool.prices[1].multipliedBy(pool.balances[1]))
-              .dividedBy(pool.lpSupply)
-              .dividedBy(2),
-            // why does this work???
+              .dividedBy(pool.lpSupply),
           }),
           {} as Record<ChartPeriod, BigNumber | undefined>,
         ),
