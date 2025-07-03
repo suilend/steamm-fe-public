@@ -151,6 +151,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
     pools: {
       volumeUsd: Record<ChartPeriod.ONE_DAY, Record<string, BigNumber>>;
       feesUsd: Record<ChartPeriod.ONE_DAY, Record<string, BigNumber>>;
+      aprPercentage: Record<ChartPeriod.ONE_DAY, Record<string, BigNumber>>;
     };
   }>({
     pools: {
@@ -158,6 +159,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         [ChartPeriod.ONE_DAY]: {},
       },
       feesUsd: {
+        [ChartPeriod.ONE_DAY]: {},
+      },
+      aprPercentage: {
         [ChartPeriod.ONE_DAY]: {},
       },
     },
@@ -172,6 +176,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           {
             volume24h: string;
             fees24h: string;
+            APR24h: string;
           }
         >;
       } = await res.json();
@@ -183,7 +188,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           volumeUsd: {
             [ChartPeriod.ONE_DAY]: Object.fromEntries(
               Object.entries(json.pools).map(
-                ([poolId, { volume24h, fees24h }]) => [
+                ([poolId, { volume24h, fees24h, APR24h }]) => [
                   poolId,
                   new BigNumber(volume24h),
                 ],
@@ -193,9 +198,21 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           feesUsd: {
             [ChartPeriod.ONE_DAY]: Object.fromEntries(
               Object.entries(json.pools).map(
-                ([poolId, { volume24h, fees24h }]) => [
+                ([poolId, { volume24h, fees24h, APR24h }]) => [
                   poolId,
                   new BigNumber(fees24h),
+                ],
+              ),
+            ),
+          },
+          aprPercentage: {
+            [ChartPeriod.ONE_DAY]: Object.fromEntries(
+              Object.entries(json.pools).map(
+                ([poolId, { volume24h, fees24h, APR24h }]) => [
+                  poolId,
+                  new BigNumber(APR24h)
+                    .minus(new BigNumber(1))
+                    .multipliedBy(new BigNumber(100)),
                 ],
               ),
             ),
@@ -211,6 +228,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             [ChartPeriod.ONE_DAY]: {},
           },
           feesUsd: {
+            [ChartPeriod.ONE_DAY]: {},
+          },
+          aprPercentage: {
             [ChartPeriod.ONE_DAY]: {},
           },
         },
@@ -545,15 +565,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             (acc, pool) => ({
               ...acc,
               [pool.id]: {
-                feesAprPercent: pool.tvlUsd.eq(0) // TODO: Use Average TVL (24h)
-                  ? new BigNumber(0)
-                  : (
-                      allStats.pools.feesUsd[ChartPeriod.ONE_DAY][pool.id] ??
-                      new BigNumber(0)
-                    )
-                      .div(pool.tvlUsd) // TODO: Use Average TVL (24h)
-                      .times(365)
-                      .times(100),
+                feesAprPercent:
+                  allStats.pools.aprPercentage[ChartPeriod.ONE_DAY][pool.id] ??
+                  new BigNumber(0),
               },
             }),
             {} as StatsContext["poolStats"]["aprPercent"][ChartPeriod.ONE_DAY],
