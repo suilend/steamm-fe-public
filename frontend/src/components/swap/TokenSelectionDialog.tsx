@@ -174,10 +174,7 @@ export default function TokenSelectionDialog({
         tokens: filteredBalanceTokens,
       },
       other: {
-        title:
-          filteredBalanceTokens.length > 0
-            ? "Other known assets"
-            : "Known assets",
+        title: filteredBalanceTokens.length > 0 ? "Other" : "Tokens",
         tokens: filteredOtherTokens,
       },
     }),
