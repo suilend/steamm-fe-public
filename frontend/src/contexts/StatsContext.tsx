@@ -151,7 +151,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
     pools: {
       volumeUsd: Record<ChartPeriod.ONE_DAY, Record<string, BigNumber>>;
       feesUsd: Record<ChartPeriod.ONE_DAY, Record<string, BigNumber>>;
-      aprPercentage: Record<ChartPeriod.ONE_DAY, Record<string, BigNumber>>;
+      aprPercent: Record<ChartPeriod.ONE_DAY, Record<string, BigNumber>>;
     };
   }>({
     pools: {
@@ -161,7 +161,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       feesUsd: {
         [ChartPeriod.ONE_DAY]: {},
       },
-      aprPercentage: {
+      aprPercent: {
         [ChartPeriod.ONE_DAY]: {},
       },
     },
@@ -205,14 +205,12 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
               ),
             ),
           },
-          aprPercentage: {
+          aprPercent: {
             [ChartPeriod.ONE_DAY]: Object.fromEntries(
               Object.entries(json.pools).map(
                 ([poolId, { volume24h, fees24h, APR24h }]) => [
                   poolId,
-                  new BigNumber(APR24h)
-                    .minus(new BigNumber(1))
-                    .multipliedBy(new BigNumber(100)),
+                  new BigNumber(APR24h).minus(1).times(100),
                 ],
               ),
             ),
@@ -230,7 +228,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           feesUsd: {
             [ChartPeriod.ONE_DAY]: {},
           },
-          aprPercentage: {
+          aprPercent: {
             [ChartPeriod.ONE_DAY]: {},
           },
         },
@@ -566,7 +564,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
               ...acc,
               [pool.id]: {
                 feesAprPercent:
-                  allStats.pools.aprPercentage[ChartPeriod.ONE_DAY][pool.id] ??
+                  allStats.pools.aprPercent[ChartPeriod.ONE_DAY][pool.id] ??
                   new BigNumber(0),
               },
             }),
