@@ -10,7 +10,7 @@ import {
 } from "react";
 
 import BigNumber from "bignumber.js";
-import { startOfDay, startOfHour } from "date-fns";
+import { startOfHour } from "date-fns";
 
 import { API_URL } from "@suilend/sui-fe";
 
@@ -27,6 +27,14 @@ const THREE_DAYS_S = ONE_DAY_S * 3;
 const SEVEN_DAYS_S = ONE_DAY_S * 7;
 const ONE_MONTH_S = ONE_DAY_S * 30;
 const THREE_MONTHS_S = ONE_MONTH_S * 3;
+
+const startOfDayUTC = (timestampMs: number): Date => {
+  const date = new Date(timestampMs);
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth();
+  const day = date.getUTCDate();
+  return new Date(Date.UTC(year, month, day));
+};
 
 export interface StatsContext {
   poolHistoricalStats: {
@@ -131,7 +139,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
     (() => {
       const nowMs = Date.now();
 
-      const dayStartMs = startOfDay(nowMs).getTime();
+      const dayStartMs = startOfDayUTC(nowMs).getTime();
       const hourStartMs = startOfHour(nowMs).getTime();
       const fifteenMinutesStartMs =
         hourStartMs +
