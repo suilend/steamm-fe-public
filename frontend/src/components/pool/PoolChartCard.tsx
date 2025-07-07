@@ -34,9 +34,6 @@ export default function PoolChartCard() {
         if (dataType === ChartDataType.TVL) return ChartType.LINE;
         return ChartType.BAR;
       },
-      getValueFormatter: (dataType: string) => {
-        return (value: number) => formatUsd(new BigNumber(value));
-      },
       dataTypeOptions: Object.values(ChartDataType).map((dataType) => ({
         id: dataType,
         name: chartDataTypeNameMap[dataType],
