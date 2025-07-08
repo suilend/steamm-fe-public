@@ -126,11 +126,7 @@ export default function BankCard({ bank }: BankCardProps) {
             .toFixed(0),
         });
       }
-      rebalanceBanks(
-        [bank].filter((b) => !isSui(b.coinType)),
-        steammClient,
-        transaction,
-      );
+      rebalanceBanks([bank], steammClient, transaction);
 
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
@@ -206,11 +202,7 @@ export default function BankCard({ bank }: BankCardProps) {
           .integerValue(BigNumber.ROUND_DOWN)
           .toString(),
       });
-      rebalanceBanks(
-        [bank].filter((b) => !isSui(b.coinType)),
-        steammClient,
-        transaction,
-      );
+      rebalanceBanks([bank], steammClient, transaction);
 
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
