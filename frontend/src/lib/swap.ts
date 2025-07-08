@@ -15,13 +15,15 @@ export const getQuoteRatio = (
 ) =>
   quote !== undefined &&
   !(
-    "in" in quote ? quote.in.amount : new BigNumber(quote.amountIn.toString())
+    "in" in quote // StandardizedQuote
+      ? quote.in.amount
+      : new BigNumber(quote.amountIn.toString())
   ).eq(0)
-    ? ("out" in quote
+    ? ("out" in quote // StandardizedQuote
         ? quote.out.amount
         : new BigNumber(quote.amountOut.toString()).div(10 ** outToken.decimals)
       ).div(
-        "in" in quote
+        "in" in quote // StandardizedQuote
           ? quote.in.amount
           : new BigNumber(quote.amountIn.toString()).div(
               10 ** inToken.decimals,
