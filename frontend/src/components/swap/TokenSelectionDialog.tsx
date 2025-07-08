@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { ClassValue } from "clsx";
-import { ChevronDown, Search, Wallet, X } from "lucide-react";
+import { ChevronDown, Search, Wallet } from "lucide-react";
 
 import {
   NORMALIZED_SEND_COINTYPE,
@@ -174,10 +174,7 @@ export default function TokenSelectionDialog({
         tokens: filteredBalanceTokens,
       },
       other: {
-        title:
-          filteredBalanceTokens.length > 0
-            ? "Other known assets"
-            : "Known assets",
+        title: filteredBalanceTokens.length > 0 ? "Other" : "Tokens",
         tokens: filteredOtherTokens,
       },
     }),
@@ -231,22 +228,11 @@ export default function TokenSelectionDialog({
       {/* Search */}
       <div className="relative z-[1] h-10 w-full shrink-0 rounded-md border bg-background transition-colors focus-within:border-focus">
         <Search className="pointer-events-none absolute left-4 top-3 z-[2] -mt-px h-4 w-4 text-secondary-foreground" />
-        {searchString !== "" && (
-          <button
-            className="group absolute right-2 top-1 z-[2] -mt-px flex h-8 w-8 flex-row items-center justify-center"
-            onClick={() => {
-              setSearchString("");
-              inputRef.current?.focus();
-            }}
-          >
-            <X className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
-          </button>
-        )}
         <input
           ref={inputRef}
           autoFocus={!isTouchscreen}
           className={cn(
-            "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] pl-10 text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground",
+            "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] pl-10 text-p2 text-foreground !shadow-none !outline-none placeholder:text-tertiary-foreground",
             searchString !== "" ? "pr-10" : "pr-4",
           )}
           type="text"
@@ -304,7 +290,7 @@ export default function TokenSelectionDialog({
             ))
         ) : (
           <p className="text-p2 text-tertiary-foreground">
-            {searchString ? `No matches for "${searchString}"` : "No tokens"}
+            {searchString ? `No results for "${searchString}"` : "No tokens"}
           </p>
         )}
       </div>

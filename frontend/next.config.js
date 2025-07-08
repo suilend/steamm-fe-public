@@ -8,18 +8,8 @@ module.exports = {
   transpilePackages: ["@suilend/sui-fe-next"],
   images: {
     remotePatterns: [
-      {
-        protocol: "http",
-        hostname: "**",
-        port: "",
-        pathname: "**",
-      },
-      {
-        protocol: "https",
-        hostname: "**",
-        port: "",
-        pathname: "**",
-      },
+      new URL("https://d29k09wtkr1a3e.cloudfront.net/steamm/**"),
+      new URL("https://d29k09wtkr1a3e.cloudfront.net/suilend/**"),
     ],
   },
   devIndicators: false,

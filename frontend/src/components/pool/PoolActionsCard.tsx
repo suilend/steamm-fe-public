@@ -237,7 +237,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
       new BigNumber(_value || 0)
         .div(smartMaxValues[index])
         .times(100)
-        .toFixed(1),
+        .toFixed(2),
     );
 
     setQuote(
@@ -279,7 +279,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
 
   // Value - slider
   const onSliderValueChange = (percent: string) => {
-    const formattedValue = formatPercentInputValue(percent, 1);
+    const formattedValue = formatPercentInputValue(percent, 2);
 
     const index = depositedIndexes.length === 1 ? depositedIndexes[0] : 0;
 
@@ -700,7 +700,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
 
             <input
               className={cn(
-                "relative z-[4] h-6 w-full min-w-0 appearance-none bg-[transparent] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground",
+                "relative z-[4] h-6 w-full min-w-0 appearance-none bg-[transparent] !shadow-none !outline-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground",
                 (+sliderValue === Infinity || isNaN(+sliderValue)) &&
                   "opacity-0",
               )}
@@ -720,7 +720,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
             <p className="text-p2 text-button-2-foreground">Max</p>
           </button>
 
-          <div className="w-20">
+          <div className="w-24">
             <PercentInput
               inputClassName="!text-p1 text-right pl-0"
               value={sliderValue}
@@ -808,7 +808,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
             ),
       ) as [string, string],
     );
-    setSliderValue(lpTokens.div(lpTokenTotalAmount).times(100).toFixed(1));
+    setSliderValue(lpTokens.div(lpTokenTotalAmount).times(100).toFixed(2));
 
     setQuote(
       [0, 1].reduce(
@@ -845,7 +845,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
         ),
       ) as [string, string],
     );
-    setSliderValue(formatPercentInputValue(_value, 1));
+    setSliderValue(formatPercentInputValue(_value, 2));
 
     setQuote(
       [0, 1].reduce(
@@ -1255,7 +1255,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
 
             <input
               className={cn(
-                "relative z-[4] h-6 w-full min-w-0 appearance-none bg-[transparent] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground",
+                "relative z-[4] h-6 w-full min-w-0 appearance-none bg-[transparent] !shadow-none !outline-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-[calc(16px/2)] [&::-webkit-slider-thumb]:bg-foreground",
                 (+sliderValue === Infinity || isNaN(+sliderValue)) &&
                   "opacity-0",
               )}
@@ -1275,7 +1275,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
             <p className="text-p2 text-button-2-foreground">Max</p>
           </button>
 
-          <div className="w-20">
+          <div className="w-24">
             <PercentInput
               inputClassName="!text-p1 text-right pl-0"
               value={sliderValue}
@@ -1825,15 +1825,18 @@ export default function PoolActionsCard({
   );
 
   // Tabs
-  const selectedAction =
-    queryParams[QueryParams.ACTION] &&
-    Object.values(Action).includes(queryParams[QueryParams.ACTION])
-      ? queryParams[QueryParams.ACTION]
-      : isCpmmOffsetPoolWithNoQuoteAssets
-        ? Action.SWAP
-        : pool.quoterId === QuoterId.ORACLE
-          ? Action.WITHDRAW
-          : Action.DEPOSIT;
+  const selectedAction = useMemo(
+    () =>
+      queryParams[QueryParams.ACTION] &&
+      Object.values(Action).includes(queryParams[QueryParams.ACTION])
+        ? queryParams[QueryParams.ACTION]
+        : isCpmmOffsetPoolWithNoQuoteAssets
+          ? Action.SWAP
+          : pool.quoterId === QuoterId.ORACLE
+            ? Action.WITHDRAW
+            : Action.DEPOSIT,
+    [queryParams, isCpmmOffsetPoolWithNoQuoteAssets, pool.quoterId],
+  );
   useEffect(() => {
     if (isCpmmOffsetPoolWithNoQuoteAssets) {
       if (queryParams[QueryParams.ACTION] !== Action.SWAP)
@@ -1857,7 +1860,7 @@ export default function PoolActionsCard({
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-md border px-4 py-5 max-sm:-mx-4 sm:w-full sm:px-5">
+    <div className="flex w-full flex-col gap-4 rounded-md border p-5">
       <div className="flex w-full flex-row justify-between">
         {/* Tabs */}
         <div className="flex flex-row">

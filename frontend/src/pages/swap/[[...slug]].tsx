@@ -36,6 +36,7 @@ import {
   useSettingsContext,
   useWalletContext,
 } from "@suilend/sui-fe-next";
+import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
@@ -113,6 +114,7 @@ export default function SwapPage() {
     ],
     [],
   );
+  const isTouchscreen = useIsTouchscreen();
 
   // CoinTypes
   const [inCoinType, outCoinType] = useMemo(() => {
@@ -594,21 +596,21 @@ export default function SwapPage() {
               />
             </div>
 
-            {(isFetchingQuote || quote) && (
-              <div className="flex w-full flex-col gap-2">
-                <div className="flex w-full flex-row items-center justify-between">
-                  <ExchangeRateParameter
-                    className="w-max"
-                    labelClassName="text-secondary-foreground"
-                    inToken={getToken(inCoinType, inCoinMetadata)}
-                    inPrice={inPoolPrice}
-                    outToken={getToken(outCoinType, outCoinMetadata)}
-                    outPrice={outPoolPrice}
-                    isFetchingQuote={isFetchingQuote}
-                    quote={quote}
-                    isInverted
-                    label=""
-                  />
+            <div className="flex w-full flex-col gap-4">
+              <div className="relative flex w-full min-w-0 flex-col items-center gap-2">
+                <CoinInput
+                  className="relative z-[1]"
+                  autoFocus={!isTouchscreen}
+                  token={getToken(inCoinType, inCoinMetadata)}
+                  value={value}
+                  usdValue={inUsdValue}
+                  onChange={(value) => onValueChange(value)}
+                  onMaxAmountClick={() => onBalanceClick()}
+                  tokens={tokens}
+                  onSelectToken={(token) =>
+                    onSelectToken(token, TokenDirection.IN)
+                  }
+                />
 
                   {/* {isFetchingQuote || !quote ? (
                       <Skeleton className="h-[21px] w-16" />

@@ -5,7 +5,7 @@ import { useLocalStorage } from "usehooks-ts";
 import PointsLeaderboardRow from "@/components/points/PointsLeaderboardRow";
 import HeaderColumn, { SortDirection } from "@/components/TableHeaderColumn";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LeaderboardRowData } from "@/contexts/PointsContext";
+import { PointsLeaderboardRowData } from "@/contexts/LeaderboardContext";
 import { cn } from "@/lib/utils";
 
 export type Column = "rank" | "address" | "totalPoints";
@@ -13,7 +13,7 @@ type SortableColumn = "totalPoints";
 
 interface PointsLeaderboardTableProps {
   tableId: string;
-  rows?: LeaderboardRowData[];
+  rows?: PointsLeaderboardRowData[];
   skeletonRows?: number;
   disableSorting?: boolean;
 }
@@ -77,7 +77,6 @@ export default function PointsLeaderboardTable({
 
   const sortedRows = useMemo(() => {
     if (rows === undefined || sortState === undefined) return rows;
-    if (disableSorting) return rows;
 
     return rows.slice().sort((a, b) => {
       if (sortState.column === "totalPoints") {
@@ -88,7 +87,7 @@ export default function PointsLeaderboardTable({
 
       return 0; // Should never reach here
     });
-  }, [rows, disableSorting, sortState]);
+  }, [rows, sortState]);
 
   // Pagination
   const pageSize = 100;
@@ -141,7 +140,7 @@ export default function PointsLeaderboardTable({
   );
 
   return (
-    <div className="w-full">
+    <div className="relative w-full">
       {/* Table */}
       <div className="relative z-[2] w-full overflow-hidden rounded-md">
         <div className="pointer-events-none absolute inset-0 z-[2] rounded-md border" />
@@ -167,7 +166,7 @@ export default function PointsLeaderboardTable({
 
                 <HeaderColumn<Column, SortableColumn>
                   id="totalPoints"
-                  sortState={disableSorting ? undefined : sortState}
+                  sortState={sortState}
                   toggleSortByColumn={
                     disableSorting ? undefined : toggleSortByColumn
                   }
@@ -213,7 +212,7 @@ export default function PointsLeaderboardTable({
 
       {/* Pagination */}
       {pageIndexes && pageIndexes.length > 1 && (
-        <div className="relative z-[1] -mt-4 flex w-full flex-row items-center justify-center gap-2 rounded-b-md bg-border/25 pb-4 pt-8">
+        <div className="relative z-[1] mt-4 flex w-full flex-row items-center justify-center gap-2">
           {pageIndexes.map((_pageIndex) => (
             <button
               key={_pageIndex}

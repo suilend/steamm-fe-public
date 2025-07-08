@@ -59,14 +59,14 @@ export default function SettingsDialog() {
           <div className="flex flex-1 flex-col gap-1">
             <SelectPopover
               options={RPCS}
-              value={rpc.id}
+              values={[rpc.id]}
               onChange={(id) => setRpcId(id as RpcId)}
             />
 
             {rpc.id === RpcId.CUSTOM && (
               <TextInput
                 className="border bg-background focus-within:border-focus focus-within:bg-background focus-within:shadow-none"
-                autoFocus
+                autoFocus={customRpcUrl === ""}
                 value={customRpcUrl}
                 onChange={setCustomRpcUrl}
                 onBlur={() => setRpcUrl(customRpcUrl)}
@@ -83,7 +83,7 @@ export default function SettingsDialog() {
         <div className="flex-1">
           <SelectPopover
             options={EXPLORERS}
-            value={explorer.id}
+            values={[explorer.id]}
             onChange={(id) => setExplorerId(id as ExplorerId)}
           />
         </div>
@@ -101,7 +101,7 @@ export default function SettingsDialog() {
         <div className="relative flex-1">
           <div className="relative z-[1] h-10 w-full rounded-md border bg-background transition-colors focus-within:border-focus">
             <input
-              className="h-full w-full min-w-0 !border-0 !bg-[transparent] px-3 text-p1 text-foreground !outline-0 placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="h-full w-full min-w-0 !border-0 !bg-[transparent] px-3 text-p1 text-foreground !shadow-none !outline-none placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               type="number"
               placeholder=""
               value={gasBudget}

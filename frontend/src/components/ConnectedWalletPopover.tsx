@@ -1,7 +1,12 @@
-import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 
-import { ChevronDown, ChevronUp, VenetianMask } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  VenetianMask,
+} from "lucide-react";
 
 import { formatAddress } from "@suilend/sui-fe";
 import { useSettingsContext, useWalletContext } from "@suilend/sui-fe-next";
@@ -10,6 +15,7 @@ import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import OpenUrlNewTab from "@/components/OpenUrlNewTab";
 import Popover from "@/components/Popover";
 import Tooltip from "@/components/Tooltip";
+import { PORTFOLIO_URL } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 export default function ConnectedWalletPopover() {
@@ -41,17 +47,17 @@ export default function ConnectedWalletPopover() {
         maxWidth: 280,
       }}
       trigger={
-        <button className="group flex h-10 max-w-28 flex-row items-center gap-2 rounded-md border bg-card px-3 md:max-w-40">
+        <button className="group flex h-10 w-full min-w-24 max-w-max flex-row items-center gap-2 rounded-md bg-card px-3">
           {isImpersonating ? (
             <VenetianMask className="h-4 w-4 shrink-0 text-secondary-foreground" />
           ) : wallet?.iconUrl ? (
-            <Image
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
               className="h-4 w-4 min-w-4 shrink-0"
               src={wallet.iconUrl}
               alt={`${wallet.name} logo`}
               width={16}
               height={16}
-              quality={100}
             />
           ) : undefined}
 
@@ -101,16 +107,28 @@ export default function ConnectedWalletPopover() {
           </div>
         </div>
 
-        {hasDisconnect && (
-          <button
-            className="group flex h-10 w-full flex-row items-center rounded-md border px-3 transition-colors hover:bg-border/50"
-            onClick={disconnectWallet}
+        <div className="flex w-full flex-col gap-1">
+          <Link
+            className="group flex h-10 w-full flex-row items-center justify-between rounded-md border px-3 transition-colors hover:bg-border/50"
+            href={PORTFOLIO_URL}
           >
             <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
-              Disconnect
+              Portfolio
             </p>
-          </button>
-        )}
+            <ChevronRight className="h-4 w-4 text-secondary-foreground group-hover:text-foreground" />
+          </Link>
+          {hasDisconnect && (
+            <button
+              className="group flex h-10 w-full flex-row items-center rounded-md border px-3 transition-colors hover:bg-border/50"
+              onClick={disconnectWallet}
+            >
+              <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
+                Disconnect
+              </p>
+            </button>
+          )}
+        </div>
+
         {hasWallets && (
           <div className="flex w-full flex-col gap-1">
             {accounts.map((a) => (

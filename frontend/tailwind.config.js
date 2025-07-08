@@ -54,26 +54,6 @@ module.exports = {
       gold: "hsl(var(--gold))",
       silver: "hsl(var(--silver))",
       bronze: "hsl(var(--bronze))",
-
-      a1: "hsl(var(--a1))",
-      "a1-active": "hsl(var(--a1-active))",
-      "a1-disabled": "hsl(var(--a1-disabled))",
-
-      a2: "hsl(var(--a2))",
-      "a2-active": "hsl(var(--a2-active))",
-      "a2-disabled": "hsl(var(--a2-disabled))",
-
-      a3: "hsl(var(--a3))",
-      "a3-active": "hsl(var(--a3-active))",
-      "a3-disabled": "hsl(var(--a3-disabled))",
-
-      a4: "hsl(var(--a4))",
-      "a4-active": "hsl(var(--a4-active))",
-      "a4-disabled": "hsl(var(--a4-disabled))",
-
-      a5: "hsl(var(--a5))",
-      "a5-active": "hsl(var(--a5-active))",
-      "a5-disabled": "hsl(var(--a5-disabled))",
     },
     borderRadius: {
       sm: "4px",

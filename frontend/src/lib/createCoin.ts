@@ -12,8 +12,9 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 
-import { keypairSignExecuteAndWaitForTransaction } from "@/lib/keypair";
-import { LAUNCH_TOKEN_PACKAGE_ID } from "@/lib/launchToken";
+import { keypairSignExecuteAndWaitForTransaction } from "@suilend/sui-fe";
+
+import { CREATE_TOKEN_PACKAGE_ID } from "@/lib/createToken";
 
 export const generate_bytecode = (
   module: string,
@@ -23,7 +24,7 @@ export const generate_bytecode = (
   description: string,
   iconUrl: string,
   decimals?: number,
-  options?: { isLaunchToken?: boolean },
+  options?: { isCreateToken?: boolean },
 ): Uint8Array<ArrayBufferLike> => {
   console.log("[generate_bytecode] Generating bytecode", {
     module,
@@ -36,7 +37,7 @@ export const generate_bytecode = (
   });
 
   const bytecode = Buffer.from(
-    !options?.isLaunchToken
+    !options?.isCreateToken
       ? "oRzrCwYAAAAKAQAMAgweAyonBFEIBVlMB6UBywEI8AJgBtADXQqtBAUMsgQoABABCwIGAhECEgITAAICAAEBBwEAAAIADAEAAQIDDAEAAQQEAgAFBQcAAAkAAQABDwUGAQACBwgJAQIDDAUBAQwDDQ0BAQwEDgoLAAUKAwQAAQQCBwQMAwICCAAHCAQAAQsCAQgAAQoCAQgFAQkAAQsBAQkAAQgABwkAAgoCCgIKAgsBAQgFBwgEAgsDAQkACwIBCQABBggEAQUBCwMBCAACCQAFDENvaW5NZXRhZGF0YQZPcHRpb24IVEVNUExBVEULVHJlYXN1cnlDYXAJVHhDb250ZXh0A1VybARjb2luD2NyZWF0ZV9jdXJyZW5jeQtkdW1teV9maWVsZARpbml0FW5ld191bnNhZmVfZnJvbV9ieXRlcwZvcHRpb24TcHVibGljX3NoYXJlX29iamVjdA9wdWJsaWNfdHJhbnNmZXIGc2VuZGVyBHNvbWUIdGVtcGxhdGUIdHJhbnNmZXIKdHhfY29udGV4dAN1cmwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAQkKAgUEVE1QTAoCDg1UZW1wbGF0ZSBDb2luCgIaGVRlbXBsYXRlIENvaW4gRGVzY3JpcHRpb24KAiEgaHR0cHM6Ly9leGFtcGxlLmNvbS90ZW1wbGF0ZS5wbmcAAgEIAQAAAAACEgsABwAHAQcCBwMHBBEGOAAKATgBDAILAS4RBTgCCwI4AwIA="
       : "oRzrCwYAAAAKAQAMAgwYAyQhBEUGBUtDB44BxgEI1AJgBrQDXQqRBAUMlgQmAA0BBQEPARABEQIOAAECAAEADAEAAQECDAEAAQMDAgAEBAcAAAgAAQACCgwBAQwCCwsBAQwDDAgJAAQJAwQABQYGBwECBQUCCgECAggABwgDAAELAQEIAAEKAgEIBAEIAAcJAAIKAgoCCgIIBAcIAwILAgEJAAsBAQkAAQYIAwEFAQsCAQgAAgkABQEJAAxDb2luTWV0YWRhdGEIVEVNUExBVEULVHJlYXN1cnlDYXAJVHhDb250ZXh0A1VybARjb2luD2NyZWF0ZV9jdXJyZW5jeQtkdW1teV9maWVsZARpbml0FW5ld191bnNhZmVfZnJvbV9ieXRlcxNwdWJsaWNfc2hhcmVfb2JqZWN0D3B1YmxpY190cmFuc2ZlcgZzZW5kZXIIdGVtcGxhdGUNdG9rZW5fZW1pdHRlcgh0cmFuc2Zlcgp0eF9jb250ZXh0A3VybAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAL0BUtMln6mQXNFP1k6DsmMtqo1FjXLxBL0/fX4BLuY2wIBCQoCBQRUTVBMCgIODVRlbXBsYXRlIENvaW4KAhoZVGVtcGxhdGUgQ29pbiBEZXNjcmlwdGlvbgoCISBodHRwczovL2V4YW1wbGUuY29tL3RlbXBsYXRlLnBuZwACAQcBAAAAAAIRCwAHAAcBBwIHAwcEEQQKATgADAILAS4RAzgBCwI4AgIA",
     "base64",
@@ -100,7 +101,7 @@ export const createCoin = async (
   bytecode: Uint8Array<ArrayBufferLike>,
   keypair: Ed25519Keypair,
   suiClient: SuiClient,
-  options?: { isLaunchToken?: boolean },
+  options?: { isCreateToken?: boolean },
 ): Promise<CreateCoinResult> => {
   console.log("[createCoin] Creating coin");
 
@@ -109,12 +110,12 @@ export const createCoin = async (
 
   const [upgradeCap] = transaction.publish({
     modules: [[...bytecode]],
-    dependencies: !options?.isLaunchToken
+    dependencies: !options?.isCreateToken
       ? [normalizeSuiAddress("0x1"), normalizeSuiAddress("0x2")]
       : [
           normalizeSuiAddress("0x1"),
           normalizeSuiAddress("0x2"),
-          normalizeSuiAddress(LAUNCH_TOKEN_PACKAGE_ID),
+          normalizeSuiAddress(CREATE_TOKEN_PACKAGE_ID),
         ],
   });
   transaction.transferObjects(

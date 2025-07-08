@@ -1,19 +1,19 @@
 import { useMemo } from "react";
 
-import { Token } from "@suilend/sui-fe";
-
-import Dialog from "@/components/Dialog";
-import Step from "@/components/Step";
-import { Batch, MakeBatchTransferResult } from "@/lib/airdrop";
 import {
   FundKeypairResult,
   ReturnAllOwnedObjectsAndSuiToUserResult,
-} from "@/lib/keypair";
+  Token,
+} from "@suilend/sui-fe";
+
+import Dialog from "@/components/Dialog";
+import Step from "@/components/Step";
+import { AirdropRow, MakeBatchTransferResult } from "@/lib/airdrop";
 
 interface AirdropStepsDialogProps {
   isOpen: boolean;
   token?: Token;
-  batches: Batch[];
+  batches?: AirdropRow[][];
   fundKeypairResult: FundKeypairResult | undefined;
   makeBatchTransferResults: MakeBatchTransferResult[] | undefined;
   returnAllOwnedObjectsAndSuiToUserResult:
@@ -35,7 +35,7 @@ export default function AirdropStepsDialog({
     if (fundKeypairResult === undefined) return 1;
     if (
       makeBatchTransferResults === undefined ||
-      makeBatchTransferResults.length !== batches.length
+      makeBatchTransferResults.length !== (batches ?? []).length
     )
       return 2;
     if (returnAllOwnedObjectsAndSuiToUserResult === undefined) return 3;
@@ -59,7 +59,7 @@ export default function AirdropStepsDialog({
         title: {
           children: ["Airdrop", token?.symbol].filter(Boolean).join(" "),
         },
-        description: "Don't close the window or refresh the page",
+        description: "Don't close this window or refresh the page",
         showCloseButton: !returnAllOwnedObjectsAndSuiToUserResult
           ? false
           : true,
@@ -83,8 +83,8 @@ export default function AirdropStepsDialog({
               title="Airdrop"
               isCompleted={currentStep > 2}
               isCurrent={currentStep === 2}
-              subSteps={batches.map((batch, index) => {
-                const prevAddressCount = batches
+              subSteps={(batches ?? []).map((batch, index) => {
+                const prevAddressCount = (batches ?? [])
                   .slice(0, index)
                   .reduce((acc, batch) => acc + batch.length, 0);
 

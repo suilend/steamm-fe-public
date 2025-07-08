@@ -1,157 +1,104 @@
-import { useRouter } from "next/router";
 import { useMemo } from "react";
 
 import BigNumber from "bignumber.js";
 
 import { formatUsd } from "@suilend/sui-fe";
-import { shallowPushQuery } from "@suilend/sui-fe-next";
 
 import HistoricalDataChart from "@/components/HistoricalDataChart";
-import NoDataIcon from "@/components/icons/NoDataIcon";
-import { Skeleton } from "@/components/ui/skeleton";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
-import { ChartConfig, ChartType, chartStatNameMap } from "@/lib/chart";
-import { cn } from "@/lib/utils";
-
-enum ChartStat {
-  TVL = "tvl",
-  VOLUME = "volume",
-  FEES = "fees",
-}
-
-enum QueryParams {
-  CHART_STAT = "chart",
-}
+import {
+  ChartConfig,
+  ChartData,
+  ChartDataType,
+  ChartPeriod,
+  ChartType,
+  chartDataTypeNameMap,
+} from "@/lib/chart";
 
 export default function PoolChartCard() {
-  const router = useRouter();
-  const queryParams = {
-    [QueryParams.CHART_STAT]: router.query[QueryParams.CHART_STAT] as
-      | ChartStat
-      | undefined,
-  };
-
   const { poolHistoricalStats, poolStats } = useStatsContext();
 
-  const { pool } = usePoolContext();
+  const {
+    selectedChartDataType,
+    onSelectedChartDataTypeChange,
+    selectedChartPeriod,
+    onSelectedChartPeriodChange,
+    pool,
+  } = usePoolContext();
 
   // Chart
-  const chartConfigMap: Record<ChartStat, ChartConfig> = useMemo(
+  const chartConfig: ChartConfig = useMemo(
     () => ({
-      [ChartStat.TVL]: {
-        title: chartStatNameMap[ChartStat.TVL],
-        value: formatUsd(pool.tvlUsd),
-        chartType: ChartType.LINE,
-        data: poolHistoricalStats.tvlUsd_7d[pool.id],
-        dataPeriodDays: 7,
-        formatValue: (value) => formatUsd(new BigNumber(value)),
+      getChartType: (dataType: string) => {
+        if (dataType === ChartDataType.TVL) return ChartType.LINE;
+        return ChartType.BAR;
       },
-      [ChartStat.VOLUME]: {
-        title: chartStatNameMap[ChartStat.VOLUME],
-        value:
-          poolStats.volumeUsd_7d[pool.id] === undefined ||
-          poolHistoricalStats.volumeUsd_7d[pool.id] === undefined
-            ? undefined
-            : poolHistoricalStats.volumeUsd_7d[pool.id].every(
-                  (d) => d.volumeUsd_7d === 0,
-                )
-              ? "--"
-              : formatUsd(poolStats.volumeUsd_7d[pool.id]),
-        valuePeriodDays: 7,
-        chartType: ChartType.BAR,
-        data: poolHistoricalStats.volumeUsd_7d[pool.id],
-        dataPeriodDays: 7,
-        formatValue: (value) => formatUsd(new BigNumber(value)),
+      dataTypeOptions: Object.values(ChartDataType).map((dataType) => ({
+        id: dataType,
+        name: chartDataTypeNameMap[dataType],
+      })),
+      totalMap: {
+        [ChartDataType.TVL]: Object.values(ChartPeriod).reduce(
+          (acc, period) => ({
+            ...acc,
+            [period]: pool.tvlUsd,
+          }),
+          {} as Record<ChartPeriod, BigNumber | undefined>,
+        ),
+        [ChartDataType.VOLUME]: Object.values(ChartPeriod).reduce(
+          (acc, period) => ({
+            ...acc,
+            [period]: poolStats.volumeUsd[period][pool.id],
+          }),
+          {} as Record<ChartPeriod, BigNumber | undefined>,
+        ),
+        [ChartDataType.FEES]: Object.values(ChartPeriod).reduce(
+          (acc, period) => ({
+            ...acc,
+            [period]: poolStats.feesUsd[period][pool.id],
+          }),
+          {} as Record<ChartPeriod, BigNumber | undefined>,
+        ),
       },
-      [ChartStat.FEES]: {
-        title: chartStatNameMap[ChartStat.FEES],
-        value:
-          poolStats.feesUsd_7d[pool.id] === undefined ||
-          poolHistoricalStats.feesUsd_7d[pool.id] === undefined
-            ? undefined
-            : poolHistoricalStats.feesUsd_7d[pool.id].every(
-                  (d) => d.feesUsd_7d === 0,
-                )
-              ? "--"
-              : formatUsd(poolStats.feesUsd_7d[pool.id]),
-        valuePeriodDays: 7,
-        chartType: ChartType.BAR,
-        dataPeriodDays: 7,
-        data: poolHistoricalStats.feesUsd_7d[pool.id],
-        formatValue: (value) => formatUsd(new BigNumber(value)),
+      dataMap: {
+        [ChartDataType.TVL]: Object.values(ChartPeriod).reduce(
+          (acc, period) => ({
+            ...acc,
+            [period]: poolHistoricalStats.tvlUsd[period][pool.id],
+          }),
+          {} as Record<ChartPeriod, ChartData[] | undefined>,
+        ),
+        [ChartDataType.VOLUME]: Object.values(ChartPeriod).reduce(
+          (acc, period) => ({
+            ...acc,
+            [period]: poolHistoricalStats.volumeUsd[period][pool.id],
+          }),
+          {} as Record<ChartPeriod, ChartData[] | undefined>,
+        ),
+        [ChartDataType.FEES]: Object.values(ChartPeriod).reduce(
+          (acc, period) => ({
+            ...acc,
+            [period]: poolHistoricalStats.feesUsd[period][pool.id],
+          }),
+          {} as Record<ChartPeriod, ChartData[] | undefined>,
+        ),
       },
     }),
-    [
-      pool.tvlUsd,
-      poolHistoricalStats.tvlUsd_7d,
-      pool.id,
-      poolStats.volumeUsd_7d,
-      poolHistoricalStats.volumeUsd_7d,
-      poolStats.feesUsd_7d,
-      poolHistoricalStats.feesUsd_7d,
-    ],
-  );
-
-  const selectedChartStat =
-    queryParams[QueryParams.CHART_STAT] &&
-    Object.values(ChartStat).includes(queryParams[QueryParams.CHART_STAT])
-      ? queryParams[QueryParams.CHART_STAT]
-      : ChartStat.TVL;
-  const onSelectedChartStatChange = (chartStat: ChartStat) => {
-    shallowPushQuery(router, {
-      ...router.query,
-      [QueryParams.CHART_STAT]: chartStat,
-    });
-  };
-
-  const chartConfig = useMemo(
-    () => chartConfigMap[selectedChartStat],
-    [chartConfigMap, selectedChartStat],
+    [pool.tvlUsd, poolStats, pool.id, poolHistoricalStats],
   );
 
   return (
-    <div className="relative rounded-md border px-4 py-5 max-sm:-mx-4 sm:w-full sm:px-5">
+    <div className="relative w-full rounded-md border p-5">
       <HistoricalDataChart
-        className="relative z-[1]"
-        topLeftClassName="max-sm:gap-2"
-        titleClassName="max-sm:!h-6"
-        title={chartConfig.title}
-        value={chartConfig.value}
-        valuePeriodDays={chartConfig.valuePeriodDays}
-        chartType={chartConfig.chartType}
-        data={chartConfig.data}
-        dataPeriodDays={chartConfig.dataPeriodDays}
-        ticksXSm={3}
-        formatValue={chartConfig.formatValue}
-        formatCategory={(category) => category}
+        topSelectsClassName="-mx-5 px-5"
+        selectedDataType={selectedChartDataType}
+        onSelectedDataTypeChange={onSelectedChartDataTypeChange}
+        selectedPeriod={selectedChartPeriod}
+        onSelectedPeriodChange={onSelectedChartPeriodChange}
+        isFullWidth
+        {...chartConfig}
       />
-
-      <div className="absolute left-4 top-5 z-[2] flex flex-row items-center gap-1 bg-background sm:left-auto sm:right-5">
-        {Object.values(ChartStat).map((chartStat) => (
-          <button
-            key={chartStat}
-            className={cn(
-              "group flex h-6 flex-row items-center rounded-md border px-2 transition-colors",
-              selectedChartStat === chartStat
-                ? "cursor-default bg-border"
-                : "hover:bg-border/50",
-            )}
-            onClick={() => onSelectedChartStatChange(chartStat)}
-          >
-            <p
-              className={cn(
-                "!text-p2 transition-colors sm:!text-p3",
-                selectedChartStat === chartStat
-                  ? "text-foreground"
-                  : "text-secondary-foreground group-hover:text-foreground",
-              )}
-            >
-              {chartStatNameMap[chartStat]}
-            </p>
-          </button>
-        ))}
-      </div>
     </div>
   );
 }

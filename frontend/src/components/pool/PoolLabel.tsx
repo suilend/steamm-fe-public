@@ -1,6 +1,6 @@
 import { ClassValue } from "clsx";
 
-import { ParsedPool } from "@suilend/steamm-sdk";
+import { ParsedPool, QuoterId } from "@suilend/steamm-sdk";
 
 import PoolTypeTag from "@/components/pool/PoolTypeTag";
 import Tag from "@/components/Tag";
@@ -38,7 +38,7 @@ export default function PoolLabel({
   return (
     <div
       className={cn(
-        "flex flex-row",
+        "flex h-max flex-row",
         !wrap && "w-max shrink-0",
         isSmall ? "gap-2" : "gap-3",
         className,
@@ -87,10 +87,18 @@ export default function PoolLabel({
         </div>
 
         <div className="flex flex-row items-center gap-px">
-          <PoolTypeTag className="rounded-r-[0] pr-2" pool={pool} />
-          <Tag className="rounded-l-[0] pl-2">
-            {formatFeeTier(pool.feeTierPercent)}
-          </Tag>
+          <PoolTypeTag
+            className={cn(
+              ![QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId) &&
+                "rounded-r-[0] pr-2",
+            )}
+            pool={pool}
+          />
+          {![QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId) && (
+            <Tag className="rounded-l-[0] pl-2">
+              {formatFeeTier(pool.feeTierPercent)}
+            </Tag>
+          )}
         </div>
       </div>
     </div>

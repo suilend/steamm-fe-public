@@ -17,7 +17,7 @@ export default function NavPopover() {
   const Icon = isOpen ? X : Menu;
 
   // Items
-  const navItems = useNavItems();
+  const navItems = useNavItems(true);
 
   return (
     <Popover

@@ -24,7 +24,7 @@ export default function PointsHeader() {
 
           <div className="relative z-[2] flex h-full w-full flex-col items-center justify-center">
             <h1 className="text-center text-[36px] font-medium text-foreground md:text-[48px]">
-              STEAMM Points
+              Leaderboard
             </h1>
           </div>
         </div>

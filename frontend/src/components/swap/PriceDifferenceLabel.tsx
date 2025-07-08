@@ -33,7 +33,7 @@ export default function PriceDifferenceLabel({
   const priceDifferencePercent =
     quoteRatio === undefined || cachedUsdPriceRatio === undefined
       ? undefined
-      : cachedUsdPriceRatio == null
+      : cachedUsdPriceRatio === null
         ? null
         : BigNumber.max(
             0,

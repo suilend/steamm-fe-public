@@ -7,6 +7,7 @@ import ConnectWalletButton from "@/components/ConnectWalletButton";
 import Container from "@/components/Container";
 import Logo from "@/components/Logo";
 import NavPopover from "@/components/NavPopover";
+import SearchDialog from "@/components/SearchDialog";
 import SettingsDialog from "@/components/SettingsDialog";
 import { useUserContext } from "@/contexts/UserContext";
 import useNavItems from "@/hooks/useNavItems";
@@ -45,7 +46,7 @@ export default function Nav() {
       >
         <Container>
           <div
-            className="flex w-full flex-row items-center justify-between gap-4"
+            className="flex w-full flex-row items-center justify-between gap-4 md:gap-8"
             style={{ height: `${NAV_HEIGHT}px` }}
           >
             {/* Start */}
@@ -85,7 +86,11 @@ export default function Nav() {
             </div>
 
             {/* End */}
-            <div className="flex min-w-0 flex-row items-center gap-4">
+            <div className="flex min-w-0 flex-1 flex-row items-center justify-end gap-3">
+              <div className="flex flex-1 flex-row justify-end max-md:-mr-1 md:mr-1">
+                <SearchDialog />
+              </div>
+
               <div className="flex shrink-0 flex-row items-center gap-2">
                 <button
                   className="group flex h-5 w-5 flex-row items-center justify-center"
@@ -93,12 +98,12 @@ export default function Nav() {
                 >
                   <RotateCw className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
                 </button>
-
                 <SettingsDialog />
-                <ConnectWalletButton />
               </div>
 
-              <div className="lg:hidden">
+              <ConnectWalletButton />
+
+              <div className="shrink-0 lg:hidden">
                 <NavPopover />
               </div>
             </div>

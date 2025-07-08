@@ -1,11 +1,12 @@
-import NextImage from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 
 import { ClassValue } from "clsx";
 
 import { Token } from "@suilend/sui-fe";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLoadedAppContext } from "@/contexts/AppContext";
+import { isInvalidIconUrl } from "@/lib/tokens";
 import { cn } from "@/lib/utils";
 
 interface TokenLogoProps {
@@ -15,26 +16,15 @@ interface TokenLogoProps {
 }
 
 export default function TokenLogo({ className, token, size }: TokenLogoProps) {
-  const loadedCoinTypesRef = useRef<string[]>([]);
-  const [hasErrorMap, setHasErrorMap] = useState<Record<string, boolean>>({});
+  const { tokenIconImageLoadErrorMap, loadTokenIconImage } =
+    useLoadedAppContext();
 
   useEffect(() => {
     if (!token) return;
-    if (!token.iconUrl || token.iconUrl === "" || token.iconUrl === "TODO")
-      return;
+    if (isInvalidIconUrl(token.iconUrl)) return;
 
-    if (loadedCoinTypesRef.current.includes(token.coinType)) return;
-    loadedCoinTypesRef.current.push(token.coinType);
-
-    const image = new Image();
-    image.src = token.iconUrl;
-    image.onerror = () => {
-      console.error(
-        `Failed to load iconUrl for ${token.coinType}: ${token.iconUrl}`,
-      );
-      setHasErrorMap((prev) => ({ ...prev, [token.coinType]: true }));
-    };
-  }, [token]);
+    loadTokenIconImage(token);
+  }, [token, loadTokenIconImage]);
 
   if (!token)
     return (
@@ -44,10 +34,8 @@ export default function TokenLogo({ className, token, size }: TokenLogoProps) {
       />
     );
   if (
-    !token.iconUrl ||
-    token.iconUrl === "" ||
-    token.iconUrl === "TODO" ||
-    hasErrorMap[token.coinType]
+    isInvalidIconUrl(token.iconUrl) ||
+    tokenIconImageLoadErrorMap[token.coinType]
   )
     return (
       <div
@@ -56,17 +44,14 @@ export default function TokenLogo({ className, token, size }: TokenLogoProps) {
       />
     );
   return (
-    <NextImage
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       className={cn("shrink-0 rounded-[50%]", className)}
-      src={token.iconUrl}
+      src={token.iconUrl!}
       alt={`${token.symbol} logo`}
       width={size}
       height={size}
       style={{ width: size, height: size }}
-      quality={100}
-      onError={() =>
-        setHasErrorMap((prev) => ({ ...prev, [token.coinType]: true }))
-      }
     />
   );
 }

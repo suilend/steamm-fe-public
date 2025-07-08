@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { Wallet, WalletType, useWalletContext } from "@suilend/sui-fe-next";
@@ -43,15 +41,16 @@ function WalletItem({ wallet }: WalletItemProps) {
     >
       <div className="flex flex-row items-center gap-2">
         {wallet.iconUrl ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            className="h-5 w-5 min-w-5 shrink-0"
             src={wallet.iconUrl}
             alt={`${wallet.name} logo`}
-            width={16}
-            height={16}
-            quality={100}
+            width={20}
+            height={20}
           />
         ) : (
-          <div className="h-4 w-4" />
+          <div className="h-5 w-5" />
         )}
 
         <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
@@ -88,7 +87,7 @@ export default function ConnectWalletPopover() {
         maxWidth: 280,
       }}
       trigger={
-        <button className="group flex h-10 flex-row items-center gap-2 rounded-md border bg-card px-3">
+        <button className="group flex h-10 w-full min-w-24 max-w-max flex-row items-center gap-2 rounded-md bg-card px-3">
           <p
             className={cn(
               "!text-p2 transition-colors",
@@ -97,7 +96,7 @@ export default function ConnectWalletPopover() {
                 : "text-secondary-foreground group-hover:text-foreground",
             )}
           >
-            Connect<span className="max-md:hidden"> wallet</span>
+            Connect<span className="max-sm:hidden"> wallet</span>
           </p>
           <Chevron
             className={cn(
