@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
-import { formatDate } from "date-fns";
+import { formatDate, getHours } from "date-fns";
 import * as Recharts from "recharts";
 import { v4 as uuidv4 } from "uuid";
 
@@ -96,19 +96,25 @@ export default function HistoricalDataChart({
     }));
   }, [data]);
 
-  const timestampsS =
-    processedData === undefined
-      ? []
-      : processedData.map((d) => d.timestampS).flat();
+  const timestampsS = useMemo(
+    () =>
+      processedData === undefined
+        ? []
+        : processedData.map((d) => d.timestampS).flat(),
+    [processedData],
+  );
 
-  const categories =
-    processedData === undefined
-      ? []
-      : processedData.length > 0
-        ? Object.keys(processedData[0]).filter(
-            (key) => key !== "timestampS" && !key.endsWith("_scaled"),
-          )
-        : [];
+  const categories = useMemo(
+    () =>
+      processedData === undefined
+        ? []
+        : processedData.length > 0
+          ? Object.keys(processedData[0]).filter(
+              (key) => key !== "timestampS" && !key.endsWith("_scaled"),
+            )
+          : [],
+    [processedData],
+  );
 
   // Min/max
   const minX = Math.min(...timestampsS);
@@ -124,6 +130,24 @@ export default function HistoricalDataChart({
             .flat(),
         );
 
+  // X-axis
+  const xAxisTimestamps = useMemo(() => {
+    if (chartType === ChartType.BAR) {
+      return timestampsS.filter(
+        (_, index, arr) => index % Math.ceil(arr.length / 8) === 0,
+      );
+    } else {
+      if (selectedPeriod === ChartPeriod.ONE_DAY)
+        return timestampsS.filter(
+          (_, index, arr) => index % Math.ceil(arr.length / 8) === 0,
+        );
+      else
+        return timestampsS
+          .filter((timestampS) => getHours(new Date(timestampS * 1000)) === 0)
+          .filter((_, index, arr) => index % Math.ceil(arr.length / 8) === 0);
+    }
+  }, [chartType, timestampsS, selectedPeriod]);
+
   // Hover
   const [hoveredTimestampS, setHoveredTimestampS] = useState<
     number | undefined
@@ -131,12 +155,10 @@ export default function HistoricalDataChart({
 
   const leaveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const onEnter = (timestampS: number) => {
-    console.log("xxx onEnter", timestampS);
     setHoveredTimestampS(timestampS);
     if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current);
   };
   const onLeave = () => {
-    console.log("xxx onLeave");
     leaveTimeoutRef.current = setTimeout(
       () => setHoveredTimestampS(undefined),
       50,
@@ -219,7 +241,7 @@ export default function HistoricalDataChart({
           {/* Date */}
           <p className="text-p2 text-secondary-foreground">
             {hoveredTimestampS !== undefined
-              ? formatDate(new Date(hoveredTimestampS * 1000), "d MMM, HH:mm a")
+              ? formatDate(new Date(hoveredTimestampS * 1000), "d MMM, HH:mm")
               : `Past ${chartPeriodUnitMap[selectedPeriod]}`}
           </p>
         </div>
@@ -309,7 +331,6 @@ export default function HistoricalDataChart({
                 <Recharts.ResponsiveContainer width="100%" height="100%">
                   <Recharts.ComposedChart
                     onMouseMove={(e) => {
-                      console.log("XXX", e);
                       const payload = e.activePayload?.[0];
                       if (payload)
                         onEnter((payload.payload as ChartData).timestampS);
@@ -394,23 +415,14 @@ export default function HistoricalDataChart({
             )}
             style={{ paddingTop: 8, height: 8 + 18 }}
           >
-            {timestampsS.map((timestampS, index) => (
+            {timestampsS.map((timestampS) => (
               <div
                 key={timestampS}
                 className={cn(
-                  "relative flex h-full flex-1 flex-row justify-center opacity-0",
-                  index %
-                    Math.ceil(
-                      timestampsS.length /
-                        (selectedPeriod === ChartPeriod.ONE_DAY
-                          ? isFullWidth || md
-                            ? 6
-                            : 4
-                          : isFullWidth || md
-                            ? 8
-                            : 6),
-                    ) ===
-                    0 && "opacity-100",
+                  "relative flex h-full flex-1 flex-row justify-center",
+                  xAxisTimestamps.includes(timestampS)
+                    ? "opacity-100"
+                    : "opacity-0",
                 )}
               >
                 <p className="absolute inset-y-0 left-1/2 w-[80px] -translate-x-1/2 text-center text-p3 text-tertiary-foreground">

@@ -4,8 +4,8 @@ import { useMemo } from "react";
 
 import { shallowPushQuery } from "@suilend/sui-fe-next";
 
-import LaunchTokenCard from "@/components/launch/LaunchTokenCard";
-import CreatePoolCard from "@/components/pools/CreatePoolCard";
+import CreatePoolCard from "@/components/create/CreatePoolCard";
+import CreateTokenCard from "@/components/create/CreateTokenCard";
 import { cn } from "@/lib/utils";
 
 enum Tab {
@@ -73,7 +73,7 @@ export default function CreatePage() {
           ))}
         </div>
 
-        {selectedTab === Tab.TOKEN && <LaunchTokenCard />}
+        {selectedTab === Tab.TOKEN && <CreateTokenCard />}
         {selectedTab === Tab.POOL && <CreatePoolCard />}
       </div>
     </>

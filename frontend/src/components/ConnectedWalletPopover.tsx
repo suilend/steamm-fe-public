@@ -113,7 +113,7 @@ export default function ConnectedWalletPopover() {
             href={PORTFOLIO_URL}
           >
             <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
-              Positions
+              Portfolio
             </p>
             <ChevronRight className="h-4 w-4 text-secondary-foreground group-hover:text-foreground" />
           </Link>

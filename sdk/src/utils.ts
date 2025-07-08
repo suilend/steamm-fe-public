@@ -121,7 +121,7 @@ export const chunk = <T>(arr: T[], size: number): T[][] =>
 /**
  * Computes the optimal offset using the formula: Price * tokenReserve * 10^(decimalsY - decimalsX)
  * @param price The price as a decimal number or string
- * @param tokenReserve Total amount of tokens to launch that have been added to the pool
+ * @param tokenReserve Total amount of tokens that will be deposited into the pool
  * @param decimalsX The decimal places of token X
  * @param decimalsY The decimal places of token Y
  * @returns The calculated offset as a bigint

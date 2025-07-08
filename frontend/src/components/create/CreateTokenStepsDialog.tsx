@@ -7,6 +7,7 @@ import { ExternalLink } from "lucide-react";
 import {
   FundKeypairResult,
   ReturnAllOwnedObjectsAndSuiToUserResult,
+  Token,
 } from "@suilend/sui-fe";
 
 import Dialog from "@/components/Dialog";
@@ -17,11 +18,15 @@ import {
   CreatePoolAndDepositInitialLiquidityResult,
 } from "@/lib/createPool";
 import { GetBTokenAndBankForTokenResult } from "@/lib/createPool";
-import { MintTokenResult } from "@/lib/launchToken";
+import { MintTokenResult } from "@/lib/createToken";
+import { formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 
-interface LaunchTokenStepsDialogProps {
+interface CreateTokenStepsDialogProps {
   isOpen: boolean;
+  closeDialog: () => void;
+  symbol: string;
+  quoteToken?: Token;
   fundKeypairResult: FundKeypairResult | undefined;
   createTokenResult: CreateCoinResult | undefined;
   mintTokenResult: MintTokenResult | undefined;
@@ -42,11 +47,13 @@ interface LaunchTokenStepsDialogProps {
   returnAllOwnedObjectsAndSuiToUserResult:
     | ReturnAllOwnedObjectsAndSuiToUserResult
     | undefined;
-  reset: () => void;
 }
 
-export default function LaunchTokenStepsDialog({
+export default function CreateTokenStepsDialog({
   isOpen,
+  closeDialog,
+  symbol,
+  quoteToken,
   fundKeypairResult,
   createTokenResult,
   mintTokenResult,
@@ -54,8 +61,7 @@ export default function LaunchTokenStepsDialog({
   createdLpToken,
   createPoolResult,
   returnAllOwnedObjectsAndSuiToUserResult,
-  reset,
-}: LaunchTokenStepsDialogProps) {
+}: CreateTokenStepsDialogProps) {
   const currentStep: number = useMemo(() => {
     if (fundKeypairResult === undefined) return 1;
     if (createTokenResult === undefined) return 2;
@@ -84,11 +90,16 @@ export default function LaunchTokenStepsDialog({
         open: isOpen,
         onOpenChange: !returnAllOwnedObjectsAndSuiToUserResult
           ? undefined
-          : reset,
+          : closeDialog,
       }}
       headerProps={{
-        title: { children: "Launch token" },
-        description: "Don't close the window or refresh the page",
+        title: {
+          children: `Create ${symbol} & ${formatPair([
+            symbol,
+            quoteToken?.symbol ?? "",
+          ])} pool`,
+        },
+        description: "Don't close this window or refresh the page",
         showCloseButton: !returnAllOwnedObjectsAndSuiToUserResult
           ? false
           : true,
@@ -175,14 +186,25 @@ export default function LaunchTokenStepsDialog({
         </div>
 
         {!!returnAllOwnedObjectsAndSuiToUserResult && (
-          <Link
-            className="flex h-14 w-full flex-row items-center justify-center gap-2 rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80"
-            href={`${POOL_URL_PREFIX}/${createPoolResult!.poolId}`} // Should always be defined
-            target="_blank"
-          >
-            <p className="text-p1 text-button-1-foreground">Go to pool</p>
-            <ExternalLink className="h-4 w-4 text-button-1-foreground" />
-          </Link>
+          <div className="flex w-full flex-col gap-2">
+            <Link
+              className="flex h-14 w-full flex-row items-center justify-center gap-2 rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80"
+              href={`${POOL_URL_PREFIX}/${createPoolResult!.poolId}`} // Should always be defined
+              target="_blank"
+            >
+              <p className="text-p1 text-button-1-foreground">Go to pool</p>
+              <ExternalLink className="h-4 w-4 text-button-1-foreground" />
+            </Link>
+
+            <button
+              className="flex h-10 w-full flex-row items-center justify-center rounded-md bg-button-2 px-3 transition-colors hover:bg-button-2/80"
+              onClick={closeDialog}
+            >
+              <p className="text-p2 text-button-2-foreground">
+                Create another token
+              </p>
+            </button>
+          </div>
         )}
       </div>
     </Dialog>

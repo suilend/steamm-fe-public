@@ -68,7 +68,7 @@ export interface AppData {
 
   coinMetadataMap: Record<string, CoinMetadata>;
   lstAprPercentMap: Record<string, BigNumber>;
-  steammLaunchCoinTypes: string[];
+  steammCreateTokenCoinTypes: string[];
   pythPriceIdentifierSymbolMap: Record<string, string>;
 
   // Oracles

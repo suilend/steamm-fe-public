@@ -276,9 +276,9 @@ export default function PoolParametersCard({
         label="Current price"
       />
 
-      {/* Initial liquidity locked (1+ STEAMM-launched token and vCPMM only) */}
+      {/* Initial liquidity locked (1+ tokens created on STEAMM and vCPMM only) */}
       {pool.coinTypes.some((coinType) =>
-        appData.steammLaunchCoinTypes.includes(coinType),
+        appData.steammCreateTokenCoinTypes.includes(coinType),
       ) &&
         pool.quoterId === QuoterId.V_CPMM && (
           <Parameter label="Initial liquidity locked">

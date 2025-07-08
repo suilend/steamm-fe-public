@@ -7,6 +7,7 @@ import { ExternalLink } from "lucide-react";
 import {
   FundKeypairResult,
   ReturnAllOwnedObjectsAndSuiToUserResult,
+  Token,
 } from "@suilend/sui-fe";
 
 import Dialog from "@/components/Dialog";
@@ -17,10 +18,12 @@ import {
   CreatePoolAndDepositInitialLiquidityResult,
 } from "@/lib/createPool";
 import { GetBTokenAndBankForTokenResult } from "@/lib/createPool";
+import { formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 
 interface CreatePoolStepsDialogProps {
   isOpen: boolean;
+  tokens: Token[];
   fundKeypairResult: FundKeypairResult | undefined;
   bTokensAndBankIds: [
     (
@@ -44,6 +47,7 @@ interface CreatePoolStepsDialogProps {
 
 export default function CreatePoolStepsDialog({
   isOpen,
+  tokens,
   fundKeypairResult,
   bTokensAndBankIds,
   createdLpToken,
@@ -78,8 +82,10 @@ export default function CreatePoolStepsDialog({
           : reset,
       }}
       headerProps={{
-        title: { children: "Create pool" },
-        description: "Don't close the window or refresh the page",
+        title: {
+          children: `Create ${formatPair(tokens.map((token) => token.symbol))} pool`,
+        },
+        description: "Don't close this window or refresh the page",
         showCloseButton: !returnAllOwnedObjectsAndSuiToUserResult
           ? false
           : true,

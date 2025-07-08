@@ -51,7 +51,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const [
       suilend,
       lstAprPercentMap,
-      steammLaunchCoinTypes,
+      steammCreateTokenCoinTypes,
       pythPriceIdentifierSymbolMap,
       {
         oracleIndexOracleInfoPriceMap,
@@ -188,13 +188,13 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         }
       })(),
 
-      // STEAMM Launch tokens (won't throw on error)
+      // Tokens created on STEAMM (won't throw on error)
       (async () => {
         try {
           const coinTypesRes = await fetch(`${API_URL}/steamm/cointypes/all`);
           const coinTypesJson: string[] = await coinTypesRes.json();
           if ((coinTypesRes as any)?.statusCode === 500)
-            throw new Error("Failed to fetch STEAMM Launch tokens");
+            throw new Error("Failed to fetch tokens created on STEAMM");
 
           return coinTypesJson.map(normalizeStructTag);
         } catch (err) {
@@ -585,7 +585,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
       coinMetadataMap,
       lstAprPercentMap,
-      steammLaunchCoinTypes,
+      steammCreateTokenCoinTypes,
       pythPriceIdentifierSymbolMap,
 
       oracleIndexOracleInfoPriceMap,

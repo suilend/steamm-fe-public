@@ -59,7 +59,7 @@ export default function AirdropStepsDialog({
         title: {
           children: ["Airdrop", token?.symbol].filter(Boolean).join(" "),
         },
-        description: "Don't close the window or refresh the page",
+        description: "Don't close this window or refresh the page",
         showCloseButton: !returnAllOwnedObjectsAndSuiToUserResult
           ? false
           : true,

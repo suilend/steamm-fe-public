@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useSignPersonalMessage } from "@mysten/dapp-kit";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
@@ -33,9 +33,9 @@ import {
 } from "@suilend/sui-fe-next";
 import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 
+import CreateTokenStepsDialog from "@/components/create/CreateTokenStepsDialog";
+import IconUpload from "@/components/create/IconUpload";
 import Divider from "@/components/Divider";
-import IconUpload from "@/components/launch/IconUpload";
-import LaunchTokenStepsDialog from "@/components/launch/LaunchTokenStepsDialog";
 import Parameter from "@/components/Parameter";
 import PercentInput from "@/components/PercentInput";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
@@ -55,11 +55,6 @@ import {
   hasBTokenAndBankForToken,
 } from "@/lib/createPool";
 import {
-  formatPair,
-  formatPercentInputValue,
-  formatTextInputValue,
-} from "@/lib/format";
-import {
   BROWSE_MAX_FILE_SIZE_BYTES,
   DEFAULT_TOKEN_DECIMALS,
   DEFAULT_TOKEN_SUPPLY,
@@ -70,13 +65,18 @@ import {
   QUOTER_ID,
   createToken,
   mintToken,
-} from "@/lib/launchToken";
+} from "@/lib/createToken";
+import {
+  formatPair,
+  formatPercentInputValue,
+  formatTextInputValue,
+} from "@/lib/format";
 import { getAvgPoolPrice } from "@/lib/pools";
 import { cn } from "@/lib/utils";
 
 const REQUIRED_SUI_AMOUNT = new BigNumber(0.2);
 
-export default function LaunchTokenCard() {
+export default function CreateTokenCard() {
   const { suiClient } = useSettingsContext();
   const { account, address, signExecuteAndWaitForTransaction } =
     useWalletContext();
@@ -446,7 +446,7 @@ export default function LaunchTokenCard() {
     if (isSubmitting) {
       return {
         isDisabled: true,
-        title: hasFailed ? "Retry" : "Launch token & create pool",
+        title: hasFailed ? "Retry" : "Create token & pool",
       };
     }
     if (hasFailed) return { isDisabled: false, title: "Retry" };
@@ -536,7 +536,7 @@ export default function LaunchTokenCard() {
 
     return {
       isDisabled: false,
-      title: "Launch token & create pool",
+      title: "Create token & pool",
     };
   })();
 
@@ -746,11 +746,16 @@ export default function LaunchTokenCard() {
         );
       }
 
-      showSuccessToast(`Launched ${symbol}`, {
+      showSuccessToast(`Created ${symbol}`, {
         description: `Created ${formatPair(tokens.map((token) => token.symbol))} pool and deposited initial liquidity`,
       });
     } catch (err) {
-      showErrorToast("Failed to launch token", err as Error, undefined, true);
+      showErrorToast(
+        "Failed to create token & pool",
+        err as Error,
+        undefined,
+        true,
+      );
       console.error(err);
 
       setHasFailed(true);
@@ -760,13 +765,25 @@ export default function LaunchTokenCard() {
     }
   };
 
-  const isStepsDialogOpen =
-    isSubmitting || !!returnAllOwnedObjectsAndSuiToUserResult;
+  // Steps dialog
+  const [isStepsDialogOpen, setIsStepsDialogOpen] = useState(false);
+  useEffect(() => {
+    if (isSubmitting || !!returnAllOwnedObjectsAndSuiToUserResult)
+      setIsStepsDialogOpen(true);
+  }, [isSubmitting, returnAllOwnedObjectsAndSuiToUserResult]);
+
+  const closeStepsDialog = () => {
+    setIsStepsDialogOpen(false);
+    setTimeout(() => reset(), 150);
+  };
 
   return (
     <>
-      <LaunchTokenStepsDialog
+      <CreateTokenStepsDialog
         isOpen={isStepsDialogOpen}
+        closeDialog={closeStepsDialog}
+        symbol={symbol}
+        quoteToken={quoteToken}
         fundKeypairResult={fundKeypairResult}
         createTokenResult={createTokenResult}
         mintTokenResult={mintTokenResult}
@@ -776,7 +793,6 @@ export default function LaunchTokenCard() {
         returnAllOwnedObjectsAndSuiToUserResult={
           returnAllOwnedObjectsAndSuiToUserResult
         }
-        reset={reset}
       />
 
       <div className="flex w-full flex-col gap-6">
@@ -823,6 +839,7 @@ export default function LaunchTokenCard() {
                 ].join(" ")}
               </p>
             </div>
+
             <IconUpload
               isDragAndDropDisabled={hasFailed || isStepsDialogOpen}
               iconUrl={iconUrl}
@@ -835,11 +852,17 @@ export default function LaunchTokenCard() {
           </div>
 
           {/* Quote asset */}
-          <div className="flex flex-row justify-between">
-            <p className="text-p2 text-secondary-foreground">Quote asset</p>
+          <div className="flex w-full flex-col gap-3">
+            <div className="flex w-full flex-col gap-1">
+              <p className="text-p2 text-secondary-foreground">Quote asset</p>
+              <p className="text-p3 text-tertiary-foreground">
+                SUI or stablecoins (e.g. USDC, USDT) are usually used as the
+                quote asset.
+              </p>
+            </div>
 
             <TokenSelectionDialog
-              triggerClassName="h-6"
+              triggerClassName="w-max px-3 border rounded-md"
               triggerIconSize={16}
               triggerLabelSelectedClassName="!text-p2"
               triggerLabelUnselectedClassName="!text-p2"
@@ -863,7 +886,7 @@ export default function LaunchTokenCard() {
                   : "text-secondary-foreground group-hover:text-foreground",
               )}
             >
-              Optional
+              More options
             </p>
             {showOptional ? (
               <ChevronUp className="h-4 w-4 text-foreground" />
@@ -1039,6 +1062,20 @@ export default function LaunchTokenCard() {
             <Parameter label="Initial FDV" isHorizontal>
               <p className="text-p2 text-foreground">
                 {formatUsd(new BigNumber(initialFdvUsd))}
+              </p>
+            </Parameter>
+
+            {/* Non-mintable */}
+            <Parameter label="Non-mintable" isHorizontal>
+              <p className="text-p2 text-foreground">
+                {nonMintable ? "Yes" : "No"}
+              </p>
+            </Parameter>
+
+            {/* Burn LP tokens */}
+            <Parameter label="Burn LP tokens" isHorizontal>
+              <p className="text-p2 text-foreground">
+                {burnLpTokens ? "Yes" : "No"}
               </p>
             </Parameter>
           </div>

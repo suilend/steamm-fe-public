@@ -38,8 +38,8 @@ import {
 import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
+import CreatePoolStepsDialog from "@/components/create/CreatePoolStepsDialog";
 import Parameter from "@/components/Parameter";
-import CreatePoolStepsDialog from "@/components/pools/CreatePoolStepsDialog";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
 import TextInput from "@/components/TextInput";
@@ -744,6 +744,9 @@ export default function CreatePoolCard() {
     <>
       <CreatePoolStepsDialog
         isOpen={isStepsDialogOpen}
+        tokens={coinTypes.map((coinType) =>
+          getToken(coinType, balancesCoinMetadataMap![coinType]),
+        )}
         fundKeypairResult={fundKeypairResult}
         bTokensAndBankIds={bTokensAndBankIds}
         createdLpToken={createLpTokenResult}
@@ -808,13 +811,19 @@ export default function CreatePoolCard() {
               {useCpmmOffset && (
                 <>
                   {/* Quote asset */}
-                  <div className="flex flex-row justify-between">
-                    <p className="text-p2 text-secondary-foreground">
-                      Quote asset
-                    </p>
+                  <div className="flex w-full flex-col gap-3">
+                    <div className="flex w-full flex-col gap-1">
+                      <p className="text-p2 text-secondary-foreground">
+                        Quote asset
+                      </p>
+                      <p className="text-p3 text-tertiary-foreground">
+                        SUI or stablecoins (e.g. USDC, USDT) are usually used as
+                        the quote asset.
+                      </p>
+                    </div>
 
                     <TokenSelectionDialog
-                      triggerClassName="h-6"
+                      triggerClassName="w-max px-3 border rounded-md"
                       triggerIconSize={16}
                       triggerLabelSelectedClassName="!text-p2"
                       triggerLabelUnselectedClassName="!text-p2"
@@ -858,6 +867,7 @@ export default function CreatePoolCard() {
                   quote asset.
                 </p>
               </div>
+
               <CoinInput
                 token={
                   coinTypes[1] !== ""
