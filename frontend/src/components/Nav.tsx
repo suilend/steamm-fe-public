@@ -46,7 +46,7 @@ export default function Nav() {
       >
         <Container>
           <div
-            className="flex w-full flex-row items-center justify-between gap-4"
+            className="flex w-full flex-row items-center justify-between gap-8"
             style={{ height: `${NAV_HEIGHT}px` }}
           >
             {/* Start */}
@@ -86,8 +86,8 @@ export default function Nav() {
             </div>
 
             {/* End */}
-            <div className="flex min-w-0 flex-row items-center gap-3">
-              <div className="shrink-0 max-md:-mr-1 md:mr-3">
+            <div className="flex min-w-0 flex-1 flex-row items-center justify-end gap-3">
+              <div className="flex flex-1 flex-row justify-end max-md:-mr-1 md:mr-1">
                 <SearchDialog />
               </div>
 
