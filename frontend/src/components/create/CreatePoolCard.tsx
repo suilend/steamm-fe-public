@@ -473,15 +473,14 @@ export default function CreatePoolCard() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    if (isSubmitting) {
-      return {
-        isDisabled: true,
-        title: hasFailed ? "Retry" : "Create pool and deposit",
-      };
-    }
-    if (hasFailed) return { isDisabled: false, title: "Retry" };
+    if (isSubmitting) return { isLoading: true, isDisabled: true };
+
+    if (hasFailed && !returnAllOwnedObjectsAndSuiToUserResult)
+      return { isDisabled: false, title: "Retry" };
     if (!!returnAllOwnedObjectsAndSuiToUserResult)
-      return { isDisabled: true, isSuccess: true };
+      return { isSuccess: true, isDisabled: true };
+
+    //
 
     if (coinTypes.some((coinType) => coinType === ""))
       return { isDisabled: true, title: "Select tokens" };
@@ -571,8 +570,8 @@ export default function CreatePoolCard() {
 
       await initializeCoinCreation();
 
-      // 1) Generate and fund keypair
-      // 1.1) Generate
+      // 1) Create, check, and fund keypair
+      // 1.1) Create
       let _keypair = keypair;
       if (_keypair === undefined) {
         _keypair = (await createKeypair(account, signPersonalMessage)).keypair;
@@ -737,6 +736,7 @@ export default function CreatePoolCard() {
     }
   };
 
+  // Steps dialog
   const isStepsDialogOpen =
     isSubmitting || !!returnAllOwnedObjectsAndSuiToUserResult;
 

@@ -24,7 +24,6 @@ import { POOL_URL_PREFIX } from "@/lib/navigation";
 
 interface CreateTokenStepsDialogProps {
   isOpen: boolean;
-  closeDialog: () => void;
   symbol: string;
   quoteToken?: Token;
   fundKeypairResult: FundKeypairResult | undefined;
@@ -47,11 +46,11 @@ interface CreateTokenStepsDialogProps {
   returnAllOwnedObjectsAndSuiToUserResult:
     | ReturnAllOwnedObjectsAndSuiToUserResult
     | undefined;
+  reset: () => void;
 }
 
 export default function CreateTokenStepsDialog({
   isOpen,
-  closeDialog,
   symbol,
   quoteToken,
   fundKeypairResult,
@@ -61,6 +60,7 @@ export default function CreateTokenStepsDialog({
   createdLpToken,
   createPoolResult,
   returnAllOwnedObjectsAndSuiToUserResult,
+  reset,
 }: CreateTokenStepsDialogProps) {
   const currentStep: number = useMemo(() => {
     if (fundKeypairResult === undefined) return 1;
@@ -90,7 +90,7 @@ export default function CreateTokenStepsDialog({
         open: isOpen,
         onOpenChange: !returnAllOwnedObjectsAndSuiToUserResult
           ? undefined
-          : closeDialog,
+          : reset,
       }}
       headerProps={{
         title: {
@@ -186,7 +186,7 @@ export default function CreateTokenStepsDialog({
         </div>
 
         {!!returnAllOwnedObjectsAndSuiToUserResult && (
-          <div className="flex w-full flex-col gap-2">
+          <div className="flex w-full flex-col gap-1">
             <Link
               className="flex h-14 w-full flex-row items-center justify-center gap-2 rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80"
               href={`${POOL_URL_PREFIX}/${createPoolResult!.poolId}`} // Should always be defined
@@ -197,10 +197,10 @@ export default function CreateTokenStepsDialog({
             </Link>
 
             <button
-              className="flex h-10 w-full flex-row items-center justify-center rounded-md bg-button-2 px-3 transition-colors hover:bg-button-2/80"
-              onClick={closeDialog}
+              className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
+              onClick={reset}
             >
-              <p className="text-p2 text-button-2-foreground">
+              <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
                 Create another token
               </p>
             </button>

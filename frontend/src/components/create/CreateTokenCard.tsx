@@ -443,15 +443,12 @@ export default function CreateTokenCard() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    if (isSubmitting) {
-      return {
-        isDisabled: true,
-        title: hasFailed ? "Retry" : "Create token & pool",
-      };
-    }
-    if (hasFailed) return { isDisabled: false, title: "Retry" };
+    if (isSubmitting) return { isLoading: true, isDisabled: true };
+
+    if (hasFailed && !returnAllOwnedObjectsAndSuiToUserResult)
+      return { isDisabled: false, title: "Retry" };
     if (!!returnAllOwnedObjectsAndSuiToUserResult)
-      return { isDisabled: true, isSuccess: true };
+      return { isSuccess: true, isDisabled: true };
 
     // Name
     if (name === "") return { isDisabled: true, title: "Enter a name" };
@@ -556,8 +553,8 @@ export default function CreateTokenCard() {
 
       await initializeCoinCreation();
 
-      // 1) Generate and fund keypair
-      // 1.1) Generate
+      // 1) Create, check, and fund keypair
+      // 1.1) Create
       let _keypair = keypair;
       if (_keypair === undefined) {
         _keypair = (await createKeypair(account, signPersonalMessage)).keypair;
@@ -766,22 +763,13 @@ export default function CreateTokenCard() {
   };
 
   // Steps dialog
-  const [isStepsDialogOpen, setIsStepsDialogOpen] = useState(false);
-  useEffect(() => {
-    if (isSubmitting || !!returnAllOwnedObjectsAndSuiToUserResult)
-      setIsStepsDialogOpen(true);
-  }, [isSubmitting, returnAllOwnedObjectsAndSuiToUserResult]);
-
-  const closeStepsDialog = () => {
-    setIsStepsDialogOpen(false);
-    setTimeout(() => reset(), 150);
-  };
+  const isStepsDialogOpen =
+    isSubmitting || !!returnAllOwnedObjectsAndSuiToUserResult;
 
   return (
     <>
       <CreateTokenStepsDialog
         isOpen={isStepsDialogOpen}
-        closeDialog={closeStepsDialog}
         symbol={symbol}
         quoteToken={quoteToken}
         fundKeypairResult={fundKeypairResult}
@@ -793,6 +781,7 @@ export default function CreateTokenCard() {
         returnAllOwnedObjectsAndSuiToUserResult={
           returnAllOwnedObjectsAndSuiToUserResult
         }
+        reset={reset}
       />
 
       <div className="flex w-full flex-col gap-6">

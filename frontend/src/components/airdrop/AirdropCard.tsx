@@ -447,6 +447,7 @@ export default function AirdropCard() {
     }
   };
 
+  // Steps dialog
   const isStepsDialogOpen =
     isSubmitting || !!returnAllOwnedObjectsAndSuiToUserResult;
 
@@ -475,11 +476,11 @@ export default function AirdropCard() {
           )}
         >
           {/* Token */}
-          <div className="flex flex-row justify-between">
+          <div className="flex w-full flex-col gap-3">
             <p className="text-p2 text-secondary-foreground">Token</p>
 
             <TokenSelectionDialog
-              triggerClassName="h-6"
+              triggerClassName="w-max px-3 border rounded-md"
               triggerIconSize={16}
               triggerLabelSelectedClassName="!text-p2"
               triggerLabelUnselectedClassName="!text-p2"
