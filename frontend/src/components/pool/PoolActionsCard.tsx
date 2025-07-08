@@ -66,11 +66,9 @@ import { AppData, useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useCachedUsdPrices from "@/hooks/useCachedUsdPrices";
-import { _7K_PARTNER_ADDRESS } from "@/lib/7k";
+import { useAggSdks } from "@/lib/agg-swap";
 import { rebalanceBanks } from "@/lib/banks";
-import { CETUS_PARTNER_ID } from "@/lib/cetus";
 import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
-import { FLOWX_PARTNER_ID } from "@/lib/flowx";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
 import {
   getIndexesOfObligationsWithDeposit,
@@ -109,41 +107,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
   const { pool } = usePoolContext();
 
   // send.ag
-  // SDKs
-  const aftermathSdk = useMemo(() => {
-    const sdk = new AftermathSdk("MAINNET");
-    sdk.init();
-    return sdk;
-  }, []);
-
-  const cetusSdk = useMemo(() => {
-    const sdk = new CetusSdk({
-      endpoint: "https://api-sui.cetus.zone/router_v2/find_routes",
-      signer: address,
-      client: suiClient,
-      env: Env.Mainnet,
-    });
-    return sdk;
-  }, [address, suiClient]);
-
-  useEffect(() => {
-    set7kSdkSuiClient(suiClient);
-  }, [suiClient]);
-
-  const flowXSdk = useMemo(() => {
-    const sdk = new FlowXAggregatorQuoter("mainnet");
-    return sdk;
-  }, []);
-
-  // Config
-  const sdkMap = useMemo(
-    () => ({
-      [QuoteProvider.AFTERMATH]: aftermathSdk,
-      [QuoteProvider.CETUS]: cetusSdk,
-      [QuoteProvider.FLOWX]: flowXSdk,
-    }),
-    [aftermathSdk, cetusSdk, flowXSdk],
-  );
+  const { sdkMap, partnerIdMap } = useAggSdks();
 
   const activeProviders = useMemo(
     () => [
@@ -428,11 +392,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
             swapQuote,
             slippagePercent,
             sdkMap,
-            {
-              [QuoteProvider.CETUS]: CETUS_PARTNER_ID,
-              [QuoteProvider._7K]: _7K_PARTNER_ADDRESS,
-              [QuoteProvider.FLOWX]: FLOWX_PARTNER_ID,
-            },
+            partnerIdMap,
             transaction,
             undefined,
           );
