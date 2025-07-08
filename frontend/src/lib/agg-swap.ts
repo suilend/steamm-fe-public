@@ -22,7 +22,7 @@ export type PartnerIdMap = {
   [QuoteProvider.FLOWX]: string;
 };
 
-export const useCetusSdk = () => {
+const useCetusSdk = () => {
   const { suiClient } = useSettingsContext();
   const { address } = useWalletContext();
 

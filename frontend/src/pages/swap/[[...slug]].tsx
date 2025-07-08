@@ -1,12 +1,8 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
-import { setSuiClient as set7kSdkSuiClient } from "@7kprotocol/sdk-ts/cjs";
-import {
-  AggregatorClient as CetusSdk,
-  Env,
-} from "@cetusprotocol/aggregator-sdk";
+import { AggregatorClient as CetusSdk } from "@cetusprotocol/aggregator-sdk";
 import { AggregatorQuoter as FlowXAggregatorQuoter } from "@flowx-finance/sdk";
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
@@ -17,7 +13,7 @@ import { clone, debounce } from "lodash";
 import {
   QuoteProvider,
   StandardizedQuote,
-  fetchAggQuotesAll,
+  getAggSortedQuotesAll,
 } from "@suilend/sdk";
 import { ParsedPool } from "@suilend/steamm-sdk";
 import {
@@ -39,7 +35,6 @@ import {
 import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
-import ExchangeRateParameter from "@/components/ExchangeRateParameter";
 import Parameter from "@/components/Parameter";
 import SuggestedPools from "@/components/pool/SuggestedPools";
 import SlippagePopover from "@/components/SlippagePopover";
@@ -50,6 +45,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useCachedUsdPrices from "@/hooks/useCachedUsdPrices";
+import { useAggSdks } from "@/lib/agg-swap";
 import { rebalanceBanks } from "@/lib/banks";
 import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
 import { formatTextInputValue } from "@/lib/format";
@@ -62,47 +58,15 @@ export default function SwapPage() {
   const router = useRouter();
   const slug = router.query.slug as string[] | undefined;
 
-  const { explorer, suiClient } = useSettingsContext();
+  const { explorer } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
   const { getBalance, refresh } = useUserContext();
 
+  const isTouchscreen = useIsTouchscreen();
+
   // send.ag
-  // SDKs
-  const aftermathSdk = useMemo(() => {
-    const sdk = new AftermathSdk("MAINNET");
-    sdk.init();
-    return sdk;
-  }, []);
-
-  const cetusSdk = useMemo(() => {
-    const sdk = new CetusSdk({
-      endpoint: "https://api-sui.cetus.zone/router_v2/find_routes",
-      signer: address,
-      client: suiClient,
-      env: Env.Mainnet,
-    });
-    return sdk;
-  }, [address, suiClient]);
-
-  useEffect(() => {
-    set7kSdkSuiClient(suiClient);
-  }, [suiClient]);
-
-  const flowXSdk = useMemo(() => {
-    const sdk = new FlowXAggregatorQuoter("mainnet");
-    return sdk;
-  }, []);
-
-  // Config
-  const sdkMap = useMemo(
-    () => ({
-      [QuoteProvider.AFTERMATH]: aftermathSdk,
-      [QuoteProvider.CETUS]: cetusSdk,
-      [QuoteProvider.FLOWX]: flowXSdk,
-    }),
-    [aftermathSdk, cetusSdk, flowXSdk],
-  );
+  const { sdkMap, partnerIdMap } = useAggSdks();
 
   const activeProviders = useMemo(
     () => [
@@ -110,11 +74,10 @@ export default function SwapPage() {
       QuoteProvider.CETUS,
       QuoteProvider._7K,
       QuoteProvider.FLOWX,
-      QuoteProvider.OKX_DEX,
+      // QuoteProvider.OKX_DEX,
     ],
     [],
   );
-  const isTouchscreen = useIsTouchscreen();
 
   // CoinTypes
   const [inCoinType, outCoinType] = useMemo(() => {
@@ -190,7 +153,7 @@ export default function SwapPage() {
           .integerValue(BigNumber.ROUND_DOWN)
           .toString();
 
-        const swapQuotes = await fetchAggQuotesAll(
+        const swapQuotes = await getAggSortedQuotesAll(
           _sdkMap,
           _activeProviders,
           _tokenIn,
@@ -612,7 +575,7 @@ export default function SwapPage() {
                   }
                 />
 
-                  {/* {isFetchingQuote || !quote ? (
+                {/* {isFetchingQuote || !quote ? (
                       <Skeleton className="h-[21px] w-16" />
                     ) : (
                       <Tooltip
@@ -648,17 +611,16 @@ export default function SwapPage() {
                         </p>
                       </Tooltip>
                     )} */}
-                </div>
-
-                <PriceDifferenceLabel
-                  inToken={getToken(inCoinType, inCoinMetadata)}
-                  outToken={getToken(outCoinType, outCoinMetadata)}
-                  cachedUsdPriceRatio={cachedUsdPriceRatio}
-                  isFetchingQuote={isFetchingQuote}
-                  quote={quote}
-                />
               </div>
-            )}
+
+              <PriceDifferenceLabel
+                inToken={getToken(inCoinType, inCoinMetadata)}
+                outToken={getToken(outCoinType, outCoinMetadata)}
+                cachedUsdPriceRatio={cachedUsdPriceRatio}
+                isFetchingQuote={isFetchingQuote}
+                quote={quote}
+              />
+            </div>
 
             <SubmitButton
               submitButtonState={submitButtonState}

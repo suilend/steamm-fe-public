@@ -8,15 +8,8 @@ import {
   useState,
 } from "react";
 
-import { setSuiClient as set7kSdkSuiClient } from "@7kprotocol/sdk-ts/cjs";
-import {
-  AggregatorClient as CetusSdk,
-  Env,
-} from "@cetusprotocol/aggregator-sdk";
-import { AggregatorQuoter as FlowXAggregatorQuoter } from "@flowx-finance/sdk";
 import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
-import { Aftermath as AftermathSdk } from "aftermath-ts-sdk";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
 
@@ -25,7 +18,7 @@ import {
   QuoteProvider,
   StandardizedQuote,
   createObligationIfNoneExists,
-  fetchAggQuotesAll,
+  getAggSortedQuotesAll,
   getSwapTransaction,
   sendObligationToUser,
 } from "@suilend/sdk";
@@ -363,7 +356,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
           .minus(swapAmountIn)
           .toString();
 
-        const swapQuotes = await fetchAggQuotesAll(
+        const swapQuotes = await getAggSortedQuotesAll(
           sdkMap,
           activeProviders,
           index === 0
