@@ -163,7 +163,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
       new BigNumber(_value || 0)
         .div(smartMaxValues[index])
         .times(100)
-        .toFixed(1),
+        .toFixed(2),
     );
 
     setQuote(
@@ -205,7 +205,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
 
   // Value - slider
   const onSliderValueChange = (percent: string) => {
-    const formattedValue = formatPercentInputValue(percent, 1);
+    const formattedValue = formatPercentInputValue(percent, 2);
 
     onValueChange(
       smartMaxValues[0]
@@ -515,7 +515,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
             <p className="text-p2 text-button-2-foreground">Max</p>
           </button>
 
-          <div className="w-20">
+          <div className="w-24">
             <PercentInput
               inputClassName="!text-p1 text-right pl-0"
               value={sliderValue}
@@ -602,7 +602,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
             ),
       ) as [string, string],
     );
-    setSliderValue(lpTokens.div(lpTokenTotalAmount).times(100).toFixed(1));
+    setSliderValue(lpTokens.div(lpTokenTotalAmount).times(100).toFixed(2));
 
     setQuote(
       [0, 1].reduce(
@@ -639,7 +639,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
         ),
       ) as [string, string],
     );
-    setSliderValue(formatPercentInputValue(_value, 1));
+    setSliderValue(formatPercentInputValue(_value, 2));
 
     setQuote(
       [0, 1].reduce(
@@ -1069,7 +1069,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
             <p className="text-p2 text-button-2-foreground">Max</p>
           </button>
 
-          <div className="w-20">
+          <div className="w-24">
             <PercentInput
               inputClassName="!text-p1 text-right pl-0"
               value={sliderValue}
