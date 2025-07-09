@@ -260,9 +260,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
   const fetchPoolHistoricalStats = useCallback(
     async (_poolIds: string[], period: ChartPeriod) => {
-      console.log("XXX fetchPoolHistoricalStats", _poolIds, period);
-
-      const { dayStartS, hourStartS, fifteenMinutesStartS } =
+      const { dayStartS, fifteenMinutesStartS } =
         referenceTimestampsSRef.current;
 
       for (const poolId of _poolIds) {
@@ -270,20 +268,20 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         (async () => {
           let startTimestampS, endTimestampS, intervalS;
           if (period === ChartPeriod.ONE_DAY) {
-            startTimestampS = hourStartS - ONE_DAY_S;
-            endTimestampS = fifteenMinutesStartS - 1;
+            startTimestampS = fifteenMinutesStartS - ONE_DAY_S;
+            endTimestampS = fifteenMinutesStartS;
             intervalS = FIFTEEN_MINUTES_S;
           } else if (period === ChartPeriod.ONE_WEEK) {
             startTimestampS = dayStartS - SEVEN_DAYS_S;
-            endTimestampS = hourStartS - 1;
+            endTimestampS = fifteenMinutesStartS;
             intervalS = ONE_HOUR_S;
           } else if (period === ChartPeriod.ONE_MONTH) {
             startTimestampS = dayStartS - ONE_MONTH_S;
-            endTimestampS = hourStartS - 1;
+            endTimestampS = fifteenMinutesStartS;
             intervalS = FOUR_HOURS_S;
           } else if (period === ChartPeriod.THREE_MONTHS) {
             startTimestampS = dayStartS - THREE_MONTHS_S;
-            endTimestampS = hourStartS - 1;
+            endTimestampS = fifteenMinutesStartS;
             intervalS = TWELVE_HOURS_S;
           }
 
@@ -346,20 +344,20 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         (async () => {
           let startTimestampS, endTimestampS, intervalS;
           if (period === ChartPeriod.ONE_DAY) {
-            startTimestampS = hourStartS - ONE_DAY_S;
-            endTimestampS = hourStartS - 1;
+            startTimestampS = fifteenMinutesStartS - ONE_DAY_S;
+            endTimestampS = fifteenMinutesStartS;
             intervalS = ONE_HOUR_S;
           } else if (period === ChartPeriod.ONE_WEEK) {
             startTimestampS = dayStartS - SEVEN_DAYS_S;
-            endTimestampS = hourStartS - 1;
+            endTimestampS = fifteenMinutesStartS;
             intervalS = ONE_DAY_S;
           } else if (period === ChartPeriod.ONE_MONTH) {
             startTimestampS = dayStartS - ONE_MONTH_S;
-            endTimestampS = hourStartS - 1;
+            endTimestampS = fifteenMinutesStartS;
             intervalS = ONE_DAY_S;
           } else if (period === ChartPeriod.THREE_MONTHS) {
             startTimestampS = dayStartS - THREE_MONTHS_S;
-            endTimestampS = hourStartS - 1;
+            endTimestampS = fifteenMinutesStartS;
             intervalS = THREE_DAYS_S;
           }
 
@@ -422,20 +420,20 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         (async () => {
           let startTimestampS, endTimestampS, intervalS;
           if (period === ChartPeriod.ONE_DAY) {
-            startTimestampS = hourStartS - ONE_DAY_S;
-            endTimestampS = hourStartS - 1;
+            startTimestampS = fifteenMinutesStartS - ONE_DAY_S;
+            endTimestampS = fifteenMinutesStartS;
             intervalS = ONE_HOUR_S;
           } else if (period === ChartPeriod.ONE_WEEK) {
             startTimestampS = dayStartS - SEVEN_DAYS_S;
-            endTimestampS = hourStartS - 1;
+            endTimestampS = fifteenMinutesStartS;
             intervalS = ONE_DAY_S;
           } else if (period === ChartPeriod.ONE_MONTH) {
             startTimestampS = dayStartS - ONE_MONTH_S;
-            endTimestampS = hourStartS - 1;
+            endTimestampS = fifteenMinutesStartS;
             intervalS = ONE_DAY_S;
           } else if (period === ChartPeriod.THREE_MONTHS) {
             startTimestampS = dayStartS - THREE_MONTHS_S;
-            endTimestampS = hourStartS - 1;
+            endTimestampS = fifteenMinutesStartS;
             intervalS = THREE_DAYS_S;
           }
 
@@ -590,29 +588,27 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
   const fetchGlobalHistoricalStats = useCallback(
     async (period: ChartPeriod) => {
-      console.log("XXX fetchGlobalHistoricalStats", period);
-
-      const { dayStartS, hourStartS, fifteenMinutesStartS } =
+      const { dayStartS, fifteenMinutesStartS } =
         referenceTimestampsSRef.current;
 
       // TVL
       (async () => {
         let startTimestampS, endTimestampS, intervalS;
         if (period === ChartPeriod.ONE_DAY) {
-          startTimestampS = hourStartS - ONE_DAY_S;
-          endTimestampS = fifteenMinutesStartS - 1;
+          startTimestampS = fifteenMinutesStartS - ONE_DAY_S;
+          endTimestampS = fifteenMinutesStartS;
           intervalS = FIFTEEN_MINUTES_S;
         } else if (period === ChartPeriod.ONE_WEEK) {
           startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = hourStartS - 1;
+          endTimestampS = fifteenMinutesStartS;
           intervalS = ONE_HOUR_S;
         } else if (period === ChartPeriod.ONE_MONTH) {
           startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = hourStartS - 1;
+          endTimestampS = fifteenMinutesStartS;
           intervalS = FOUR_HOURS_S;
         } else if (period === ChartPeriod.THREE_MONTHS) {
           startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = hourStartS - 1;
+          endTimestampS = fifteenMinutesStartS;
           intervalS = TWELVE_HOURS_S;
         }
 
@@ -668,20 +664,20 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       (async () => {
         let startTimestampS, endTimestampS, intervalS;
         if (period === ChartPeriod.ONE_DAY) {
-          startTimestampS = hourStartS - ONE_DAY_S;
-          endTimestampS = hourStartS - 1;
+          startTimestampS = fifteenMinutesStartS - ONE_DAY_S;
+          endTimestampS = fifteenMinutesStartS;
           intervalS = ONE_HOUR_S;
         } else if (period === ChartPeriod.ONE_WEEK) {
           startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = hourStartS - 1;
+          endTimestampS = fifteenMinutesStartS;
           intervalS = ONE_DAY_S;
         } else if (period === ChartPeriod.ONE_MONTH) {
           startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = hourStartS - 1;
+          endTimestampS = fifteenMinutesStartS;
           intervalS = ONE_DAY_S;
         } else if (period === ChartPeriod.THREE_MONTHS) {
           startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = hourStartS - 1;
+          endTimestampS = fifteenMinutesStartS;
           intervalS = THREE_DAYS_S;
         }
 
@@ -737,20 +733,20 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       (async () => {
         let startTimestampS, endTimestampS, intervalS;
         if (period === ChartPeriod.ONE_DAY) {
-          startTimestampS = hourStartS - ONE_DAY_S;
-          endTimestampS = hourStartS - 1;
+          startTimestampS = fifteenMinutesStartS - ONE_DAY_S;
+          endTimestampS = fifteenMinutesStartS;
           intervalS = ONE_HOUR_S;
         } else if (period === ChartPeriod.ONE_WEEK) {
           startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = hourStartS - 1;
+          endTimestampS = fifteenMinutesStartS;
           intervalS = ONE_DAY_S;
         } else if (period === ChartPeriod.ONE_MONTH) {
           startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = hourStartS - 1;
+          endTimestampS = fifteenMinutesStartS;
           intervalS = ONE_DAY_S;
         } else if (period === ChartPeriod.THREE_MONTHS) {
           startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = hourStartS - 1;
+          endTimestampS = fifteenMinutesStartS;
           intervalS = THREE_DAYS_S;
         }
 
