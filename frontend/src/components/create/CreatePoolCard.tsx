@@ -744,9 +744,11 @@ export default function CreatePoolCard() {
     <>
       <CreatePoolStepsDialog
         isOpen={isStepsDialogOpen}
-        tokens={coinTypes.map((coinType) =>
-          getToken(coinType, balancesCoinMetadataMap![coinType]),
-        )}
+        tokens={coinTypes
+          .filter((coinType) => coinType !== "")
+          .map((coinType) =>
+            getToken(coinType, balancesCoinMetadataMap![coinType]),
+          )}
         fundKeypairResult={fundKeypairResult}
         bTokensAndBankIds={bTokensAndBankIds}
         createdLpToken={createLpTokenResult}

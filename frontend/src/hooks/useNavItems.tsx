@@ -6,6 +6,7 @@ import {
   CREATE_URL,
   LEADERBOARD_URL,
   POOL_URL_PREFIX,
+  PORTFOLIO_URL,
   ROOT_URL,
   // SWAP_URL,
 } from "@/lib/navigation";
@@ -25,6 +26,7 @@ const useNavItems = (includePools: boolean = false) => {
       : null,
     { url: CREATE_URL, title: "Create" },
     // { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
+    { url: PORTFOLIO_URL, title: "Portfolio" },
     { url: LEADERBOARD_URL, title: "Leaderboard" },
   ].filter(Boolean) as NavItem[];
 
