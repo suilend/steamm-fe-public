@@ -1,4 +1,7 @@
+import { ClassValue } from "clsx";
 import { Check, Loader2 } from "lucide-react";
+
+import { cn } from "@/lib/utils";
 
 export type SubmitButtonState = {
   isLoading?: boolean;
@@ -9,17 +12,22 @@ export type SubmitButtonState = {
 };
 
 interface SubmitButtonProps {
+  className?: ClassValue;
   submitButtonState: SubmitButtonState;
   onClick: () => void;
 }
 
 export default function SubmitButton({
+  className,
   submitButtonState,
   onClick,
 }: SubmitButtonProps) {
   return (
     <button
-      className="flex h-14 w-full flex-col items-center justify-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
+      className={cn(
+        "flex h-14 w-full flex-col items-center justify-center rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50",
+        className,
+      )}
       disabled={submitButtonState.isDisabled}
       onClick={onClick}
     >

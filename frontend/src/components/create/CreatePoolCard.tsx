@@ -994,7 +994,6 @@ export default function CreatePoolCard() {
                       >
                         <div className="w-max">
                           <button
-                            key={_quoterId}
                             className={cn(
                               "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
                               _quoterId === quoterId

@@ -1,5 +1,6 @@
 import BigNumber from "bignumber.js";
 
+import { StandardizedQuote } from "@suilend/sdk";
 import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 import { API_URL, Token } from "@suilend/sui-fe";
 
@@ -10,13 +11,23 @@ export const PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD = 2;
 export const getQuoteRatio = (
   inToken: Token,
   outToken: Token,
-  quote?: SwapQuote | MultiSwapQuote,
+  quote?: SwapQuote | MultiSwapQuote | StandardizedQuote,
 ) =>
-  quote !== undefined && !new BigNumber(quote.amountIn.toString()).eq(0)
-    ? new BigNumber(
-        new BigNumber(quote.amountOut.toString()).div(10 ** outToken.decimals),
+  quote !== undefined &&
+  !(
+    "in" in quote // StandardizedQuote
+      ? quote.in.amount
+      : new BigNumber(quote.amountIn.toString())
+  ).eq(0)
+    ? ("out" in quote // StandardizedQuote
+        ? quote.out.amount
+        : new BigNumber(quote.amountOut.toString()).div(10 ** outToken.decimals)
       ).div(
-        new BigNumber(quote.amountIn.toString()).div(10 ** inToken.decimals),
+        "in" in quote // StandardizedQuote
+          ? quote.in.amount
+          : new BigNumber(quote.amountIn.toString()).div(
+              10 ** inToken.decimals,
+            ),
       )
     : undefined;
 

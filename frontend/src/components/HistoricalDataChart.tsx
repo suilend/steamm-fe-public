@@ -327,7 +327,7 @@ export default function HistoricalDataChart({
                                 className="absolute inset-0 opacity-75"
                                 style={{
                                   backgroundImage:
-                                    "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6/NlyAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAADWSURBVHgB7ZZBCoVQDANzlN7/Uh6lirjQfUODyYe3+DLQmV0AoK93XK/w/dXzvV/vD5xVbENcjsFZxdb6USQ2sdOcVez93yn2gLgcg7OKvYOdYhvicgzOKrbWjyKxiZ3msrSU5BicVWxDXI7BZWkpyTE4q9haP4rEJnaay9JSkmNwVrENcTkGl6WlJMfgrGJr/SgSm9hpLktLSY7BWcU2xOUYXJaWkhyDs4qt9aNIbGKnuSwtJTkGZxXbEJdjcFlaSnIMziq21o8isYmd5rK0lOQYnFVsn6oqAWIYr1eVAAAAAElFTkSuQmCC)",
+                                    "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4AgMAAABECt5BAAAADFBMVEUAAAAAAAAAAAAAAAA16TeWAAAAA3RSTlMAgH8BTzA4AAAAYElEQVR4Xu3SsQ3AIBTEUIuWYViBzVkhw6RFF/0B/vWRrnHr5qHNVBsuLLXhhaM2PAypDXYt7Ppi1hWzrtj1/u8aux7Y9cSuF3Z9sGvFWiXWYi3WYi3WYi3WYi3WYi3WPhVhAWJ8v+OTAAAAAElFTkSuQmCC)",
                                   backgroundSize: "24px 24px",
                                   backgroundRepeat: "repeat",
                                 }}
@@ -379,6 +379,7 @@ export default function HistoricalDataChart({
                     </defs>
                     <Recharts.Area
                       dataKey={`${categories[0]}_scaled`}
+                      type="monotone"
                       stackId="1"
                       isAnimationActive={false}
                       fill={`url(#${gradientId})`}
