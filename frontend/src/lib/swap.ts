@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 
 import { StandardizedQuote } from "@suilend/sdk";
-import { SwapQuote } from "@suilend/steamm-sdk";
+import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 import { API_URL, Token } from "@suilend/sui-fe";
 
 import { HistorySwap, HistoryTransactionType } from "@/lib/types";
@@ -11,7 +11,7 @@ export const PRICE_DIFFERENCE_PERCENT_WARNING_THRESHOLD = 2;
 export const getQuoteRatio = (
   inToken: Token,
   outToken: Token,
-  quote?: SwapQuote | StandardizedQuote,
+  quote?: SwapQuote | MultiSwapQuote | StandardizedQuote,
 ) =>
   quote !== undefined &&
   !(

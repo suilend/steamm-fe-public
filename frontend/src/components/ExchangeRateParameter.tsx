@@ -5,7 +5,7 @@ import { ClassValue } from "clsx";
 import { ArrowRightLeft } from "lucide-react";
 
 import { StandardizedQuote } from "@suilend/sdk";
-import { SwapQuote } from "@suilend/steamm-sdk";
+import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 import { Token, formatPrice, formatToken } from "@suilend/sui-fe";
 
 import Parameter from "@/components/Parameter";
@@ -22,7 +22,7 @@ interface ExchangeRateParameterProps {
   outToken: Token;
   outPrice: BigNumber;
   isFetchingQuote?: boolean;
-  quote?: SwapQuote | StandardizedQuote;
+  quote?: SwapQuote | MultiSwapQuote | StandardizedQuote;
   isInverted?: boolean;
   label?: string;
   isHorizontal?: boolean;
