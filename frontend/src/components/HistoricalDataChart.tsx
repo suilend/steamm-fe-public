@@ -217,7 +217,7 @@ export default function HistoricalDataChart({
           </div>
         </div>
 
-        <div className="flex w-full flex-col">
+        <div className="flex w-full flex-col gap-px">
           {/* Total */}
           {total === undefined ? (
             <Skeleton className="h-[36px] w-20" />
@@ -236,16 +236,20 @@ export default function HistoricalDataChart({
           )}
 
           {/* Date */}
-          <p className="text-p2 text-secondary-foreground">
-            {hoveredTimestampS !== undefined
-              ? formatDate(new Date(hoveredTimestampS * 1000), "d MMM, HH:mm")
-              : `Past ${chartPeriodUnitMap[selectedPeriod]}`}
-          </p>
+          {total === undefined ? (
+            <Skeleton className="h-[21px] w-24" />
+          ) : (
+            <p className="text-p2 text-secondary-foreground">
+              {hoveredTimestampS !== undefined
+                ? formatDate(new Date(hoveredTimestampS * 1000), "d MMM, HH:mm")
+                : `Past ${chartPeriodUnitMap[selectedPeriod]}`}
+            </p>
+          )}
         </div>
       </div>
 
       {/* Bottom */}
-      <div className={cn("flex w-full flex-col", chartClassName)}>
+      <div className={cn("flex w-full flex-col gap-px", chartClassName)}>
         {/* Chart */}
         <div className="h-[120px] transform-gpu sm:h-[180px]">
           {processedData === undefined ||
@@ -283,7 +287,7 @@ export default function HistoricalDataChart({
                   )}
                 >
                   <div className="flex h-full w-full transform-gpu flex-row items-stretch">
-                    {processedData.map((d) => (
+                    {processedData.map((d, index) => (
                       // Bar container
                       <div
                         key={d.timestampS}
@@ -309,7 +313,7 @@ export default function HistoricalDataChart({
                           )}
                         >
                           <div
-                            className="w-full shrink-0 rounded-[2px]"
+                            className="relative w-full shrink-0 overflow-hidden rounded-[2px]"
                             style={{
                               backgroundColor:
                                 maxY > 0 && d[categories[0]] > 0
@@ -317,7 +321,19 @@ export default function HistoricalDataChart({
                                   : "hsla(var(--jordy-blue) / 25%)",
                               height: `max(2px, calc((100% - ${(categories.length - 1) * 2}px) * ${maxY === 0 ? 0 : d[categories[0]] / maxY}))`,
                             }}
-                          />
+                          >
+                            {index === processedData.length - 1 && (
+                              <div
+                                className="absolute inset-0 opacity-75"
+                                style={{
+                                  backgroundImage:
+                                    "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6/NlyAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAADWSURBVHgB7ZZBCoVQDANzlN7/Uh6lirjQfUODyYe3+DLQmV0AoK93XK/w/dXzvV/vD5xVbENcjsFZxdb6USQ2sdOcVez93yn2gLgcg7OKvYOdYhvicgzOKrbWjyKxiZ3msrSU5BicVWxDXI7BZWkpyTE4q9haP4rEJnaay9JSkmNwVrENcTkGl6WlJMfgrGJr/SgSm9hpLktLSY7BWcU2xOUYXJaWkhyDs4qt9aNIbGKnuSwtJTkGZxXbEJdjcFlaSnIMziq21o8isYmd5rK0lOQYnFVsn6oqAWIYr1eVAAAAAElFTkSuQmCC)",
+                                  backgroundSize: "24px 24px",
+                                  backgroundRepeat: "repeat",
+                                }}
+                              />
+                            )}
+                          </div>
                           <div className="w-px flex-1" />
                         </div>
                       </div>
