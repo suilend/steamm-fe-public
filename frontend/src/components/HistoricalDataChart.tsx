@@ -11,7 +11,6 @@ import { formatUsd } from "@suilend/sui-fe";
 import NoDataIcon from "@/components/icons/NoDataIcon";
 import SelectPopover from "@/components/SelectPopover";
 import { Skeleton } from "@/components/ui/skeleton";
-import useBreakpoint from "@/hooks/useBreakpoint";
 import {
   ChartConfig,
   ChartData,
@@ -50,8 +49,6 @@ export default function HistoricalDataChart({
   totalMap,
   dataMap,
 }: HistoricalDataChartProps) {
-  const { md } = useBreakpoint();
-
   const gradientId = useRef<string>(uuidv4()).current;
 
   const chartType: ChartType = getChartType(selectedDataType);

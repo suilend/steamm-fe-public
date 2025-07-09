@@ -2,8 +2,8 @@ export const ROOT_URL = "/";
 export const POOL_URL_PREFIX = "/pool";
 export const CREATE_URL = "/create";
 // export const SWAP_URL = "/swap";
-export const LEADERBOARD_URL = "/leaderboard";
 export const PORTFOLIO_URL = "/portfolio";
+export const LEADERBOARD_URL = "/leaderboard";
 export const ADMIN_URL = "/admin";
 
 export const SUILEND_URL = "https://suilend.fi";
