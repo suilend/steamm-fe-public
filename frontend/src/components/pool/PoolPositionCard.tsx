@@ -1,8 +1,7 @@
 import { Loader2 } from "lucide-react";
 
-import { formatToken, formatUsd, getToken } from "@suilend/sui-fe";
+import { formatUsd } from "@suilend/sui-fe";
 
-import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
@@ -60,31 +59,6 @@ export default function PoolPositionCard() {
               {formatUsd(poolPosition.balanceUsd)}
             </p>
           </Tooltip>
-        )}
-
-        {poolPosition === undefined ? (
-          <Skeleton className="h-[21px] w-40" />
-        ) : (
-          <div className="flex flex-row items-center gap-3">
-            {pool.coinTypes.map((coinType, index) => (
-              <div key={coinType} className="flex flex-row items-center gap-2">
-                <TokenLogo
-                  token={getToken(coinType, appData.coinMetadataMap[coinType])}
-                  size={16}
-                />
-                <Tooltip
-                  title={`${formatToken(poolPosition.balances[index], { dp: appData.coinMetadataMap[coinType].decimals })} ${appData.coinMetadataMap[coinType].symbol}`}
-                >
-                  <p className="text-p2 text-foreground">
-                    {formatToken(poolPosition.balances[index], {
-                      exact: false,
-                    })}{" "}
-                    {appData.coinMetadataMap[coinType].symbol}
-                  </p>
-                </Tooltip>
-              </div>
-            ))}
-          </div>
         )}
       </div>
     </>
