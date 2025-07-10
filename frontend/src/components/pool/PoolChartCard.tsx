@@ -2,8 +2,6 @@ import { useMemo } from "react";
 
 import BigNumber from "bignumber.js";
 
-import { formatUsd } from "@suilend/sui-fe";
-
 import HistoricalDataChart from "@/components/HistoricalDataChart";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
@@ -33,7 +31,7 @@ export default function PoolChartCard() {
       getChartType: (dataType: string) => {
         if (
           dataType === ChartDataType.TVL ||
-          dataType === ChartDataType.LP_VALUE
+          dataType === ChartDataType.LP_TOKEN_VALUE
         )
           return ChartType.LINE;
         return ChartType.BAR;
@@ -64,13 +62,10 @@ export default function PoolChartCard() {
           }),
           {} as Record<ChartPeriod, BigNumber | undefined>,
         ),
-        [ChartDataType.LP_VALUE]: Object.values(ChartPeriod).reduce(
+        [ChartDataType.LP_TOKEN_VALUE]: Object.values(ChartPeriod).reduce(
           (acc, period) => ({
             ...acc,
-            [period]: pool.prices[0]
-              .multipliedBy(pool.balances[0])
-              .plus(pool.prices[1].multipliedBy(pool.balances[1]))
-              .dividedBy(pool.lpSupply),
+            [period]: pool.tvlUsd.div(pool.lpSupply),
           }),
           {} as Record<ChartPeriod, BigNumber | undefined>,
         ),
@@ -97,7 +92,7 @@ export default function PoolChartCard() {
           }),
           {} as Record<ChartPeriod, ChartData[] | undefined>,
         ),
-        [ChartDataType.LP_VALUE]: Object.values(ChartPeriod).reduce(
+        [ChartDataType.LP_TOKEN_VALUE]: Object.values(ChartPeriod).reduce(
           (acc, period) => ({
             ...acc,
             [period]: poolHistoricalStats.lpTokenValueUsd[period][pool.id],
@@ -106,7 +101,7 @@ export default function PoolChartCard() {
         ),
       },
     }),
-    [pool.tvlUsd, poolStats, pool.id, poolHistoricalStats],
+    [pool.tvlUsd, poolStats, pool.lpSupply, pool.id, poolHistoricalStats],
   );
 
   return (

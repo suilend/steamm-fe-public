@@ -12,7 +12,7 @@ import {
 import BigNumber from "bignumber.js";
 import { startOfHour } from "date-fns";
 
-import { API_URL, getHistoryPrice, getPrice } from "@suilend/sui-fe";
+import { API_URL } from "@suilend/sui-fe";
 
 import { useAppContext } from "@/contexts/AppContext";
 import { ChartData, ChartPeriod } from "@/lib/chart";
@@ -48,6 +48,7 @@ export interface StatsContext {
     // tvlUsd
     volumeUsd: Record<ChartPeriod, Record<string, BigNumber>>;
     feesUsd: Record<ChartPeriod, Record<string, BigNumber>>;
+    // lpTokenValueUsd
     aprPercent: Record<
       ChartPeriod.ONE_DAY,
       Record<string, { feesAprPercent: BigNumber }>
@@ -496,56 +497,55 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           }
         })();
 
-        // historical LP token values
+        // LP Token values
         (async () => {
           let startTimestampS, endTimestampS, intervalS;
           if (period === ChartPeriod.ONE_DAY) {
-            startTimestampS = hourStartS - ONE_DAY_S;
-            endTimestampS = hourStartS - 1;
-            intervalS = ONE_HOUR_S;
+            startTimestampS = tenMinutesStartS - ONE_DAY_S;
+            endTimestampS = tenMinutesStartS;
+            intervalS = ONE_HOUR_S; // TEN_MINUTES_S;
           } else if (period === ChartPeriod.ONE_WEEK) {
             startTimestampS = dayStartS - SEVEN_DAYS_S;
-            endTimestampS = hourStartS - 1;
-            intervalS = ONE_DAY_S;
+            endTimestampS = tenMinutesStartS;
+            intervalS = FOUR_HOURS_S; // ONE_HOUR_S;
           } else if (period === ChartPeriod.ONE_MONTH) {
             startTimestampS = dayStartS - ONE_MONTH_S;
-            endTimestampS = hourStartS - 1;
-            intervalS = ONE_DAY_S;
+            endTimestampS = tenMinutesStartS;
+            intervalS = TWELVE_HOURS_S; // FOUR_HOURS_S;
           } else if (period === ChartPeriod.THREE_MONTHS) {
             startTimestampS = dayStartS - THREE_MONTHS_S;
-            endTimestampS = hourStartS - 1;
-            intervalS = THREE_DAYS_S;
+            endTimestampS = tenMinutesStartS;
+            intervalS = ONE_DAY_S; // TWELVE_HOURS_S;
           }
+
           try {
-            if (
-              startTimestampS === undefined ||
-              endTimestampS === undefined ||
-              intervalS === undefined
-            ) {
-              throw new Error("timestamps cannot be undefined!");
-            }
-            const historicalLPTokenValues: {
+            const res = await fetch(
+              `${API_URL}/steamm/historical/lpTokenValue?${new URLSearchParams({
+                startTimestampS: `${startTimestampS}`,
+                endTimestampS: `${endTimestampS}`,
+                intervalS: `${intervalS}`,
+                poolId,
+                useHistoricalPrice: "true",
+              })}`,
+            );
+            const json: {
               usdValue: number;
               timestampS: number;
-            }[] = await (
-              await fetch(
-                `${API_URL}/steamm/historical/lpTokenValue?` +
-                  new URLSearchParams({
-                    startTimestampS: startTimestampS.toString(),
-                    endTimestampS: endTimestampS.toString(),
-                    intervalS: intervalS.toString(),
-                    poolId,
-                    useHistoricalPrice: true.toString(),
-                  }).toString(),
-              )
-            ).json();
+            }[] = await res.json();
+            if ((json as any)?.statusCode === 500)
+              throw new Error(
+                `Failed to fetch historical LP Token values for pool with id ${poolId}, period ${period}`,
+              );
+
+            // const firstUsdValue = json[0].usdValue;
+
             setPoolHistoricalStats((prev) => ({
               ...prev,
               lpTokenValueUsd: {
                 ...prev.lpTokenValueUsd,
                 [period]: {
                   ...prev.lpTokenValueUsd[period],
-                  [poolId]: historicalLPTokenValues.reduce(
+                  [poolId]: json.reduce(
                     (acc, d) => [
                       ...acc,
                       {

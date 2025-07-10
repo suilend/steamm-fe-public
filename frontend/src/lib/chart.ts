@@ -6,13 +6,13 @@ export enum ChartDataType {
   TVL = "tvl",
   VOLUME = "volume",
   FEES = "fees",
-  LP_VALUE = "lp-value",
+  LP_TOKEN_VALUE = "lpTokenValue",
 }
 export const chartDataTypeNameMap: Record<ChartDataType, string> = {
   [ChartDataType.TVL]: "TVL",
   [ChartDataType.VOLUME]: "Volume",
   [ChartDataType.FEES]: "Fees",
-  [ChartDataType.LP_VALUE]: "LP Value",
+  [ChartDataType.LP_TOKEN_VALUE]: "LP Token value",
 };
 
 export enum ChartPeriod {
