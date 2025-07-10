@@ -7,6 +7,7 @@ import {
 import {
   SUI_CLOCK_OBJECT_ID,
   SUI_SYSTEM_STATE_OBJECT_ID,
+  normalizeStructTag,
 } from "@mysten/sui/utils";
 
 import { Codegen } from "../..";
@@ -94,7 +95,7 @@ export class BankAbi {
   public rebalance(tx: Transaction) {
     const [lendingMarketType, coinType, bTokenType] = this.typeArgs();
 
-    if (coinType === "0x2::sui::SUI") {
+    if (normalizeStructTag(coinType) === normalizeStructTag("0x2::sui::SUI")) {
       const callArgs = {
         bank: tx.object(this.bankInfo.bankId),
         lendingMarket: tx.object(this.bankInfo.lendingMarketId),
