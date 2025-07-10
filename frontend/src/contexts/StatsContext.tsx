@@ -507,7 +507,8 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             (acc2, [poolId, data]) => ({
               ...acc2,
               [poolId]: data.reduce(
-                (acc3, d) => acc3.plus(d.volumeUsd),
+                (acc3, d, index, arr) =>
+                  index === arr.length - 1 ? acc3 : acc3.plus(d.volumeUsd), // Don't add last value (incomplete)
                 new BigNumber(0),
               ),
             }),
@@ -523,7 +524,8 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             (acc2, [poolId, data]) => ({
               ...acc2,
               [poolId]: data.reduce(
-                (acc3, d) => acc3.plus(d.feesUsd),
+                (acc3, d, index, arr) =>
+                  index === arr.length - 1 ? acc3 : acc3.plus(d.feesUsd), // Don't add last value (incomplete)
                 new BigNumber(0),
               ),
             }),
@@ -808,7 +810,8 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           [period]:
             globalHistoricalStats.volumeUsd[period] !== undefined
               ? globalHistoricalStats.volumeUsd[period].reduce(
-                  (acc2, d) => acc2.plus(d.volumeUsd),
+                  (acc2, d, index, arr) =>
+                    index === arr.length - 1 ? acc2 : acc2.plus(d.volumeUsd), // Don't add last value (incomplete)
                   new BigNumber(0),
                 )
               : undefined,
@@ -821,7 +824,8 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           [period]:
             globalHistoricalStats.feesUsd[period] !== undefined
               ? globalHistoricalStats.feesUsd[period].reduce(
-                  (acc2, d) => acc2.plus(d.feesUsd),
+                  (acc2, d, index, arr) =>
+                    index === arr.length - 1 ? acc2 : acc2.plus(d.feesUsd), // Don't add last value (incomplete)
                   new BigNumber(0),
                 )
               : undefined,
