@@ -231,7 +231,7 @@ export default function SearchDialog() {
         <button
           className={cn(
             "group flex h-5 w-5 flex-row items-center justify-center transition-colors",
-            "md:h-10 md:w-64 md:justify-between md:rounded-md md:border md:pl-3 md:pr-2 md:hover:bg-border/50 md:focus-visible:outline md:focus-visible:outline-focus",
+            "md:h-10 md:w-full md:max-w-96 md:justify-between md:rounded-md md:border md:pl-3 md:pr-2 md:hover:bg-border/50 md:focus-visible:outline md:focus-visible:outline-focus",
           )}
         >
           <div className="flex flex-row items-center gap-2">

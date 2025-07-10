@@ -89,7 +89,10 @@ export default function AirdropAddressAmountRow({
         >
           <div className="w-max">
             <p className="text-p2 text-foreground">
-              {formatToken(new BigNumber(row.amount), { dp: token.decimals })}{" "}
+              {formatToken(new BigNumber(row.amount), {
+                dp: token.decimals,
+                trimTrailingZeros: true,
+              })}{" "}
               {token.symbol}
             </p>
           </div>

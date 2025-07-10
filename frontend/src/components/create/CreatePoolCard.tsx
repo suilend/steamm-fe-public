@@ -38,8 +38,8 @@ import {
 import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
+import CreatePoolStepsDialog from "@/components/create/CreatePoolStepsDialog";
 import Parameter from "@/components/Parameter";
-import CreatePoolStepsDialog from "@/components/pools/CreatePoolStepsDialog";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
 import TextInput from "@/components/TextInput";
@@ -473,15 +473,14 @@ export default function CreatePoolCard() {
 
   const submitButtonState: SubmitButtonState = (() => {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
-    if (isSubmitting) {
-      return {
-        isDisabled: true,
-        title: hasFailed ? "Retry" : "Create pool and deposit",
-      };
-    }
-    if (hasFailed) return { isDisabled: false, title: "Retry" };
+    if (isSubmitting) return { isLoading: true, isDisabled: true };
+
+    if (hasFailed && !returnAllOwnedObjectsAndSuiToUserResult)
+      return { isDisabled: false, title: "Retry" };
     if (!!returnAllOwnedObjectsAndSuiToUserResult)
-      return { isDisabled: true, isSuccess: true };
+      return { isSuccess: true, isDisabled: true };
+
+    //
 
     if (coinTypes.some((coinType) => coinType === ""))
       return { isDisabled: true, title: "Select tokens" };
@@ -571,8 +570,8 @@ export default function CreatePoolCard() {
 
       await initializeCoinCreation();
 
-      // 1) Generate and fund keypair
-      // 1.1) Generate
+      // 1) Create, check, and fund keypair
+      // 1.1) Create
       let _keypair = keypair;
       if (_keypair === undefined) {
         _keypair = (await createKeypair(account, signPersonalMessage)).keypair;
@@ -737,6 +736,7 @@ export default function CreatePoolCard() {
     }
   };
 
+  // Steps dialog
   const isStepsDialogOpen =
     isSubmitting || !!returnAllOwnedObjectsAndSuiToUserResult;
 
@@ -744,6 +744,11 @@ export default function CreatePoolCard() {
     <>
       <CreatePoolStepsDialog
         isOpen={isStepsDialogOpen}
+        tokens={coinTypes
+          .filter((coinType) => coinType !== "")
+          .map((coinType) =>
+            getToken(coinType, balancesCoinMetadataMap![coinType]),
+          )}
         fundKeypairResult={fundKeypairResult}
         bTokensAndBankIds={bTokensAndBankIds}
         createdLpToken={createLpTokenResult}
@@ -808,13 +813,19 @@ export default function CreatePoolCard() {
               {useCpmmOffset && (
                 <>
                   {/* Quote asset */}
-                  <div className="flex flex-row justify-between">
-                    <p className="text-p2 text-secondary-foreground">
-                      Quote asset
-                    </p>
+                  <div className="flex w-full flex-col gap-3">
+                    <div className="flex w-full flex-col gap-1">
+                      <p className="text-p2 text-secondary-foreground">
+                        Quote asset
+                      </p>
+                      <p className="text-p3 text-tertiary-foreground">
+                        SUI or stablecoins (e.g. USDC, USDT) are usually used as
+                        the quote asset.
+                      </p>
+                    </div>
 
                     <TokenSelectionDialog
-                      triggerClassName="h-6"
+                      triggerClassName="w-max px-3 border rounded-md"
                       triggerIconSize={16}
                       triggerLabelSelectedClassName="!text-p2"
                       triggerLabelUnselectedClassName="!text-p2"
@@ -858,6 +869,7 @@ export default function CreatePoolCard() {
                   quote asset.
                 </p>
               </div>
+
               <CoinInput
                 token={
                   coinTypes[1] !== ""
@@ -982,7 +994,6 @@ export default function CreatePoolCard() {
                       >
                         <div className="w-max">
                           <button
-                            key={_quoterId}
                             className={cn(
                               "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
                               _quoterId === quoterId

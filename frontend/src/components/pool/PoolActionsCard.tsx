@@ -1,14 +1,29 @@
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
-import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
+import {
+  Transaction,
+  TransactionArgument,
+  coinWithBalance,
+} from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
+import { Plus } from "lucide-react";
 
 import {
   ParsedObligation,
+  QuoteProvider,
   createObligationIfNoneExists,
+  getAggSortedQuotesAll,
+  getSwapTransaction,
   sendObligationToUser,
 } from "@suilend/sdk";
 import {
@@ -48,6 +63,7 @@ import { AppData, useLoadedAppContext } from "@/contexts/AppContext";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useCachedUsdPrices from "@/hooks/useCachedUsdPrices";
+import { useAggSdks } from "@/lib/agg-swap";
 import { rebalanceBanks } from "@/lib/banks";
 import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
@@ -81,11 +97,28 @@ interface DepositTabProps {
 }
 
 function DepositTab({ onDeposit }: DepositTabProps) {
-  const { explorer } = useSettingsContext();
+  const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData, slippagePercent } = useLoadedAppContext();
   const { getBalance, userData, refresh } = useUserContext();
   const { pool } = usePoolContext();
+
+  // send.ag
+  const { sdkMap, partnerIdMap } = useAggSdks();
+
+  const activeProviders = useMemo(
+    () => [
+      // QuoteProvider.AFTERMATH, - Doesn't work with with $intents (?)
+      QuoteProvider.CETUS,
+      QuoteProvider._7K,
+      QuoteProvider.FLOWX,
+      // QuoteProvider.OKX_DEX,
+    ],
+    [],
+  );
+
+  // Deposited assets
+  const [depositedIndexes, setDepositedIndexes] = useState<number[]>([0, 1]);
 
   // Value
   const dps = [
@@ -105,32 +138,33 @@ function DepositTab({ onDeposit }: DepositTabProps) {
       BigNumber.ROUND_DOWN,
     ),
   ) as [BigNumber, BigNumber];
-  const smartMaxValues = pool.tvlUsd.eq(0)
-    ? maxValues
-    : [
-        BigNumber.min(
-          maxValues[0],
-          new BigNumber(
-            maxValues[1].div(pool.balances[1]).times(pool.balances[0]),
-          )
-            .div(1 + slippagePercent / 100)
-            .decimalPlaces(
-              appData.coinMetadataMap[pool.coinTypes[1]].decimals,
-              BigNumber.ROUND_DOWN,
-            ),
-        ),
-        BigNumber.min(
-          maxValues[1],
-          new BigNumber(
-            maxValues[0].div(pool.balances[0]).times(pool.balances[1]),
-          )
-            .div(1 + slippagePercent / 100)
-            .decimalPlaces(
-              appData.coinMetadataMap[pool.coinTypes[0]].decimals,
-              BigNumber.ROUND_DOWN,
-            ),
-        ),
-      ];
+  const smartMaxValues =
+    pool.tvlUsd.eq(0) || depositedIndexes.length === 1
+      ? maxValues
+      : [
+          BigNumber.min(
+            maxValues[0],
+            new BigNumber(
+              maxValues[1].div(pool.balances[1]).times(pool.balances[0]),
+            )
+              .div(1 + slippagePercent / 100)
+              .decimalPlaces(
+                appData.coinMetadataMap[pool.coinTypes[1]].decimals,
+                BigNumber.ROUND_DOWN,
+              ),
+          ),
+          BigNumber.min(
+            maxValues[1],
+            new BigNumber(
+              maxValues[0].div(pool.balances[0]).times(pool.balances[1]),
+            )
+              .div(1 + slippagePercent / 100)
+              .decimalPlaces(
+                appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+                BigNumber.ROUND_DOWN,
+              ),
+          ),
+        ];
 
   const [values, setValues] = useState<[string, string]>(["", ""]);
   const [lastActiveInputIndex, setLastActiveInputIndex] = useState<
@@ -163,7 +197,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
       new BigNumber(_value || 0)
         .div(smartMaxValues[index])
         .times(100)
-        .toFixed(1),
+        .toFixed(2),
     );
 
     setQuote(
@@ -205,17 +239,19 @@ function DepositTab({ onDeposit }: DepositTabProps) {
 
   // Value - slider
   const onSliderValueChange = (percent: string) => {
-    const formattedValue = formatPercentInputValue(percent, 1);
+    const formattedValue = formatPercentInputValue(percent, 2);
+
+    const index = depositedIndexes.length === 1 ? depositedIndexes[0] : 0;
 
     onValueChange(
-      smartMaxValues[0]
+      smartMaxValues[index]
         .times(formattedValue || "0")
         .div(100)
         .toFixed(
-          appData.coinMetadataMap[pool.coinTypes[0]].decimals,
+          appData.coinMetadataMap[pool.coinTypes[index]].decimals,
           BigNumber.ROUND_DOWN,
         ),
-      0,
+      index,
     );
 
     setSliderValue(formattedValue);
@@ -245,16 +281,18 @@ function DepositTab({ onDeposit }: DepositTabProps) {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
     if (isSubmitting) return { isDisabled: true, isLoading: true };
 
-    if (Object.values(values).some((value) => value === ""))
+    if (values.some((value) => value === ""))
       return { isDisabled: true, title: "Enter an amount" };
-    if (Object.values(values).some((value) => new BigNumber(value).lt(0)))
+    if (values.some((value) => new BigNumber(value).lt(0)))
       return { isDisabled: true, title: "Enter a +ve amount" };
-    if (Object.values(values).some((value) => new BigNumber(value).eq(0)))
+    if (values.some((value) => new BigNumber(value).eq(0)))
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
     if (quote) {
       for (let i = 0; i < pool.coinTypes.length; i++) {
         const coinType = pool.coinTypes[i];
+        if (depositedIndexes.length === 1 && i !== depositedIndexes[0])
+          continue;
 
         if (
           getBalance(coinType).lt(
@@ -299,55 +337,146 @@ function DepositTab({ onDeposit }: DepositTabProps) {
         appData.coinMetadataMap[coinTypeB],
       ];
 
-      const submitAmountA = new BigNumber(quote.depositA.toString())
-        .times(
-          lastActiveInputIndex === 0 || pool.tvlUsd.eq(0)
-            ? 1
-            : 1 + slippagePercent / 100,
-        )
-        .integerValue(BigNumber.ROUND_DOWN)
-        .toString();
-      const submitAmountB = new BigNumber(quote.depositB.toString())
-        .times(
-          lastActiveInputIndex === 1 || pool.tvlUsd.eq(0)
-            ? 1
-            : 1 + slippagePercent / 100,
-        )
-        .integerValue(BigNumber.ROUND_DOWN)
-        .toString();
+      let transaction = new Transaction();
 
-      const transaction = new Transaction();
+      let maxA: bigint | TransactionArgument,
+        maxB: bigint | TransactionArgument;
+      let depositCoinA, depositCoinB;
+      if (depositedIndexes.length === 1) {
+        // Swap
+        const index = depositedIndexes[0];
 
-      // Deposit into pool
-      const coinA = coinWithBalance({
-        balance: BigInt(submitAmountA),
-        type: coinTypeA,
-        useGasCoin: isSui(coinTypeA),
-      })(transaction);
-      const coinB = coinWithBalance({
-        balance: BigInt(submitAmountB),
-        type: coinTypeB,
-        useGasCoin: isSui(coinTypeB),
-      })(transaction);
+        const [indexCoinType, nonIndexCoinType] =
+          index === 0 ? [coinTypeA, coinTypeB] : [coinTypeB, coinTypeA];
+
+        const [indexToken, nonIndexToken] = [
+          getToken(indexCoinType, appData.coinMetadataMap[indexCoinType]),
+          getToken(nonIndexCoinType, appData.coinMetadataMap[nonIndexCoinType]),
+        ];
+
+        const indexQuoteDeposit =
+          index === 0 ? quote.depositA.toString() : quote.depositB.toString();
+
+        const indexSwapAmountIn = new BigNumber(indexQuoteDeposit)
+          .times(
+            new BigNumber(1).minus(
+              new BigNumber(pool.balances[index].times(pool.prices[index])).div(
+                pool.tvlUsd,
+              ),
+            ),
+          )
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString();
+        const indexSwapCoinIn = coinWithBalance({
+          type: indexToken.coinType,
+          balance: BigInt(indexSwapAmountIn),
+          useGasCoin: isSui(indexToken.coinType),
+        })(transaction);
+
+        const swapQuotes = await getAggSortedQuotesAll(
+          sdkMap,
+          activeProviders,
+          indexToken,
+          nonIndexToken,
+          indexSwapAmountIn,
+        );
+        const swapQuote = swapQuotes[0];
+        if (!swapQuote) throw new Error("No swap quotes found");
+
+        const { transaction: _transaction, coinOut: swapCoinOut } =
+          await getSwapTransaction(
+            suiClient,
+            address,
+            swapQuote,
+            +slippagePercent,
+            sdkMap,
+            partnerIdMap,
+            transaction,
+            indexSwapCoinIn,
+          );
+        if (!swapCoinOut) throw new Error("Missing coin to deposit");
+
+        transaction = _transaction;
+
+        // Deposit
+        const indexDepositAmount = new BigNumber(
+          new BigNumber(indexQuoteDeposit).minus(indexSwapAmountIn),
+        )
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString();
+        const indexDepositCoin = coinWithBalance({
+          type: indexToken.coinType,
+          balance: BigInt(indexDepositAmount),
+          useGasCoin: isSui(indexToken.coinType),
+        })(transaction);
+
+        maxA =
+          index === 0
+            ? BigInt(indexDepositAmount)
+            : transaction.moveCall({
+                target: "0x2::coin::value",
+                typeArguments: [nonIndexToken.coinType],
+                arguments: [swapCoinOut],
+              });
+        maxB =
+          index === 0
+            ? transaction.moveCall({
+                target: "0x2::coin::value",
+                typeArguments: [nonIndexToken.coinType],
+                arguments: [swapCoinOut],
+              })
+            : BigInt(indexDepositAmount);
+
+        depositCoinA = index === 0 ? indexDepositCoin : swapCoinOut;
+        depositCoinB = index === 0 ? swapCoinOut : indexDepositCoin;
+      } else {
+        maxA = BigInt(
+          new BigNumber(quote.depositA.toString())
+            .times(
+              lastActiveInputIndex === 0 || pool.tvlUsd.eq(0)
+                ? 1
+                : 1 + slippagePercent / 100,
+            )
+            .integerValue(BigNumber.ROUND_DOWN)
+            .toString(),
+        );
+        maxB = BigInt(
+          new BigNumber(quote.depositB.toString())
+            .times(
+              lastActiveInputIndex === 1 || pool.tvlUsd.eq(0)
+                ? 1
+                : 1 + slippagePercent / 100,
+            )
+            .integerValue(BigNumber.ROUND_DOWN)
+            .toString(),
+        );
+
+        depositCoinA = coinWithBalance({
+          balance: maxA,
+          type: coinTypeA,
+          useGasCoin: isSui(coinTypeA),
+        })(transaction);
+        depositCoinB = coinWithBalance({
+          balance: maxB,
+          type: coinTypeB,
+          useGasCoin: isSui(coinTypeB),
+        })(transaction);
+      }
 
       const banks = [appData.bankMap[coinTypeA], appData.bankMap[coinTypeB]];
 
       const [lpCoin] = await steammClient.Pool.depositLiquidity(transaction, {
-        coinA,
-        coinB,
-        maxA: BigInt(submitAmountA),
-        maxB: BigInt(submitAmountB),
+        coinA: depositCoinA,
+        coinB: depositCoinB,
+        maxA,
+        maxB,
         poolInfo: pool.poolInfo,
         bankInfoA: banks[0].bankInfo,
         bankInfoB: banks[1].bankInfo,
       });
-      transaction.transferObjects([coinA, coinB], address);
+      transaction.transferObjects([depositCoinA, depositCoinB], address);
 
-      rebalanceBanks(
-        banks.filter((b) => !isSui(b.coinType)),
-        steammClient,
-        transaction,
-      );
+      rebalanceBanks(banks, steammClient, transaction);
 
       // Stake LP tokens (if reserve exists)
       if (!!appData.suilend.lmMarket.reserveMap[pool.lpTokenType]) {
@@ -386,33 +515,64 @@ function DepositTab({ onDeposit }: DepositTabProps) {
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
 
-      const balanceChangeA = getBalanceChange(
-        res,
-        address,
-        getToken(coinTypeA, appData.coinMetadataMap[coinTypeA]),
-        -1,
-      );
-      const balanceChangeB = getBalanceChange(
-        res,
-        address,
-        getToken(coinTypeB, appData.coinMetadataMap[coinTypeB]),
-        -1,
-      );
+      const [depositedAmountA, depositedAmountB] = (() => {
+        const depositResultEvent = res.events?.find(
+          (event) =>
+            event.type ===
+              "0x4fb1cf45dffd6230305f1d269dd1816678cc8e3ba0b747a813a556921219f261::events::Event<0x4fb1cf45dffd6230305f1d269dd1816678cc8e3ba0b747a813a556921219f261::pool::DepositResult>" &&
+            (event.parsedJson as any).event.pool_id === pool.id,
+        );
+        const mintBTokenEventA = res.events?.find(
+          (event) =>
+            event.type ===
+              "0x4fb1cf45dffd6230305f1d269dd1816678cc8e3ba0b747a813a556921219f261::events::Event<0x4fb1cf45dffd6230305f1d269dd1816678cc8e3ba0b747a813a556921219f261::bank::MintBTokenEvent>" &&
+            (event.parsedJson as any).event.bank_id ===
+              appData.bankMap[coinTypeA].bankInfo.bankId,
+        );
+        const mintBTokenEventB = res.events?.find(
+          (event) =>
+            event.type ===
+              "0x4fb1cf45dffd6230305f1d269dd1816678cc8e3ba0b747a813a556921219f261::events::Event<0x4fb1cf45dffd6230305f1d269dd1816678cc8e3ba0b747a813a556921219f261::bank::MintBTokenEvent>" &&
+            (event.parsedJson as any).event.bank_id ===
+              appData.bankMap[coinTypeB].bankInfo.bankId,
+        );
+        if (!depositResultEvent || !mintBTokenEventA || !mintBTokenEventB)
+          return [undefined, undefined];
+
+        const bTokenExchangeRateA = new BigNumber(
+          (mintBTokenEventA.parsedJson as any).event.deposited_amount,
+        ).div((mintBTokenEventA.parsedJson as any).event.minted_amount);
+        const bTokenExchangeRateB = new BigNumber(
+          (mintBTokenEventB.parsedJson as any).event.deposited_amount,
+        ).div((mintBTokenEventB.parsedJson as any).event.minted_amount);
+
+        const depositedAmountA = new BigNumber(
+          (depositResultEvent.parsedJson as any).event.deposit_a,
+        )
+          .times(bTokenExchangeRateA)
+          .div(10 ** appData.coinMetadataMap[coinTypeA].decimals);
+        const depositedAmountB = new BigNumber(
+          (depositResultEvent.parsedJson as any).event.deposit_b,
+        )
+          .times(bTokenExchangeRateB)
+          .div(10 ** appData.coinMetadataMap[coinTypeB].decimals);
+        return [depositedAmountA, depositedAmountB];
+      })();
 
       onDeposit();
       showSuccessTxnToast(
         [
           "Deposited",
-          balanceChangeA !== undefined
-            ? formatToken(balanceChangeA, {
+          depositedAmountA !== undefined
+            ? formatToken(depositedAmountA, {
                 dp: coinMetadataA.decimals,
                 trimTrailingZeros: true,
               })
             : null,
           coinMetadataA.symbol,
           "and",
-          balanceChangeB !== undefined
-            ? formatToken(balanceChangeB, {
+          depositedAmountB !== undefined
+            ? formatToken(depositedAmountB, {
                 dp: coinMetadataB.decimals,
                 trimTrailingZeros: true,
               })
@@ -447,18 +607,74 @@ function DepositTab({ onDeposit }: DepositTabProps) {
 
   return (
     <>
-      {[0, 1].map((index) => (
-        <CoinInput
-          key={index}
-          token={getToken(
-            pool.coinTypes[index],
-            appData.coinMetadataMap[pool.coinTypes[index]],
+      {/* Deposited assets */}
+      {pool.tvlUsd.gt(0) && (
+        <div className="relative flex w-full flex-row rounded-full bg-border/25">
+          <Plus
+            className={cn(
+              "absolute left-1/2 top-1/2 z-[3] h-4 w-4 -translate-x-1/2 -translate-y-1/2 text-tertiary-foreground transition-opacity",
+              depositedIndexes.length === 1 && "opacity-0",
+            )}
+          />
+          {pool.coinTypes.map((coinType, index) => (
+            <button
+              key={coinType}
+              className="group relative z-[2] flex h-10 flex-1 flex-row items-center justify-center rounded-full px-3"
+              onClick={() =>
+                setDepositedIndexes((prev) =>
+                  prev.includes(index)
+                    ? prev.length === 1
+                      ? [0, 1]
+                      : [index]
+                    : [...prev, index],
+                )
+              }
+            >
+              <div className="flex flex-row items-center gap-2">
+                <TokenLogo
+                  token={getToken(coinType, appData.coinMetadataMap[coinType])}
+                  size={16}
+                />
+                <p
+                  className={cn(
+                    "!text-p2 transition-colors",
+                    depositedIndexes.includes(index)
+                      ? "text-foreground"
+                      : "text-secondary-foreground group-hover:text-foreground",
+                  )}
+                >
+                  {appData.coinMetadataMap[coinType].symbol}
+                </p>
+              </div>
+            </button>
+          ))}
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-y-0 z-[1] rounded-full border border-button-1 bg-button-1/25",
+              depositedIndexes.length === 2
+                ? "inset-x-0"
+                : cn(
+                    "w-1/2",
+                    depositedIndexes.includes(0) ? "left-0" : "right-0",
+                  ),
+            )}
+          />
+        </div>
+      )}
+
+      {pool.coinTypes.map((coinType, index) => (
+        <Fragment key={index}>
+          {depositedIndexes.includes(index) && (
+            <CoinInput
+              key={coinType}
+              token={getToken(coinType, appData.coinMetadataMap[coinType])}
+              value={values[index]}
+              usdValue={usdValues[index]}
+              onChange={(_value) => onValueChange(_value, index)}
+              onMaxAmountClick={() => onBalanceClick(index)}
+            />
           )}
-          value={values[index]}
-          usdValue={usdValues[index]}
-          onChange={(_value) => onValueChange(_value, index)}
-          onMaxAmountClick={() => onBalanceClick(index)}
-        />
+        </Fragment>
       ))}
 
       {/* Slider */}
@@ -515,7 +731,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
             <p className="text-p2 text-button-2-foreground">Max</p>
           </button>
 
-          <div className="w-20">
+          <div className="w-24">
             <PercentInput
               inputClassName="!text-p1 text-right pl-0"
               value={sliderValue}
@@ -602,7 +818,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
             ),
       ) as [string, string],
     );
-    setSliderValue(lpTokens.div(lpTokenTotalAmount).times(100).toFixed(1));
+    setSliderValue(lpTokens.div(lpTokenTotalAmount).times(100).toFixed(2));
 
     setQuote(
       [0, 1].reduce(
@@ -639,7 +855,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
         ),
       ) as [string, string],
     );
-    setSliderValue(formatPercentInputValue(_value, 1));
+    setSliderValue(formatPercentInputValue(_value, 2));
 
     setQuote(
       [0, 1].reduce(
@@ -888,11 +1104,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
     });
     transaction.transferObjects([coinA, coinB], address);
 
-    rebalanceBanks(
-      banks.filter((b) => !isSui(b.coinType)),
-      steammClient,
-      transaction,
-    );
+    rebalanceBanks(banks, steammClient, transaction);
 
     return transaction;
   };
@@ -1069,7 +1281,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
             <p className="text-p2 text-button-2-foreground">Max</p>
           </button>
 
-          <div className="w-20">
+          <div className="w-24">
             <PercentInput
               inputClassName="!text-p1 text-right pl-0"
               value={sliderValue}
@@ -1387,11 +1599,7 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
       });
       transaction.transferObjects([coinA, coinB], address);
 
-      rebalanceBanks(
-        banks.filter((b) => !isSui(b.coinType)),
-        steammClient,
-        transaction,
-      );
+      rebalanceBanks(banks, steammClient, transaction);
 
       const res = await signExecuteAndWaitForTransaction(transaction, {
         auction: true,

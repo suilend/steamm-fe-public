@@ -138,7 +138,7 @@ export default function AirdropAddressAmountTable({
   );
 
   return (
-    <div className="relative w-full">
+    <div className="pointer-events-auto relative w-full">
       {/* Table */}
       <div className="relative z-[2] w-full overflow-hidden rounded-md">
         <div className="pointer-events-none absolute inset-0 z-[2] rounded-md border" />
@@ -174,7 +174,7 @@ export default function AirdropAddressAmountTable({
 
               {/* Rows */}
               {pageRows === undefined ? (
-                Array.from({ length: 3 }).map((_, index) => (
+                Array.from({ length: pageSize }).map((_, index) => (
                   <tr
                     key={index}
                     className="h-[calc(45px+1px)] border-x border-b"

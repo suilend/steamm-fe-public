@@ -56,7 +56,7 @@ export default function SettingsDialog() {
             <p className="text-p2 text-secondary-foreground">RPC</p>
           </div>
 
-          <div className="flex flex-1 flex-col gap-1">
+          <div className="flex flex-1 flex-col gap-2">
             <SelectPopover
               options={RPCS}
               values={[rpc.id]}

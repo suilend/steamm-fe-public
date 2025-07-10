@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   BROWSE_FILE_SIZE_ERROR_MESSAGE,
   BROWSE_MAX_FILE_SIZE_BYTES,
-} from "@/lib/launchToken";
+} from "@/lib/createToken";
 
 const MAX_BASE64_LENGTH = 2 ** 16; // 65,536 characters (~49KB file size)
 
@@ -201,7 +201,7 @@ export default function IconUpload({
 
       <div className="flex w-full flex-row items-center gap-4">
         {/* Icon */}
-        <div className="group relative flex w-max flex-row items-center justify-center rounded-md border">
+        <div className="group relative flex w-max flex-row items-center justify-center rounded-md border border-dashed">
           {isProcessing || !!iconUrl ? (
             <>
               {!isProcessing && !!iconUrl && (

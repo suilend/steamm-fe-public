@@ -152,9 +152,6 @@ export default function PoolsPage() {
       getChartType: (dataType: string) => {
         return ChartType.LINE;
       },
-      getValueFormatter: (dataType: string) => {
-        return (value: number) => formatUsd(new BigNumber(value));
-      },
       periodOptions: [ChartPeriod.ONE_WEEK].map((period) => ({
         id: period,
         name: chartPeriodNameMap[period],
@@ -181,9 +178,6 @@ export default function PoolsPage() {
     () => ({
       getChartType: (dataType: string) => {
         return ChartType.BAR;
-      },
-      getValueFormatter: (dataType: string) => {
-        return (value: number) => formatUsd(new BigNumber(value));
       },
       periodOptions: [ChartPeriod.ONE_WEEK].map((period) => ({
         id: period,

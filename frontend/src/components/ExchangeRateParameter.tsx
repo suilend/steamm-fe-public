@@ -4,6 +4,7 @@ import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { ArrowRightLeft } from "lucide-react";
 
+import { StandardizedQuote } from "@suilend/sdk";
 import { MultiSwapQuote, SwapQuote } from "@suilend/steamm-sdk";
 import { Token, formatPrice, formatToken } from "@suilend/sui-fe";
 
@@ -21,7 +22,7 @@ interface ExchangeRateParameterProps {
   outToken: Token;
   outPrice: BigNumber;
   isFetchingQuote?: boolean;
-  quote?: SwapQuote | MultiSwapQuote;
+  quote?: SwapQuote | MultiSwapQuote | StandardizedQuote;
   isInverted?: boolean;
   label?: string;
   isHorizontal?: boolean;

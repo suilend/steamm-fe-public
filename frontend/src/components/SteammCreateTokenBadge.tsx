@@ -2,17 +2,17 @@ import SteammLogo from "@/components/SteammLogo";
 import Tooltip from "@/components/Tooltip";
 import { cn } from "@/lib/utils";
 
-interface SteammLaunchTokenBadgeProps {
+interface SteammCreateTokenBadgeProps {
   isSmall?: boolean;
   isLarge?: boolean;
 }
 
-export default function SteammLaunchTokenBadge({
+export default function SteammCreateTokenBadge({
   isSmall,
   isLarge,
-}: SteammLaunchTokenBadgeProps) {
+}: SteammCreateTokenBadgeProps) {
   return (
-    <Tooltip title="Launched on STEAMM">
+    <Tooltip title="Created on STEAMM">
       <div
         className={cn(
           "flex shrink-0 flex-row items-center justify-center rounded-full border border-button-1 bg-button-1/25",

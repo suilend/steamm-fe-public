@@ -100,16 +100,28 @@ export default function ConnectedWalletPopover() {
           </div>
         </div>
 
-        {hasDisconnect && (
-          <button
-            className="group flex h-10 w-full flex-row items-center rounded-md border px-3 transition-colors hover:bg-border/50"
-            onClick={disconnectWallet}
+        <div className="flex w-full flex-col gap-1">
+          {/* <Link
+            className="group flex h-10 w-full flex-row items-center justify-between rounded-md border px-3 transition-colors hover:bg-border/50"
+            href={PORTFOLIO_URL}
           >
             <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
-              Disconnect
+              Portfolio
             </p>
-          </button>
-        )}
+            <ChevronRight className="h-4 w-4 text-secondary-foreground group-hover:text-foreground" />
+          </Link> */}
+          {hasDisconnect && (
+            <button
+              className="group flex h-10 w-full flex-row items-center rounded-md border px-3 transition-colors hover:bg-border/50"
+              onClick={disconnectWallet}
+            >
+              <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
+                Disconnect
+              </p>
+            </button>
+          )}
+        </div>
+
         {hasWallets && (
           <div className="flex w-full flex-col gap-1">
             {accounts.map((a) => (

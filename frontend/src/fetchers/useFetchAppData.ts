@@ -39,10 +39,7 @@ import { OracleType } from "@/lib/oracles";
 import { fetchPool } from "@/lib/pools";
 
 const TEST_BANK_COIN_TYPES: string[] = [];
-const TEST_POOL_IDS: string[] = [
-  "0x933a0929120061c9922b404f2425d2c2de7fcf059547d2dcd55759c7fda79063", // LOLS2 ($250K MC)
-  "0x68b579df0062ec3606655220d79e3a155a9b31ea4e1c1dbc9d09c1b353772376", // SCL ($1M MC)
-];
+const TEST_POOL_IDS: string[] = [];
 
 export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
@@ -54,7 +51,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     const [
       suilend,
       lstAprPercentMap,
-      steammLaunchCoinTypes,
+      steammCreateTokenCoinTypes,
       pythPriceIdentifierSymbolMap,
       {
         oracleIndexOracleInfoPriceMap,
@@ -191,13 +188,13 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         }
       })(),
 
-      // STEAMM Launch tokens (won't throw on error)
+      // Tokens created on STEAMM (won't throw on error)
       (async () => {
         try {
           const coinTypesRes = await fetch(`${API_URL}/steamm/cointypes/all`);
           const coinTypesJson: string[] = await coinTypesRes.json();
           if ((coinTypesRes as any)?.statusCode === 500)
-            throw new Error("Failed to fetch STEAMM Launch tokens");
+            throw new Error("Failed to fetch tokens created on STEAMM");
 
           return coinTypesJson.map(normalizeStructTag);
         } catch (err) {
@@ -588,7 +585,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
       coinMetadataMap,
       lstAprPercentMap,
-      steammLaunchCoinTypes,
+      steammCreateTokenCoinTypes,
       pythPriceIdentifierSymbolMap,
 
       oracleIndexOracleInfoPriceMap,

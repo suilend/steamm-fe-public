@@ -7,9 +7,8 @@ import { FileSpreadsheet, X } from "lucide-react";
 import { Token, formatNumber } from "@suilend/sui-fe";
 import { showErrorToast } from "@suilend/sui-fe-next";
 
-import AirdropAddressAmountTable from "@/components/airdrop/AirdropAddressAmountTable";
-import Parameter from "@/components/Parameter";
 import { AirdropRow } from "@/lib/airdrop";
+import { sleep } from "@/lib/utils";
 
 const VALID_MIME_TYPES = ["text/csv"];
 
@@ -26,7 +25,6 @@ interface CsvUploadProps {
 
 export default function CsvUpload({
   isDragAndDropDisabled,
-  token,
   csvRows,
   setCsvRows,
   csvFilename,
@@ -72,8 +70,6 @@ export default function CsvUpload({
   }, []);
 
   // Process file
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-
   const reset = () => {
     setCsvRows(undefined);
     setCsvFilename("");
@@ -84,7 +80,6 @@ export default function CsvUpload({
   const handleFile = async (file: File) => {
     try {
       reset();
-      setIsProcessing(true);
 
       // Validate file type
       if (!VALID_MIME_TYPES.includes(file.type))
@@ -92,8 +87,9 @@ export default function CsvUpload({
 
       // Read file
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
+          await sleep(100);
           const text = e.target?.result as string;
 
           const records: { [key: string]: string }[] = parseCsv(text, {
@@ -120,7 +116,6 @@ export default function CsvUpload({
           });
 
           setCsvRows(parsedRecords);
-          setIsProcessing(false);
           setCsvFilename(file.name);
           setCsvFileSize(
             file.size > 1024
@@ -132,7 +127,6 @@ export default function CsvUpload({
           showErrorToast("Failed to upload CSV file", err as Error);
 
           reset();
-          setIsProcessing(false);
         }
       };
       reader.onerror = () => {
@@ -143,7 +137,6 @@ export default function CsvUpload({
           showErrorToast("Failed to upload CSV file", err as Error);
 
           reset();
-          setIsProcessing(false);
         }
       };
       reader.readAsText(file);
@@ -152,7 +145,6 @@ export default function CsvUpload({
       showErrorToast("Failed to upload CSV file", err as Error);
 
       reset();
-      setIsProcessing(false);
     }
   };
 
@@ -190,62 +182,48 @@ export default function CsvUpload({
         </div>
       )}
 
-      <Parameter
-        className="gap-3"
-        labelContainerClassName="flex-col gap-1 items-start"
-        label="CSV file"
-        labelEndDecorator="Address & amount columns, comma-separated"
-      >
-        <div className="flex w-full flex-row items-center gap-4">
-          {/* CSV */}
-          <div className="group relative flex w-max flex-row items-center justify-center rounded-md border">
-            {isProcessing || (csvRows ?? []).length > 0 ? (
-              <>
-                {!isProcessing && (csvRows ?? []).length > 0 && (
-                  <button
-                    className="absolute right-1 top-1 z-[2] rounded-md border bg-background p-1 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
-                    onClick={reset}
-                  >
-                    <X className="h-4 w-4 text-secondary-foreground transition-colors hover:text-foreground" />
-                  </button>
-                )}
+      <div className="flex w-full flex-row items-center gap-4">
+        {/* CSV */}
+        <div className="group relative flex w-max flex-row items-center justify-center rounded-md border">
+          {(csvRows ?? []).length > 0 ? (
+            <>
+              <button
+                className="absolute right-1 top-1 z-[2] rounded-md border bg-background p-1 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
+                onClick={reset}
+              >
+                <X className="h-4 w-4 text-secondary-foreground transition-colors hover:text-foreground" />
+              </button>
 
-                <div className="pointer-events-none relative z-[1] flex h-24 w-24">
-                  <FileSpreadsheet className="absolute left-4 top-4 h-16 w-16 text-[#34A853]" />
-                </div>
-              </>
-            ) : (
-              <div className="pointer-events-none relative z-[2] flex h-24 w-24 flex-col items-center justify-center gap-0.5">
-                <p className="text-p3 text-secondary-foreground">Drag & drop</p>
-                <p className="text-p3 text-secondary-foreground">or browse</p>
+              <div className="pointer-events-none relative z-[1] flex h-24 w-24">
+                <FileSpreadsheet className="absolute left-4 top-4 h-16 w-16 text-button-1" />
               </div>
-            )}
+            </>
+          ) : (
+            <div className="pointer-events-none relative z-[2] flex h-24 w-24 flex-col items-center justify-center gap-0.5">
+              <p className="text-p3 text-secondary-foreground">Drag & drop</p>
+              <p className="text-p3 text-secondary-foreground">or browse</p>
+            </div>
+          )}
 
-            <input
-              id="csv-upload"
-              className="absolute inset-0 z-[1] appearance-none opacity-0"
-              type="file"
-              accept={VALID_MIME_TYPES.join(",")}
-              onChange={handleFileSelect}
-              disabled={isProcessing}
-            />
-          </div>
-
-          {/* Metadata */}
-          <div className="flex flex-1 flex-col gap-1">
-            <p className="break-all text-p2 text-secondary-foreground">
-              {csvFilename || "--"}
-            </p>
-            <p className="text-p3 text-tertiary-foreground">
-              {csvFileSize || "--"}
-            </p>
-          </div>
+          <input
+            id="csv-upload"
+            className="absolute inset-0 z-[1] appearance-none opacity-0"
+            type="file"
+            accept={VALID_MIME_TYPES.join(",")}
+            onChange={handleFileSelect}
+          />
         </div>
-      </Parameter>
 
-      {token !== undefined && (isProcessing || csvRows !== undefined) && (
-        <AirdropAddressAmountTable token={token} rows={csvRows} />
-      )}
+        {/* Metadata */}
+        <div className="flex flex-1 flex-col gap-1">
+          <p className="break-all text-p2 text-secondary-foreground">
+            {csvFilename || "--"}
+          </p>
+          <p className="text-p3 text-tertiary-foreground">
+            {csvFileSize || "--"}
+          </p>
+        </div>
+      </div>
     </>
   );
 }

@@ -26,8 +26,8 @@ const useNavItems = (includePools: boolean = false) => {
       : null,
     { url: CREATE_URL, title: "Create" },
     // { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
-    { url: LEADERBOARD_URL, title: "Leaderboard" },
     { url: PORTFOLIO_URL, title: "Portfolio" },
+    { url: LEADERBOARD_URL, title: "Leaderboard" },
   ].filter(Boolean) as NavItem[];
 
   const ADMIN_NAV_ITEM: NavItem = {

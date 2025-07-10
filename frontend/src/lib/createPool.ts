@@ -29,7 +29,7 @@ import {
   createCoin,
   generate_bytecode,
 } from "@/lib/createCoin";
-import { BURN_ADDRESS } from "@/lib/launchToken";
+import { BURN_ADDRESS } from "@/lib/createToken";
 
 export const QUOTER_IDS: QuoterId[] = Object.values(QuoterId).filter(
   (quoterId) => quoterId !== QuoterId.V_CPMM,

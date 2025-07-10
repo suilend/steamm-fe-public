@@ -38,9 +38,6 @@ export default function PoolChartCard() {
           return ChartType.LINE;
         return ChartType.BAR;
       },
-      getValueFormatter: (dataType: string) => {
-        return (value: number) => formatUsd(new BigNumber(value));
-      },
       dataTypeOptions: Object.values(ChartDataType).map((dataType) => ({
         id: dataType,
         name: chartDataTypeNameMap[dataType],
