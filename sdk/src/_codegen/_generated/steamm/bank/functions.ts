@@ -29,6 +29,31 @@ export function rebalance(
   });
 }
 
+export interface RebalanceSuiArgs {
+  bank: TransactionObjectInput;
+  lendingMarket: TransactionObjectInput;
+  suiSystem: TransactionObjectInput;
+  clock: TransactionObjectInput;
+}
+
+export function rebalanceSui(
+  tx: Transaction,
+  typeArgs: [string, string],
+  args: RebalanceSuiArgs,
+  publishedAt: string = PUBLISHED_AT,
+) {
+  return tx.moveCall({
+    target: `${publishedAt}::bank::rebalance_sui`,
+    typeArguments: typeArgs,
+    arguments: [
+      obj(tx, args.bank),
+      obj(tx, args.lendingMarket),
+      obj(tx, args.suiSystem),
+      obj(tx, args.clock),
+    ],
+  });
+}
+
 export interface CtokenAmountArgs {
   bank: TransactionObjectInput;
   lendingMarket: TransactionObjectInput;
