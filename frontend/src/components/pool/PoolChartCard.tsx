@@ -2,6 +2,8 @@ import { useMemo } from "react";
 
 import BigNumber from "bignumber.js";
 
+import { QuoterId } from "@suilend/steamm-sdk";
+
 import HistoricalDataChart from "@/components/HistoricalDataChart";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
@@ -29,17 +31,20 @@ export default function PoolChartCard() {
   const chartConfig: ChartConfig = useMemo(
     () => ({
       getChartType: (dataType: string) => {
-        if (
-          dataType === ChartDataType.TVL ||
-          dataType === ChartDataType.LP_TOKEN_VALUE
-        )
+        if (dataType === ChartDataType.TVL || dataType === ChartDataType.LP)
           return ChartType.LINE;
         return ChartType.BAR;
       },
-      dataTypeOptions: Object.values(ChartDataType).map((dataType) => ({
-        id: dataType,
-        name: chartDataTypeNameMap[dataType],
-      })),
+      dataTypeOptions: Object.values(ChartDataType)
+        .filter((dataType) =>
+          dataType === ChartDataType.LP
+            ? [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId)
+            : true,
+        )
+        .map((dataType) => ({
+          id: dataType,
+          name: chartDataTypeNameMap[dataType],
+        })),
       totalMap: {
         [ChartDataType.TVL]: Object.values(ChartPeriod).reduce(
           (acc, period) => ({
@@ -62,10 +67,10 @@ export default function PoolChartCard() {
           }),
           {} as Record<ChartPeriod, BigNumber | undefined>,
         ),
-        [ChartDataType.LP_TOKEN_VALUE]: Object.values(ChartPeriod).reduce(
+        [ChartDataType.LP]: Object.values(ChartPeriod).reduce(
           (acc, period) => ({
             ...acc,
-            [period]: pool.tvlUsd.div(pool.lpSupply),
+            [period]: poolStats.lpUsd[period][pool.id],
           }),
           {} as Record<ChartPeriod, BigNumber | undefined>,
         ),
@@ -92,16 +97,16 @@ export default function PoolChartCard() {
           }),
           {} as Record<ChartPeriod, ChartData[] | undefined>,
         ),
-        [ChartDataType.LP_TOKEN_VALUE]: Object.values(ChartPeriod).reduce(
+        [ChartDataType.LP]: Object.values(ChartPeriod).reduce(
           (acc, period) => ({
             ...acc,
-            [period]: poolHistoricalStats.lpTokenValueUsd[period][pool.id],
+            [period]: poolHistoricalStats.lpUsd[period][pool.id],
           }),
           {} as Record<ChartPeriod, ChartData[] | undefined>,
         ),
       },
     }),
-    [pool.tvlUsd, poolStats, pool.lpSupply, pool.id, poolHistoricalStats],
+    [pool.quoterId, pool.tvlUsd, poolStats, pool.id, poolHistoricalStats],
   );
 
   return (

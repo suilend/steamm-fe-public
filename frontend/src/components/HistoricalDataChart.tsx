@@ -1,10 +1,9 @@
-import { useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { formatDate, getHours } from "date-fns";
 import * as Recharts from "recharts";
-import { v4 as uuidv4 } from "uuid";
 
 import { formatUsd } from "@suilend/sui-fe";
 
@@ -49,7 +48,7 @@ export default function HistoricalDataChart({
   totalMap,
   dataMap,
 }: HistoricalDataChartProps) {
-  const gradientId = useRef<string>(uuidv4()).current;
+  const colors = ["hsl(var(--jordy-blue))", "hsl(var(--emerald))"];
 
   const chartType: ChartType = getChartType(selectedDataType);
   const total: BigNumber | undefined =
@@ -172,7 +171,7 @@ export default function HistoricalDataChart({
             {dataTypeOptions.length > 1 ? (
               <SelectPopover
                 popoverContentClassName="p-0 border-none"
-                className="h-6 w-max gap-0.5 border-none bg-[transparent] px-0"
+                className="h-6 min-h-0 w-max gap-0.5 border-none bg-[transparent] px-0 py-0"
                 textClassName="!text-p2 !text-secondary-foreground"
                 iconClassName="!text-secondary-foreground"
                 optionClassName="h-8 p-2"
@@ -195,7 +194,7 @@ export default function HistoricalDataChart({
             {periodOptions.length > 1 ? (
               <SelectPopover
                 popoverContentClassName="p-0 border-none"
-                className="h-6 w-max gap-0.5 border-none bg-[transparent] px-0"
+                className="h-6 min-h-0 w-max gap-0.5 border-none bg-[transparent] px-0 py-0"
                 textClassName="!text-p2 !text-secondary-foreground"
                 iconClassName="!text-secondary-foreground"
                 optionClassName="h-8 p-2"
@@ -218,21 +217,43 @@ export default function HistoricalDataChart({
         </div>
 
         <div className="flex w-full flex-col gap-px">
-          {/* Total */}
           {total === undefined ? (
             <Skeleton className="h-[36px] w-20" />
           ) : (
-            <p className="text-h2 text-foreground">
-              {formatUsd(
-                hoveredTimestampS !== undefined
-                  ? new BigNumber(
-                      processedData?.find(
-                        (d) => d.timestampS === hoveredTimestampS,
-                      )?.[categories[0]] ?? 0,
-                    )
-                  : total,
-              )}
-            </p>
+            <div className="flex flex-row items-center gap-3">
+              {categories.map((category, index) => (
+                <Fragment key={category}>
+                  <p
+                    className="text-h2"
+                    style={{
+                      color:
+                        categories.length === 1
+                          ? "hsl(var(--foreground))"
+                          : colors[index],
+                    }}
+                  >
+                    {categories.length > 1 && (
+                      <span className="opacity-75">{category} </span>
+                    )}
+                    <span>
+                      {formatUsd(
+                        hoveredTimestampS !== undefined
+                          ? new BigNumber(
+                              processedData?.find(
+                                (d) => d.timestampS === hoveredTimestampS,
+                              )?.[category] ?? 0,
+                            )
+                          : total,
+                      )}
+                    </span>
+                  </p>
+
+                  {/* {index !== categories.length - 1 && (
+                    <p className="text-h2 text-tertiary-foreground">/</p>
+                  )} */}
+                </Fragment>
+              ))}
+            </div>
           )}
 
           {/* Date */}
@@ -358,35 +379,41 @@ export default function HistoricalDataChart({
                     }}
                   >
                     <defs>
-                      <linearGradient
-                        id={gradientId}
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor="hsl(var(--jordy-blue))"
-                          stopOpacity={0.25}
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="hsl(var(--jordy-blue))"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
+                      {categories.map((category, index) => (
+                        <linearGradient
+                          key={category}
+                          id={`${category}-gradient`}
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="0%"
+                            stopColor={colors[index]}
+                            stopOpacity={0.25 / categories.length}
+                          />
+                          <stop
+                            offset="100%"
+                            stopColor={colors[index]}
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      ))}
                     </defs>
-                    <Recharts.Area
-                      dataKey={`${categories[0]}_scaled`}
-                      type="monotone"
-                      stackId="1"
-                      isAnimationActive={false}
-                      fill={`url(#${gradientId})`}
-                      fillOpacity={1}
-                      stroke="hsl(var(--jordy-blue))"
-                      strokeWidth={2}
-                    />
+                    {categories.map((category, index) => (
+                      <Recharts.Area
+                        key={category}
+                        dataKey={`${category}_scaled`}
+                        type="monotone"
+                        stackId={index}
+                        isAnimationActive={false}
+                        fill={`url(#${category}-gradient)`}
+                        fillOpacity={1}
+                        stroke={colors[index]}
+                        strokeWidth={2}
+                      />
+                    ))}
                     <Recharts.Tooltip
                       isAnimationActive={false}
                       cursor={{
