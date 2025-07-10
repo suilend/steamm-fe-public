@@ -4,7 +4,11 @@ import {
   TransactionObjectInput,
   TransactionResult,
 } from "@mysten/sui/transactions";
-import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
+import {
+  SUI_CLOCK_OBJECT_ID,
+  SUI_SYSTEM_STATE_OBJECT_ID,
+  normalizeStructTag,
+} from "@mysten/sui/utils";
 
 import { Codegen } from "../..";
 import { BankInfo, PackageInfo, SteammInfo } from "../../types";
@@ -89,13 +93,31 @@ export class BankAbi {
   }
 
   public rebalance(tx: Transaction) {
-    const callArgs = {
-      bank: tx.object(this.bankInfo.bankId),
-      lendingMarket: tx.object(this.bankInfo.lendingMarketId),
-      clock: tx.object(SUI_CLOCK_OBJECT_ID),
-    };
+    const [lendingMarketType, coinType, bTokenType] = this.typeArgs();
 
-    Codegen.Bank.rebalance(tx, this.typeArgs(), callArgs, this.publishedAt);
+    if (normalizeStructTag(coinType) === normalizeStructTag("0x2::sui::SUI")) {
+      const callArgs = {
+        bank: tx.object(this.bankInfo.bankId),
+        lendingMarket: tx.object(this.bankInfo.lendingMarketId),
+        suiSystem: tx.object(SUI_SYSTEM_STATE_OBJECT_ID),
+        clock: tx.object(SUI_CLOCK_OBJECT_ID),
+      };
+
+      Codegen.Bank.rebalanceSui(
+        tx,
+        [lendingMarketType, bTokenType],
+        callArgs,
+        this.publishedAt,
+      );
+    } else {
+      const callArgs = {
+        bank: tx.object(this.bankInfo.bankId),
+        lendingMarket: tx.object(this.bankInfo.lendingMarketId),
+        clock: tx.object(SUI_CLOCK_OBJECT_ID),
+      };
+
+      Codegen.Bank.rebalance(tx, this.typeArgs(), callArgs, this.publishedAt);
+    }
   }
 
   public compoundInterestIfAny(tx: Transaction) {
