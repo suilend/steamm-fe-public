@@ -16,6 +16,7 @@ import {
 import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
+import { Plus } from "lucide-react";
 
 import {
   ParsedObligation,
@@ -608,63 +609,56 @@ function DepositTab({ onDeposit }: DepositTabProps) {
     <>
       {/* Deposited assets */}
       {pool.tvlUsd.gt(0) && (
-        <div className="flex w-full flex-row items-center">
+        <div className="relative flex w-full flex-row rounded-full bg-border/25">
+          <Plus
+            className={cn(
+              "absolute left-1/2 top-1/2 z-[3] h-4 w-4 -translate-x-1/2 -translate-y-1/2 text-tertiary-foreground transition-opacity",
+              depositedIndexes.length === 1 && "opacity-0",
+            )}
+          />
           {pool.coinTypes.map((coinType, index) => (
-            <Fragment key={coinType}>
-              <button
-                className={cn(
-                  "group flex h-10 w-max flex-1 flex-row items-center justify-center rounded-md border px-3 transition-colors",
-                  depositedIndexes.includes(index)
-                    ? "border-button-1 bg-button-1/25"
-                    : "hover:bg-border/50",
-                )}
-                onClick={() =>
-                  setDepositedIndexes((prev) =>
-                    prev.includes(index)
-                      ? prev.length === 1
-                        ? [0, 1]
-                        : [index]
-                      : [...prev, index],
-                  )
-                }
-              >
-                <div className="flex flex-row items-center gap-2">
-                  <TokenLogo
-                    token={getToken(
-                      coinType,
-                      appData.coinMetadataMap[coinType],
-                    )}
-                    size={16}
-                  />
-                  <p
-                    className={cn(
-                      "!text-p2 transition-colors",
-                      depositedIndexes.includes(index)
-                        ? "text-foreground"
-                        : "text-secondary-foreground group-hover:text-foreground",
-                    )}
-                  >
-                    {appData.coinMetadataMap[coinType].symbol}
-                  </p>
-                </div>
-              </button>
-
-              {index === 0 && (
-                <div
-                  className={cn(
-                    "h-[18px] w-[4px] transition-opacity",
-                    depositedIndexes.length === 1 ? "opacity-0" : "opacity-100",
-                  )}
-                  style={{
-                    backgroundImage:
-                      "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAgCAYAAAAv8DnQAAABOUlEQVR4AXxTx1EEMRDUF08i8IUXIVxMRICTqSIKeB0JUCPhXRyYDJrtlQZGZ6vWTm87ndzpC3bdql+4x9Gymc+YuCj4uCjYnh3yHWfOC76HY5puccjB8SPWzwr2Y8Y0FHw7nkLGayy4Gu5PefB+OF7+AYKX8aXgLDUAP6qAQYLoKB3D9R+DF2XoJYKoRMZXKA0gFRCkMvgG+OEDX3JIH8rQSRCgDE3ulR8zxWIPNoUCGv2ZeuiK4kvbAz9igAooCySUwUq04dnCqinhjYSJuUBCGTRmLCaFFqVNegUsYrASWnWXQoxJm8JLZRiOH13NjqFrkoCVHmyTSQHKIGrS/mlni9IeaIxN8khtub1lIMCuZrSLFTNuLh+xx00zbseMg3HjsGq/autlvDv/gIn7HWkZGwH69/8XAADNlqFucvzNEgAAAABJRU5ErkJggg==)",
-                    backgroundSize: "4px 18px",
-                    backgroundRepeat: "no-repeat",
-                  }}
+            <button
+              key={coinType}
+              className="group relative z-[2] flex h-10 flex-1 flex-row items-center justify-center rounded-full px-3"
+              onClick={() =>
+                setDepositedIndexes((prev) =>
+                  prev.includes(index)
+                    ? prev.length === 1
+                      ? [0, 1]
+                      : [index]
+                    : [...prev, index],
+                )
+              }
+            >
+              <div className="flex flex-row items-center gap-2">
+                <TokenLogo
+                  token={getToken(coinType, appData.coinMetadataMap[coinType])}
+                  size={16}
                 />
-              )}
-            </Fragment>
+                <p
+                  className={cn(
+                    "!text-p2 transition-colors",
+                    depositedIndexes.includes(index)
+                      ? "text-foreground"
+                      : "text-secondary-foreground group-hover:text-foreground",
+                  )}
+                >
+                  {appData.coinMetadataMap[coinType].symbol}
+                </p>
+              </div>
+            </button>
           ))}
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-y-0 z-[1] rounded-full border border-button-1 bg-button-1/25",
+              depositedIndexes.length === 2
+                ? "inset-x-0"
+                : cn(
+                    "w-1/2",
+                    depositedIndexes.includes(0) ? "left-0" : "right-0",
+                  ),
+            )}
+          />
         </div>
       )}
 
