@@ -43,8 +43,8 @@ export type ChartConfig = {
   getChartType: (dataType: ChartDataType) => ChartType;
   periodOptions?: SelectPopoverOption[];
   dataTypeOptions: SelectPopoverOption[];
-  totalMap: Partial<
-    Record<ChartDataType, Partial<Record<ChartPeriod, BigNumber | undefined>>>
+  totalsMap: Partial<
+    Record<ChartDataType, Partial<Record<ChartPeriod, BigNumber[] | undefined>>>
   >;
   dataMap: Partial<
     Record<ChartDataType, Partial<Record<ChartPeriod, ChartData[] | undefined>>>

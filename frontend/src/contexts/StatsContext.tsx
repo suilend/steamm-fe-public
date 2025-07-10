@@ -56,7 +56,10 @@ export interface StatsContext {
     // tvlUsd
     volumeUsd: Record<ChartPeriod, Record<string, BigNumber>>;
     feesUsd: Record<ChartPeriod, Record<string, BigNumber>>;
-    lpUsd: Record<ChartPeriod, Record<string, BigNumber>>;
+    lpUsd: Record<
+      ChartPeriod,
+      Record<string, { LP: BigNumber; Hold: BigNumber }>
+    >;
     aprPercent: Record<
       ChartPeriod.ONE_DAY,
       Record<string, { feesAprPercent: BigNumber }>
@@ -110,7 +113,10 @@ const defaultData = {
     ),
     lpUsd: Object.values(ChartPeriod).reduce(
       (acc, period) => ({ ...acc, [period]: {} }),
-      {} as Record<ChartPeriod, Record<string, BigNumber>>,
+      {} as Record<
+        ChartPeriod,
+        Record<string, { LP: BigNumber; Hold: BigNumber }>
+      >,
     ),
     aprPercent: {
       [ChartPeriod.ONE_DAY]: {},
@@ -657,10 +663,16 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           [period]: Object.entries(poolHistoricalStats.lpUsd[period]).reduce(
             (acc2, [poolId, data]) => ({
               ...acc2,
-              [poolId]:
-                data.length > 0
-                  ? new BigNumber(data[data.length - 1].LP)
-                  : new BigNumber(0),
+              [poolId]: {
+                LP:
+                  data.length > 0
+                    ? new BigNumber(data[data.length - 1].LP)
+                    : new BigNumber(0),
+                Hold:
+                  data.length > 0
+                    ? new BigNumber(data[data.length - 1].Hold)
+                    : new BigNumber(0),
+              },
             }),
             {} as StatsContext["poolStats"]["lpUsd"][ChartPeriod],
           ),

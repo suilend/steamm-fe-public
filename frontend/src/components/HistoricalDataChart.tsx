@@ -45,14 +45,14 @@ export default function HistoricalDataChart({
   getChartType,
   periodOptions: _periodOptions,
   dataTypeOptions,
-  totalMap,
+  totalsMap,
   dataMap,
 }: HistoricalDataChartProps) {
   const colors = ["hsl(var(--jordy-blue))", "hsl(var(--emerald))"];
 
   const chartType: ChartType = getChartType(selectedDataType);
-  const total: BigNumber | undefined =
-    totalMap[selectedDataType]?.[selectedPeriod];
+  const totals: BigNumber[] | undefined =
+    totalsMap[selectedDataType]?.[selectedPeriod];
   const data: ChartData[] | undefined =
     dataMap[selectedDataType]?.[selectedPeriod];
 
@@ -217,7 +217,8 @@ export default function HistoricalDataChart({
         </div>
 
         <div className="flex w-full flex-col gap-px">
-          {total === undefined ? (
+          {/* Total */}
+          {totals === undefined || processedData === undefined ? (
             <Skeleton className="h-[36px] w-20" />
           ) : (
             <div className="flex flex-row items-center gap-3">
@@ -243,7 +244,7 @@ export default function HistoricalDataChart({
                                 (d) => d.timestampS === hoveredTimestampS,
                               )?.[category] ?? 0,
                             )
-                          : total,
+                          : totals[index],
                       )}
                     </span>
                   </p>
@@ -257,7 +258,7 @@ export default function HistoricalDataChart({
           )}
 
           {/* Date */}
-          {total === undefined ? (
+          {totals === undefined || processedData === undefined ? (
             <Skeleton className="h-[21px] w-24" />
           ) : (
             <p className="text-p2 text-secondary-foreground">

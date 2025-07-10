@@ -160,10 +160,10 @@ export default function PoolsPage() {
         id: dataType,
         name: chartDataTypeNameMap[dataType],
       })),
-      totalMap: {
+      totalsMap: {
         [ChartDataType.TVL]: Object.values(ChartPeriod).reduce(
-          (acc, period) => ({ ...acc, [period]: globalTvlUsd }),
-          {} as Record<ChartPeriod, BigNumber | undefined>,
+          (acc, period) => ({ ...acc, [period]: [globalTvlUsd] }),
+          {} as Record<ChartPeriod, BigNumber[] | undefined>,
         ),
       },
       dataMap: {
@@ -189,9 +189,21 @@ export default function PoolsPage() {
           name: chartDataTypeNameMap[dataType],
         }),
       ),
-      totalMap: {
-        [ChartDataType.VOLUME]: globalStats.volumeUsd,
-        [ChartDataType.FEES]: globalStats.feesUsd,
+      totalsMap: {
+        [ChartDataType.VOLUME]: Object.values(ChartPeriod).reduce(
+          (acc, period) => ({
+            ...acc,
+            [period]: [globalStats.volumeUsd[period]],
+          }),
+          {} as Record<ChartPeriod, BigNumber[] | undefined>,
+        ),
+        [ChartDataType.FEES]: Object.values(ChartPeriod).reduce(
+          (acc, period) => ({
+            ...acc,
+            [period]: [globalStats.feesUsd[period]],
+          }),
+          {} as Record<ChartPeriod, BigNumber[] | undefined>,
+        ),
       },
       dataMap: {
         [ChartDataType.VOLUME]: globalHistoricalStats.volumeUsd,

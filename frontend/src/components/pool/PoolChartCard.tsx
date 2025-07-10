@@ -45,34 +45,40 @@ export default function PoolChartCard() {
           id: dataType,
           name: chartDataTypeNameMap[dataType],
         })),
-      totalMap: {
+      totalsMap: {
         [ChartDataType.TVL]: Object.values(ChartPeriod).reduce(
           (acc, period) => ({
             ...acc,
-            [period]: pool.tvlUsd,
+            [period]: [pool.tvlUsd],
           }),
-          {} as Record<ChartPeriod, BigNumber | undefined>,
+          {} as Record<ChartPeriod, BigNumber[] | undefined>,
         ),
         [ChartDataType.VOLUME]: Object.values(ChartPeriod).reduce(
           (acc, period) => ({
             ...acc,
-            [period]: poolStats.volumeUsd[period][pool.id],
+            [period]: [poolStats.volumeUsd[period][pool.id]],
           }),
-          {} as Record<ChartPeriod, BigNumber | undefined>,
+          {} as Record<ChartPeriod, BigNumber[] | undefined>,
         ),
         [ChartDataType.FEES]: Object.values(ChartPeriod).reduce(
           (acc, period) => ({
             ...acc,
-            [period]: poolStats.feesUsd[period][pool.id],
+            [period]: [poolStats.feesUsd[period][pool.id]],
           }),
-          {} as Record<ChartPeriod, BigNumber | undefined>,
+          {} as Record<ChartPeriod, BigNumber[] | undefined>,
         ),
         [ChartDataType.LP]: Object.values(ChartPeriod).reduce(
           (acc, period) => ({
             ...acc,
-            [period]: poolStats.lpUsd[period][pool.id],
+            [period]:
+              poolStats.lpUsd[period][pool.id] === undefined
+                ? undefined
+                : [
+                    poolStats.lpUsd[period][pool.id].LP,
+                    poolStats.lpUsd[period][pool.id].Hold,
+                  ],
           }),
-          {} as Record<ChartPeriod, BigNumber | undefined>,
+          {} as Record<ChartPeriod, BigNumber[] | undefined>,
         ),
       },
       dataMap: {
