@@ -612,7 +612,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
         <div className="relative flex w-full flex-row rounded-full bg-border/25">
           <Plus
             className={cn(
-              "absolute left-1/2 top-1/2 z-[3] h-4 w-4 -translate-x-1/2 -translate-y-1/2 text-tertiary-foreground transition-opacity",
+              "absolute left-1/2 top-1/2 z-[3] h-4 w-4 -translate-x-1/2 -translate-y-1/2 text-secondary-foreground transition-opacity",
               depositedIndexes.length === 1 && "opacity-0",
             )}
           />

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import BigNumber from "bignumber.js";
 
-import { formatUsd } from "@suilend/sui-fe";
+import { QuoterId } from "@suilend/steamm-sdk";
 
 import HistoricalDataChart from "@/components/HistoricalDataChart";
 import { usePoolContext } from "@/contexts/PoolContext";
@@ -31,13 +31,20 @@ export default function PoolChartCard() {
   const chartConfig: ChartConfig = useMemo(
     () => ({
       getChartType: (dataType: string) => {
-        if (dataType === ChartDataType.TVL) return ChartType.LINE;
+        if (dataType === ChartDataType.TVL || dataType === ChartDataType.LP)
+          return ChartType.LINE;
         return ChartType.BAR;
       },
-      dataTypeOptions: Object.values(ChartDataType).map((dataType) => ({
-        id: dataType,
-        name: chartDataTypeNameMap[dataType],
-      })),
+      dataTypeOptions: Object.values(ChartDataType)
+        .filter((dataType) =>
+          dataType === ChartDataType.LP
+            ? [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId)
+            : true,
+        )
+        .map((dataType) => ({
+          id: dataType,
+          name: chartDataTypeNameMap[dataType],
+        })),
       totalMap: {
         [ChartDataType.TVL]: Object.values(ChartPeriod).reduce(
           (acc, period) => ({
@@ -57,6 +64,13 @@ export default function PoolChartCard() {
           (acc, period) => ({
             ...acc,
             [period]: poolStats.feesUsd[period][pool.id],
+          }),
+          {} as Record<ChartPeriod, BigNumber | undefined>,
+        ),
+        [ChartDataType.LP]: Object.values(ChartPeriod).reduce(
+          (acc, period) => ({
+            ...acc,
+            [period]: poolStats.lpUsd[period][pool.id],
           }),
           {} as Record<ChartPeriod, BigNumber | undefined>,
         ),
@@ -83,9 +97,16 @@ export default function PoolChartCard() {
           }),
           {} as Record<ChartPeriod, ChartData[] | undefined>,
         ),
+        [ChartDataType.LP]: Object.values(ChartPeriod).reduce(
+          (acc, period) => ({
+            ...acc,
+            [period]: poolHistoricalStats.lpUsd[period][pool.id],
+          }),
+          {} as Record<ChartPeriod, ChartData[] | undefined>,
+        ),
       },
     }),
-    [pool.tvlUsd, poolStats, pool.id, poolHistoricalStats],
+    [pool.quoterId, pool.tvlUsd, poolStats, pool.id, poolHistoricalStats],
   );
 
   return (

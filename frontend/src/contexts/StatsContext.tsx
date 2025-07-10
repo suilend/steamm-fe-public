@@ -12,14 +12,18 @@ import {
 import BigNumber from "bignumber.js";
 import { startOfHour } from "date-fns";
 
+import { QuoterId } from "@suilend/steamm-sdk";
 import { API_URL } from "@suilend/sui-fe";
 
 import { useAppContext } from "@/contexts/AppContext";
 import { ChartData, ChartPeriod } from "@/lib/chart";
 
 const TEN_MINUTES_S = 10 * 60;
+const TWENTY_MINUTES_S = 20 * 60;
 const ONE_HOUR_S = TEN_MINUTES_S * 6;
+const TWO_HOURS_S = ONE_HOUR_S * 2;
 const FOUR_HOURS_S = ONE_HOUR_S * 4;
+const EIGHT_HOURS_S = ONE_HOUR_S * 8;
 const TWELVE_HOURS_S = ONE_HOUR_S * 12;
 
 const ONE_DAY_S = ONE_HOUR_S * 24;
@@ -41,12 +45,18 @@ export interface StatsContext {
     tvlUsd: Record<ChartPeriod, Record<string, ChartData[]>>;
     volumeUsd: Record<ChartPeriod, Record<string, ChartData[]>>;
     feesUsd: Record<ChartPeriod, Record<string, ChartData[]>>;
+    lpUsd: Record<ChartPeriod, Record<string, ChartData[]>>;
   };
-  fetchPoolHistoricalStats: (poolIds: string[], period: ChartPeriod) => void;
+  fetchPoolHistoricalStats: (
+    poolId: string,
+    poolQuoterId: QuoterId,
+    period: ChartPeriod,
+  ) => void;
   poolStats: {
     // tvlUsd
     volumeUsd: Record<ChartPeriod, Record<string, BigNumber>>;
     feesUsd: Record<ChartPeriod, Record<string, BigNumber>>;
+    lpUsd: Record<ChartPeriod, Record<string, BigNumber>>;
     aprPercent: Record<
       ChartPeriod.ONE_DAY,
       Record<string, { feesAprPercent: BigNumber }>
@@ -80,6 +90,10 @@ const defaultData = {
       (acc, period) => ({ ...acc, [period]: {} }),
       {} as Record<ChartPeriod, Record<string, ChartData[]>>,
     ),
+    lpUsd: Object.values(ChartPeriod).reduce(
+      (acc, period) => ({ ...acc, [period]: {} }),
+      {} as Record<ChartPeriod, Record<string, ChartData[]>>,
+    ),
   },
   fetchPoolHistoricalStats: async () => {
     throw Error("StatsContextProvider not initialized");
@@ -91,6 +105,10 @@ const defaultData = {
       {} as Record<ChartPeriod, Record<string, BigNumber>>,
     ),
     feesUsd: Object.values(ChartPeriod).reduce(
+      (acc, period) => ({ ...acc, [period]: {} }),
+      {} as Record<ChartPeriod, Record<string, BigNumber>>,
+    ),
+    lpUsd: Object.values(ChartPeriod).reduce(
       (acc, period) => ({ ...acc, [period]: {} }),
       {} as Record<ChartPeriod, Record<string, BigNumber>>,
     ),
@@ -259,238 +277,336 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   >(defaultData.poolHistoricalStats);
 
   const fetchPoolHistoricalStats = useCallback(
-    async (_poolIds: string[], period: ChartPeriod) => {
+    async (poolId: string, poolQuoterId: QuoterId, period: ChartPeriod) => {
       const { dayStartS, tenMinutesStartS } = referenceTimestampsSRef.current;
 
-      for (const poolId of _poolIds) {
-        // TVL
-        (async () => {
-          let startTimestampS, endTimestampS, intervalS;
-          if (period === ChartPeriod.ONE_DAY) {
-            startTimestampS = tenMinutesStartS - ONE_DAY_S;
-            endTimestampS = tenMinutesStartS;
-            intervalS = TEN_MINUTES_S;
-          } else if (period === ChartPeriod.ONE_WEEK) {
-            startTimestampS = dayStartS - SEVEN_DAYS_S;
-            endTimestampS = tenMinutesStartS;
-            intervalS = ONE_HOUR_S;
-          } else if (period === ChartPeriod.ONE_MONTH) {
-            startTimestampS = dayStartS - ONE_MONTH_S;
-            endTimestampS = tenMinutesStartS;
-            intervalS = FOUR_HOURS_S;
-          } else if (period === ChartPeriod.THREE_MONTHS) {
-            startTimestampS = dayStartS - THREE_MONTHS_S;
-            endTimestampS = tenMinutesStartS;
-            intervalS = TWELVE_HOURS_S;
-          }
+      // TVL
+      (async () => {
+        let startTimestampS, endTimestampS, intervalS;
+        if (period === ChartPeriod.ONE_DAY) {
+          startTimestampS = tenMinutesStartS - ONE_DAY_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = TEN_MINUTES_S;
+        } else if (period === ChartPeriod.ONE_WEEK) {
+          startTimestampS = dayStartS - SEVEN_DAYS_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = ONE_HOUR_S;
+        } else if (period === ChartPeriod.ONE_MONTH) {
+          startTimestampS = dayStartS - ONE_MONTH_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = FOUR_HOURS_S;
+        } else if (period === ChartPeriod.THREE_MONTHS) {
+          startTimestampS = dayStartS - THREE_MONTHS_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = TWELVE_HOURS_S;
+        } else throw new Error(`Invalid period ${period}`);
 
-          try {
-            const res = await fetch(
-              `${API_URL}/steamm/historical/tvl?${new URLSearchParams({
-                startTimestampS: `${startTimestampS}`,
-                endTimestampS: `${endTimestampS}`,
-                intervalS: `${intervalS}`,
-                poolId,
-              })}`,
+        try {
+          const res = await fetch(
+            `${API_URL}/steamm/historical/tvl?${new URLSearchParams({
+              startTimestampS: `${startTimestampS}`,
+              endTimestampS: `${endTimestampS}`,
+              intervalS: `${intervalS}`,
+              poolId,
+            })}`,
+          );
+          const json: {
+            start: number;
+            end: number;
+            tvl: Record<string, string>;
+            usdValue: string;
+          }[] = await res.json();
+          if ((json as any)?.statusCode === 500)
+            throw new Error(
+              `Failed to fetch historical TVL for pool with id ${poolId}, period ${period}`,
             );
-            const json: {
-              start: number;
-              end: number;
-              tvl: Record<string, string>;
-              usdValue: string;
-            }[] = await res.json();
-            if ((json as any)?.statusCode === 500)
-              throw new Error(
-                `Failed to fetch historical TVL for pool with id ${poolId}, period ${period}`,
-              );
 
-            setPoolHistoricalStats((prev) => ({
-              ...prev,
-              tvlUsd: {
-                ...prev.tvlUsd,
-                [period]: {
-                  ...prev.tvlUsd[period],
-                  [poolId]: json.reduce(
-                    (acc, d) => [
-                      ...acc,
-                      {
-                        timestampS: d.start,
-                        tvlUsd: !isNaN(+d.usdValue) ? +d.usdValue : 0,
-                      },
-                    ],
-                    [] as ChartData[],
-                  ),
-                },
+          setPoolHistoricalStats((prev) => ({
+            ...prev,
+            tvlUsd: {
+              ...prev.tvlUsd,
+              [period]: {
+                ...prev.tvlUsd[period],
+                [poolId]: json.reduce(
+                  (acc, d) => [
+                    ...acc,
+                    {
+                      timestampS: d.start,
+                      tvlUsd: !isNaN(+d.usdValue) ? +d.usdValue : 0,
+                    },
+                  ],
+                  [] as ChartData[],
+                ),
               },
-            }));
-          } catch (err) {
-            console.error(err);
+            },
+          }));
+        } catch (err) {
+          console.error(err);
 
-            setPoolHistoricalStats((prev) => ({
-              ...prev,
-              tvlUsd: {
-                ...prev.tvlUsd,
-                [period]: {
-                  ...prev.tvlUsd[period],
-                  [poolId]: [{ timestampS: 0, tvlUsd: 0 }],
-                },
+          setPoolHistoricalStats((prev) => ({
+            ...prev,
+            tvlUsd: {
+              ...prev.tvlUsd,
+              [period]: {
+                ...prev.tvlUsd[period],
+                [poolId]: [{ timestampS: 0, tvlUsd: 0 }],
               },
-            }));
-          }
-        })();
+            },
+          }));
+        }
+      })();
 
-        // Volume
-        (async () => {
-          let startTimestampS, endTimestampS, intervalS;
-          if (period === ChartPeriod.ONE_DAY) {
-            startTimestampS = tenMinutesStartS - ONE_DAY_S;
-            endTimestampS = tenMinutesStartS;
-            intervalS = ONE_HOUR_S;
-          } else if (period === ChartPeriod.ONE_WEEK) {
-            startTimestampS = dayStartS - SEVEN_DAYS_S;
-            endTimestampS = tenMinutesStartS;
-            intervalS = ONE_DAY_S;
-          } else if (period === ChartPeriod.ONE_MONTH) {
-            startTimestampS = dayStartS - ONE_MONTH_S;
-            endTimestampS = tenMinutesStartS;
-            intervalS = ONE_DAY_S;
-          } else if (period === ChartPeriod.THREE_MONTHS) {
-            startTimestampS = dayStartS - THREE_MONTHS_S;
-            endTimestampS = tenMinutesStartS;
-            intervalS = THREE_DAYS_S;
-          }
+      // Volume
+      (async () => {
+        let startTimestampS, endTimestampS, intervalS;
+        if (period === ChartPeriod.ONE_DAY) {
+          startTimestampS = tenMinutesStartS - ONE_DAY_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = ONE_HOUR_S;
+        } else if (period === ChartPeriod.ONE_WEEK) {
+          startTimestampS = dayStartS - SEVEN_DAYS_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = ONE_DAY_S;
+        } else if (period === ChartPeriod.ONE_MONTH) {
+          startTimestampS = dayStartS - ONE_MONTH_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = ONE_DAY_S;
+        } else if (period === ChartPeriod.THREE_MONTHS) {
+          startTimestampS = dayStartS - THREE_MONTHS_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = THREE_DAYS_S;
+        } else throw new Error(`Invalid period ${period}`);
 
-          try {
-            const res = await fetch(
-              `${API_URL}/steamm/historical/volume?${new URLSearchParams({
-                startTimestampS: `${startTimestampS}`,
-                endTimestampS: `${endTimestampS}`,
-                intervalS: `${intervalS}`,
-                poolId,
-              })}`,
+        try {
+          const res = await fetch(
+            `${API_URL}/steamm/historical/volume?${new URLSearchParams({
+              startTimestampS: `${startTimestampS}`,
+              endTimestampS: `${endTimestampS}`,
+              intervalS: `${intervalS}`,
+              poolId,
+            })}`,
+          );
+          const json: {
+            start: number;
+            end: number;
+            volume: Record<string, string>;
+            usdValue: string;
+          }[] = await res.json();
+          if ((json as any)?.statusCode === 500)
+            throw new Error(
+              `Failed to fetch historical volume for pool with id ${poolId}, period ${period}`,
             );
-            const json: {
-              start: number;
-              end: number;
-              volume: Record<string, string>;
-              usdValue: string;
-            }[] = await res.json();
-            if ((json as any)?.statusCode === 500)
-              throw new Error(
-                `Failed to fetch historical volume for pool with id ${poolId}, period ${period}`,
-              );
 
-            setPoolHistoricalStats((prev) => ({
-              ...prev,
-              volumeUsd: {
-                ...prev.volumeUsd,
-                [period]: {
-                  ...prev.volumeUsd[period],
-                  [poolId]: json.reduce(
-                    (acc, d) => [
-                      ...acc,
-                      {
-                        timestampS: d.start,
-                        volumeUsd: !isNaN(+d.usdValue) ? +d.usdValue : 0,
-                      },
-                    ],
-                    [] as ChartData[],
-                  ),
-                },
+          setPoolHistoricalStats((prev) => ({
+            ...prev,
+            volumeUsd: {
+              ...prev.volumeUsd,
+              [period]: {
+                ...prev.volumeUsd[period],
+                [poolId]: json.reduce(
+                  (acc, d) => [
+                    ...acc,
+                    {
+                      timestampS: d.start,
+                      volumeUsd: !isNaN(+d.usdValue) ? +d.usdValue : 0,
+                    },
+                  ],
+                  [] as ChartData[],
+                ),
               },
-            }));
-          } catch (err) {
-            console.error(err);
+            },
+          }));
+        } catch (err) {
+          console.error(err);
 
-            setPoolHistoricalStats((prev) => ({
-              ...prev,
-              volumeUsd: {
-                ...prev.volumeUsd,
-                [period]: {
-                  ...prev.volumeUsd[period],
-                  [poolId]: [{ timestampS: 0, volumeUsd: 0 }],
-                },
+          setPoolHistoricalStats((prev) => ({
+            ...prev,
+            volumeUsd: {
+              ...prev.volumeUsd,
+              [period]: {
+                ...prev.volumeUsd[period],
+                [poolId]: [{ timestampS: 0, volumeUsd: 0 }],
               },
-            }));
-          }
-        })();
+            },
+          }));
+        }
+      })();
 
-        // Fees
-        (async () => {
-          let startTimestampS, endTimestampS, intervalS;
-          if (period === ChartPeriod.ONE_DAY) {
-            startTimestampS = tenMinutesStartS - ONE_DAY_S;
-            endTimestampS = tenMinutesStartS;
-            intervalS = ONE_HOUR_S;
-          } else if (period === ChartPeriod.ONE_WEEK) {
-            startTimestampS = dayStartS - SEVEN_DAYS_S;
-            endTimestampS = tenMinutesStartS;
-            intervalS = ONE_DAY_S;
-          } else if (period === ChartPeriod.ONE_MONTH) {
-            startTimestampS = dayStartS - ONE_MONTH_S;
-            endTimestampS = tenMinutesStartS;
-            intervalS = ONE_DAY_S;
-          } else if (period === ChartPeriod.THREE_MONTHS) {
-            startTimestampS = dayStartS - THREE_MONTHS_S;
-            endTimestampS = tenMinutesStartS;
-            intervalS = THREE_DAYS_S;
-          }
+      // Fees
+      (async () => {
+        let startTimestampS, endTimestampS, intervalS;
+        if (period === ChartPeriod.ONE_DAY) {
+          startTimestampS = tenMinutesStartS - ONE_DAY_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = ONE_HOUR_S;
+        } else if (period === ChartPeriod.ONE_WEEK) {
+          startTimestampS = dayStartS - SEVEN_DAYS_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = ONE_DAY_S;
+        } else if (period === ChartPeriod.ONE_MONTH) {
+          startTimestampS = dayStartS - ONE_MONTH_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = ONE_DAY_S;
+        } else if (period === ChartPeriod.THREE_MONTHS) {
+          startTimestampS = dayStartS - THREE_MONTHS_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = THREE_DAYS_S;
+        } else throw new Error(`Invalid period ${period}`);
 
-          try {
-            const res = await fetch(
-              `${API_URL}/steamm/historical/fees?${new URLSearchParams({
-                startTimestampS: `${startTimestampS}`,
-                endTimestampS: `${endTimestampS}`,
-                intervalS: `${intervalS}`,
-                poolId,
-              })}`,
+        try {
+          const res = await fetch(
+            `${API_URL}/steamm/historical/fees?${new URLSearchParams({
+              startTimestampS: `${startTimestampS}`,
+              endTimestampS: `${endTimestampS}`,
+              intervalS: `${intervalS}`,
+              poolId,
+            })}`,
+          );
+          const json: {
+            start: number;
+            end: number;
+            fees: Record<string, string>;
+            usdValue: string;
+          }[] = await res.json();
+          if ((json as any)?.statusCode === 500)
+            throw new Error(
+              `Failed to fetch historical fees for pool with id ${poolId}, period ${period}`,
             );
-            const json: {
-              start: number;
-              end: number;
-              fees: Record<string, string>;
-              usdValue: string;
-            }[] = await res.json();
-            if ((json as any)?.statusCode === 500)
-              throw new Error(
-                `Failed to fetch historical fees for pool with id ${poolId}, period ${period}`,
-              );
 
-            setPoolHistoricalStats((prev) => ({
-              ...prev,
-              feesUsd: {
-                ...prev.feesUsd,
-                [period]: {
-                  ...prev.feesUsd[period],
-                  [poolId]: json.reduce(
-                    (acc, d) => [
-                      ...acc,
-                      {
-                        timestampS: d.start,
-                        feesUsd: !isNaN(+d.usdValue) ? +d.usdValue : 0,
-                      },
-                    ],
-                    [] as ChartData[],
-                  ),
-                },
+          setPoolHistoricalStats((prev) => ({
+            ...prev,
+            feesUsd: {
+              ...prev.feesUsd,
+              [period]: {
+                ...prev.feesUsd[period],
+                [poolId]: json.reduce(
+                  (acc, d) => [
+                    ...acc,
+                    {
+                      timestampS: d.start,
+                      feesUsd: !isNaN(+d.usdValue) ? +d.usdValue : 0,
+                    },
+                  ],
+                  [] as ChartData[],
+                ),
               },
-            }));
-          } catch (err) {
-            console.error(err);
+            },
+          }));
+        } catch (err) {
+          console.error(err);
 
-            setPoolHistoricalStats((prev) => ({
-              ...prev,
-              feesUsd: {
-                ...prev.feesUsd,
-                [period]: {
-                  ...prev.feesUsd[period],
-                  [poolId]: [{ timestampS: 0, feesUsd: 0 }],
-                },
+          setPoolHistoricalStats((prev) => ({
+            ...prev,
+            feesUsd: {
+              ...prev.feesUsd,
+              [period]: {
+                ...prev.feesUsd[period],
+                [poolId]: [{ timestampS: 0, feesUsd: 0 }],
               },
+            },
+          }));
+        }
+      })();
+
+      // LP
+      (async () => {
+        if (![QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(poolQuoterId))
+          return;
+
+        let startTimestampS, endTimestampS, intervalS;
+        if (period === ChartPeriod.ONE_DAY) {
+          startTimestampS = tenMinutesStartS - ONE_DAY_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = TWENTY_MINUTES_S; // TEN_MINUTES_S;
+        } else if (period === ChartPeriod.ONE_WEEK) {
+          startTimestampS = dayStartS - SEVEN_DAYS_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = TWO_HOURS_S; // ONE_HOUR_S;
+        } else if (period === ChartPeriod.ONE_MONTH) {
+          startTimestampS = dayStartS - ONE_MONTH_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = EIGHT_HOURS_S; // FOUR_HOURS_S;
+        } else if (period === ChartPeriod.THREE_MONTHS) {
+          startTimestampS = dayStartS - THREE_MONTHS_S;
+          endTimestampS = tenMinutesStartS;
+          intervalS = ONE_DAY_S; // TWELVE_HOURS_S;
+        } else throw new Error(`Invalid period ${period}`);
+
+        try {
+          const res = await fetch(
+            `${API_URL}/steamm/historical/lpTokenValue?${new URLSearchParams({
+              startTimestampS: `${startTimestampS}`,
+              endTimestampS: `${endTimestampS}`,
+              intervalS: `${intervalS}`,
+              poolId,
+              useHistoricalPrice: "true",
+            })}`,
+          );
+          const json: {
+            usdValue: number;
+            holdUsdValue: number;
+            timestampS: number;
+          }[] = await res.json();
+          if ((json as any)?.statusCode === 500)
+            throw new Error(
+              `Failed to fetch historical LP values for pool with id ${poolId}, period ${period}`,
+            );
+
+          const n =
+            Math.floor((endTimestampS - startTimestampS) / intervalS) + 1;
+          const m = json.length;
+
+          // Pad the start of `json` if m < n
+          let paddedJson = json;
+          if (m < n) {
+            const paddingData = Array.from({ length: n - m }, (_, i) => ({
+              usdValue: 0,
+              holdUsdValue: 0,
+              timestampS: startTimestampS + i * intervalS,
             }));
+            paddedJson = [...paddingData, ...json];
           }
-        })();
-      }
+
+          const firstUsdValue = json[0].usdValue; // Same as json[0].holdUsdValue. Should not be 0
+
+          setPoolHistoricalStats((prev) => ({
+            ...prev,
+            lpUsd: {
+              ...prev.lpUsd,
+              [period]: {
+                ...prev.lpUsd[period],
+                [poolId]: paddedJson.reduce(
+                  (acc, d) => [
+                    ...acc,
+                    {
+                      timestampS: d.timestampS,
+                      LP:
+                        (!isNaN(+d.usdValue) ? +d.usdValue : 0) / firstUsdValue,
+                      Hold:
+                        (!isNaN(+d.holdUsdValue) ? +d.holdUsdValue : 0) /
+                        firstUsdValue,
+                    },
+                  ],
+                  [] as ChartData[],
+                ),
+              },
+            },
+          }));
+        } catch (err) {
+          console.error(err);
+
+          setPoolHistoricalStats((prev) => ({
+            ...prev,
+            lpUsd: {
+              ...prev.lpUsd,
+              [period]: {
+                ...prev.lpUsd[period],
+                [poolId]: [{ timestampS: 0, LP: 0, Hold: 0 }],
+              },
+            },
+          }));
+        }
+      })();
     },
     [],
   );
@@ -498,6 +614,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   // Pool - stats
   const poolStats: StatsContext["poolStats"] = useMemo(() => {
     const result: StatsContext["poolStats"] = {
+      // tvlUsd
       volumeUsd: Object.values(ChartPeriod).reduce(
         (acc, period) => ({
           ...acc,
@@ -533,6 +650,22 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           ),
         }),
         {} as StatsContext["poolStats"]["feesUsd"],
+      ),
+      lpUsd: Object.values(ChartPeriod).reduce(
+        (acc, period) => ({
+          ...acc,
+          [period]: Object.entries(poolHistoricalStats.lpUsd[period]).reduce(
+            (acc2, [poolId, data]) => ({
+              ...acc2,
+              [poolId]:
+                data.length > 0
+                  ? new BigNumber(data[data.length - 1].LP)
+                  : new BigNumber(0),
+            }),
+            {} as StatsContext["poolStats"]["lpUsd"][ChartPeriod],
+          ),
+        }),
+        {} as StatsContext["poolStats"]["lpUsd"],
       ),
       aprPercent: {
         [ChartPeriod.ONE_DAY]: {},
@@ -610,7 +743,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           startTimestampS = dayStartS - THREE_MONTHS_S;
           endTimestampS = tenMinutesStartS;
           intervalS = TWELVE_HOURS_S;
-        }
+        } else throw new Error(`Invalid period ${period}`);
 
         try {
           const res = await fetch(
@@ -679,7 +812,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           startTimestampS = dayStartS - THREE_MONTHS_S;
           endTimestampS = tenMinutesStartS;
           intervalS = THREE_DAYS_S;
-        }
+        } else throw new Error(`Invalid period ${period}`);
 
         try {
           const res = await fetch(
@@ -748,7 +881,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           startTimestampS = dayStartS - THREE_MONTHS_S;
           endTimestampS = tenMinutesStartS;
           intervalS = THREE_DAYS_S;
-        }
+        } else throw new Error(`Invalid period ${period}`);
 
         try {
           const res = await fetch(
