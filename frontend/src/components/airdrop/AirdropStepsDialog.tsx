@@ -4,6 +4,7 @@ import {
   FundKeypairResult,
   ReturnAllOwnedObjectsAndSuiToUserResult,
   Token,
+  formatInteger,
 } from "@suilend/sui-fe";
 
 import Dialog from "@/components/Dialog";
@@ -90,9 +91,9 @@ export default function AirdropStepsDialog({
 
                 return {
                   number: index + 1,
-                  title: `${prevAddressCount + 1}–${
-                    prevAddressCount + batch.length
-                  }`,
+                  title: `${formatInteger(prevAddressCount + 1)}–${formatInteger(
+                    prevAddressCount + batch.length,
+                  )}`,
                   isCompleted:
                     currentStep > 2 &&
                     index <= (makeBatchTransferResults ?? []).length - 1,

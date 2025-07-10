@@ -63,31 +63,57 @@ export default function SelectPopover({
       trigger={
         <button
           className={cn(
-            "group/trigger flex h-10 w-full flex-row items-center justify-between gap-2 rounded-md border bg-card px-3",
+            "group/trigger flex min-h-10 w-full flex-row items-center justify-between gap-2 rounded-md border bg-card px-3 py-2",
             className,
           )}
         >
-          <p
-            className={cn(
-              "!text-p2 transition-colors",
-              isOpen
-                ? "text-foreground"
-                : cn(
-                    values.length > 0
-                      ? "text-foreground"
-                      : "text-secondary-foreground group-hover/trigger:text-foreground",
-                  ),
-              textClassName,
-            )}
-          >
-            {values.length > 0
-              ? formatList(
-                  options
-                    .filter((option) => values.includes(option.id))
-                    .map((option) => option.name),
-                )
-              : placeholder}
-          </p>
+          <div className="flex flex-col items-start gap-1">
+            <div className="flex flex-row items-baseline gap-1.5">
+              <p
+                className={cn(
+                  "!text-p2 transition-colors",
+                  isOpen
+                    ? "text-foreground"
+                    : cn(
+                        values.length > 0
+                          ? "text-foreground"
+                          : "text-secondary-foreground group-hover/trigger:text-foreground",
+                      ),
+                  textClassName,
+                )}
+              >
+                {values.length > 0
+                  ? formatList(
+                      options
+                        .filter((option) => values.includes(option.id))
+                        .map((option) => option.name),
+                    )
+                  : placeholder}
+              </p>
+              {values.length > 0 &&
+                options
+                  .filter((option) => values.includes(option.id))
+                  .every((option) => option.count !== undefined) && (
+                  <p className="text-left text-p3 text-tertiary-foreground">
+                    {options
+                      .filter((option) => values.includes(option.id))
+                      .reduce((acc, option) => acc + option.count!, 0)}
+                  </p>
+                )}
+            </div>
+
+            {values.length === 1 &&
+              options.filter((option) => values.includes(option.id))[0]
+                .description !== undefined && (
+                <p className="text-left text-p3 text-tertiary-foreground">
+                  {
+                    options.filter((option) => values.includes(option.id))[0]
+                      .description
+                  }
+                </p>
+              )}
+          </div>
+
           {values.length > 0 && canClear && !!onClear ? (
             <button
               className="group -m-2 h-8 w-8 shrink-0 p-2"
@@ -118,7 +144,7 @@ export default function SelectPopover({
           <button
             key={option.id}
             className={cn(
-              "group flex h-10 w-full flex-row items-center justify-between rounded-md border px-3 transition-colors",
+              "group flex min-h-10 w-full flex-row items-center justify-between rounded-md border px-3 py-2 transition-colors",
               values.includes(option.id)
                 ? "cursor-default border-button-1 bg-button-1/25"
                 : "hover:bg-border",
@@ -129,28 +155,43 @@ export default function SelectPopover({
               if (!isMultiSelect) setIsOpen(false);
             }}
           >
-            <div className="flex flex-row items-baseline gap-1.5">
-              <p
-                className={cn(
-                  "!text-p2 transition-colors",
-                  values.includes(option.id)
-                    ? "text-foreground"
-                    : "text-secondary-foreground group-hover:text-foreground",
-                  optionTextClassName,
-                )}
-              >
-                {option.name}
-              </p>
-              {option.count !== undefined && (
+            <div className="flex flex-col items-start gap-1">
+              <div className="flex flex-row items-baseline gap-1.5">
                 <p
                   className={cn(
-                    "!text-p3 transition-colors",
+                    "text-left !text-p2 transition-colors",
+                    values.includes(option.id)
+                      ? "text-foreground"
+                      : "text-secondary-foreground group-hover:text-foreground",
+                    optionTextClassName,
+                  )}
+                >
+                  {option.name}
+                </p>
+                {option.count !== undefined && (
+                  <p
+                    className={cn(
+                      "text-left !text-p3 transition-colors",
+                      values.includes(option.id)
+                        ? "text-foreground/75"
+                        : "text-tertiary-foreground group-hover:text-foreground/75",
+                    )}
+                  >
+                    {option.count}
+                  </p>
+                )}
+              </div>
+
+              {option.description && (
+                <p
+                  className={cn(
+                    "text-left !text-p3 transition-colors",
                     values.includes(option.id)
                       ? "text-foreground/75"
                       : "text-tertiary-foreground group-hover:text-foreground/75",
                   )}
                 >
-                  {option.count}
+                  {option.description}
                 </p>
               )}
             </div>

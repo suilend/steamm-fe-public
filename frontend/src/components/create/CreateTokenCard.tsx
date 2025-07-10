@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useSignPersonalMessage } from "@mysten/dapp-kit";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
@@ -413,7 +413,10 @@ export default function CreateTokenCard() {
     setIconUrl("");
     setIconFilename("");
     setIconFileSize("");
-    (document.getElementById("icon-upload") as HTMLInputElement).value = "";
+    const iconUploadInput = document.getElementById(
+      "icon-upload",
+    ) as HTMLInputElement;
+    if (iconUploadInput) iconUploadInput.value = "";
 
     setQuoteAssetCoinType(undefined);
 

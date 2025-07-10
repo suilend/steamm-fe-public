@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useSignPersonalMessage } from "@mysten/dapp-kit";
 import { SuiTransactionBlockResponse } from "@mysten/sui/client";
@@ -30,12 +30,15 @@ import {
   useWalletContext,
 } from "@suilend/sui-fe-next";
 
+import AirdropAddressAmountTable from "@/components/airdrop/AirdropAddressAmountTable";
 import AirdropStepsDialog from "@/components/airdrop/AirdropStepsDialog";
 import CsvUpload from "@/components/airdrop/CsvUpload";
 import Divider from "@/components/Divider";
 import Parameter from "@/components/Parameter";
+import SelectPopover from "@/components/SelectPopover";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
+import TextInput from "@/components/TextInput";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
 import {
@@ -43,6 +46,11 @@ import {
   MakeBatchTransferResult,
   makeBatchTransfer,
 } from "@/lib/airdrop";
+import { formatTextInputValue } from "@/lib/format";
+import doubleUpCitizenObjectIds from "@/lib/nft-collections/doubleup-citizen-object-ids.json";
+import primeMachinObjectIds from "@/lib/nft-collections/prime-machin-object-ids.json";
+import rootletsObjectIds from "@/lib/nft-collections/rootlets-object-ids.json";
+import { SelectPopoverOption } from "@/lib/select";
 import { cn } from "@/lib/utils";
 
 enum LastSignedTransactionType {
@@ -50,6 +58,19 @@ enum LastSignedTransactionType {
   MAKE_BATCH_TRANSFER = "makeBatchTransfer",
   RETURN_ALL_OWNED_OBJECTS_AND_SUI_TO_USER = "returnAllOwnedObjectsAndSuiToUser",
 }
+
+enum RecipientsType {
+  CSV = "csv",
+  ROOTLETS = "rootlets",
+  DOUBLE_UP_CITIZEN = "doubleUpCitizen",
+  PRIME_MACHIN = "primeMachin",
+}
+const recipientsTypeNameMap: Record<RecipientsType, string> = {
+  [RecipientsType.CSV]: "CSV file",
+  [RecipientsType.ROOTLETS]: "Rootlets",
+  [RecipientsType.PRIME_MACHIN]: "Prime Machin",
+  [RecipientsType.DOUBLE_UP_CITIZEN]: "DoubleUp Citizen",
+};
 
 const TRANSFERS_PER_BATCH = 500; // Max = 512 (if no other MOVE calls in the transaction)
 const getBatchTransactionGas = (transferCount: number) =>
@@ -126,11 +147,46 @@ export default function AirdropCard() {
       ? getToken(coinType, balancesCoinMetadataMap![coinType])
       : undefined;
 
-  // State - CSV
+  // State - recipients
   const [batches, setBatches] = useLocalStorage<AirdropRow[][] | undefined>(
     "airdrop-batches",
     undefined,
   );
+
+  const recipientsTypeOptions: SelectPopoverOption[] = useMemo(
+    () => [
+      {
+        id: RecipientsType.CSV,
+        name: recipientsTypeNameMap[RecipientsType.CSV],
+        description: "Address & amount columns, comma-separated",
+      },
+      {
+        id: RecipientsType.ROOTLETS,
+        name: recipientsTypeNameMap[RecipientsType.ROOTLETS],
+        description: "NFT collection",
+        count: rootletsObjectIds.length,
+      },
+      {
+        id: RecipientsType.PRIME_MACHIN,
+        name: recipientsTypeNameMap[RecipientsType.PRIME_MACHIN],
+        description: "NFT collection",
+        count: primeMachinObjectIds.length,
+      },
+      {
+        id: RecipientsType.DOUBLE_UP_CITIZEN,
+        name: recipientsTypeNameMap[RecipientsType.DOUBLE_UP_CITIZEN],
+        description: "NFT collection",
+        count: doubleUpCitizenObjectIds.length,
+      },
+    ],
+    [],
+  );
+  const [recipientsType, setRecipientsType] = useLocalStorage<RecipientsType>(
+    "airdrop-recipientsType",
+    RecipientsType.CSV,
+  );
+
+  // State - recipients - CSV
   const [csvFilename, setCsvFilename] = useLocalStorage<string>(
     "airdrop-csvFilename",
     "",
@@ -139,6 +195,54 @@ export default function AirdropCard() {
     "airdrop-csvFileSize",
     "",
   );
+
+  // State - recipients - NFT collection
+  const amountPerNftInputRef = useRef<HTMLInputElement>(null);
+  const [amountPerNft, setAmountPerNft] = useLocalStorage<string>(
+    "airdrop-amountPerNft",
+    "",
+  );
+  const isAmountPerNftInvalid = useCallback(
+    (value: string) =>
+      value === "" || isNaN(+value) || new BigNumber(value).lte(0),
+    [],
+  );
+
+  const onAmountPerNftChange = useCallback(
+    (value: string) => {
+      const formattedValue = formatTextInputValue(value, token?.decimals ?? 9);
+      setAmountPerNft(formattedValue);
+    },
+    [token, setAmountPerNft],
+  );
+
+  const getNftCollectionObjectIds = (recipientsType: RecipientsType) => {
+    if (recipientsType === RecipientsType.ROOTLETS) return rootletsObjectIds;
+    else if (recipientsType === RecipientsType.DOUBLE_UP_CITIZEN)
+      return doubleUpCitizenObjectIds;
+    else if (recipientsType === RecipientsType.PRIME_MACHIN)
+      return primeMachinObjectIds;
+    throw new Error("Invalid NFT collection");
+  };
+
+  useEffect(() => {
+    if (recipientsType === RecipientsType.CSV) return;
+
+    if (isAmountPerNftInvalid(amountPerNft)) {
+      setBatches(undefined);
+    } else {
+      setBatches(
+        chunk(
+          getNftCollectionObjectIds(recipientsType).map((objectId, index) => ({
+            number: index + 1,
+            address: objectId,
+            amount: amountPerNft,
+          })),
+          TRANSFERS_PER_BATCH,
+        ),
+      );
+    }
+  }, [recipientsType, isAmountPerNftInvalid, amountPerNft, setBatches]);
 
   // Calcs
   const totalTokenAmount: BigNumber | undefined = useMemo(
@@ -171,6 +275,21 @@ export default function AirdropCard() {
   );
 
   // Submit
+  const resetRecipients = (
+    _recipientsType: RecipientsType = RecipientsType.CSV,
+  ) => {
+    setBatches(undefined);
+    setRecipientsType(_recipientsType);
+
+    setCsvFilename("");
+    setCsvFileSize("");
+    const csvUploadInput = document.getElementById(
+      "csv-upload",
+    ) as HTMLInputElement;
+    if (csvUploadInput) csvUploadInput.value = "";
+
+    setAmountPerNft("");
+  };
   const reset = () => {
     // Progress
     setHasFailed(false);
@@ -183,10 +302,7 @@ export default function AirdropCard() {
     // State
     setCoinType(undefined);
 
-    setBatches(undefined);
-    setCsvFilename("");
-    setCsvFileSize("");
-    (document.getElementById("csv-upload") as HTMLInputElement).value = "";
+    resetRecipients();
   };
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -210,13 +326,20 @@ export default function AirdropCard() {
     if (token === undefined)
       return { isDisabled: true, title: "Select a token" };
 
-    // CSV
+    // Recipients
     if (
       batches === undefined ||
       totalTokenAmount === undefined ||
       totalGasAmount === undefined
-    )
-      return { isDisabled: true, title: "Upload a CSV file" };
+    ) {
+      if (recipientsType === RecipientsType.CSV)
+        return { isDisabled: true, title: "Upload a CSV file" };
+      else
+        return {
+          isDisabled: true,
+          title: `Enter ${token.symbol} per NFT`,
+        };
+    }
 
     //
 
@@ -432,8 +555,10 @@ export default function AirdropCard() {
         `Airdropped ${formatToken(totalTokenAmount, {
           dp: token.decimals,
           trimTrailingZeros: true,
-        })} ${token.symbol} to ${batches.flat().length} ${
-          batches.flat().length === 1 ? "address" : "addresses"
+        })} ${token.symbol} to ${
+          recipientsType === RecipientsType.CSV
+            ? `${batches.flat().length} ${batches.flat().length === 1 ? "address" : "addresses"}`
+            : `the ${recipientsTypeNameMap[recipientsType]} NFT collection`
         }`,
       );
     } catch (err) {
@@ -491,28 +616,70 @@ export default function AirdropCard() {
             />
           </div>
 
-          {/* CSV */}
-          <CsvUpload
-            isDragAndDropDisabled={
-              hasFailed ||
-              lastSignedTransactionRef.current !== undefined ||
-              currentFlowDigests.length > 0 ||
-              isStepsDialogOpen
-            }
-            token={token}
-            csvRows={batches === undefined ? undefined : batches.flat()}
-            setCsvRows={(rows: AirdropRow[] | undefined) =>
-              setBatches(
-                rows === undefined
-                  ? undefined
-                  : chunk(rows, TRANSFERS_PER_BATCH),
-              )
-            }
-            csvFilename={csvFilename}
-            setCsvFilename={setCsvFilename}
-            csvFileSize={csvFileSize}
-            setCsvFileSize={setCsvFileSize}
-          />
+          {/* Recipients */}
+          <div className="flex w-full flex-col gap-3">
+            <p className="text-p2 text-secondary-foreground">Recipients</p>
+
+            {/* Recipients type */}
+            <SelectPopover
+              className="bg-transparent w-full"
+              align="start"
+              maxWidth={1000}
+              options={recipientsTypeOptions}
+              values={[recipientsType]}
+              onChange={(id) => {
+                resetRecipients(id as RecipientsType);
+                if ((id as RecipientsType) !== RecipientsType.CSV)
+                  setTimeout(() => amountPerNftInputRef.current?.focus(), 100);
+              }}
+            />
+
+            {/* CSV upload */}
+            {recipientsType === RecipientsType.CSV ? (
+              <CsvUpload
+                isDragAndDropDisabled={
+                  hasFailed ||
+                  lastSignedTransactionRef.current !== undefined ||
+                  currentFlowDigests.length > 0 ||
+                  isStepsDialogOpen
+                }
+                token={token}
+                csvRows={batches === undefined ? undefined : batches.flat()}
+                setCsvRows={(rows: AirdropRow[] | undefined) =>
+                  setBatches(
+                    rows === undefined
+                      ? undefined
+                      : chunk(rows, TRANSFERS_PER_BATCH),
+                  )
+                }
+                csvFilename={csvFilename}
+                setCsvFilename={setCsvFilename}
+                csvFileSize={csvFileSize}
+                setCsvFileSize={setCsvFileSize}
+              />
+            ) : (
+              // NFT collection
+              <div className="flex w-full flex-row items-center gap-4">
+                <div className="w-32">
+                  <TextInput
+                    ref={amountPerNftInputRef}
+                    placeholder="Enter amount"
+                    value={amountPerNft}
+                    onChange={onAmountPerNftChange}
+                  />
+                </div>
+                <p className="text-p2 text-secondary-foreground">
+                  {token === undefined ? "Per" : `${token.symbol} per`}{" "}
+                  {recipientsTypeNameMap[recipientsType]} NFT
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Table */}
+          {token !== undefined && batches !== undefined && (
+            <AirdropAddressAmountTable token={token} rows={batches.flat()} />
+          )}
         </div>
 
         <Divider />
