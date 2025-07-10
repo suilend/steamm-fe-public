@@ -12,7 +12,7 @@ export const chartDataTypeNameMap: Record<ChartDataType, string> = {
   [ChartDataType.TVL]: "TVL",
   [ChartDataType.VOLUME]: "Volume",
   [ChartDataType.FEES]: "Fees",
-  [ChartDataType.LP]: "LP",
+  [ChartDataType.LP]: "Performance",
 };
 
 export enum ChartPeriod {
