@@ -1,5 +1,11 @@
-import Image from "next/image";
-import { ChangeEvent, DragEvent, useEffect, useState } from "react";
+import {
+  ChangeEvent,
+  Dispatch,
+  DragEvent,
+  SetStateAction,
+  useEffect,
+  useState,
+} from "react";
 
 import BigNumber from "bignumber.js";
 import { X } from "lucide-react";
@@ -27,11 +33,11 @@ const VALID_MIME_TYPES = [
 interface IconUploadProps {
   isDragAndDropDisabled?: boolean;
   iconUrl: string;
-  setIconUrl: (url: string) => void;
+  setIconUrl: Dispatch<SetStateAction<string>>;
   iconFilename: string;
-  setIconFilename: (filename: string) => void;
+  setIconFilename: Dispatch<SetStateAction<string>>;
   iconFileSize: string;
-  setIconFileSize: (fileSize: string) => void;
+  setIconFileSize: Dispatch<SetStateAction<string>>;
 }
 
 export default function IconUpload({
@@ -215,13 +221,13 @@ export default function IconUpload({
 
               <div className="pointer-events-none relative z-[1] flex h-24 w-24">
                 {!!iconUrl && (
-                  <Image
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
                     className="absolute left-4 top-4 z-[2] h-16 w-16"
                     src={iconUrl}
                     alt="Icon"
                     width={64}
                     height={64}
-                    quality={100}
                     onLoad={() => setIsProcessing(false)}
                   />
                 )}
