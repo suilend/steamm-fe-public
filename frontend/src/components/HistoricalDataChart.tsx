@@ -178,7 +178,7 @@ export default function HistoricalDataChart({
                 optionTextClassName="!text-p2"
                 align="start"
                 alignOffset={-(2 + 1 + 8)}
-                maxWidth={100}
+                maxWidth={120}
                 options={dataTypeOptions}
                 values={[selectedDataType]}
                 onChange={(id: string) =>
@@ -201,7 +201,7 @@ export default function HistoricalDataChart({
                 optionTextClassName="!text-p2"
                 align="start"
                 alignOffset={-(2 + 1 + 8)}
-                maxWidth={100}
+                maxWidth={80}
                 options={periodOptions}
                 values={[selectedPeriod]}
                 onChange={(id: string) =>

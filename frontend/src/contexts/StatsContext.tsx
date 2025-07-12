@@ -19,11 +19,8 @@ import { useAppContext } from "@/contexts/AppContext";
 import { ChartData, ChartPeriod } from "@/lib/chart";
 
 const TEN_MINUTES_S = 10 * 60;
-const TWENTY_MINUTES_S = 20 * 60;
 const ONE_HOUR_S = TEN_MINUTES_S * 6;
-const TWO_HOURS_S = ONE_HOUR_S * 2;
 const FOUR_HOURS_S = ONE_HOUR_S * 4;
-const EIGHT_HOURS_S = ONE_HOUR_S * 8;
 const TWELVE_HOURS_S = ONE_HOUR_S * 12;
 
 const ONE_DAY_S = ONE_HOUR_S * 24;
@@ -523,19 +520,19 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         if (period === ChartPeriod.ONE_DAY) {
           startTimestampS = tenMinutesStartS - ONE_DAY_S;
           endTimestampS = tenMinutesStartS;
-          intervalS = TWENTY_MINUTES_S; // TEN_MINUTES_S;
+          intervalS = TEN_MINUTES_S;
         } else if (period === ChartPeriod.ONE_WEEK) {
           startTimestampS = dayStartS - SEVEN_DAYS_S;
           endTimestampS = tenMinutesStartS;
-          intervalS = TWO_HOURS_S; // ONE_HOUR_S;
+          intervalS = ONE_HOUR_S;
         } else if (period === ChartPeriod.ONE_MONTH) {
           startTimestampS = dayStartS - ONE_MONTH_S;
           endTimestampS = tenMinutesStartS;
-          intervalS = EIGHT_HOURS_S; // FOUR_HOURS_S;
+          intervalS = FOUR_HOURS_S;
         } else if (period === ChartPeriod.THREE_MONTHS) {
           startTimestampS = dayStartS - THREE_MONTHS_S;
           endTimestampS = tenMinutesStartS;
-          intervalS = ONE_DAY_S; // TWELVE_HOURS_S;
+          intervalS = TWELVE_HOURS_S;
         } else throw new Error(`Invalid period ${period}`);
 
         try {
