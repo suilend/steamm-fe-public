@@ -6,7 +6,6 @@ import BigNumber from "bignumber.js";
 import { v4 as uuidv4 } from "uuid";
 
 import { ParsedPool } from "@suilend/steamm-sdk";
-import { formatUsd } from "@suilend/sui-fe";
 import { shallowPushQuery } from "@suilend/sui-fe-next";
 
 import HistoricalDataChart from "@/components/HistoricalDataChart";
@@ -138,15 +137,6 @@ export default function PoolsPage() {
   }, [selectedRhsChartPeriod, fetchGlobalHistoricalStats]);
 
   // LHS
-  const globalTvlUsd = useMemo(
-    () =>
-      appData.pools.reduce(
-        (acc, pool) => acc.plus(pool.tvlUsd),
-        new BigNumber(0),
-      ),
-    [appData],
-  );
-
   const lhsChartConfig: ChartConfig = useMemo(
     () => ({
       getChartType: (dataType: string) => {
@@ -162,7 +152,10 @@ export default function PoolsPage() {
       })),
       totalsMap: {
         [ChartDataType.TVL]: Object.values(ChartPeriod).reduce(
-          (acc, period) => ({ ...acc, [period]: [globalTvlUsd] }),
+          (acc, period) => ({
+            ...acc,
+            [period]: [globalStats.tvlUsd[period]],
+          }),
           {} as Record<ChartPeriod, BigNumber[] | undefined>,
         ),
       },
@@ -170,7 +163,7 @@ export default function PoolsPage() {
         [ChartDataType.TVL]: globalHistoricalStats.tvlUsd,
       },
     }),
-    [globalTvlUsd, globalHistoricalStats.tvlUsd],
+    [globalStats.tvlUsd, globalHistoricalStats.tvlUsd],
   );
 
   // RHS

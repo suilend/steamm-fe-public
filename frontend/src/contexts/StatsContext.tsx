@@ -70,7 +70,7 @@ export interface StatsContext {
   };
   fetchGlobalHistoricalStats: (period: ChartPeriod) => void;
   globalStats: {
-    // tvlUsd
+    tvlUsd: Record<ChartPeriod, BigNumber | undefined>;
     volumeUsd: Record<ChartPeriod, BigNumber | undefined>;
     feesUsd: Record<ChartPeriod, BigNumber | undefined>;
   };
@@ -138,7 +138,10 @@ const defaultData = {
     throw Error("StatsContextProvider not initialized");
   },
   globalStats: {
-    // tvlUsd
+    tvlUsd: Object.values(ChartPeriod).reduce(
+      (acc, period) => ({ ...acc, [period]: undefined }),
+      {} as Record<ChartPeriod, BigNumber | undefined>,
+    ),
     volumeUsd: Object.values(ChartPeriod).reduce(
       (acc, period) => ({ ...acc, [period]: undefined }),
       {} as Record<ChartPeriod, BigNumber | undefined>,
@@ -946,6 +949,18 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   // Global - stats
   const globalStats: StatsContext["globalStats"] = useMemo(
     () => ({
+      tvlUsd: Object.values(ChartPeriod).reduce(
+        (acc, period) => ({
+          ...acc,
+          [period]:
+            globalHistoricalStats.tvlUsd[period] !== undefined
+              ? new BigNumber(
+                  globalHistoricalStats.tvlUsd[period].at(-1)?.tvlUsd ?? 0,
+                )
+              : undefined,
+        }),
+        {} as StatsContext["globalStats"]["volumeUsd"],
+      ),
       volumeUsd: Object.values(ChartPeriod).reduce(
         (acc, period) => ({
           ...acc,
@@ -977,6 +992,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
     }),
     [globalHistoricalStats],
   );
+  console.log("XXX", globalStats);
 
   // Context
   const contextValue: StatsContext = useMemo(
