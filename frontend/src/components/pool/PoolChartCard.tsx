@@ -35,16 +35,10 @@ export default function PoolChartCard() {
           return ChartType.LINE;
         return ChartType.BAR;
       },
-      dataTypeOptions: Object.values(ChartDataType)
-        .filter((dataType) =>
-          dataType === ChartDataType.LP
-            ? [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId)
-            : true,
-        )
-        .map((dataType) => ({
-          id: dataType,
-          name: chartDataTypeNameMap[dataType],
-        })),
+      dataTypeOptions: Object.values(ChartDataType).map((dataType) => ({
+        id: dataType,
+        name: chartDataTypeNameMap[dataType],
+      })),
       totalsMap: {
         [ChartDataType.TVL]: Object.values(ChartPeriod).reduce(
           (acc, period) => ({
@@ -112,7 +106,7 @@ export default function PoolChartCard() {
         ),
       },
     }),
-    [pool.quoterId, pool.tvlUsd, poolStats, pool.id, poolHistoricalStats],
+    [pool.tvlUsd, poolStats, pool.id, poolHistoricalStats],
   );
 
   return (

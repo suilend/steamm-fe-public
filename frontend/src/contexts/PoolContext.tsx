@@ -131,7 +131,6 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
   >({});
 
   useEffect(() => {
-    if (existingPool === undefined) return;
     if (
       hasFetchedPoolHistoricalStatsMapRef.current[poolId]?.[selectedChartPeriod]
     )
@@ -142,12 +141,8 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
     hasFetchedPoolHistoricalStatsMapRef.current[poolId][selectedChartPeriod] =
       true;
 
-    fetchPoolHistoricalStats(
-      poolId,
-      existingPool.quoterId,
-      selectedChartPeriod,
-    );
-  }, [existingPool, poolId, selectedChartPeriod, fetchPoolHistoricalStats]);
+    fetchPoolHistoricalStats(poolId, selectedChartPeriod);
+  }, [poolId, selectedChartPeriod, fetchPoolHistoricalStats]);
 
   // Refreshed pool map
   const [refreshedPoolMap, setRefreshedPoolMap] = useState<

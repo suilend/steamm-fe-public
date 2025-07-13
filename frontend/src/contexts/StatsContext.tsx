@@ -12,7 +12,6 @@ import {
 import BigNumber from "bignumber.js";
 import { startOfHour } from "date-fns";
 
-import { QuoterId } from "@suilend/steamm-sdk";
 import { API_URL } from "@suilend/sui-fe";
 
 import { useAppContext } from "@/contexts/AppContext";
@@ -44,11 +43,7 @@ export interface StatsContext {
     feesUsd: Record<ChartPeriod, Record<string, ChartData[]>>;
     lpUsd: Record<ChartPeriod, Record<string, ChartData[]>>;
   };
-  fetchPoolHistoricalStats: (
-    poolId: string,
-    poolQuoterId: QuoterId,
-    period: ChartPeriod,
-  ) => void;
+  fetchPoolHistoricalStats: (poolId: string, period: ChartPeriod) => void;
   poolStats: {
     // tvlUsd
     volumeUsd: Record<ChartPeriod, Record<string, BigNumber>>;
@@ -283,7 +278,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
   >(defaultData.poolHistoricalStats);
 
   const fetchPoolHistoricalStats = useCallback(
-    async (poolId: string, poolQuoterId: QuoterId, period: ChartPeriod) => {
+    async (poolId: string, period: ChartPeriod) => {
       const { dayStartS, tenMinutesStartS } = referenceTimestampsSRef.current;
 
       // TVL
@@ -516,9 +511,6 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
       // LP
       (async () => {
-        if (![QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(poolQuoterId))
-          return;
-
         let startTimestampS, endTimestampS, intervalS;
         if (period === ChartPeriod.ONE_DAY) {
           startTimestampS = tenMinutesStartS - ONE_DAY_S;
@@ -992,7 +984,6 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
     }),
     [globalHistoricalStats],
   );
-  console.log("XXX", globalStats);
 
   // Context
   const contextValue: StatsContext = useMemo(
