@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { CoinMetadata } from "@mysten/sui/client";
+import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
 import { useLocalStorage } from "usehooks-ts";
@@ -28,9 +29,10 @@ import {
   ParsedPool,
   SteammSDK,
 } from "@suilend/steamm-sdk";
-import { Token } from "@suilend/sui-fe";
+import { Token, getLedgerHash } from "@suilend/sui-fe";
 import { useSettingsContext, useWalletContext } from "@suilend/sui-fe-next";
 
+import LedgerHashDialog from "@/components/LedgerHashDialog";
 import useFetchAppData from "@/fetchers/useFetchAppData";
 import { isInvalidIconUrl } from "@/lib/tokens";
 
@@ -110,6 +112,9 @@ interface AppContext {
 
   tokenIconImageLoadErrorMap: Record<string, boolean>;
   loadTokenIconImage: (token: Token) => void;
+
+  openLedgerHashDialog: (transaction: Transaction) => Promise<void>;
+  closeLedgerHashDialog: () => void;
 }
 type LoadedAppContext = AppContext & {
   steammClient: SteammSDK;
@@ -145,13 +150,20 @@ const AppContext = createContext<AppContext>({
   loadTokenIconImage: () => {
     throw Error("AppContextProvider not initialized");
   },
+
+  openLedgerHashDialog: async () => {
+    throw Error("AppContextProvider not initialized");
+  },
+  closeLedgerHashDialog: () => {
+    throw Error("AppContextProvider not initialized");
+  },
 });
 
 export const useAppContext = () => useContext(AppContext);
 export const useLoadedAppContext = () => useAppContext() as LoadedAppContext;
 
 export function AppContextProvider({ children }: PropsWithChildren) {
-  const { rpc } = useSettingsContext();
+  const { rpc, suiClient } = useSettingsContext();
   const { address } = useWalletContext();
 
   // STEAMM client
@@ -245,6 +257,29 @@ export function AppContextProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
+  // Ledger hash
+  const [ledgerHash, setLedgerHash] = useState<string | undefined>(undefined);
+  const [isLedgerHashDialogOpen, setIsLedgerHashDialogOpen] =
+    useState<boolean>(false);
+
+  const openLedgerHashDialog = useCallback(
+    async (transaction: Transaction) => {
+      if (!address) return;
+
+      const transactionLedgerHash = await getLedgerHash(
+        address,
+        transaction,
+        suiClient,
+      );
+      setLedgerHash(transactionLedgerHash);
+      setIsLedgerHashDialogOpen(true);
+    },
+    [address, suiClient],
+  );
+  const closeLedgerHashDialog = useCallback(() => {
+    setIsLedgerHashDialogOpen(false);
+  }, []);
+
   // Context
   const contextValue: AppContext = useMemo(
     () => ({
@@ -266,6 +301,9 @@ export function AppContextProvider({ children }: PropsWithChildren) {
 
       tokenIconImageLoadErrorMap,
       loadTokenIconImage,
+
+      openLedgerHashDialog,
+      closeLedgerHashDialog,
     }),
     [
       steammClient,
@@ -280,10 +318,19 @@ export function AppContextProvider({ children }: PropsWithChildren) {
       addRecentPoolId,
       tokenIconImageLoadErrorMap,
       loadTokenIconImage,
+      openLedgerHashDialog,
+      closeLedgerHashDialog,
     ],
   );
 
   return (
-    <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>
+    <AppContext.Provider value={contextValue}>
+      <LedgerHashDialog
+        isOpen={isLedgerHashDialogOpen}
+        ledgerHash={ledgerHash ?? ""}
+      />
+
+      {children}
+    </AppContext.Provider>
   );
 }

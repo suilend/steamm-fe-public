@@ -8,11 +8,7 @@ import {
   useState,
 } from "react";
 
-import {
-  Transaction,
-  TransactionArgument,
-  coinWithBalance,
-} from "@mysten/sui/transactions";
+import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
@@ -37,9 +33,11 @@ import {
 import {
   MAX_U64,
   formatToken,
+  getAllCoins,
   getBalanceChange,
   getToken,
   isSui,
+  mergeAllCoins,
 } from "@suilend/sui-fe";
 import {
   shallowPushQuery,
@@ -99,7 +97,13 @@ interface DepositTabProps {
 function DepositTab({ onDeposit }: DepositTabProps) {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
+  const {
+    steammClient,
+    appData,
+    slippagePercent,
+    openLedgerHashDialog,
+    closeLedgerHashDialog,
+  } = useLoadedAppContext();
   const { getBalance, userData, refresh } = useUserContext();
   const { pool } = usePoolContext();
 
@@ -336,8 +340,16 @@ function DepositTab({ onDeposit }: DepositTabProps) {
         appData.coinMetadataMap[coinTypeA],
         appData.coinMetadataMap[coinTypeB],
       ];
+      const [allCoinsA, allCoinsB] = await Promise.all([
+        getAllCoins(suiClient, address, coinTypeA),
+        getAllCoins(suiClient, address, coinTypeB),
+      ]);
 
       let transaction = new Transaction();
+      const [mergeCoinA, mergeCoinB] = [
+        mergeAllCoins(coinTypeA, transaction, allCoinsA),
+        mergeAllCoins(coinTypeB, transaction, allCoinsB),
+      ];
 
       let maxA: bigint | TransactionArgument,
         maxB: bigint | TransactionArgument;
@@ -348,11 +360,14 @@ function DepositTab({ onDeposit }: DepositTabProps) {
 
         const [indexCoinType, nonIndexCoinType] =
           index === 0 ? [coinTypeA, coinTypeB] : [coinTypeB, coinTypeA];
-
-        const [indexToken, nonIndexToken] = [
-          getToken(indexCoinType, appData.coinMetadataMap[indexCoinType]),
-          getToken(nonIndexCoinType, appData.coinMetadataMap[nonIndexCoinType]),
+        const [indexCoinMetadata, nonIndexCoinMetadata] = [
+          appData.coinMetadataMap[indexCoinType],
+          appData.coinMetadataMap[nonIndexCoinType],
         ];
+        const [allCoinsIndex, allCoinsNonIndex] =
+          index === 0 ? [allCoinsA, allCoinsB] : [allCoinsB, allCoinsA];
+        const [mergeCoinIndex, mergeCoinNonIndex] =
+          index === 0 ? [mergeCoinA, mergeCoinB] : [mergeCoinB, mergeCoinA];
 
         const indexQuoteDeposit =
           index === 0 ? quote.depositA.toString() : quote.depositB.toString();
@@ -367,17 +382,18 @@ function DepositTab({ onDeposit }: DepositTabProps) {
           )
           .integerValue(BigNumber.ROUND_DOWN)
           .toString();
-        const indexSwapCoinIn = coinWithBalance({
-          type: indexToken.coinType,
-          balance: BigInt(indexSwapAmountIn),
-          useGasCoin: isSui(indexToken.coinType),
-        })(transaction);
+        const [indexSwapCoinIn] = transaction.splitCoins(
+          isSui(indexCoinType)
+            ? transaction.gas
+            : transaction.object(mergeCoinIndex.coinObjectId),
+          [BigInt(indexSwapAmountIn)],
+        );
 
         const swapQuotes = await getAggSortedQuotesAll(
           sdkMap,
           activeProviders,
-          indexToken,
-          nonIndexToken,
+          getToken(indexCoinType, indexCoinMetadata),
+          getToken(nonIndexCoinType, nonIndexCoinMetadata),
           indexSwapAmountIn,
         );
         const swapQuote = swapQuotes[0];
@@ -404,25 +420,26 @@ function DepositTab({ onDeposit }: DepositTabProps) {
         )
           .integerValue(BigNumber.ROUND_DOWN)
           .toString();
-        const indexDepositCoin = coinWithBalance({
-          type: indexToken.coinType,
-          balance: BigInt(indexDepositAmount),
-          useGasCoin: isSui(indexToken.coinType),
-        })(transaction);
+        const [indexDepositCoin] = transaction.splitCoins(
+          isSui(indexCoinType)
+            ? transaction.gas
+            : transaction.object(mergeCoinIndex.coinObjectId),
+          [BigInt(indexDepositAmount)],
+        );
 
         maxA =
           index === 0
             ? BigInt(indexDepositAmount)
             : transaction.moveCall({
                 target: "0x2::coin::value",
-                typeArguments: [nonIndexToken.coinType],
+                typeArguments: [nonIndexCoinType],
                 arguments: [swapCoinOut],
               });
         maxB =
           index === 0
             ? transaction.moveCall({
                 target: "0x2::coin::value",
-                typeArguments: [nonIndexToken.coinType],
+                typeArguments: [nonIndexCoinType],
                 arguments: [swapCoinOut],
               })
             : BigInt(indexDepositAmount);
@@ -451,16 +468,18 @@ function DepositTab({ onDeposit }: DepositTabProps) {
             .toString(),
         );
 
-        depositCoinA = coinWithBalance({
-          balance: maxA,
-          type: coinTypeA,
-          useGasCoin: isSui(coinTypeA),
-        })(transaction);
-        depositCoinB = coinWithBalance({
-          balance: maxB,
-          type: coinTypeB,
-          useGasCoin: isSui(coinTypeB),
-        })(transaction);
+        [depositCoinA] = transaction.splitCoins(
+          isSui(coinTypeA)
+            ? transaction.gas
+            : transaction.object(mergeCoinA.coinObjectId),
+          [maxA],
+        );
+        [depositCoinB] = transaction.splitCoins(
+          isSui(coinTypeB)
+            ? transaction.gas
+            : transaction.object(mergeCoinB.coinObjectId),
+          [maxB],
+        );
       }
 
       const banks = [appData.bankMap[coinTypeA], appData.bankMap[coinTypeB]];
@@ -512,6 +531,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
         transaction.transferObjects([lpCoin], address);
       }
 
+      await openLedgerHashDialog(transaction);
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
 
@@ -602,6 +622,8 @@ function DepositTab({ onDeposit }: DepositTabProps) {
       document.getElementById(getCoinInputId(pool.coinTypes[0]))?.focus();
       setIsSubmitting(false);
       refresh();
+
+      closeLedgerHashDialog();
     }
   };
 
@@ -754,10 +776,16 @@ interface WithdrawTabProps {
 }
 
 function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
-  const { explorer } = useSettingsContext();
+  const { explorer, suiClient } = useSettingsContext();
   const { address, dryRunTransaction, signExecuteAndWaitForTransaction } =
     useWalletContext();
-  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
+  const {
+    steammClient,
+    appData,
+    slippagePercent,
+    openLedgerHashDialog,
+    closeLedgerHashDialog,
+  } = useLoadedAppContext();
   const { getBalance, userData, refresh } = useUserContext();
   const { pool } = usePoolContext();
 
@@ -935,25 +963,32 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
       appData.coinMetadataMap[coinTypeA],
       appData.coinMetadataMap[coinTypeB],
     ];
+    const allCoinsLpToken = await getAllCoins(suiClient, address, lpTokenType);
 
     const lpTokenValue = lpTokenTotalAmount.times(sliderValue).div(100);
 
     const transaction = new Transaction();
+    const mergeCoinLpToken = mergeAllCoins(
+      lpTokenType,
+      transaction,
+      allCoinsLpToken,
+    );
 
     let lpCoin;
     if (lpTokenBalance.gte(lpTokenValue)) {
       console.log("XXX withdraw from wallet");
       // Withdraw from wallet only
-      lpCoin = coinWithBalance({
-        balance: BigInt(
-          new BigNumber(lpTokenValue)
-            .times(10 ** coinMetadataLpToken.decimals)
-            .integerValue(BigNumber.ROUND_DOWN)
-            .toString(),
-        ),
-        type: lpTokenType,
-        useGasCoin: false,
-      })(transaction);
+      [lpCoin] = transaction.splitCoins(
+        transaction.object(mergeCoinLpToken.coinObjectId),
+        [
+          BigInt(
+            new BigNumber(lpTokenValue)
+              .times(10 ** coinMetadataLpToken.decimals)
+              .integerValue(BigNumber.ROUND_DOWN)
+              .toString(),
+          ),
+        ],
+      );
     } else {
       const obligationIndexes = getIndexesOfObligationsWithDeposit(
         userData.obligations,
@@ -966,18 +1001,18 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
       if (lpTokenBalance.gt(0)) {
         // Withdraw MAX from wallet
         console.log("XXX withdraw MAX from wallet, and...");
-        lpCoins.push(
-          coinWithBalance({
-            balance: BigInt(
+        const [_lpCoin] = transaction.splitCoins(
+          transaction.object(mergeCoinLpToken.coinObjectId),
+          [
+            BigInt(
               new BigNumber(lpTokenBalance)
                 .times(10 ** coinMetadataLpToken.decimals)
                 .integerValue(BigNumber.ROUND_DOWN)
                 .toString(),
             ),
-            type: lpTokenType,
-            useGasCoin: false,
-          })(transaction),
+          ],
         );
+        lpCoins.push(_lpCoin);
       }
 
       if (lpTokenValue.eq(lpTokenTotalAmount)) {
@@ -1145,6 +1180,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
         if (!transaction) return;
       }
 
+      await openLedgerHashDialog(transaction);
       const res = await signExecuteAndWaitForTransaction(transaction);
       const txUrl = explorer.buildTxUrl(res.digest);
 
@@ -1202,6 +1238,8 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
     } finally {
       setIsSubmitting(false);
       refresh();
+
+      closeLedgerHashDialog();
     }
   };
 
@@ -1305,9 +1343,15 @@ interface SwapTabProps {
 }
 
 function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
-  const { explorer } = useSettingsContext();
+  const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
+  const {
+    steammClient,
+    appData,
+    slippagePercent,
+    openLedgerHashDialog,
+    closeLedgerHashDialog,
+  } = useLoadedAppContext();
   const { getBalance, refresh } = useUserContext();
   const { pool } = usePoolContext();
 
@@ -1559,6 +1603,10 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
         appData.coinMetadataMap[coinTypeA],
         appData.coinMetadataMap[coinTypeB],
       ];
+      const [allCoinsA, allCoinsB] = await Promise.all([
+        getAllCoins(suiClient, address, coinTypeA),
+        getAllCoins(suiClient, address, coinTypeB),
+      ]);
 
       const amountIn = quote.amountIn.toString();
       const minAmountOut = new BigNumber(quote.amountOut.toString())
@@ -1567,23 +1615,29 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
         .toString();
 
       const transaction = new Transaction();
+      const [mergeCoinA, mergeCoinB] = [
+        mergeAllCoins(coinTypeA, transaction, allCoinsA),
+        mergeAllCoins(coinTypeB, transaction, allCoinsB),
+      ];
 
       const coinA =
         activeCoinIndex === 0
-          ? coinWithBalance({
-              balance: BigInt(amountIn),
-              type: coinTypeA,
-              useGasCoin: isSui(coinTypeA),
-            })(transaction)
+          ? transaction.splitCoins(
+              isSui(coinTypeA)
+                ? transaction.gas
+                : transaction.object(mergeCoinA.coinObjectId),
+              [BigInt(amountIn)],
+            )
           : steammClient.fullClient.zeroCoin(transaction, coinTypeA);
       const coinB =
         activeCoinIndex === 0
           ? steammClient.fullClient.zeroCoin(transaction, coinTypeB)
-          : coinWithBalance({
-              balance: BigInt(amountIn),
-              type: coinTypeB,
-              useGasCoin: isSui(coinTypeB),
-            })(transaction);
+          : transaction.splitCoins(
+              isSui(coinTypeB)
+                ? transaction.gas
+                : transaction.object(mergeCoinB.coinObjectId),
+              [BigInt(amountIn)],
+            );
 
       const banks = [appData.bankMap[coinTypeA], appData.bankMap[coinTypeB]];
 
@@ -1601,6 +1655,7 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
 
       rebalanceBanks(banks, steammClient, transaction);
 
+      await openLedgerHashDialog(transaction);
       const res = await signExecuteAndWaitForTransaction(transaction, {
         auction: true,
       });
@@ -1666,6 +1721,8 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
       document.getElementById(getCoinInputId(activeCoinType))?.focus();
       setIsSubmitting(false);
       refresh();
+
+      closeLedgerHashDialog();
     }
   };
 
