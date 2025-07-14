@@ -2,7 +2,7 @@ import { ChangeEvent, DragEvent, useEffect, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { parse as parseCsv } from "csv-parse/sync";
-import { FileSpreadsheet, X } from "lucide-react";
+import { Download, FileSpreadsheet, X } from "lucide-react";
 
 import { Token, formatNumber } from "@suilend/sui-fe";
 import { showErrorToast } from "@suilend/sui-fe-next";
@@ -182,47 +182,59 @@ export default function CsvUpload({
         </div>
       )}
 
-      <div className="flex w-full flex-row items-center gap-4">
-        {/* CSV */}
-        <div className="group relative flex w-max flex-row items-center justify-center rounded-md border">
-          {(csvRows ?? []).length > 0 ? (
-            <>
-              <button
-                className="absolute right-1 top-1 z-[2] rounded-md border bg-background p-1 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
-                onClick={reset}
-              >
-                <X className="h-4 w-4 text-secondary-foreground transition-colors hover:text-foreground" />
-              </button>
+      <div className="flex w-full flex-col gap-2">
+        <div className="flex w-full flex-row items-center gap-4">
+          {/* CSV */}
+          <div className="group relative flex w-max flex-row items-center justify-center rounded-md border">
+            {(csvRows ?? []).length > 0 ? (
+              <>
+                <button
+                  className="absolute right-1 top-1 z-[2] rounded-md border bg-background p-1 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
+                  onClick={reset}
+                >
+                  <X className="h-4 w-4 text-secondary-foreground transition-colors hover:text-foreground" />
+                </button>
 
-              <div className="pointer-events-none relative z-[1] flex h-24 w-24">
-                <FileSpreadsheet className="absolute left-4 top-4 h-16 w-16 text-button-1" />
+                <div className="pointer-events-none relative z-[1] flex h-24 w-24">
+                  <FileSpreadsheet className="absolute left-4 top-4 h-16 w-16 text-button-1" />
+                </div>
+              </>
+            ) : (
+              <div className="pointer-events-none relative z-[2] flex h-24 w-24 flex-col items-center justify-center gap-0.5">
+                <p className="text-p3 text-secondary-foreground">Drag & drop</p>
+                <p className="text-p3 text-secondary-foreground">or browse</p>
               </div>
-            </>
-          ) : (
-            <div className="pointer-events-none relative z-[2] flex h-24 w-24 flex-col items-center justify-center gap-0.5">
-              <p className="text-p3 text-secondary-foreground">Drag & drop</p>
-              <p className="text-p3 text-secondary-foreground">or browse</p>
-            </div>
-          )}
+            )}
 
-          <input
-            id="csv-upload"
-            className="absolute inset-0 z-[1] appearance-none opacity-0"
-            type="file"
-            accept={VALID_MIME_TYPES.join(",")}
-            onChange={handleFileSelect}
-          />
+            <input
+              id="csv-upload"
+              className="absolute inset-0 z-[1] appearance-none opacity-0"
+              type="file"
+              accept={VALID_MIME_TYPES.join(",")}
+              onChange={handleFileSelect}
+            />
+          </div>
+
+          {/* Metadata */}
+          <div className="flex flex-1 flex-col gap-1">
+            <p className="break-all text-p2 text-secondary-foreground">
+              {csvFilename || "--"}
+            </p>
+            <p className="text-p3 text-tertiary-foreground">
+              {csvFileSize || "--"}
+            </p>
+          </div>
         </div>
 
-        {/* Metadata */}
-        <div className="flex flex-1 flex-col gap-1">
-          <p className="break-all text-p2 text-secondary-foreground">
-            {csvFilename || "--"}
+        <button
+          className="group flex w-24 flex-row items-center justify-center gap-1"
+          onClick={() => window.open("/template.csv", "_blank")}
+        >
+          <Download className="h-3 w-3 text-secondary-foreground transition-colors group-hover:text-foreground" />
+          <p className="text-p3 text-secondary-foreground transition-colors group-hover:text-foreground">
+            Template
           </p>
-          <p className="text-p3 text-tertiary-foreground">
-            {csvFileSize || "--"}
-          </p>
-        </div>
+        </button>
       </div>
     </>
   );
