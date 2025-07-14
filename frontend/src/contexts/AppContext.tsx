@@ -29,8 +29,9 @@ import {
   ParsedPool,
   SteammSDK,
 } from "@suilend/steamm-sdk";
-import { Token, getLedgerHash } from "@suilend/sui-fe";
+import { Token } from "@suilend/sui-fe";
 import { useSettingsContext, useWalletContext } from "@suilend/sui-fe-next";
+import useLedgerHashDialog from "@suilend/sui-fe-next/hooks/useLedgerHashDialog";
 
 import LedgerHashDialog from "@/components/LedgerHashDialog";
 import useFetchAppData from "@/fetchers/useFetchAppData";
@@ -258,27 +259,13 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   }, []);
 
   // Ledger hash
-  const [ledgerHash, setLedgerHash] = useState<string | undefined>(undefined);
-  const [isLedgerHashDialogOpen, setIsLedgerHashDialogOpen] =
-    useState<boolean>(false);
-
-  const openLedgerHashDialog = useCallback(
-    async (transaction: Transaction) => {
-      if (!address) return;
-
-      const transactionLedgerHash = await getLedgerHash(
-        address,
-        transaction,
-        suiClient,
-      );
-      setLedgerHash(transactionLedgerHash);
-      setIsLedgerHashDialogOpen(true);
-    },
-    [address, suiClient],
-  );
-  const closeLedgerHashDialog = useCallback(() => {
-    setIsLedgerHashDialogOpen(false);
-  }, []);
+  const {
+    ledgerHash,
+    isLedgerHashDialogOpen,
+    doNotShowLedgerHashDialogAgain,
+    openLedgerHashDialog,
+    closeLedgerHashDialog,
+  } = useLedgerHashDialog();
 
   // Context
   const contextValue: AppContext = useMemo(
