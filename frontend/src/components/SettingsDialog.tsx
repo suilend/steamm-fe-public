@@ -6,6 +6,7 @@ import { EXPLORERS, ExplorerId, RPCS, RpcId } from "@suilend/sui-fe";
 import { useSettingsContext } from "@suilend/sui-fe-next";
 
 import Dialog from "@/components/Dialog";
+import Parameter from "@/components/Parameter";
 import SelectPopover from "@/components/SelectPopover";
 import TextInput from "@/components/TextInput";
 import { cn } from "@/lib/utils";
@@ -19,10 +20,9 @@ export default function SettingsDialog() {
     setExplorerId,
     gasBudget,
     setGasBudget,
+    isUsingLedger,
+    setIsUsingLedger,
   } = useSettingsContext();
-
-  // State
-  const [isOpen, setIsOpen] = useState<boolean>(false);
 
   // Custom RPC URL
   const [customRpcUrl, setCustomRpcUrl] = useState<string>(
@@ -31,17 +31,9 @@ export default function SettingsDialog() {
 
   return (
     <Dialog
-      rootProps={{ open: isOpen, onOpenChange: setIsOpen }}
       trigger={
         <button className="group flex h-5 w-5 flex-row items-center justify-center">
-          <Settings
-            className={cn(
-              "h-4 w-4 transition-colors",
-              isOpen
-                ? "text-foreground"
-                : "text-secondary-foreground group-hover:text-foreground",
-            )}
-          />
+          <Settings className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
         </button>
       }
       headerProps={{
@@ -117,6 +109,26 @@ export default function SettingsDialog() {
           </p>
         </div>
       </div>
+
+      {/* Ledger */}
+      <Parameter label="Using a Ledger" isHorizontal>
+        <button
+          className={cn(
+            "group flex h-[24px] w-[40px] flex-row items-center rounded-full border p-px transition-colors",
+            isUsingLedger
+              ? "border-button-1 bg-button-1/25"
+              : "hover:bg-border/50",
+          )}
+          onClick={() => setIsUsingLedger(!isUsingLedger)}
+        >
+          <div
+            className={cn(
+              "h-[20px] w-[20px] rounded-full bg-foreground transition-all",
+              isUsingLedger && "ml-[16px]",
+            )}
+          />
+        </button>
+      </Parameter>
     </Dialog>
   );
 }
