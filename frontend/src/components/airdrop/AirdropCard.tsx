@@ -158,7 +158,7 @@ export default function AirdropCard() {
       {
         id: RecipientsType.CSV,
         name: recipientsTypeNameMap[RecipientsType.CSV],
-        description: "Address & amount columns, comma-separated",
+        description: "Address & amount columns with headers, comma-separated",
       },
       {
         id: RecipientsType.ROOTLETS,

@@ -5,11 +5,12 @@ import { useMemo } from "react";
 import { shallowPushQuery } from "@suilend/sui-fe-next";
 
 import CreatePoolCard from "@/components/create/CreatePoolCard";
-import CreateTokenCard from "@/components/create/CreateTokenCard";
+import CreateTokenAndPoolCard from "@/components/create/CreateTokenAndPoolCard";
 import { cn } from "@/lib/utils";
 
 enum Tab {
-  TOKEN = "token",
+  TOKEN_AND_POOL = "tokenAndPool",
+  // TOKEN = "token",
   POOL = "pool",
 }
 
@@ -18,7 +19,8 @@ enum QueryParams {
 }
 
 const tabNameMap: Record<Tab, string> = {
-  [Tab.TOKEN]: "Create token",
+  [Tab.TOKEN_AND_POOL]: "Create token & pool",
+  // [Tab.TOKEN]: "Create token",
   [Tab.POOL]: "Create pool",
 };
 
@@ -36,7 +38,7 @@ export default function CreatePage() {
     queryParams[QueryParams.TAB] &&
     Object.values(Tab).includes(queryParams[QueryParams.TAB])
       ? queryParams[QueryParams.TAB]
-      : Tab.TOKEN;
+      : Tab.TOKEN_AND_POOL;
   const onSelectedTabChange = (tab: Tab) => {
     shallowPushQuery(router, { ...router.query, [QueryParams.TAB]: tab });
   };
@@ -73,7 +75,8 @@ export default function CreatePage() {
           ))}
         </div>
 
-        {selectedTab === Tab.TOKEN && <CreateTokenCard />}
+        {selectedTab === Tab.TOKEN_AND_POOL && <CreateTokenAndPoolCard />}
+        {/* {selectedTab === Tab.TOKEN && <CreateTokenCard />} */}
         {selectedTab === Tab.POOL && <CreatePoolCard />}
       </div>
     </>

@@ -76,7 +76,7 @@ import { cn } from "@/lib/utils";
 
 const REQUIRED_SUI_AMOUNT = new BigNumber(0.2);
 
-export default function CreateTokenCard() {
+export default function CreateTokenAndPoolCard() {
   const { suiClient } = useSettingsContext();
   const { account, address, signExecuteAndWaitForTransaction } =
     useWalletContext();
