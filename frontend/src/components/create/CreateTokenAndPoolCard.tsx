@@ -76,7 +76,13 @@ import { cn } from "@/lib/utils";
 
 const REQUIRED_SUI_AMOUNT = new BigNumber(0.2);
 
-export default function CreateTokenAndPoolCard() {
+interface CreateTokenAndPoolCardProps {
+  isTokenOnly: boolean;
+}
+
+export default function CreateTokenAndPoolCard({
+  isTokenOnly,
+}: CreateTokenAndPoolCardProps) {
   const { suiClient } = useSettingsContext();
   const { account, address, signExecuteAndWaitForTransaction } =
     useWalletContext();
@@ -498,7 +504,7 @@ export default function CreateTokenAndPoolCard() {
     if (iconUrl === "") return { isDisabled: true, title: "Upload an icon" };
 
     // Quote asset
-    if (quoteAssetCoinType === undefined)
+    if (!isTokenOnly && quoteAssetCoinType === undefined)
       return { isDisabled: true, title: "Select a quote asset" };
 
     // Description
@@ -516,11 +522,11 @@ export default function CreateTokenAndPoolCard() {
     if (supplyRaw === "") return { isDisabled: true, title: "Enter a supply" };
 
     // Deposited supply %
-    if (depositedSupplyPercentRaw === "")
+    if (!isTokenOnly && depositedSupplyPercentRaw === "")
       return { isDisabled: true, title: "Enter deposited supply %" };
 
     // Initial FDV
-    if (initialFdvUsdRaw === "")
+    if (!isTokenOnly && initialFdvUsdRaw === "")
       return { isDisabled: true, title: "Enter initial FDV" };
 
     //
@@ -536,14 +542,14 @@ export default function CreateTokenAndPoolCard() {
 
     return {
       isDisabled: false,
-      title: "Create token & pool",
+      title: !isTokenOnly ? "Create token & pool" : "Create token",
     };
   })();
 
   const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const onSubmitClick = async () => {
     if (submitButtonState.isDisabled) return;
-    if (!quoteToken) return; // Should not happen
+    if (!isTokenOnly && !quoteToken) return; // Should not happen
 
     try {
       if (!account?.publicKey || !address)
@@ -552,7 +558,8 @@ export default function CreateTokenAndPoolCard() {
       setIsSubmitting(true);
 
       // 0) Prepare
-      if (!quoteToken.id) throw new Error("Token coinMetadata id not found");
+      if (!isTokenOnly && !quoteToken!.id)
+        throw new Error("Token coinMetadata id not found");
 
       await initializeCoinCreation();
 
@@ -633,106 +640,108 @@ export default function CreateTokenAndPoolCard() {
         setMintTokenResult(_mintTokenResult);
       }
 
-      // 2.3) Get/create bTokens and banks (2 transactions for each missing bToken+bank pair = 0, 2, or 4 transactions in total)
-      const _bTokensAndBankIds = bTokensAndBankIds;
-      if (
-        _bTokensAndBankIds.some(
-          (bTokenAndBankId) => bTokenAndBankId === undefined,
-        )
-      ) {
-        for (const index of [0, 1]) {
-          if (_bTokensAndBankIds[index] === undefined) {
-            _bTokensAndBankIds[index] = hasBTokenAndBankForToken(
-              tokens[index],
-              appData,
-            )
-              ? await getBTokenAndBankForToken(
-                  tokens[index],
-                  suiClient,
-                  appData,
-                )
-              : await (async () => {
-                  const result = await createBTokenAndBankForToken(
+      if (!isTokenOnly) {
+        // 2.3) Get/create bTokens and banks (2 transactions for each missing bToken+bank pair = 0, 2, or 4 transactions in total)
+        const _bTokensAndBankIds = bTokensAndBankIds;
+        if (
+          _bTokensAndBankIds.some(
+            (bTokenAndBankId) => bTokenAndBankId === undefined,
+          )
+        ) {
+          for (const index of [0, 1]) {
+            if (_bTokensAndBankIds[index] === undefined) {
+              _bTokensAndBankIds[index] = hasBTokenAndBankForToken(
+                tokens[index],
+                appData,
+              )
+                ? await getBTokenAndBankForToken(
                     tokens[index],
-                    steammClient,
-                    appData,
-                    _keypair,
                     suiClient,
-                  );
-                  await new Promise((resolve) => setTimeout(resolve, 2000));
+                    appData,
+                  )
+                : await (async () => {
+                    const result = await createBTokenAndBankForToken(
+                      tokens[index],
+                      steammClient,
+                      appData,
+                      _keypair,
+                      suiClient,
+                    );
+                    await new Promise((resolve) => setTimeout(resolve, 2000));
 
-                  return result;
-                })();
+                    return result;
+                  })();
 
-            setBTokensAndBankIds(
-              (prev) =>
-                [0, 1].map((i) =>
-                  i === index ? _bTokensAndBankIds[index] : prev[i],
-                ) as [
-                  (
-                    | GetBTokenAndBankForTokenResult
-                    | CreateBTokenAndBankForTokenResult
-                    | undefined
-                  ),
-                  (
-                    | GetBTokenAndBankForTokenResult
-                    | CreateBTokenAndBankForTokenResult
-                    | undefined
-                  ),
-                ],
-            );
+              setBTokensAndBankIds(
+                (prev) =>
+                  [0, 1].map((i) =>
+                    i === index ? _bTokensAndBankIds[index] : prev[i],
+                  ) as [
+                    (
+                      | GetBTokenAndBankForTokenResult
+                      | CreateBTokenAndBankForTokenResult
+                      | undefined
+                    ),
+                    (
+                      | GetBTokenAndBankForTokenResult
+                      | CreateBTokenAndBankForTokenResult
+                      | undefined
+                    ),
+                  ],
+              );
+            }
           }
         }
-      }
 
-      const bTokens = _bTokensAndBankIds.map(
-        (bTokenAndBankId) => bTokenAndBankId!.bToken,
-      ) as [Token, Token];
-      const bankIds = _bTokensAndBankIds.map(
-        (bTokenAndBankId) => bTokenAndBankId!.bankId,
-      ) as [string, string];
+        const bTokens = _bTokensAndBankIds.map(
+          (bTokenAndBankId) => bTokenAndBankId!.bToken,
+        ) as [Token, Token];
+        const bankIds = _bTokensAndBankIds.map(
+          (bTokenAndBankId) => bTokenAndBankId!.bankId,
+        ) as [string, string];
 
-      // 2.4) Create LP token (1 transaction)
-      let _createLpTokenResult = createLpTokenResult;
-      if (_createLpTokenResult === undefined) {
-        _createLpTokenResult = await createLpToken(
-          bTokens,
-          _keypair,
-          suiClient,
-        );
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        setCreateLpTokenResult(_createLpTokenResult);
-      }
+        // 2.4) Create LP token (1 transaction)
+        let _createLpTokenResult = createLpTokenResult;
+        if (_createLpTokenResult === undefined) {
+          _createLpTokenResult = await createLpToken(
+            bTokens,
+            _keypair,
+            suiClient,
+          );
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          setCreateLpTokenResult(_createLpTokenResult);
+        }
 
-      // 2.5) Create pool and deposit initial liquidity (1 transaction)
-      const values = [
-        new BigNumber(supply)
-          .times(depositedSupplyPercent)
-          .div(100)
-          .toFixed(decimals, BigNumber.ROUND_DOWN),
-        "0",
-      ] as [string, string];
+        // 2.5) Create pool and deposit initial liquidity (1 transaction)
+        const values = [
+          new BigNumber(supply)
+            .times(depositedSupplyPercent)
+            .div(100)
+            .toFixed(decimals, BigNumber.ROUND_DOWN),
+          "0",
+        ] as [string, string];
 
-      let _createPoolResult = createPoolResult;
-      if (_createPoolResult === undefined) {
-        _createPoolResult = await createPoolAndDepositInitialLiquidity(
-          tokens,
-          values,
-          QUOTER_ID,
-          cpmmOffset,
-          undefined,
-          FEE_TIER_PERCENT,
-          bTokens,
-          bankIds,
-          _createLpTokenResult,
-          burnLpTokens,
-          steammClient,
-          appData,
-          _keypair,
-          suiClient,
-        );
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        setCreatePoolResult(_createPoolResult);
+        let _createPoolResult = createPoolResult;
+        if (_createPoolResult === undefined) {
+          _createPoolResult = await createPoolAndDepositInitialLiquidity(
+            tokens,
+            values,
+            QUOTER_ID,
+            cpmmOffset,
+            undefined,
+            FEE_TIER_PERCENT,
+            bTokens,
+            bankIds,
+            _createLpTokenResult,
+            burnLpTokens,
+            steammClient,
+            appData,
+            _keypair,
+            suiClient,
+          );
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          setCreatePoolResult(_createPoolResult);
+        }
       }
 
       // 2.6) Return objects and unused SUI to user
@@ -746,12 +755,19 @@ export default function CreateTokenAndPoolCard() {
         );
       }
 
-      showSuccessToast(`Created ${symbol}`, {
-        description: `Created ${formatPair(tokens.map((token) => token.symbol))} pool and deposited initial liquidity`,
-      });
+      showSuccessToast(
+        !isTokenOnly
+          ? `Created ${symbol} and ${formatPair(tokens.map((token) => token.symbol))} pool`
+          : `Created ${symbol}`,
+        {
+          description: !isTokenOnly ? "Deposited initial liquidity" : undefined,
+        },
+      );
     } catch (err) {
       showErrorToast(
-        "Failed to create token & pool",
+        !isTokenOnly
+          ? "Failed to create token & pool"
+          : "Failed to create token",
         err as Error,
         undefined,
         true,
@@ -773,6 +789,7 @@ export default function CreateTokenAndPoolCard() {
     <>
       <CreateTokenAndPoolStepsDialog
         isOpen={isStepsDialogOpen}
+        isTokenOnly={isTokenOnly}
         symbol={symbol}
         quoteToken={quoteToken}
         fundKeypairResult={fundKeypairResult}
@@ -844,26 +861,28 @@ export default function CreateTokenAndPoolCard() {
           </div>
 
           {/* Quote asset */}
-          <div className="flex w-full flex-col gap-3">
-            <div className="flex w-full flex-col gap-1">
-              <p className="text-p2 text-secondary-foreground">Quote asset</p>
-              <p className="text-p3 text-tertiary-foreground">
-                SUI or stablecoins (e.g. USDC, USDT) are usually used as the
-                quote asset.
-              </p>
-            </div>
+          {!isTokenOnly && (
+            <div className="flex w-full flex-col gap-3">
+              <div className="flex w-full flex-col gap-1">
+                <p className="text-p2 text-secondary-foreground">Quote asset</p>
+                <p className="text-p3 text-tertiary-foreground">
+                  SUI or stablecoins (e.g. USDC, USDT) are usually used as the
+                  quote asset.
+                </p>
+              </div>
 
-            <TokenSelectionDialog
-              triggerClassName="w-max px-3 border rounded-md"
-              triggerIconSize={16}
-              triggerLabelSelectedClassName="!text-p2"
-              triggerLabelUnselectedClassName="!text-p2"
-              triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
-              token={quoteToken}
-              tokens={quoteTokens}
-              onSelectToken={(token) => onSelectQuoteToken(token)}
-            />
-          </div>
+              <TokenSelectionDialog
+                triggerClassName="w-max px-3 border rounded-md"
+                triggerIconSize={16}
+                triggerLabelSelectedClassName="!text-p2"
+                triggerLabelUnselectedClassName="!text-p2"
+                triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
+                token={quoteToken}
+                tokens={quoteTokens}
+                onSelectToken={(token) => onSelectQuoteToken(token)}
+              />
+            </div>
+          )}
 
           {/* Optional */}
           <button
@@ -922,29 +941,33 @@ export default function CreateTokenAndPoolCard() {
 
               {isWhitelisted && (
                 <>
-                  {/* Optional - Deposited supply */}
-                  <div className="flex w-full flex-col gap-2">
-                    <p className="text-p2 text-secondary-foreground">
-                      Deposited supply (%)
-                    </p>
-                    <PercentInput
-                      placeholder={depositedSupplyPercent.toString()}
-                      value={depositedSupplyPercentRaw}
-                      onChange={onDepositedSupplyPercentChange}
-                    />
-                  </div>
+                  {!isTokenOnly && (
+                    <>
+                      {/* Optional - Deposited supply */}
+                      <div className="flex w-full flex-col gap-2">
+                        <p className="text-p2 text-secondary-foreground">
+                          Deposited supply (%)
+                        </p>
+                        <PercentInput
+                          placeholder={depositedSupplyPercent.toString()}
+                          value={depositedSupplyPercentRaw}
+                          onChange={onDepositedSupplyPercentChange}
+                        />
+                      </div>
 
-                  {/* Optional - Initial FDV */}
-                  <div className="flex w-full flex-col gap-2">
-                    <p className="text-p2 text-secondary-foreground">
-                      Initial FDV ($)
-                    </p>
-                    <TextInput
-                      placeholder={initialFdvUsd.toString()}
-                      value={initialFdvUsdRaw}
-                      onChange={onInitialFdvUsdChange}
-                    />
-                  </div>
+                      {/* Optional - Initial FDV */}
+                      <div className="flex w-full flex-col gap-2">
+                        <p className="text-p2 text-secondary-foreground">
+                          Initial FDV ($)
+                        </p>
+                        <TextInput
+                          placeholder={initialFdvUsd.toString()}
+                          value={initialFdvUsdRaw}
+                          onChange={onInitialFdvUsdChange}
+                        />
+                      </div>
+                    </>
+                  )}
 
                   {/* Optional - Mintable */}
                   <Parameter
@@ -970,92 +993,118 @@ export default function CreateTokenAndPoolCard() {
               )}
 
               {/* Optional - Burn LP tokens */}
-              <Parameter
-                label="Burn LP tokens"
-                labelTooltip="Burning your LP tokens prevents you from withdrawing the pool's initial liquidity. You also won't receive any LP fees from depositing the pool's initial liquidity."
-                isHorizontal
-              >
-                <button
-                  className={cn(
-                    "group flex h-5 w-5 flex-row items-center justify-center rounded-sm border transition-colors",
-                    burnLpTokens
-                      ? "border-button-1 bg-button-1/25"
-                      : "hover:bg-border/50",
-                  )}
-                  onClick={() => setBurnLpTokens(!burnLpTokens)}
+              {!isTokenOnly && (
+                <Parameter
+                  label="Burn LP tokens"
+                  labelTooltip="Burning your LP tokens prevents you from withdrawing the pool's initial liquidity. You also won't receive any LP fees from depositing the pool's initial liquidity."
+                  isHorizontal
                 >
-                  {burnLpTokens && (
-                    <Check className="h-4 w-4 text-foreground" />
-                  )}
-                </button>
-              </Parameter>
+                  <button
+                    className={cn(
+                      "group flex h-5 w-5 flex-row items-center justify-center rounded-sm border transition-colors",
+                      burnLpTokens
+                        ? "border-button-1 bg-button-1/25"
+                        : "hover:bg-border/50",
+                    )}
+                    onClick={() => setBurnLpTokens(!burnLpTokens)}
+                  >
+                    {burnLpTokens && (
+                      <Check className="h-4 w-4 text-foreground" />
+                    )}
+                  </button>
+                </Parameter>
+              )}
             </>
           )}
 
           <Divider />
 
           <div className="flex w-full flex-col gap-2">
-            {/* Deposited */}
-            <Parameter label="Initial liquidity" isHorizontal>
-              {symbol !== "" ? (
-                <div className="flex flex-row items-center gap-2">
+            {!isTokenOnly ? (
+              <>
+                {/* Deposited */}
+                <Parameter label="Initial liquidity" isHorizontal>
+                  {symbol !== "" ? (
+                    <div className="flex flex-row items-center gap-2">
+                      <p className="text-p2 text-foreground">
+                        {formatToken(
+                          new BigNumber(supply)
+                            .times(depositedSupplyPercent)
+                            .div(100),
+                          { dp: decimals, trimTrailingZeros: true },
+                        )}{" "}
+                        {symbol}
+                      </p>
+
+                      <p className="text-p2 text-secondary-foreground">
+                        {formatPercent(new BigNumber(depositedSupplyPercent), {
+                          dp: 0,
+                        })}{" "}
+                        of supply
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-p2 text-foreground">--</p>
+                  )}
+                </Parameter>
+
+                {/* Initial price */}
+                <Parameter label="Initial price" isHorizontal>
+                  {symbol !== "" &&
+                  tokenInitialPriceUsd !== undefined &&
+                  quoteToken !== undefined ? (
+                    <div className="flex flex-row items-center gap-2">
+                      <p className="text-p2 text-foreground">
+                        1 {symbol}
+                        {" = "}
+                        {formatToken(
+                          tokenInitialPriceUsd.div(
+                            getAvgPoolPrice(
+                              appData.pools,
+                              quoteToken.coinType,
+                            )!,
+                          ),
+                          {
+                            dp: balancesCoinMetadataMap![quoteToken.coinType]
+                              .decimals,
+                          },
+                        )}{" "}
+                        {balancesCoinMetadataMap![quoteToken.coinType].symbol}
+                      </p>
+                      <p className="text-p2 text-secondary-foreground">
+                        {formatPrice(tokenInitialPriceUsd)}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-p2 text-foreground">--</p>
+                  )}
+                </Parameter>
+
+                {/* Initial FDV */}
+                <Parameter label="Initial FDV" isHorizontal>
                   <p className="text-p2 text-foreground">
-                    {formatToken(
-                      new BigNumber(supply)
-                        .times(depositedSupplyPercent)
-                        .div(100),
-                      { dp: decimals, trimTrailingZeros: true },
-                    )}{" "}
-                    {symbol}
+                    {formatUsd(new BigNumber(initialFdvUsd))}
                   </p>
-
-                  <p className="text-p2 text-secondary-foreground">
-                    {formatPercent(new BigNumber(depositedSupplyPercent), {
-                      dp: 0,
-                    })}{" "}
-                    of supply
-                  </p>
-                </div>
-              ) : (
-                <p className="text-p2 text-foreground">--</p>
-              )}
-            </Parameter>
-
-            {/* Initial price */}
-            <Parameter label="Initial price" isHorizontal>
-              {symbol !== "" &&
-              tokenInitialPriceUsd !== undefined &&
-              quoteToken !== undefined ? (
-                <div className="flex flex-row items-center gap-2">
-                  <p className="text-p2 text-foreground">
-                    1 {symbol}
-                    {" = "}
-                    {formatToken(
-                      tokenInitialPriceUsd.div(
-                        getAvgPoolPrice(appData.pools, quoteToken.coinType)!,
-                      ),
-                      {
-                        dp: balancesCoinMetadataMap![quoteToken.coinType]
-                          .decimals,
-                      },
-                    )}{" "}
-                    {balancesCoinMetadataMap![quoteToken.coinType].symbol}
-                  </p>
-                  <p className="text-p2 text-secondary-foreground">
-                    {formatPrice(tokenInitialPriceUsd)}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-p2 text-foreground">--</p>
-              )}
-            </Parameter>
-
-            {/* Initial FDV */}
-            <Parameter label="Initial FDV" isHorizontal>
-              <p className="text-p2 text-foreground">
-                {formatUsd(new BigNumber(initialFdvUsd))}
-              </p>
-            </Parameter>
+                </Parameter>
+              </>
+            ) : (
+              <>
+                {/* Supply */}
+                <Parameter label="Supply" isHorizontal>
+                  {symbol !== "" ? (
+                    <p className="text-p2 text-foreground">
+                      {formatToken(new BigNumber(supply), {
+                        dp: decimals,
+                        trimTrailingZeros: true,
+                      })}{" "}
+                      {symbol}
+                    </p>
+                  ) : (
+                    <p className="text-p2 text-foreground">--</p>
+                  )}
+                </Parameter>
+              </>
+            )}
 
             {/* Mintable */}
             <Parameter label="Mintable" isHorizontal>
@@ -1065,11 +1114,13 @@ export default function CreateTokenAndPoolCard() {
             </Parameter>
 
             {/* Burn LP tokens */}
-            <Parameter label="Burn LP tokens" isHorizontal>
-              <p className="text-p2 text-foreground">
-                {burnLpTokens ? "Yes" : "No"}
-              </p>
-            </Parameter>
+            {!isTokenOnly && (
+              <Parameter label="Burn LP tokens" isHorizontal>
+                <p className="text-p2 text-foreground">
+                  {burnLpTokens ? "Yes" : "No"}
+                </p>
+              </Parameter>
+            )}
           </div>
         </div>
 

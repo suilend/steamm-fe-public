@@ -24,6 +24,7 @@ import { POOL_URL_PREFIX } from "@/lib/navigation";
 
 interface CreateTokenAndPoolStepsDialogProps {
   isOpen: boolean;
+  isTokenOnly: boolean;
   symbol: string;
   quoteToken?: Token;
   fundKeypairResult: FundKeypairResult | undefined;
@@ -51,6 +52,7 @@ interface CreateTokenAndPoolStepsDialogProps {
 
 export default function CreateTokenAndPoolStepsDialog({
   isOpen,
+  isTokenOnly,
   symbol,
   quoteToken,
   fundKeypairResult,
@@ -66,18 +68,25 @@ export default function CreateTokenAndPoolStepsDialog({
     if (fundKeypairResult === undefined) return 1;
     if (createTokenResult === undefined) return 2;
     if (mintTokenResult === undefined) return 3;
-    if (
-      bTokensAndBankIds.some((bTokenAndBankId) => bTokenAndBankId === undefined)
-    )
-      return 4;
-    if (createdLpToken === undefined) return 5;
-    if (createPoolResult === undefined) return 6;
-    if (returnAllOwnedObjectsAndSuiToUserResult === undefined) return 7;
+    if (!isTokenOnly) {
+      if (
+        bTokensAndBankIds.some(
+          (bTokenAndBankId) => bTokenAndBankId === undefined,
+        )
+      )
+        return 4;
+      if (createdLpToken === undefined) return 5;
+      if (createPoolResult === undefined) return 6;
+      if (returnAllOwnedObjectsAndSuiToUserResult === undefined) return 7;
+    } else {
+      if (returnAllOwnedObjectsAndSuiToUserResult === undefined) return 4;
+    }
     return 99;
   }, [
     fundKeypairResult,
     createTokenResult,
     mintTokenResult,
+    isTokenOnly,
     bTokensAndBankIds,
     createdLpToken,
     createPoolResult,
@@ -94,10 +103,9 @@ export default function CreateTokenAndPoolStepsDialog({
       }}
       headerProps={{
         title: {
-          children: `Create ${symbol} & ${formatPair([
-            symbol,
-            quoteToken?.symbol ?? "",
-          ])} pool`,
+          children: !isTokenOnly
+            ? `Create ${symbol} & ${formatPair([symbol, quoteToken?.symbol ?? ""])} pool`
+            : `Create ${symbol}`,
         },
         description: "Don't close this window or refresh the page",
         showCloseButton: !returnAllOwnedObjectsAndSuiToUserResult
@@ -111,7 +119,9 @@ export default function CreateTokenAndPoolStepsDialog({
         <div className="flex w-full flex-col gap-4">
           {/* Token steps */}
           <div className="flex w-full flex-col gap-3">
-            <div className="text-p3 text-tertiary-foreground">Token</div>
+            {!isTokenOnly && (
+              <div className="text-p3 text-tertiary-foreground">Token</div>
+            )}
 
             <Step
               number={1}
@@ -134,77 +144,85 @@ export default function CreateTokenAndPoolStepsDialog({
               isCurrent={currentStep === 3}
               res={mintTokenResult ? [mintTokenResult.res] : []}
             />
+            {isTokenOnly && (
+              <Step
+                number={4}
+                title="Finalize"
+                isCompleted={currentStep > 4}
+                isCurrent={currentStep === 4}
+                res={
+                  returnAllOwnedObjectsAndSuiToUserResult
+                    ? [returnAllOwnedObjectsAndSuiToUserResult.res]
+                    : []
+                }
+              />
+            )}
           </div>
 
           {/* Pool steps */}
-          <div className="flex w-full flex-col gap-3">
-            <div className="text-p3 text-tertiary-foreground">Pool</div>
+          {!isTokenOnly && (
+            <div className="flex w-full flex-col gap-3">
+              <div className="text-p3 text-tertiary-foreground">Pool</div>
 
-            <Step
-              number={1}
-              title="Create bTokens and banks"
-              isCompleted={currentStep > 4}
-              isCurrent={currentStep === 4}
-              res={bTokensAndBankIds.reduce((acc, bTokenAndBankId) => {
-                if (bTokenAndBankId === undefined) return acc;
+              <Step
+                number={1}
+                title="Create bTokens and banks"
+                isCompleted={currentStep > 4}
+                isCurrent={currentStep === 4}
+                res={bTokensAndBankIds.reduce((acc, bTokenAndBankId) => {
+                  if (bTokenAndBankId === undefined) return acc;
 
-                return "createBankRes" in bTokenAndBankId
-                  ? [
-                      ...acc,
-                      bTokenAndBankId.createBTokenResult.res,
-                      bTokenAndBankId.createBankRes,
-                    ]
-                  : acc;
-              }, [] as SuiTransactionBlockResponse[])}
-            />
-            <Step
-              number={2}
-              title="Create LP token"
-              isCompleted={currentStep > 5}
-              isCurrent={currentStep === 5}
-              res={createdLpToken ? [createdLpToken.res] : []}
-            />
-            <Step
-              number={3}
-              title="Create pool and deposit initial liquidity"
-              isCompleted={currentStep > 6}
-              isCurrent={currentStep === 6}
-              res={createPoolResult ? [createPoolResult.res] : []}
-            />
-            <Step
-              number={4}
-              title="Finalize"
-              isCompleted={currentStep > 7}
-              isCurrent={currentStep === 7}
-              res={
-                returnAllOwnedObjectsAndSuiToUserResult
-                  ? [returnAllOwnedObjectsAndSuiToUserResult.res]
-                  : []
-              }
-            />
-          </div>
+                  return "createBankRes" in bTokenAndBankId
+                    ? [
+                        ...acc,
+                        bTokenAndBankId.createBTokenResult.res,
+                        bTokenAndBankId.createBankRes,
+                      ]
+                    : acc;
+                }, [] as SuiTransactionBlockResponse[])}
+              />
+              <Step
+                number={2}
+                title="Create LP token"
+                isCompleted={currentStep > 5}
+                isCurrent={currentStep === 5}
+                res={createdLpToken ? [createdLpToken.res] : []}
+              />
+              <Step
+                number={3}
+                title="Create pool and deposit initial liquidity"
+                isCompleted={currentStep > 6}
+                isCurrent={currentStep === 6}
+                res={createPoolResult ? [createPoolResult.res] : []}
+              />
+              <Step
+                number={4}
+                title="Finalize"
+                isCompleted={currentStep > 7}
+                isCurrent={currentStep === 7}
+                res={
+                  returnAllOwnedObjectsAndSuiToUserResult
+                    ? [returnAllOwnedObjectsAndSuiToUserResult.res]
+                    : []
+                }
+              />
+            </div>
+          )}
         </div>
 
         {!!returnAllOwnedObjectsAndSuiToUserResult && (
-          <div className="flex w-full flex-col gap-1">
-            <Link
-              className="flex h-14 w-full flex-row items-center justify-center gap-2 rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80"
-              href={`${POOL_URL_PREFIX}/${createPoolResult!.poolId}`} // Should always be defined
-              target="_blank"
-            >
-              <p className="text-p1 text-button-1-foreground">Go to pool</p>
-              <ExternalLink className="h-4 w-4 text-button-1-foreground" />
-            </Link>
-
-            <button
-              className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
-              onClick={reset}
-            >
-              <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
-                Create another token
-              </p>
-            </button>
-          </div>
+          <>
+            {!isTokenOnly && (
+              <Link
+                className="flex h-14 w-full flex-row items-center justify-center gap-2 rounded-md bg-button-1 px-3 transition-colors hover:bg-button-1/80"
+                href={`${POOL_URL_PREFIX}/${createPoolResult!.poolId}`} // Should always be defined
+                target="_blank"
+              >
+                <p className="text-p1 text-button-1-foreground">Go to pool</p>
+                <ExternalLink className="h-4 w-4 text-button-1-foreground" />
+              </Link>
+            )}
+          </>
         )}
       </div>
     </Dialog>
