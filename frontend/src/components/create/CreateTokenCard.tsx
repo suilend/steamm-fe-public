@@ -358,8 +358,8 @@ export default function CreateTokenCard() {
     [initialPoolTvlUsd, depositedSupply],
   );
 
-  // State - optional - non-mintable
-  const [nonMintable, setNonMintable] = useState<boolean>(true);
+  // State - optional - mintable
+  const [isMintable, setIsMintable] = useState<boolean>(false);
 
   // State - optional - burn LP tokens
   const [burnLpTokens, setBurnLpTokens] = useState<boolean>(false);
@@ -437,7 +437,7 @@ export default function CreateTokenCard() {
     setInitialFdvUsdRaw(INITIAL_TOKEN_FDV_USD.toString());
     setInitialFdvUsd(INITIAL_TOKEN_FDV_USD);
 
-    setNonMintable(true);
+    setIsMintable(false);
 
     setBurnLpTokens(false);
   };
@@ -625,7 +625,7 @@ export default function CreateTokenCard() {
           _createTokenResult,
           supply,
           decimals,
-          nonMintable,
+          !isMintable,
           _keypair,
           suiClient,
         );
@@ -946,22 +946,22 @@ export default function CreateTokenCard() {
                     />
                   </div>
 
-                  {/* Optional - Non-mintable */}
+                  {/* Optional - Mintable */}
                   <Parameter
-                    label="Non-mintable"
-                    labelTooltip="Make the token non-mintable after minting the initial supply."
+                    label="Mintable"
+                    labelTooltip="Whether the token is mintable after minting the initial supply."
                     isHorizontal
                   >
                     <button
                       className={cn(
                         "group flex h-5 w-5 flex-row items-center justify-center rounded-sm border transition-colors",
-                        nonMintable
+                        isMintable
                           ? "border-button-1 bg-button-1/25"
                           : "hover:bg-border/50",
                       )}
-                      onClick={() => setNonMintable(!nonMintable)}
+                      onClick={() => setIsMintable(!isMintable)}
                     >
-                      {nonMintable && (
+                      {isMintable && (
                         <Check className="h-4 w-4 text-foreground" />
                       )}
                     </button>
@@ -1057,10 +1057,10 @@ export default function CreateTokenCard() {
               </p>
             </Parameter>
 
-            {/* Non-mintable */}
-            <Parameter label="Non-mintable" isHorizontal>
+            {/* Mintable */}
+            <Parameter label="Mintable" isHorizontal>
               <p className="text-p2 text-foreground">
-                {nonMintable ? "Yes" : "No"}
+                {isMintable ? "Yes" : "No"}
               </p>
             </Parameter>
 
