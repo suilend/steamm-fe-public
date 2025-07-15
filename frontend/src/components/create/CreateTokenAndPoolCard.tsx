@@ -33,7 +33,7 @@ import {
 } from "@suilend/sui-fe-next";
 import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 
-import CreateTokenStepsDialog from "@/components/create/CreateTokenStepsDialog";
+import CreateTokenAndPoolStepsDialog from "@/components/create/CreateTokenAndPoolStepsDialog";
 import IconUpload from "@/components/create/IconUpload";
 import Divider from "@/components/Divider";
 import Parameter from "@/components/Parameter";
@@ -771,7 +771,7 @@ export default function CreateTokenAndPoolCard() {
 
   return (
     <>
-      <CreateTokenStepsDialog
+      <CreateTokenAndPoolStepsDialog
         isOpen={isStepsDialogOpen}
         symbol={symbol}
         quoteToken={quoteToken}

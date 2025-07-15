@@ -22,7 +22,7 @@ import { MintTokenResult } from "@/lib/createToken";
 import { formatPair } from "@/lib/format";
 import { POOL_URL_PREFIX } from "@/lib/navigation";
 
-interface CreateTokenStepsDialogProps {
+interface CreateTokenAndPoolStepsDialogProps {
   isOpen: boolean;
   symbol: string;
   quoteToken?: Token;
@@ -49,7 +49,7 @@ interface CreateTokenStepsDialogProps {
   reset: () => void;
 }
 
-export default function CreateTokenStepsDialog({
+export default function CreateTokenAndPoolStepsDialog({
   isOpen,
   symbol,
   quoteToken,
@@ -61,7 +61,7 @@ export default function CreateTokenStepsDialog({
   createPoolResult,
   returnAllOwnedObjectsAndSuiToUserResult,
   reset,
-}: CreateTokenStepsDialogProps) {
+}: CreateTokenAndPoolStepsDialogProps) {
   const currentStep: number = useMemo(() => {
     if (fundKeypairResult === undefined) return 1;
     if (createTokenResult === undefined) return 2;
