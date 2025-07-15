@@ -212,6 +212,7 @@ export default function CsvUpload({
               type="file"
               accept={VALID_MIME_TYPES.join(",")}
               onChange={handleFileSelect}
+              autoComplete="off"
             />
           </div>
 

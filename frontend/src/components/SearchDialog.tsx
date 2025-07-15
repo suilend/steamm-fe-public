@@ -273,6 +273,7 @@ export default function SearchDialog() {
                       paddingRight:
                         (rawSearchString !== "" ? 2.5 + 5 + 5 : 5) * 4,
                     }}
+                    autoComplete="off"
                   />
                 </div>
 

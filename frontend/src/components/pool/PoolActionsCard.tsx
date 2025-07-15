@@ -743,6 +743,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
               step={1}
               value={sliderValue || "0"}
               onChange={(e) => onSliderValueChange(e.target.value)}
+              autoComplete="off"
             />
           </div>
 
@@ -1309,6 +1310,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
               step={1}
               value={sliderValue || "0"}
               onChange={(e) => onSliderValueChange(e.target.value)}
+              autoComplete="off"
             />
           </div>
 

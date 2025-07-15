@@ -108,6 +108,7 @@ export default function SettingsDialog() {
               onChange={(e) => setGasBudget(e.target.value)}
               onWheel={(e) => e.currentTarget.blur()}
               step="any"
+              autoComplete="off"
             />
           </div>
 

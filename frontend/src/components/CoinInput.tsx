@@ -93,6 +93,7 @@ const CoinInput = forwardRef<HTMLInputElement, CoinInputProps>(
               readOnly={isReadOnly}
               onWheel={(e) => e.currentTarget.blur()}
               step="any"
+              autoComplete="off"
             />
           )}
 

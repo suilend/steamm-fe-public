@@ -36,6 +36,7 @@ export default function PercentInput({
           onChange={(e) => onChange(e.target.value)}
           onWheel={(e) => e.currentTarget.blur()}
           step="any"
+          autoComplete="off"
         />
       </div>
 
