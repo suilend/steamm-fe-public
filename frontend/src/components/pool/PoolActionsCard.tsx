@@ -531,8 +531,11 @@ function DepositTab({ onDeposit }: DepositTabProps) {
         transaction.transferObjects([lpCoin], address);
       }
 
-      await openLedgerHashDialog(transaction);
-      const res = await signExecuteAndWaitForTransaction(transaction);
+      const res = await signExecuteAndWaitForTransaction(
+        transaction,
+        undefined,
+        (tx: Transaction) => openLedgerHashDialog(tx),
+      );
       const txUrl = explorer.buildTxUrl(res.digest);
 
       const [depositedAmountA, depositedAmountB] = (() => {
@@ -1181,8 +1184,11 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
         if (!transaction) return;
       }
 
-      await openLedgerHashDialog(transaction);
-      const res = await signExecuteAndWaitForTransaction(transaction);
+      const res = await signExecuteAndWaitForTransaction(
+        transaction,
+        undefined,
+        (tx: Transaction) => openLedgerHashDialog(tx),
+      );
       const txUrl = explorer.buildTxUrl(res.digest);
 
       const balanceChangeA = getBalanceChange(
@@ -1657,10 +1663,11 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
 
       rebalanceBanks(banks, steammClient, transaction);
 
-      await openLedgerHashDialog(transaction);
-      const res = await signExecuteAndWaitForTransaction(transaction, {
-        auction: true,
-      });
+      const res = await signExecuteAndWaitForTransaction(
+        transaction,
+        { auction: true },
+        (tx: Transaction) => openLedgerHashDialog(tx),
+      );
       const txUrl = explorer.buildTxUrl(res.digest);
 
       const balanceChangeA = getBalanceChange(
