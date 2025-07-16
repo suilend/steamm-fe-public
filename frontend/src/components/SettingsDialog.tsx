@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Settings } from "lucide-react";
 
 import { EXPLORERS, ExplorerId, RPCS, RpcId } from "@suilend/sui-fe";
-import { useSettingsContext } from "@suilend/sui-fe-next";
+import { useSettingsContext, useWalletContext } from "@suilend/sui-fe-next";
 
 import Dialog from "@/components/Dialog";
 import Parameter from "@/components/Parameter";
@@ -20,9 +20,8 @@ export default function SettingsDialog() {
     setExplorerId,
     gasBudget,
     setGasBudget,
-    isUsingLedger,
-    setIsUsingLedger,
   } = useSettingsContext();
+  const { isUsingLedger, setIsUsingLedger } = useWalletContext();
 
   // Custom RPC URL
   const [customRpcUrl, setCustomRpcUrl] = useState<string>(
