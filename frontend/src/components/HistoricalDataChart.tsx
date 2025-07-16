@@ -1,11 +1,14 @@
-import { Fragment, useMemo, useRef, useState } from "react";
+// Supports multiple categories for line charts, but not for bar charts
+// Supports negative Y values for line charts, but not for bar charts
+
+import { useMemo, useRef, useState } from "react";
 
 import BigNumber from "bignumber.js";
 import { ClassValue } from "clsx";
 import { formatDate, getHours } from "date-fns";
 import * as Recharts from "recharts";
 
-import { formatUsd } from "@suilend/sui-fe";
+import { formatPercent, formatUsd } from "@suilend/sui-fe";
 
 import NoDataIcon from "@/components/icons/NoDataIcon";
 import SelectPopover from "@/components/SelectPopover";
@@ -75,18 +78,10 @@ export default function HistoricalDataChart({
         ? Object.keys(data[0]).filter((key) => key !== "timestampS")
         : [];
 
-    const minY = Math.min(
-      ...data.map((d) => categories.map((category) => d[category])).flat(),
-    );
-
     return data.map((d) => ({
       timestampS: d.timestampS,
       ...categories.reduce(
-        (acc, category) => ({
-          ...acc,
-          [category]: d[category],
-          [`${category}_scaled`]: d[category] - minY * 0.75,
-        }),
+        (acc, category) => ({ ...acc, [category]: d[category] }),
         {},
       ),
     }));
@@ -105,9 +100,7 @@ export default function HistoricalDataChart({
       processedData === undefined
         ? []
         : processedData.length > 0
-          ? Object.keys(processedData[0]).filter(
-              (key) => key !== "timestampS" && !key.endsWith("_scaled"),
-            )
+          ? Object.keys(processedData[0]).filter((key) => key !== "timestampS")
           : [],
     [processedData],
   );
@@ -116,7 +109,15 @@ export default function HistoricalDataChart({
   const minX = Math.min(...timestampsS);
   const maxX = Math.max(...timestampsS);
 
-  const minY = 0;
+  const minY =
+    processedData === undefined
+      ? 0
+      : Math.min(
+          0,
+          ...processedData
+            .map((d) => categories.map((category) => d[category]))
+            .flat(),
+        );
   const maxY =
     processedData === undefined
       ? 0
@@ -162,7 +163,7 @@ export default function HistoricalDataChart({
   };
 
   return (
-    <div className={cn("relative flex w-full flex-col gap-3", className)}>
+    <div className={cn("relative flex w-full flex-col gap-4", className)}>
       {/* Top */}
       <div className="flex w-full flex-col gap-1">
         {/* Selects */}
@@ -222,40 +223,46 @@ export default function HistoricalDataChart({
             <Skeleton className="h-[36px] w-20" />
           ) : (
             <div className="flex flex-row gap-3">
-              {categories.map((category, index) => (
-                <div
-                  key={category}
-                  className="relative flex w-max flex-col"
-                  style={{
-                    color:
-                      categories.length === 1
-                        ? "hsl(var(--foreground))"
-                        : colors[index],
-                  }}
-                >
-                  <p className="text-inherit text-h2">
-                    {categories.length > 1 && (
-                      <span className="opacity-75">{category} </span>
-                    )}
-                    <span>
-                      {formatUsd(
-                        hoveredTimestampS !== undefined
-                          ? new BigNumber(
-                              processedData?.find(
-                                (d) => d.timestampS === hoveredTimestampS,
-                              )?.[category] ?? 0,
-                            )
-                          : totals[index],
+              {categories.map((category, index) => {
+                const isPerformanceChart = ["LP", "Hold"].includes(category);
+                const value =
+                  hoveredTimestampS !== undefined
+                    ? new BigNumber(
+                        processedData?.find(
+                          (d) => d.timestampS === hoveredTimestampS,
+                        )?.[category] ?? 0,
+                      )
+                    : totals[index];
+
+                return (
+                  <div
+                    key={category}
+                    className="relative flex w-max flex-col"
+                    style={{
+                      color:
+                        categories.length === 1
+                          ? "hsl(var(--foreground))"
+                          : colors[index],
+                    }}
+                  >
+                    <p className="text-inherit text-h2">
+                      {categories.length > 1 && (
+                        <span className="opacity-75">{category} </span>
                       )}
-                    </span>
-                  </p>
-                  {category === "LP" && (
-                    <p className="text-inherit -mt-1 mb-0.5 text-[10px] opacity-50">
-                      Excluding incentives
+                      <span>
+                        {!isPerformanceChart
+                          ? formatUsd(value)
+                          : `${value.gte(0) ? "+" : "-"}${formatPercent(value.abs(), { dp: 3 })}`}
+                      </span>
                     </p>
-                  )}
-                </div>
-              ))}
+                    {category === "LP" && (
+                      <p className="text-inherit -mt-1 mb-0.5 text-[10px] opacity-50">
+                        Excluding incentives
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -404,10 +411,18 @@ export default function HistoricalDataChart({
                         </linearGradient>
                       ))}
                     </defs>
+                    {minY < 0 && (
+                      <Recharts.ReferenceLine
+                        y="0"
+                        stroke="hsla(var(--foreground) / 10%)"
+                        strokeWidth={1}
+                        strokeDasharray="3 3"
+                      />
+                    )}
                     {categories.map((category, index) => (
                       <Recharts.Area
                         key={category}
-                        dataKey={`${category}_scaled`}
+                        dataKey={category}
                         type="monotone"
                         stackId={index}
                         isAnimationActive={false}

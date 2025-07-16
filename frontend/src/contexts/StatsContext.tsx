@@ -554,9 +554,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             Math.floor((endTimestampS - startTimestampS) / intervalS) + 1;
           const m = json.length;
 
-          // Pad the start of `json` if m < n
+          // Pad the start if `m < n` and the first timestamp in `json` is not `startTimestampS`
           let paddedJson = json;
-          if (m < n) {
+          if (m < n && json[0].timestampS !== startTimestampS) {
             const paddingData = Array.from({ length: n - m }, (_, i) => ({
               usdValue: 0,
               holdUsdValue: 0,
@@ -579,10 +579,15 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
                     {
                       timestampS: d.timestampS,
                       LP:
-                        (!isNaN(+d.usdValue) ? +d.usdValue : 0) / firstUsdValue,
+                        (((!isNaN(+d.usdValue) ? +d.usdValue : 0) -
+                          firstUsdValue) /
+                          firstUsdValue) *
+                        100,
                       Hold:
-                        (!isNaN(+d.holdUsdValue) ? +d.holdUsdValue : 0) /
-                        firstUsdValue,
+                        (((!isNaN(+d.holdUsdValue) ? +d.holdUsdValue : 0) -
+                          firstUsdValue) /
+                          firstUsdValue) *
+                        100,
                     },
                   ],
                   [] as ChartData[],
