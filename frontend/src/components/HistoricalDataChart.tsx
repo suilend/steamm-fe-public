@@ -216,23 +216,24 @@ export default function HistoricalDataChart({
           </div>
         </div>
 
-        <div className="flex w-full flex-col gap-px">
+        <div className="flex h-[58px] w-full flex-col gap-px">
           {/* Total */}
           {totals === undefined || processedData === undefined ? (
             <Skeleton className="h-[36px] w-20" />
           ) : (
-            <div className="flex flex-row items-center gap-3">
+            <div className="flex flex-row gap-3">
               {categories.map((category, index) => (
-                <Fragment key={category}>
-                  <p
-                    className="text-h2"
-                    style={{
-                      color:
-                        categories.length === 1
-                          ? "hsl(var(--foreground))"
-                          : colors[index],
-                    }}
-                  >
+                <div
+                  key={category}
+                  className="relative flex w-max flex-col"
+                  style={{
+                    color:
+                      categories.length === 1
+                        ? "hsl(var(--foreground))"
+                        : colors[index],
+                  }}
+                >
+                  <p className="text-inherit text-h2">
                     {categories.length > 1 && (
                       <span className="opacity-75">{category} </span>
                     )}
@@ -248,11 +249,12 @@ export default function HistoricalDataChart({
                       )}
                     </span>
                   </p>
-
-                  {/* {index !== categories.length - 1 && (
-                    <p className="text-h2 text-tertiary-foreground">/</p>
-                  )} */}
-                </Fragment>
+                  {category === "LP" && (
+                    <p className="text-inherit -mt-1 mb-0.5 text-[10px] opacity-50">
+                      Excluding incentives
+                    </p>
+                  )}
+                </div>
               ))}
             </div>
           )}
