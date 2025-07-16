@@ -252,7 +252,7 @@ export default function HistoricalDataChart({
                       <span>
                         {!isPerformanceChart
                           ? formatUsd(value)
-                          : `${value.gte(0) ? "+" : "-"}${formatPercent(value.abs(), { dp: 3 })}`}
+                          : `${value.gte(0) ? "+" : "-"}${formatPercent(value.abs())}`}
                       </span>
                     </p>
                     {category === "LP" && (
