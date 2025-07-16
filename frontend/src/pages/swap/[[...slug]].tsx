@@ -395,6 +395,7 @@ export default function SwapPage() {
       setIsSubmitting(true);
 
       const transaction = new Transaction();
+      transaction.setSender(address);
 
       const coinIn = coinWithBalance({
         balance: BigInt(quote.amountIn.toString()),
