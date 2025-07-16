@@ -139,6 +139,7 @@ export class SteammSDK {
     );
     this._pythConnection = new SuiPriceServiceConnection(
       "https://hermes.pyth.network",
+      { timeout: 30 * 1000 },
     );
 
     patchFixSuiObjectId(this.sdkOptions);
@@ -599,6 +600,7 @@ export class SteammSDK {
 
               const pythConnection = new SuiPriceServiceConnection(
                 "https://hermes.pyth.network",
+                { timeout: 30 * 1000 },
               );
               // TODO: Switchboard price connection
 

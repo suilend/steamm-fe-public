@@ -280,6 +280,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
                   const pythConnection = new SuiPriceServiceConnection(
                     "https://hermes.pyth.network",
+                    { timeout: 30 * 1000 },
                   );
                   // TODO: Switchboard price connection
 
