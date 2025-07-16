@@ -34,10 +34,6 @@ export default function Footer() {
           </div>
 
           <div className="flex flex-row items-center gap-6">
-            <p className="text-p3 text-tertiary-foreground/50">
-              CMC Ticket ID: 1135161
-            </p>
-
             <Link
               className="text-p2 text-secondary-foreground transition-colors hover:text-foreground"
               href={DOCS_URL}
