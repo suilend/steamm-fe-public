@@ -158,15 +158,28 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
     (() => {
       const nowMs = Date.now();
 
+      const threeDaysStartMs =
+        startOfDayUTC(nowMs).getTime() - ONE_DAY_S * 2 * 1000;
       const dayStartMs = startOfDayUTC(nowMs).getTime();
+      const twelveHoursStartMs =
+        dayStartMs +
+        Math.floor((nowMs - dayStartMs) / (TWELVE_HOURS_S * 1000)) *
+          (TWELVE_HOURS_S * 1000);
+      const fourHoursStartMs =
+        dayStartMs +
+        Math.floor((nowMs - dayStartMs) / (FOUR_HOURS_S * 1000)) *
+          (FOUR_HOURS_S * 1000);
       const hourStartMs = startOfHour(nowMs).getTime();
       const tenMinutesStartMs =
-        hourStartMs +
-        Math.floor((nowMs - hourStartMs) / (TEN_MINUTES_S * 1000)) *
+        dayStartMs +
+        Math.floor((nowMs - dayStartMs) / (TEN_MINUTES_S * 1000)) *
           (TEN_MINUTES_S * 1000);
 
       return {
+        threeDaysStartS: Math.floor(threeDaysStartMs / 1000),
         dayStartS: Math.floor(dayStartMs / 1000),
+        twelveHoursStartMs: Math.floor(twelveHoursStartMs / 1000),
+        fourHoursStartMs: Math.floor(fourHoursStartMs / 1000),
         hourStartS: Math.floor(hourStartMs / 1000),
         tenMinutesStartS: Math.floor(tenMinutesStartMs / 1000),
       };
@@ -279,7 +292,14 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
   const fetchPoolHistoricalStats = useCallback(
     async (poolId: string, period: ChartPeriod) => {
-      const { dayStartS, tenMinutesStartS } = referenceTimestampsSRef.current;
+      const {
+        threeDaysStartS,
+        dayStartS,
+        twelveHoursStartMs,
+        fourHoursStartMs,
+        hourStartS,
+        tenMinutesStartS,
+      } = referenceTimestampsSRef.current;
 
       // TVL
       (async () => {
@@ -290,15 +310,15 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           intervalS = TEN_MINUTES_S;
         } else if (period === ChartPeriod.ONE_WEEK) {
           startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = hourStartS;
           intervalS = ONE_HOUR_S;
         } else if (period === ChartPeriod.ONE_MONTH) {
           startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = fourHoursStartMs;
           intervalS = FOUR_HOURS_S;
         } else if (period === ChartPeriod.THREE_MONTHS) {
           startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = twelveHoursStartMs;
           intervalS = TWELVE_HOURS_S;
         } else throw new Error(`Invalid period ${period}`);
 
@@ -362,19 +382,19 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         let startTimestampS, endTimestampS, intervalS;
         if (period === ChartPeriod.ONE_DAY) {
           startTimestampS = tenMinutesStartS - ONE_DAY_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = hourStartS;
           intervalS = ONE_HOUR_S;
         } else if (period === ChartPeriod.ONE_WEEK) {
           startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = dayStartS;
           intervalS = ONE_DAY_S;
         } else if (period === ChartPeriod.ONE_MONTH) {
           startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = dayStartS;
           intervalS = ONE_DAY_S;
         } else if (period === ChartPeriod.THREE_MONTHS) {
           startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = threeDaysStartS;
           intervalS = THREE_DAYS_S;
         } else throw new Error(`Invalid period ${period}`);
 
@@ -438,19 +458,19 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         let startTimestampS, endTimestampS, intervalS;
         if (period === ChartPeriod.ONE_DAY) {
           startTimestampS = tenMinutesStartS - ONE_DAY_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = hourStartS;
           intervalS = ONE_HOUR_S;
         } else if (period === ChartPeriod.ONE_WEEK) {
           startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = dayStartS;
           intervalS = ONE_DAY_S;
         } else if (period === ChartPeriod.ONE_MONTH) {
           startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = dayStartS;
           intervalS = ONE_DAY_S;
         } else if (period === ChartPeriod.THREE_MONTHS) {
           startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = threeDaysStartS;
           intervalS = THREE_DAYS_S;
         } else throw new Error(`Invalid period ${period}`);
 
@@ -518,15 +538,15 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           intervalS = TEN_MINUTES_S;
         } else if (period === ChartPeriod.ONE_WEEK) {
           startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = hourStartS;
           intervalS = ONE_HOUR_S;
         } else if (period === ChartPeriod.ONE_MONTH) {
           startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = fourHoursStartMs;
           intervalS = FOUR_HOURS_S;
         } else if (period === ChartPeriod.THREE_MONTHS) {
           startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = twelveHoursStartMs;
           intervalS = TWELVE_HOURS_S;
         } else throw new Error(`Invalid period ${period}`);
 
@@ -731,7 +751,14 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
   const fetchGlobalHistoricalStats = useCallback(
     async (period: ChartPeriod) => {
-      const { dayStartS, tenMinutesStartS } = referenceTimestampsSRef.current;
+      const {
+        threeDaysStartS,
+        dayStartS,
+        twelveHoursStartMs,
+        fourHoursStartMs,
+        hourStartS,
+        tenMinutesStartS,
+      } = referenceTimestampsSRef.current;
 
       // TVL
       (async () => {
@@ -742,15 +769,15 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           intervalS = TEN_MINUTES_S;
         } else if (period === ChartPeriod.ONE_WEEK) {
           startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = hourStartS;
           intervalS = ONE_HOUR_S;
         } else if (period === ChartPeriod.ONE_MONTH) {
           startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = fourHoursStartMs;
           intervalS = FOUR_HOURS_S;
         } else if (period === ChartPeriod.THREE_MONTHS) {
           startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = twelveHoursStartMs;
           intervalS = TWELVE_HOURS_S;
         } else throw new Error(`Invalid period ${period}`);
 
@@ -807,19 +834,19 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         let startTimestampS, endTimestampS, intervalS;
         if (period === ChartPeriod.ONE_DAY) {
           startTimestampS = tenMinutesStartS - ONE_DAY_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = hourStartS;
           intervalS = ONE_HOUR_S;
         } else if (period === ChartPeriod.ONE_WEEK) {
           startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = dayStartS;
           intervalS = ONE_DAY_S;
         } else if (period === ChartPeriod.ONE_MONTH) {
           startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = dayStartS;
           intervalS = ONE_DAY_S;
         } else if (period === ChartPeriod.THREE_MONTHS) {
           startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = threeDaysStartS;
           intervalS = THREE_DAYS_S;
         } else throw new Error(`Invalid period ${period}`);
 
@@ -876,19 +903,19 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         let startTimestampS, endTimestampS, intervalS;
         if (period === ChartPeriod.ONE_DAY) {
           startTimestampS = tenMinutesStartS - ONE_DAY_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = hourStartS;
           intervalS = ONE_HOUR_S;
         } else if (period === ChartPeriod.ONE_WEEK) {
           startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = dayStartS;
           intervalS = ONE_DAY_S;
         } else if (period === ChartPeriod.ONE_MONTH) {
           startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = dayStartS;
           intervalS = ONE_DAY_S;
         } else if (period === ChartPeriod.THREE_MONTHS) {
           startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = tenMinutesStartS;
+          endTimestampS = threeDaysStartS;
           intervalS = THREE_DAYS_S;
         } else throw new Error(`Invalid period ${period}`);
 
