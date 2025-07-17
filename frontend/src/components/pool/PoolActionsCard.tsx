@@ -112,7 +112,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
 
   const activeProviders = useMemo(
     () => [
-      // QuoteProvider.AFTERMATH, - Doesn't work with with $intents (?)
+      QuoteProvider.AFTERMATH,
       QuoteProvider.CETUS,
       QuoteProvider._7K,
       QuoteProvider.FLOWX,
