@@ -550,6 +550,8 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
               `Failed to fetch historical LP values for pool with id ${poolId}, period ${period}`,
             );
 
+          const firstUsdValue = json[0].usdValue; // Same as json[0].holdUsdValue. Should not be 0
+
           const n =
             Math.floor((endTimestampS - startTimestampS) / intervalS) + 1;
           const m = json.length;
@@ -558,14 +560,12 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           let paddedJson = json;
           if (m < n && json[0].timestampS !== startTimestampS) {
             const paddingData = Array.from({ length: n - m }, (_, i) => ({
-              usdValue: 0,
-              holdUsdValue: 0,
+              usdValue: firstUsdValue,
+              holdUsdValue: firstUsdValue,
               timestampS: startTimestampS + i * intervalS,
             }));
             paddedJson = [...paddingData, ...json];
           }
-
-          const firstUsdValue = json[0].usdValue; // Same as json[0].holdUsdValue. Should not be 0
 
           setPoolHistoricalStats((prev) => ({
             ...prev,
