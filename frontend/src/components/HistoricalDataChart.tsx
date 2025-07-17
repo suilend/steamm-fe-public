@@ -171,14 +171,14 @@ export default function HistoricalDataChart({
           <div className="flex w-max flex-row items-center gap-3">
             {dataTypeOptions.length > 1 ? (
               <SelectPopover
-                popoverContentClassName="p-0 border-none"
+                popoverContentClassName="p-1 rounded-lg"
                 className="h-6 min-h-0 w-max gap-0.5 border-none bg-[transparent] px-0 py-0"
                 textClassName="!text-p2 !text-secondary-foreground"
                 iconClassName="!text-secondary-foreground"
-                optionClassName="h-8 p-2"
+                optionClassName="min-h-8 py-1 px-2"
                 optionTextClassName="!text-p2"
                 align="start"
-                alignOffset={-(2 + 1 + 8)}
+                alignOffset={-(1 + 4 + 1 + 8)}
                 maxWidth={120}
                 options={dataTypeOptions}
                 values={[selectedDataType]}
@@ -194,14 +194,14 @@ export default function HistoricalDataChart({
 
             {periodOptions.length > 1 ? (
               <SelectPopover
-                popoverContentClassName="p-0 border-none"
+                popoverContentClassName="p-1 rounded-lg"
                 className="h-6 min-h-0 w-max gap-0.5 border-none bg-[transparent] px-0 py-0"
                 textClassName="!text-p2 !text-secondary-foreground"
                 iconClassName="!text-secondary-foreground"
-                optionClassName="h-8 p-2"
+                optionClassName="min-h-8 py-1 px-2"
                 optionTextClassName="!text-p2"
                 align="start"
-                alignOffset={-(2 + 1 + 8)}
+                alignOffset={-(1 + 4 + 1 + 8)}
                 maxWidth={80}
                 options={periodOptions}
                 values={[selectedPeriod]}
