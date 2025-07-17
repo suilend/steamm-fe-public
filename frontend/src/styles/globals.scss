@@ -52,7 +52,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-p2 text-foreground;
+    @apply bg-background text-p2 text-foreground max-md:overscroll-none;
   }
 }
 

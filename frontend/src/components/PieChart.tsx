@@ -62,7 +62,10 @@ export default function PieChart({ data, size }: PieChartProps) {
   }, [data]);
 
   return (
-    <div className="transform-gpu" style={{ width: size, height: size }}>
+    <div
+      className="shrink-0 transform-gpu"
+      style={{ width: size, height: size }}
+    >
       {processedData === undefined ? (
         <Skeleton className="h-full w-full" />
       ) : (

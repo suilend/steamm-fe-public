@@ -463,7 +463,7 @@ export default function HistoricalDataChart({
         ) : (
           <div
             className={cn(
-              "flex flex-row",
+              "flex flex-row overflow-hidden",
               chartType === ChartType.BAR
                 ? cn(
                     isFullWidth
