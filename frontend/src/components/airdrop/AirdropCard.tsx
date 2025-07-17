@@ -439,7 +439,9 @@ export default function AirdropCard() {
                       },
                     ]),
               ],
+              address,
               _keypair,
+              suiClient,
               signExecuteAndWaitForTransaction,
               onSign<LastSignedTransactionType>(
                 LastSignedTransactionType.FUND_KEYPAIR,

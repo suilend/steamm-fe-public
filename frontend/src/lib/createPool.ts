@@ -5,7 +5,7 @@ import {
   SuiTransactionBlockResponse,
 } from "@mysten/sui/client";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
+import { Transaction } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID, normalizeStructTag } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 
@@ -17,9 +17,11 @@ import {
 } from "@suilend/steamm-sdk";
 import {
   Token,
+  getAllCoins,
   getToken,
   isSui,
   keypairSignExecuteAndWaitForTransaction,
+  mergeAllCoins,
 } from "@suilend/sui-fe";
 
 import { AppData } from "@/contexts/AppContext";
@@ -281,8 +283,18 @@ export const createPoolAndDepositInitialLiquidity = async (
   // 1) Create pool
   console.log("[createPoolAndDepositInitialLiquidity] Creating pool");
 
+  const [allCoinsA, allCoinsB] = await Promise.all([
+    getAllCoins(suiClient, keypair.toSuiAddress(), tokens[0].coinType),
+    getAllCoins(suiClient, keypair.toSuiAddress(), tokens[1].coinType),
+  ]);
+
   const transaction = new Transaction();
   transaction.setSender(keypair.toSuiAddress());
+
+  const [mergeCoinA, mergeCoinB] = [
+    mergeAllCoins(tokens[0].coinType, transaction, allCoinsA),
+    mergeAllCoins(tokens[1].coinType, transaction, allCoinsB),
+  ];
 
   const createPoolBaseArgs = {
     bTokenTypeA: bTokens[0].coinType,
@@ -341,16 +353,18 @@ export const createPoolAndDepositInitialLiquidity = async (
     .integerValue(BigNumber.ROUND_DOWN)
     .toString();
 
-  const coinA = coinWithBalance({
-    balance: BigInt(submitAmountA),
-    type: tokens[0].coinType,
-    useGasCoin: isSui(tokens[0].coinType),
-  })(transaction);
-  const coinB = coinWithBalance({
-    balance: BigInt(submitAmountB),
-    type: tokens[1].coinType,
-    useGasCoin: isSui(tokens[1].coinType),
-  })(transaction);
+  const [coinA] = transaction.splitCoins(
+    isSui(tokens[0].coinType)
+      ? transaction.gas
+      : transaction.object(mergeCoinA.coinObjectId),
+    [BigInt(submitAmountA)],
+  );
+  const [coinB] = transaction.splitCoins(
+    isSui(tokens[1].coinType)
+      ? transaction.gas
+      : transaction.object(mergeCoinB.coinObjectId),
+    [BigInt(submitAmountB)],
+  );
 
   const { lendingMarketId, lendingMarketType } =
     steammClient.sdkOptions.packages.suilend.config!;

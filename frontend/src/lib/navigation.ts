@@ -1,6 +1,7 @@
 export const ROOT_URL = "/";
 export const POOL_URL_PREFIX = "/pool";
 export const CREATE_URL = "/create";
+export const AIRDROP_URL = "/airdrop";
 // export const SWAP_URL = "/swap";
 export const PORTFOLIO_URL = "/portfolio";
 export const LEADERBOARD_URL = "/leaderboard";

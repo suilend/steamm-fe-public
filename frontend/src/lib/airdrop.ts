@@ -1,13 +1,15 @@
 import { SuiClient, SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { SignatureWithBytes } from "@mysten/sui/cryptography";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
+import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 
 import {
   Token,
+  getAllCoins,
   isSui,
   keypairSignExecuteAndWaitForTransaction,
+  mergeAllCoins,
 } from "@suilend/sui-fe";
 
 export type AirdropRow = { number: number; address: string; amount: string };
@@ -45,14 +47,22 @@ export const makeBatchTransfer = async (
     totalAmount,
   });
 
+  const allCoins = await getAllCoins(
+    suiClient,
+    keypair.toSuiAddress(),
+    token.coinType,
+  );
+
   const transaction = new Transaction();
   transaction.setSender(keypair.toSuiAddress());
 
-  const coin = coinWithBalance({
-    balance: totalAmount,
-    type: token.coinType,
-    useGasCoin: isSui(token.coinType),
-  })(transaction);
+  const mergeCoin = mergeAllCoins(token.coinType, transaction, allCoins);
+  const [coin] = transaction.splitCoins(
+    isSui(token.coinType)
+      ? transaction.gas
+      : transaction.object(mergeCoin.coinObjectId),
+    [totalAmount],
+  );
 
   transaction.moveCall({
     target: `${STEAMM_AIRDROPPER_PACKAGE_ID}::steamm_airdropper::airdrop`,

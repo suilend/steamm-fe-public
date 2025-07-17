@@ -609,7 +609,9 @@ export default function CreatePoolCard() {
                   },
                 ]),
           ],
+          address,
           _keypair,
+          suiClient,
           signExecuteAndWaitForTransaction,
         );
         setFundKeypairResult(_fundKeypairResult);

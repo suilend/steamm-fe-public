@@ -592,7 +592,9 @@ export default function CreateTokenAndPoolCard({
               amount: REQUIRED_SUI_AMOUNT,
             },
           ],
+          address,
           _keypair,
+          suiClient,
           signExecuteAndWaitForTransaction,
         );
         setFundKeypairResult(_fundKeypairResult);
