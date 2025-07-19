@@ -74,7 +74,7 @@ const recipientsTypeNameMap: Record<RecipientsType, string> = {
 
 const TRANSFERS_PER_BATCH = 500; // Max = 512 (if no other MOVE calls in the transaction)
 const getBatchTransactionGas = (transferCount: number) =>
-  Math.max(0.01, 0.0016 * transferCount);
+  Math.max(0.015, 0.0016 * transferCount);
 
 export default function AirdropCard() {
   const { suiClient } = useSettingsContext();
