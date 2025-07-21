@@ -15,7 +15,6 @@ import {
   getAggQuotes,
   getSwapTransaction,
 } from "@suilend/sdk";
-import { ParsedPool } from "@suilend/steamm-sdk";
 import {
   NORMALIZED_SEND_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
@@ -36,7 +35,6 @@ import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
-import SuggestedPools from "@/components/pool/SuggestedPools";
 import SlippagePopover from "@/components/SlippagePopover";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
@@ -408,28 +406,6 @@ export default function SwapPage() {
     }
   };
 
-  // Suggested pools
-  const suggestedPools: ParsedPool[] = useMemo(
-    () => [
-      ...appData.pools.filter(
-        (_pool) =>
-          _pool.coinTypes[0] === inCoinType &&
-          _pool.coinTypes[1] === outCoinType,
-      ),
-      ...appData.pools.filter(
-        (_pool) =>
-          _pool.coinTypes[0] === inCoinType &&
-          _pool.coinTypes[1] !== outCoinType,
-      ),
-      ...appData.pools.filter(
-        (_pool) =>
-          _pool.coinTypes[0] !== inCoinType &&
-          _pool.coinTypes[1] === outCoinType,
-      ),
-    ],
-    [appData.pools, inCoinType, outCoinType],
-  );
-
   return (
     <>
       <Head>
@@ -508,13 +484,6 @@ export default function SwapPage() {
             />
           </div>
         </div>
-
-        <SuggestedPools
-          tableId="swap"
-          title="Suggested pools"
-          pools={suggestedPools}
-          isTvlOnly
-        />
       </div>
     </>
   );
