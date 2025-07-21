@@ -22,7 +22,7 @@ export type PartnerIdMap = {
   [QuoteProvider.FLOWX]: string;
 };
 
-const useCetusSdk = () => {
+export const useCetusSdk = () => {
   const { suiClient } = useSettingsContext();
   const { address } = useWalletContext();
 
@@ -76,7 +76,7 @@ export const useAggSdks = (): {
   const partnerIdMap = useMemo(
     () => ({
       [QuoteProvider.CETUS]:
-        "0x73d10d84520e640f58254a30474478333dd3f08fa7ed2f28cfabdcc9504dc248",
+        "0x7d68adb758c18d0f1e6cbbfe07c4c12bce92de37ce61b27b51245a568381b83e",
       [QuoteProvider._7K]:
         "0x7d68adb758c18d0f1e6cbbfe07c4c12bce92de37ce61b27b51245a568381b83e",
       [QuoteProvider.FLOWX]:

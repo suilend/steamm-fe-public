@@ -1,23 +1,26 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { Fragment, useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
+import { AggregatorClient as CetusSdk } from "@cetusprotocol/aggregator-sdk";
+import { AggregatorQuoter as FlowXAggregatorQuoter } from "@flowx-finance/sdk";
+import { Transaction } from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
+import { Aftermath as AftermathSdk } from "aftermath-ts-sdk";
 import BigNumber from "bignumber.js";
-import { clone, debounce } from "lodash";
-import { ArrowRight } from "lucide-react";
 
 import {
-  MultiSwapQuote,
-  ParsedPool,
-  Route,
-  SteammSDK,
-} from "@suilend/steamm-sdk";
+  QuoteProvider,
+  StandardizedQuote,
+  getAggQuotes,
+  getSwapTransaction,
+} from "@suilend/sdk";
+import { ParsedPool } from "@suilend/steamm-sdk";
 import {
   NORMALIZED_SEND_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
   Token,
+  formatInteger,
   formatToken,
   getBalanceChange,
   getToken,
@@ -25,7 +28,6 @@ import {
 } from "@suilend/sui-fe";
 import {
   shallowPushQuery,
-  shallowReplaceQuery,
   showErrorToast,
   useSettingsContext,
   useWalletContext,
@@ -34,186 +36,164 @@ import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import ExchangeRateParameter from "@/components/ExchangeRateParameter";
-import Parameter from "@/components/Parameter";
 import SuggestedPools from "@/components/pool/SuggestedPools";
 import SlippagePopover from "@/components/SlippagePopover";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
-import PriceDifferenceLabel from "@/components/swap/PriceDifferenceLabel";
-import ReverseAssetsButton from "@/components/swap/ReverseAssetsButton";
-import Tooltip from "@/components/Tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
-import useCachedUsdPrices from "@/hooks/useCachedUsdPrices";
-import { rebalanceBanks } from "@/lib/banks";
+import { useAggSdks } from "@/lib/agg-swap";
 import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
 import { formatTextInputValue } from "@/lib/format";
+import { SWAP_URL } from "@/lib/navigation";
 import { getAvgPoolPrice } from "@/lib/pools";
-import { getCachedUsdPriceRatio } from "@/lib/swap";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { TokenDirection } from "@/lib/types";
-import { cn, hoverUnderlineClassName } from "@/lib/utils";
+
+const DEFAULT_TOKEN_IN_COINTYPE = NORMALIZED_SUI_COINTYPE;
+const DEFAULT_TOKEN_OUT_COINTYPE = NORMALIZED_SEND_COINTYPE;
+
+const getSwapUrl = (inCoinType?: string, outCoinType?: string) =>
+  `${SWAP_URL}/${inCoinType ?? DEFAULT_TOKEN_IN_COINTYPE}-${
+    outCoinType ?? DEFAULT_TOKEN_OUT_COINTYPE
+  }`;
 
 export default function SwapPage() {
   const router = useRouter();
   const slug = router.query.slug as string[] | undefined;
 
-  const { explorer } = useSettingsContext();
+  const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData, slippagePercent } = useLoadedAppContext();
+  const { appData, slippagePercent } = useLoadedAppContext();
   const { getBalance, refresh } = useUserContext();
 
   const isTouchscreen = useIsTouchscreen();
 
-  // CoinTypes
-  const [inCoinType, outCoinType] = useMemo(() => {
-    if (
-      !slug ||
-      slug.length !== 1 ||
-      slug[0].split("-").length !== 2 ||
-      slug[0]
-        .split("-")
-        .some(
-          (symbol) =>
-            !Object.values(appData.coinMetadataMap).find(
-              (coinMetadata) => coinMetadata.symbol === symbol,
-            ),
-        )
-    ) {
-      shallowReplaceQuery(router, {
-        slug: "SUI-SEND",
-      });
-      return [NORMALIZED_SUI_COINTYPE, NORMALIZED_SEND_COINTYPE];
-    }
+  // send.ag
+  const { sdkMap, partnerIdMap } = useAggSdks();
 
-    return slug[0].split("-").map((symbol) => {
-      return Object.entries(appData.coinMetadataMap).find(
-        ([coinType, coinMetadata]) => coinMetadata.symbol === symbol,
-      )![0];
-    });
+  const activeProviders = useMemo(
+    () =>
+      [
+        QuoteProvider.AFTERMATH,
+        QuoteProvider.CETUS,
+        QuoteProvider._7K,
+        QuoteProvider.FLOWX,
+        // QuoteProvider.OKX_DEX,
+      ].filter(Boolean) as QuoteProvider[],
+    [],
+  );
+
+  // Tokens
+  const [inCoinType, outCoinType] = !(
+    slug === undefined ||
+    slug[0].split("-").length !== 2 ||
+    slug[0].split("-")[0] === slug[0].split("-")[1] ||
+    slug[0].split("-").some((coinType) => !appData.coinMetadataMap[coinType])
+  )
+    ? slug[0].split("-")
+    : [DEFAULT_TOKEN_IN_COINTYPE, DEFAULT_TOKEN_OUT_COINTYPE];
+
+  useEffect(() => {
+    if (
+      slug === undefined ||
+      slug[0].split("-").length !== 2 ||
+      slug[0].split("-")[0] === slug[0].split("-")[1] ||
+      slug[0].split("-").some((coinType) => !appData.coinMetadataMap[coinType])
+    )
+      router.replace({ pathname: getSwapUrl() }, undefined, { shallow: true });
   }, [slug, appData.coinMetadataMap, router]);
 
-  const [inCoinMetadata, outCoinMetadata] = [
-    appData.coinMetadataMap[inCoinType],
-    appData.coinMetadataMap[outCoinType],
-  ];
+  const [inCoinMetadata, outCoinMetadata] = useMemo(
+    () => [
+      appData.coinMetadataMap[inCoinType],
+      appData.coinMetadataMap[outCoinType],
+    ],
+    [appData.coinMetadataMap, inCoinType, outCoinType],
+  );
+  const [tokenIn, tokenOut] = useMemo(
+    () => [
+      getToken(inCoinType, inCoinMetadata),
+      getToken(outCoinType, outCoinMetadata),
+    ],
+    [inCoinType, inCoinMetadata, outCoinType, outCoinMetadata],
+  );
 
-  // Value
-  const inMaxValue = isSui(inCoinType)
-    ? BigNumber.max(
-        0,
-        getBalance(inCoinType).minus(MAX_BALANCE_SUI_SUBTRACTED_AMOUNT),
-      )
-    : getBalance(inCoinType);
-
-  const valueRef = useRef<string>("");
+  // State
   const [value, setValue] = useState<string>("");
 
-  const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false);
-  const [quote, setQuote] = useState<MultiSwapQuote | undefined>(undefined);
-  const [route, setRoute] = useState<Route | undefined>(undefined);
-  const flattenedRoute = useMemo(() => {
-    if (!route) return undefined;
+  // Quote
+  const [quotesMap, setQuotesMap] = useState<
+    Record<number, (StandardizedQuote | null)[]>
+  >({});
 
-    const result: { poolId: string; bTokenType: string }[] = [];
-    for (let i = 0; i < route.length; i++) {
-      const r = route[i];
-      if (i === 0) {
-        result.push(
-          {
-            poolId: r.poolId,
-            bTokenType: r.a2b ? r.coinTypeA : r.coinTypeB,
-          },
-          {
-            poolId: r.poolId,
-            bTokenType: r.a2b ? r.coinTypeB : r.coinTypeA,
-          },
-        );
-      } else {
-        result.push({
-          poolId: r.poolId,
-          bTokenType: r.a2b ? r.coinTypeB : r.coinTypeA,
-        });
-      }
-    }
+  const quotes = useMemo(() => {
+    const timestampsS = Object.entries(quotesMap)
+      .filter(([, value]) => value.length > 0)
+      .map(([timestampS]) => +timestampS);
+    if (timestampsS.length === 0) return undefined;
 
-    return result;
-  }, [route]);
+    const maxTimestampS = Math.max(...timestampsS);
+    if (quotesMap[maxTimestampS].filter(Boolean).length === 0) return undefined;
 
-  const fetchQuote = useCallback(
+    const sortedQuotes = (
+      quotesMap[maxTimestampS].filter(Boolean) as StandardizedQuote[]
+    )
+      .slice()
+      .sort((a, b) => +b.out.amount.minus(a.out.amount));
+    return sortedQuotes;
+  }, [quotesMap]);
+
+  const quote = quotes?.find(
+    (q) => q.in.coinType === inCoinType && q.out.coinType === outCoinType,
+  ); // Best quote by amount out
+
+  const isFetchingQuotes = useMemo(() => {
+    const timestampsS = Object.keys(quotesMap).map((timestampS) => +timestampS);
+    if (timestampsS.length === 0) return false;
+
+    const maxTimestampS = Math.max(...timestampsS);
+    return quotesMap[maxTimestampS].filter(Boolean).length < 1; // < numActiveProviders;
+  }, [quotesMap]);
+
+  const fetchQuotes = useCallback(
     async (
-      _steammClient: SteammSDK,
+      _sdkMap: {
+        [QuoteProvider.AFTERMATH]: AftermathSdk;
+        [QuoteProvider.CETUS]: CetusSdk;
+        [QuoteProvider.FLOWX]: FlowXAggregatorQuoter;
+      },
+      _activeProviders: QuoteProvider[],
+      _tokenIn: Token,
+      _tokenOut: Token,
       _value: string,
-      _inCoinType: string,
-      _outCoinType: string,
     ) => {
-      console.log(
-        "SwapPage.fetchQuote - _value(=formattedValue):",
-        _value,
-        "_inCoinType:",
-        _inCoinType,
-        "_outCoinType:",
-        _outCoinType,
-        "valueRef.current:",
-        valueRef.current,
+      if (_tokenIn.coinType === _tokenOut.coinType) return;
+      if (new BigNumber(_value || 0).lte(0)) return;
+
+      const amountIn = new BigNumber(_value)
+        .times(10 ** _tokenIn.decimals)
+        .integerValue(BigNumber.ROUND_DOWN)
+        .toString();
+
+      const timestamp = new Date().getTime();
+      setQuotesMap((o) => ({ ...(o ?? {}), [timestamp]: [] }));
+
+      await getAggQuotes(
+        _sdkMap,
+        _activeProviders,
+        (quote) => {
+          setQuotesMap((o) => ({
+            ...(o ?? {}),
+            [timestamp]: [...((o ?? {})[timestamp] ?? []), quote],
+          }));
+        },
+        _tokenIn,
+        _tokenOut,
+        amountIn,
       );
-
-      if (valueRef.current !== _value) return;
-
-      try {
-        const submitAmount = new BigNumber(_value)
-          .times(10 ** appData.coinMetadataMap[_inCoinType].decimals)
-          .integerValue(BigNumber.ROUND_DOWN)
-          .toString();
-        const { quote, route } = await _steammClient.Router.getBestSwapRoute(
-          { coinIn: _inCoinType, coinOut: _outCoinType },
-          BigInt(submitAmount),
-        );
-
-        if (valueRef.current !== _value) return;
-        console.log("SwapPage.fetchQuote - quote:", quote, "route:", route);
-
-        setIsFetchingQuote(false);
-        setQuote(quote);
-        setRoute(route);
-      } catch (err) {
-        showErrorToast("Failed to fetch quote", err as Error);
-        console.error(err);
-        Sentry.captureException(err);
-      }
     },
-    [appData.coinMetadataMap],
+    [],
   );
-  const debouncedFetchQuote = useRef(debounce(fetchQuote, 100)).current;
-
-  const onValueChange = (_value: string, isImmediate?: boolean) => {
-    console.log("SwapPage.onValueChange - _value:", _value);
-
-    const formattedValue = formatTextInputValue(
-      _value,
-      inCoinMetadata.decimals,
-    );
-
-    const newValue = formattedValue;
-    valueRef.current = newValue;
-    setValue(newValue);
-
-    // formattedValue === "" || formattedValue <= 0
-    if (new BigNumber(formattedValue || 0).lte(0)) {
-      setIsFetchingQuote(false);
-      setQuote(undefined);
-      return;
-    }
-
-    // formattedValue > 0
-    setIsFetchingQuote(true);
-    (isImmediate ? fetchQuote : debouncedFetchQuote)(
-      steammClient,
-      formattedValue,
-      inCoinType,
-      outCoinType,
-    );
-  };
 
   // USD prices - current
   const inPoolPrice = getAvgPoolPrice(appData.pools, inCoinType)!;
@@ -221,50 +201,62 @@ export default function SwapPage() {
 
   const inUsdValue = useMemo(
     () =>
-      isFetchingQuote || inPoolPrice === undefined
+      isFetchingQuotes || inPoolPrice === undefined
         ? undefined
         : quote
-          ? new BigNumber(quote.amountIn.toString())
-              .div(10 ** inCoinMetadata.decimals)
-              .times(inPoolPrice)
+          ? quote.in.amount.times(inPoolPrice)
           : "",
-    [isFetchingQuote, inPoolPrice, quote, inCoinMetadata],
+    [isFetchingQuotes, inPoolPrice, quote],
   );
   const outUsdValue = useMemo(
     () =>
-      isFetchingQuote || outPoolPrice === undefined
+      isFetchingQuotes || outPoolPrice === undefined
         ? undefined
         : quote
-          ? new BigNumber(quote.amountOut.toString())
-              .div(10 ** outCoinMetadata.decimals)
-              .times(outPoolPrice)
+          ? quote.out.amount.times(outPoolPrice)
           : "",
-    [isFetchingQuote, outPoolPrice, quote, outCoinMetadata],
+    [isFetchingQuotes, outPoolPrice, quote],
   );
 
-  // Cached USD prices - current
-  const { cachedUsdPricesMap, fetchCachedUsdPrice } = useCachedUsdPrices([
-    inCoinType,
-    outCoinType,
-  ]);
+  // Value
+  const formatAndSetValue = useCallback((_value: string, token: Token) => {
+    let formattedValue;
+    if (new BigNumber(_value || 0).lt(0)) formattedValue = _value;
+    else if (!_value.includes(".")) formattedValue = _value;
+    else {
+      const [integers, decimals] = _value.split(".");
+      const integersFormatted = formatInteger(
+        integers !== "" ? parseInt(integers) : 0,
+        false,
+      );
+      const decimalsFormatted = decimals.slice(
+        0,
+        Math.min(decimals.length, token.decimals),
+      );
+      formattedValue = `${integersFormatted}.${decimalsFormatted}`;
+    }
 
-  // Ratios
-  const cachedUsdPriceRatio = useMemo(
-    () =>
-      getCachedUsdPriceRatio(
-        cachedUsdPricesMap[inCoinType],
-        cachedUsdPricesMap[outCoinType],
-      ),
-    [cachedUsdPricesMap, inCoinType, outCoinType],
-  );
-  // console.log("SwapPage - cachedUsdPriceRatio:", cachedUsdPriceRatio, cachedUsdPricesMap);
+    setValue(formattedValue);
+  }, []);
+
+  const onValueChange = (_value: string) => {
+    formatAndSetValue(_value, tokenIn);
+
+    if (new BigNumber(_value || 0).gt(0))
+      fetchQuotes(sdkMap, activeProviders, tokenIn, tokenOut, _value);
+    else setQuotesMap({});
+  };
 
   // Value - max
+  const inMaxValue = isSui(inCoinType)
+    ? BigNumber.max(
+        0,
+        getBalance(inCoinType).minus(MAX_BALANCE_SUI_SUBTRACTED_AMOUNT),
+      )
+    : getBalance(inCoinType);
+
   const onBalanceClick = () => {
-    onValueChange(
-      inMaxValue.toFixed(inCoinMetadata.decimals, BigNumber.ROUND_DOWN),
-      true,
-    );
+    onValueChange(inMaxValue.toFixed(tokenIn.decimals, BigNumber.ROUND_DOWN));
     document.getElementById(getCoinInputId(inCoinType))?.focus();
   };
 
@@ -292,63 +284,35 @@ export default function SwapPage() {
         : token.coinType === inCoinType
           ? outCoinType
           : inCoinType;
-    const newInCoinMetadata = appData.coinMetadataMap[newInCoinType];
     const newOutCoinType =
       direction === TokenDirection.IN
         ? token.coinType === outCoinType
           ? inCoinType
           : outCoinType
         : token.coinType;
-    const newOutCoinMetadata = appData.coinMetadataMap[newOutCoinType];
-
-    if (cachedUsdPricesMap[newInCoinType] === undefined)
-      fetchCachedUsdPrice(newInCoinType);
-    if (cachedUsdPricesMap[newOutCoinType] === undefined)
-      fetchCachedUsdPrice(newOutCoinType);
 
     shallowPushQuery(router, {
-      slug: `${newInCoinMetadata.symbol}-${newOutCoinMetadata.symbol}`,
+      slug: `${newInCoinType}-${newOutCoinType}`,
     });
 
-    setQuote(undefined);
+    setQuotesMap({});
 
     setTimeout(
       () => document.getElementById(getCoinInputId(newInCoinType))?.focus(),
-      250,
+      500,
     );
 
     // value === "" || value <= 0
     if (new BigNumber(value || 0).lte(0)) return;
 
     // value > 0
-    setIsFetchingQuote(true);
-    fetchQuote(steammClient, value, newInCoinType, newOutCoinType);
-  };
-
-  // Reverse
-  const reverseAssets = () => {
-    const newInCoinType = outCoinType;
-    const newInCoinMetadata = outCoinMetadata;
-    const newOutCoinType = inCoinType;
-    const newOutCoinMetadata = inCoinMetadata;
-
-    shallowPushQuery(router, {
-      slug: `${newInCoinMetadata.symbol}-${newOutCoinMetadata.symbol}`,
-    });
-
-    setQuote(undefined);
-
-    setTimeout(
-      () => document.getElementById(getCoinInputId(newInCoinType))?.focus(),
-      50,
+    fetchQuotes(
+      sdkMap,
+      activeProviders,
+      direction === TokenDirection.IN ? token : tokenIn,
+      direction === TokenDirection.IN ? tokenOut : token,
+      value,
     );
-
-    // value === "" || value <= 0
-    if (new BigNumber(value || 0).lte(0)) return;
-
-    // value > 0
-    setIsFetchingQuote(true);
-    fetchQuote(steammClient, value, newInCoinType, newOutCoinType);
   };
 
   // Submit
@@ -364,107 +328,75 @@ export default function SwapPage() {
     if (new BigNumber(value).eq(0))
       return { isDisabled: true, title: "Enter a non-zero amount" };
 
-    if (quote) {
-      if (
-        getBalance(inCoinType).lt(
-          new BigNumber(quote.amountIn.toString()).div(
-            10 ** inCoinMetadata.decimals,
-          ),
-        )
-      )
-        return {
-          isDisabled: true,
-          title: `Insufficient ${inCoinMetadata.symbol}`,
-        };
-    }
-
     return {
-      isDisabled: isFetchingQuote || !quote || !route,
-      title: "Swap",
+      title: `Swap ${tokenIn.symbol} for ${tokenOut.symbol}`,
+      isDisabled: !quote || isFetchingQuotes,
     };
   })();
 
   const onSubmitClick = async () => {
-    console.log("SwapPage.onSubmitClick");
+    if (!address) throw new Error("Wallet not connected");
+    if (!quote) throw new Error("No quote found");
 
     if (submitButtonState.isDisabled) return;
-
-    if (!address || !quote || !route) return;
+    setIsSubmitting(true);
 
     try {
-      setIsSubmitting(true);
-
-      const transaction = new Transaction();
-      transaction.setSender(address);
-
-      const coinIn = coinWithBalance({
-        balance: BigInt(quote.amountIn.toString()),
-        type: inCoinType,
-        useGasCoin: isSui(inCoinType),
-      })(transaction);
-
-      const _quote = clone(quote);
-      _quote.amountOut = BigInt(
-        new BigNumber(_quote.amountOut.toString())
-          .div(1 + slippagePercent / 100)
-          .integerValue(BigNumber.ROUND_DOWN)
-          .toString(),
+      let transaction = new Transaction();
+      const { transaction: _transaction, coinOut } = await getSwapTransaction(
+        suiClient,
+        address,
+        quote,
+        +slippagePercent,
+        sdkMap,
+        partnerIdMap,
+        transaction,
+        undefined,
       );
-      await steammClient.Router.swapWithRoute(transaction, {
-        coinIn,
-        route,
-        quote: _quote,
-      });
+      if (!coinOut) throw new Error("Missing coin to deposit/transfer to user");
 
-      transaction.transferObjects([coinIn], address);
+      transaction = _transaction;
 
-      const banks = [appData.bankMap[inCoinType], appData.bankMap[outCoinType]];
-      rebalanceBanks(banks, steammClient, transaction);
+      // TRANSFER out token
+      transaction.transferObjects(
+        [coinOut!], // Checked above
+        transaction.pure.address(address),
+      );
 
       const res = await signExecuteAndWaitForTransaction(transaction, {
         auction: true,
       });
       const txUrl = explorer.buildTxUrl(res.digest);
 
-      const balanceChangeIn = getBalanceChange(
-        res,
-        address,
-        getToken(inCoinType, inCoinMetadata),
-        -1,
-      );
-      const balanceChangeOut = getBalanceChange(
-        res,
-        address,
-        getToken(outCoinType, outCoinMetadata),
-        1,
-      );
+      const balanceChangeIn = getBalanceChange(res, address, tokenIn, -1);
+      const balanceChangeOut = getBalanceChange(res, address, tokenOut);
 
       showSuccessTxnToast(
         [
           "Swapped",
           balanceChangeIn !== undefined
             ? formatToken(balanceChangeIn, {
-                dp: inCoinMetadata.decimals,
+                dp: tokenIn.decimals,
                 trimTrailingZeros: true,
               })
             : null,
-          inCoinMetadata.symbol,
+          tokenIn.symbol,
           "for",
           balanceChangeOut !== undefined
             ? formatToken(balanceChangeOut, {
-                dp: outCoinMetadata.decimals,
+                dp: tokenOut.decimals,
                 trimTrailingZeros: true,
               })
             : null,
-          outCoinMetadata.symbol,
+          tokenOut.symbol,
         ]
           .filter(Boolean)
           .join(" "),
         txUrl,
       );
-      valueRef.current = "";
-      setValue("");
-      setQuote(undefined);
+
+      formatAndSetValue("", tokenIn);
+      setQuotesMap({});
     } catch (err) {
       showErrorToast("Failed to swap", err as Error, undefined, true);
       console.error(err);
@@ -498,174 +430,92 @@ export default function SwapPage() {
     [appData.pools, inCoinType, outCoinType],
   );
 
-  // TEMP
-  const isUnderConstruction = true;
-
   return (
     <>
       <Head>
         <title>STEAMM | Swap</title>
       </Head>
 
-      {isUnderConstruction ? (
-        <div className="flex w-full max-w-md flex-col gap-8">
-          <div className="flex w-full flex-row items-center justify-between gap-4 rounded-md border border-warning bg-warning/25 px-5 py-2">
-            <p className="text-p2 text-foreground">
-              This page is currently under construction.
-            </p>
+      <div className="flex w-full max-w-md flex-col gap-8">
+        <div className="flex w-full flex-col gap-6">
+          <div className="flex w-full flex-row items-center justify-between">
+            <h1 className="text-h1 text-foreground">Swap</h1>
+            <SlippagePopover />
           </div>
-        </div>
-      ) : (
-        <div className="flex w-full max-w-md flex-col gap-8">
-          <div className="flex w-full flex-col gap-6">
-            <div className="flex w-full flex-row items-center justify-between">
-              <h1 className="text-h1 text-foreground">Swap</h1>
-              <SlippagePopover />
-            </div>
 
-            <div className="flex w-full flex-col gap-4">
-              <div className="relative flex w-full min-w-0 flex-col items-center gap-2">
-                <CoinInput
-                  className="relative z-[1]"
-                  autoFocus={!isTouchscreen}
-                  token={getToken(inCoinType, inCoinMetadata)}
-                  value={value}
-                  usdValue={inUsdValue}
-                  onChange={(value) => onValueChange(value)}
-                  onMaxAmountClick={() => onBalanceClick()}
-                  tokens={tokens}
-                  onSelectToken={(token) =>
-                    onSelectToken(token, TokenDirection.IN)
-                  }
-                />
-
-                <ReverseAssetsButton onClick={reverseAssets} />
-
-                <CoinInput
-                  className="relative z-[1]"
-                  token={getToken(outCoinType, outCoinMetadata)}
-                  value={
-                    isFetchingQuote
-                      ? undefined
-                      : quote
-                        ? formatTextInputValue(
-                            new BigNumber(quote.amountOut.toString())
-                              .div(10 ** outCoinMetadata.decimals)
-                              .toFixed(
-                                outCoinMetadata.decimals,
-                                BigNumber.ROUND_DOWN,
-                              ),
-                            outCoinMetadata.decimals,
-                          )
-                        : ""
-                  }
-                  usdValue={outUsdValue}
-                  tokens={tokens}
-                  onSelectToken={(token) =>
-                    onSelectToken(token, TokenDirection.OUT)
-                  }
-                />
-              </div>
-
-              {(isFetchingQuote || quote) && (
-                <div className="flex w-full flex-col gap-2">
-                  <div className="flex w-full flex-row items-center justify-between">
-                    <ExchangeRateParameter
-                      className="w-max"
-                      labelClassName="text-secondary-foreground"
-                      inToken={getToken(inCoinType, inCoinMetadata)}
-                      inPrice={inPoolPrice}
-                      outToken={getToken(outCoinType, outCoinMetadata)}
-                      outPrice={outPoolPrice}
-                      isFetchingQuote={isFetchingQuote}
-                      quote={quote}
-                      isInverted
-                      label=""
-                    />
-
-                    {isFetchingQuote || !quote || !route ? (
-                      <Skeleton className="h-[21px] w-16" />
-                    ) : (
-                      <Tooltip
-                        content={
-                          <div className="flex flex-row items-center gap-1">
-                            {flattenedRoute!.map((r, index) => (
-                              <Fragment key={r.bTokenType}>
-                                <p className="text-p3 text-foreground">
-                                  {
-                                    appData.coinMetadataMap[
-                                      appData.bTokenTypeCoinTypeMap[
-                                        r.bTokenType
-                                      ]
-                                    ].symbol
-                                  }
-                                </p>
-                                {index !== flattenedRoute!.length - 1 && (
-                                  <ArrowRight className="h-3 w-3 text-foreground" />
-                                )}
-                              </Fragment>
-                            ))}
-                          </div>
-                        }
-                      >
-                        <p
-                          className={cn(
-                            "text-p2 text-secondary-foreground decoration-secondary-foreground/50",
-                            hoverUnderlineClassName,
-                          )}
-                        >
-                          {route.length} hop
-                          {route.length > 1 && "s"}
-                        </p>
-                      </Tooltip>
-                    )}
-                  </div>
-
-                  <PriceDifferenceLabel
-                    inToken={getToken(inCoinType, inCoinMetadata)}
-                    outToken={getToken(outCoinType, outCoinMetadata)}
-                    cachedUsdPriceRatio={cachedUsdPriceRatio}
-                    isFetchingQuote={isFetchingQuote}
-                    quote={quote}
-                  />
-                </div>
-              )}
-
-              <SubmitButton
-                submitButtonState={submitButtonState}
-                onClick={onSubmitClick}
+          <div className="flex w-full flex-col gap-4">
+            <div className="relative flex w-full min-w-0 flex-col items-center gap-2">
+              <CoinInput
+                className="relative z-[1]"
+                autoFocus={!isTouchscreen}
+                token={tokenIn}
+                value={value}
+                usdValue={inUsdValue}
+                onChange={(value) => onValueChange(value)}
+                onMaxAmountClick={() => onBalanceClick()}
+                tokens={tokens}
+                onSelectToken={(token) =>
+                  onSelectToken(token, TokenDirection.IN)
+                }
               />
 
-              {(isFetchingQuote || quote) && (
-                <div className="flex w-full flex-col gap-2">
-                  <Parameter label="Minimum inflow" isHorizontal>
-                    {isFetchingQuote || !quote ? (
-                      <Skeleton className="h-[21px] w-24" />
-                    ) : (
-                      <p className="text-p2 text-foreground">
-                        {formatToken(
-                          new BigNumber(quote.amountOut.toString())
-                            .div(1 + slippagePercent / 100)
-                            .div(10 ** outCoinMetadata.decimals),
-                          { dp: outCoinMetadata.decimals },
-                        )}{" "}
-                        {outCoinMetadata.symbol}
-                      </p>
-                    )}
-                  </Parameter>
-                </div>
-              )}
+              <CoinInput
+                className="relative z-[1]"
+                token={tokenOut}
+                value={
+                  isFetchingQuotes
+                    ? undefined
+                    : quote
+                      ? formatTextInputValue(
+                          new BigNumber(quote.out.amount).toFixed(
+                            tokenOut.decimals,
+                            BigNumber.ROUND_DOWN,
+                          ),
+                          tokenOut.decimals,
+                        )
+                      : ""
+                }
+                usdValue={outUsdValue}
+                tokens={tokens}
+                onSelectToken={(token) =>
+                  onSelectToken(token, TokenDirection.OUT)
+                }
+              />
             </div>
-          </div>
 
-          <SuggestedPools
-            tableId="swap"
-            title="Suggested pools"
-            pools={suggestedPools}
-            isTvlOnly
-          />
+            {(isFetchingQuotes || quote) && (
+              <div className="flex w-full flex-col gap-2">
+                <div className="flex w-full flex-row items-center justify-between">
+                  <ExchangeRateParameter
+                    className="w-max"
+                    labelClassName="text-secondary-foreground"
+                    inToken={tokenIn}
+                    inPrice={inPoolPrice}
+                    outToken={tokenOut}
+                    outPrice={outPoolPrice}
+                    isFetchingQuote={isFetchingQuotes}
+                    quote={quote}
+                    isInverted
+                    label=""
+                  />
+                </div>
+              </div>
+            )}
+
+            <SubmitButton
+              submitButtonState={submitButtonState}
+              onClick={onSubmitClick}
+            />
+          </div>
         </div>
-      )}
+
+        <SuggestedPools
+          tableId="swap"
+          title="Suggested pools"
+          pools={suggestedPools}
+          isTvlOnly
+        />
+      </div>
     </>
   );
 }
