@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AggregatorClient as CetusSdk } from "@cetusprotocol/aggregator-sdk";
 import { AggregatorQuoter as FlowXAggregatorQuoter } from "@flowx-finance/sdk";
 import { Transaction } from "@mysten/sui/transactions";
+import { normalizeStructTag } from "@mysten/sui/utils";
 import * as Sentry from "@sentry/nextjs";
 import { Aftermath as AftermathSdk } from "aftermath-ts-sdk";
 import BigNumber from "bignumber.js";
@@ -18,6 +19,7 @@ import {
 import {
   NORMALIZED_SEND_COINTYPE,
   NORMALIZED_SUI_COINTYPE,
+  SUI_COINTYPE,
   Token,
   formatInteger,
   formatToken,
@@ -47,7 +49,7 @@ import { getAvgPoolPrice } from "@/lib/pools";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { TokenDirection } from "@/lib/types";
 
-const DEFAULT_TOKEN_IN_COINTYPE = NORMALIZED_SUI_COINTYPE;
+const DEFAULT_TOKEN_IN_COINTYPE = SUI_COINTYPE;
 const DEFAULT_TOKEN_OUT_COINTYPE = NORMALIZED_SEND_COINTYPE;
 
 const getSwapUrl = (inCoinType?: string, outCoinType?: string) =>
@@ -85,18 +87,28 @@ export default function SwapPage() {
   const [inCoinType, outCoinType] = !(
     slug === undefined ||
     slug[0].split("-").length !== 2 ||
-    slug[0].split("-")[0] === slug[0].split("-")[1] ||
-    slug[0].split("-").some((coinType) => !appData.coinMetadataMap[coinType])
+    normalizeStructTag(slug[0].split("-")[0]) ===
+      normalizeStructTag(slug[0].split("-")[1]) ||
+    slug[0]
+      .split("-")
+      .some(
+        (coinType) => !appData.coinMetadataMap[normalizeStructTag(coinType)],
+      )
   )
-    ? slug[0].split("-")
+    ? slug[0].split("-").map(normalizeStructTag)
     : [DEFAULT_TOKEN_IN_COINTYPE, DEFAULT_TOKEN_OUT_COINTYPE];
 
   useEffect(() => {
     if (
       slug === undefined ||
       slug[0].split("-").length !== 2 ||
-      slug[0].split("-")[0] === slug[0].split("-")[1] ||
-      slug[0].split("-").some((coinType) => !appData.coinMetadataMap[coinType])
+      normalizeStructTag(slug[0].split("-")[0]) ===
+        normalizeStructTag(slug[0].split("-")[1]) ||
+      slug[0]
+        .split("-")
+        .some(
+          (coinType) => !appData.coinMetadataMap[normalizeStructTag(coinType)],
+        )
     )
       router.replace({ pathname: getSwapUrl() }, undefined, { shallow: true });
   }, [slug, appData.coinMetadataMap, router]);
@@ -290,7 +302,10 @@ export default function SwapPage() {
         : token.coinType;
 
     shallowPushQuery(router, {
-      slug: `${newInCoinType}-${newOutCoinType}`,
+      slug: [
+        isSui(newInCoinType) ? SUI_COINTYPE : newInCoinType,
+        isSui(newOutCoinType) ? SUI_COINTYPE : newOutCoinType,
+      ].join("-"),
     });
 
     setQuotesMap({});
