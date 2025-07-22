@@ -1810,31 +1810,6 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
 
       {(isFetchingQuote || quote) && (
         <div className="flex w-full flex-col gap-2">
-          <Parameter label="Fees" isHorizontal>
-            {isFetchingQuote || !quote ? (
-              <Skeleton className="h-[21px] w-24" />
-            ) : (
-              <div className="flex flex-row items-center gap-2">
-                <TokenLogo
-                  token={getToken(inactiveCoinType, inactiveCoinMetadata)}
-                  size={16}
-                />
-                <p className="text-p2 text-foreground">
-                  {formatToken(
-                    new BigNumber(
-                      (
-                        quote.outputFees.poolFees +
-                        quote.outputFees.protocolFees
-                      ).toString(),
-                    ).div(10 ** inactiveCoinMetadata.decimals),
-                    { dp: inactiveCoinMetadata.decimals },
-                  )}{" "}
-                  {inactiveCoinMetadata.symbol}
-                </p>
-              </div>
-            )}
-          </Parameter>
-
           <Parameter label="Minimum inflow" isHorizontal>
             {isFetchingQuote || !quote ? (
               <Skeleton className="h-[21px] w-24" />
