@@ -368,7 +368,7 @@ export default function CreateTokenAndPoolCard({
   const [isMintable, setIsMintable] = useState<boolean>(false);
 
   // State - optional - burn LP tokens
-  const [burnLpTokens, setBurnLpTokens] = useState<boolean>(false);
+  const [burnLpTokens, setBurnLpTokens] = useState<boolean>(true);
 
   // CPMM offset
   const cpmmOffset: bigint | undefined = useMemo(() => {
