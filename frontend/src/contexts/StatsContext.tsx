@@ -570,7 +570,8 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
               `Failed to fetch historical LP values for pool with id ${poolId}, period ${period}`,
             );
 
-          const firstUsdValue = json[0].usdValue; // Same as json[0].holdUsdValue. Should not be 0
+          const firstDataPoint = json.find((d) => d.usdValue !== 0)!; // json[0].usdValue should not be zero (for vCPMM pools, json[1].usdValue should not be zero)
+          const firstUsdValue = firstDataPoint.usdValue;
 
           const n =
             Math.floor((endTimestampS - startTimestampS) / intervalS) + 1;
@@ -599,15 +600,23 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
                     {
                       timestampS: d.timestampS,
                       LP:
-                        (((!isNaN(+d.usdValue) ? +d.usdValue : 0) -
-                          firstUsdValue) /
-                          firstUsdValue) *
-                        100,
+                        firstUsdValue === 0
+                          ? !isNaN(+d.usdValue)
+                            ? +d.usdValue
+                            : 0
+                          : (((!isNaN(+d.usdValue) ? +d.usdValue : 0) -
+                              firstUsdValue) /
+                              firstUsdValue) *
+                            100,
                       Hold:
-                        (((!isNaN(+d.holdUsdValue) ? +d.holdUsdValue : 0) -
-                          firstUsdValue) /
-                          firstUsdValue) *
-                        100,
+                        firstUsdValue === 0
+                          ? !isNaN(+d.holdUsdValue)
+                            ? +d.holdUsdValue
+                            : 0
+                          : (((!isNaN(+d.holdUsdValue) ? +d.holdUsdValue : 0) -
+                              firstUsdValue) /
+                              firstUsdValue) *
+                            100,
                     },
                   ],
                   [] as ChartData[],
