@@ -75,15 +75,15 @@ import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
 
 enum Action {
+  SWAP = "swap",
   DEPOSIT = "deposit",
   WITHDRAW = "withdraw",
-  SWAP = "swap",
 }
 
 const actionNameMap: Record<Action, string> = {
+  [Action.SWAP]: "Swap",
   [Action.DEPOSIT]: "Deposit",
   [Action.WITHDRAW]: "Withdraw",
-  [Action.SWAP]: "Swap",
 };
 
 enum QueryParams {
@@ -1838,15 +1838,15 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
 }
 
 interface PoolActionsCardProps {
+  onSwap: () => void;
   onDeposit: () => void;
   onWithdraw: () => void;
-  onSwap: () => void;
 }
 
 export default function PoolActionsCard({
+  onSwap,
   onDeposit,
   onWithdraw,
-  onSwap,
 }: PoolActionsCardProps) {
   const router = useRouter();
   const queryParams = useMemo(
@@ -1871,31 +1871,27 @@ export default function PoolActionsCard({
       queryParams[QueryParams.ACTION] &&
       Object.values(Action).includes(queryParams[QueryParams.ACTION])
         ? queryParams[QueryParams.ACTION]
-        : isCpmmOffsetPoolWithNoQuoteAssets
-          ? Action.SWAP
-          : pool.quoterId === QuoterId.ORACLE
-            ? Action.WITHDRAW
-            : Action.DEPOSIT,
-    [queryParams, isCpmmOffsetPoolWithNoQuoteAssets, pool.quoterId],
+        : Action.SWAP,
+    [queryParams],
   );
   useEffect(() => {
-    if (isCpmmOffsetPoolWithNoQuoteAssets) {
-      if (queryParams[QueryParams.ACTION] !== Action.SWAP)
+    if (queryParams[QueryParams.ACTION] === Action.DEPOSIT) {
+      if (
+        pool.quoterId === QuoterId.ORACLE ||
+        isCpmmOffsetPoolWithNoQuoteAssets
+      )
         shallowReplaceQuery(router, {
           ...router.query,
           [QueryParams.ACTION]: Action.SWAP,
         });
-    } else if (pool.quoterId === QuoterId.ORACLE) {
-      if (
-        queryParams[QueryParams.ACTION] !== Action.WITHDRAW &&
-        queryParams[QueryParams.ACTION] !== Action.SWAP
-      )
+    } else if (queryParams[QueryParams.ACTION] === Action.WITHDRAW) {
+      if (isCpmmOffsetPoolWithNoQuoteAssets)
         shallowReplaceQuery(router, {
           ...router.query,
-          [QueryParams.ACTION]: Action.WITHDRAW,
+          [QueryParams.ACTION]: Action.SWAP,
         });
     }
-  }, [isCpmmOffsetPoolWithNoQuoteAssets, queryParams, router, pool.quoterId]);
+  }, [queryParams, pool.quoterId, isCpmmOffsetPoolWithNoQuoteAssets, router]);
   const onSelectedActionChange = (action: Action) => {
     shallowPushQuery(router, { ...router.query, [QueryParams.ACTION]: action });
   };
@@ -1914,12 +1910,7 @@ export default function PoolActionsCard({
                 return null;
             }
             if (action === Action.WITHDRAW) {
-              if (isCpmmOffsetPoolWithNoQuoteAssets || pool.tvlUsd.eq(0))
-                return null;
-            }
-            if (action === Action.SWAP) {
-              if (pool.quoterId !== QuoterId.V_CPMM && pool.tvlUsd.eq(0))
-                return null;
+              if (isCpmmOffsetPoolWithNoQuoteAssets) return null;
             }
 
             return (
@@ -1957,22 +1948,19 @@ export default function PoolActionsCard({
         <SlippagePopover />
       </div>
 
+      {selectedAction === Action.SWAP && (
+        <SwapTab
+          onSwap={onSwap}
+          isCpmmOffsetPoolWithNoQuoteAssets={isCpmmOffsetPoolWithNoQuoteAssets}
+        />
+      )}
       {selectedAction === Action.DEPOSIT &&
         !(
           pool.quoterId === QuoterId.ORACLE || isCpmmOffsetPoolWithNoQuoteAssets
         ) && <DepositTab onDeposit={onDeposit} />}
       {selectedAction === Action.WITHDRAW &&
-        !(isCpmmOffsetPoolWithNoQuoteAssets || pool.tvlUsd.eq(0)) && (
+        !isCpmmOffsetPoolWithNoQuoteAssets && (
           <WithdrawTab onWithdraw={onWithdraw} />
-        )}
-      {selectedAction === Action.SWAP &&
-        !(pool.quoterId !== QuoterId.V_CPMM && pool.tvlUsd.eq(0)) && (
-          <SwapTab
-            onSwap={onSwap}
-            isCpmmOffsetPoolWithNoQuoteAssets={
-              isCpmmOffsetPoolWithNoQuoteAssets
-            }
-          />
         )}
     </div>
   );

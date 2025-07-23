@@ -101,6 +101,16 @@ function PoolPage() {
   );
 
   // Actions
+  const onSwap = async () => {
+    refresh();
+
+    setTimeout(() => {
+      fetchRefreshedPool(pool);
+      fetchPoolCurrentPriceQuote([pool.id]);
+      fetchPoolTransactionHistoryMap([pool.id]);
+    }, 2000);
+  };
+
   const onDeposit = async () => {
     refresh();
 
@@ -112,16 +122,6 @@ function PoolPage() {
   };
 
   const onWithdraw = async () => {
-    refresh();
-
-    setTimeout(() => {
-      fetchRefreshedPool(pool);
-      fetchPoolCurrentPriceQuote([pool.id]);
-      fetchPoolTransactionHistoryMap([pool.id]);
-    }, 2000);
-  };
-
-  const onSwap = async () => {
     refresh();
 
     setTimeout(() => {
@@ -263,9 +263,9 @@ function PoolPage() {
                   <PoolPositionCard />
                   <PoolActionsCard
                     key={pool.id}
+                    onSwap={onSwap}
                     onDeposit={onDeposit}
                     onWithdraw={onWithdraw}
-                    onSwap={onSwap}
                   />
                 </div>
               </div>
