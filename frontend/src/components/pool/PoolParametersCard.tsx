@@ -231,7 +231,7 @@ export default function PoolParametersCard({
 
                 <p className="text-p2 text-foreground">
                   {formatPercent(appData.bankMap[coinType].utilizationPercent)}{" "}
-                  deployed on Suilend
+                  deposited on Suilend
                 </p>
               </div>
             ))}
