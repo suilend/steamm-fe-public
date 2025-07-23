@@ -217,7 +217,7 @@ export default function PoolParametersCard({
       {pool.coinTypes.some((coinType) =>
         appData.bankMap[coinType].suilendDepositAprPercent.gt(0),
       ) && (
-        <Parameter label="Bank utilization">
+        <Parameter label="Deployed liquidity">
           {pool.coinTypes
             .filter((coinType) =>
               appData.bankMap[coinType].suilendDepositAprPercent.gt(0),
