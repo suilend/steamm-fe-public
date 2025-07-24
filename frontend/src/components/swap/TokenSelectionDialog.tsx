@@ -14,6 +14,7 @@ import {
   formatToken,
   isSui,
 } from "@suilend/sui-fe";
+import { useWalletContext } from "@suilend/sui-fe-next";
 import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 
 import CopyToClipboardButton from "@/components/CopyToClipboardButton";
@@ -96,6 +97,7 @@ export default function TokenSelectionDialog({
   tokens,
   onSelectToken,
 }: TokenSelectionDialogProps) {
+  const { address } = useWalletContext();
   const { getBalance } = useUserContext();
 
   const isTouchscreen = useIsTouchscreen();
@@ -291,7 +293,11 @@ export default function TokenSelectionDialog({
             ))
         ) : (
           <p className="text-p2 text-tertiary-foreground">
-            {searchString ? `No results for "${searchString}"` : "No tokens"}
+            {searchString
+              ? `No results for "${searchString}"`
+              : address
+                ? "No tokens"
+                : "Connect your wallet to see your tokens"}
           </p>
         )}
       </div>
