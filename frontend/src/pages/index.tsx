@@ -300,7 +300,6 @@ export default function PoolsPage() {
           {/* TVL */}
           <div className="min-w-0 flex-1 rounded-md border p-5">
             <HistoricalDataChart
-              topSelectsClassName="-mx-5 px-5"
               selectedDataType={ChartDataType.TVL}
               onSelectedDataTypeChange={() => {}}
               selectedPeriod={selectedLhsChartPeriod}
@@ -313,7 +312,6 @@ export default function PoolsPage() {
           {/* Volume */}
           <div className="min-w-0 flex-1 rounded-md border p-5">
             <HistoricalDataChart
-              topSelectsClassName="-mx-5 px-5"
               selectedDataType={selectedRhsChartDataType}
               onSelectedDataTypeChange={onSelectedRhsChartDataTypeChange}
               selectedPeriod={selectedRhsChartPeriod}

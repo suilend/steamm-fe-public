@@ -13,6 +13,7 @@ import { formatPercent, formatUsd } from "@suilend/sui-fe";
 import NoDataIcon from "@/components/icons/NoDataIcon";
 import SelectPopover from "@/components/SelectPopover";
 import { Skeleton } from "@/components/ui/skeleton";
+import useBreakpoint from "@/hooks/useBreakpoint";
 import {
   ChartConfig,
   ChartData,
@@ -27,7 +28,6 @@ import { cn } from "@/lib/utils";
 
 interface HistoricalDataChartProps extends ChartConfig {
   className?: ClassValue;
-  topSelectsClassName?: ClassValue;
   chartClassName?: ClassValue;
   selectedDataType: ChartDataType;
   onSelectedDataTypeChange: (dataType: ChartDataType) => void;
@@ -38,7 +38,6 @@ interface HistoricalDataChartProps extends ChartConfig {
 
 export default function HistoricalDataChart({
   className,
-  topSelectsClassName,
   chartClassName,
   selectedDataType,
   onSelectedDataTypeChange,
@@ -51,6 +50,8 @@ export default function HistoricalDataChart({
   totalsMap,
   dataMap,
 }: HistoricalDataChartProps) {
+  const { md } = useBreakpoint();
+
   const colors = ["hsl(var(--jordy-blue))", "hsl(var(--emerald))"];
 
   const chartType: ChartType = getChartType(selectedDataType);
@@ -167,30 +168,31 @@ export default function HistoricalDataChart({
       {/* Top */}
       <div className="flex w-full flex-col gap-1">
         {/* Selects */}
-        <div className={cn("overflow-x-auto", topSelectsClassName)}>
+        <div className="flex w-full flex-row justify-between gap-4">
           <div className="flex w-max flex-row items-center gap-3">
-            {dataTypeOptions.length > 1 ? (
-              <SelectPopover
-                popoverContentClassName="p-1 rounded-lg"
-                className="h-6 min-h-0 w-max gap-0.5 border-none bg-[transparent] px-0 py-0"
-                textClassName="!text-p2 !text-secondary-foreground"
-                iconClassName="!text-secondary-foreground"
-                optionClassName="min-h-8 py-1 px-2"
-                optionTextClassName="!text-p2"
-                align="start"
-                alignOffset={-(1 + 4 + 1 + 8)}
-                maxWidth={120}
-                options={dataTypeOptions}
-                values={[selectedDataType]}
-                onChange={(id: string) =>
-                  onSelectedDataTypeChange(id as ChartDataType)
-                }
-              />
-            ) : (
-              <p className="text-p2 text-secondary-foreground">
-                {dataTypeOptions[0].name}
-              </p>
-            )}
+            {!md &&
+              (dataTypeOptions.length > 1 ? (
+                <SelectPopover
+                  popoverContentClassName="p-1 rounded-lg"
+                  className="h-6 min-h-0 w-max gap-0.5 border-none bg-[transparent] px-0 py-0"
+                  textClassName="!text-p2 !text-secondary-foreground"
+                  iconClassName="!text-secondary-foreground"
+                  optionClassName="min-h-8 py-1 px-2"
+                  optionTextClassName="!text-p2"
+                  align="start"
+                  alignOffset={-(1 + 4 + 1 + 8)}
+                  maxWidth={120}
+                  options={dataTypeOptions}
+                  values={[selectedDataType]}
+                  onChange={(id: string) =>
+                    onSelectedDataTypeChange(id as ChartDataType)
+                  }
+                />
+              ) : (
+                <p className="text-p2 text-secondary-foreground">
+                  {dataTypeOptions[0].name}
+                </p>
+              ))}
 
             {periodOptions.length > 1 ? (
               <SelectPopover
@@ -215,6 +217,35 @@ export default function HistoricalDataChart({
               </p>
             )}
           </div>
+
+          {md && (
+            <div className="flex w-max flex-row rounded-full bg-border/25">
+              {dataTypeOptions.map((option) => (
+                <button
+                  key={option.id}
+                  className={cn(
+                    "group flex h-6 flex-1 flex-row items-center justify-center rounded-full border border-[transparent] px-2.5 transition-colors",
+                    option.id === selectedDataType &&
+                      "border-button-1 bg-button-1/25",
+                  )}
+                  onClick={() =>
+                    onSelectedDataTypeChange(option.id as ChartDataType)
+                  }
+                >
+                  <p
+                    className={cn(
+                      "w-max !text-p3 transition-colors",
+                      option.id === selectedDataType
+                        ? "text-foreground"
+                        : "text-secondary-foreground group-hover:text-foreground",
+                    )}
+                  >
+                    {option.name}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex h-[58px] w-full flex-col gap-px">

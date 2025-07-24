@@ -112,7 +112,6 @@ export default function PoolChartCard() {
   return (
     <div className="relative w-full rounded-md border p-5">
       <HistoricalDataChart
-        topSelectsClassName="-mx-5 px-5"
         selectedDataType={selectedChartDataType}
         onSelectedDataTypeChange={onSelectedChartDataTypeChange}
         selectedPeriod={selectedChartPeriod}
