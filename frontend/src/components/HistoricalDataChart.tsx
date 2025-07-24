@@ -166,9 +166,38 @@ export default function HistoricalDataChart({
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
       {/* Top */}
-      <div className="flex w-full flex-col gap-1">
+      <div className="flex w-full flex-col gap-1 md:gap-2">
         {/* Selects */}
-        <div className="flex w-full flex-row justify-between gap-4">
+        <div className="flex w-full flex-row gap-4">
+          {md && (
+            <div className="flex w-max flex-row rounded-full bg-border/25">
+              {dataTypeOptions.map((option) => (
+                <button
+                  key={option.id}
+                  className={cn(
+                    "group flex h-6 flex-1 flex-row items-center justify-center rounded-full border border-[transparent] px-2.5 transition-colors",
+                    option.id === selectedDataType &&
+                      "border-button-1 bg-button-1/25",
+                  )}
+                  onClick={() =>
+                    onSelectedDataTypeChange(option.id as ChartDataType)
+                  }
+                >
+                  <p
+                    className={cn(
+                      "w-max !text-p3 transition-colors",
+                      option.id === selectedDataType
+                        ? "text-foreground"
+                        : "text-secondary-foreground group-hover:text-foreground",
+                    )}
+                  >
+                    {option.name}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="flex w-max flex-row items-center gap-3">
             {!md &&
               (dataTypeOptions.length > 1 ? (
@@ -217,35 +246,6 @@ export default function HistoricalDataChart({
               </p>
             )}
           </div>
-
-          {md && (
-            <div className="flex w-max flex-row rounded-full bg-border/25">
-              {dataTypeOptions.map((option) => (
-                <button
-                  key={option.id}
-                  className={cn(
-                    "group flex h-6 flex-1 flex-row items-center justify-center rounded-full border border-[transparent] px-2.5 transition-colors",
-                    option.id === selectedDataType &&
-                      "border-button-1 bg-button-1/25",
-                  )}
-                  onClick={() =>
-                    onSelectedDataTypeChange(option.id as ChartDataType)
-                  }
-                >
-                  <p
-                    className={cn(
-                      "w-max !text-p3 transition-colors",
-                      option.id === selectedDataType
-                        ? "text-foreground"
-                        : "text-secondary-foreground group-hover:text-foreground",
-                    )}
-                  >
-                    {option.name}
-                  </p>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         <div className="flex h-[58px] w-full flex-col gap-px">
