@@ -361,7 +361,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
             const coinTypeOracleInfoPriceMap: Record<
               string,
-              { oracleInfo: OracleInfo; price: BigNumber }
+              { oracleInfo: OracleInfo; price: BigNumber } | undefined
             > = Object.entries(COINTYPE_ORACLE_INDEX_MAP).reduce(
               (acc, [coinType, oracleIndex]) => ({
                 ...acc,
@@ -369,7 +369,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               }),
               {} as Record<
                 string,
-                { oracleInfo: OracleInfo; price: BigNumber }
+                { oracleInfo: OracleInfo; price: BigNumber } | undefined
               >,
             );
 

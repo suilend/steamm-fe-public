@@ -33,8 +33,9 @@ export default function OraclesTab() {
             coinMetadataMap={coinMetadataMap}
             coinTypes={Object.entries(appData.coinTypeOracleInfoPriceMap)
               .filter(
-                ([_, { oracleInfo }]) =>
-                  oracleInfo.oracleIndex === +oracleIndex,
+                ([_, value]) =>
+                  value !== undefined &&
+                  value.oracleInfo.oracleIndex === +oracleIndex,
               )
               .map(([coinType]) => coinType)}
             oracleInfo={oracleInfo}
