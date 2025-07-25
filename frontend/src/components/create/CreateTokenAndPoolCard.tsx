@@ -43,6 +43,7 @@ import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
 import TextInput from "@/components/TextInput";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
+import useCachedUsdPrices from "@/hooks/useCachedUsdPrices";
 import { CreateCoinResult, initializeCoinCreation } from "@/lib/createCoin";
 import {
   CreateBTokenAndBankForTokenResult,
@@ -71,7 +72,6 @@ import {
   formatPercentInputValue,
   formatTextInputValue,
 } from "@/lib/format";
-import { getAvgPoolPrice } from "@/lib/pools";
 import { cn } from "@/lib/utils";
 
 const REQUIRED_SUI_AMOUNT = new BigNumber(0.2);
@@ -164,6 +164,9 @@ export default function CreateTokenAndPoolCard({
     ],
   );
 
+  // Cached USD prices - current
+  const { cachedUsdPricesMap, fetchCachedUsdPrice } = useCachedUsdPrices([]);
+
   // State
   const [name, setName] = useState<string>("");
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -179,15 +182,11 @@ export default function CreateTokenAndPoolCard({
     () =>
       Object.entries(balancesCoinMetadataMap ?? {})
         .filter(([coinType]) => getBalance(coinType).gt(0))
-        .filter(
-          ([coinType]) =>
-            getAvgPoolPrice(appData.pools, coinType) !== undefined,
-        )
         .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
         .sort(
           (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
         ),
-    [balancesCoinMetadataMap, getBalance, appData.pools],
+    [balancesCoinMetadataMap, getBalance],
   );
 
   const [quoteAssetCoinType, setQuoteAssetCoinType] = useState<
@@ -200,6 +199,9 @@ export default function CreateTokenAndPoolCard({
       setDecimalsRaw(token.decimals.toString());
       setDecimals(token.decimals);
     }
+
+    if (cachedUsdPricesMap[token.coinType] === undefined)
+      fetchCachedUsdPrice(token.coinType);
   };
 
   const quoteToken =
@@ -372,9 +374,14 @@ export default function CreateTokenAndPoolCard({
 
   // CPMM offset
   const cpmmOffset: bigint | undefined = useMemo(() => {
-    if (quoteToken === undefined) return undefined;
+    if (
+      quoteToken === undefined ||
+      cachedUsdPricesMap[quoteToken.coinType] === undefined ||
+      cachedUsdPricesMap[quoteToken.coinType].eq(0)
+    )
+      return undefined;
 
-    const quotePrice = getAvgPoolPrice(appData.pools, quoteToken.coinType)!;
+    const quotePrice = cachedUsdPricesMap[quoteToken.coinType];
     const tokenInitialPriceQuote = tokenInitialPriceUsd.div(quotePrice);
 
     return computeOptimalOffset(
@@ -390,7 +397,7 @@ export default function CreateTokenAndPoolCard({
     );
   }, [
     quoteToken,
-    appData.pools,
+    cachedUsdPricesMap,
     tokenInitialPriceUsd,
     depositedSupply,
     decimals,
@@ -541,7 +548,7 @@ export default function CreateTokenAndPoolCard({
       };
 
     return {
-      isDisabled: false,
+      isDisabled: cpmmOffset === undefined,
       title: !isTokenOnly ? "Create token & pool" : "Create token",
     };
   })();
@@ -1054,17 +1061,16 @@ export default function CreateTokenAndPoolCard({
                 <Parameter label="Initial price" isHorizontal>
                   {symbol !== "" &&
                   tokenInitialPriceUsd !== undefined &&
-                  quoteToken !== undefined ? (
+                  quoteToken !== undefined &&
+                  cachedUsdPricesMap[quoteToken.coinType] !== undefined &&
+                  !cachedUsdPricesMap[quoteToken.coinType].eq(0) ? (
                     <div className="flex flex-row items-center gap-2">
                       <p className="text-p2 text-foreground">
                         1 {symbol}
                         {" = "}
                         {formatToken(
                           tokenInitialPriceUsd.div(
-                            getAvgPoolPrice(
-                              appData.pools,
-                              quoteToken.coinType,
-                            )!,
+                            cachedUsdPricesMap[quoteToken.coinType],
                           ),
                           {
                             dp: balancesCoinMetadataMap![quoteToken.coinType]

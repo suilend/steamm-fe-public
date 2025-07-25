@@ -104,7 +104,7 @@ export default function CreateTokenAndPoolStepsDialog({
       headerProps={{
         title: {
           children: !isTokenOnly
-            ? `Create ${symbol} & ${formatPair([symbol, quoteToken?.symbol ?? ""])} pool`
+            ? `Create ${symbol} & pool`
             : `Create ${symbol}`,
         },
         description: "Don't close this window or refresh the page",
