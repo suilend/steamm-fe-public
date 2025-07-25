@@ -22,7 +22,7 @@ import {
   parseOraclePriceIdentifier,
 } from "@/lib/oracles";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { cn } from "@/lib/utils";
+import { cn, sleep } from "@/lib/utils";
 
 export default function AddOracleCard() {
   const { explorer } = useSettingsContext();
@@ -43,8 +43,26 @@ export default function AddOracleCard() {
 
       const transaction = new Transaction();
 
-      const priceInfoObjectId =
+      let priceInfoObjectId =
         await steammClient.pythClient.getPriceFeedObjectId(priceIdentifier);
+      if (!priceInfoObjectId) {
+        const innerTransaction = new Transaction();
+
+        const priceUpdateData =
+          await steammClient.pythConnection.getPriceFeedsUpdateData([
+            priceIdentifier,
+          ]);
+        await steammClient.pythClient.createPriceFeed(
+          innerTransaction,
+          priceUpdateData,
+        );
+
+        await signExecuteAndWaitForTransaction(innerTransaction);
+
+        await sleep(2000);
+        priceInfoObjectId =
+          await steammClient.pythClient.getPriceFeedObjectId(priceIdentifier);
+      }
       if (!priceInfoObjectId)
         throw new Error(
           "Unable to find price info object id for price identifier",
