@@ -27,9 +27,9 @@
     "url": "https://github.com/suilend/steamm-fe-public/issues"
   },
   "dependencies": {
-    "@pythnetwork/pyth-sui-js": "^2.1.0",
+    "@pythnetwork/pyth-sui-js": "^2.2.0",
     "@suilend/sdk": "^1.1.73",
-    "@suilend/sui-fe": "^0.3.16",
+    "@suilend/sui-fe": "^0.3.18",
     "bignumber.js": "^9.1.2",
     "dotenv": "^16.4.7"
   },

@@ -19,4 +19,4 @@ export const parseOraclePriceIdentifier = (oracleInfo: OracleInfo) =>
     : ""; // TODO: Parse Switchboard price identifier
 
 export const getPythOracleUrl = (symbol: string) =>
-  `https://pyth.network/price-feeds/${symbol.toLowerCase().replace(/\.|\//g, "-")}?range=1W`;
+  `https://insights.pyth.network/price-feeds/${symbol.replace("/", "%2F")}`;
