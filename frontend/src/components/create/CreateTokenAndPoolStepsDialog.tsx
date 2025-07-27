@@ -26,7 +26,7 @@ interface CreateTokenAndPoolStepsDialogProps {
   isOpen: boolean;
   isTokenOnly: boolean;
   symbol: string;
-  quoteToken?: Token;
+  quoteToken: Token;
   fundKeypairResult: FundKeypairResult | undefined;
   createTokenResult: CreateCoinResult | undefined;
   mintTokenResult: MintTokenResult | undefined;
@@ -104,7 +104,7 @@ export default function CreateTokenAndPoolStepsDialog({
       headerProps={{
         title: {
           children: !isTokenOnly
-            ? `Create ${symbol} & pool`
+            ? `Create ${symbol} & ${formatPair([symbol ?? "", quoteToken.symbol])} pool`
             : `Create ${symbol}`,
         },
         description: "Don't close this window or refresh the page",

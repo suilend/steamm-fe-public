@@ -39,7 +39,6 @@ import Divider from "@/components/Divider";
 import Parameter from "@/components/Parameter";
 import PercentInput from "@/components/PercentInput";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
-import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
 import TextInput from "@/components/TextInput";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
@@ -87,7 +86,7 @@ export default function CreateTokenAndPoolCard({
   const { account, address, signExecuteAndWaitForTransaction } =
     useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
-  const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
+  const { getBalance, refresh } = useUserContext();
 
   const flags = useFlags();
   const isWhitelisted = useMemo(
@@ -165,7 +164,8 @@ export default function CreateTokenAndPoolCard({
   );
 
   // Cached USD prices - current
-  const { cachedUsdPricesMap, fetchCachedUsdPrice } = useCachedUsdPrices([]);
+  const { cachedUsdPricesMap } = useCachedUsdPrices([NORMALIZED_SUI_COINTYPE]);
+  console.log(cachedUsdPricesMap, +cachedUsdPricesMap[NORMALIZED_SUI_COINTYPE]);
 
   // State
   const [name, setName] = useState<string>("");
@@ -177,40 +177,11 @@ export default function CreateTokenAndPoolCard({
   const [iconFilename, setIconFilename] = useState<string>("");
   const [iconFileSize, setIconFileSize] = useState<string>("");
 
-  // State - quote asset
-  const quoteTokens = useMemo(
-    () =>
-      Object.entries(balancesCoinMetadataMap ?? {})
-        .filter(([coinType]) => getBalance(coinType).gt(0))
-        .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
-        .sort(
-          (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
-        ),
-    [balancesCoinMetadataMap, getBalance],
+  // State - quote asset (SUI)
+  const quoteToken = getToken(
+    NORMALIZED_SUI_COINTYPE,
+    appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE],
   );
-
-  const [quoteAssetCoinType, setQuoteAssetCoinType] = useState<
-    string | undefined
-  >(undefined);
-  const onSelectQuoteToken = (token: Token) => {
-    setQuoteAssetCoinType(token.coinType);
-
-    if (token.decimals < decimals) {
-      setDecimalsRaw(token.decimals.toString());
-      setDecimals(token.decimals);
-    }
-
-    if (cachedUsdPricesMap[token.coinType] === undefined)
-      fetchCachedUsdPrice(token.coinType);
-  };
-
-  const quoteToken =
-    quoteAssetCoinType !== undefined
-      ? getToken(
-          quoteAssetCoinType,
-          balancesCoinMetadataMap![quoteAssetCoinType],
-        )
-      : undefined;
 
   // State - optional
   const [showOptional, setShowOptional] = useState<boolean>(false);
@@ -375,7 +346,6 @@ export default function CreateTokenAndPoolCard({
   // CPMM offset
   const cpmmOffset: bigint | undefined = useMemo(() => {
     if (
-      quoteToken === undefined ||
       cachedUsdPricesMap[quoteToken.coinType] === undefined ||
       cachedUsdPricesMap[quoteToken.coinType].eq(0)
     )
@@ -396,8 +366,8 @@ export default function CreateTokenAndPoolCard({
       quoteToken.decimals,
     );
   }, [
-    quoteToken,
     cachedUsdPricesMap,
+    quoteToken,
     tokenInitialPriceUsd,
     depositedSupply,
     decimals,
@@ -431,8 +401,6 @@ export default function CreateTokenAndPoolCard({
     ) as HTMLInputElement;
     if (iconUploadInput) iconUploadInput.value = "";
 
-    setQuoteAssetCoinType(undefined);
-
     // State - optional
     setShowOptional(false);
 
@@ -452,7 +420,7 @@ export default function CreateTokenAndPoolCard({
 
     setIsMintable(false);
 
-    setBurnLpTokens(false);
+    setBurnLpTokens(true);
   };
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -510,10 +478,6 @@ export default function CreateTokenAndPoolCard({
     // Icon
     if (iconUrl === "") return { isDisabled: true, title: "Upload an icon" };
 
-    // Quote asset
-    if (!isTokenOnly && quoteAssetCoinType === undefined)
-      return { isDisabled: true, title: "Select a quote asset" };
-
     // Description
     if (description.length > 256)
       return {
@@ -548,7 +512,7 @@ export default function CreateTokenAndPoolCard({
       };
 
     return {
-      isDisabled: cpmmOffset === undefined,
+      isDisabled: !isTokenOnly ? cpmmOffset === undefined : false,
       title: !isTokenOnly ? "Create token & pool" : "Create token",
     };
   })();
@@ -556,7 +520,6 @@ export default function CreateTokenAndPoolCard({
   const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const onSubmitClick = async () => {
     if (submitButtonState.isDisabled) return;
-    if (!isTokenOnly && !quoteToken) return; // Should not happen
 
     try {
       if (!account?.publicKey || !address)
@@ -565,7 +528,7 @@ export default function CreateTokenAndPoolCard({
       setIsSubmitting(true);
 
       // 0) Prepare
-      if (!isTokenOnly && !quoteToken!.id)
+      if (!isTokenOnly && !quoteToken.id)
         throw new Error("Token coinMetadata id not found");
 
       await initializeCoinCreation();
@@ -869,30 +832,6 @@ export default function CreateTokenAndPoolCard({
             />
           </div>
 
-          {/* Quote asset */}
-          {!isTokenOnly && (
-            <div className="flex w-full flex-col gap-3">
-              <div className="flex w-full flex-col gap-1">
-                <p className="text-p2 text-secondary-foreground">Quote asset</p>
-                <p className="text-p3 text-tertiary-foreground">
-                  SUI or stablecoins (e.g. USDC, USDT) are usually used as the
-                  quote asset.
-                </p>
-              </div>
-
-              <TokenSelectionDialog
-                triggerClassName="w-max px-3 border rounded-md"
-                triggerIconSize={16}
-                triggerLabelSelectedClassName="!text-p2"
-                triggerLabelUnselectedClassName="!text-p2"
-                triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
-                token={quoteToken}
-                tokens={quoteTokens}
-                onSelectToken={(token) => onSelectQuoteToken(token)}
-              />
-            </div>
-          )}
-
           {/* Optional */}
           <button
             className="group flex w-max flex-row items-center gap-2"
@@ -1061,7 +1000,6 @@ export default function CreateTokenAndPoolCard({
                 <Parameter label="Initial price" isHorizontal>
                   {symbol !== "" &&
                   tokenInitialPriceUsd !== undefined &&
-                  quoteToken !== undefined &&
                   cachedUsdPricesMap[quoteToken.coinType] !== undefined &&
                   !cachedUsdPricesMap[quoteToken.coinType].eq(0) ? (
                     <div className="flex flex-row items-center gap-2">
@@ -1073,11 +1011,11 @@ export default function CreateTokenAndPoolCard({
                             cachedUsdPricesMap[quoteToken.coinType],
                           ),
                           {
-                            dp: balancesCoinMetadataMap![quoteToken.coinType]
+                            dp: appData.coinMetadataMap[quoteToken.coinType]
                               .decimals,
                           },
                         )}{" "}
-                        {balancesCoinMetadataMap![quoteToken.coinType].symbol}
+                        {appData.coinMetadataMap[quoteToken.coinType].symbol}
                       </p>
                       <p className="text-p2 text-secondary-foreground">
                         {formatPrice(tokenInitialPriceUsd)}

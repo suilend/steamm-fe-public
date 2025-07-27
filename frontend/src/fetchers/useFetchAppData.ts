@@ -484,7 +484,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       })(),
     ]);
 
-    // CoinMetadata
+    // CoinMetadata (must include SUI for token vCPMM pool creation page)
     let coinMetadataMap: Record<string, CoinMetadata> = {
       ...suilend.mainMarket.rewardCoinMetadataMap,
       ...suilend.lmMarket.rewardCoinMetadataMap,
