@@ -977,48 +977,50 @@ export default function CreatePoolCard() {
               <div className="flex flex-row gap-1">
                 {QUOTER_IDS.filter((_quoterId) =>
                   isWhitelisted ? true : PUBLIC_QUOTER_IDS.includes(_quoterId),
-                ).map((_quoterId) => {
-                  const hasExistingPool =
-                    hasExistingPoolForQuoterFeeTierAndAmplifier(
-                      _quoterId,
-                      feeTierPercent,
-                      amplifier,
-                    );
+                )
+                  .filter((_quoterId) => _quoterId !== QuoterId.ORACLE)
+                  .map((_quoterId) => {
+                    const hasExistingPool =
+                      hasExistingPoolForQuoterFeeTierAndAmplifier(
+                        _quoterId,
+                        feeTierPercent,
+                        amplifier,
+                      );
 
-                  return (
-                    <div key={_quoterId} className="w-max">
-                      <Tooltip
-                        title={
-                          hasExistingPool ? existingPoolTooltip : undefined
-                        }
-                      >
-                        <div className="w-max">
-                          <button
-                            className={cn(
-                              "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
-                              _quoterId === quoterId
-                                ? "cursor-default border-button-1 bg-button-1/25"
-                                : "hover:bg-border/50",
-                            )}
-                            onClick={() => onSelectQuoter(_quoterId)}
-                            disabled={hasExistingPool}
-                          >
-                            <p
+                    return (
+                      <div key={_quoterId} className="w-max">
+                        <Tooltip
+                          title={
+                            hasExistingPool ? existingPoolTooltip : undefined
+                          }
+                        >
+                          <div className="w-max">
+                            <button
                               className={cn(
-                                "!text-p2 transition-colors",
+                                "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
                                 _quoterId === quoterId
-                                  ? "text-foreground"
-                                  : "text-secondary-foreground group-hover:text-foreground",
+                                  ? "cursor-default border-button-1 bg-button-1/25"
+                                  : "hover:bg-border/50",
                               )}
+                              onClick={() => onSelectQuoter(_quoterId)}
+                              disabled={hasExistingPool}
                             >
-                              {QUOTER_ID_NAME_MAP[_quoterId]}
-                            </p>
-                          </button>
-                        </div>
-                      </Tooltip>
-                    </div>
-                  );
-                })}
+                              <p
+                                className={cn(
+                                  "!text-p2 transition-colors",
+                                  _quoterId === quoterId
+                                    ? "text-foreground"
+                                    : "text-secondary-foreground group-hover:text-foreground",
+                                )}
+                              >
+                                {QUOTER_ID_NAME_MAP[_quoterId]}
+                              </p>
+                            </button>
+                          </div>
+                        </Tooltip>
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           )}
