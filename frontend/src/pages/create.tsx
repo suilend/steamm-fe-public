@@ -78,7 +78,7 @@ export default function CreatePage() {
       <div className="flex w-full max-w-md flex-col gap-8">
         {/* Tabs */}
         <div className="flex w-full flex-col gap-2">
-          <div className="flex w-full flex-row rounded-full bg-border/25">
+          <div className="flex w-full flex-row rounded-full bg-card/75">
             {[Tab.TOKEN, Tab.POOL].map((tab) => (
               <button
                 key={tab}
@@ -102,7 +102,7 @@ export default function CreatePage() {
             ))}
           </div>
           {selectedTab === Tab.TOKEN && (
-            <div className="flex w-max flex-row rounded-full bg-border/25">
+            <div className="flex w-max flex-row rounded-full bg-card/75">
               {Object.values(TokenTab).map((tab) => (
                 <button
                   key={tab}

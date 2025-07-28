@@ -170,7 +170,7 @@ export default function HistoricalDataChart({
         {/* Selects */}
         <div className="flex w-full flex-row gap-4">
           {md && (
-            <div className="flex w-max flex-row rounded-full bg-border/25">
+            <div className="flex w-max flex-row rounded-full bg-card/75">
               {dataTypeOptions.map((option) => (
                 <button
                   key={option.id}
