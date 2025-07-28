@@ -6,11 +6,11 @@ import {
   AIRDROP_URL,
   CREATE_URL,
   LEADERBOARD_URL,
+  MINT_URL,
   POOL_URL_PREFIX,
   PORTFOLIO_URL,
   ROOT_URL,
   SWAP_URL,
-  // SWAP_URL,
 } from "@/lib/navigation";
 
 type NavItem = {
@@ -27,6 +27,7 @@ const useNavItems = (includePools: boolean = false) => {
       ? { url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX }
       : null,
     { url: CREATE_URL, title: "Create" },
+    { url: MINT_URL, title: "Mint" },
     { url: AIRDROP_URL, title: "Airdrop" },
     { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
     { url: PORTFOLIO_URL, title: "Portfolio" },
