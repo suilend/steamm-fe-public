@@ -792,7 +792,7 @@ export default function CreatePoolCard() {
           {isWhitelisted && (
             <>
               {/* Use CPMM offset */}
-              <Parameter label="Use CPMM offset" isHorizontal>
+              <Parameter label="vCPMM" isHorizontal>
                 <button
                   className={cn(
                     "group flex h-5 w-5 flex-row items-center justify-center rounded-sm border transition-colors",
