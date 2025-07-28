@@ -291,6 +291,11 @@ export default function HistoricalDataChart({
                         Excluding incentives
                       </p>
                     )}
+                    {category === "Hold" && (
+                      <p className="text-inherit -mt-1 mb-0.5 text-[10px] opacity-50">
+                        Holding 53% WAL, 37% SUI
+                      </p>
+                    )}
                   </div>
                 );
               })}
