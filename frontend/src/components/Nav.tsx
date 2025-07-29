@@ -85,7 +85,7 @@ export default function Nav() {
                             })),
                         }}
                         trigger={
-                          <div className="group flex h-8 cursor-pointer flex-row items-center gap-1">
+                          <div className="group flex h-8 cursor-pointer flex-row items-center gap-1.5">
                             <p
                               className={cn(
                                 "transition-colors",
@@ -98,13 +98,13 @@ export default function Nav() {
                             </p>
                             {isMenuOpenMap[item.title] ? (
                               <ChevronUp
-                                className={cn("h-3 w-3", "text-foreground")}
+                                className={cn("h-4 w-4", "text-foreground")}
                               />
                             ) : (
                               <ChevronDown
                                 className={cn(
-                                  "h-3 w-3",
-                                  "text-muted-foreground group-hover:text-foreground",
+                                  "h-4 w-4",
+                                  "text-secondary-foreground group-hover:text-foreground",
                                 )}
                               />
                             )}
