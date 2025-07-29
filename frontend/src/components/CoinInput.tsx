@@ -28,6 +28,7 @@ interface CoinInputProps {
   onMaxAmountClick?: () => void;
   tokens?: Token[];
   onSelectToken?: (token: Token) => void;
+  isDisabled?: boolean;
 }
 
 const CoinInput = forwardRef<HTMLInputElement, CoinInputProps>(
@@ -44,6 +45,7 @@ const CoinInput = forwardRef<HTMLInputElement, CoinInputProps>(
       onMaxAmountClick,
       tokens,
       onSelectToken,
+      isDisabled,
     },
     ref,
   ) => {
@@ -62,8 +64,8 @@ const CoinInput = forwardRef<HTMLInputElement, CoinInputProps>(
     const inputRef = useRef<HTMLInputElement>(null);
     const mergedRef = mergeRefs(ref, inputRef);
     useEffect(() => {
-      if (autoFocus) inputRef.current?.focus();
-    }, [autoFocus]);
+      if (autoFocus && !isDisabled) inputRef.current?.focus();
+    }, [autoFocus, isDisabled]);
 
     return (
       <div
@@ -94,6 +96,7 @@ const CoinInput = forwardRef<HTMLInputElement, CoinInputProps>(
               onWheel={(e) => e.currentTarget.blur()}
               step="any"
               autoComplete="off"
+              disabled={isDisabled}
             />
           )}
 
@@ -113,6 +116,7 @@ const CoinInput = forwardRef<HTMLInputElement, CoinInputProps>(
                 token={token}
                 tokens={tokens}
                 onSelectToken={onSelectToken}
+                isDisabled={isDisabled}
               />
             </div>
           ) : (

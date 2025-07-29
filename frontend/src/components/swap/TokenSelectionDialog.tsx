@@ -85,6 +85,7 @@ interface TokenSelectionDialogProps {
   token?: Token;
   tokens: Token[];
   onSelectToken: (token: Token) => void;
+  isDisabled?: boolean;
 }
 
 export default function TokenSelectionDialog({
@@ -96,6 +97,7 @@ export default function TokenSelectionDialog({
   token,
   tokens,
   onSelectToken,
+  isDisabled,
 }: TokenSelectionDialogProps) {
   const { address } = useWalletContext();
   const { getBalance } = useUserContext();
@@ -196,9 +198,10 @@ export default function TokenSelectionDialog({
       trigger={
         <button
           className={cn(
-            "group flex h-10 flex-row items-center gap-2",
+            "group flex h-10 flex-row items-center gap-2 disabled:pointer-events-none disabled:opacity-50",
             triggerClassName,
           )}
+          disabled={isDisabled}
         >
           {token && <TokenLogo token={token} size={triggerIconSize ?? 24} />}
           <p

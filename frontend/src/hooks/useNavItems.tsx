@@ -6,18 +6,21 @@ import {
   AIRDROP_URL,
   CREATE_URL,
   LEADERBOARD_URL,
+  MINT_URL,
   POOL_URL_PREFIX,
   PORTFOLIO_URL,
   ROOT_URL,
   SWAP_URL,
-  // SWAP_URL,
 } from "@/lib/navigation";
 
 type NavItem = {
-  url: string;
+  url?: string;
   startsWithUrl?: string;
   title: string;
-};
+} & (
+  | { url: string }
+  | { items: (Omit<NavItem, "items" | "url"> & { url: string })[] }
+);
 
 const useNavItems = (includePools: boolean = false) => {
   const { address } = useWalletContext();
@@ -27,7 +30,13 @@ const useNavItems = (includePools: boolean = false) => {
       ? { url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX }
       : null,
     { url: CREATE_URL, title: "Create" },
-    { url: AIRDROP_URL, title: "Airdrop" },
+    {
+      title: "Studio",
+      items: [
+        { url: AIRDROP_URL, title: "Airdrop" },
+        { url: MINT_URL, title: "Mint" },
+      ],
+    },
     { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
     { url: PORTFOLIO_URL, title: "Portfolio" },
     { url: LEADERBOARD_URL, title: "Leaderboard" },
