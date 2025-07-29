@@ -19,7 +19,7 @@ interface PoolLabelProps {
   isLarge?: boolean;
   pool: ParsedPool;
   showOmmV3UpdateFlag?: boolean;
-  hasOmmV3UpdateFlag: boolean | undefined;
+  hasOmmV3UpdateFlag?: boolean | undefined;
 }
 
 export default function PoolLabel({
