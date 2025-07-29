@@ -26,9 +26,9 @@ const useNavItems = (includePools: boolean = false) => {
   const { address } = useWalletContext();
 
   const NAV_ITEMS: NavItem[] = [
-    includePools
-      ? { url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX }
-      : null,
+    ...(includePools
+      ? [{ url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX }]
+      : []),
     { url: CREATE_URL, title: "Create" },
     {
       title: "Studio",
@@ -39,18 +39,14 @@ const useNavItems = (includePools: boolean = false) => {
     },
     { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
     { url: PORTFOLIO_URL, title: "Portfolio" },
-    { url: LEADERBOARD_URL, title: "Leaderboard" },
-  ].filter(Boolean) as NavItem[];
+    ...(address === ADMIN_ADDRESS ? [{ url: ADMIN_URL, title: "Admin" }] : []),
+    {
+      title: "More",
+      items: [{ url: LEADERBOARD_URL, title: "Leaderboard" }],
+    },
+  ];
 
-  const ADMIN_NAV_ITEM: NavItem = {
-    url: ADMIN_URL,
-    title: "Admin",
-  };
-
-  const navItems = [...NAV_ITEMS];
-  if (address === ADMIN_ADDRESS) navItems.push(ADMIN_NAV_ITEM);
-
-  return navItems;
+  return NAV_ITEMS;
 };
 
 export default useNavItems;
