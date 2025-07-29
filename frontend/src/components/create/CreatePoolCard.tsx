@@ -4,7 +4,6 @@ import { useSignPersonalMessage } from "@mysten/dapp-kit";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
-import { Check } from "lucide-react";
 
 import {
   ADMIN_ADDRESS,
@@ -340,54 +339,37 @@ export default function CreatePoolCard() {
     undefined,
   );
 
-  // CPMM offset
-  const [useCpmmOffset, setUseCpmmOffset] = useState<boolean>(false);
-  const [initialPoolTvlUsd, setInitialPoolTvlUsd] = useState<string>("");
+  // vCPMM - initial pool TVL USD
+  const [vCpmmInitialPoolTvlUsd, setVcpmmInitialPoolTvlUsd] =
+    useState<string>("");
 
-  const onUseCpmmOffsetChange = () => {
-    const newValue = !useCpmmOffset;
-    if (newValue) {
-      setValues((prev) => [prev[0], "0"] as [string, string]);
-      onSelectQuoter(QuoterId.CPMM);
-
-      setUseCpmmOffset(true);
-      setInitialPoolTvlUsd("");
-    } else {
-      setValues((prev) => [prev[0], ""] as [string, string]);
-      setQuoterId(undefined);
-
-      setUseCpmmOffset(false);
-      setInitialPoolTvlUsd("");
-    }
-  };
-
-  const onInitialPoolTvlUsdChange = useCallback((value: string) => {
+  const onVcpmmInitialPoolTvlUsdChange = useCallback((value: string) => {
     const formattedValue = formatTextInputValue(value, 2);
-    setInitialPoolTvlUsd(formattedValue);
+    setVcpmmInitialPoolTvlUsd(formattedValue);
   }, []);
 
-  const tokenInitialPriceUsd: BigNumber | undefined = useMemo(
+  const vCpmmTokenInitialPriceUsd: BigNumber | undefined = useMemo(
     () =>
-      new BigNumber(initialPoolTvlUsd || 0).eq(0) ||
+      new BigNumber(vCpmmInitialPoolTvlUsd || 0).eq(0) ||
       new BigNumber(values[0] || 0).eq(0)
         ? undefined
-        : new BigNumber(initialPoolTvlUsd).div(values[0]),
-    [initialPoolTvlUsd, values],
+        : new BigNumber(vCpmmInitialPoolTvlUsd).div(values[0]),
+    [vCpmmInitialPoolTvlUsd, values],
   );
 
-  // CPMM offset - compute
+  // vCPMM - compute offset
   const cpmmOffset: bigint | undefined = useMemo(() => {
     if (
       coinTypes.some((coinType) => coinType === "") ||
       values[0] === "" ||
-      tokenInitialPriceUsd === undefined ||
+      vCpmmTokenInitialPriceUsd === undefined ||
       cachedUsdPricesMap[coinTypes[1]] === undefined ||
       cachedUsdPricesMap[coinTypes[1]].eq(0)
     )
       return undefined;
 
     const quotePrice = cachedUsdPricesMap[coinTypes[1]];
-    const tokenInitialPriceQuote = tokenInitialPriceUsd.div(quotePrice);
+    const tokenInitialPriceQuote = vCpmmTokenInitialPriceUsd.div(quotePrice);
 
     return computeOptimalOffset(
       tokenInitialPriceQuote.toFixed(20, BigNumber.ROUND_DOWN),
@@ -403,7 +385,7 @@ export default function CreatePoolCard() {
   }, [
     coinTypes,
     values,
-    tokenInitialPriceUsd,
+    vCpmmTokenInitialPriceUsd,
     cachedUsdPricesMap,
     balancesCoinMetadataMap,
   ]);
@@ -461,8 +443,7 @@ export default function CreatePoolCard() {
     setAmplifier(undefined);
     setFeeTierPercent(undefined);
 
-    setUseCpmmOffset(false);
-    setInitialPoolTvlUsd("");
+    setVcpmmInitialPoolTvlUsd("");
   };
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -478,24 +459,28 @@ export default function CreatePoolCard() {
 
     //
 
+    if (quoterId === undefined)
+      return { isDisabled: true, title: "Select a quoter" };
     if (coinTypes.some((coinType) => coinType === ""))
       return { isDisabled: true, title: "Select tokens" };
-    if (useCpmmOffset ? values[0] === "" : values.some((value) => value === ""))
+    if (
+      quoterId === QuoterId.V_CPMM
+        ? values[0] === ""
+        : values.some((value) => value === "")
+    )
       return { isDisabled: true, title: "Enter amounts" };
     if (
-      useCpmmOffset
+      quoterId === QuoterId.V_CPMM
         ? new BigNumber(values[0]).lt(0)
-        : Object.values(values).some((value) => new BigNumber(value).lt(0))
+        : values.some((value) => new BigNumber(value).lt(0))
     )
       return { isDisabled: true, title: "Enter a +ve amounts" };
     if (
-      useCpmmOffset
+      quoterId === QuoterId.V_CPMM
         ? new BigNumber(values[0]).eq(0)
-        : Object.values(values).some((value) => new BigNumber(value).eq(0))
+        : values.some((value) => new BigNumber(value).eq(0))
     )
       return { isDisabled: true, title: "Enter a non-zero amounts" };
-    if (quoterId === undefined)
-      return { isDisabled: true, title: "Select a quoter" };
     if (quoterId === QuoterId.ORACLE_V2) {
       if (amplifier === undefined)
         return { isDisabled: true, title: "Select an amplifier" };
@@ -524,6 +509,8 @@ export default function CreatePoolCard() {
       };
 
     for (let i = 0; i < coinTypes.length; i++) {
+      if (quoterId === QuoterId.V_CPMM && i !== 0) break;
+
       const coinType = coinTypes[i];
       const coinMetadata = balancesCoinMetadataMap![coinType];
 
@@ -541,7 +528,8 @@ export default function CreatePoolCard() {
     }
 
     return {
-      isDisabled: useCpmmOffset ? cpmmOffset === undefined : false,
+      isDisabled:
+        quoterId === QuoterId.V_CPMM ? cpmmOffset === undefined : false,
       title: "Create pool and deposit",
     };
   })();
@@ -589,9 +577,9 @@ export default function CreatePoolCard() {
           [
             ...tokens.map((token, index) => ({
               ...token,
-              amount: new BigNumber(values[index]).plus(
-                isSui(token.coinType) ? REQUIRED_SUI_AMOUNT : 0,
-              ),
+              amount: new BigNumber(
+                quoterId === QuoterId.V_CPMM && index !== 0 ? 0 : values[index],
+              ).plus(isSui(token.coinType) ? REQUIRED_SUI_AMOUNT : 0),
             })),
             ...(tokens.some((token) => isSui(token.coinType))
               ? []
@@ -692,7 +680,7 @@ export default function CreatePoolCard() {
           tokens,
           values,
           quoterId,
-          useCpmmOffset ? cpmmOffset : undefined,
+          quoterId === QuoterId.V_CPMM ? cpmmOffset : undefined,
           amplifier,
           feeTierPercent,
           bTokens,
@@ -720,7 +708,7 @@ export default function CreatePoolCard() {
       }
 
       showSuccessToast(
-        `Created ${formatPair(tokens.map((token) => token.symbol))} ${QUOTER_ID_NAME_MAP[useCpmmOffset ? QuoterId.V_CPMM : quoterId]} ${formatFeeTier(new BigNumber(feeTierPercent))} pool`,
+        `Created ${formatPair(tokens.map((token) => token.symbol))} ${QUOTER_ID_NAME_MAP[quoterId]} ${formatFeeTier(new BigNumber(feeTierPercent))} pool`,
         { description: "Deposited initial liquidity" },
       );
     } catch (err) {
@@ -764,6 +752,56 @@ export default function CreatePoolCard() {
             hasFailed && "pointer-events-none",
           )}
         >
+          {/* Quoter */}
+          <div className="flex flex-row items-center justify-between">
+            <p className="text-p2 text-secondary-foreground">Quoter</p>
+
+            <div className="flex flex-row gap-1">
+              {QUOTER_IDS.filter((_quoterId) =>
+                isWhitelisted ? true : PUBLIC_QUOTER_IDS.includes(_quoterId),
+              ).map((_quoterId) => {
+                const hasExistingPool =
+                  hasExistingPoolForQuoterFeeTierAndAmplifier(
+                    _quoterId,
+                    feeTierPercent,
+                    amplifier,
+                  );
+
+                return (
+                  <div key={_quoterId} className="w-max">
+                    <Tooltip
+                      title={hasExistingPool ? existingPoolTooltip : undefined}
+                    >
+                      <div className="w-max">
+                        <button
+                          className={cn(
+                            "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
+                            _quoterId === quoterId
+                              ? "cursor-default border-button-1 bg-button-1/25"
+                              : "hover:bg-border/50",
+                          )}
+                          onClick={() => onSelectQuoter(_quoterId)}
+                          disabled={hasExistingPool}
+                        >
+                          <p
+                            className={cn(
+                              "!text-p2 transition-colors",
+                              _quoterId === quoterId
+                                ? "text-foreground"
+                                : "text-secondary-foreground group-hover:text-foreground",
+                            )}
+                          >
+                            {QUOTER_ID_NAME_MAP[_quoterId]}
+                          </p>
+                        </button>
+                      </div>
+                    </Tooltip>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Base asset */}
           <div className="flex w-full flex-col gap-3">
             <p className="text-p2 text-secondary-foreground">Base asset</p>
@@ -789,104 +827,85 @@ export default function CreatePoolCard() {
             />
           </div>
 
-          {isWhitelisted && (
+          {quoterId === QuoterId.V_CPMM ? (
             <>
-              {/* Use CPMM offset */}
-              <Parameter label="vCPMM" isHorizontal>
-                <button
-                  className={cn(
-                    "group flex h-5 w-5 flex-row items-center justify-center rounded-sm border transition-colors",
-                    useCpmmOffset
-                      ? "border-button-1 bg-button-1/25"
-                      : "hover:bg-border/50",
-                  )}
-                  onClick={onUseCpmmOffsetChange}
-                >
-                  {useCpmmOffset && (
-                    <Check className="h-4 w-4 text-foreground" />
-                  )}
-                </button>
-              </Parameter>
+              {/* Quote asset */}
+              <div className="flex w-full flex-col gap-3">
+                <div className="flex w-full flex-col gap-1">
+                  <p className="text-p2 text-secondary-foreground">
+                    Quote asset
+                  </p>
+                  <p className="text-p3 text-tertiary-foreground">
+                    SUI or stablecoins (e.g. USDC, USDT) are usually used as the
+                    quote asset.
+                  </p>
+                </div>
 
-              {useCpmmOffset && (
-                <>
-                  {/* Quote asset */}
-                  <div className="flex w-full flex-col gap-3">
-                    <div className="flex w-full flex-col gap-1">
-                      <p className="text-p2 text-secondary-foreground">
-                        Quote asset
-                      </p>
-                      <p className="text-p3 text-tertiary-foreground">
-                        SUI or stablecoins (e.g. USDC, USDT) are usually used as
-                        the quote asset.
-                      </p>
-                    </div>
-
-                    <TokenSelectionDialog
-                      triggerClassName="w-max px-3 border rounded-md"
-                      triggerIconSize={16}
-                      triggerLabelSelectedClassName="!text-p2"
-                      triggerLabelUnselectedClassName="!text-p2"
-                      triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
-                      token={
-                        coinTypes[1] !== ""
-                          ? getToken(
-                              coinTypes[1],
-                              balancesCoinMetadataMap![coinTypes[1]],
-                            )
-                          : undefined
-                      }
-                      tokens={quoteTokens}
-                      onSelectToken={(token) => onSelectToken(token, 1)}
-                    />
-                  </div>
-
-                  {/* Initial pool TVL */}
-                  <div className="flex w-full flex-col gap-2">
-                    <p className="text-p2 text-secondary-foreground">
-                      Initial pool TVL ($)
-                    </p>
-                    <TextInput
-                      placeholder={initialPoolTvlUsd.toString()}
-                      value={initialPoolTvlUsd}
-                      onChange={onInitialPoolTvlUsdChange}
-                    />
-                  </div>
-                </>
-              )}
-            </>
-          )}
-
-          {/* Quote */}
-          {!useCpmmOffset && (
-            <div className="flex w-full flex-col gap-3">
-              <div className="flex w-full flex-col gap-1">
-                <p className="text-p2 text-secondary-foreground">Quote asset</p>
-                <p className="text-p3 text-tertiary-foreground">
-                  SUI or stablecoins (e.g. USDC, USDT) are usually used as the
-                  quote asset.
-                </p>
+                <TokenSelectionDialog
+                  triggerClassName="w-max px-3 border rounded-md"
+                  triggerIconSize={16}
+                  triggerLabelSelectedClassName="!text-p2"
+                  triggerLabelUnselectedClassName="!text-p2"
+                  triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
+                  token={
+                    coinTypes[1] !== ""
+                      ? getToken(
+                          coinTypes[1],
+                          balancesCoinMetadataMap![coinTypes[1]],
+                        )
+                      : undefined
+                  }
+                  tokens={quoteTokens}
+                  onSelectToken={(token) => onSelectToken(token, 1)}
+                />
               </div>
 
-              <CoinInput
-                token={
-                  coinTypes[1] !== ""
-                    ? getToken(
-                        coinTypes[1],
-                        balancesCoinMetadataMap![coinTypes[1]],
-                      )
-                    : undefined
-                }
-                value={values[1]}
-                usdValue={cachedUsdValues[1]}
-                onChange={(value) => onValueChange(value, 1)}
-                onMaxAmountClick={
-                  coinTypes[1] !== "" ? () => onBalanceClick(1) : undefined
-                }
-                tokens={quoteTokens}
-                onSelectToken={(token) => onSelectToken(token, 1)}
-              />
-            </div>
+              {/* Initial pool TVL */}
+              <div className="flex w-full flex-col gap-2">
+                <p className="text-p2 text-secondary-foreground">
+                  Initial pool TVL ($)
+                </p>
+                <TextInput
+                  placeholder={vCpmmInitialPoolTvlUsd.toString()}
+                  value={vCpmmInitialPoolTvlUsd}
+                  onChange={onVcpmmInitialPoolTvlUsdChange}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Quote asset */}
+              <div className="flex w-full flex-col gap-3">
+                <div className="flex w-full flex-col gap-1">
+                  <p className="text-p2 text-secondary-foreground">
+                    Quote asset
+                  </p>
+                  <p className="text-p3 text-tertiary-foreground">
+                    SUI or stablecoins (e.g. USDC, USDT) are usually used as the
+                    quote asset.
+                  </p>
+                </div>
+
+                <CoinInput
+                  token={
+                    coinTypes[1] !== ""
+                      ? getToken(
+                          coinTypes[1],
+                          balancesCoinMetadataMap![coinTypes[1]],
+                        )
+                      : undefined
+                  }
+                  value={values[1]}
+                  usdValue={cachedUsdValues[1]}
+                  onChange={(value) => onValueChange(value, 1)}
+                  onMaxAmountClick={
+                    coinTypes[1] !== "" ? () => onBalanceClick(1) : undefined
+                  }
+                  tokens={quoteTokens}
+                  onSelectToken={(token) => onSelectToken(token, 1)}
+                />
+              </div>
+            </>
           )}
 
           <div className="flex w-full flex-col gap-2">
@@ -894,7 +913,7 @@ export default function CreatePoolCard() {
             <Parameter label="Initial price" isHorizontal>
               <div className="flex flex-row items-center gap-2">
                 <p className="text-p2 text-foreground">
-                  {!useCpmmOffset
+                  {quoterId !== QuoterId.V_CPMM
                     ? coinTypes.every((coinType) => coinType !== "") &&
                       values.every((value) => value !== "")
                       ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${new BigNumber(
@@ -905,11 +924,11 @@ export default function CreatePoolCard() {
                         )} ${balancesCoinMetadataMap![coinTypes[1]].symbol}`
                       : "--"
                     : coinTypes.every((coinType) => coinType !== "") &&
-                        tokenInitialPriceUsd !== undefined &&
+                        vCpmmTokenInitialPriceUsd !== undefined &&
                         cachedUsdPricesMap[coinTypes[1]] !== undefined &&
                         !cachedUsdPricesMap[coinTypes[1]].eq(0)
                       ? `1 ${balancesCoinMetadataMap![coinTypes[0]].symbol} = ${formatToken(
-                          tokenInitialPriceUsd.div(
+                          vCpmmTokenInitialPriceUsd.div(
                             cachedUsdPricesMap[coinTypes[1]],
                           ),
                           {
@@ -919,18 +938,18 @@ export default function CreatePoolCard() {
                       : "--"}
                 </p>
 
-                {!useCpmmOffset
+                {quoterId !== QuoterId.V_CPMM
                   ? null
                   : coinTypes.every((coinType) => coinType !== "") &&
-                    tokenInitialPriceUsd !== undefined && (
+                    vCpmmTokenInitialPriceUsd !== undefined && (
                       <p className="text-p2 text-secondary-foreground">
-                        {formatPrice(tokenInitialPriceUsd)}
+                        {formatPrice(vCpmmTokenInitialPriceUsd)}
                       </p>
                     )}
               </div>
             </Parameter>
 
-            {!useCpmmOffset && (
+            {quoterId !== QuoterId.V_CPMM && (
               // Market price
               <Parameter label="Market price (Noodles/Birdeye)" isHorizontal>
                 <div className="flex flex-col items-end gap-1.5">
@@ -968,62 +987,6 @@ export default function CreatePoolCard() {
               </Parameter>
             )}
           </div>
-
-          {/* Quoter */}
-          {!useCpmmOffset && (
-            <div className="flex flex-row items-center justify-between">
-              <p className="text-p2 text-secondary-foreground">Quoter</p>
-
-              <div className="flex flex-row gap-1">
-                {QUOTER_IDS.filter((_quoterId) =>
-                  isWhitelisted ? true : PUBLIC_QUOTER_IDS.includes(_quoterId),
-                )
-                  .filter((_quoterId) => _quoterId !== QuoterId.ORACLE)
-                  .map((_quoterId) => {
-                    const hasExistingPool =
-                      hasExistingPoolForQuoterFeeTierAndAmplifier(
-                        _quoterId,
-                        feeTierPercent,
-                        amplifier,
-                      );
-
-                    return (
-                      <div key={_quoterId} className="w-max">
-                        <Tooltip
-                          title={
-                            hasExistingPool ? existingPoolTooltip : undefined
-                          }
-                        >
-                          <div className="w-max">
-                            <button
-                              className={cn(
-                                "group flex h-10 flex-row items-center rounded-md border px-3 transition-colors disabled:pointer-events-none disabled:opacity-50",
-                                _quoterId === quoterId
-                                  ? "cursor-default border-button-1 bg-button-1/25"
-                                  : "hover:bg-border/50",
-                              )}
-                              onClick={() => onSelectQuoter(_quoterId)}
-                              disabled={hasExistingPool}
-                            >
-                              <p
-                                className={cn(
-                                  "!text-p2 transition-colors",
-                                  _quoterId === quoterId
-                                    ? "text-foreground"
-                                    : "text-secondary-foreground group-hover:text-foreground",
-                                )}
-                              >
-                                {QUOTER_ID_NAME_MAP[_quoterId]}
-                              </p>
-                            </button>
-                          </div>
-                        </Tooltip>
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          )}
 
           {/* Amplifier */}
           {quoterId === QuoterId.ORACLE_V2 && (
