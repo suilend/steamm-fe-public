@@ -41,30 +41,33 @@ export default function NavPopover() {
     >
       <div className="relative flex w-full flex-col gap-3">
         {navItems.map((item) => {
-          const isSelected =
-            router.asPath.split("?")[0] === item.url ||
-            (item.startsWithUrl &&
-              router.asPath.startsWith(item.startsWithUrl));
+          const flattenedItems = "items" in item ? item.items : [item];
+          return flattenedItems.map((item) => {
+            const isSelected =
+              router.asPath.split("?")[0] === item.url ||
+              (item.startsWithUrl &&
+                router.asPath.startsWith(item.startsWithUrl));
 
-          return (
-            <Link
-              key={item.title}
-              className="group relative z-[1]"
-              href={item.url}
-              onClick={() => setIsOpen(false)}
-            >
-              <p
-                className={cn(
-                  "!text-p2 transition-colors",
-                  isSelected
-                    ? "text-foreground"
-                    : "text-secondary-foreground group-hover:text-foreground",
-                )}
+            return (
+              <Link
+                key={item.title}
+                className="group relative z-[1]"
+                href={item.url}
+                onClick={() => setIsOpen(false)}
               >
-                {item.title}
-              </p>
-            </Link>
-          );
+                <p
+                  className={cn(
+                    "!text-p2 transition-colors",
+                    isSelected
+                      ? "text-foreground"
+                      : "text-secondary-foreground group-hover:text-foreground",
+                  )}
+                >
+                  {item.title}
+                </p>
+              </Link>
+            );
+          });
         })}
       </div>
     </Popover>

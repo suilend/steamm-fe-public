@@ -1,30 +1,32 @@
 import Head from "next/head";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { Transaction } from "@mysten/sui/transactions";
+import BigNumber from "bignumber.js";
 import { Loader2 } from "lucide-react";
 
-import { formatToken, getToken } from "@suilend/sui-fe";
+import { Token, formatToken, getToken } from "@suilend/sui-fe";
 import {
   showErrorToast,
-  showSuccessToast,
   useSettingsContext,
   useWalletContext,
 } from "@suilend/sui-fe-next";
 import useCoinMetadataMap from "@suilend/sui-fe-next/hooks/useCoinMetadataMap";
+import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 
+import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
-import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
-import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
+import useCachedUsdPrices from "@/hooks/useCachedUsdPrices";
 import { formatTextInputValue } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { showSuccessTxnToast } from "@/lib/toasts";
 
 export default function MintPage() {
-  const { suiClient } = useSettingsContext();
-  const { account, address, signExecuteAndWaitForTransaction } =
-    useWalletContext();
-  const { appData } = useLoadedAppContext();
-  const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
+  const { explorer, suiClient } = useSettingsContext();
+  const { address, signExecuteAndWaitForTransaction } = useWalletContext();
+  const { refresh } = useUserContext();
+
+  const isTouchscreen = useIsTouchscreen();
 
   // TreasuryCap map
   const [treasuryCapIdMapMap, setTreasuryCapIdMapMap] = useState<
@@ -105,28 +107,66 @@ export default function MintPage() {
   const [coinType, setCoinType] = useState<string>("");
   const coinInputRef = useRef<HTMLInputElement>(null);
 
-  const token =
-    coinType !== ""
-      ? getToken(coinType, (coinMetadataMap ?? {})[coinType])!
-      : undefined;
-
-  // State - amount
+  // State - value
   const [value, setValue] = useState<string>("");
 
   const onValueChange = (_value: string, _coinType?: string) => {
     const formattedValue = formatTextInputValue(
       _value,
       (_coinType ?? coinType)
-        ? (coinMetadataMap ?? {})[_coinType ?? coinType]!.decimals
+        ? coinMetadataMap![_coinType ?? coinType].decimals
         : 9,
     );
-    setValue(formattedValue);
+
+    const newValue = formattedValue;
+    setValue(newValue);
+  };
+
+  // Cached USD prices - current
+  const { cachedUsdPricesMap, fetchCachedUsdPrice } = useCachedUsdPrices([]);
+
+  const cachedUsdValue = useMemo(
+    () =>
+      coinType !== ""
+        ? cachedUsdPricesMap[coinType] === undefined
+          ? undefined
+          : new BigNumber(value || 0).times(cachedUsdPricesMap[coinType])
+        : "",
+    [coinType, cachedUsdPricesMap, value],
+  );
+
+  // Select
+  const tokens = useMemo(
+    () =>
+      Object.entries(coinMetadataMap ?? {})
+        .filter(([coinType]) => treasuryCapIdMap?.[coinType])
+        .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
+        .sort(
+          (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
+        ),
+    [coinMetadataMap, treasuryCapIdMap],
+  );
+
+  const onSelectToken = (token: Token) => {
+    const newCoinType = token.coinType;
+
+    if (cachedUsdPricesMap[newCoinType] === undefined)
+      fetchCachedUsdPrice(newCoinType);
+
+    setCoinType(newCoinType);
+    onValueChange(value, newCoinType);
+
+    setTimeout(() => {
+      document.getElementById(getCoinInputId(newCoinType))?.focus();
+    }, 500);
   };
 
   // Submit
   const reset = () => {
     // State
     setCoinType("");
+    setTimeout(() => coinInputRef.current?.focus(), 100); // After dialog is closed
+
     setValue("");
   };
 
@@ -136,11 +176,12 @@ export default function MintPage() {
     if (!address) return { isDisabled: true, title: "Connect wallet" };
     if (isSubmitting) return { isLoading: true, isDisabled: true };
 
-    // Token
-    if (token === undefined)
-      return { isDisabled: true, title: "Select a token" };
-
-    //
+    if (coinType === "") return { isDisabled: true, title: "Select a token" };
+    if (value === "") return { isDisabled: true, title: "Enter an amount" };
+    if (new BigNumber(value).lt(0))
+      return { isDisabled: true, title: "Enter a +ve amount" };
+    if (new BigNumber(value).eq(0))
+      return { isDisabled: true, title: "Enter a non-zero amount" };
 
     return {
       isDisabled: false,
@@ -150,20 +191,57 @@ export default function MintPage() {
 
   const onSubmitClick = async () => {
     if (submitButtonState.isDisabled) return;
-    if (token === undefined) return; // Should not happen
 
     try {
-      if (!account?.publicKey || !address)
-        throw new Error("Wallet not connected");
+      if (!address) throw new Error("Wallet not connected");
 
       setIsSubmitting(true);
 
-      showSuccessToast(
-        `Minted ${formatToken(new BigNumber(amount || 0), {
+      // Get supply
+      const supply = new BigNumber(
+        (await suiClient.getTotalSupply({ coinType })).value,
+      );
+      const newSupply = supply.plus(new BigNumber(value || 0));
+
+      // Mint
+      const token = getToken(coinType, coinMetadataMap![coinType]);
+
+      const transaction = new Transaction();
+
+      const mintedCoin = transaction.moveCall({
+        target: "0x2::coin::mint",
+        arguments: [
+          transaction.object(treasuryCapIdMap[coinType]),
+          transaction.pure.u64(
+            BigInt(
+              new BigNumber(value || 0)
+                .times(10 ** token.decimals)
+                .integerValue(BigNumber.ROUND_DOWN)
+                .toString(),
+            ),
+          ),
+        ],
+        typeArguments: [coinType],
+      });
+      transaction.transferObjects([mintedCoin], address);
+
+      const res = await signExecuteAndWaitForTransaction(transaction);
+      const txUrl = explorer.buildTxUrl(res.digest);
+
+      showSuccessTxnToast(
+        `Minted ${formatToken(new BigNumber(value || 0), {
           dp: token.decimals,
           trimTrailingZeros: true,
         })} ${token.symbol}`,
+        txUrl,
+        {
+          description: `New supply: ${formatToken(newSupply, {
+            dp: token.decimals,
+            trimTrailingZeros: true,
+          })}`,
+        },
       );
+      reset();
     } catch (err) {
       showErrorToast("Failed to mint", err as Error, undefined, true);
       console.error(err);
@@ -185,12 +263,7 @@ export default function MintPage() {
         </div>
 
         <div className="flex w-full flex-col gap-6">
-          <div
-            className={cn(
-              "flex w-full flex-col gap-4",
-              false && "pointer-events-none",
-            )}
-          >
+          <div className="flex w-full flex-col gap-4">
             {/* Token */}
             <div className="flex w-full flex-col gap-3">
               <div className="flex flex-row items-center gap-2">
@@ -202,41 +275,27 @@ export default function MintPage() {
               </div>
 
               <CoinInput
-                // ref={baseAssetCoinInputRef}
-                // autoFocus={!isTouchscreen}
-                token={token}
-                value={values[0]}
-                usdValue={cachedUsdValues[0]}
-                onChange={(value) => onValueChange(value, 0)}
-                onMaxAmountClick={
-                  coinTypes[0] !== "" ? () => onBalanceClick(0) : undefined
+                ref={coinInputRef}
+                autoFocus={!isTouchscreen}
+                token={
+                  coinType !== ""
+                    ? getToken(coinType, coinMetadataMap![coinType])
+                    : undefined
                 }
-                tokens={baseTokens}
-                onSelectToken={(token) => onSelectToken(token, 0)}
-              />
-
-              <TokenSelectionDialog
-                triggerClassName="w-max px-3 border rounded-md"
-                triggerIconSize={16}
-                triggerLabelSelectedClassName="!text-p2"
-                triggerLabelUnselectedClassName="!text-p2"
-                triggerChevronClassName="!h-4 !w-4 !ml-0 !mr-0"
-                token={token}
+                value={value}
+                usdValue={cachedUsdValue}
+                onChange={onValueChange}
                 tokens={tokens}
-                onSelectToken={(token) => setCoinType(token.coinType)}
+                onSelectToken={onSelectToken}
                 isDisabled={treasuryCapIdMap === undefined}
               />
             </div>
-
-            {/* Amount */}
           </div>
 
-          <div className="flex w-full flex-col gap-1">
-            <SubmitButton
-              submitButtonState={submitButtonState}
-              onClick={onSubmitClick}
-            />
-          </div>
+          <SubmitButton
+            submitButtonState={submitButtonState}
+            onClick={onSubmitClick}
+          />
         </div>
       </div>
     </>
