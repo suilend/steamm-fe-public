@@ -240,10 +240,11 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
   const fetchPoolHistoricalStats = useCallback(
     async (poolId: string, period: ChartPeriod) => {
+      const apiPeriod = chartPeriodApiMap[period];
+
       // TVL
       (async () => {
         try {
-          const apiPeriod = chartPeriodApiMap[period];
           const res = await fetch(
             `${API_URL}/steamm/historical/tvl?${new URLSearchParams({
               period: apiPeriod,
@@ -299,7 +300,6 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       // Volume
       (async () => {
         try {
-          const apiPeriod = chartPeriodApiMap[period];
           const res = await fetch(
             `${API_URL}/steamm/historical/volume?${new URLSearchParams({
               period: apiPeriod,
@@ -355,7 +355,6 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       // Fees
       (async () => {
         try {
-          const apiPeriod = chartPeriodApiMap[period];
           const res = await fetch(
             `${API_URL}/steamm/historical/fees?${new URLSearchParams({
               period: apiPeriod,
@@ -411,7 +410,6 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       // LP
       (async () => {
         try {
-          const apiPeriod = chartPeriodApiMap[period];
           const res = await fetch(
             `${API_URL}/steamm/historical/lpTokenValue?${new URLSearchParams({
               period: apiPeriod,
@@ -604,10 +602,11 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
   const fetchGlobalHistoricalStats = useCallback(
     async (period: ChartPeriod) => {
+      const apiPeriod = chartPeriodApiMap[period];
+
       // TVL
       (async () => {
         try {
-          const apiPeriod = chartPeriodApiMap[period];
           const res = await fetch(
             `${API_URL}/steamm/historical/tvl?${new URLSearchParams({
               period: apiPeriod,
