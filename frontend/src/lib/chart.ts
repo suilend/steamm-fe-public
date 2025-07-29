@@ -34,6 +34,13 @@ export const chartPeriodUnitMap: Record<ChartPeriod, string> = {
   [ChartPeriod.THREE_MONTHS]: "3 months",
 };
 
+export const chartPeriodApiMap: Record<ChartPeriod, string> = {
+  [ChartPeriod.ONE_DAY]: "1d",
+  [ChartPeriod.ONE_WEEK]: "7d",
+  [ChartPeriod.ONE_MONTH]: "30d",
+  [ChartPeriod.THREE_MONTHS]: "90d",
+};
+
 export enum ChartType {
   LINE = "line",
   BAR = "bar",
