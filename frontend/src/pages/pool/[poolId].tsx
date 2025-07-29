@@ -4,7 +4,12 @@ import { useEffect, useMemo, useRef } from "react";
 
 import { ChevronRight } from "lucide-react";
 
-import { ParsedPool, QUOTER_ID_NAME_MAP, QuoterId } from "@suilend/steamm-sdk";
+import {
+  ADMIN_ADDRESS,
+  ParsedPool,
+  QUOTER_ID_NAME_MAP,
+  QuoterId,
+} from "@suilend/steamm-sdk";
 import { formatUsd } from "@suilend/sui-fe";
 import { useWalletContext } from "@suilend/sui-fe-next";
 
@@ -35,7 +40,7 @@ function PoolPage() {
   const { poolStats } = useStatsContext();
   const { refresh } = useUserContext();
 
-  const { pool, fetchRefreshedPool } = usePoolContext();
+  const { pool, fetchRefreshedPool, hasOmmV3UpdateFlag } = usePoolContext();
 
   // Recent pool
   useEffect(() => {
@@ -160,7 +165,13 @@ function PoolPage() {
             {/* Top */}
             <div className="flex w-full flex-col max-lg:gap-6 lg:flex-row lg:items-center lg:justify-between">
               {/* Title */}
-              <PoolLabel wrap isLarge pool={pool} />
+              <PoolLabel
+                wrap
+                isLarge
+                pool={pool}
+                showOmmV3UpdateFlag={address === ADMIN_ADDRESS}
+                hasOmmV3UpdateFlag={hasOmmV3UpdateFlag}
+              />
 
               {/* Stats */}
               <div className="grid grid-cols-2 gap-6 md:flex md:flex-row md:gap-12">

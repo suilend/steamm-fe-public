@@ -10,10 +10,16 @@ import {
   useState,
 } from "react";
 
+import { DynamicFieldInfo } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
 
-import { ParsedPool, getParsedPool } from "@suilend/steamm-sdk";
-import { shallowPushQuery } from "@suilend/sui-fe-next";
+import {
+  ADMIN_ADDRESS,
+  ParsedPool,
+  QuoterId,
+  getParsedPool,
+} from "@suilend/steamm-sdk";
+import { shallowPushQuery, useWalletContext } from "@suilend/sui-fe-next";
 
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useStatsContext } from "@/contexts/StatsContext";
@@ -35,6 +41,8 @@ interface PoolContext {
 
   pool: ParsedPool;
   fetchRefreshedPool: (existingPool: ParsedPool) => Promise<void>;
+
+  hasOmmV3UpdateFlag: boolean | undefined;
 }
 
 const PoolContext = createContext<PoolContext>({
@@ -51,6 +59,8 @@ const PoolContext = createContext<PoolContext>({
   fetchRefreshedPool: async () => {
     throw Error("PoolContextProvider not initialized");
   },
+
+  hasOmmV3UpdateFlag: undefined,
 });
 
 export const usePoolContext = () => useContext(PoolContext);
@@ -73,6 +83,7 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
   );
 
   const { steammClient, appData } = useLoadedAppContext();
+  const { address } = useWalletContext();
   const { fetchPoolHistoricalStats } = useStatsContext();
 
   // Query params
@@ -211,6 +222,48 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
     if (pool === undefined) router.replace(ROOT_URL); // Redirect to Home page if poolId is not valid
   }, [pool, router]);
 
+  // OMMv3 UpdateFlag
+  const [hasOmmV3UpdateFlagMap, setHasOmmV3UpdateFlagMap] = useState<
+    Record<string, boolean>
+  >({});
+  const hasOmmV3UpdateFlag: boolean | undefined = useMemo(
+    () => hasOmmV3UpdateFlagMap[poolId],
+    [hasOmmV3UpdateFlagMap, poolId],
+  );
+
+  const fetchHasOmmV3UpdateFlag = useCallback(
+    async (poolId: string) => {
+      const dynamicFields = (
+        await steammClient.fullClient.getDynamicFieldsByPage(poolId)
+      ).data;
+
+      setHasOmmV3UpdateFlagMap((prev) => ({
+        ...prev,
+        [poolId]: dynamicFields.some(
+          (df) =>
+            (df as DynamicFieldInfo).name.type ===
+            "0x4373f25b870b314128644116e11e8025d3d6cd57a84e36af82b74774cd08c84c::omm_v2::UpdateFlag",
+        ),
+      }));
+    },
+    [steammClient.fullClient],
+  );
+
+  const hasFetchedHasOmmV3UpdateFlagMapRef = useRef<Record<string, boolean>>(
+    {},
+  );
+  useEffect(() => {
+    if (address !== ADMIN_ADDRESS) return;
+
+    if (pool === undefined) return;
+    if (![QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId)) return;
+
+    if (hasFetchedHasOmmV3UpdateFlagMapRef.current[pool.id]) return;
+    hasFetchedHasOmmV3UpdateFlagMapRef.current[pool.id] = true;
+
+    fetchHasOmmV3UpdateFlag(pool.id);
+  }, [address, pool, fetchHasOmmV3UpdateFlag]);
+
   // Context
   const contextValue: PoolContext = useMemo(
     () => ({
@@ -221,6 +274,8 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
 
       pool,
       fetchRefreshedPool,
+
+      hasOmmV3UpdateFlag,
     }),
     [
       selectedChartDataType,
@@ -229,6 +284,7 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
       onSelectedChartPeriodChange,
       pool,
       fetchRefreshedPool,
+      hasOmmV3UpdateFlag,
     ],
   );
 
