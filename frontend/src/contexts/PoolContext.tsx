@@ -43,6 +43,7 @@ interface PoolContext {
   fetchRefreshedPool: (existingPool: ParsedPool) => Promise<void>;
 
   hasOmmV3UpdateFlag: boolean | undefined;
+  isPaused: boolean | undefined;
 }
 
 const PoolContext = createContext<PoolContext>({
@@ -61,6 +62,7 @@ const PoolContext = createContext<PoolContext>({
   },
 
   hasOmmV3UpdateFlag: undefined,
+  isPaused: undefined,
 });
 
 export const usePoolContext = () => useContext(PoolContext);
@@ -222,7 +224,7 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
     if (pool === undefined) router.replace(ROOT_URL); // Redirect to Home page if poolId is not valid
   }, [pool, router]);
 
-  // OMMv3 UpdateFlag
+  // OMM flags
   const [hasOmmV3UpdateFlagMap, setHasOmmV3UpdateFlagMap] = useState<
     Record<string, boolean>
   >({});
@@ -231,7 +233,13 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
     [hasOmmV3UpdateFlagMap, poolId],
   );
 
-  const fetchHasOmmV3UpdateFlag = useCallback(
+  const [isPausedMap, setIsPausedMap] = useState<Record<string, boolean>>({});
+  const isPaused: boolean | undefined = useMemo(
+    () => isPausedMap[poolId],
+    [isPausedMap, poolId],
+  );
+
+  const fetchOmmFlags = useCallback(
     async (poolId: string) => {
       const dynamicFields = (
         await steammClient.fullClient.getDynamicFieldsByPage(poolId)
@@ -245,24 +253,28 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
             "0x4373f25b870b314128644116e11e8025d3d6cd57a84e36af82b74774cd08c84c::omm_v2::UpdateFlag",
         ),
       }));
+      setIsPausedMap((prev) => ({
+        ...prev,
+        [poolId]: dynamicFields.some(
+          (df) =>
+            (df as DynamicFieldInfo).name.type ===
+            "0x5d7c7f59ac2b12325b73fcdc850e80b52470e954c09f0c57d056b0406d236890::pool::PauseFlag",
+        ),
+      }));
     },
     [steammClient.fullClient],
   );
 
-  const hasFetchedHasOmmV3UpdateFlagMapRef = useRef<Record<string, boolean>>(
-    {},
-  );
+  const hasFetchedOmmFlagsMapRef = useRef<Record<string, boolean>>({});
   useEffect(() => {
-    if (address !== ADMIN_ADDRESS) return;
-
     if (pool === undefined) return;
     if (![QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId)) return;
 
-    if (hasFetchedHasOmmV3UpdateFlagMapRef.current[pool.id]) return;
-    hasFetchedHasOmmV3UpdateFlagMapRef.current[pool.id] = true;
+    if (hasFetchedOmmFlagsMapRef.current[pool.id]) return;
+    hasFetchedOmmFlagsMapRef.current[pool.id] = true;
 
-    fetchHasOmmV3UpdateFlag(pool.id);
-  }, [address, pool, fetchHasOmmV3UpdateFlag]);
+    fetchOmmFlags(pool.id);
+  }, [address, pool, fetchOmmFlags]);
 
   // Context
   const contextValue: PoolContext = useMemo(
@@ -276,6 +288,7 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
       fetchRefreshedPool,
 
       hasOmmV3UpdateFlag,
+      isPaused,
     }),
     [
       selectedChartDataType,
@@ -285,6 +298,7 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
       pool,
       fetchRefreshedPool,
       hasOmmV3UpdateFlag,
+      isPaused,
     ],
   );
 

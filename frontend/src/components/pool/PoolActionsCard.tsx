@@ -1361,7 +1361,7 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
     closeLedgerHashDialog,
   } = useLoadedAppContext();
   const { getBalance, refresh } = useUserContext();
-  const { pool } = usePoolContext();
+  const { pool, isPaused } = usePoolContext();
 
   // CoinTypes
   const [activeCoinIndex, setActiveCoinIndex] = useState<0 | 1>(
@@ -1591,7 +1591,7 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
     }
 
     return {
-      isDisabled: isFetchingQuote || !quote,
+      isDisabled: isFetchingQuote || !quote || isPaused,
       title: "Swap",
     };
   })();
