@@ -34,7 +34,7 @@ import {
 import { BURN_ADDRESS } from "@/lib/createToken";
 
 export const QUOTER_IDS: QuoterId[] = Object.values(QuoterId).filter(
-  (quoterId) => quoterId !== QuoterId.V_CPMM,
+  (quoterId) => quoterId !== QuoterId.ORACLE,
 );
 export const AMPLIFIERS: number[] = [1, 5, 10, 20, 30, 50, 100, 1000];
 export const FEE_TIER_PERCENTS: number[] = [
@@ -308,7 +308,7 @@ export const createPoolAndDepositInitialLiquidity = async (
   };
 
   let poolArgs;
-  if (quoterId === QuoterId.CPMM) {
+  if ([QuoterId.CPMM, QuoterId.V_CPMM].includes(quoterId)) {
     poolArgs = {
       ...createPoolBaseArgs,
       type: "ConstantProduct" as const,
@@ -348,7 +348,9 @@ export const createPoolAndDepositInitialLiquidity = async (
     .times(10 ** tokens[0].decimals)
     .integerValue(BigNumber.ROUND_DOWN)
     .toString();
-  const submitAmountB = new BigNumber(values[1])
+  const submitAmountB = new BigNumber(
+    quoterId === QuoterId.V_CPMM ? 0 : values[1],
+  )
     .times(10 ** tokens[1].decimals)
     .integerValue(BigNumber.ROUND_DOWN)
     .toString();
@@ -359,12 +361,15 @@ export const createPoolAndDepositInitialLiquidity = async (
       : transaction.object(mergeCoinA.coinObjectId),
     [BigInt(submitAmountA)],
   );
-  const [coinB] = transaction.splitCoins(
-    isSui(tokens[1].coinType)
-      ? transaction.gas
-      : transaction.object(mergeCoinB.coinObjectId),
-    [BigInt(submitAmountB)],
-  );
+  const [coinB] =
+    quoterId === QuoterId.V_CPMM
+      ? steammClient.fullClient.zeroCoin(transaction, tokens[1].coinType)
+      : transaction.splitCoins(
+          isSui(tokens[1].coinType)
+            ? transaction.gas
+            : transaction.object(mergeCoinB.coinObjectId),
+          [BigInt(submitAmountB)],
+        );
 
   const { lendingMarketId, lendingMarketType } =
     steammClient.sdkOptions.packages.suilend.config!;
@@ -379,6 +384,7 @@ export const createPoolAndDepositInitialLiquidity = async (
       bTokens[1].coinType,
       {
         [QuoterId.CPMM]: `${steammClient.sdkOptions.packages.steamm.config!.quoterIds.cpmm}::cpmm::CpQuoter`,
+        [QuoterId.V_CPMM]: `${steammClient.sdkOptions.packages.steamm.config!.quoterIds.cpmm}::cpmm::CpQuoter`,
         [QuoterId.ORACLE]: `${
           steammClient.sdkOptions.packages.steamm.config!.quoterIds.omm
         }::omm::OracleQuoter`,
@@ -418,6 +424,10 @@ export const createPoolAndDepositInitialLiquidity = async (
   steammClient.Pool.sharePool(
     {
       [QuoterId.CPMM]: {
+        ...sharePoolBaseArgs,
+        type: "ConstantProduct" as const,
+      },
+      [QuoterId.V_CPMM]: {
         ...sharePoolBaseArgs,
         type: "ConstantProduct" as const,
       },

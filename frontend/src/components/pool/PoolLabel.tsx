@@ -5,6 +5,7 @@ import { ParsedPool, QuoterId } from "@suilend/steamm-sdk";
 import PoolTypeTag from "@/components/pool/PoolTypeTag";
 import Tag from "@/components/Tag";
 import TokenLogos from "@/components/TokenLogos";
+import { Skeleton } from "@/components/ui/skeleton";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { formatFeeTier, formatPair } from "@/lib/format";
@@ -17,6 +18,8 @@ interface PoolLabelProps {
   isSmall?: boolean;
   isLarge?: boolean;
   pool: ParsedPool;
+  showOmmV3UpdateFlag?: boolean;
+  hasOmmV3UpdateFlag?: boolean | undefined;
 }
 
 export default function PoolLabel({
@@ -26,6 +29,8 @@ export default function PoolLabel({
   isSmall,
   isLarge,
   pool,
+  showOmmV3UpdateFlag,
+  hasOmmV3UpdateFlag,
 }: PoolLabelProps) {
   const { appData, verifiedCoinTypes } = useLoadedAppContext();
 
@@ -86,19 +91,30 @@ export default function PoolLabel({
           {isVerified && <VerifiedBadge isSmall={isSmall} isLarge={isLarge} />}
         </div>
 
-        <div className="flex flex-row items-center gap-px">
-          <PoolTypeTag
-            className={cn(
-              ![QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId) &&
-                "rounded-r-[0] pr-2",
+        {/* Tags */}
+        <div className="flex flex-row items-center gap-2">
+          <div className="flex flex-row items-center gap-px">
+            <PoolTypeTag
+              className={cn(
+                ![QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(
+                  pool.quoterId,
+                ) && "rounded-r-[0] pr-2",
+              )}
+              pool={pool}
+            />
+            {![QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId) && (
+              <Tag className="rounded-l-[0] pl-2">
+                {formatFeeTier(pool.feeTierPercent)}
+              </Tag>
             )}
-            pool={pool}
-          />
-          {![QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId) && (
-            <Tag className="rounded-l-[0] pl-2">
-              {formatFeeTier(pool.feeTierPercent)}
-            </Tag>
-          )}
+          </div>
+          {showOmmV3UpdateFlag &&
+            [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId) &&
+            (hasOmmV3UpdateFlag === undefined ? (
+              <Skeleton className="h-5 w-8" />
+            ) : (
+              <Tag>{hasOmmV3UpdateFlag ? "v3" : "v2"}</Tag>
+            ))}
         </div>
       </div>
     </div>
