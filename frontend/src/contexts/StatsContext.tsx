@@ -168,7 +168,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           }
         >;
       } = await res.json();
-      if ((json as any)?.statusCode === 500)
+      if (!res.ok || [400, 500].includes((json as any)?.statusCode))
         throw new Error("Failed to fetch stats");
 
       setAllStats({
@@ -257,7 +257,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             tvl: Record<string, string>;
             usdValue: string;
           }[] = await res.json();
-          if ((json as any)?.statusCode === 500)
+          if (!res.ok || [400, 500].includes((json as any)?.statusCode))
             throw new Error(
               `Failed to fetch historical TVL for pool with id ${poolId}, period ${period}`,
             );
@@ -312,7 +312,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             volume: Record<string, string>;
             usdValue: string;
           }[] = await res.json();
-          if ((json as any)?.statusCode === 500)
+          if (!res.ok || [400, 500].includes((json as any)?.statusCode))
             throw new Error(
               `Failed to fetch historical volume for pool with id ${poolId}, period ${period}`,
             );
@@ -367,7 +367,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             fees: Record<string, string>;
             usdValue: string;
           }[] = await res.json();
-          if ((json as any)?.statusCode === 500)
+          if (!res.ok || [400, 500].includes((json as any)?.statusCode))
             throw new Error(
               `Failed to fetch historical fees for pool with id ${poolId}, period ${period}`,
             );
@@ -422,7 +422,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             holdUsdValue: number;
             timestampS: number;
           }[] = await res.json();
-          if ((json as any)?.statusCode === 500)
+          if (!res.ok || [400, 500].includes((json as any)?.statusCode))
             throw new Error(
               `Failed to fetch historical LP values for pool with id ${poolId}, period ${period}`,
             );
@@ -618,7 +618,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             tvl: Record<string, string>;
             usdValue: string;
           }[] = await res.json();
-          if ((json as any)?.statusCode === 500)
+          if (!res.ok || [400, 500].includes((json as any)?.statusCode))
             throw new Error(
               `Failed to fetch global historical TVL, period ${period}`,
             );
@@ -667,7 +667,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             volume: Record<string, string>;
             usdValue: string;
           }[] = await res.json();
-          if ((json as any)?.statusCode === 500)
+          if (!res.ok || [400, 500].includes((json as any)?.statusCode))
             throw new Error(
               `Failed to fetch global historical volume, period ${period}`,
             );
@@ -716,7 +716,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
             fees: Record<string, string>;
             usdValue: string;
           }[] = await res.json();
-          if ((json as any)?.statusCode === 500)
+          if (!res.ok || [400, 500].includes((json as any)?.statusCode))
             throw new Error(
               `Failed to fetch global historical fees, period ${period}`,
             );
