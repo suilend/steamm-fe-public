@@ -42,8 +42,8 @@ interface PoolContext {
   pool: ParsedPool;
   fetchRefreshedPool: (existingPool: ParsedPool) => Promise<void>;
 
-  hasOmmV3UpdateFlag: boolean | undefined;
-  isPaused: boolean | undefined;
+  hasOmmV2UpdateFlag: boolean | undefined;
+  isOmmV2Paused: boolean | undefined;
 }
 
 const PoolContext = createContext<PoolContext>({
@@ -61,8 +61,8 @@ const PoolContext = createContext<PoolContext>({
     throw Error("PoolContextProvider not initialized");
   },
 
-  hasOmmV3UpdateFlag: undefined,
-  isPaused: undefined,
+  hasOmmV2UpdateFlag: undefined,
+  isOmmV2Paused: undefined,
 });
 
 export const usePoolContext = () => useContext(PoolContext);
@@ -224,28 +224,30 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
     if (pool === undefined) router.replace(ROOT_URL); // Redirect to Home page if poolId is not valid
   }, [pool, router]);
 
-  // OMM flags
-  const [hasOmmV3UpdateFlagMap, setHasOmmV3UpdateFlagMap] = useState<
+  // OMMv2 flags
+  const [hasOmmV2UpdateFlagMap, setHasOmmV2UpdateFlagMap] = useState<
     Record<string, boolean>
   >({});
-  const hasOmmV3UpdateFlag: boolean | undefined = useMemo(
-    () => hasOmmV3UpdateFlagMap[poolId],
-    [hasOmmV3UpdateFlagMap, poolId],
+  const hasOmmV2UpdateFlag: boolean | undefined = useMemo(
+    () => hasOmmV2UpdateFlagMap[poolId],
+    [hasOmmV2UpdateFlagMap, poolId],
   );
 
-  const [isPausedMap, setIsPausedMap] = useState<Record<string, boolean>>({});
-  const isPaused: boolean | undefined = useMemo(
-    () => isPausedMap[poolId],
-    [isPausedMap, poolId],
+  const [isOmmV2PausedMap, setIsOmmV2PausedMap] = useState<
+    Record<string, boolean>
+  >({});
+  const isOmmV2Paused: boolean | undefined = useMemo(
+    () => isOmmV2PausedMap[poolId],
+    [isOmmV2PausedMap, poolId],
   );
 
-  const fetchOmmFlags = useCallback(
+  const fetchOmmV2Flags = useCallback(
     async (poolId: string) => {
       const dynamicFields = (
         await steammClient.fullClient.getDynamicFieldsByPage(poolId)
       ).data;
 
-      setHasOmmV3UpdateFlagMap((prev) => ({
+      setHasOmmV2UpdateFlagMap((prev) => ({
         ...prev,
         [poolId]: dynamicFields.some(
           (df) =>
@@ -253,7 +255,7 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
             "0x4373f25b870b314128644116e11e8025d3d6cd57a84e36af82b74774cd08c84c::omm_v2::UpdateFlag",
         ),
       }));
-      setIsPausedMap((prev) => ({
+      setIsOmmV2PausedMap((prev) => ({
         ...prev,
         [poolId]: dynamicFields.some(
           (df) =>
@@ -265,16 +267,16 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
     [steammClient.fullClient],
   );
 
-  const hasFetchedOmmFlagsMapRef = useRef<Record<string, boolean>>({});
+  const hasFetchedOmmV2FlagsMapRef = useRef<Record<string, boolean>>({});
   useEffect(() => {
     if (pool === undefined) return;
-    if (![QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId)) return;
+    if (pool.quoterId !== QuoterId.ORACLE_V2) return;
 
-    if (hasFetchedOmmFlagsMapRef.current[pool.id]) return;
-    hasFetchedOmmFlagsMapRef.current[pool.id] = true;
+    if (hasFetchedOmmV2FlagsMapRef.current[pool.id]) return;
+    hasFetchedOmmV2FlagsMapRef.current[pool.id] = true;
 
-    fetchOmmFlags(pool.id);
-  }, [address, pool, fetchOmmFlags]);
+    fetchOmmV2Flags(pool.id);
+  }, [address, pool, fetchOmmV2Flags]);
 
   // Context
   const contextValue: PoolContext = useMemo(
@@ -287,8 +289,8 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
       pool,
       fetchRefreshedPool,
 
-      hasOmmV3UpdateFlag,
-      isPaused,
+      hasOmmV2UpdateFlag,
+      isOmmV2Paused,
     }),
     [
       selectedChartDataType,
@@ -297,8 +299,8 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
       onSelectedChartPeriodChange,
       pool,
       fetchRefreshedPool,
-      hasOmmV3UpdateFlag,
-      isPaused,
+      hasOmmV2UpdateFlag,
+      isOmmV2Paused,
     ],
   );
 

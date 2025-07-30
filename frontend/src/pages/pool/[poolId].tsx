@@ -15,6 +15,7 @@ import { useWalletContext } from "@suilend/sui-fe-next";
 
 import AprBreakdown from "@/components/AprBreakdown";
 import PoolActionsCard from "@/components/pool/PoolActionsCard";
+import PoolAdminCard from "@/components/pool/PoolAdminCard";
 import PoolChartCard from "@/components/pool/PoolChartCard";
 import PoolLabel from "@/components/pool/PoolLabel";
 import PoolParametersCard from "@/components/pool/PoolParametersCard";
@@ -40,7 +41,7 @@ function PoolPage() {
   const { poolStats } = useStatsContext();
   const { refresh } = useUserContext();
 
-  const { pool, fetchRefreshedPool, hasOmmV3UpdateFlag } = usePoolContext();
+  const { pool, fetchRefreshedPool } = usePoolContext();
 
   // Recent pool
   useEffect(() => {
@@ -165,13 +166,7 @@ function PoolPage() {
             {/* Top */}
             <div className="flex w-full flex-col max-lg:gap-6 lg:flex-row lg:items-center lg:justify-between">
               {/* Title */}
-              <PoolLabel
-                wrap
-                isLarge
-                pool={pool}
-                showOmmV3UpdateFlag={address === ADMIN_ADDRESS}
-                hasOmmV3UpdateFlag={hasOmmV3UpdateFlag}
-              />
+              <PoolLabel wrap isLarge pool={pool} />
 
               {/* Stats */}
               <div className="grid grid-cols-2 gap-6 md:flex md:flex-row md:gap-12">
@@ -278,6 +273,7 @@ function PoolPage() {
                     onDeposit={onDeposit}
                     onWithdraw={onWithdraw}
                   />
+                  {address === ADMIN_ADDRESS && <PoolAdminCard />}
                 </div>
               </div>
             </div>
