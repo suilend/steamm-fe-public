@@ -10,31 +10,11 @@ import {
 } from "react";
 
 import BigNumber from "bignumber.js";
-import { startOfHour } from "date-fns";
 
 import { API_URL } from "@suilend/sui-fe";
 
 import { useAppContext } from "@/contexts/AppContext";
-import { ChartData, ChartPeriod } from "@/lib/chart";
-
-const TEN_MINUTES_S = 10 * 60;
-const ONE_HOUR_S = TEN_MINUTES_S * 6;
-const FOUR_HOURS_S = ONE_HOUR_S * 4;
-const TWELVE_HOURS_S = ONE_HOUR_S * 12;
-
-const ONE_DAY_S = ONE_HOUR_S * 24;
-const THREE_DAYS_S = ONE_DAY_S * 3;
-const SEVEN_DAYS_S = ONE_DAY_S * 7;
-const ONE_MONTH_S = ONE_DAY_S * 30;
-const THREE_MONTHS_S = ONE_MONTH_S * 3;
-
-const startOfDayUTC = (timestampMs: number): Date => {
-  const date = new Date(timestampMs);
-  const year = date.getUTCFullYear();
-  const month = date.getUTCMonth();
-  const day = date.getUTCDate();
-  return new Date(Date.UTC(year, month, day));
-};
+import { ChartData, ChartPeriod, chartPeriodApiMap } from "@/lib/chart";
 
 export interface StatsContext {
   poolHistoricalStats: {
@@ -154,38 +134,6 @@ export const useStatsContext = () => useContext(StatsContext);
 export function StatsContextProvider({ children }: PropsWithChildren) {
   const { appData } = useAppContext();
 
-  const referenceTimestampsSRef = useRef(
-    (() => {
-      const nowMs = Date.now();
-
-      const threeDaysStartMs =
-        startOfDayUTC(nowMs).getTime() - ONE_DAY_S * 2 * 1000;
-      const dayStartMs = startOfDayUTC(nowMs).getTime();
-      const twelveHoursStartMs =
-        dayStartMs +
-        Math.floor((nowMs - dayStartMs) / (TWELVE_HOURS_S * 1000)) *
-          (TWELVE_HOURS_S * 1000);
-      const fourHoursStartMs =
-        dayStartMs +
-        Math.floor((nowMs - dayStartMs) / (FOUR_HOURS_S * 1000)) *
-          (FOUR_HOURS_S * 1000);
-      const hourStartMs = startOfHour(nowMs).getTime();
-      const tenMinutesStartMs =
-        dayStartMs +
-        Math.floor((nowMs - dayStartMs) / (TEN_MINUTES_S * 1000)) *
-          (TEN_MINUTES_S * 1000);
-
-      return {
-        threeDaysStartS: Math.floor(threeDaysStartMs / 1000),
-        dayStartS: Math.floor(dayStartMs / 1000),
-        twelveHoursStartMs: Math.floor(twelveHoursStartMs / 1000),
-        fourHoursStartMs: Math.floor(fourHoursStartMs / 1000),
-        hourStartS: Math.floor(hourStartMs / 1000),
-        tenMinutesStartS: Math.floor(tenMinutesStartMs / 1000),
-      };
-    })(),
-  );
-
   // All stats
   const [allStats, setAllStats] = useState<{
     pools: {
@@ -292,42 +240,14 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
   const fetchPoolHistoricalStats = useCallback(
     async (poolId: string, period: ChartPeriod) => {
-      const {
-        threeDaysStartS,
-        dayStartS,
-        twelveHoursStartMs,
-        fourHoursStartMs,
-        hourStartS,
-        tenMinutesStartS,
-      } = referenceTimestampsSRef.current;
+      const apiPeriod = chartPeriodApiMap[period];
 
       // TVL
       (async () => {
-        let startTimestampS, endTimestampS, intervalS;
-        if (period === ChartPeriod.ONE_DAY) {
-          startTimestampS = tenMinutesStartS - ONE_DAY_S;
-          endTimestampS = tenMinutesStartS;
-          intervalS = TEN_MINUTES_S;
-        } else if (period === ChartPeriod.ONE_WEEK) {
-          startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = hourStartS;
-          intervalS = ONE_HOUR_S;
-        } else if (period === ChartPeriod.ONE_MONTH) {
-          startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = fourHoursStartMs;
-          intervalS = FOUR_HOURS_S;
-        } else if (period === ChartPeriod.THREE_MONTHS) {
-          startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = twelveHoursStartMs;
-          intervalS = TWELVE_HOURS_S;
-        } else throw new Error(`Invalid period ${period}`);
-
         try {
           const res = await fetch(
             `${API_URL}/steamm/historical/tvl?${new URLSearchParams({
-              startTimestampS: `${startTimestampS}`,
-              endTimestampS: `${endTimestampS}`,
-              intervalS: `${intervalS}`,
+              period: apiPeriod,
               poolId,
             })}`,
           );
@@ -379,31 +299,10 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
       // Volume
       (async () => {
-        let startTimestampS, endTimestampS, intervalS;
-        if (period === ChartPeriod.ONE_DAY) {
-          startTimestampS = tenMinutesStartS - ONE_DAY_S;
-          endTimestampS = hourStartS;
-          intervalS = ONE_HOUR_S;
-        } else if (period === ChartPeriod.ONE_WEEK) {
-          startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = dayStartS;
-          intervalS = ONE_DAY_S;
-        } else if (period === ChartPeriod.ONE_MONTH) {
-          startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = dayStartS;
-          intervalS = ONE_DAY_S;
-        } else if (period === ChartPeriod.THREE_MONTHS) {
-          startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = threeDaysStartS;
-          intervalS = THREE_DAYS_S;
-        } else throw new Error(`Invalid period ${period}`);
-
         try {
           const res = await fetch(
             `${API_URL}/steamm/historical/volume?${new URLSearchParams({
-              startTimestampS: `${startTimestampS}`,
-              endTimestampS: `${endTimestampS}`,
-              intervalS: `${intervalS}`,
+              period: apiPeriod,
               poolId,
             })}`,
           );
@@ -455,31 +354,10 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
       // Fees
       (async () => {
-        let startTimestampS, endTimestampS, intervalS;
-        if (period === ChartPeriod.ONE_DAY) {
-          startTimestampS = tenMinutesStartS - ONE_DAY_S;
-          endTimestampS = hourStartS;
-          intervalS = ONE_HOUR_S;
-        } else if (period === ChartPeriod.ONE_WEEK) {
-          startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = dayStartS;
-          intervalS = ONE_DAY_S;
-        } else if (period === ChartPeriod.ONE_MONTH) {
-          startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = dayStartS;
-          intervalS = ONE_DAY_S;
-        } else if (period === ChartPeriod.THREE_MONTHS) {
-          startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = threeDaysStartS;
-          intervalS = THREE_DAYS_S;
-        } else throw new Error(`Invalid period ${period}`);
-
         try {
           const res = await fetch(
             `${API_URL}/steamm/historical/fees?${new URLSearchParams({
-              startTimestampS: `${startTimestampS}`,
-              endTimestampS: `${endTimestampS}`,
-              intervalS: `${intervalS}`,
+              period: apiPeriod,
               poolId,
             })}`,
           );
@@ -531,31 +409,10 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
       // LP
       (async () => {
-        let startTimestampS, endTimestampS, intervalS;
-        if (period === ChartPeriod.ONE_DAY) {
-          startTimestampS = tenMinutesStartS - ONE_DAY_S;
-          endTimestampS = tenMinutesStartS;
-          intervalS = TEN_MINUTES_S;
-        } else if (period === ChartPeriod.ONE_WEEK) {
-          startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = hourStartS;
-          intervalS = ONE_HOUR_S;
-        } else if (period === ChartPeriod.ONE_MONTH) {
-          startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = fourHoursStartMs;
-          intervalS = FOUR_HOURS_S;
-        } else if (period === ChartPeriod.THREE_MONTHS) {
-          startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = twelveHoursStartMs;
-          intervalS = TWELVE_HOURS_S;
-        } else throw new Error(`Invalid period ${period}`);
-
         try {
           const res = await fetch(
             `${API_URL}/steamm/historical/lpTokenValue?${new URLSearchParams({
-              startTimestampS: `${startTimestampS}`,
-              endTimestampS: `${endTimestampS}`,
-              intervalS: `${intervalS}`,
+              period: apiPeriod,
               poolId,
               useHistoricalPrice: "true",
             })}`,
@@ -573,28 +430,13 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
           const firstDataPoint = json.find((d) => d.usdValue !== 0)!; // json[0].usdValue should not be zero (for vCPMM pools, json[1].usdValue should not be zero)
           const firstUsdValue = firstDataPoint.usdValue;
 
-          const n =
-            Math.floor((endTimestampS - startTimestampS) / intervalS) + 1;
-          const m = json.length;
-
-          // Pad the start if `m < n` and the first timestamp in `json` is not `startTimestampS`
-          let paddedJson = json;
-          if (m < n && json[0].timestampS !== startTimestampS) {
-            const paddingData = Array.from({ length: n - m }, (_, i) => ({
-              usdValue: firstUsdValue,
-              holdUsdValue: firstUsdValue,
-              timestampS: startTimestampS + i * intervalS,
-            }));
-            paddedJson = [...paddingData, ...json];
-          }
-
           setPoolHistoricalStats((prev) => ({
             ...prev,
             lpUsd: {
               ...prev.lpUsd,
               [period]: {
                 ...prev.lpUsd[period],
-                [poolId]: paddedJson.reduce(
+                [poolId]: json.reduce(
                   (acc, d) => [
                     ...acc,
                     {
@@ -760,42 +602,14 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
   const fetchGlobalHistoricalStats = useCallback(
     async (period: ChartPeriod) => {
-      const {
-        threeDaysStartS,
-        dayStartS,
-        twelveHoursStartMs,
-        fourHoursStartMs,
-        hourStartS,
-        tenMinutesStartS,
-      } = referenceTimestampsSRef.current;
+      const apiPeriod = chartPeriodApiMap[period];
 
       // TVL
       (async () => {
-        let startTimestampS, endTimestampS, intervalS;
-        if (period === ChartPeriod.ONE_DAY) {
-          startTimestampS = tenMinutesStartS - ONE_DAY_S;
-          endTimestampS = tenMinutesStartS;
-          intervalS = TEN_MINUTES_S;
-        } else if (period === ChartPeriod.ONE_WEEK) {
-          startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = hourStartS;
-          intervalS = ONE_HOUR_S;
-        } else if (period === ChartPeriod.ONE_MONTH) {
-          startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = fourHoursStartMs;
-          intervalS = FOUR_HOURS_S;
-        } else if (period === ChartPeriod.THREE_MONTHS) {
-          startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = twelveHoursStartMs;
-          intervalS = TWELVE_HOURS_S;
-        } else throw new Error(`Invalid period ${period}`);
-
         try {
           const res = await fetch(
             `${API_URL}/steamm/historical/tvl?${new URLSearchParams({
-              startTimestampS: `${startTimestampS}`,
-              endTimestampS: `${endTimestampS}`,
-              intervalS: `${intervalS}`,
+              period: apiPeriod,
             })}`,
           );
           const json: {
@@ -840,31 +654,11 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
       // Volume
       (async () => {
-        let startTimestampS, endTimestampS, intervalS;
-        if (period === ChartPeriod.ONE_DAY) {
-          startTimestampS = tenMinutesStartS - ONE_DAY_S;
-          endTimestampS = hourStartS;
-          intervalS = ONE_HOUR_S;
-        } else if (period === ChartPeriod.ONE_WEEK) {
-          startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = dayStartS;
-          intervalS = ONE_DAY_S;
-        } else if (period === ChartPeriod.ONE_MONTH) {
-          startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = dayStartS;
-          intervalS = ONE_DAY_S;
-        } else if (period === ChartPeriod.THREE_MONTHS) {
-          startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = threeDaysStartS;
-          intervalS = THREE_DAYS_S;
-        } else throw new Error(`Invalid period ${period}`);
-
         try {
+          const apiPeriod = chartPeriodApiMap[period];
           const res = await fetch(
             `${API_URL}/steamm/historical/volume?${new URLSearchParams({
-              startTimestampS: `${startTimestampS}`,
-              endTimestampS: `${endTimestampS}`,
-              intervalS: `${intervalS}`,
+              period: apiPeriod,
             })}`,
           );
           const json: {
@@ -909,31 +703,11 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
       // Fees
       (async () => {
-        let startTimestampS, endTimestampS, intervalS;
-        if (period === ChartPeriod.ONE_DAY) {
-          startTimestampS = tenMinutesStartS - ONE_DAY_S;
-          endTimestampS = hourStartS;
-          intervalS = ONE_HOUR_S;
-        } else if (period === ChartPeriod.ONE_WEEK) {
-          startTimestampS = dayStartS - SEVEN_DAYS_S;
-          endTimestampS = dayStartS;
-          intervalS = ONE_DAY_S;
-        } else if (period === ChartPeriod.ONE_MONTH) {
-          startTimestampS = dayStartS - ONE_MONTH_S;
-          endTimestampS = dayStartS;
-          intervalS = ONE_DAY_S;
-        } else if (period === ChartPeriod.THREE_MONTHS) {
-          startTimestampS = dayStartS - THREE_MONTHS_S;
-          endTimestampS = threeDaysStartS;
-          intervalS = THREE_DAYS_S;
-        } else throw new Error(`Invalid period ${period}`);
-
         try {
+          const apiPeriod = chartPeriodApiMap[period];
           const res = await fetch(
             `${API_URL}/steamm/historical/fees?${new URLSearchParams({
-              startTimestampS: `${startTimestampS}`,
-              endTimestampS: `${endTimestampS}`,
-              intervalS: `${intervalS}`,
+              period: apiPeriod,
             })}`,
           );
           const json: {
