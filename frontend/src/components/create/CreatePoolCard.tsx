@@ -207,6 +207,7 @@ export default function CreatePoolCard() {
           name: appData.pythPriceIdentifierSymbolMap[
             parseOraclePriceIdentifier(oracleInfo)
           ],
+          description: `0x${parseOraclePriceIdentifier(oracleInfo)}`,
           endDecorator: (
             <TokenLogos
               coinTypes={getCoinTypesForOracleIndex(oracleIndex)}
@@ -909,7 +910,9 @@ export default function CreatePoolCard() {
                   </p>
 
                   <SelectPopover
-                    className="w-max bg-[transparent]"
+                    className="w-max max-w-[280px] bg-[transparent]"
+                    descriptionClassName="break-all"
+                    optionDescriptionClassName="break-all"
                     options={baseOracleIndexOptions}
                     placeholder="Select oracle"
                     values={oracleIndexes[0] === "" ? [] : [oracleIndexes[0]]}
@@ -1007,7 +1010,9 @@ export default function CreatePoolCard() {
                       </p>
 
                       <SelectPopover
-                        className="w-max bg-[transparent]"
+                        className="w-max max-w-[280px] bg-[transparent]"
+                        descriptionClassName="break-all"
+                        optionDescriptionClassName="break-all"
                         options={quoteOracleIndexOptions}
                         placeholder="Select oracle"
                         values={

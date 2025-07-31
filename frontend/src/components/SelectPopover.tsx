@@ -13,9 +13,11 @@ interface SelectPopoverProps {
   popoverContentClassName?: ClassValue;
   className?: ClassValue;
   textClassName?: ClassValue;
+  descriptionClassName?: ClassValue;
   iconClassName?: ClassValue;
   optionClassName?: ClassValue;
   optionTextClassName?: ClassValue;
+  optionDescriptionClassName?: ClassValue;
   align?: "start" | "end";
   alignOffset?: number;
   maxWidth?: number;
@@ -32,9 +34,11 @@ export default function SelectPopover({
   popoverContentClassName,
   className,
   textClassName,
+  descriptionClassName,
   iconClassName,
   optionClassName,
   optionTextClassName,
+  optionDescriptionClassName,
   align,
   alignOffset,
   maxWidth,
@@ -121,7 +125,12 @@ export default function SelectPopover({
             {values.length === 1 &&
               allOptions.filter((option) => values.includes(option.id))[0]
                 .description !== undefined && (
-                <p className="text-left text-p3 text-tertiary-foreground">
+                <p
+                  className={cn(
+                    "text-left !text-p3 text-tertiary-foreground",
+                    descriptionClassName,
+                  )}
+                >
                   {
                     allOptions.filter((option) => values.includes(option.id))[0]
                       .description
@@ -213,6 +222,7 @@ export default function SelectPopover({
                         values.includes(option.id)
                           ? "text-foreground/75"
                           : "text-tertiary-foreground group-hover:text-foreground/75",
+                        optionDescriptionClassName,
                       )}
                     >
                       {option.description}
