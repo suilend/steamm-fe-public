@@ -6,17 +6,14 @@ import { shallowPushQuery } from "@suilend/sui-fe-next";
 
 import BanksTab from "@/components/admin/banks/BanksTab";
 import OraclesTab from "@/components/admin/oracles/OraclesTab";
-import PoolsTab from "@/components/admin/pools/PoolsTab";
 import { cn } from "@/lib/utils";
 
 enum Tab {
-  POOLS = "pools",
   BANKS = "banks",
   ORACLES = "oracles",
 }
 
 const tabNameMap: Record<Tab, string> = {
-  [Tab.POOLS]: "Pools",
   [Tab.BANKS]: "Banks",
   [Tab.ORACLES]: "Oracles",
 };
@@ -40,7 +37,7 @@ export default function AdminPage() {
       queryParams[QueryParams.TAB] &&
       Object.values(Tab).includes(queryParams[QueryParams.TAB])
         ? queryParams[QueryParams.TAB]
-        : Tab.POOLS,
+        : Tab.BANKS,
     [queryParams],
   );
   const onSelectedTabChange = (tab: Tab) => {
@@ -89,7 +86,6 @@ export default function AdminPage() {
           })}
         </div>
 
-        {selectedTab === Tab.POOLS && <PoolsTab />}
         {selectedTab === Tab.BANKS && <BanksTab />}
         {selectedTab === Tab.ORACLES && <OraclesTab />}
       </div>
