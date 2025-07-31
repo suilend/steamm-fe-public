@@ -32,7 +32,6 @@ import {
 import { showErrorToast, useSettingsContext } from "@suilend/sui-fe-next";
 
 import { AppData } from "@/contexts/AppContext";
-import { ASSETS_URL } from "@/lib/constants";
 import { formatPair } from "@/lib/format";
 import { normalizeRewards } from "@/lib/liquidityMining";
 import { OracleType } from "@/lib/oracles";
@@ -53,13 +52,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       lstAprPercentMap,
       steammCreateTokenCoinTypes,
       pythPriceIdentifierSymbolMap,
-      {
-        oracleIndexOracleInfoPriceMap,
-        COINTYPE_ORACLE_INDEX_MAP,
-        coinTypeOracleInfoPriceMap,
-        bankObjs,
-        poolObjs,
-      },
+      oracleIndexOracleInfoPriceMap,
+      { bankObjs, poolObjs },
     ] = await Promise.all([
       // Suilend
       (async () => {
@@ -203,7 +197,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         }
       })(),
 
-      // Pyth price identifier -> symbol map
+      // Pyth price identifier -> symbol map (won't throw on error)
       (async () => {
         try {
           const res = await fetch(
@@ -224,205 +218,134 @@ export default function useFetchAppData(steammClient: SteammSDK) {
         }
       })(),
 
-      // Oracles, Banks, and Pools
+      // Oracles
       (async () => {
-        // Oracles and Banks
-        const [
-          {
-            oracleIndexOracleInfoPriceMap,
-            COINTYPE_ORACLE_INDEX_MAP,
-            coinTypeOracleInfoPriceMap,
-          },
-          bankObjs,
-        ] = await Promise.all([
-          // Oracles
-          (async () => {
-            const [oracleIndexOracleInfoPriceMap, COINTYPE_ORACLE_INDEX_MAP] =
-              await Promise.all([
-                // OracleInfos
-                (async () => {
-                  const oraclesRes = await fetch(
-                    `${API_URL}/steamm/oracles/all`,
-                  );
-                  const oraclesJson: OracleObj[] = await oraclesRes.json();
-                  if ((oraclesJson as any)?.statusCode === 500)
-                    throw new Error("Failed to fetch oracles");
+        const oraclesRes = await fetch(`${API_URL}/steamm/oracles/all`);
+        const oraclesJson: OracleObj[] = await oraclesRes.json();
+        if ((oraclesJson as any)?.statusCode === 500)
+          throw new Error("Failed to fetch oracles");
 
-                  const oracleObjs: OracleObj[] = oraclesJson;
+        const oracleObjs: OracleObj[] = oraclesJson;
 
-                  const pythOracleInfos = oracleObjs.filter(
-                    (oracleInfo) => oracleInfo.oracleType === OracleType.PYTH,
-                  );
-                  const switchboardOracleInfos = oracleObjs.filter(
-                    (oracleInfo) =>
-                      oracleInfo.oracleType === OracleType.SWITCHBOARD,
-                  );
+        const pythOracleInfos = oracleObjs.filter(
+          (oracleInfo) => oracleInfo.oracleType === OracleType.PYTH,
+        );
+        const switchboardOracleInfos = oracleObjs.filter(
+          (oracleInfo) => oracleInfo.oracleType === OracleType.SWITCHBOARD,
+        );
 
-                  const oracleIndexToPythPriceIdentifierMap: Record<
-                    number,
-                    string
-                  > = Object.fromEntries(
-                    pythOracleInfos.map((oracleInfo) => [
-                      oracleInfo.oracleIndex,
-                      typeof oracleInfo.oracleIdentifier === "string"
-                        ? oracleInfo.oracleIdentifier
-                        : toHexString(oracleInfo.oracleIdentifier),
-                    ]) as [number, string][],
-                  );
-                  const oracleIndexToSwitchboardPriceIdentifierMap: Record<
-                    number,
-                    string
-                  > = Object.fromEntries(
-                    switchboardOracleInfos.map(
-                      (oracleInfo) => [oracleInfo.oracleIndex, ""], // TODO: Parse Switchboard price identifier
-                    ) as [number, string][],
-                  );
+        const oracleIndexToPythPriceIdentifierMap: Record<number, string> =
+          Object.fromEntries(
+            pythOracleInfos.map((oracleInfo) => [
+              oracleInfo.oracleIndex,
+              typeof oracleInfo.oracleIdentifier === "string"
+                ? oracleInfo.oracleIdentifier
+                : toHexString(oracleInfo.oracleIdentifier),
+            ]) as [number, string][],
+          );
+        const oracleIndexToSwitchboardPriceIdentifierMap: Record<
+          number,
+          string
+        > = Object.fromEntries(
+          switchboardOracleInfos.map(
+            (oracleInfo) => [oracleInfo.oracleIndex, ""], // TODO: Parse Switchboard price identifier
+          ) as [number, string][],
+        );
 
-                  const pythConnection = new SuiPriceServiceConnection(
-                    "https://hermes.pyth.network",
-                    { timeout: 30 * 1000 },
-                  );
-                  // TODO: Switchboard price connection
+        const pythConnection = new SuiPriceServiceConnection(
+          "https://hermes.pyth.network",
+          { timeout: 30 * 1000 },
+        );
+        // TODO: Switchboard price connection
 
-                  const pythPriceFeeds =
-                    (await pythConnection.getLatestPriceFeeds(
-                      Object.values(oracleIndexToPythPriceIdentifierMap),
-                    )) ?? [];
-                  const switchboardPriceFeeds: any[] = [];
+        const pythPriceFeeds =
+          (await pythConnection.getLatestPriceFeeds(
+            Object.values(oracleIndexToPythPriceIdentifierMap),
+          )) ?? [];
+        const switchboardPriceFeeds: any[] = [];
 
-                  const oracleIndexToPythPriceFeedMap: Record<
-                    number,
-                    PriceFeed
-                  > = Object.keys(oracleIndexToPythPriceIdentifierMap).reduce(
-                    (acc, oracleIndexStr, index) => {
-                      const pythPriceFeed = pythPriceFeeds[index];
-                      if (!pythPriceFeed) return acc;
+        const oracleIndexToPythPriceFeedMap: Record<number, PriceFeed> =
+          Object.keys(oracleIndexToPythPriceIdentifierMap).reduce(
+            (acc, oracleIndexStr, index) => {
+              const pythPriceFeed = pythPriceFeeds[index];
+              if (!pythPriceFeed) return acc;
 
-                      return { ...acc, [+oracleIndexStr]: pythPriceFeed };
-                    },
-                    {} as Record<number, PriceFeed>,
-                  );
-                  const oracleIndexToSwitchboardPriceFeedMap: Record<
-                    number,
-                    any
-                  > = {};
+              return { ...acc, [+oracleIndexStr]: pythPriceFeed };
+            },
+            {} as Record<number, PriceFeed>,
+          );
+        const oracleIndexToSwitchboardPriceFeedMap: Record<number, any> = {};
 
-                  const oracleIndexOracleInfoPriceEntries: [
-                    number,
-                    { oracleInfo: OracleInfo; price: BigNumber },
-                  ][] = oracleObjs.map((oracleInfo) => {
-                    if (oracleInfo.oracleType === OracleType.PYTH) {
-                      const pythPriceFeed =
-                        oracleIndexToPythPriceFeedMap[oracleInfo.oracleIndex];
+        const oracleIndexOracleInfoPriceEntries: [
+          number,
+          { oracleInfo: OracleInfo; price: BigNumber },
+        ][] = oracleObjs.map((oracleInfo) => {
+          if (oracleInfo.oracleType === OracleType.PYTH) {
+            const pythPriceFeed =
+              oracleIndexToPythPriceFeedMap[oracleInfo.oracleIndex];
 
-                      return [
-                        +oracleInfo.oracleIndex,
-                        {
-                          oracleInfo,
-                          price: new BigNumber(
-                            pythPriceFeed
-                              .getPriceUnchecked()
-                              .getPriceAsNumberUnchecked(),
-                          ),
-                        },
-                      ];
-                    } else if (
-                      oracleInfo.oracleType === OracleType.SWITCHBOARD
-                    ) {
-                      return [
-                        +oracleInfo.oracleIndex,
-                        {
-                          oracleInfo,
-                          price: new BigNumber(0.000001), // TODO: Fetch Switchboard price
-                        },
-                      ];
-                    } else {
-                      throw new Error(
-                        `Unknown oracle type: ${oracleInfo.oracleType}`,
-                      );
-                    }
-                  });
-
-                  return Object.fromEntries(oracleIndexOracleInfoPriceEntries);
-                })(),
-
-                // COINTYPE_ORACLE_INDEX_MAP
-                (async () => {
-                  const COINTYPE_ORACLE_INDEX_MAP: Record<string, number> =
-                    await (
-                      await fetch(
-                        `${ASSETS_URL}/cointype-oracle-index-map.json?timestamp=${Date.now()}`,
-                      )
-                    ).json();
-
-                  return COINTYPE_ORACLE_INDEX_MAP;
-                })(),
-              ]);
-
-            const coinTypeOracleInfoPriceMap: Record<
-              string,
-              { oracleInfo: OracleInfo; price: BigNumber } | undefined
-            > = Object.entries(COINTYPE_ORACLE_INDEX_MAP).reduce(
-              (acc, [coinType, oracleIndex]) => ({
-                ...acc,
-                [coinType]: oracleIndexOracleInfoPriceMap[oracleIndex],
-              }),
-              {} as Record<
-                string,
-                { oracleInfo: OracleInfo; price: BigNumber } | undefined
-              >,
-            );
-
-            return {
-              oracleIndexOracleInfoPriceMap,
-              COINTYPE_ORACLE_INDEX_MAP,
-              coinTypeOracleInfoPriceMap,
-            };
-          })(),
-
-          // Banks
-          (async () => {
-            const bankObjs: BankObj[] = [];
-
-            if (process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true") {
-              const bankInfos = Object.values(
-                await steammClient.fetchBankData(),
-              );
-
-              for (const bankInfo of bankInfos) {
-                if (TEST_BANK_COIN_TYPES.includes(bankInfo.coinType)) continue; // Filter out test banks
-
-                const bank = await steammClient.fullClient.fetchBank(
-                  bankInfo.bankId,
-                );
-                const totalFunds =
-                  await steammClient.Bank.getTotalFunds(bankInfo);
-
-                bankObjs.push({
-                  bankInfo,
-                  bank,
-                  totalFunds: +totalFunds.toString(),
-                });
-              }
-            } else {
-              const banksRes = await fetch(`${API_URL}/steamm/banks/all`);
-              const banksJson: (Omit<BankObj, "totalFundsRaw"> & {
-                totalFunds: number;
-              })[] = await banksRes.json();
-              if ((banksJson as any)?.statusCode === 500)
-                throw new Error("Failed to fetch banks");
-
-              bankObjs.push(
-                ...banksJson.filter(
-                  (bankObj) =>
-                    !TEST_BANK_COIN_TYPES.includes(bankObj.bankInfo.coinType), // Filter out test banks
+            return [
+              +oracleInfo.oracleIndex,
+              {
+                oracleInfo,
+                price: new BigNumber(
+                  pythPriceFeed.getPriceUnchecked().getPriceAsNumberUnchecked(),
                 ),
-              );
-            }
+              },
+            ];
+          } else if (oracleInfo.oracleType === OracleType.SWITCHBOARD) {
+            return [
+              +oracleInfo.oracleIndex,
+              {
+                oracleInfo,
+                price: new BigNumber(0.000001), // TODO: Fetch Switchboard price
+              },
+            ];
+          } else {
+            throw new Error(`Unknown oracle type: ${oracleInfo.oracleType}`);
+          }
+        });
 
-            return bankObjs;
-          })(),
-        ]);
+        return Object.fromEntries(oracleIndexOracleInfoPriceEntries);
+      })(),
+
+      // Banks and Pools
+      (async () => {
+        // Banks
+        const bankObjs: BankObj[] = [];
+
+        if (process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true") {
+          const bankInfos = Object.values(await steammClient.fetchBankData());
+
+          for (const bankInfo of bankInfos) {
+            if (TEST_BANK_COIN_TYPES.includes(bankInfo.coinType)) continue; // Filter out test banks
+
+            const bank = await steammClient.fullClient.fetchBank(
+              bankInfo.bankId,
+            );
+            const totalFunds = await steammClient.Bank.getTotalFunds(bankInfo);
+
+            bankObjs.push({
+              bankInfo,
+              bank,
+              totalFunds: +totalFunds.toString(),
+            });
+          }
+        } else {
+          const banksRes = await fetch(`${API_URL}/steamm/banks/all`);
+          const banksJson: (Omit<BankObj, "totalFundsRaw"> & {
+            totalFunds: number;
+          })[] = await banksRes.json();
+          if ((banksJson as any)?.statusCode === 500)
+            throw new Error("Failed to fetch banks");
+
+          bankObjs.push(
+            ...banksJson.filter(
+              (bankObj) =>
+                !TEST_BANK_COIN_TYPES.includes(bankObj.bankInfo.coinType), // Filter out test banks
+            ),
+          );
+        }
 
         // Pools
         const poolObjs: PoolObj[] = [];
@@ -475,13 +398,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           );
         }
 
-        return {
-          oracleIndexOracleInfoPriceMap,
-          COINTYPE_ORACLE_INDEX_MAP,
-          coinTypeOracleInfoPriceMap,
-          bankObjs,
-          poolObjs,
-        };
+        return { bankObjs, poolObjs };
       })(),
     ]);
 
@@ -591,8 +508,6 @@ export default function useFetchAppData(steammClient: SteammSDK) {
       pythPriceIdentifierSymbolMap,
 
       oracleIndexOracleInfoPriceMap,
-      COINTYPE_ORACLE_INDEX_MAP,
-      coinTypeOracleInfoPriceMap,
 
       bTokenTypeCoinTypeMap,
       banks,

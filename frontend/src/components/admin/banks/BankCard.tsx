@@ -20,7 +20,6 @@ import {
   formatUsd,
   getToken,
   isSendPoints,
-  isSui,
 } from "@suilend/sui-fe";
 import {
   showErrorToast,
@@ -615,7 +614,7 @@ export default function BankCard({ bank }: BankCardProps) {
         </div>
 
         {/* Rewards */}
-        <Parameter label="Rewards" isHorizontal>
+        <Parameter className="items-start" label="Rewards" isHorizontal>
           <div className="flex flex-col items-end gap-1.5">
             {bankClaimableRewardsMap === undefined ||
             bankPointsMap === undefined ? (

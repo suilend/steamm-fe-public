@@ -79,11 +79,6 @@ export interface AppData {
     number,
     { oracleInfo: OracleInfo; price: BigNumber }
   >;
-  COINTYPE_ORACLE_INDEX_MAP: Record<string, number>;
-  coinTypeOracleInfoPriceMap: Record<
-    string,
-    { oracleInfo: OracleInfo; price: BigNumber } | undefined
-  >;
 
   // Banks
   bTokenTypeCoinTypeMap: Record<string, string>;

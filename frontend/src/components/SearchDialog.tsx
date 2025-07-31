@@ -292,7 +292,7 @@ export default function SearchDialog() {
                 <SelectPopover
                   className="w-max min-w-32"
                   align="start"
-                  options={feeTierOptions}
+                  options={[feeTierOptions]}
                   placeholder="All fee tiers"
                   values={feeTiers.map((feeTier) => feeTier.toString())}
                   onChange={(id: string) => onFeeTierChange(+id)}
@@ -304,7 +304,7 @@ export default function SearchDialog() {
                 <SelectPopover
                   className="w-max min-w-32"
                   align="start"
-                  options={quoterIdOptions}
+                  options={[quoterIdOptions]}
                   placeholder="All quoter types"
                   values={quoterIds}
                   onChange={(id: string) => onQuoterIdChange(id as QuoterId)}

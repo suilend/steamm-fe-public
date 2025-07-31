@@ -696,9 +696,10 @@ export default function CreateTokenAndPoolCard({
         let _createPoolResult = createPoolResult;
         if (_createPoolResult === undefined) {
           _createPoolResult = await createPoolAndDepositInitialLiquidity(
-            tokens,
-            values,
             QUOTER_ID,
+            tokens,
+            undefined,
+            values,
             cpmmOffset,
             undefined,
             FEE_TIER_PERCENT,

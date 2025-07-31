@@ -1,6 +1,6 @@
-import { useMemo } from "react";
-
-import useCoinMetadataMap from "@suilend/sui-fe-next/hooks/useCoinMetadataMap";
+import { QuoterId } from "@suilend/steamm-sdk";
+import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
+import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 
 import AddOracleCard from "@/components/admin/oracles/AddOracleCard";
 import OracleCard from "@/components/admin/oracles/OracleCard";
@@ -9,19 +9,8 @@ import { useLoadedAppContext } from "@/contexts/AppContext";
 export default function OraclesTab() {
   const { appData } = useLoadedAppContext();
 
-  // CoinMetadata
-  const additionalCoinTypes = useMemo(
-    () =>
-      Object.keys(appData.coinTypeOracleInfoPriceMap).filter(
-        (coinType) => !Object.keys(appData.coinMetadataMap).includes(coinType),
-      ),
-    [appData.coinTypeOracleInfoPriceMap, appData.coinMetadataMap],
-  );
-  const additionalCoinMetadataMap = useCoinMetadataMap(additionalCoinTypes);
-
-  const coinMetadataMap = useMemo(
-    () => ({ ...appData.coinMetadataMap, ...additionalCoinMetadataMap }),
-    [appData.coinMetadataMap, additionalCoinMetadataMap],
+  const ommPools = appData.pools.filter((pool) =>
+    [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId),
   );
 
   return (
@@ -30,14 +19,26 @@ export default function OraclesTab() {
         ([oracleIndex, { oracleInfo, price }]) => (
           <OracleCard
             key={oracleIndex}
-            coinMetadataMap={coinMetadataMap}
-            coinTypes={Object.entries(appData.coinTypeOracleInfoPriceMap)
-              .filter(
-                ([_, value]) =>
-                  value !== undefined &&
-                  value.oracleInfo.oracleIndex === +oracleIndex,
-              )
-              .map(([coinType]) => coinType)}
+            coinTypes={Array.from(
+              new Set([
+                ...ommPools
+                  .filter(
+                    (pool) =>
+                      (
+                        pool.pool.quoter as OracleQuoter | OracleQuoterV2
+                      ).oracleIndexA.toString() === oracleIndex,
+                  )
+                  .map((pool) => pool.coinTypes[0]),
+                ...ommPools
+                  .filter(
+                    (pool) =>
+                      (
+                        pool.pool.quoter as OracleQuoter | OracleQuoterV2
+                      ).oracleIndexB.toString() === oracleIndex,
+                  )
+                  .map((pool) => pool.coinTypes[1]),
+              ]),
+            )}
             oracleInfo={oracleInfo}
             price={price}
           />

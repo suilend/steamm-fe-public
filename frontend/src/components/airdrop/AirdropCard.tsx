@@ -627,9 +627,9 @@ export default function AirdropCard() {
               className="bg-transparent w-full"
               align="start"
               maxWidth={1000}
-              options={recipientsTypeOptions}
+              options={[recipientsTypeOptions]}
               values={[recipientsType]}
-              onChange={(id) => {
+              onChange={(id: string) => {
                 resetRecipients(id as RecipientsType);
                 if ((id as RecipientsType) !== RecipientsType.CSV)
                   setTimeout(() => amountPerNftInputRef.current?.focus(), 100);

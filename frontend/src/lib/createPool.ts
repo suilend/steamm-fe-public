@@ -224,9 +224,10 @@ export type CreatePoolAndDepositInitialLiquidityResult = {
   poolId: string;
 };
 export const createPoolAndDepositInitialLiquidity = async (
-  tokens: [Token, Token],
-  values: [string, string],
   quoterId: QuoterId,
+  tokens: [Token, Token],
+  oracleIndexes: [string, string] | undefined,
+  values: [string, string],
   cpmmOffset: bigint | undefined,
   oracleV2Amplifier: number | undefined,
   feeTierPercent: number,
@@ -242,9 +243,10 @@ export const createPoolAndDepositInitialLiquidity = async (
   console.log(
     "[createPoolAndDepositInitialLiquidity] Creating pool and depositing initial liquidity",
     {
-      tokens,
-      values,
       quoterId,
+      tokens,
+      oracleIndexes,
+      values,
       cpmmOffset,
       oracleV2Amplifier,
       feeTierPercent,
@@ -255,19 +257,10 @@ export const createPoolAndDepositInitialLiquidity = async (
     },
   );
 
-  const oracleIndexA = appData.COINTYPE_ORACLE_INDEX_MAP[tokens[0].coinType];
-  const oracleIndexB = appData.COINTYPE_ORACLE_INDEX_MAP[tokens[1].coinType];
-
   if ([QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)) {
-    // Won't happen in practice, as we don't allow the user to select tokens that
-    // don't have an oracle index if the oracle/oracle V2 quoter is selected
-    if (oracleIndexA === undefined)
+    if (oracleIndexes === undefined)
       throw new Error(
-        `Base asset coinType ${tokens[0].coinType} not found in COINTYPE_ORACLE_INDEX_MAP`,
-      );
-    if (oracleIndexB === undefined)
-      throw new Error(
-        `Quote asset coinType ${tokens[1].coinType} not found in COINTYPE_ORACLE_INDEX_MAP`,
+        `Oracle indexes are required for ${QUOTER_ID_NAME_MAP[quoterId]} quoter`,
       );
   }
 
@@ -318,8 +311,8 @@ export const createPoolAndDepositInitialLiquidity = async (
     poolArgs = {
       ...createPoolBaseArgs,
       type: "Oracle" as const,
-      oracleIndexA: BigInt(oracleIndexA),
-      oracleIndexB: BigInt(oracleIndexB),
+      oracleIndexA: BigInt(oracleIndexes![0]), // Checked above
+      oracleIndexB: BigInt(oracleIndexes![1]), // Checked above
       coinTypeA: tokens[0].coinType,
       coinMetaA: tokens[0].id!,
       coinTypeB: tokens[1].coinType,
@@ -329,8 +322,8 @@ export const createPoolAndDepositInitialLiquidity = async (
     poolArgs = {
       ...createPoolBaseArgs,
       type: "OracleV2" as const,
-      oracleIndexA: BigInt(oracleIndexA),
-      oracleIndexB: BigInt(oracleIndexB),
+      oracleIndexA: BigInt(oracleIndexes![0]), // Checked above
+      oracleIndexB: BigInt(oracleIndexes![1]), // Checked above
       coinTypeA: tokens[0].coinType,
       coinMetaA: tokens[0].id!,
       coinTypeB: tokens[1].coinType,

@@ -315,7 +315,7 @@ export const getParsedPool = (
       lpSupply,
       isInitialLpTokenBurned,
       initialLpTokensMinted:
-        initialLpTokensMinted === null
+        initialLpTokensMinted === null || initialLpTokensMinted === ""
           ? null
           : new BigNumber(initialLpTokensMinted).div(10 ** 9),
       tvlUsd,

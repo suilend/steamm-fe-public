@@ -49,9 +49,9 @@ export default function SettingsDialog() {
 
           <div className="flex flex-1 flex-col gap-2">
             <SelectPopover
-              options={RPCS}
+              options={[RPCS]}
               values={[rpc.id]}
-              onChange={(id) => setRpcId(id as RpcId)}
+              onChange={(id: string) => setRpcId(id as RpcId)}
             />
 
             {rpc.id === RpcId.CUSTOM && (
@@ -73,9 +73,9 @@ export default function SettingsDialog() {
 
         <div className="flex-1">
           <SelectPopover
-            options={EXPLORERS}
+            options={[EXPLORERS]}
             values={[explorer.id]}
-            onChange={(id) => setExplorerId(id as ExplorerId)}
+            onChange={(id: string) => setExplorerId(id as ExplorerId)}
           />
         </div>
       </div>

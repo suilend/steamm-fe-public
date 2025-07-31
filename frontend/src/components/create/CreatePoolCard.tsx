@@ -12,6 +12,7 @@ import {
   QuoterId,
   computeOptimalOffset,
 } from "@suilend/steamm-sdk";
+import { OracleQuoter } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm/structs";
 import { OracleQuoterV2 } from "@suilend/steamm-sdk/_codegen/_generated/steamm/omm_v2/structs";
 import { Pool } from "@suilend/steamm-sdk/_codegen/_generated/steamm/pool/structs";
 import {
@@ -39,9 +40,11 @@ import useIsTouchscreen from "@suilend/sui-fe-next/hooks/useIsTouchscreen";
 import CoinInput, { getCoinInputId } from "@/components/CoinInput";
 import CreatePoolStepsDialog from "@/components/create/CreatePoolStepsDialog";
 import Parameter from "@/components/Parameter";
+import SelectPopover from "@/components/SelectPopover";
 import SubmitButton, { SubmitButtonState } from "@/components/SubmitButton";
 import TokenSelectionDialog from "@/components/swap/TokenSelectionDialog";
 import TextInput from "@/components/TextInput";
+import TokenLogos from "@/components/TokenLogos";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
@@ -70,7 +73,9 @@ import {
   formatPair,
   formatTextInputValue,
 } from "@/lib/format";
+import { parseOraclePriceIdentifier } from "@/lib/oracles";
 import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
+import { SelectPopoverOption } from "@/lib/select";
 import { getCachedUsdPriceRatio } from "@/lib/swap";
 import { cn, hoverUnderlineClassName } from "@/lib/utils";
 
@@ -147,27 +152,100 @@ export default function CreatePoolCard() {
     ],
   );
 
-  // CoinTypes
-  const [coinTypes, setCoinTypes] = useState<[string, string]>(["", ""]);
-  const baseAssetCoinInputRef = useRef<HTMLInputElement>(null);
-
   // Quoter
   const [quoterId, setQuoterId] = useState<QuoterId | undefined>(undefined);
 
   const onSelectQuoter = (newQuoterId: QuoterId) => {
     setQuoterId(newQuoterId);
-
-    if ([QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(newQuoterId)) {
-      setCoinTypes(
-        (prev) =>
-          prev.map((coinType) =>
-            appData.COINTYPE_ORACLE_INDEX_MAP[coinType] === undefined
-              ? ""
-              : coinType,
-          ) as [string, string],
-      );
-    }
   };
+
+  // CoinTypes
+  const [coinTypes, setCoinTypes] = useState<[string, string]>(["", ""]);
+  const baseAssetCoinInputRef = useRef<HTMLInputElement>(null);
+
+  // Oracles
+  const [oracleIndexes, setOracleIndexes] = useState<[string, string]>([
+    "",
+    "",
+  ]);
+
+  const getCoinTypesForOracleIndex = useCallback(
+    (oracleIndex: string) => {
+      const ommPools = appData.pools.filter((pool) =>
+        [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(pool.quoterId),
+      );
+
+      return Array.from(
+        new Set([
+          ...ommPools
+            .filter(
+              (pool) =>
+                (
+                  pool.pool.quoter as OracleQuoter | OracleQuoterV2
+                ).oracleIndexA.toString() === oracleIndex,
+            )
+            .map((pool) => pool.coinTypes[0]),
+          ...ommPools
+            .filter(
+              (pool) =>
+                (
+                  pool.pool.quoter as OracleQuoter | OracleQuoterV2
+                ).oracleIndexB.toString() === oracleIndex,
+            )
+            .map((pool) => pool.coinTypes[1]),
+        ]),
+      );
+    },
+    [appData.pools],
+  );
+
+  const oracleIndexOptions: SelectPopoverOption[] = useMemo(
+    () =>
+      Object.entries(appData.oracleIndexOracleInfoPriceMap).map(
+        ([oracleIndex, { oracleInfo }]) => ({
+          id: oracleIndex,
+          name: appData.pythPriceIdentifierSymbolMap[
+            parseOraclePriceIdentifier(oracleInfo)
+          ],
+          endDecorator: (
+            <TokenLogos
+              coinTypes={getCoinTypesForOracleIndex(oracleIndex)}
+              size={16}
+            />
+          ),
+        }),
+      ),
+    [
+      appData.oracleIndexOracleInfoPriceMap,
+      appData.pythPriceIdentifierSymbolMap,
+      getCoinTypesForOracleIndex,
+    ],
+  );
+
+  const baseOracleIndexOptions: SelectPopoverOption[][] = useMemo(
+    () => [
+      oracleIndexOptions.filter((option) =>
+        getCoinTypesForOracleIndex(option.id).includes(coinTypes[0]),
+      ),
+      oracleIndexOptions.filter(
+        (option) =>
+          !getCoinTypesForOracleIndex(option.id).includes(coinTypes[0]),
+      ),
+    ],
+    [oracleIndexOptions, getCoinTypesForOracleIndex, coinTypes],
+  );
+  const quoteOracleIndexOptions: SelectPopoverOption[][] = useMemo(
+    () => [
+      oracleIndexOptions.filter((option) =>
+        getCoinTypesForOracleIndex(option.id).includes(coinTypes[1]),
+      ),
+      oracleIndexOptions.filter(
+        (option) =>
+          !getCoinTypesForOracleIndex(option.id).includes(coinTypes[1]),
+      ),
+    ],
+    [oracleIndexOptions, getCoinTypesForOracleIndex, coinTypes],
+  );
 
   // Values
   const maxValues = coinTypes.map((coinType) =>
@@ -282,24 +360,11 @@ export default function CreatePoolCard() {
     () =>
       Object.entries(balancesCoinMetadataMap ?? {})
         .filter(([coinType]) => getBalance(coinType).gt(0))
-        .filter(
-          ([coinType]) =>
-            quoterId === undefined ||
-            !(
-              [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId) &&
-              appData.COINTYPE_ORACLE_INDEX_MAP[coinType] === undefined
-            ),
-        )
         .map(([coinType, coinMetadata]) => getToken(coinType, coinMetadata))
         .sort(
           (a, b) => (a.symbol.toLowerCase() < b.symbol.toLowerCase() ? -1 : 1), // Sort by symbol (ascending)
         ),
-    [
-      balancesCoinMetadataMap,
-      getBalance,
-      quoterId,
-      appData.COINTYPE_ORACLE_INDEX_MAP,
-    ],
+    [balancesCoinMetadataMap, getBalance],
   );
 
   const quoteTokens = useMemo(() => baseTokens, [baseTokens]);
@@ -434,12 +499,15 @@ export default function CreatePoolCard() {
     setReturnAllOwnedObjectsAndSuiToUserResult(undefined);
 
     // Pool
+    setQuoterId(undefined);
+
     setCoinTypes(["", ""]);
     setTimeout(() => baseAssetCoinInputRef.current?.focus(), 100); // After dialog is closed
 
+    setOracleIndexes(["", ""]);
+
     setValues(["", ""]);
     setLastActiveInputIndex(undefined);
-    setQuoterId(undefined);
     setAmplifier(undefined);
     setFeeTierPercent(undefined);
 
@@ -463,6 +531,12 @@ export default function CreatePoolCard() {
       return { isDisabled: true, title: "Select a quoter" };
     if (coinTypes.some((coinType) => coinType === ""))
       return { isDisabled: true, title: "Select tokens" };
+    if ([QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId)) {
+      if (oracleIndexes[0] === "")
+        return { isDisabled: true, title: "Select a base oracle" };
+      if (oracleIndexes[1] === "")
+        return { isDisabled: true, title: "Select a quote oracle" };
+    }
     if (
       quoterId === QuoterId.V_CPMM
         ? values[0] === ""
@@ -677,9 +751,10 @@ export default function CreatePoolCard() {
       let _createPoolResult = createPoolResult;
       if (_createPoolResult === undefined) {
         _createPoolResult = await createPoolAndDepositInitialLiquidity(
-          tokens,
-          values,
           quoterId,
+          tokens,
+          oracleIndexes,
+          values,
           quoterId === QuoterId.V_CPMM ? cpmmOffset : undefined,
           amplifier,
           feeTierPercent,
@@ -825,6 +900,25 @@ export default function CreatePoolCard() {
               tokens={baseTokens}
               onSelectToken={(token) => onSelectToken(token, 0)}
             />
+
+            {quoterId !== undefined &&
+              [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId) && (
+                <div className="flex w-full flex-row items-center justify-between">
+                  <p className="text-p2 text-secondary-foreground">
+                    Base oracle
+                  </p>
+
+                  <SelectPopover
+                    className="w-max bg-[transparent]"
+                    options={baseOracleIndexOptions}
+                    placeholder="Select oracle"
+                    values={oracleIndexes[0] === "" ? [] : [oracleIndexes[0]]}
+                    onChange={(id: string) =>
+                      setOracleIndexes((prev) => [id, prev[1]])
+                    }
+                  />
+                </div>
+              )}
           </div>
 
           {quoterId === QuoterId.V_CPMM ? (
@@ -904,6 +998,27 @@ export default function CreatePoolCard() {
                   tokens={quoteTokens}
                   onSelectToken={(token) => onSelectToken(token, 1)}
                 />
+
+                {quoterId !== undefined &&
+                  [QuoterId.ORACLE, QuoterId.ORACLE_V2].includes(quoterId) && (
+                    <div className="flex w-full flex-row items-center justify-between">
+                      <p className="text-p2 text-secondary-foreground">
+                        Quote oracle
+                      </p>
+
+                      <SelectPopover
+                        className="w-max bg-[transparent]"
+                        options={quoteOracleIndexOptions}
+                        placeholder="Select oracle"
+                        values={
+                          oracleIndexes[1] === "" ? [] : [oracleIndexes[1]]
+                        }
+                        onChange={(id: string) =>
+                          setOracleIndexes((prev) => [prev[0], id])
+                        }
+                      />
+                    </div>
+                  )}
               </div>
             </>
           )}

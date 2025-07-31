@@ -19,7 +19,7 @@ interface SelectPopoverProps {
   align?: "start" | "end";
   alignOffset?: number;
   maxWidth?: number;
-  options: SelectPopoverOption[];
+  options: SelectPopoverOption[][];
   placeholder?: string;
   values: string[];
   onChange: (id: string) => void;
@@ -46,6 +46,8 @@ export default function SelectPopover({
   canClear,
   onClear,
 }: SelectPopoverProps) {
+  const allOptions = options.flat();
+
   // State
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -68,46 +70,60 @@ export default function SelectPopover({
           )}
         >
           <div className="flex flex-col items-start gap-1">
-            <div className="flex flex-row items-baseline gap-1.5">
-              <p
-                className={cn(
-                  "!text-p2 transition-colors",
-                  isOpen
-                    ? "text-foreground"
-                    : cn(
-                        values.length > 0
-                          ? "text-foreground"
-                          : "text-secondary-foreground group-hover/trigger:text-foreground",
-                      ),
-                  textClassName,
-                )}
-              >
-                {values.length > 0
-                  ? formatList(
-                      options
+            <div className="flex flex-row items-center gap-2">
+              <div className="flex flex-row items-baseline gap-1.5">
+                <p
+                  className={cn(
+                    "!text-p2 transition-colors",
+                    isOpen
+                      ? "text-foreground"
+                      : cn(
+                          values.length > 0
+                            ? "text-foreground"
+                            : "text-secondary-foreground group-hover/trigger:text-foreground",
+                        ),
+                    textClassName,
+                  )}
+                >
+                  {values.length > 0
+                    ? formatList(
+                        allOptions
+                          .filter((option) => values.includes(option.id))
+                          .map((option) => option.name),
+                      )
+                    : placeholder}
+                </p>
+                {values.length > 0 &&
+                  allOptions
+                    .filter((option) => values.includes(option.id))
+                    .every((option) => option.count !== undefined) && (
+                    <p className="text-left text-p3 text-tertiary-foreground">
+                      {allOptions
                         .filter((option) => values.includes(option.id))
-                        .map((option) => option.name),
-                    )
-                  : placeholder}
-              </p>
-              {values.length > 0 &&
-                options
-                  .filter((option) => values.includes(option.id))
-                  .every((option) => option.count !== undefined) && (
-                  <p className="text-left text-p3 text-tertiary-foreground">
-                    {options
-                      .filter((option) => values.includes(option.id))
-                      .reduce((acc, option) => acc + option.count!, 0)}
-                  </p>
+                        .reduce((acc, option) => acc + option.count!, 0)}
+                    </p>
+                  )}
+              </div>
+
+              {values.length === 1 &&
+                allOptions.filter((option) => values.includes(option.id))[0]
+                  .endDecorator !== undefined && (
+                  <>
+                    {
+                      allOptions.filter((option) =>
+                        values.includes(option.id),
+                      )[0].endDecorator
+                    }
+                  </>
                 )}
             </div>
 
             {values.length === 1 &&
-              options.filter((option) => values.includes(option.id))[0]
+              allOptions.filter((option) => values.includes(option.id))[0]
                 .description !== undefined && (
                 <p className="text-left text-p3 text-tertiary-foreground">
                   {
-                    options.filter((option) => values.includes(option.id))[0]
+                    allOptions.filter((option) => values.includes(option.id))[0]
                       .description
                   }
                 </p>
@@ -139,67 +155,77 @@ export default function SelectPopover({
         </button>
       }
     >
-      <div className="flex w-full flex-col gap-1">
-        {options.map((option) => (
-          <button
-            key={option.id}
-            className={cn(
-              "group flex min-h-10 w-full flex-row items-center justify-between rounded-md border px-3 py-2 transition-colors",
-              values.includes(option.id)
-                ? "cursor-default border-button-1 bg-button-1/25"
-                : "hover:bg-border",
-              optionClassName,
-            )}
-            onClick={() => {
-              onChange(option.id);
-              if (!isMultiSelect) setIsOpen(false);
-            }}
-          >
-            <div className="flex flex-col items-start gap-1">
-              <div className="flex flex-row items-baseline gap-1.5">
-                <p
-                  className={cn(
-                    "text-left !text-p2 transition-colors",
-                    values.includes(option.id)
-                      ? "text-foreground"
-                      : "text-secondary-foreground group-hover:text-foreground",
-                    optionTextClassName,
-                  )}
-                >
-                  {option.name}
-                </p>
-                {option.count !== undefined && (
-                  <p
-                    className={cn(
-                      "text-left !text-p3 transition-colors",
-                      values.includes(option.id)
-                        ? "text-foreground/75"
-                        : "text-tertiary-foreground group-hover:text-foreground/75",
-                    )}
-                  >
-                    {option.count}
-                  </p>
+      <div className="flex w-full flex-col gap-3">
+        {options.map((subOptions, index) => (
+          <div key={index} className="flex w-full flex-col gap-1">
+            {subOptions.map((option) => (
+              <button
+                key={option.id}
+                className={cn(
+                  "group flex min-h-10 w-full flex-row items-center justify-between rounded-md border px-3 py-2 transition-colors",
+                  values.includes(option.id)
+                    ? "cursor-default border-button-1 bg-button-1/25"
+                    : "hover:bg-border",
+                  optionClassName,
                 )}
-              </div>
+                onClick={() => {
+                  onChange(option.id);
+                  if (!isMultiSelect) setIsOpen(false);
+                }}
+              >
+                <div className="flex flex-col items-start gap-1">
+                  <div className="flex flex-row items-center gap-2">
+                    <div className="flex flex-row items-baseline gap-1.5">
+                      <p
+                        className={cn(
+                          "text-left !text-p2 transition-colors",
+                          values.includes(option.id)
+                            ? "text-foreground"
+                            : "text-secondary-foreground group-hover:text-foreground",
+                          optionTextClassName,
+                        )}
+                      >
+                        {option.name}
+                      </p>
+                      {option.count !== undefined && (
+                        <p
+                          className={cn(
+                            "text-left !text-p3 transition-colors",
+                            values.includes(option.id)
+                              ? "text-foreground/75"
+                              : "text-tertiary-foreground group-hover:text-foreground/75",
+                          )}
+                        >
+                          {option.count}
+                        </p>
+                      )}
+                    </div>
 
-              {option.description && (
-                <p
-                  className={cn(
-                    "text-left !text-p3 transition-colors",
-                    values.includes(option.id)
-                      ? "text-foreground/75"
-                      : "text-tertiary-foreground group-hover:text-foreground/75",
+                    {option.endDecorator !== undefined && (
+                      <>{option.endDecorator}</>
+                    )}
+                  </div>
+
+                  {option.description && (
+                    <p
+                      className={cn(
+                        "text-left !text-p3 transition-colors",
+                        values.includes(option.id)
+                          ? "text-foreground/75"
+                          : "text-tertiary-foreground group-hover:text-foreground/75",
+                      )}
+                    >
+                      {option.description}
+                    </p>
                   )}
-                >
-                  {option.description}
-                </p>
-              )}
-            </div>
+                </div>
 
-            {isMultiSelect && values.includes(option.id) && (
-              <Check className="h-4 w-4 shrink-0 text-foreground" />
-            )}
-          </button>
+                {isMultiSelect && values.includes(option.id) && (
+                  <Check className="h-4 w-4 shrink-0 text-foreground" />
+                )}
+              </button>
+            ))}
+          </div>
         ))}
       </div>
     </Popover>

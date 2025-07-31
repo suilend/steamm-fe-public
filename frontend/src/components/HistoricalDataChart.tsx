@@ -211,7 +211,7 @@ export default function HistoricalDataChart({
                   align="start"
                   alignOffset={-(1 + 4 + 1 + 8)}
                   maxWidth={120}
-                  options={dataTypeOptions}
+                  options={[dataTypeOptions]}
                   values={[selectedDataType]}
                   onChange={(id: string) =>
                     onSelectedDataTypeChange(id as ChartDataType)
@@ -234,7 +234,7 @@ export default function HistoricalDataChart({
                 align="start"
                 alignOffset={-(1 + 4 + 1 + 8)}
                 maxWidth={80}
-                options={periodOptions}
+                options={[periodOptions]}
                 values={[selectedPeriod]}
                 onChange={(id: string) =>
                   onSelectedPeriodChange(id as ChartPeriod)

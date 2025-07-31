@@ -1,4 +1,3 @@
-import { CoinMetadata } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
 
 import { OracleInfo } from "@suilend/steamm-sdk";
@@ -12,7 +11,6 @@ import PythLogo from "@/components/PythLogo";
 import SwitchboardLogo from "@/components/SwitchboardLogo";
 import TokenLogo from "@/components/TokenLogo";
 import Tooltip from "@/components/Tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import {
   OracleType,
@@ -21,14 +19,12 @@ import {
 } from "@/lib/oracles";
 
 interface OracleCardProps {
-  coinMetadataMap: Record<string, CoinMetadata>;
   coinTypes: string[];
   oracleInfo: OracleInfo;
   price: BigNumber;
 }
 
 export default function OracleCard({
-  coinMetadataMap,
   coinTypes,
   oracleInfo,
   price,
@@ -83,22 +79,18 @@ export default function OracleCard({
           <p className="text-p2 text-foreground">{formatPrice(price)}</p>
         </Parameter>
 
-        <Parameter label="coinTypes" isHorizontal>
+        <Parameter className="items-start" label="coinTypes" isHorizontal>
           <div className="flex flex-col items-end gap-1">
             {coinTypes.map((coinType) => (
               <div key={coinType} className="flex flex-row items-center gap-2">
                 <TokenLogo
-                  token={getToken(coinType, coinMetadataMap[coinType])}
+                  token={getToken(coinType, appData.coinMetadataMap[coinType])}
                   size={16}
                 />
 
-                {coinMetadataMap[coinType] === undefined ? (
-                  <Skeleton className="h-[21px] w-12" />
-                ) : (
-                  <p className="flex text-p2 text-foreground">
-                    {coinMetadataMap[coinType].symbol}
-                  </p>
-                )}
+                <p className="flex text-p2 text-foreground">
+                  {appData.coinMetadataMap[coinType].symbol}
+                </p>
 
                 <div className="flex flex-row items-center gap-1">
                   <CopyToClipboardButton value={coinType} />

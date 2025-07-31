@@ -490,262 +490,202 @@ export class SteammSDK {
     const TEST_POOL_IDS: string[] = [];
 
     // Data
-    const [
-      suilend,
-      lstAprPercentMap,
-      {
-        oracleIndexOracleInfoPriceMap,
-        COINTYPE_ORACLE_INDEX_MAP,
-        coinTypeOracleInfoPriceMap,
-      },
-      bankObjs,
-      poolObjs,
-    ] = await Promise.all([
-      // Suilend
-      (async () => {
-        // Suilend - Main market
-        const mainMarket_depositAprPercentMap: Record<string, BigNumber> = {}; // Not needed for this use case
+    const [suilend, oracleIndexOracleInfoPriceMap, bankObjs, poolObjs] =
+      await Promise.all([
+        // Suilend
+        (async () => {
+          // Suilend - Main market
+          const mainMarket_depositAprPercentMap: Record<string, BigNumber> = {}; // Not needed for this use case
 
-        // Suilend - LM market
-        const lmMarket_suilendClient = await SuilendClient.initialize(
-          process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-            ? "0xb1d89cf9082cedce09d3647f0ebda4a8b5db125aff5d312a8bfd7eefa715bd35" // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
-            : "0xc1888ec1b81a414e427a44829310508352aec38252ee0daa9f8b181b6947de9f",
-          process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-            ? "0xdeeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP"
-            : "0x0a071f4976abae1a7f722199cf0bfcbe695ef9408a878e7d12a7ca87b7e582a6::lp_rewards::LP_REWARDS",
-          this.fullClient,
-        );
+          // Suilend - LM market
+          const lmMarket_suilendClient = await SuilendClient.initialize(
+            process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+              ? "0xb1d89cf9082cedce09d3647f0ebda4a8b5db125aff5d312a8bfd7eefa715bd35" // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
+              : "0xc1888ec1b81a414e427a44829310508352aec38252ee0daa9f8b181b6947de9f",
+            process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+              ? "0xdeeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP"
+              : "0x0a071f4976abae1a7f722199cf0bfcbe695ef9408a878e7d12a7ca87b7e582a6::lp_rewards::LP_REWARDS",
+            this.fullClient,
+          );
 
-        const {
-          refreshedRawReserves: lmMarket_refreshedRawReserves,
-          reserveMap: lmMarket_reserveMap,
-
-          rewardCoinMetadataMap: lmMarket_rewardCoinMetadataMap,
-        } = await initializeSuilend(this.fullClient, lmMarket_suilendClient);
-
-        return {
-          mainMarket: {
-            depositAprPercentMap: mainMarket_depositAprPercentMap,
-          },
-          lmMarket: {
-            suilendClient: lmMarket_suilendClient,
-
+          const {
             refreshedRawReserves: lmMarket_refreshedRawReserves,
             reserveMap: lmMarket_reserveMap,
 
             rewardCoinMetadataMap: lmMarket_rewardCoinMetadataMap,
-          },
-        };
-      })(),
+          } = await initializeSuilend(this.fullClient, lmMarket_suilendClient);
 
-      // LSTs
-      (async () => {
-        const lstAprPercentMap: Record<string, BigNumber> = {}; // Not needed for this use case
+          return {
+            mainMarket: {
+              depositAprPercentMap: mainMarket_depositAprPercentMap,
+            },
+            lmMarket: {
+              suilendClient: lmMarket_suilendClient,
 
-        return lstAprPercentMap;
-      })(),
+              refreshedRawReserves: lmMarket_refreshedRawReserves,
+              reserveMap: lmMarket_reserveMap,
 
-      // Oracles
-      (async () => {
-        const [oracleIndexOracleInfoPriceMap, COINTYPE_ORACLE_INDEX_MAP] =
-          await Promise.all([
-            // OracleInfos
-            // OracleInfos
-            (async () => {
-              let oracleObjs: OracleObj[] = [];
+              rewardCoinMetadataMap: lmMarket_rewardCoinMetadataMap,
+            },
+          };
+        })(),
 
-              if (
-                this._apiOracles !== undefined &&
-                Date.now() <= this._apiOracles.updatedAt + 5 * 60 * 1000 // 5 minutes
-              ) {
-                oracleObjs = this._apiOracles.oracleObjs;
-              } else {
-                const oraclesRes = await fetch(`${API_URL}/steamm/oracles/all`);
-                const oraclesJson: OracleObj[] = await oraclesRes.json();
-                if ((oraclesJson as any)?.statusCode === 500)
-                  throw new Error("Failed to fetch oracles");
+        // Oracles
+        (async () => {
+          let oracleObjs: OracleObj[] = [];
 
-                oracleObjs = oraclesJson;
-                this._apiOracles = { oracleObjs, updatedAt: Date.now() };
-              }
+          if (
+            this._apiOracles !== undefined &&
+            Date.now() <= this._apiOracles.updatedAt + 5 * 60 * 1000 // 5 minutes
+          ) {
+            oracleObjs = this._apiOracles.oracleObjs;
+          } else {
+            const oraclesRes = await fetch(`${API_URL}/steamm/oracles/all`);
+            const oraclesJson: OracleObj[] = await oraclesRes.json();
+            if ((oraclesJson as any)?.statusCode === 500)
+              throw new Error("Failed to fetch oracles");
 
-              const pythOracleInfos = oracleObjs.filter(
-                (oracleInfo) => oracleInfo.oracleType === OracleType.PYTH,
-              );
-              const switchboardOracleInfos = oracleObjs.filter(
-                (oracleInfo) =>
-                  oracleInfo.oracleType === OracleType.SWITCHBOARD,
-              );
+            oracleObjs = oraclesJson;
+            this._apiOracles = { oracleObjs, updatedAt: Date.now() };
+          }
 
-              const oracleIndexToPythPriceIdentifierMap: Record<
-                number,
-                string
-              > = Object.fromEntries(
-                pythOracleInfos.map((oracleInfo) => [
-                  oracleInfo.oracleIndex,
-                  typeof oracleInfo.oracleIdentifier === "string"
-                    ? oracleInfo.oracleIdentifier
-                    : toHexString(oracleInfo.oracleIdentifier),
-                ]) as [number, string][],
-              );
-              const oracleIndexToSwitchboardPriceIdentifierMap: Record<
-                number,
-                string
-              > = Object.fromEntries(
-                switchboardOracleInfos.map(
-                  (oracleInfo) => [oracleInfo.oracleIndex, ""], // TODO: Parse Switchboard price identifier
-                ) as [number, string][],
-              );
+          const pythOracleInfos = oracleObjs.filter(
+            (oracleInfo) => oracleInfo.oracleType === OracleType.PYTH,
+          );
+          const switchboardOracleInfos = oracleObjs.filter(
+            (oracleInfo) => oracleInfo.oracleType === OracleType.SWITCHBOARD,
+          );
 
-              const pythConnection = new SuiPriceServiceConnection(
-                "https://hermes.pyth.network",
-                { timeout: 30 * 1000 },
-              );
-              // TODO: Switchboard price connection
+          const oracleIndexToPythPriceIdentifierMap: Record<number, string> =
+            Object.fromEntries(
+              pythOracleInfos.map((oracleInfo) => [
+                oracleInfo.oracleIndex,
+                typeof oracleInfo.oracleIdentifier === "string"
+                  ? oracleInfo.oracleIdentifier
+                  : toHexString(oracleInfo.oracleIdentifier),
+              ]) as [number, string][],
+            );
+          const oracleIndexToSwitchboardPriceIdentifierMap: Record<
+            number,
+            string
+          > = Object.fromEntries(
+            switchboardOracleInfos.map(
+              (oracleInfo) => [oracleInfo.oracleIndex, ""], // TODO: Parse Switchboard price identifier
+            ) as [number, string][],
+          );
 
-              const pythPriceFeeds =
-                (await pythConnection.getLatestPriceFeeds(
-                  Object.values(oracleIndexToPythPriceIdentifierMap),
-                )) ?? [];
-              const switchboardPriceFeeds: any[] = [];
+          const pythConnection = new SuiPriceServiceConnection(
+            "https://hermes.pyth.network",
+            { timeout: 30 * 1000 },
+          );
+          // TODO: Switchboard price connection
 
-              const oracleIndexToPythPriceFeedMap: Record<number, PriceFeed> =
-                Object.keys(oracleIndexToPythPriceIdentifierMap).reduce(
-                  (acc, oracleIndexStr, index) => {
-                    const pythPriceFeed = pythPriceFeeds[index];
-                    if (!pythPriceFeed) return acc;
+          const pythPriceFeeds =
+            (await pythConnection.getLatestPriceFeeds(
+              Object.values(oracleIndexToPythPriceIdentifierMap),
+            )) ?? [];
+          const switchboardPriceFeeds: any[] = [];
 
-                    return { ...acc, [+oracleIndexStr]: pythPriceFeed };
-                  },
-                  {} as Record<number, PriceFeed>,
-                );
-              const oracleIndexToSwitchboardPriceFeedMap: Record<number, any> =
-                {};
+          const oracleIndexToPythPriceFeedMap: Record<number, PriceFeed> =
+            Object.keys(oracleIndexToPythPriceIdentifierMap).reduce(
+              (acc, oracleIndexStr, index) => {
+                const pythPriceFeed = pythPriceFeeds[index];
+                if (!pythPriceFeed) return acc;
 
-              const oracleIndexOracleInfoPriceEntries: [
-                number,
-                { oracleInfo: OracleInfo; price: BigNumber },
-              ][] = oracleObjs.map((oracleInfo) => {
-                if (oracleInfo.oracleType === OracleType.PYTH) {
-                  const pythPriceFeed =
-                    oracleIndexToPythPriceFeedMap[oracleInfo.oracleIndex];
+                return { ...acc, [+oracleIndexStr]: pythPriceFeed };
+              },
+              {} as Record<number, PriceFeed>,
+            );
+          const oracleIndexToSwitchboardPriceFeedMap: Record<number, any> = {};
 
-                  return [
-                    +oracleInfo.oracleIndex,
-                    {
-                      oracleInfo,
-                      price: new BigNumber(
-                        pythPriceFeed
-                          .getPriceUnchecked()
-                          .getPriceAsNumberUnchecked(),
-                      ),
-                    },
-                  ];
-                } else if (oracleInfo.oracleType === OracleType.SWITCHBOARD) {
-                  return [
-                    +oracleInfo.oracleIndex,
-                    {
-                      oracleInfo,
-                      price: new BigNumber(0.000001), // TODO: Fetch Switchboard price
-                    },
-                  ];
-                } else {
-                  throw new Error(
-                    `Unknown oracle type: ${oracleInfo.oracleType}`,
-                  );
-                }
-              });
+          const oracleIndexOracleInfoPriceEntries: [
+            number,
+            { oracleInfo: OracleInfo; price: BigNumber },
+          ][] = oracleObjs.map((oracleInfo) => {
+            if (oracleInfo.oracleType === OracleType.PYTH) {
+              const pythPriceFeed =
+                oracleIndexToPythPriceFeedMap[oracleInfo.oracleIndex];
 
-              return Object.fromEntries(oracleIndexOracleInfoPriceEntries);
-            })(),
+              return [
+                +oracleInfo.oracleIndex,
+                {
+                  oracleInfo,
+                  price: new BigNumber(
+                    pythPriceFeed
+                      .getPriceUnchecked()
+                      .getPriceAsNumberUnchecked(),
+                  ),
+                },
+              ];
+            } else if (oracleInfo.oracleType === OracleType.SWITCHBOARD) {
+              return [
+                +oracleInfo.oracleIndex,
+                {
+                  oracleInfo,
+                  price: new BigNumber(0.000001), // TODO: Fetch Switchboard price
+                },
+              ];
+            } else {
+              throw new Error(`Unknown oracle type: ${oracleInfo.oracleType}`);
+            }
+          });
 
-            // COINTYPE_ORACLE_INDEX_MAP
-            (async () => {
-              const COINTYPE_ORACLE_INDEX_MAP: Record<string, number> = await (
-                await fetch(
-                  `${ASSETS_URL}/cointype-oracle-index-map.json?timestamp=${Date.now()}`,
-                )
-              ).json();
+          return Object.fromEntries(oracleIndexOracleInfoPriceEntries);
+        })(),
 
-              return COINTYPE_ORACLE_INDEX_MAP;
-            })(),
-          ]);
+        // Banks
+        (async () => {
+          if (
+            this._apiBanks !== undefined &&
+            Date.now() <= this._apiBanks.updatedAt + 5 * 60 * 1000 // 5 minutes
+          )
+            return this._apiBanks.bankObjs;
 
-        const coinTypeOracleInfoPriceMap: Record<
-          string,
-          { oracleInfo: OracleInfo; price: BigNumber } | undefined
-        > = Object.entries(COINTYPE_ORACLE_INDEX_MAP).reduce(
-          (acc, [coinType, oracleIndex]) => ({
-            ...acc,
-            [coinType]: oracleIndexOracleInfoPriceMap[oracleIndex],
-          }),
-          {} as Record<
-            string,
-            { oracleInfo: OracleInfo; price: BigNumber } | undefined
-          >,
-        );
+          const bankObjs: BankObj[] = [];
 
-        return {
-          oracleIndexOracleInfoPriceMap,
-          COINTYPE_ORACLE_INDEX_MAP,
-          coinTypeOracleInfoPriceMap,
-        };
-      })(),
+          const banksRes = await fetch(`${API_URL}/steamm/banks/all`);
+          const banksJson: (Omit<BankObj, "totalFundsRaw"> & {
+            totalFunds: number;
+          })[] = await banksRes.json();
+          if ((banksJson as any)?.statusCode === 500)
+            throw new Error("Failed to fetch banks");
 
-      // Banks
-      (async () => {
-        if (
-          this._apiBanks !== undefined &&
-          Date.now() <= this._apiBanks.updatedAt + 5 * 60 * 1000 // 5 minutes
-        )
-          return this._apiBanks.bankObjs;
+          bankObjs.push(
+            ...banksJson.filter(
+              (bankObj) =>
+                !TEST_BANK_COIN_TYPES.includes(bankObj.bankInfo.coinType), // Filter out test banks
+            ),
+          );
 
-        const bankObjs: BankObj[] = [];
+          this._apiBanks = { bankObjs, updatedAt: Date.now() };
+          return bankObjs;
+        })(),
 
-        const banksRes = await fetch(`${API_URL}/steamm/banks/all`);
-        const banksJson: (Omit<BankObj, "totalFundsRaw"> & {
-          totalFunds: number;
-        })[] = await banksRes.json();
-        if ((banksJson as any)?.statusCode === 500)
-          throw new Error("Failed to fetch banks");
+        // Pools
+        (async () => {
+          if (
+            this._apiPools !== undefined &&
+            Date.now() <= this._apiPools.updatedAt + 5 * 60 * 1000 // 5 minutes
+          )
+            return this._apiPools.poolObjs;
 
-        bankObjs.push(
-          ...banksJson.filter(
-            (bankObj) =>
-              !TEST_BANK_COIN_TYPES.includes(bankObj.bankInfo.coinType), // Filter out test banks
-          ),
-        );
+          const poolObjs: PoolObj[] = [];
 
-        this._apiBanks = { bankObjs, updatedAt: Date.now() };
-        return bankObjs;
-      })(),
+          const poolsRes = await fetch(`${API_URL}/steamm/pools/all`);
+          const poolsJson: PoolObj[] = await poolsRes.json();
+          if ((poolsJson as any)?.statusCode === 500)
+            throw new Error("Failed to fetch pools");
 
-      // Pools
-      (async () => {
-        if (
-          this._apiPools !== undefined &&
-          Date.now() <= this._apiPools.updatedAt + 5 * 60 * 1000 // 5 minutes
-        )
-          return this._apiPools.poolObjs;
+          poolObjs.push(
+            ...poolsJson.filter(
+              (poolObj) => !TEST_POOL_IDS.includes(poolObj.poolInfo.poolId), // Filter out test pools
+            ),
+          );
 
-        const poolObjs: PoolObj[] = [];
-
-        const poolsRes = await fetch(`${API_URL}/steamm/pools/all`);
-        const poolsJson: PoolObj[] = await poolsRes.json();
-        if ((poolsJson as any)?.statusCode === 500)
-          throw new Error("Failed to fetch pools");
-
-        poolObjs.push(
-          ...poolsJson.filter(
-            (poolObj) => !TEST_POOL_IDS.includes(poolObj.poolInfo.poolId), // Filter out test pools
-          ),
-        );
-
-        this._apiPools = { poolObjs, updatedAt: Date.now() };
-        return poolObjs;
-      })(),
-    ]);
+          this._apiPools = { poolObjs, updatedAt: Date.now() };
+          return poolObjs;
+        })(),
+      ]);
 
     // CoinMetadata
     // CoinMetadata - banks
