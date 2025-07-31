@@ -459,6 +459,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               priceB: null,
               isInitialLpTokenBurned: null,
               initialLpTokensMinted: null,
+              timestampS: null,
             });
           }
         } else {

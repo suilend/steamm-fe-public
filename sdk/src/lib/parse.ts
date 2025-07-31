@@ -65,10 +65,12 @@ export type PoolObj = {
   priceB: string | null;
   isInitialLpTokenBurned: boolean | null;
   initialLpTokensMinted: string | null;
+  timestampS: string | null;
 };
 
 export type ParsedPool = {
   id: string;
+  timestampS: number | null;
   pool:
     | Pool<string, string, CpQuoter, string>
     | Pool<string, string, OracleQuoter, string>
@@ -189,6 +191,7 @@ export const getParsedPool = (
       priceB: _priceB,
       isInitialLpTokenBurned,
       initialLpTokensMinted,
+      timestampS,
     } = poolObj;
 
     const id = poolInfo.poolId;
@@ -298,6 +301,7 @@ export const getParsedPool = (
 
     return {
       id,
+      timestampS: timestampS === null ? null : +timestampS,
       pool,
       poolInfo,
       quoterId,

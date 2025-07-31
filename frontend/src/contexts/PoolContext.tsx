@@ -14,8 +14,8 @@ import { DynamicFieldInfo } from "@mysten/sui/client";
 import BigNumber from "bignumber.js";
 
 import {
-  ADMIN_ADDRESS,
   ParsedPool,
+  PoolObj,
   QuoterId,
   getParsedPool,
 } from "@suilend/steamm-sdk";
@@ -26,6 +26,9 @@ import { useStatsContext } from "@/contexts/StatsContext";
 import { ChartDataType, ChartPeriod } from "@/lib/chart";
 import { ROOT_URL } from "@/lib/navigation";
 import { fetchPool } from "@/lib/pools";
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const ONE_WEEK_MS = 7 * ONE_DAY_MS;
 
 enum QueryParams {
   POOL_ID_WITH_SLUG = "poolId",
@@ -51,7 +54,7 @@ const PoolContext = createContext<PoolContext>({
   onSelectedChartDataTypeChange: () => {
     throw Error("PoolContextProvider not initialized");
   },
-  selectedChartPeriod: ChartPeriod.ONE_WEEK,
+  selectedChartPeriod: ChartPeriod.ONE_MONTH,
   onSelectedChartPeriodChange: () => {
     throw Error("PoolContextProvider not initialized");
   },
@@ -94,6 +97,11 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
     [queryParams],
   );
 
+  const existingPool: ParsedPool | undefined = useMemo(
+    () => appData.pools.find((pool) => pool.id === poolId),
+    [appData.pools, poolId],
+  );
+
   const selectedChartDataType = useMemo(
     () =>
       queryParams[QueryParams.CHART_DATA_TYPE] &&
@@ -109,8 +117,12 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
       queryParams[QueryParams.CHART_PERIOD] &&
       Object.values(ChartPeriod).includes(queryParams[QueryParams.CHART_PERIOD])
         ? queryParams[QueryParams.CHART_PERIOD]
-        : ChartPeriod.ONE_WEEK,
-    [queryParams],
+        : Date.now() - (existingPool?.timestampS ?? 0) * 1000 < ONE_DAY_MS
+          ? ChartPeriod.ONE_DAY
+          : Date.now() - (existingPool?.timestampS ?? 0) * 1000 < ONE_WEEK_MS
+            ? ChartPeriod.ONE_WEEK
+            : ChartPeriod.ONE_MONTH,
+    [queryParams, existingPool?.timestampS],
   );
 
   const onSelectedChartDataTypeChange = useCallback(
@@ -130,12 +142,6 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
       });
     },
     [router],
-  );
-
-  // Pool info
-  const existingPool: ParsedPool | undefined = useMemo(
-    () => appData.pools.find((pool) => pool.id === poolId),
-    [appData.pools, poolId],
   );
 
   // Historical stats
@@ -179,7 +185,7 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
                 bankInfoB: appData.bankMap[_existingPool.coinTypes[1]].bankInfo,
               });
 
-        const parsedPool = getParsedPool(appData, {
+        const poolObj: PoolObj = {
           poolInfo: _existingPool.poolInfo, // Existing poolInfo
           pool,
           redeemQuote,
@@ -190,7 +196,12 @@ export function PoolContextProvider({ children }: PropsWithChildren) {
             _existingPool.initialLpTokensMinted === null
               ? _existingPool.initialLpTokensMinted
               : _existingPool.initialLpTokensMinted.times(10 ** 9).toString(), // Existing initialLpTokensMinted
-        });
+          timestampS:
+            _existingPool.timestampS === null
+              ? null
+              : _existingPool.timestampS.toString(), // Existing timestampS
+        };
+        const parsedPool = getParsedPool(appData, poolObj);
         if (parsedPool === undefined) return;
 
         setRefreshedPoolMap((prev) => ({
