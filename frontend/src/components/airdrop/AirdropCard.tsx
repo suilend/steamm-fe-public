@@ -5,6 +5,7 @@ import { SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import BigNumber from "bignumber.js";
 import { chunk } from "lodash";
+import { Loader2 } from "lucide-react";
 import { useLocalStorage } from "usehooks-ts";
 
 import {
@@ -24,6 +25,7 @@ import {
 } from "@suilend/sui-fe";
 import {
   showErrorToast,
+  showInfoToast,
   showSuccessToast,
   useLastSignedTransaction,
   useSettingsContext,
@@ -51,6 +53,7 @@ import doubleUpCitizenObjectIds from "@/lib/nft-collections/doubleup-citizen-obj
 import primeMachinObjectIds from "@/lib/nft-collections/prime-machin-object-ids.json";
 import rootletsObjectIds from "@/lib/nft-collections/rootlets-object-ids.json";
 import { SelectPopoverOption } from "@/lib/select";
+import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
 
 enum LastSignedTransactionType {
@@ -77,7 +80,7 @@ const getBatchTransactionGas = (transferCount: number) =>
   Math.max(0.015, 0.0016 * transferCount);
 
 export default function AirdropCard() {
-  const { suiClient } = useSettingsContext();
+  const { explorer, suiClient } = useSettingsContext();
   const { account, address, signExecuteAndWaitForTransaction } =
     useWalletContext();
   const { appData } = useLoadedAppContext();
@@ -574,6 +577,59 @@ export default function AirdropCard() {
     }
   };
 
+  // Retrieve unused funds
+  const [isRetrievingUnusedFunds, setIsRetrievingUnusedFunds] =
+    useState<boolean>(false);
+
+  const retrieveUnusedFunds = async () => {
+    try {
+      if (!account?.publicKey || !address)
+        throw new Error("Wallet not connected");
+
+      setIsRetrievingUnusedFunds(true);
+
+      // 1) Create keypair
+      let _keypair = keypair;
+      if (_keypair === undefined) {
+        console.log("[onSubmitClick] createKeypair");
+
+        _keypair = (await createKeypair(account, signPersonalMessage)).keypair;
+        setKeypair(_keypair);
+      }
+
+      // 2) Retrieve objects and unused SUI to user (if any)
+      try {
+        const { res } = await returnAllOwnedObjectsAndSuiToUser(
+          address,
+          _keypair,
+          suiClient,
+        ); // Dry run will throw if there is no gas object (i.e. if we've already returned all owned objects and SUI to user)
+        const txUrl = explorer.buildTxUrl(res.digest);
+
+        showSuccessTxnToast(
+          "Retrieved unused funds from STEAMM Airdrop wallet",
+          txUrl,
+        );
+      } catch (err) {
+        showInfoToast("No unused funds to retrieve from STEAMM Airdrop wallet");
+        console.error(err);
+      }
+
+      reset();
+    } catch (err) {
+      showErrorToast(
+        "Failed to retrieve unused funds from STEAMM Airdrop wallet",
+        err as Error,
+        undefined,
+        true,
+      );
+      console.error(err);
+    } finally {
+      setIsRetrievingUnusedFunds(false);
+      refresh();
+    }
+  };
+
   // Steps dialog
   const isStepsDialogOpen =
     isSubmitting || !!returnAllOwnedObjectsAndSuiToUserResult;
@@ -763,6 +819,20 @@ export default function AirdropCard() {
                 </p>
               </button>
             )}
+
+          <button
+            className="group flex h-8 w-full flex-col items-center justify-center rounded-md bg-border/25 transition-colors hover:bg-border/50 disabled:pointer-events-none disabled:opacity-50"
+            disabled={isRetrievingUnusedFunds}
+            onClick={retrieveUnusedFunds}
+          >
+            {isRetrievingUnusedFunds ? (
+              <Loader2 className="h-4 w-4 animate-spin text-secondary-foreground" />
+            ) : (
+              <p className="text-p3 text-tertiary-foreground transition-colors group-hover:text-secondary-foreground">
+                Retrieve unused funds (if any)
+              </p>
+            )}
+          </button>
         </div>
       </div>
     </>
