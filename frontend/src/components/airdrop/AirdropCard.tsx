@@ -18,6 +18,7 @@ import {
   formatInteger,
   formatToken,
   fundKeypair,
+  getAllOwnedObjects,
   getToken,
   isSui,
   onSign,
@@ -92,6 +93,9 @@ export default function AirdropCard() {
     useLastSignedTransaction<LastSignedTransactionType>("airdrop");
 
   const [keypair, setKeypair] = useState<Ed25519Keypair | undefined>(undefined); // Don't use `localStorage` (shouldn't put private key in localStorage)
+  const [keypairAddress, setKeypairAddress] = useLocalStorage<
+    string | undefined
+  >("airdrop-keypairAddress", undefined);
   const [fundKeypairResult, setFundKeypairResult] = useLocalStorage<
     FundKeypairResult | undefined
   >("airdrop-fundKeypairResults", undefined);
@@ -391,8 +395,13 @@ export default function AirdropCard() {
       if (_keypair === undefined) {
         console.log("[onSubmitClick] createKeypair");
 
-        _keypair = (await createKeypair(account, signPersonalMessage)).keypair;
+        const createKeypairResult = await createKeypair(
+          account,
+          signPersonalMessage,
+        );
+        _keypair = createKeypairResult.keypair;
         setKeypair(_keypair);
+        setKeypairAddress(createKeypairResult.address);
       }
 
       // 1.2) Check
@@ -577,7 +586,40 @@ export default function AirdropCard() {
     }
   };
 
-  // Retrieve unused funds
+  // Unused funds
+  const [hasUnusedFundsMap, setHasUnusedFundsMap] = useState<
+    Record<string, boolean>
+  >({});
+  const hasUnusedFunds = useMemo(
+    () => (!keypairAddress ? false : hasUnusedFundsMap[keypairAddress]),
+    [keypairAddress, hasUnusedFundsMap],
+  );
+
+  const fetchHasUnusedFunds = useCallback(async () => {
+    try {
+      const ownedObjectIds = await getAllOwnedObjects(
+        suiClient,
+        keypairAddress!,
+      );
+      const result = ownedObjectIds.length > 0;
+
+      setHasUnusedFundsMap((prev) => ({ ...prev, [keypairAddress!]: result }));
+    } catch (err) {
+      console.error(err);
+    }
+  }, [suiClient, keypairAddress]);
+
+  const hasFetchedHasUnusedFundsMapRef = useRef<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!keypairAddress) return;
+
+    if (hasFetchedHasUnusedFundsMapRef.current[keypairAddress]) return;
+    hasFetchedHasUnusedFundsMapRef.current[keypairAddress] = true;
+
+    fetchHasUnusedFunds();
+  }, [keypairAddress, fetchHasUnusedFunds]);
+
+  // Unused funds - retrieve
   const [isRetrievingUnusedFunds, setIsRetrievingUnusedFunds] =
     useState<boolean>(false);
 
@@ -597,7 +639,7 @@ export default function AirdropCard() {
         setKeypair(_keypair);
       }
 
-      // 2) Retrieve objects and unused SUI to user (if any)
+      // 2) Retrieve objects and unused SUI to user
       try {
         const { res } = await returnAllOwnedObjectsAndSuiToUser(
           address,
@@ -610,6 +652,11 @@ export default function AirdropCard() {
           "Retrieved unused funds from STEAMM Airdrop wallet",
           txUrl,
         );
+
+        setHasUnusedFundsMap((prev) => ({
+          ...prev,
+          [keypairAddress!]: false,
+        }));
       } catch (err) {
         showInfoToast("No unused funds to retrieve from STEAMM Airdrop wallet");
         console.error(err);
@@ -820,19 +867,21 @@ export default function AirdropCard() {
               </button>
             )}
 
-          <button
-            className="group flex h-8 w-full flex-col items-center justify-center rounded-md bg-border/25 transition-colors hover:bg-border/50 disabled:pointer-events-none disabled:opacity-50"
-            disabled={isRetrievingUnusedFunds}
-            onClick={retrieveUnusedFunds}
-          >
-            {isRetrievingUnusedFunds ? (
-              <Loader2 className="h-4 w-4 animate-spin text-secondary-foreground" />
-            ) : (
-              <p className="text-p3 text-tertiary-foreground transition-colors group-hover:text-secondary-foreground">
-                Retrieve unused funds (if any)
-              </p>
-            )}
-          </button>
+          {hasUnusedFunds && (
+            <button
+              className="group flex h-8 w-full flex-col items-center justify-center rounded-md bg-border/25 transition-colors hover:bg-border/50 disabled:pointer-events-none disabled:opacity-50"
+              disabled={isRetrievingUnusedFunds}
+              onClick={retrieveUnusedFunds}
+            >
+              {isRetrievingUnusedFunds ? (
+                <Loader2 className="h-4 w-4 animate-spin text-secondary-foreground" />
+              ) : (
+                <p className="text-p3 text-tertiary-foreground transition-colors group-hover:text-secondary-foreground">
+                  Retrieve unused funds
+                </p>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </>
