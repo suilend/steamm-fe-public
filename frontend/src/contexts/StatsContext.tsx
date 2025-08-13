@@ -609,7 +609,7 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
         try {
           const res = await fetch(
             `${API_URL}/steamm/historical/tvl?${new URLSearchParams({
-              period: apiPeriod,
+              // period: apiPeriod,
             })}`,
           );
           const json: {
