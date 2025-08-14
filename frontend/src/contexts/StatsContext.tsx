@@ -602,14 +602,14 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
 
   const fetchGlobalHistoricalStats = useCallback(
     async (period: ChartPeriod) => {
-      // const apiPeriod = chartPeriodApiMap[period];
+      const apiPeriod = chartPeriodApiMap[period];
 
       // TVL
       (async () => {
         try {
           const res = await fetch(
             `${API_URL}/steamm/historical/tvl?${new URLSearchParams({
-              // period: apiPeriod,
+              period: apiPeriod,
             })}`,
           );
           const json: {
@@ -655,10 +655,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       // Volume
       (async () => {
         try {
-          // const apiPeriod = chartPeriodApiMap[period];
           const res = await fetch(
             `${API_URL}/steamm/historical/volume?${new URLSearchParams({
-              period: "7d",
+              period: apiPeriod,
             })}`,
           );
           const json: {
@@ -704,10 +703,9 @@ export function StatsContextProvider({ children }: PropsWithChildren) {
       // Fees
       (async () => {
         try {
-          // const apiPeriod = chartPeriodApiMap[period];
           const res = await fetch(
             `${API_URL}/steamm/historical/fees?${new URLSearchParams({
-              period: "7d",
+              period: apiPeriod,
             })}`,
           );
           const json: {

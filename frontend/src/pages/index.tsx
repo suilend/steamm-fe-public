@@ -64,7 +64,7 @@ export default function PoolsPage() {
         queryParams[QueryParams.LHS_CHART_PERIOD],
       )
         ? queryParams[QueryParams.LHS_CHART_PERIOD]
-        : ChartPeriod.ONE_WEEK,
+        : ChartPeriod.ONE_MONTH,
     [queryParams],
   );
   const selectedRhsChartDataType = useMemo(
@@ -84,7 +84,7 @@ export default function PoolsPage() {
         queryParams[QueryParams.RHS_CHART_PERIOD],
       )
         ? queryParams[QueryParams.RHS_CHART_PERIOD]
-        : ChartPeriod.ONE_WEEK,
+        : ChartPeriod.ONE_MONTH,
     [queryParams],
   );
 
@@ -142,10 +142,6 @@ export default function PoolsPage() {
       getChartType: (dataType: string) => {
         return ChartType.LINE;
       },
-      periodOptions: [ChartPeriod.ONE_WEEK].map((period) => ({
-        id: period,
-        name: chartPeriodNameMap[period],
-      })),
       dataTypeOptions: [ChartDataType.TVL].map((dataType) => ({
         id: dataType,
         name: chartDataTypeNameMap[dataType],
@@ -172,10 +168,6 @@ export default function PoolsPage() {
       getChartType: (dataType: string) => {
         return ChartType.BAR;
       },
-      periodOptions: [ChartPeriod.ONE_WEEK].map((period) => ({
-        id: period,
-        name: chartPeriodNameMap[period],
-      })),
       dataTypeOptions: [ChartDataType.VOLUME, ChartDataType.FEES].map(
         (dataType) => ({
           id: dataType,
