@@ -711,6 +711,17 @@ export default function BankCard({ bank }: BankCardProps) {
             </button>
           </div>
         </Parameter>
+
+        {/* bToken exchange rate */}
+        <Parameter
+          label={`1 b${appData.coinMetadataMap[bank.coinType].symbol} ≈`}
+          isHorizontal
+        >
+          <p className="text-p2 text-foreground">
+            {bank.bTokenExchangeRate.toFixed(12)}{" "}
+            {appData.coinMetadataMap[bank.coinType].symbol}
+          </p>
+        </Parameter>
       </div>
     </div>
   );
