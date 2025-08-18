@@ -63,7 +63,10 @@ import { useUserContext } from "@/contexts/UserContext";
 import useCachedUsdPrices from "@/hooks/useCachedUsdPrices";
 import { useAggSdks } from "@/lib/agg-swap";
 import { rebalanceBanks } from "@/lib/banks";
-import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
+import {
+  MAX_BALANCE_SUI_SUBTRACTED_AMOUNT,
+  MAX_DEPOSITS_PER_OBLIGATION,
+} from "@/lib/constants";
 import { formatPercentInputValue, formatTextInputValue } from "@/lib/format";
 import {
   getIndexesOfObligationsWithDeposit,
@@ -506,9 +509,10 @@ function DepositTab({ onDeposit }: DepositTabProps) {
         if (obligationIndexes.length === 0)
           obligationIndexes = [
             userData.obligations.findIndex(
-              (obligation) => obligation.depositPositionCount < 5,
+              (obligation) =>
+                obligation.depositPositionCount < MAX_DEPOSITS_PER_OBLIGATION,
             ),
-          ]; // Get first obligation with less than 5 deposits (if any)
+          ]; // Get first obligation with less than MAX_DEPOSITS_PER_OBLIGATION deposits (if any)
         console.log("XXX obligationIndexes:", obligationIndexes);
 
         const { obligationOwnerCapId, didCreate } =

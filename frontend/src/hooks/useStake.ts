@@ -16,6 +16,7 @@ import {
 
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
+import { MAX_DEPOSITS_PER_OBLIGATION } from "@/lib/constants";
 import { formatPair } from "@/lib/format";
 import { getIndexesOfObligationsWithDeposit } from "@/lib/obligation";
 import { showSuccessTxnToast } from "@/lib/toasts";
@@ -64,9 +65,10 @@ const useStake = (
       if (obligationIndexes.length === 0)
         obligationIndexes = [
           userData.obligations.findIndex(
-            (obligation) => obligation.depositPositionCount < 5,
+            (obligation) =>
+              obligation.depositPositionCount < MAX_DEPOSITS_PER_OBLIGATION,
           ),
-        ]; // Get first obligation with less than 5 deposits (if any)
+        ]; // Get first obligation with less than MAX_DEPOSITS_PER_OBLIGATION deposits (if any)
       console.log("XXX obligationIndexes:", obligationIndexes);
 
       const { obligationOwnerCapId, didCreate } = createObligationIfNoneExists(
