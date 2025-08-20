@@ -8,7 +8,7 @@ import { useLoadedMarketContext } from "@/contexts/MarketContext";
 import { SUILEND_ASSETS_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-interface Token {
+export interface Token {
   id: string;
   name: string;
   symbol: string;
