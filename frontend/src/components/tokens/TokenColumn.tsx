@@ -1,11 +1,14 @@
-import { useMemo, useRef } from "react";
+import Image from "next/image";
+import { useMemo } from "react";
 
-import { ChevronDown, Search, X } from "lucide-react";
+import { Clock, Copy, Search, Star, Users } from "lucide-react";
 
-import TokenCard from "@/components/tokens/TokenCard";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useLoadedMarketContext } from "@/contexts/MarketContext";
+import { SUILEND_ASSETS_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-export interface Token {
+interface Token {
   id: string;
   name: string;
   symbol: string;
@@ -22,7 +25,7 @@ interface TokenColumnProps {
   title: string;
   tokens: Token[];
   searchString: string;
-  onSearchChange: (searchString: string) => void;
+  onSearchChange: (value: string) => void;
   showSearch?: boolean;
 }
 
@@ -33,132 +36,142 @@ export default function TokenColumn({
   onSearchChange,
   showSearch = false,
 }: TokenColumnProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const { quickBuyAmount, watchlist, setWatchlist } = useLoadedMarketContext();
 
-  // Filter tokens based on search string
   const filteredTokens = useMemo(() => {
-    if (!searchString) return tokens;
+    if (!searchString.trim()) return tokens;
 
-    return tokens.filter((token) =>
-      `${token.name}${token.symbol}${token.id}`
-        .toLowerCase()
-        .includes(searchString.toLowerCase()),
+    return tokens.filter(
+      (token) =>
+        token.name.toLowerCase().includes(searchString.toLowerCase()) ||
+        token.symbol.toLowerCase().includes(searchString.toLowerCase()),
     );
   }, [tokens, searchString]);
 
-  return (
-    <div className="flex w-full flex-col gap-4">
-      {/* Column Header */}
-      <div className="flex flex-row items-center justify-between">
-        <div className="flex flex-row items-center gap-2">
-          <h3 className="text-h3 text-foreground">{title}</h3>
-          <button className="flex flex-row items-center">
-            <ChevronDown className="h-4 w-4 text-secondary-foreground" />
-          </button>
-        </div>
-      </div>
+  const formatMarketCap = (marketCap: number) => {
+    if (marketCap >= 1000000) {
+      return `$${(marketCap / 1000000).toFixed(1)}M`;
+    }
+    return `$${(marketCap / 1000).toFixed(0)}K`;
+  };
 
-      {/* Search Input (only for certain columns) */}
-      {showSearch && (
-        <div className="flex w-full flex-col gap-3">
-          <div className="relative z-[1] h-10 rounded-md bg-card transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]">
-            <Search className="pointer-events-none absolute left-3 top-3 z-[2] h-4 w-4 text-secondary-foreground" />
-            {searchString !== "" && (
-              <button
-                className="group absolute right-1 top-1 z-[2] flex h-8 w-8 flex-row items-center justify-center"
-                onClick={() => {
-                  onSearchChange("");
-                  inputRef.current?.focus();
-                }}
-              >
-                <X className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
-              </button>
-            )}
+  const formatChange = (change: number) => {
+    const sign = change >= 0 ? "+" : "";
+    return `${sign}${change.toFixed(2)}%`;
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex flex-col gap-3">
+        <h3 className="text-h3 text-foreground">{title}</h3>
+
+        {showSearch && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary-foreground" />
             <input
-              ref={inputRef}
-              className={cn(
-                "relative z-[1] h-full w-full min-w-0 !border-0 !bg-[transparent] pl-9 text-p2 text-foreground !outline-0 placeholder:text-tertiary-foreground",
-                searchString !== "" ? "pr-9" : "pr-3",
-              )}
               type="text"
-              placeholder="Search keywords"
+              placeholder="Search tokens..."
               value={searchString}
               onChange={(e) => onSearchChange(e.target.value)}
+              className="text-sm w-full rounded-md border bg-background py-2 pl-10 pr-4 placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
             />
           </div>
-
-          {/* Filter Options */}
-          <div className="flex w-full flex-col gap-2">
-            <div className="flex flex-row items-center gap-2 text-p3 text-secondary-foreground">
-              <span>keyword1, keyword2</span>
-            </div>
-            <div className="flex flex-row items-center gap-2 text-p3 text-secondary-foreground">
-              <span>Exclude keywords</span>
-            </div>
-            <div className="flex flex-row items-center justify-between">
-              <span className="text-p3 text-secondary-foreground">Age</span>
-              <div className="flex flex-row items-center gap-2">
-                <input
-                  type="number"
-                  placeholder="Min"
-                  className="rounded w-16 border bg-background px-2 py-1 text-p3"
-                />
-                <input
-                  type="number"
-                  placeholder="Max"
-                  className="rounded w-16 border bg-background px-2 py-1 text-p3"
-                />
-              </div>
-            </div>
-            <div className="flex flex-row items-center justify-between">
-              <span className="text-p3 text-secondary-foreground">Holders</span>
-              <div className="flex flex-row items-center gap-2">
-                <input
-                  type="number"
-                  placeholder="Min"
-                  className="rounded w-16 border bg-background px-2 py-1 text-p3"
-                />
-                <input
-                  type="number"
-                  placeholder="Max"
-                  className="rounded w-16 border bg-background px-2 py-1 text-p3"
-                />
-              </div>
-            </div>
-            <div className="flex flex-row items-center justify-between">
-              <span className="text-p3 text-secondary-foreground">
-                Market cap
-              </span>
-              <div className="flex flex-row items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="$"
-                  className="rounded w-16 border bg-background px-2 py-1 text-p3"
-                />
-                <input
-                  type="text"
-                  placeholder="$"
-                  className="rounded w-16 border bg-background px-2 py-1 text-p3"
-                />
-              </div>
-            </div>
-            <div className="flex flex-row justify-between">
-              <button className="text-p3 text-secondary-foreground hover:text-foreground">
-                Reset
-              </button>
-              <button className="rounded bg-primary px-3 py-1 text-p3 text-primary-foreground">
-                Apply
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Token List */}
-      <div className="flex w-full flex-col gap-3">
-        {filteredTokens.map((token) => (
-          <TokenCard key={token.id} token={token} />
-        ))}
+      <div className="flex flex-col gap-3">
+        {filteredTokens.length === 0 ? (
+          <div className="py-8 text-center">
+            <p className="text-sm text-secondary-foreground">
+              {searchString ? "No tokens found" : "No tokens available"}
+            </p>
+          </div>
+        ) : (
+          filteredTokens.map((token) => (
+            <div
+              key={token.id}
+              className="group flex items-center gap-3 overflow-hidden rounded-md border transition-colors hover:bg-card/50"
+            >
+              {/* Token Image */}
+              <div className="flex-shrink-0 border-r border-border">
+                {token.image ? (
+                  <img
+                    src={token.image}
+                    alt={token.name}
+                    className="h-16 w-16 object-cover"
+                  />
+                ) : (
+                  <Skeleton className="h-full w-full rounded-full" />
+                )}
+              </div>
+
+              {/* Token Info */}
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                {/* Name and Icons */}
+                <div className="flex flex-row items-center gap-2">
+                  <h4 className="text-sm truncate font-medium text-foreground">
+                    {token.symbol}
+                  </h4>
+                  <button
+                    className="text-secondary-foreground transition-colors hover:text-foreground"
+                    onClick={() => {
+                      navigator.clipboard.writeText(token.id);
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </button>
+                  <button
+                    className="text-secondary-foreground transition-colors hover:text-foreground"
+                    onClick={() => {
+                      setWatchlist(token.id);
+                    }}
+                  >
+                    {watchlist.includes(token.id) ? (
+                      <Star className="h-3 w-3" fill="currentColor" />
+                    ) : (
+                      <Star className="h-3 w-3" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Stats */}
+                <div className="text-xs flex flex-row items-center gap-3 text-secondary-foreground">
+                  <span className="flex items-center gap-1">
+                    <span>
+                      <Clock size={14} />
+                    </span>
+                    <span>{token.timeAgo}</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span>
+                      <Users size={14} />
+                    </span>
+                    <span>{token.rating}</span>
+                  </span>
+                  <span>MC: {formatMarketCap(token.marketCap)}</span>
+                </div>
+              </div>
+
+              {/* Buy Button */}
+              <div className="mr-3 flex-shrink-0">
+                <button className="text-sm flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 transition-colors hover:bg-background/90">
+                  <Image
+                    src={`${SUILEND_ASSETS_URL}/Suilend.svg`}
+                    alt="Coin"
+                    width={16}
+                    height={16}
+                    className="h-4 w-4"
+                  />
+                  <span className="font-medium text-button-1">
+                    {quickBuyAmount}
+                  </span>
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

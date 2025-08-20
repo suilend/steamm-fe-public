@@ -30,7 +30,6 @@ const useNavItems = (includePools: boolean = false) => {
     ...(includePools
       ? [{ url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX }]
       : []),
-    { url: FUN_URL, title: "Fun" },
     { url: CREATE_URL, title: "Create" },
     {
       title: "Studio",
@@ -40,6 +39,7 @@ const useNavItems = (includePools: boolean = false) => {
       ],
     },
     { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
+    { url: FUN_URL, title: "Fun" },
     { url: PORTFOLIO_URL, title: "Portfolio" },
     ...(address === ADMIN_ADDRESS ? [{ url: ADMIN_URL, title: "Admin" }] : []),
     {
