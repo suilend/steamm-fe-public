@@ -5,6 +5,7 @@ import {
   ADMIN_URL,
   AIRDROP_URL,
   CREATE_URL,
+  FUN_URL,
   LEADERBOARD_URL,
   MINT_URL,
   POOL_URL_PREFIX,
@@ -29,6 +30,7 @@ const useNavItems = (includePools: boolean = false) => {
     ...(includePools
       ? [{ url: ROOT_URL, title: "Pools", startsWithUrl: POOL_URL_PREFIX }]
       : []),
+    { url: FUN_URL, title: "Fun" },
     { url: CREATE_URL, title: "Create" },
     {
       title: "Studio",
