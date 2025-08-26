@@ -358,12 +358,7 @@ export default function HistoricalDataChart({
                       // Bar container
                       <div
                         key={d.timestampS}
-                        className={cn(
-                          "group flex flex-1 flex-row justify-center",
-                          isFullWidth
-                            ? "px-[2px] sm:px-[4px]"
-                            : "px-[1px] sm:px-[2px]",
-                        )}
+                        className="group flex min-w-0 flex-1 flex-row justify-center px-[0.5px]"
                         onMouseEnter={() => onEnter(d.timestampS)}
                         onMouseLeave={() => onLeave()}
                       >

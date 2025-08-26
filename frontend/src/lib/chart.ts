@@ -20,18 +20,24 @@ export enum ChartPeriod {
   ONE_WEEK = "1W",
   ONE_MONTH = "1M",
   THREE_MONTHS = "3M",
+  SIX_MONTHS = "6M",
+  ONE_YEAR = "1Y",
 }
 export const chartPeriodNameMap: Record<ChartPeriod, string> = {
   [ChartPeriod.ONE_DAY]: "1D",
   [ChartPeriod.ONE_WEEK]: "1W",
   [ChartPeriod.ONE_MONTH]: "1M",
   [ChartPeriod.THREE_MONTHS]: "3M",
+  [ChartPeriod.SIX_MONTHS]: "6M",
+  [ChartPeriod.ONE_YEAR]: "1Y",
 };
 export const chartPeriodUnitMap: Record<ChartPeriod, string> = {
   [ChartPeriod.ONE_DAY]: "day",
   [ChartPeriod.ONE_WEEK]: "week",
   [ChartPeriod.ONE_MONTH]: "month",
   [ChartPeriod.THREE_MONTHS]: "3 months",
+  [ChartPeriod.SIX_MONTHS]: "6 months",
+  [ChartPeriod.ONE_YEAR]: "1 year",
 };
 
 export const chartPeriodApiMap: Record<ChartPeriod, string> = {
@@ -39,6 +45,8 @@ export const chartPeriodApiMap: Record<ChartPeriod, string> = {
   [ChartPeriod.ONE_WEEK]: "7d",
   [ChartPeriod.ONE_MONTH]: "30d",
   [ChartPeriod.THREE_MONTHS]: "90d",
+  [ChartPeriod.SIX_MONTHS]: "180d",
+  [ChartPeriod.ONE_YEAR]: "1y",
 };
 
 export enum ChartType {

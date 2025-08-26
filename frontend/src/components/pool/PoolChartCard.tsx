@@ -2,8 +2,6 @@ import { useMemo } from "react";
 
 import BigNumber from "bignumber.js";
 
-import { QuoterId } from "@suilend/steamm-sdk";
-
 import HistoricalDataChart from "@/components/HistoricalDataChart";
 import { usePoolContext } from "@/contexts/PoolContext";
 import { useStatsContext } from "@/contexts/StatsContext";
@@ -14,6 +12,7 @@ import {
   ChartPeriod,
   ChartType,
   chartDataTypeNameMap,
+  chartPeriodNameMap,
 } from "@/lib/chart";
 
 export default function PoolChartCard() {
@@ -28,6 +27,15 @@ export default function PoolChartCard() {
   } = usePoolContext();
 
   // Chart
+  const chartPeriods = useMemo(
+    () =>
+      Object.values(ChartPeriod).filter(
+        (period) =>
+          ![ChartPeriod.SIX_MONTHS, ChartPeriod.ONE_YEAR].includes(period),
+      ),
+    [],
+  );
+
   const chartConfig: ChartConfig = useMemo(
     () => ({
       getChartType: (dataType: string) => {
@@ -35,33 +43,37 @@ export default function PoolChartCard() {
           return ChartType.LINE;
         return ChartType.BAR;
       },
+      periodOptions: chartPeriods.map((period) => ({
+        id: period,
+        name: chartPeriodNameMap[period],
+      })),
       dataTypeOptions: Object.values(ChartDataType).map((dataType) => ({
         id: dataType,
         name: chartDataTypeNameMap[dataType],
       })),
       totalsMap: {
-        [ChartDataType.TVL]: Object.values(ChartPeriod).reduce(
+        [ChartDataType.TVL]: chartPeriods.reduce(
           (acc, period) => ({
             ...acc,
             [period]: [pool.tvlUsd],
           }),
           {} as Record<ChartPeriod, BigNumber[] | undefined>,
         ),
-        [ChartDataType.VOLUME]: Object.values(ChartPeriod).reduce(
+        [ChartDataType.VOLUME]: chartPeriods.reduce(
           (acc, period) => ({
             ...acc,
             [period]: [poolStats.volumeUsd[period][pool.id]],
           }),
           {} as Record<ChartPeriod, BigNumber[] | undefined>,
         ),
-        [ChartDataType.FEES]: Object.values(ChartPeriod).reduce(
+        [ChartDataType.FEES]: chartPeriods.reduce(
           (acc, period) => ({
             ...acc,
             [period]: [poolStats.feesUsd[period][pool.id]],
           }),
           {} as Record<ChartPeriod, BigNumber[] | undefined>,
         ),
-        [ChartDataType.LP]: Object.values(ChartPeriod).reduce(
+        [ChartDataType.LP]: chartPeriods.reduce(
           (acc, period) => ({
             ...acc,
             [period]:
@@ -76,28 +88,28 @@ export default function PoolChartCard() {
         ),
       },
       dataMap: {
-        [ChartDataType.TVL]: Object.values(ChartPeriod).reduce(
+        [ChartDataType.TVL]: chartPeriods.reduce(
           (acc, period) => ({
             ...acc,
             [period]: poolHistoricalStats.tvlUsd[period][pool.id],
           }),
           {} as Record<ChartPeriod, ChartData[] | undefined>,
         ),
-        [ChartDataType.VOLUME]: Object.values(ChartPeriod).reduce(
+        [ChartDataType.VOLUME]: chartPeriods.reduce(
           (acc, period) => ({
             ...acc,
             [period]: poolHistoricalStats.volumeUsd[period][pool.id],
           }),
           {} as Record<ChartPeriod, ChartData[] | undefined>,
         ),
-        [ChartDataType.FEES]: Object.values(ChartPeriod).reduce(
+        [ChartDataType.FEES]: chartPeriods.reduce(
           (acc, period) => ({
             ...acc,
             [period]: poolHistoricalStats.feesUsd[period][pool.id],
           }),
           {} as Record<ChartPeriod, ChartData[] | undefined>,
         ),
-        [ChartDataType.LP]: Object.values(ChartPeriod).reduce(
+        [ChartDataType.LP]: chartPeriods.reduce(
           (acc, period) => ({
             ...acc,
             [period]: poolHistoricalStats.lpUsd[period][pool.id],
@@ -106,7 +118,7 @@ export default function PoolChartCard() {
         ),
       },
     }),
-    [pool.tvlUsd, poolStats, pool.id, poolHistoricalStats],
+    [chartPeriods, pool.tvlUsd, poolStats, pool.id, poolHistoricalStats],
   );
 
   return (
