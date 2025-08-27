@@ -74,11 +74,10 @@ export default function SwapPage() {
   const activeProviders = useMemo(
     () =>
       [
-        QuoteProvider.AFTERMATH,
+        // QuoteProvider.AFTERMATH,
         QuoteProvider.CETUS,
         QuoteProvider._7K,
         QuoteProvider.FLOWX,
-        // QuoteProvider.OKX_DEX,
       ].filter(Boolean) as QuoteProvider[],
     [],
   );

@@ -119,7 +119,6 @@ function DepositTab({ onDeposit }: DepositTabProps) {
       QuoteProvider.CETUS,
       QuoteProvider._7K,
       QuoteProvider.FLOWX,
-      // QuoteProvider.OKX_DEX,
     ],
     [],
   );
