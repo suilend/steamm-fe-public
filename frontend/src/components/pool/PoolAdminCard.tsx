@@ -111,6 +111,8 @@ export default function PoolAdminCard() {
 
   const createSuilendLmReserve = async () => {
     if (address !== ADMIN_ADDRESS) return;
+    if (!appData.suilend.lmMarket.lendingMarket.ownerCapId)
+      throw new Error("Error: lendingMarket.ownerCapId not defined");
 
     try {
       setIsCreatingSuilendLmReserve(true);
