@@ -112,13 +112,20 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
           // Suilend - LM market
           (async () => {
+            const [STEAMM_LM_LENDING_MARKET_ID, STEAMM_LM_LENDING_MARKET_TYPE] =
+              process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+                ? [
+                    "0xb1d89cf9082cedce09d3647f0ebda4a8b5db125aff5d312a8bfd7eefa715bd35",
+                    "0xdeeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP",
+                  ]
+                : [
+                    "0xc1888ec1b81a414e427a44829310508352aec38252ee0daa9f8b181b6947de9f",
+                    "0x0a071f4976abae1a7f722199cf0bfcbe695ef9408a878e7d12a7ca87b7e582a6::lp_rewards::LP_REWARDS",
+                  ];
+
             const suilendClient = await SuilendClient.initialize(
-              process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-                ? "0xb1d89cf9082cedce09d3647f0ebda4a8b5db125aff5d312a8bfd7eefa715bd35" // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
-                : "0xc1888ec1b81a414e427a44829310508352aec38252ee0daa9f8b181b6947de9f",
-              process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-                ? "0xdeeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP"
-                : "0x0a071f4976abae1a7f722199cf0bfcbe695ef9408a878e7d12a7ca87b7e582a6::lp_rewards::LP_REWARDS",
+              STEAMM_LM_LENDING_MARKET_ID,
+              STEAMM_LM_LENDING_MARKET_TYPE,
               suiClient,
             );
 
@@ -130,7 +137,12 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
               activeRewardCoinTypes,
               rewardCoinMetadataMap,
-            } = await initializeSuilend(suiClient, suilendClient);
+            } = await initializeSuilend(suiClient, suilendClient, {
+              id: STEAMM_LM_LENDING_MARKET_ID,
+              type: STEAMM_LM_LENDING_MARKET_TYPE,
+              lendingMarketOwnerCapId:
+                "0x55a0f33b24e091830302726c8cfbff8cf8abd2ec1f83a4e6f4bf51c7ba3ad5ab",
+            });
 
             return {
               suilendClient,
