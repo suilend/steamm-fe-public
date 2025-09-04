@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { DynamicFieldInfo } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 import { Loader2 } from "lucide-react";
@@ -54,7 +55,9 @@ export default function BankCard({ bank }: BankCardProps) {
   const { refresh } = useUserContext();
 
   // Price
-  const price = getAvgPoolPrice(appData.pools, bank.coinType);
+  const price =
+    appData.suilend.mainMarket.reserveMap[bank.coinType]?.price ??
+    getAvgPoolPrice(appData.pools, bank.coinType);
 
   // Initialize/set target util. and util. buffer
   const [targetUtilizationPercent, setTargetUtilizationPercent] =
@@ -257,6 +260,57 @@ export default function BankCard({ bank }: BankCardProps) {
     }
   };
 
+  // Fees
+  const [bankProtocolFees, setBankProtocolFees] = useState<
+    BigNumber | null | undefined
+  >(undefined);
+
+  const fetchBankFees = useCallback(async () => {
+    const dynamicFields = (
+      await steammClient.fullClient.getDynamicFieldsByPage(bank.id)
+    ).data;
+
+    const protocolFeeField = dynamicFields.find(
+      (df) =>
+        (df as DynamicFieldInfo).name.type ===
+        "0xc04425c5585e7d0a7e49f1265983e4303180216880179cccfc894afa8afe6d50::bank::ProtocolFeeKey",
+    );
+    if (!protocolFeeField) {
+      setBankProtocolFees(null);
+      return;
+    }
+
+    const protocolFeeObj = await suiClient.getObject({
+      id: (protocolFeeField as DynamicFieldInfo).objectId,
+      options: {
+        showContent: true,
+        showType: true,
+        showOwner: true,
+        showPreviousTransaction: true,
+        showStorageRebate: true,
+      },
+    });
+
+    const value = new BigNumber(
+      (protocolFeeObj.data?.content as any).fields.value,
+    ).div(10 ** appData.coinMetadataMap[bank.coinType].decimals);
+    setBankProtocolFees(value);
+  }, [
+    steammClient.fullClient,
+    bank.id,
+    suiClient,
+    appData.coinMetadataMap,
+    bank.coinType,
+  ]);
+
+  const hasFetchedBankFeesRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (hasFetchedBankFeesRef.current) return;
+    hasFetchedBankFeesRef.current = true;
+
+    fetchBankFees();
+  }, [address, fetchBankFees]);
+
   // Rewards
   const [obligations, setObligations] = useState<
     ParsedObligation[] | undefined
@@ -367,6 +421,25 @@ export default function BankCard({ bank }: BankCardProps) {
   );
 
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
+
+  // Deposits
+  const bankDepositsMap = useMemo(() => {
+    if (obligations === undefined) return undefined;
+
+    const result: Record<string, BigNumber> = {};
+    for (let i = 0; i < obligations.length; i++) {
+      const obligation = obligations[i];
+      if (!obligation.deposits) continue;
+
+      for (const deposit of obligation.deposits) {
+        result[deposit.coinType] = (
+          result[deposit.coinType] ?? new BigNumber(0)
+        ).plus(deposit.depositedAmount);
+      }
+    }
+
+    return result;
+  }, [obligations]);
 
   return (
     <div
@@ -613,6 +686,75 @@ export default function BankCard({ bank }: BankCardProps) {
           </Parameter>
         </div>
 
+        {/* Protocol fees */}
+        <Parameter className="items-start" label="Protocol fees" isHorizontal>
+          <div className="flex flex-col items-end gap-1.5">
+            {bankProtocolFees === undefined ? (
+              <Skeleton className="h-[21px] w-16" />
+            ) : (
+              <div className="flex flex-row items-center gap-2">
+                <Tooltip
+                  title={
+                    bankProtocolFees !== null
+                      ? `${formatToken(bankProtocolFees, {
+                          dp: appData.coinMetadataMap[bank.coinType].decimals,
+                        })} ${appData.coinMetadataMap[bank.coinType].symbol}`
+                      : undefined
+                  }
+                >
+                  <p className="text-p2 text-foreground">
+                    {bankProtocolFees !== null ? (
+                      <>
+                        {formatToken(bankProtocolFees, { exact: false })}{" "}
+                        {appData.coinMetadataMap[bank.coinType].symbol}
+                      </>
+                    ) : (
+                      "--"
+                    )}
+                  </p>
+                </Tooltip>
+
+                {price === undefined ? (
+                  <Skeleton className="h-[21px] w-12" />
+                ) : (
+                  <Tooltip
+                    title={
+                      bankProtocolFees !== null
+                        ? formatUsd(bankProtocolFees.times(price), {
+                            exact: true,
+                          })
+                        : undefined
+                    }
+                  >
+                    <p className="text-p2 text-secondary-foreground">
+                      {bankProtocolFees !== null
+                        ? formatUsd(bankProtocolFees.times(price))
+                        : "--"}
+                    </p>
+                  </Tooltip>
+                )}
+              </div>
+            )}
+
+            {/* <button
+              className="group flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
+              disabled={
+                bankClaimableRewardsMap === undefined ||
+                Object.keys(bankClaimableRewardsMap).length === 0 ||
+                isClaiming ||
+                true // TODO
+              }
+              onClick={undefined}
+            >
+              {isClaiming ? (
+                <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
+              ) : (
+                <p className="text-p3 text-button-2-foreground">Claim</p>
+              )}
+            </button> */}
+          </div>
+        </Parameter>
+
         {/* Rewards */}
         <Parameter className="items-start" label="Rewards" isHorizontal>
           <div className="flex flex-col items-end gap-1.5">
@@ -710,6 +852,58 @@ export default function BankCard({ bank }: BankCardProps) {
               )}
             </button>
           </div>
+        </Parameter>
+
+        {/* Deposits */}
+        <Parameter className="items-start" label="Deposits" isHorizontal>
+          {bankDepositsMap === undefined ? (
+            <Skeleton className="h-[21px] w-16" />
+          ) : Object.keys(bankDepositsMap).length > 0 ? (
+            <Tooltip
+              content={
+                <div className="flex flex-col gap-1">
+                  {Object.entries(bankDepositsMap).map(([coinType, amount]) => (
+                    <div
+                      key={coinType}
+                      className="flex flex-row items-center gap-2"
+                    >
+                      <TokenLogo
+                        token={getToken(
+                          coinType,
+                          appData.coinMetadataMap[coinType],
+                        )}
+                        size={16}
+                      />
+                      <p className="text-p2 text-foreground">
+                        {formatToken(amount, {
+                          dp: appData.coinMetadataMap[coinType].decimals,
+                        })}{" "}
+                        {appData.coinMetadataMap[coinType].symbol}
+                      </p>
+
+                      <p className="text-p2 text-secondary-foreground">
+                        {formatUsd(
+                          amount.times(
+                            appData.suilend.mainMarket.reserveMap[coinType]
+                              .price,
+                          ),
+                        )}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              }
+            >
+              <div className="flex h-[21px] w-max flex-row items-center">
+                <TokenLogos
+                  coinTypes={Object.keys(bankDepositsMap)}
+                  size={16}
+                />
+              </div>
+            </Tooltip>
+          ) : (
+            <p className="text-p2 text-foreground">--</p>
+          )}
         </Parameter>
 
         {/* bToken exchange rate */}
