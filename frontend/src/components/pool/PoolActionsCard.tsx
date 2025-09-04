@@ -392,6 +392,12 @@ function DepositTab({ onDeposit }: DepositTabProps) {
           [BigInt(indexSwapAmountIn)],
         );
 
+        console.log('verf indexCoinType', indexCoinType);
+        console.log('verf nonIndexCoinType', nonIndexCoinType);
+        console.log('verf indexSwapAmountIn', indexSwapAmountIn);
+        console.log('verf indexCoinMetadata', indexCoinMetadata);
+        console.log('verf nonIndexCoinMetadata', nonIndexCoinMetadata);
+
         const swapQuotes = await getAggSortedQuotesAll(
           sdkMap,
           activeProviders,

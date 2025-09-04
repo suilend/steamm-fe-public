@@ -58,7 +58,7 @@ export default function TokenCard({ token }: TokenCardProps) {
           <span>{token.timeAgo}</span>
           <div className="flex flex-row items-center gap-1">
             <span>👥</span>
-            <span>{token.rating}</span>
+            <span>{token.holders}</span>
           </div>
           <span>MC: {formatMarketCap(token.marketCap)}</span>
         </div>

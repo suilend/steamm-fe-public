@@ -61,6 +61,11 @@ module.exports = {
       lg: "12px",
       full: "calc(infinity * 1px)",
     },
+    extend: {
+      animation: {
+        "spin-slow": "spin 3s linear infinite",
+      },
+    },
   },
   plugins: [require("tailwindcss-animate")],
 };

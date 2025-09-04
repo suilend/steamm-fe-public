@@ -101,7 +101,7 @@ export default function useFetchMarketData() {
     // Convert coin details to TrendingCoin format for compatibility
     const trendingCoins: TrendingCoin[] = coinDetailsData.successful.map(
       (detail) => ({
-        coin_type: detail.data.coin.coin_type,
+        coinType: detail.data.coin.coin_type,
         name: detail.data.coin.name,
         symbol: detail.data.coin.symbol,
         logo: detail.data.coin.logo || "",
@@ -119,7 +119,7 @@ export default function useFetchMarketData() {
         volume_6h: "0", // Not available in coin-detail API
         volume_4h: "0", // Not available in coin-detail API
         volume_30m: "0", // Not available in coin-detail API
-        maker_24h: detail.data.coin.holders || 0, // Use holders count as maker count
+        holders: detail.data.coin.holders || 0, // Use holders count as maker count
         market_cap: detail.data.coin.market_cap || "0",
         liquidity_usd: detail.data.coin.liquidity || "0",
         circulating_supply: detail.data.coin.circulating_supply || "0",
@@ -128,6 +128,8 @@ export default function useFetchMarketData() {
         verified: detail.data.coin.verified,
         rank: detail.data.rank || undefined,
         decimals: detail.data.coin.decimals || 9,
+        description: detail.data.coin.description || "",
+        topTenHolders: detail.data.security?.top_10_holders || 0,
       }),
     );
 

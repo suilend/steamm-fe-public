@@ -25,9 +25,11 @@ import {
 import { SelectPopoverOption } from "@/lib/select";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useLoadedMarketContext } from "@/contexts/MarketContext";
 
 export default function SearchDialog() {
   const { appData, recentPoolIds } = useLoadedAppContext();
+  const { marketData } = useLoadedMarketContext();
   const { poolStats } = useStatsContext();
   const router = useRouter();
 

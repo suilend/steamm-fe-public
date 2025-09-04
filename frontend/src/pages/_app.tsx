@@ -106,8 +106,8 @@ export default function App({ Component, pageProps }: AppProps) {
           <SettingsContextProvider>
             <WalletContextProviderWrapper>
               <AppContextProvider>
-                <MarketContextProvider>
                   <UserContextProvider>
+                  <MarketContextProvider>
                     <StatsContextProvider>
                       <PoolPositionsContextProvider>
                         <TooltipProvider>
@@ -118,8 +118,8 @@ export default function App({ Component, pageProps }: AppProps) {
                         </TooltipProvider>
                       </PoolPositionsContextProvider>
                     </StatsContextProvider>
+                    </MarketContextProvider>
                   </UserContextProvider>
-                </MarketContextProvider>
               </AppContextProvider>
             </WalletContextProviderWrapper>
           </SettingsContextProvider>
