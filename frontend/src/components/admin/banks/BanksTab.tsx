@@ -65,8 +65,6 @@ export default function BanksTab() {
         return;
       }
 
-      console.log("xxxx", bank.id);
-
       const dynamicFields = (
         await steammClient.fullClient.getDynamicFieldsByPage(bank.id)
       ).data;

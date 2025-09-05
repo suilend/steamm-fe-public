@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
-import { DynamicFieldInfo } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
@@ -31,6 +30,7 @@ import {
   useWalletContext,
 } from "@suilend/sui-fe-next";
 
+import Divider from "@/components/Divider";
 import Parameter from "@/components/Parameter";
 import PercentInput from "@/components/PercentInput";
 import Tag from "@/components/Tag";
@@ -456,7 +456,11 @@ export default function BankCard({
       }),
     );
 
-    return result;
+    const sortedResult = Object.fromEntries(
+      Object.entries(result).sort((a, b) => (a[0] < b[0] ? 1 : -1)),
+    );
+
+    return sortedResult;
   }, [
     obligation,
     appData.suilend.mainMarket.reserveMap,
@@ -510,19 +514,46 @@ export default function BankCard({
   };
 
   // Deposits
-  const bankDepositsMap = useMemo(() => {
-    if (obligation === undefined) return undefined;
-    if (obligation === null) return {};
+  const [bankAutoclaimedRewardsMap, bankDepositsMap] = useMemo(() => {
+    if (obligation === undefined) return [undefined, undefined];
+    if (obligation === null) return [{}, {}];
 
-    const result: Record<string, BigNumber> = {};
+    const autoclaimedRewardsResult: Record<string, { amount: BigNumber }> = {};
+    const depositsResult: Record<string, BigNumber> = {};
+
     for (const deposit of obligation.deposits) {
-      result[deposit.coinType] = (
-        result[deposit.coinType] ?? new BigNumber(0)
-      ).plus(deposit.depositedAmount);
+      if (bank.coinType !== deposit.coinType)
+        autoclaimedRewardsResult[deposit.coinType] = {
+          amount: deposit.depositedAmount,
+        };
+      else {
+        const x = deposit.depositedCtokenAmount;
+        const y = new BigNumber(bank.bank.lending?.ctokens.toString() || 0);
+        const autoclaimedCtokenAmount = x.minus(y);
+
+        if (autoclaimedCtokenAmount.gt(0)) {
+          autoclaimedRewardsResult[deposit.coinType] = {
+            amount: deposit.depositedAmount.times(
+              autoclaimedCtokenAmount.div(x),
+            ),
+          };
+          depositsResult[deposit.coinType] = deposit.depositedAmount.times(
+            y.div(x),
+          );
+        } else {
+          depositsResult[deposit.coinType] = deposit.depositedAmount;
+        }
+      }
     }
 
-    return result;
-  }, [obligation]);
+    const sortedAutoclaimedRewardsResult = Object.fromEntries(
+      Object.entries(autoclaimedRewardsResult).sort((a, b) =>
+        a[0] < b[0] ? 1 : -1,
+      ),
+    );
+
+    return [sortedAutoclaimedRewardsResult, depositsResult];
+  }, [obligation, bank.coinType, bank.bank.lending?.ctokens]);
 
   return (
     <div
@@ -856,61 +887,90 @@ export default function BankCard({
         {/* Rewards */}
         <Parameter className="items-start" label="Rewards" isHorizontal>
           <div className="flex flex-col items-end gap-1.5">
-            {bankRewardsMap === undefined ? (
+            {bankRewardsMap === undefined ||
+            bankAutoclaimedRewardsMap === undefined ? (
               <Skeleton className="h-[21px] w-16" />
-            ) : Object.keys(bankRewardsMap).length > 0 ? (
+            ) : Object.keys(bankRewardsMap).length > 0 ||
+              Object.keys(bankAutoclaimedRewardsMap).length > 0 ? (
               <Tooltip
                 content={
-                  <div className="flex flex-col gap-1">
-                    {Object.entries(bankRewardsMap).map(
-                      ([coinType, { amount }]) => (
-                        <div
-                          key={coinType}
-                          className="flex flex-row items-center gap-2"
-                        >
-                          <TokenLogo
-                            token={getToken(
-                              coinType,
-                              appData.coinMetadataMap[coinType],
-                            )}
-                            size={16}
-                          />
-                          <p className="text-p2 text-foreground">
-                            {isSendPoints(coinType) || isSteammPoints(coinType)
-                              ? formatPoints(amount, {
-                                  dp: appData.coinMetadataMap[coinType]
-                                    .decimals,
-                                })
-                              : formatToken(amount, {
-                                  dp: appData.coinMetadataMap[coinType]
-                                    .decimals,
-                                })}{" "}
-                            {appData.coinMetadataMap[coinType].symbol}
+                  <div className="flex flex-col gap-2">
+                    {[
+                      Object.entries(bankRewardsMap),
+                      ...(Object.entries(bankAutoclaimedRewardsMap).length > 0
+                        ? [Object.entries(bankAutoclaimedRewardsMap)]
+                        : []),
+                    ].map((entries, index, arr) => (
+                      <Fragment key={index}>
+                        <div className="flex flex-col gap-1">
+                          <p className="text-p2 text-secondary-foreground">
+                            {index === 0
+                              ? "Unclaimed rewards"
+                              : "Autoclaimed rewards"}
                           </p>
-
-                          {!isSendPoints(coinType) &&
-                            !isSteammPoints(coinType) && (
-                              <p className="text-p2 text-secondary-foreground">
-                                {formatUsd(
-                                  amount.times(
-                                    appData.suilend.mainMarket.rewardPriceMap[
-                                      coinType
-                                    ] ?? 0,
-                                  ),
+                          {entries.map(([coinType, { amount }]) => (
+                            <div
+                              key={coinType}
+                              className="flex flex-row items-center gap-2"
+                            >
+                              <TokenLogo
+                                token={getToken(
+                                  coinType,
+                                  appData.coinMetadataMap[coinType],
                                 )}
+                                size={16}
+                              />
+                              <p className="text-p2 text-foreground">
+                                {isSendPoints(coinType) ||
+                                isSteammPoints(coinType)
+                                  ? formatPoints(amount, {
+                                      dp: appData.coinMetadataMap[coinType]
+                                        .decimals,
+                                    })
+                                  : formatToken(amount, {
+                                      dp: appData.coinMetadataMap[coinType]
+                                        .decimals,
+                                    })}{" "}
+                                {appData.coinMetadataMap[coinType].symbol}
                               </p>
-                            )}
+
+                              {!isSendPoints(coinType) &&
+                                !isSteammPoints(coinType) && (
+                                  <p className="text-p2 text-secondary-foreground">
+                                    {formatUsd(
+                                      amount.times(
+                                        appData.suilend.mainMarket
+                                          .rewardPriceMap[coinType] ?? 0,
+                                      ),
+                                    )}
+                                  </p>
+                                )}
+                            </div>
+                          ))}
                         </div>
-                      ),
-                    )}
+
+                        {index !== arr.length - 1 && <Divider />}
+                      </Fragment>
+                    ))}
                   </div>
                 }
               >
-                <div className="flex h-[21px] w-max flex-row items-center">
+                <div className="flex h-[21px] w-max flex-row items-center gap-2">
                   <TokenLogos
                     coinTypes={Object.keys(bankRewardsMap)}
                     size={16}
                   />
+
+                  {Object.keys(bankAutoclaimedRewardsMap).length > 0 && (
+                    <>
+                      <div className="h-4 w-px bg-border" />
+
+                      <TokenLogos
+                        coinTypes={Object.keys(bankAutoclaimedRewardsMap)}
+                        size={16}
+                      />
+                    </>
+                  )}
                 </div>
               </Tooltip>
             ) : (
@@ -933,58 +993,6 @@ export default function BankCard({
               )}
             </button>
           </div>
-        </Parameter>
-
-        {/* Deposits */}
-        <Parameter className="items-start" label="Deposits" isHorizontal>
-          {bankDepositsMap === undefined ? (
-            <Skeleton className="h-[21px] w-16" />
-          ) : Object.keys(bankDepositsMap).length > 0 ? (
-            <Tooltip
-              content={
-                <div className="flex flex-col gap-1">
-                  {Object.entries(bankDepositsMap).map(([coinType, amount]) => (
-                    <div
-                      key={coinType}
-                      className="flex flex-row items-center gap-2"
-                    >
-                      <TokenLogo
-                        token={getToken(
-                          coinType,
-                          appData.coinMetadataMap[coinType],
-                        )}
-                        size={16}
-                      />
-                      <p className="text-p2 text-foreground">
-                        {formatToken(amount, {
-                          dp: appData.coinMetadataMap[coinType].decimals,
-                        })}{" "}
-                        {appData.coinMetadataMap[coinType].symbol}
-                      </p>
-
-                      <p className="text-p2 text-secondary-foreground">
-                        {formatUsd(
-                          amount.times(
-                            appData.suilend.mainMarket.reserveMap[coinType]
-                              .price,
-                          ),
-                        )}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              }
-            >
-              <div className="flex h-[21px] w-max flex-row items-center">
-                <TokenLogos
-                  coinTypes={Object.keys(bankDepositsMap)}
-                  size={16}
-                />
-              </div>
-            </Tooltip>
-          ) : (
-            <p className="text-p2 text-foreground">--</p>
-          )}
         </Parameter>
 
         {/* bToken exchange rate */}
