@@ -2,18 +2,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DynamicFieldInfo } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
+import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 import { Loader2 } from "lucide-react";
 
 import {
   ParsedObligation,
-  Side,
+  RewardsMap,
   SuilendClient,
   formatRewards,
   parseObligation,
 } from "@suilend/sdk";
 import * as simulate from "@suilend/sdk/utils/simulate";
 import { ADMIN_ADDRESS, ParsedBank } from "@suilend/steamm-sdk";
+import { PUBLISHED_AT } from "@suilend/steamm-sdk/_codegen/_generated/steamm";
 import {
   formatPercent,
   formatPoints,
@@ -21,6 +23,7 @@ import {
   formatUsd,
   getToken,
   isSendPoints,
+  isSteammPoints,
 } from "@suilend/sui-fe";
 import {
   showErrorToast,
@@ -53,6 +56,51 @@ export default function BankCard({ bank }: BankCardProps) {
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { refresh } = useUserContext();
+
+  // Obligation
+  const [obligation, setObligation] = useState<ParsedObligation | undefined>(
+    undefined,
+  );
+
+  useEffect(() => {
+    (async () => {
+      const obligationId = bank.bank.lending?.obligationCap.obligationId;
+      if (!obligationId) {
+        setObligation(undefined);
+        return;
+      }
+
+      const obligation_ = (
+        await Promise.all([
+          SuilendClient.getObligation(
+            obligationId,
+            appData.suilend.mainMarket.suilendClient.lendingMarket.$typeArgs,
+            suiClient,
+          ),
+        ])
+      )
+        .map((rawObligation) =>
+          simulate.refreshObligation(
+            rawObligation,
+            appData.suilend.mainMarket.refreshedRawReserves,
+          ),
+        )
+        .map((refreshedObligation) =>
+          parseObligation(
+            refreshedObligation,
+            appData.suilend.mainMarket.reserveMap,
+          ),
+        )[0];
+
+      setObligation(obligation_);
+    })();
+  }, [
+    bank.bank.lending,
+    appData.suilend.mainMarket.suilendClient.lendingMarket.$typeArgs,
+    suiClient,
+    appData.suilend.mainMarket.refreshedRawReserves,
+    appData.suilend.mainMarket.reserveMap,
+  ]);
 
   // Price
   const price =
@@ -260,12 +308,12 @@ export default function BankCard({ bank }: BankCardProps) {
     }
   };
 
-  // Fees
+  // Protocol fees
   const [bankProtocolFees, setBankProtocolFees] = useState<
     BigNumber | null | undefined
   >(undefined);
 
-  const fetchBankFees = useCallback(async () => {
+  const fetchBankProtocolFees = useCallback(async () => {
     const dynamicFields = (
       await steammClient.fullClient.getDynamicFieldsByPage(bank.id)
     ).data;
@@ -303,143 +351,212 @@ export default function BankCard({ bank }: BankCardProps) {
     bank.coinType,
   ]);
 
-  const hasFetchedBankFeesRef = useRef<boolean>(false);
+  const hasFetchedBankProtocolFeesRef = useRef<boolean>(false);
   useEffect(() => {
-    if (hasFetchedBankFeesRef.current) return;
-    hasFetchedBankFeesRef.current = true;
+    if (hasFetchedBankProtocolFeesRef.current) return;
+    hasFetchedBankProtocolFeesRef.current = true;
 
-    fetchBankFees();
-  }, [address, fetchBankFees]);
+    fetchBankProtocolFees();
+  }, [address, fetchBankProtocolFees]);
 
-  // Rewards
-  const [obligations, setObligations] = useState<
-    ParsedObligation[] | undefined
-  >(undefined);
+  // Protocol fees - crank pools
+  const [isCrankingPools, setIsCrankingPools] = useState<boolean>(false);
 
-  useEffect(() => {
-    (async () => {
-      const obligationId = bank.bank.lending?.obligationCap.obligationId;
-      if (!obligationId) {
-        setObligations([]);
-        return;
+  const crankPools = async () => {
+    const pools = appData.pools.filter((p) =>
+      p.coinTypes.includes(bank.coinType),
+    );
+
+    try {
+      setIsCrankingPools(true);
+
+      const transaction = new Transaction();
+
+      for (const pool of pools) {
+        transaction.moveCall({
+          target: `${PUBLISHED_AT}::fee_crank::crank_fees`,
+          typeArguments: [
+            appData.bankMap[pool.coinTypes[0]].bankInfo.lendingMarketType,
+            pool.coinTypes[0],
+            pool.coinTypes[1],
+            pool.poolInfo.quoterType,
+            pool.lpTokenType,
+            pool.bTokenTypes[0],
+            pool.bTokenTypes[1],
+          ],
+          arguments: [
+            transaction.object(pool.id),
+            transaction.object(appData.bankMap[pool.coinTypes[0]].id),
+            transaction.object(appData.bankMap[pool.coinTypes[1]].id),
+          ],
+        });
       }
 
-      const obligations_ = (
-        await Promise.all([
-          SuilendClient.getObligation(
-            obligationId,
-            appData.suilend.mainMarket.suilendClient.lendingMarket.$typeArgs,
-            suiClient,
-          ),
-        ])
-      )
-        .map((rawObligation) =>
-          simulate.refreshObligation(
-            rawObligation,
-            appData.suilend.mainMarket.refreshedRawReserves,
-          ),
-        )
-        .map((refreshedObligation) =>
-          parseObligation(
-            refreshedObligation,
-            appData.suilend.mainMarket.reserveMap,
-          ),
-        )
-        .sort((a, b) => +b.netValueUsd.minus(a.netValueUsd));
+      const res = await signExecuteAndWaitForTransaction(transaction);
+      const txUrl = explorer.buildTxUrl(res.digest);
 
-      setObligations(obligations_);
-    })();
-  }, [
-    bank.bank.lending,
-    appData.suilend.mainMarket.suilendClient.lendingMarket.$typeArgs,
-    suiClient,
-    appData.suilend.mainMarket.refreshedRawReserves,
-    appData.suilend.mainMarket.reserveMap,
-  ]);
+      showSuccessTxnToast(
+        `Cranked ${pools.length} pool${pools.length > 1 ? "s" : ""}`,
+        txUrl,
+      );
+    } catch (err) {
+      showErrorToast("Failed to crank pools", err as Error, undefined, true);
+      console.error(err);
+    } finally {
+      setIsCrankingPools(false);
+      fetchBankProtocolFees();
+    }
+  };
 
-  const bankRewardMap: Record<string, BigNumber> | undefined = useMemo(() => {
-    if (obligations === undefined) return undefined;
+  // Protocol fees - claim
+  const [isClaimingProtocolFees, setIsClaimingProtocolFees] =
+    useState<boolean>(false);
+
+  const claimProtocolFees = async () => {
+    try {
+      setIsClaimingProtocolFees(true);
+
+      const transaction = new Transaction();
+
+      transaction.moveCall({
+        target: `${PUBLISHED_AT}::bank::claim_fees`,
+        typeArguments: [
+          bank.bankInfo.lendingMarketType,
+          bank.coinType,
+          bank.bTokenType,
+        ],
+        arguments: [
+          transaction.object(bank.id),
+          transaction.object(bank.bankInfo.lendingMarketId),
+          // transaction.object(bank.bankInfo), // REGISTRY
+          transaction.object(SUI_CLOCK_OBJECT_ID),
+        ],
+      });
+
+      const res = await signExecuteAndWaitForTransaction(transaction);
+      const txUrl = explorer.buildTxUrl(res.digest);
+
+      showSuccessTxnToast("Claimed protocol fees", txUrl);
+    } catch (err) {
+      showErrorToast(
+        "Failed to claim protocol fees",
+        err as Error,
+        undefined,
+        true,
+      );
+      console.error(err);
+    } finally {
+      setIsClaimingProtocolFees(false);
+      fetchBankProtocolFees();
+    }
+  };
+
+  // Rewards
+  const bankRewardsMap: RewardsMap | undefined = useMemo(() => {
+    if (obligation === undefined) return undefined;
 
     const rewardMap = formatRewards(
       appData.suilend.mainMarket.reserveMap,
       appData.suilend.mainMarket.rewardCoinMetadataMap,
       appData.suilend.mainMarket.rewardPriceMap,
-      obligations,
+      [obligation],
     );
 
-    return (rewardMap[bank.coinType]?.[Side.DEPOSIT] ?? []).reduce(
-      (acc, r) => {
-        for (let i = 0; i < obligations.length; i++) {
-          const obligation = obligations[i];
+    const result: RewardsMap = {};
 
-          const minAmount = 10 ** (-1 * r.stats.mintDecimals);
-          if (
-            !r.obligationClaims[obligation.id] ||
-            r.obligationClaims[obligation.id].claimableAmount.lt(minAmount) // This also covers the 0 case
-          )
-            continue;
+    Object.values(rewardMap).flatMap((rewards) =>
+      [...rewards.deposit, ...rewards.borrow].forEach((r) => {
+        if (!r.obligationClaims[obligation.id]) return;
+        if (r.obligationClaims[obligation.id].claimableAmount.eq(0)) return;
 
-          acc[r.stats.rewardCoinType] = new BigNumber(
-            acc[r.stats.rewardCoinType] ?? 0,
-          ).plus(r.obligationClaims[obligation.id].claimableAmount);
-        }
+        const minAmount = 10 ** (-1 * r.stats.mintDecimals);
+        if (r.obligationClaims[obligation.id].claimableAmount.lt(minAmount))
+          return;
 
-        return acc;
-      },
-      {} as Record<string, BigNumber>,
+        if (!result[r.stats.rewardCoinType])
+          result[r.stats.rewardCoinType] = {
+            amount: new BigNumber(0),
+            rawAmount: new BigNumber(0),
+            rewards: [],
+          };
+        result[r.stats.rewardCoinType].amount = result[
+          r.stats.rewardCoinType
+        ].amount.plus(r.obligationClaims[obligation.id].claimableAmount);
+        result[r.stats.rewardCoinType].rawAmount = result[
+          r.stats.rewardCoinType
+        ].amount
+          .times(10 ** appData.coinMetadataMap[r.stats.rewardCoinType].decimals)
+          .integerValue(BigNumber.ROUND_DOWN);
+        result[r.stats.rewardCoinType].rewards.push(r);
+      }),
     );
+
+    return result;
   }, [
-    obligations,
+    obligation,
     appData.suilend.mainMarket.reserveMap,
     appData.suilend.mainMarket.rewardCoinMetadataMap,
     appData.suilend.mainMarket.rewardPriceMap,
-    bank.coinType,
+    appData.coinMetadataMap,
   ]);
 
-  const bankClaimableRewardsMap: Record<string, BigNumber> | undefined =
-    useMemo(
-      () =>
-        bankRewardMap === undefined
-          ? undefined
-          : Object.fromEntries(
-              Object.entries(bankRewardMap).filter(
-                ([coinType, amount]) => !isSendPoints(coinType),
-              ),
-            ),
-      [bankRewardMap],
-    );
-  const bankPointsMap: Record<string, BigNumber> | undefined = useMemo(
-    () =>
-      bankRewardMap === undefined
-        ? undefined
-        : Object.fromEntries(
-            Object.entries(bankRewardMap).filter(([coinType, amount]) =>
-              isSendPoints(coinType),
-            ),
-          ),
-    [bankRewardMap],
-  );
+  const [isClaimingRewards, setIsClaimingRewards] = useState<boolean>(false);
 
-  const [isClaiming, setIsClaiming] = useState<boolean>(false);
+  const claimRewards = async () => {
+    if (bankRewardsMap === undefined) return;
+
+    try {
+      setIsClaimingRewards(true);
+
+      const transaction = new Transaction();
+
+      for (const [coinType, { rewards }] of Object.entries(bankRewardsMap)) {
+        for (const reward of rewards) {
+          transaction.moveCall({
+            target: `${PUBLISHED_AT}::bank::claim_rewards`,
+            typeArguments: [
+              bank.bankInfo.lendingMarketType,
+              bank.coinType,
+              bank.bTokenType,
+              coinType,
+            ],
+            arguments: [
+              transaction.object(bank.id),
+              transaction.object(bank.bankInfo.lendingMarketId),
+              // transaction.object(bank.bankInfo), // REGISTRY
+              transaction.pure.u64(reward.stats.rewardIndex),
+              transaction.object(SUI_CLOCK_OBJECT_ID),
+            ],
+          });
+        }
+      }
+
+      const res = await signExecuteAndWaitForTransaction(transaction);
+      const txUrl = explorer.buildTxUrl(res.digest);
+
+      showSuccessTxnToast("Claimed rewards", txUrl);
+    } catch (err) {
+      showErrorToast("Failed to claim rewards", err as Error, undefined, true);
+      console.error(err);
+    } finally {
+      setIsClaimingRewards(false);
+      refresh();
+    }
+  };
 
   // Deposits
   const bankDepositsMap = useMemo(() => {
-    if (obligations === undefined) return undefined;
+    if (obligation === undefined) return undefined;
 
     const result: Record<string, BigNumber> = {};
-    for (let i = 0; i < obligations.length; i++) {
-      const obligation = obligations[i];
-      if (!obligation.deposits) continue;
-
-      for (const deposit of obligation.deposits) {
-        result[deposit.coinType] = (
-          result[deposit.coinType] ?? new BigNumber(0)
-        ).plus(deposit.depositedAmount);
-      }
+    for (const deposit of obligation.deposits) {
+      result[deposit.coinType] = (
+        result[deposit.coinType] ?? new BigNumber(0)
+      ).plus(deposit.depositedAmount);
     }
 
     return result;
-  }, [obligations]);
+  }, [obligation]);
 
   return (
     <div
@@ -736,58 +853,52 @@ export default function BankCard({ bank }: BankCardProps) {
               </div>
             )}
 
-            {/* <button
-              className="group flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
-              disabled={
-                bankClaimableRewardsMap === undefined ||
-                Object.keys(bankClaimableRewardsMap).length === 0 ||
-                isClaiming ||
-                true // TODO
-              }
-              onClick={undefined}
-            >
-              {isClaiming ? (
-                <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
-              ) : (
-                <p className="text-p3 text-button-2-foreground">Claim</p>
-              )}
-            </button> */}
+            <div className="flex flex-row items-center gap-2">
+              <button
+                className="group flex h-6 w-[81px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
+                disabled={isCrankingPools}
+                onClick={crankPools}
+              >
+                {isCrankingPools ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
+                ) : (
+                  <p className="text-p3 text-button-2-foreground">
+                    Crank pools
+                  </p>
+                )}
+              </button>
+
+              <button
+                className="group flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
+                disabled={
+                  bankProtocolFees === undefined ||
+                  bankProtocolFees === null ||
+                  bankProtocolFees.eq(0) ||
+                  isClaimingProtocolFees
+                }
+                onClick={claimProtocolFees}
+              >
+                {isClaimingProtocolFees ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
+                ) : (
+                  <p className="text-p3 text-button-2-foreground">Claim</p>
+                )}
+              </button>
+            </div>
           </div>
         </Parameter>
 
         {/* Rewards */}
         <Parameter className="items-start" label="Rewards" isHorizontal>
           <div className="flex flex-col items-end gap-1.5">
-            {bankClaimableRewardsMap === undefined ||
-            bankPointsMap === undefined ? (
+            {bankRewardsMap === undefined ? (
               <Skeleton className="h-[21px] w-16" />
-            ) : Object.keys(bankClaimableRewardsMap).length > 0 ||
-              Object.keys(bankPointsMap).length > 0 ? (
+            ) : Object.keys(bankRewardsMap).length > 0 ? (
               <Tooltip
                 content={
                   <div className="flex flex-col gap-1">
-                    {Object.entries(bankPointsMap).map(([coinType, amount]) => (
-                      <div
-                        key={coinType}
-                        className="flex flex-row items-center gap-2"
-                      >
-                        <TokenLogo
-                          token={getToken(
-                            coinType,
-                            appData.coinMetadataMap[coinType],
-                          )}
-                          size={16}
-                        />
-                        <p className="text-p2 text-foreground">
-                          {formatPoints(amount, {
-                            dp: appData.coinMetadataMap[coinType].decimals,
-                          })}{" "}
-                          {appData.coinMetadataMap[coinType].symbol}
-                        </p>
-                      </div>
-                    ))}
-                    {Object.entries(bankClaimableRewardsMap).map(
-                      ([coinType, amount]) => (
+                    {Object.entries(bankRewardsMap).map(
+                      ([coinType, { amount }]) => (
                         <div
                           key={coinType}
                           className="flex flex-row items-center gap-2"
@@ -800,21 +911,30 @@ export default function BankCard({ bank }: BankCardProps) {
                             size={16}
                           />
                           <p className="text-p2 text-foreground">
-                            {formatToken(amount, {
-                              dp: appData.coinMetadataMap[coinType].decimals,
-                            })}{" "}
+                            {isSendPoints(coinType) || isSteammPoints(coinType)
+                              ? formatPoints(amount, {
+                                  dp: appData.coinMetadataMap[coinType]
+                                    .decimals,
+                                })
+                              : formatToken(amount, {
+                                  dp: appData.coinMetadataMap[coinType]
+                                    .decimals,
+                                })}{" "}
                             {appData.coinMetadataMap[coinType].symbol}
                           </p>
 
-                          <p className="text-p2 text-secondary-foreground">
-                            {formatUsd(
-                              amount.times(
-                                appData.suilend.mainMarket.rewardPriceMap[
-                                  coinType
-                                ] ?? 0,
-                              ),
+                          {!isSendPoints(coinType) &&
+                            !isSteammPoints(coinType) && (
+                              <p className="text-p2 text-secondary-foreground">
+                                {formatUsd(
+                                  amount.times(
+                                    appData.suilend.mainMarket.rewardPriceMap[
+                                      coinType
+                                    ] ?? 0,
+                                  ),
+                                )}
+                              </p>
                             )}
-                          </p>
                         </div>
                       ),
                     )}
@@ -823,10 +943,7 @@ export default function BankCard({ bank }: BankCardProps) {
               >
                 <div className="flex h-[21px] w-max flex-row items-center">
                   <TokenLogos
-                    coinTypes={[
-                      ...Object.keys(bankPointsMap),
-                      ...Object.keys(bankClaimableRewardsMap),
-                    ]}
+                    coinTypes={Object.keys(bankRewardsMap)}
                     size={16}
                   />
                 </div>
@@ -838,14 +955,13 @@ export default function BankCard({ bank }: BankCardProps) {
             <button
               className="group flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
               disabled={
-                bankClaimableRewardsMap === undefined ||
-                Object.keys(bankClaimableRewardsMap).length === 0 ||
-                isClaiming ||
-                true // TODO
+                bankRewardsMap === undefined ||
+                Object.keys(bankRewardsMap).length === 0 ||
+                isClaimingRewards
               }
-              onClick={undefined}
+              onClick={claimRewards}
             >
-              {isClaiming ? (
+              {isClaimingRewards ? (
                 <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
               ) : (
                 <p className="text-p3 text-button-2-foreground">Claim</p>
