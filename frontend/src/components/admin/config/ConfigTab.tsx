@@ -144,7 +144,9 @@ export default function ConfigTab() {
   };
 
   return (
-    <div className="flex w-full flex-col gap-3 rounded-md border p-4">
+    <div className="flex w-full max-w-3xl flex-col gap-3 rounded-md border p-4">
+      <p className="text-p1 text-foreground">Fee receivers</p>
+
       {/* Table */}
       <div className="flex w-full flex-col gap-2">
         {feeReceiverRows.map((row, index) => (
