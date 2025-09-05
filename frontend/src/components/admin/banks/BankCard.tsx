@@ -392,7 +392,9 @@ export default function BankCard({
         arguments: [
           transaction.object(bank.id),
           transaction.object(bank.bankInfo.lendingMarketId),
-          // transaction.object(bank.bankInfo), // REGISTRY
+          transaction.object(
+            steammClient.sdkOptions.packages.steamm.config!.registryId,
+          ),
           transaction.object(SUI_CLOCK_OBJECT_ID),
         ],
       });
@@ -492,7 +494,9 @@ export default function BankCard({
             arguments: [
               transaction.object(bank.id),
               transaction.object(bank.bankInfo.lendingMarketId),
-              // transaction.object(bank.bankInfo), // REGISTRY
+              transaction.object(
+                steammClient.sdkOptions.packages.steamm.config!.registryId,
+              ),
               transaction.pure.u64(reward.stats.rewardIndex),
               transaction.object(SUI_CLOCK_OBJECT_ID),
             ],

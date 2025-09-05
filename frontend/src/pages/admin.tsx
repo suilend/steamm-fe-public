@@ -5,17 +5,20 @@ import { useMemo } from "react";
 import { shallowPushQuery } from "@suilend/sui-fe-next";
 
 import BanksTab from "@/components/admin/banks/BanksTab";
+import ConfigTab from "@/components/admin/config/ConfigTab";
 import OraclesTab from "@/components/admin/oracles/OraclesTab";
 import { cn } from "@/lib/utils";
 
 enum Tab {
   BANKS = "banks",
   ORACLES = "oracles",
+  CONFIG = "config",
 }
 
 const tabNameMap: Record<Tab, string> = {
   [Tab.BANKS]: "Banks",
   [Tab.ORACLES]: "Oracles",
+  [Tab.CONFIG]: "Config",
 };
 
 enum QueryParams {
@@ -88,6 +91,7 @@ export default function AdminPage() {
 
         {selectedTab === Tab.BANKS && <BanksTab />}
         {selectedTab === Tab.ORACLES && <OraclesTab />}
+        {selectedTab === Tab.CONFIG && <ConfigTab />}
       </div>
     </>
   );
