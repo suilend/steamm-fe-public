@@ -49,24 +49,30 @@ import { cn } from "@/lib/utils";
 
 interface BankCardProps {
   bank: ParsedBank;
+  bankProtocolFees: BigNumber | null | undefined;
+  fetchBankProtocolFees: () => void;
 }
 
-export default function BankCard({ bank }: BankCardProps) {
+export default function BankCard({
+  bank,
+  bankProtocolFees,
+  fetchBankProtocolFees,
+}: BankCardProps) {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { refresh } = useUserContext();
 
   // Obligation
-  const [obligation, setObligation] = useState<ParsedObligation | undefined>(
-    undefined,
-  );
+  const [obligation, setObligation] = useState<
+    ParsedObligation | null | undefined
+  >(undefined);
 
   useEffect(() => {
     (async () => {
       const obligationId = bank.bank.lending?.obligationCap.obligationId;
       if (!obligationId) {
-        setObligation(undefined);
+        setObligation(null);
         return;
       }
 
@@ -309,55 +315,13 @@ export default function BankCard({ bank }: BankCardProps) {
   };
 
   // Protocol fees
-  const [bankProtocolFees, setBankProtocolFees] = useState<
-    BigNumber | null | undefined
-  >(undefined);
-
-  const fetchBankProtocolFees = useCallback(async () => {
-    const dynamicFields = (
-      await steammClient.fullClient.getDynamicFieldsByPage(bank.id)
-    ).data;
-
-    const protocolFeeField = dynamicFields.find(
-      (df) =>
-        (df as DynamicFieldInfo).name.type ===
-        "0xc04425c5585e7d0a7e49f1265983e4303180216880179cccfc894afa8afe6d50::bank::ProtocolFeeKey",
-    );
-    if (!protocolFeeField) {
-      setBankProtocolFees(null);
-      return;
-    }
-
-    const protocolFeeObj = await suiClient.getObject({
-      id: (protocolFeeField as DynamicFieldInfo).objectId,
-      options: {
-        showContent: true,
-        showType: true,
-        showOwner: true,
-        showPreviousTransaction: true,
-        showStorageRebate: true,
-      },
-    });
-
-    const value = new BigNumber(
-      (protocolFeeObj.data?.content as any).fields.value,
-    ).div(10 ** appData.coinMetadataMap[bank.coinType].decimals);
-    setBankProtocolFees(value);
-  }, [
-    steammClient.fullClient,
-    bank.id,
-    suiClient,
-    appData.coinMetadataMap,
-    bank.coinType,
-  ]);
-
   const hasFetchedBankProtocolFeesRef = useRef<boolean>(false);
   useEffect(() => {
     if (hasFetchedBankProtocolFeesRef.current) return;
     hasFetchedBankProtocolFeesRef.current = true;
 
     fetchBankProtocolFees();
-  }, [address, fetchBankProtocolFees]);
+  }, [fetchBankProtocolFees]);
 
   // Protocol fees - crank pools
   const [isCrankingPools, setIsCrankingPools] = useState<boolean>(false);
@@ -454,6 +418,7 @@ export default function BankCard({ bank }: BankCardProps) {
   // Rewards
   const bankRewardsMap: RewardsMap | undefined = useMemo(() => {
     if (obligation === undefined) return undefined;
+    if (obligation === null) return {};
 
     const rewardMap = formatRewards(
       appData.suilend.mainMarket.reserveMap,
@@ -547,6 +512,7 @@ export default function BankCard({ bank }: BankCardProps) {
   // Deposits
   const bankDepositsMap = useMemo(() => {
     if (obligation === undefined) return undefined;
+    if (obligation === null) return {};
 
     const result: Record<string, BigNumber> = {};
     for (const deposit of obligation.deposits) {
@@ -873,7 +839,6 @@ export default function BankCard({ bank }: BankCardProps) {
                 disabled={
                   bankProtocolFees === undefined ||
                   bankProtocolFees === null ||
-                  bankProtocolFees.eq(0) ||
                   isClaimingProtocolFees
                 }
                 onClick={claimProtocolFees}
