@@ -6,6 +6,7 @@ import BigNumber from "bignumber.js";
 import { ExternalLink, Loader2 } from "lucide-react";
 
 import { ADMIN_ADDRESS, QuoterId } from "@suilend/steamm-sdk";
+import { PUBLISHED_AT } from "@suilend/steamm-sdk/_codegen/_generated/steamm";
 import {
   showErrorToast,
   useSettingsContext,
@@ -170,6 +171,56 @@ export default function PoolAdminCard() {
     }
   };
 
+  // Protocol fees
+  const [isCrankingProtocolFees, setIsCrankingProtocolFees] =
+    useState<boolean>(false);
+
+  const crankProtocolFees = async () => {
+    if (address !== ADMIN_ADDRESS) return;
+    if (!appData.suilend.lmMarket.lendingMarket.ownerCapId)
+      throw new Error("Error: lendingMarket.ownerCapId not defined");
+
+    try {
+      setIsCrankingProtocolFees(true);
+
+      const transaction = new Transaction();
+
+      transaction.moveCall({
+        target: `${PUBLISHED_AT}::fee_crank::crank_fees`,
+        typeArguments: [
+          appData.bankMap[pool.coinTypes[0]].bankInfo.lendingMarketType,
+          pool.coinTypes[0],
+          pool.coinTypes[1],
+          pool.poolInfo.quoterType,
+          pool.lpTokenType,
+          pool.bTokenTypes[0],
+          pool.bTokenTypes[1],
+        ],
+        arguments: [
+          transaction.object(pool.id),
+          transaction.object(appData.bankMap[pool.coinTypes[0]].id),
+          transaction.object(appData.bankMap[pool.coinTypes[1]].id),
+        ],
+      });
+
+      const res = await signExecuteAndWaitForTransaction(transaction);
+      const txUrl = explorer.buildTxUrl(res.digest);
+
+      showSuccessTxnToast("Cranked protocol fees", txUrl);
+    } catch (err) {
+      showErrorToast(
+        "Failed to crank protocol fees",
+        err as Error,
+        undefined,
+        true,
+      );
+      console.error(err);
+    } finally {
+      setIsCrankingProtocolFees(false);
+      refresh();
+    }
+  };
+
   return (
     <div className="flex w-full flex-col gap-6 rounded-md border border-error/25 bg-error/5 p-5">
       {/* OMMv2 */}
@@ -246,6 +297,23 @@ export default function PoolAdminCard() {
             )}
           </button>
         )}
+      </div>
+
+      {/* Protocol fees */}
+      <div className="flex w-full flex-col gap-2">
+        <p className="text-p1 text-foreground">Protocol fees</p>
+
+        <button
+          className="flex h-6 w-[75px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
+          disabled={isCrankingProtocolFees}
+          onClick={crankProtocolFees}
+        >
+          {isCrankingProtocolFees ? (
+            <Loader2 className="h-4 w-4 animate-spin text-button-2-foreground" />
+          ) : (
+            <p className="text-p3 text-button-2-foreground">Crank fees</p>
+          )}
+        </button>
       </div>
     </div>
   );
