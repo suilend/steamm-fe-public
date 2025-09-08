@@ -27,8 +27,9 @@ import {
 import { ASSETS_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-import TokenFilterPopup, { FilterCriteria } from "./TokenFilterPopup";
 import VerifiedBadge from "../VerifiedBadge";
+
+import TokenFilterPopup, { FilterCriteria } from "./TokenFilterPopup";
 
 interface TokenColumnProps {
   title: string;

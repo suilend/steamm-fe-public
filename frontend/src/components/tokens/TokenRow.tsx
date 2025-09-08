@@ -16,6 +16,7 @@ import useBreakpoint from "@/hooks/useBreakpoint";
 import { ASSETS_URL } from "@/lib/constants";
 import { isInvalidIconUrl } from "@/lib/tokens";
 import { cn } from "@/lib/utils";
+
 import VerifiedBadge from "../VerifiedBadge";
 
 interface TokenRowProps {
