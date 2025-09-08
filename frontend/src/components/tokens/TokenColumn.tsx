@@ -28,6 +28,7 @@ import { ASSETS_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 import TokenFilterPopup, { FilterCriteria } from "./TokenFilterPopup";
+import VerifiedBadge from "../VerifiedBadge";
 
 interface TokenColumnProps {
   title: string;
@@ -265,6 +266,9 @@ export default function TokenColumn({
                     <h4 className="text-sm truncate font-medium text-foreground">
                       {token.symbol}
                     </h4>
+                    {token.isVerified && (
+                      <VerifiedBadge tooltip="Verified token" />
+                    )}
                     <button
                       className="text-secondary-foreground transition-colors hover:text-foreground"
                       onClick={(e) => {
@@ -364,6 +368,7 @@ export default function TokenColumn({
                         <span className="text-p3">
                           {formatToken(new BigNumber(token.holders), {
                             exact: false,
+                            trimTrailingZeros: true,
                           })}
                         </span>
                       </span>

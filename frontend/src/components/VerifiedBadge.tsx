@@ -6,14 +6,16 @@ import { cn } from "@/lib/utils";
 interface VerifiedBadgeProps {
   isSmall?: boolean;
   isLarge?: boolean;
+  tooltip?: string;
 }
 
 export default function VerifiedBadge({
   isSmall,
   isLarge,
+  tooltip = "Verified asset pair",
 }: VerifiedBadgeProps) {
   return (
-    <Tooltip title="Verified asset pair">
+    <Tooltip title={tooltip}>
       <BadgeCheck
         className={cn(
           "text-verified",

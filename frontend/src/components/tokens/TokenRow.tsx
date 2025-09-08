@@ -16,6 +16,7 @@ import useBreakpoint from "@/hooks/useBreakpoint";
 import { ASSETS_URL } from "@/lib/constants";
 import { isInvalidIconUrl } from "@/lib/tokens";
 import { cn } from "@/lib/utils";
+import VerifiedBadge from "../VerifiedBadge";
 
 interface TokenRowProps {
   columnStyleMap: Record<
@@ -127,9 +128,7 @@ export default function TokenRow({ columnStyleMap, token }: TokenRowProps) {
                       {token.symbol}
                     </span>
                     {token.isVerified && (
-                      <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-success">
-                        <div className="h-2 w-2 rounded-full bg-background" />
-                      </div>
+                      <VerifiedBadge tooltip="Verified token" />
                     )}
 
                     {/* Token Controls - always visible */}
