@@ -235,7 +235,7 @@ export function AppContextProvider({ children }: PropsWithChildren) {
 
   const loadedTokenIconsRef = useRef<string[]>([]);
   const loadTokenIconImage = useCallback((token: Token) => {
-    if (isInvalidIconUrl(token.iconUrl)) return;
+    if (isInvalidIconUrl(token.iconUrl ?? null)) return;
 
     if (loadedTokenIconsRef.current.includes(token.coinType)) return;
     loadedTokenIconsRef.current.push(token.coinType);
