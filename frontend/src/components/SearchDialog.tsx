@@ -380,7 +380,7 @@ export default function SearchDialog() {
             <h2 className="-mb-2 text-p1 text-foreground">
               {filteredTokensCount} token{filteredTokensCount !== 1 && "s"}
             </h2>
-            <div className="flex max-h-max min-h-0 w-full flex-row items-stretch overflow-hidden">
+            <div className="flex flex-1 flex-row items-stretch overflow-hidden">
               <TokensTable
                 className="flex flex-col"
                 containerClassName="flex-1"
@@ -426,7 +426,7 @@ export default function SearchDialog() {
                 />
               </div>
             </h2>
-            <div className="flex max-h-max min-h-0 flex-row items-stretch overflow-hidden">
+            <div className="flex flex-1 flex-row items-stretch overflow-hidden">
               <PoolsTable
                 className="flex flex-col"
                 containerClassName="flex-1"
