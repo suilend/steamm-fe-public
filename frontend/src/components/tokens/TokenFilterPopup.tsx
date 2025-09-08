@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
-import { useLocalStorage } from "usehooks-ts";
+import { useEffect, useState } from "react";
+
 import { Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useLocalStorage } from "usehooks-ts";
+
 import Popover from "@/components/Popover";
+import { cn } from "@/lib/utils";
 
 export interface FilterCriteria {
   keywords: string;
@@ -43,7 +45,10 @@ export default function TokenFilterPopup({
 }: TokenFilterPopupProps) {
   const [activeTab, setActiveTab] = useState<"manual" | "saved">("manual");
   const [filters, setFilters] = useState<FilterCriteria>(currentFilters);
-  const [savedFilters, setSavedFilters] = useLocalStorage<SavedFilter[]>("token-saved-filters", []);
+  const [savedFilters, setSavedFilters] = useLocalStorage<SavedFilter[]>(
+    "token-saved-filters",
+    [],
+  );
 
   // Update local filters when currentFilters change
   useEffect(() => {
@@ -67,11 +72,11 @@ export default function TokenFilterPopup({
       criteria: { ...filters },
       timestamp: Date.now(),
     };
-    setSavedFilters(prev => [...prev, newFilter]);
+    setSavedFilters((prev) => [...prev, newFilter]);
   };
 
   const handleDeleteSaved = (id: string) => {
-    setSavedFilters(prev => prev.filter(f => f.id !== id));
+    setSavedFilters((prev) => prev.filter((f) => f.id !== id));
   };
 
   const handleApplySaved = (criteria: FilterCriteria) => {
@@ -82,24 +87,31 @@ export default function TokenFilterPopup({
 
   const formatFilterChip = (criteria: FilterCriteria) => {
     const chips = [];
-    
+
     if (criteria.keywords) chips.push(`"${criteria.keywords}"`);
-    if (criteria.ageMin && criteria.ageMax) chips.push(`Age ${criteria.ageMin}-${criteria.ageMax}d`);
+    if (criteria.ageMin && criteria.ageMax)
+      chips.push(`Age ${criteria.ageMin}-${criteria.ageMax}d`);
     else if (criteria.ageMin) chips.push(`Age ≥ ${criteria.ageMin}d`);
     else if (criteria.ageMax) chips.push(`Age ≤ ${criteria.ageMax}d`);
-    
-    if (criteria.holdersMin && criteria.holdersMax) chips.push(`Holders ${criteria.holdersMin}-${criteria.holdersMax}`);
-    else if (criteria.holdersMin) chips.push(`Holders ≥ ${criteria.holdersMin}`);
-    else if (criteria.holdersMax) chips.push(`Holders ≤ ${criteria.holdersMax}`);
-    
-    if (criteria.marketCapMin && criteria.marketCapMax) chips.push(`MC $${criteria.marketCapMin}-$${criteria.marketCapMax}`);
-    else if (criteria.marketCapMin) chips.push(`MC ≥ $${criteria.marketCapMin}`);
-    else if (criteria.marketCapMax) chips.push(`MC ≤ $${criteria.marketCapMax}`);
-    
+
+    if (criteria.holdersMin && criteria.holdersMax)
+      chips.push(`Holders ${criteria.holdersMin}-${criteria.holdersMax}`);
+    else if (criteria.holdersMin)
+      chips.push(`Holders ≥ ${criteria.holdersMin}`);
+    else if (criteria.holdersMax)
+      chips.push(`Holders ≤ ${criteria.holdersMax}`);
+
+    if (criteria.marketCapMin && criteria.marketCapMax)
+      chips.push(`MC $${criteria.marketCapMin}-$${criteria.marketCapMax}`);
+    else if (criteria.marketCapMin)
+      chips.push(`MC ≥ $${criteria.marketCapMin}`);
+    else if (criteria.marketCapMax)
+      chips.push(`MC ≤ $${criteria.marketCapMax}`);
+
     return chips;
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => value !== "");
+  const hasActiveFilters = Object.values(filters).some((value) => value !== "");
 
   return (
     <Popover
@@ -110,196 +122,206 @@ export default function TokenFilterPopup({
         className: "p-6",
       }}
     >
-        {/* Tabs */}
-        <div className="flex mb-6 border-b border-border">
-          <button
-            className={cn(
-              "px-4 py-2 text-sm font-medium border-b-2 transition-colors",
-              activeTab === "manual"
-                ? "border-focus text-foreground"
-                : "border-transparent text-secondary-foreground hover:text-foreground"
-            )}
-            onClick={() => setActiveTab("manual")}
-          >
-            Manual
-          </button>
-          <button
-            className={cn(
-              "px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2",
-              activeTab === "saved"
-                ? "border-focus text-foreground"
-                : "border-transparent text-secondary-foreground hover:text-foreground"
-            )}
-            onClick={() => setActiveTab("saved")}
-          >
-            Saved
-            <span className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full text-xs">
-              {savedFilters.length}
-            </span>
-          </button>
-        </div>
+      {/* Tabs */}
+      <div className="mb-6 flex border-b border-border">
+        <button
+          className={cn(
+            "text-sm border-b-2 px-4 py-2 font-medium transition-colors",
+            activeTab === "manual"
+              ? "border-focus text-foreground"
+              : "border-transparent text-secondary-foreground hover:text-foreground",
+          )}
+          onClick={() => setActiveTab("manual")}
+        >
+          Manual
+        </button>
+        <button
+          className={cn(
+            "text-sm flex items-center gap-2 border-b-2 px-4 py-2 font-medium transition-colors",
+            activeTab === "saved"
+              ? "border-focus text-foreground"
+              : "border-transparent text-secondary-foreground hover:text-foreground",
+          )}
+          onClick={() => setActiveTab("saved")}
+        >
+          Saved
+          <span className="text-xs rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground">
+            {savedFilters.length}
+          </span>
+        </button>
+      </div>
 
-        {activeTab === "manual" ? (
-          <div className="space-y-4">
-            {/* Search Keywords */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Search keywords
-              </label>
+      {activeTab === "manual" ? (
+        <div className="space-y-4">
+          {/* Search Keywords */}
+          <div>
+            <label className="text-sm mb-2 block font-medium text-foreground">
+              Search keywords
+            </label>
+            <input
+              type="text"
+              placeholder="Enter keywords"
+              value={filters.keywords}
+              onChange={(e) => handleInputChange("keywords", e.target.value)}
+              className="text-sm w-full rounded-md border border-border bg-card px-3 py-2 placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
+            />
+          </div>
+
+          {/* Age */}
+          <div>
+            <label className="text-sm mb-2 block font-medium text-foreground">
+              Age (days)
+            </label>
+            <div className="flex gap-2">
               <input
-                type="text"
-                placeholder="Enter keywords"
-                value={filters.keywords}
-                onChange={(e) => handleInputChange("keywords", e.target.value)}
-                className="w-full px-3 py-2 bg-card border border-border rounded-md text-sm placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
+                type="number"
+                placeholder="Min"
+                value={filters.ageMin}
+                onChange={(e) => handleInputChange("ageMin", e.target.value)}
+                className="text-sm flex-1 rounded-md border border-border bg-card px-3 py-2 placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
+              />
+              <input
+                type="number"
+                placeholder="Max"
+                value={filters.ageMax}
+                onChange={(e) => handleInputChange("ageMax", e.target.value)}
+                className="text-sm flex-1 rounded-md border border-border bg-card px-3 py-2 placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
               />
             </div>
+          </div>
 
-            {/* Age */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Age (days)
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  placeholder="Min"
-                  value={filters.ageMin}
-                  onChange={(e) => handleInputChange("ageMin", e.target.value)}
-                  className="flex-1 px-3 py-2 bg-card border border-border rounded-md text-sm placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
-                />
-                <input
-                  type="number"
-                  placeholder="Max"
-                  value={filters.ageMax}
-                  onChange={(e) => handleInputChange("ageMax", e.target.value)}
-                  className="flex-1 px-3 py-2 bg-card border border-border rounded-md text-sm placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Holders */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Holders
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  placeholder="Min"
-                  value={filters.holdersMin}
-                  onChange={(e) => handleInputChange("holdersMin", e.target.value)}
-                  className="flex-1 px-3 py-2 bg-card border border-border rounded-md text-sm placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
-                />
-                <input
-                  type="number"
-                  placeholder="Max"
-                  value={filters.holdersMax}
-                  onChange={(e) => handleInputChange("holdersMax", e.target.value)}
-                  className="flex-1 px-3 py-2 bg-card border border-border rounded-md text-sm placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Market Cap */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Market cap
-              </label>
-              <div className="flex gap-2">
-                <div className="flex-1 relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-foreground text-sm">
-                    $
-                  </span>
-                  <input
-                    type="number"
-                    placeholder="Min"
-                    value={filters.marketCapMin}
-                    onChange={(e) => handleInputChange("marketCapMin", e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 bg-card border border-border rounded-md text-sm placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
-                  />
-                </div>
-                <div className="flex-1 relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-foreground text-sm">
-                    $
-                  </span>
-                  <input
-                    type="number"
-                    placeholder="Max"
-                    value={filters.marketCapMax}
-                    onChange={(e) => handleInputChange("marketCapMax", e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 bg-card border border-border rounded-md text-sm placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 pt-4">
-              <button
-                onClick={handleReset}
-                className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-md text-sm font-medium hover:bg-secondary/90 transition-colors"
-              >
-                Reset
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={!hasActiveFilters}
-                className={cn(
-                  "flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors",
-                  hasActiveFilters
-                    ? "bg-button-1 text-button-1-foreground hover:bg-button-1/90"
-                    : "bg-secondary text-secondary-foreground cursor-not-allowed"
-                )}
-              >
-                Save
-              </button>
+          {/* Holders */}
+          <div>
+            <label className="text-sm mb-2 block font-medium text-foreground">
+              Holders
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                placeholder="Min"
+                value={filters.holdersMin}
+                onChange={(e) =>
+                  handleInputChange("holdersMin", e.target.value)
+                }
+                className="text-sm flex-1 rounded-md border border-border bg-card px-3 py-2 placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
+              />
+              <input
+                type="number"
+                placeholder="Max"
+                value={filters.holdersMax}
+                onChange={(e) =>
+                  handleInputChange("holdersMax", e.target.value)
+                }
+                className="text-sm flex-1 rounded-md border border-border bg-card px-3 py-2 placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
+              />
             </div>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {savedFilters.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-sm text-secondary-foreground">No saved filters</p>
+
+          {/* Market Cap */}
+          <div>
+            <label className="text-sm mb-2 block font-medium text-foreground">
+              Market cap
+            </label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="text-sm absolute left-3 top-1/2 -translate-y-1/2 text-secondary-foreground">
+                  $
+                </span>
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={filters.marketCapMin}
+                  onChange={(e) =>
+                    handleInputChange("marketCapMin", e.target.value)
+                  }
+                  className="text-sm w-full rounded-md border border-border bg-card py-2 pl-8 pr-3 placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
+                />
               </div>
-            ) : (
-              savedFilters.map((savedFilter) => {
-                const chips = formatFilterChip(savedFilter.criteria);
-                return (
-                  <div
-                    key={savedFilter.id}
-                    className="border border-border rounded-md p-3 space-y-2 hover:bg-card/50 transition-colors"
-                  >
-                    <div className="flex flex-wrap gap-1">
-                      {chips.map((chip, index) => (
-                        <span
-                          key={index}
-                          className="px-2 py-1 bg-secondary text-secondary-foreground rounded text-xs"
-                        >
-                          {chip}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => handleApplySaved(savedFilter.criteria)}
-                        className="px-3 py-1 bg-button-1 text-button-1-foreground rounded text-xs font-medium hover:bg-button-1/90 transition-colors rounded-md"
+              <div className="relative flex-1">
+                <span className="text-sm absolute left-3 top-1/2 -translate-y-1/2 text-secondary-foreground">
+                  $
+                </span>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={filters.marketCapMax}
+                  onChange={(e) =>
+                    handleInputChange("marketCapMax", e.target.value)
+                  }
+                  className="text-sm w-full rounded-md border border-border bg-card py-2 pl-8 pr-3 placeholder:text-secondary-foreground focus:border-focus focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-4">
+            <button
+              onClick={handleReset}
+              className="text-sm flex-1 rounded-md bg-secondary px-4 py-2 font-medium text-secondary-foreground transition-colors hover:bg-secondary/90"
+            >
+              Reset
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!hasActiveFilters}
+              className={cn(
+                "text-sm flex-1 rounded-md px-4 py-2 font-medium transition-colors",
+                hasActiveFilters
+                  ? "bg-button-1 text-button-1-foreground hover:bg-button-1/90"
+                  : "cursor-not-allowed bg-secondary text-secondary-foreground",
+              )}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {savedFilters.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="text-sm text-secondary-foreground">
+                No saved filters
+              </p>
+            </div>
+          ) : (
+            savedFilters.map((savedFilter) => {
+              const chips = formatFilterChip(savedFilter.criteria);
+              return (
+                <div
+                  key={savedFilter.id}
+                  className="space-y-2 rounded-md border border-border p-3 transition-colors hover:bg-card/50"
+                >
+                  <div className="flex flex-wrap gap-1">
+                    {chips.map((chip, index) => (
+                      <span
+                        key={index}
+                        className="rounded text-xs bg-secondary px-2 py-1 text-secondary-foreground"
                       >
-                        Apply
-                      </button>
-                      <button
-                        onClick={() => handleDeleteSaved(savedFilter.id)}
-                        className="p-1 text-secondary-foreground hover:text-foreground transition-colors"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
+                        {chip}
+                      </span>
+                    ))}
                   </div>
-                );
-              })
-            )}
-          </div>
-        )}
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => handleApplySaved(savedFilter.criteria)}
+                      className="rounded text-xs rounded-md bg-button-1 px-3 py-1 font-medium text-button-1-foreground transition-colors hover:bg-button-1/90"
+                    >
+                      Apply
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSaved(savedFilter.id)}
+                      className="p-1 text-secondary-foreground transition-colors hover:text-foreground"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
     </Popover>
   );
 }

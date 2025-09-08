@@ -60,6 +60,10 @@ interface CoinDetailsResponse {
         blacklist: boolean;
         top_10_holders: number | null;
       } | null;
+      volume_data?: {
+        volume_24h: string;
+        volume_change_24h: number;
+      } | null;
     };
   }>;
   failed: Array<{ coin_id: string; error: string }>;
@@ -115,7 +119,7 @@ export default function useFetchMarketData() {
         liq_change_1d: 0, // Not available in coin-detail API
         tx_change_1d: 0, // Not available in coin-detail API
         tx_24h: 0, // Not available in coin-detail API
-        volume_24h: "0", // Not available in coin-detail API
+        volume_24h: detail.data.volume_data?.volume_24h || "0",
         volume_6h: "0", // Not available in coin-detail API
         volume_4h: "0", // Not available in coin-detail API
         volume_30m: "0", // Not available in coin-detail API

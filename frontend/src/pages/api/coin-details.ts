@@ -56,7 +56,24 @@ interface CoinDetailResponse {
       blacklist: boolean;
       top_10_holders: number | null;
     } | null;
+    volume_data?: {
+      volume_24h: string;
+      volume_change_24h: number;
+    } | null;
   };
+}
+
+interface VolumeData {
+  price: number;
+  volume_24h: number;
+  price_change_24h: number;
+  volume_change_24h: number;
+}
+
+interface VolumeResponse {
+  code: number;
+  message: string;
+  data: Record<string, VolumeData>;
 }
 
 interface CoinDetailsResponse {
@@ -89,6 +106,35 @@ export default async function handler(
       console.error("NOODLES_API_KEY environment variable is not set");
       return res.status(500).json({ error: "API configuration error" });
     }
+
+    // Helper function to chunk coin IDs for URL length limits
+    const chunkCoinIds = (
+      coinIds: string[],
+      maxUrlLength: number = 2000,
+    ): string[][] => {
+      const chunks: string[][] = [];
+      let currentChunk: string[] = [];
+      let currentUrl = `${NOODLES_API_BASE}/api/v1/partner/coin-price-volume-multi?coin_ids=`;
+
+      for (const coinId of coinIds) {
+        const encodedCoinId = encodeURIComponent(coinId);
+        const testUrl = currentUrl + [...currentChunk, encodedCoinId].join(",");
+
+        if (testUrl.length > maxUrlLength && currentChunk.length > 0) {
+          chunks.push([...currentChunk]);
+          currentChunk = [coinId];
+          currentUrl = `${NOODLES_API_BASE}/api/v1/partner/coin-price-volume-multi?coin_ids=`;
+        } else {
+          currentChunk.push(coinId);
+        }
+      }
+
+      if (currentChunk.length > 0) {
+        chunks.push(currentChunk);
+      }
+
+      return chunks;
+    };
 
     // Create promises for all coin detail requests
     const coinDetailPromises = requestBody.coin_ids.map(async (coinId) => {
@@ -127,14 +173,64 @@ export default async function handler(
       }
     });
 
+    // Create promises for volume data requests (chunked)
+    const coinIdChunks = chunkCoinIds(requestBody.coin_ids);
+    const volumePromises = coinIdChunks.map(async (chunk) => {
+      try {
+        const coinIdsParam = chunk
+          .map((id) => encodeURIComponent(id))
+          .join(",");
+        const response = await fetch(
+          `${NOODLES_API_BASE}/api/v1/partner/coin-price-volume-multi?coin_ids=${coinIdsParam}`,
+          {
+            method: "GET",
+            headers: {
+              "Accept-Encoding": "application/json",
+              "x-api-key": apiKey,
+              "x-chain": "sui",
+            },
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data: VolumeResponse = await response.json();
+
+        if (data.code !== 200) {
+          throw new Error(`API error: ${data.message}`);
+        }
+
+        return { status: "fulfilled" as const, value: data.data };
+      } catch (error) {
+        console.error("Volume API error:", error);
+        return { status: "rejected" as const, reason: error };
+      }
+    });
+
     // Execute all requests in parallel
-    const results = await Promise.allSettled(coinDetailPromises);
+    const [coinDetailResults, volumeResults] = await Promise.all([
+      Promise.allSettled(coinDetailPromises),
+      Promise.allSettled(volumePromises),
+    ]);
+
+    // Merge volume data from all chunks
+    const volumeData: Record<string, VolumeData> = {};
+    volumeResults.forEach((result) => {
+      if (
+        result.status === "fulfilled" &&
+        result.value.status === "fulfilled"
+      ) {
+        Object.assign(volumeData, result.value.value);
+      }
+    });
 
     // Separate successful and failed requests
     const successful: CoinDetailResponse[] = [];
     const failed: { coin_id: string; error: string }[] = [];
 
-    results.forEach((result) => {
+    coinDetailResults.forEach((result) => {
       if (result.status === "fulfilled") {
         if (result.value.status === "fulfilled") {
           successful.push(result.value.value);
@@ -149,10 +245,32 @@ export default async function handler(
     console.log(
       `Coin details fetch completed: ${successful.length} successful, ${failed.length} failed`,
     );
+    console.log(
+      `Volume data fetch completed: ${Object.keys(volumeData).length} coins with volume data`,
+    );
+
+    // Enhance successful responses with volume data
+    const enhancedSuccessful = successful.map((coinDetail) => {
+      const coinType = coinDetail.data.coin.coin_type;
+      const volume = volumeData[coinType];
+
+      return {
+        ...coinDetail,
+        data: {
+          ...coinDetail.data,
+          volume_data: volume
+            ? {
+                volume_24h: volume.volume_24h.toString(),
+                volume_change_24h: volume.volume_change_24h,
+              }
+            : null,
+        },
+      };
+    });
 
     // Return both successful and failed results
     return res.status(200).json({
-      successful,
+      successful: enhancedSuccessful,
       failed,
     });
   } catch (error) {

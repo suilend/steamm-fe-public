@@ -13,7 +13,9 @@ import Dialog from "@/components/Dialog";
 import Divider from "@/components/Divider";
 import PoolsTable from "@/components/pools/PoolsTable";
 import SelectPopover from "@/components/SelectPopover";
+import TokensTable from "@/components/tokens/TokensTable";
 import { useLoadedAppContext } from "@/contexts/AppContext";
+import { Token, useLoadedMarketContext } from "@/contexts/MarketContext";
 import { useStatsContext } from "@/contexts/StatsContext";
 import { FEE_TIER_PERCENTS } from "@/lib/createPool";
 import { formatFeeTier } from "@/lib/format";
@@ -23,9 +25,42 @@ import {
   getPoolsWithExtraData,
 } from "@/lib/pools";
 import { SelectPopoverOption } from "@/lib/select";
+import { getFilteredTokens } from "@/lib/tokens";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { useLoadedMarketContext } from "@/contexts/MarketContext";
+
+// Convert trending coin to Token format (same as in fun.tsx)
+const convertTrendingCoinToToken = (
+  trendingCoin: any,
+  rank?: number,
+): Token => {
+  const marketCapValue = parseFloat(trendingCoin.market_cap) || 0;
+  const priceValue = parseFloat(trendingCoin.price) || 0;
+  const publishedDate = new Date(trendingCoin.published_at);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - publishedDate.getTime());
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  const timeAgo = diffDays === 0 ? "Today" : `${diffDays}d`;
+
+  return {
+    id: trendingCoin.coinType,
+    name: trendingCoin.name,
+    symbol: trendingCoin.symbol,
+    image: trendingCoin.logo,
+    change24h: trendingCoin.price_change_1d || 0,
+    timeAgo,
+    holders: trendingCoin.holders || 0,
+    coinType: trendingCoin.coinType,
+    marketCap: marketCapValue,
+    price: priceValue,
+    isVerified: trendingCoin.verified,
+    decimals: trendingCoin.decimals,
+    description: trendingCoin.description,
+    topTenHolders: trendingCoin.topTenHolders,
+    volume24h: trendingCoin.volume_24h,
+    rank,
+  };
+};
 
 export default function SearchDialog() {
   const { appData, recentPoolIds } = useLoadedAppContext();
@@ -93,6 +128,11 @@ export default function SearchDialog() {
     () => getPoolGroups(poolsWithExtraData),
     [poolsWithExtraData],
   );
+
+  // Tokens
+  const allTokens: Token[] = useMemo(() => {
+    return marketData?.trendingCoins.map(convertTrendingCoinToToken) || [];
+  }, [marketData?.trendingCoins]);
 
   // Search
   // Input
@@ -197,6 +237,9 @@ export default function SearchDialog() {
     0,
   );
 
+  const filteredTokens: Token[] = getFilteredTokens(allTokens, searchString);
+  const filteredTokensCount = filteredTokens.length;
+
   const showSearchResults = !(
     rawSearchString === "" &&
     feeTiers.length === 0 &&
@@ -239,7 +282,7 @@ export default function SearchDialog() {
           <div className="flex flex-row items-center gap-2">
             <Search className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
             <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground max-md:hidden">
-              Search pools
+              Search pools & tokens
             </p>
           </div>
 
@@ -267,7 +310,7 @@ export default function SearchDialog() {
                       rawSearchString !== "" ? "pr-10" : "pr-5",
                     )}
                     type="text"
-                    placeholder="Search pools"
+                    placeholder="Search pools & tokens"
                     value={rawSearchString}
                     onChange={(e) => onRawSearchStringChange(e.target.value)}
                     style={{
@@ -290,7 +333,74 @@ export default function SearchDialog() {
               </div>
 
               {/* Bottom */}
-              <div className="flex w-full flex-row flex-wrap items-center gap-2 px-5 pb-5">
+              {!showSearchResults && (
+                <div className="flex w-full flex-row flex-wrap items-center gap-2 px-5 pb-5">
+                  <SelectPopover
+                    className="w-max min-w-32"
+                    align="start"
+                    options={[feeTierOptions]}
+                    placeholder="All fee tiers"
+                    values={feeTiers.map((feeTier) => feeTier.toString())}
+                    onChange={(id: string) => onFeeTierChange(+id)}
+                    isMultiSelect
+                    canClear
+                    onClear={() => setFeeTiers([])}
+                  />
+
+                  <SelectPopover
+                    className="w-max min-w-32"
+                    align="start"
+                    options={[quoterIdOptions]}
+                    placeholder="All quoter types"
+                    values={quoterIds}
+                    onChange={(id: string) => onQuoterIdChange(id as QuoterId)}
+                    isMultiSelect
+                    canClear
+                    onClear={() => setQuoterIds([])}
+                  />
+                </div>
+              )}
+            </div>
+            <Divider />
+          </>
+        ),
+      }}
+      dialogContentInnerClassName="max-w-4xl h-[800px]"
+      dialogContentInnerChildrenWrapperClassName="pt-5 flex-1"
+    >
+      {/* Search results */}
+      <div
+        className={cn(
+          !showSearchResults ? "hidden" : "flex min-h-0 flex-1 flex-col gap-5",
+        )}
+      >
+        {/* Tokens Section */}
+        {searchString !== "" && filteredTokensCount > 0 && (
+          <>
+            <h2 className="-mb-2 text-p1 text-foreground">
+              {filteredTokensCount} token{filteredTokensCount !== 1 && "s"}
+            </h2>
+            <div className="flex max-h-max min-h-0 w-full flex-row items-stretch overflow-hidden">
+              <TokensTable
+                className="flex flex-col"
+                containerClassName="flex-1"
+                tableContainerClassName="h-full"
+                tableId="search-tokens"
+                tokens={filteredTokens}
+                searchString={searchString}
+                pageSize={10}
+              />
+            </div>
+          </>
+        )}
+
+        {/* Pools Section */}
+        {filteredPoolGroupsCount > 0 && (
+          <>
+            <h2 className="-mb-2 flex items-center justify-between text-p1 text-foreground">
+              {filteredPoolGroupsCount} pool
+              {filteredPoolGroupsCount !== 1 && "s"}
+              <div className="flex flex-row flex-wrap items-center gap-2">
                 <SelectPopover
                   className="w-max min-w-32"
                   align="start"
@@ -315,46 +425,27 @@ export default function SearchDialog() {
                   onClear={() => setQuoterIds([])}
                 />
               </div>
+            </h2>
+            <div className="flex max-h-max min-h-0 flex-row items-stretch overflow-hidden">
+              <PoolsTable
+                className="flex flex-col"
+                containerClassName="flex-1"
+                tableContainerClassName="h-full"
+                tableId="search-pools"
+                poolGroups={filteredPoolGroups}
+                searchString={searchString}
+                pageSize={10}
+              />
             </div>
-            <Divider />
           </>
-        ),
-      }}
-      dialogContentInnerClassName="max-w-4xl h-[800px]"
-      dialogContentInnerChildrenWrapperClassName="pt-5 flex-1"
-    >
-      {/* Search results */}
-      <div
-        className={cn(
-          !showSearchResults ? "hidden" : "flex min-h-0 flex-1 flex-col gap-5",
         )}
-      >
-        <h2 className="-mb-2 text-p1 text-foreground">
-          {filteredPoolGroupsCount > 0 ? (
-            <>
-              {filteredPoolGroupsCount} result
-              {filteredPoolGroupsCount !== 1 && "s"}
-            </>
-          ) : (
-            `No results for "${searchString}"`
-          )}
-        </h2>
-        <div
-          className={cn(
-            "flex max-h-max min-h-0 w-full flex-1 flex-row items-stretch overflow-hidden",
-            filteredPoolGroupsCount === 0 && "hidden",
-          )}
-        >
-          <PoolsTable
-            className="flex flex-col"
-            containerClassName="flex-1"
-            tableContainerClassName="h-full"
-            tableId="search-pools"
-            poolGroups={filteredPoolGroups}
-            searchString={searchString}
-            pageSize={10}
-          />
-        </div>
+
+        {/* No results */}
+        {filteredTokensCount === 0 && filteredPoolGroupsCount === 0 && (
+          <h2 className="-mb-2 text-p1 text-foreground">
+            No results for &quot;{searchString}&quot;
+          </h2>
+        )}
       </div>
 
       {/* Recent and popular pools */}

@@ -5,14 +5,21 @@ import { useMemo, useState } from "react";
 
 import BigNumber from "bignumber.js";
 
+import QuickBuyModal from "@/components/tokens/QuickBuyModal";
 import TokenColumn from "@/components/tokens/TokenColumn";
 import TokenTicker from "@/components/tokens/TokenTicker";
-import QuickBuyModal from "@/components/tokens/QuickBuyModal";
-import { TrendingCoin, useLoadedMarketContext, Token } from "@/contexts/MarketContext";
+import {
+  Token,
+  TrendingCoin,
+  useLoadedMarketContext,
+} from "@/contexts/MarketContext";
 import { ASSETS_URL } from "@/lib/constants";
 
 // Convert TrendingCoin to Token format
-const convertTrendingCoinToToken = (trendingCoin: TrendingCoin, rank?: number): Token => {
+const convertTrendingCoinToToken = (
+  trendingCoin: TrendingCoin,
+  rank?: number,
+): Token => {
   const marketCapValue = new BigNumber(
     trendingCoin.market_cap || "0",
   ).toNumber();
@@ -50,16 +57,10 @@ const convertTrendingCoinToToken = (trendingCoin: TrendingCoin, rank?: number): 
     decimals: trendingCoin.decimals,
     description: trendingCoin.description,
     topTenHolders: trendingCoin.topTenHolders,
+    volume24h: trendingCoin.volume_24h,
     rank,
   };
 };
-
-enum FilterType {
-  FEATURED = "featured",
-  LAST_TRADE = "lastTrade",
-  CREATION_TIME = "creationTime",
-  MARKET_CAP = "marketCap",
-}
 
 export default function TokensPage() {
   const {
@@ -67,8 +68,6 @@ export default function TokensPage() {
     quickBuyAmount,
     setQuickBuyAmount,
     watchlist,
-    isWatchlistMode,
-    setIsWatchlistMode,
     slippagePercent,
     setSlippagePercent,
     quickBuyModalOpen,
@@ -77,9 +76,6 @@ export default function TokensPage() {
   } = useLoadedMarketContext();
 
   const [searchString, setSearchString] = useState<string>("");
-  const [selectedFilter, setSelectedFilter] = useState<FilterType>(
-    FilterType.FEATURED,
-  );
 
   // Convert trending coins to Token format
   const allTokens = useMemo(() => {
@@ -130,28 +126,35 @@ export default function TokensPage() {
 
       <div className="mt-6 flex w-full flex-col gap-8">
         {/* Header */}
-        <div className="flex w-full flex-col xl:flex-row xl:items-center justify-between gap-2">
-            <h1 className="text-h1 text-foreground">Tokens</h1>
+        <div className="flex w-full flex-col justify-between gap-2 xl:flex-row xl:items-center">
+          <h1 className="text-h1 text-foreground">Tokens</h1>
 
-          <div className="flex flex-row items-center gap-4 max-xl:justify-between max-xl:w-full">
-            <div className="text-sm flex items-center gap-2 rounded-md shadow-[inset_0_0_0_1px_hsl(var(--border))] bg-background text-button-1-foreground transition-colors hover:bg-background/90 pr-2">
-            <div className="text-sm flex items-center gap-2 rounded-md shadow-[inset_0_0_0_1px_hsl(var(--border))] bg-[#0C131F] px-3 py-2 text-button-1-foreground transition-colors hover:bg-background/90">
-              <span className="mr-4 text-focus">Quickbuy</span>
-              <input
-                type="text"
-                value={quickBuyAmount}
-                onChange={(e) => setQuickBuyAmount(e.target.value)}
-                className="relative z-[1] min-w-8 !border-0 !bg-[transparent] text-button-1 !shadow-none !outline-none placeholder:text-tertiary-foreground text-right"
-                size={Math.max(1, quickBuyAmount.length || 1)}
-                style={{ width: `${Math.max(2, (quickBuyAmount.length || 1) * 0.6)}rem` }}
-              />
-              <Image
-                src={`${ASSETS_URL}/icons/sui.png`}
-                alt="Coin"
-                width={24}
-                height={24}
-                className="h-4 w-4"
-              />
+          <div className="flex flex-row items-center gap-4 max-xl:w-full max-xl:justify-between">
+            <div className="text-sm flex items-center gap-2 rounded-md bg-background pr-2 text-button-1-foreground shadow-[inset_0_0_0_1px_hsl(var(--border))] transition-colors hover:bg-background/90">
+              <div className="text-sm flex items-center gap-2 rounded-md bg-[#0C131F] px-3 py-2 text-button-1-foreground shadow-[inset_0_0_0_1px_hsl(var(--border))] transition-colors hover:bg-background/90">
+                <span className="mr-4 text-focus">Quickbuy</span>
+                <input
+                  type="text"
+                  value={quickBuyAmount}
+                  onChange={(e) => setQuickBuyAmount(e.target.value)}
+                  onBlur={(e) => {
+                    if (!e.target.value.match(/^\d+(\.\d*)?$/)) {
+                      setQuickBuyAmount("1");
+                    }
+                  }}
+                  className="relative z-[1] min-w-8 !border-0 !bg-[transparent] text-right text-button-1 !shadow-none !outline-none placeholder:text-tertiary-foreground"
+                  size={Math.max(1, quickBuyAmount.length || 1)}
+                  style={{
+                    width: `${Math.max(2, (quickBuyAmount.length || 1) * 0.6)}rem`,
+                  }}
+                />
+                <Image
+                  src={`${ASSETS_URL}/icons/sui.png`}
+                  alt="Coin"
+                  width={24}
+                  height={24}
+                  className="h-4 w-4"
+                />
               </div>
               <Image
                 src={`${ASSETS_URL}/icons/slippage.svg`}
@@ -163,9 +166,14 @@ export default function TokensPage() {
               <input
                 type="text"
                 value={slippagePercent}
+                onBlur={(e) => {
+                  if (!e.target.value.match(/^\d+(\.\d*)?$/)) {
+                    setSlippagePercent("20");
+                  }
+                }}
                 placeholder="-"
                 onChange={(e) => setSlippagePercent(e.target.value)}
-                className="relative z-[1] w-6 !border-0 !bg-[transparent] text-secondary-foreground !shadow-none !outline-none placeholder:text-tertiary-foreground text-right"
+                className="relative z-[1] w-6 !border-0 !bg-[transparent] text-right text-secondary-foreground !shadow-none !outline-none placeholder:text-tertiary-foreground"
               />
               <span className="text-secondary-foreground">%</span>
             </div>
@@ -197,13 +205,13 @@ export default function TokensPage() {
               onSearchChange={() => {}}
             />
 
-              <TokenColumn
-                title="Top"
-                rankedBezels
-                tokens={topTokens}
-                searchString=""
-                onSearchChange={() => {}}
-              />
+            <TokenColumn
+              title="Top"
+              rankedBezels
+              tokens={topTokens}
+              searchString=""
+              onSearchChange={() => {}}
+            />
           </div>
         </div>
       </div>

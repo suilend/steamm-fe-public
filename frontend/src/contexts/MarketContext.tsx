@@ -6,11 +6,10 @@ import {
   useMemo,
   useState,
 } from "react";
-
-import { useLocalStorage } from "usehooks-ts";
 import { Transaction } from "@mysten/sui/transactions";
-import * as Sentry from "@sentry/nextjs";
+import { SUI_DECIMALS } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
+import { useLocalStorage } from "usehooks-ts";
 
 import {
   QuoteProvider,
@@ -20,7 +19,6 @@ import {
 import {
   NORMALIZED_SUI_COINTYPE,
   formatToken,
-  getAllCoins,
   getBalanceChange,
   getToken,
 } from "@suilend/sui-fe";
@@ -30,14 +28,13 @@ import {
   useWalletContext,
 } from "@suilend/sui-fe-next";
 
-import useFetchMarketData from "@/fetchers/useFetchMarketData";
-import { formatPercentInputValue } from "@/lib/format";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
+import useFetchMarketData from "@/fetchers/useFetchMarketData";
 import { useAggSdks } from "@/lib/agg-swap";
 import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
+import { formatPercentInputValue } from "@/lib/format";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { SUI_DECIMALS } from "@mysten/sui/utils";
 
 const SUI_TOKEN = getToken(NORMALIZED_SUI_COINTYPE, {
   decimals: SUI_DECIMALS,
@@ -104,9 +101,9 @@ export interface Token {
   description: string;
   coinType: string;
   topTenHolders: number;
+  volume24h: string;
   rank?: number; // Original ranking position, unaffected by filtering
 }
-
 
 export interface MarketData {
   steammCoinTypes: string[];
@@ -193,7 +190,7 @@ export function MarketContextProvider({ children }: PropsWithChildren) {
   // Market data (blocking)
   const { data: marketData, mutateData: mutateMarketData } =
     useFetchMarketData();
-  const [quickBuyAmount, setQuickBuyAmount] = useLocalStorage<string>(
+  const [quickBuyAmount, _setQuickBuyAmount] = useLocalStorage<string>(
     "quickBuyAmount",
     "5",
   );
@@ -207,9 +204,14 @@ export function MarketContextProvider({ children }: PropsWithChildren) {
     watchlist.length > 0,
   );
 
+  function setQuickBuyAmount(amount: string) {
+    if (!amount.match(/^\d*(\.\d*)?$/)) return;
+    _setQuickBuyAmount(amount);
+  }
+
   // Buy state
   const [buyingTokenId, setBuyingTokenId] = useState<string | null>(null);
-  
+
   // Quick buy modal state
   const [quickBuyModalOpen, setQuickBuyModalOpen] = useState(false);
   const [quickBuyModalData, setQuickBuyModalData] = useState<{
@@ -226,16 +228,13 @@ export function MarketContextProvider({ children }: PropsWithChildren) {
   });
 
   const activeProviders = useMemo(
-    () => [
-      QuoteProvider.CETUS,
-      QuoteProvider._7K,
-      QuoteProvider.FLOWX,
-    ],
+    () => [QuoteProvider.CETUS, QuoteProvider._7K, QuoteProvider.FLOWX],
     [],
   );
 
   const setSlippagePercent = useCallback(
     (_value: string) => {
+      if (!_value.match(/^\d*(\.\d*)?$/)) return;
       const formattedValue = formatPercentInputValue(_value, 2);
 
       _setSlippagePercent(formattedValue);
@@ -272,311 +271,208 @@ export function MarketContextProvider({ children }: PropsWithChildren) {
     });
   }, []);
 
-  const quickBuyToken = useCallback(async (token: QuickBuyToken) => {
-    if (!address || !appData) {
-      showErrorToast("Wallet not connected", new Error("Please connect your wallet"));
-      return;
-    }
-
-    if (buyingTokenId) return; // Prevent multiple simultaneous buys
-
-    // Open modal and start loading
-    setBuyingTokenId(token.id);
-    setQuickBuyModalData({
-      token,
-      quote: null,
-      isLoading: true,
-      isExecuting: false,
-    });
-    setQuickBuyModalOpen(true);
-
-    try {
-      // Get SUI token info
-      const suiTokenType = NORMALIZED_SUI_COINTYPE;
-
-      // Calculate amount in SUI (convert from SUI to smallest unit)
-      const suiAmountIn = new BigNumber(quickBuyAmount)
-        .times(10 ** token.decimals)
-        .integerValue(BigNumber.ROUND_DOWN)
-        .toString();
-
-      // Check SUI balance
-      const suiBalance = getBalance(suiTokenType);
-      const requiredSuiAmount = new BigNumber(suiAmountIn)
-        .div(10 ** SUI_DECIMALS)
-        .plus(MAX_BALANCE_SUI_SUBTRACTED_AMOUNT); // Add buffer for gas
-
-      if (suiBalance.lt(requiredSuiAmount)) {
-        throw new Error(`Insufficient SUI balance. Need ${requiredSuiAmount.toFixed(4)} SUI`);
+  const quickBuyToken = useCallback(
+    async (token: QuickBuyToken) => {
+      if (!quickBuyAmount.length) return;
+      if (!address || !appData) {
+        showErrorToast(
+          "Wallet not connected",
+          new Error("Please connect your wallet"),
+        );
+        return;
       }
 
-      // Get aggregated quotes
-      const swapQuotes = await getAggSortedQuotesAll(
-        sdkMap,
-        activeProviders,
-        SUI_TOKEN,
-        token,
-        suiAmountIn,
-      );
+      if (buyingTokenId) return; // Prevent multiple simultaneous buys
 
-      const bestQuote = swapQuotes[0];
-      if (!bestQuote) {
-        throw new Error(`No swap quotes available for ${token.symbol}`);
-      }
-
-      // Format quote data for modal
-      const quoteDetails = {
-        inputAmount: quickBuyAmount,
-        outputAmount: new BigNumber(bestQuote.out.amount).div(10 ** token.decimals).toString(),
-        exchangeRate: new BigNumber(bestQuote.out.amount).div(10 ** token.decimals).div(quickBuyAmount).toString(),
-        slippage: slippagePercent,
-        provider: bestQuote.provider,
-      };
-
-      // Update modal with quote data
-      setQuickBuyModalData({
-        token,
-        quote: quoteDetails,
-        isLoading: false,
-        isExecuting: false,
-      });
-
-      // Auto-execute the transaction after showing details
-      setTimeout(() => {
-        executeQuickBuyInternal(token, bestQuote);
-      }, 1000); // Give user 1 second to see the details
-      
-    } catch (error) {
-      console.error("Quote error:", error);
+      // Open modal and start loading
+      setBuyingTokenId(token.id);
       setQuickBuyModalData({
         token,
         quote: null,
-        isLoading: false,
-        isExecuting: false,
-        error: error instanceof Error ? error.message : "Failed to get quote",
-      });
-    }
-  }, [
-    address,
-    appData,
-    buyingTokenId,
-    quickBuyAmount,
-    getBalance,
-    sdkMap,
-    activeProviders,
-    slippagePercent,
-  ]);
-
-  const executeQuickBuyInternal = useCallback(async (token: QuickBuyToken, bestQuote: any) => {
-    try {
-      // Show executing state
-      setQuickBuyModalData(prev => ({
-        ...prev,
-        isExecuting: true,
-      }));
-
-      const suiTokenType = NORMALIZED_SUI_COINTYPE;
-      
-      // Build transaction
-      let transaction = new Transaction();
-      const { transaction: swapTransaction, coinOut } = await getSwapTransaction(
-        suiClient,
-        address!,
-        bestQuote,
-        +slippagePercent,
-        sdkMap,
-        partnerIdMap,
-        transaction,
-        undefined,
-      );
-
-      if (!coinOut) {
-        throw new Error("Failed to get output coin from swap");
-      }
-
-      transaction = swapTransaction;
-      transaction.transferObjects([coinOut], address!);
-
-      // Execute transaction - this will trigger wallet signing
-      const res = await signExecuteAndWaitForTransaction(transaction, {
-        auction: true,
-      });
-
-      const txUrl = explorer.buildTxUrl(res.digest);
-
-      // Get balance changes for success message
-      const balanceChangeIn = getBalanceChange(res, address!, SUI_TOKEN, -1);
-      const balanceChangeOut = getBalanceChange(res, address!, token, 1);
-
-      // Show success toast
-      showSuccessTxnToast(
-        [
-          "Bought",
-          balanceChangeOut !== undefined
-            ? formatToken(balanceChangeOut, {
-                dp: token.decimals,
-                trimTrailingZeros: true,
-              })
-            : null,
-          token.symbol,
-          "with",
-          balanceChangeIn !== undefined
-            ? formatToken(balanceChangeIn, {
-                dp: SUI_TOKEN.decimals,
-                trimTrailingZeros: true,
-              })
-            : null,
-          SUI_TOKEN.symbol,
-        ]
-          .filter(Boolean)
-          .join(" "),
-        txUrl,
-      );
-
-      refresh();
-      
-      // Close modal on success
-      handleModalClose();
-    } catch (error) {
-      console.error("Execute buy error:", error);
-      showErrorToast(
-        `Failed to buy ${token.symbol}`,
-        error as Error,
-        undefined,
-        true,
-      );
-      
-      // Close modal on error
-      handleModalClose();
-    }
-  }, [
-    suiClient,
-    address,
-    slippagePercent,
-    sdkMap,
-    partnerIdMap,
-    signExecuteAndWaitForTransaction,
-    explorer,
-    refresh,
-    handleModalClose,
-  ]);
-
-  const executeQuickBuy = useCallback(async () => {
-    const { token, quote } = quickBuyModalData;
-    if (!token || !quote || !address) return;
-
-    try {
-      // Close modal and show signing state
-      setQuickBuyModalOpen(false);
-
-      const suiTokenType = NORMALIZED_SUI_COINTYPE;
-      const suiAmountIn = new BigNumber(quickBuyAmount)
-        .times(10 ** token.decimals)
-        .integerValue(BigNumber.ROUND_DOWN)
-        .toString();
-
-      // Get quotes again (they might have changed)
-      const swapQuotes = await getAggSortedQuotesAll(
-        sdkMap,
-        activeProviders,
-        SUI_TOKEN,
-        token,
-        suiAmountIn,
-      );
-
-      const bestQuote = swapQuotes[0];
-      if (!bestQuote) {
-        throw new Error(`No swap quotes available for ${token.symbol}`);
-      }
-
-      // Build transaction
-      let transaction = new Transaction();
-      const { transaction: swapTransaction, coinOut } = await getSwapTransaction(
-        suiClient,
-        address,
-        bestQuote,
-        +slippagePercent,
-        sdkMap,
-        partnerIdMap,
-        transaction,
-        undefined,
-      );
-
-      if (!coinOut) {
-        throw new Error("Failed to get output coin from swap");
-      }
-
-      transaction = swapTransaction;
-      transaction.transferObjects([coinOut], address);
-
-      // Execute transaction
-      const res = await signExecuteAndWaitForTransaction(transaction, {
-        auction: true,
-      });
-
-      const txUrl = explorer.buildTxUrl(res.digest);
-
-      // Get balance changes for success message
-      const balanceChangeIn = getBalanceChange(res, address, SUI_TOKEN, -1);
-      const balanceChangeOut = getBalanceChange(res, address, token, 1);
-
-      // Show success toast
-      showSuccessTxnToast(
-        [
-          "Bought",
-          balanceChangeOut !== undefined
-            ? formatToken(balanceChangeOut, {
-                dp: token.decimals,
-                trimTrailingZeros: true,
-              })
-            : null,
-          token.symbol,
-          "with",
-          balanceChangeIn !== undefined
-            ? formatToken(balanceChangeIn, {
-                dp: SUI_TOKEN.decimals,
-                trimTrailingZeros: true,
-              })
-            : null,
-          SUI_TOKEN.symbol,
-        ]
-          .filter(Boolean)
-          .join(" "),
-        txUrl,
-      );
-
-      refresh();
-    } catch (error) {
-      console.error("Execute buy error:", error);
-      showErrorToast(
-        `Failed to buy ${token.symbol}`,
-        error as Error,
-        undefined,
-        true,
-      );
-      Sentry.captureException(error);
-    } finally {
-      setBuyingTokenId(null);
-      setQuickBuyModalData({
-        token: null,
-        quote: null,
-        isLoading: false,
+        isLoading: true,
         isExecuting: false,
       });
-    }
-  }, [
-    quickBuyModalData,
-    address,
-    quickBuyAmount,
-    sdkMap,
-    activeProviders,
-    suiClient,
-    slippagePercent,
-    partnerIdMap,
-    signExecuteAndWaitForTransaction,
-    explorer,
-    refresh,
-  ]);
+      setQuickBuyModalOpen(true);
+
+      try {
+        // Get SUI token info
+        const suiTokenType = NORMALIZED_SUI_COINTYPE;
+
+        // Calculate amount in SUI (convert from SUI to smallest unit)
+        const suiAmountIn = new BigNumber(quickBuyAmount)
+          .times(10 ** SUI_DECIMALS)
+          .integerValue(BigNumber.ROUND_DOWN)
+          .toString();
+
+        // Check SUI balance
+        const suiBalance = getBalance(suiTokenType);
+        const requiredSuiAmount = new BigNumber(suiAmountIn)
+          .div(10 ** SUI_DECIMALS)
+          .plus(MAX_BALANCE_SUI_SUBTRACTED_AMOUNT); // Add buffer for gas
+
+        if (suiBalance.lt(requiredSuiAmount)) {
+          throw new Error(
+            `Insufficient SUI balance. Need ${requiredSuiAmount.toFixed(4)} SUI`,
+          );
+        }
+
+        // Get aggregated quotes
+        const swapQuotes = await getAggSortedQuotesAll(
+          sdkMap,
+          activeProviders,
+          SUI_TOKEN,
+          token,
+          suiAmountIn,
+        );
+
+        const bestQuote = swapQuotes[0];
+        if (!bestQuote) {
+          throw new Error(`No swap quotes available for ${token.symbol}`);
+        }
+
+        // Format quote data for modal
+        const quoteDetails = {
+          inputAmount: quickBuyAmount,
+          outputAmount: new BigNumber(bestQuote.out.amount).toString(),
+          exchangeRate: new BigNumber(bestQuote.out.amount)
+            .div(quickBuyAmount)
+            .toString(),
+          slippage: slippagePercent,
+          provider:
+            bestQuote.provider.slice(0, 1).toUpperCase() +
+            bestQuote.provider.slice(1),
+        };
+
+        // Update modal with quote data
+        setQuickBuyModalData({
+          token,
+          quote: quoteDetails,
+          isLoading: false,
+          isExecuting: false,
+        });
+
+        // Auto-execute the transaction after showing details
+        setTimeout(() => {
+          executeQuickBuyInternal(token, bestQuote);
+        }, 1000); // Give user 1 second to see the details
+      } catch (error) {
+        console.error("Quote error:", error);
+        setQuickBuyModalData({
+          token,
+          quote: null,
+          isLoading: false,
+          isExecuting: false,
+          error: error instanceof Error ? error.message : "Failed to get quote",
+        });
+      }
+    },
+    [
+      address,
+      appData,
+      buyingTokenId,
+      quickBuyAmount,
+      getBalance,
+      sdkMap,
+      activeProviders,
+      slippagePercent,
+    ],
+  );
+
+  const executeQuickBuyInternal = useCallback(
+    async (token: QuickBuyToken, bestQuote: any) => {
+      try {
+        // Show executing state
+        setQuickBuyModalData((prev) => ({
+          ...prev,
+          isExecuting: true,
+        }));
+
+        // Build transaction
+        let transaction = new Transaction();
+        const { transaction: swapTransaction, coinOut } =
+          await getSwapTransaction(
+            suiClient,
+            address!,
+            bestQuote,
+            +slippagePercent,
+            sdkMap,
+            partnerIdMap,
+            transaction,
+            undefined,
+          );
+
+        if (!coinOut) {
+          throw new Error("Failed to get output coin from swap");
+        }
+
+        transaction = swapTransaction;
+        transaction.transferObjects([coinOut], address!);
+
+        // Execute transaction - this will trigger wallet signing
+        const res = await signExecuteAndWaitForTransaction(transaction, {
+          auction: true,
+        });
+
+        const txUrl = explorer.buildTxUrl(res.digest);
+
+        // Get balance changes for success message
+        const balanceChangeIn = getBalanceChange(res, address!, SUI_TOKEN, -1);
+        const balanceChangeOut = getBalanceChange(res, address!, token, 1);
+
+        // Show success toast
+        showSuccessTxnToast(
+          [
+            "Bought",
+            balanceChangeOut !== undefined
+              ? formatToken(balanceChangeOut, {
+                  dp: token.decimals,
+                  trimTrailingZeros: true,
+                })
+              : null,
+            token.symbol,
+            "with",
+            balanceChangeIn !== undefined
+              ? formatToken(balanceChangeIn, {
+                  dp: SUI_TOKEN.decimals,
+                  trimTrailingZeros: true,
+                })
+              : null,
+            SUI_TOKEN.symbol,
+          ]
+            .filter(Boolean)
+            .join(" "),
+          txUrl,
+        );
+
+        refresh();
+
+        // Close modal on success
+        handleModalClose();
+      } catch (error) {
+        console.error("Execute buy error:", error);
+        showErrorToast(
+          `Failed to buy ${token.symbol}`,
+          error as Error,
+          undefined,
+          true,
+        );
+
+        // Close modal on error
+        handleModalClose();
+      }
+    },
+    [
+      suiClient,
+      address,
+      slippagePercent,
+      sdkMap,
+      partnerIdMap,
+      signExecuteAndWaitForTransaction,
+      explorer,
+      refresh,
+      handleModalClose,
+    ],
+  );
 
   // Context
   const contextValue: MarketContext = useMemo(
