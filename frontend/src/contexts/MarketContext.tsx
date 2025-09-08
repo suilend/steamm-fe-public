@@ -205,10 +205,13 @@ export function MarketContextProvider({ children }: PropsWithChildren) {
     watchlist.length > 0,
   );
 
-  function setQuickBuyAmount(amount: string) {
-    if (!amount.match(/^\d*(\.\d*)?$/)) return;
-    _setQuickBuyAmount(amount);
-  }
+  const setQuickBuyAmount = useCallback(
+    (amount: string) => {
+      if (!amount.match(/^\d*(\.\d*)?$/)) return;
+      _setQuickBuyAmount(amount);
+    },
+    [_setQuickBuyAmount],
+  );
 
   // Buy state
   const [buyingTokenId, setBuyingTokenId] = useState<string | null>(null);
@@ -271,6 +274,102 @@ export function MarketContextProvider({ children }: PropsWithChildren) {
       isExecuting: false,
     });
   }, []);
+
+  const executeQuickBuyInternal = useCallback(
+    async (token: QuickBuyToken, bestQuote: any) => {
+      try {
+        // Show executing state
+        setQuickBuyModalData((prev) => ({
+          ...prev,
+          isExecuting: true,
+        }));
+
+        // Build transaction
+        let transaction = new Transaction();
+        const { transaction: swapTransaction, coinOut } =
+          await getSwapTransaction(
+            suiClient,
+            address!,
+            bestQuote,
+            +slippagePercent,
+            sdkMap,
+            partnerIdMap,
+            transaction,
+            undefined,
+          );
+
+        if (!coinOut) {
+          throw new Error("Failed to get output coin from swap");
+        }
+
+        transaction = swapTransaction;
+        transaction.transferObjects([coinOut], address!);
+
+        // Execute transaction - this will trigger wallet signing
+        const res = await signExecuteAndWaitForTransaction(transaction, {
+          auction: true,
+        });
+
+        const txUrl = explorer.buildTxUrl(res.digest);
+
+        // Get balance changes for success message
+        const balanceChangeIn = getBalanceChange(res, address!, SUI_TOKEN, -1);
+        const balanceChangeOut = getBalanceChange(res, address!, token, 1);
+
+        // Show success toast
+        showSuccessTxnToast(
+          [
+            "Bought",
+            balanceChangeOut !== undefined
+              ? formatToken(balanceChangeOut, {
+                  dp: token.decimals,
+                  trimTrailingZeros: true,
+                })
+              : null,
+            token.symbol,
+            "with",
+            balanceChangeIn !== undefined
+              ? formatToken(balanceChangeIn, {
+                  dp: SUI_TOKEN.decimals,
+                  trimTrailingZeros: true,
+                })
+              : null,
+            SUI_TOKEN.symbol,
+          ]
+            .filter(Boolean)
+            .join(" "),
+          txUrl,
+        );
+
+        refresh();
+
+        // Close modal on success
+        handleModalClose();
+      } catch (error) {
+        console.error("Execute buy error:", error);
+        showErrorToast(
+          `Failed to buy ${token.symbol}`,
+          error as Error,
+          undefined,
+          true,
+        );
+
+        // Close modal on error
+        handleModalClose();
+      }
+    },
+    [
+      suiClient,
+      address,
+      slippagePercent,
+      sdkMap,
+      partnerIdMap,
+      signExecuteAndWaitForTransaction,
+      explorer,
+      refresh,
+      handleModalClose,
+    ],
+  );
 
   const quickBuyToken = useCallback(
     async (token: QuickBuyToken) => {
@@ -372,106 +471,11 @@ export function MarketContextProvider({ children }: PropsWithChildren) {
       appData,
       buyingTokenId,
       quickBuyAmount,
+      executeQuickBuyInternal,
       getBalance,
       sdkMap,
       activeProviders,
       slippagePercent,
-    ],
-  );
-
-  const executeQuickBuyInternal = useCallback(
-    async (token: QuickBuyToken, bestQuote: any) => {
-      try {
-        // Show executing state
-        setQuickBuyModalData((prev) => ({
-          ...prev,
-          isExecuting: true,
-        }));
-
-        // Build transaction
-        let transaction = new Transaction();
-        const { transaction: swapTransaction, coinOut } =
-          await getSwapTransaction(
-            suiClient,
-            address!,
-            bestQuote,
-            +slippagePercent,
-            sdkMap,
-            partnerIdMap,
-            transaction,
-            undefined,
-          );
-
-        if (!coinOut) {
-          throw new Error("Failed to get output coin from swap");
-        }
-
-        transaction = swapTransaction;
-        transaction.transferObjects([coinOut], address!);
-
-        // Execute transaction - this will trigger wallet signing
-        const res = await signExecuteAndWaitForTransaction(transaction, {
-          auction: true,
-        });
-
-        const txUrl = explorer.buildTxUrl(res.digest);
-
-        // Get balance changes for success message
-        const balanceChangeIn = getBalanceChange(res, address!, SUI_TOKEN, -1);
-        const balanceChangeOut = getBalanceChange(res, address!, token, 1);
-
-        // Show success toast
-        showSuccessTxnToast(
-          [
-            "Bought",
-            balanceChangeOut !== undefined
-              ? formatToken(balanceChangeOut, {
-                  dp: token.decimals,
-                  trimTrailingZeros: true,
-                })
-              : null,
-            token.symbol,
-            "with",
-            balanceChangeIn !== undefined
-              ? formatToken(balanceChangeIn, {
-                  dp: SUI_TOKEN.decimals,
-                  trimTrailingZeros: true,
-                })
-              : null,
-            SUI_TOKEN.symbol,
-          ]
-            .filter(Boolean)
-            .join(" "),
-          txUrl,
-        );
-
-        refresh();
-
-        // Close modal on success
-        handleModalClose();
-      } catch (error) {
-        console.error("Execute buy error:", error);
-        showErrorToast(
-          `Failed to buy ${token.symbol}`,
-          error as Error,
-          undefined,
-          true,
-        );
-
-        // Close modal on error
-        handleModalClose();
-      }
-    },
-    [
-      suiClient,
-      address,
-      slippagePercent,
-      sdkMap,
-      partnerIdMap,
-      signExecuteAndWaitForTransaction,
-      explorer,
-      refresh,
-      handleModalClose,
     ],
   );
 

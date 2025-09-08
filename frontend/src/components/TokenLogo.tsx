@@ -21,7 +21,7 @@ export default function TokenLogo({ className, token, size }: TokenLogoProps) {
 
   useEffect(() => {
     if (!token) return;
-    if (isInvalidIconUrl(token.iconUrl)) return;
+    if (isInvalidIconUrl(token.iconUrl ?? null)) return;
 
     loadTokenIconImage(token);
   }, [token, loadTokenIconImage]);
@@ -34,7 +34,7 @@ export default function TokenLogo({ className, token, size }: TokenLogoProps) {
       />
     );
   if (
-    isInvalidIconUrl(token.iconUrl) ||
+    isInvalidIconUrl(token.iconUrl ?? null) ||
     tokenIconImageLoadErrorMap[token.coinType]
   )
     return (
