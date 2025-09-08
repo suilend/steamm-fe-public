@@ -59,7 +59,7 @@ import {
   SwapParams,
 } from ".";
 
-const STALENESS_THRESHOLD_SECONDS = 12;
+const STALENESS_THRESHOLD_SECONDS = 0; // Always update price feeds
 
 /**
  * Helper class to help interact with pools.
