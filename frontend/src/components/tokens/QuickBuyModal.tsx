@@ -1,6 +1,12 @@
 import BigNumber from "bignumber.js";
 import { X } from "lucide-react";
-import { formatToken, formatUsd, NORMALIZED_SUI_COINTYPE } from "@suilend/sui-fe";
+
+import {
+  NORMALIZED_SUI_COINTYPE,
+  formatToken,
+  formatUsd,
+} from "@suilend/sui-fe";
+
 import Dialog from "@/components/Dialog";
 import { QuickBuyToken } from "@/contexts/MarketContext";
 import useCachedUsdPrices from "@/hooks/useCachedUsdPrices";
@@ -103,9 +109,14 @@ export default function QuickBuyModal({
                     SUI
                   </div>
                   <div className="text-xs text-secondary-foreground">
-                    {formatUsd(new BigNumber(quote.inputAmount).times(cachedUsdPricesMap[NORMALIZED_SUI_COINTYPE]), {
-                      exact: false,
-                    })}
+                    {formatUsd(
+                      new BigNumber(quote.inputAmount).times(
+                        cachedUsdPricesMap[NORMALIZED_SUI_COINTYPE],
+                      ),
+                      {
+                        exact: false,
+                      },
+                    )}
                   </div>
                 </div>
               </div>
