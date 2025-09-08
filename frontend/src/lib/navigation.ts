@@ -1,5 +1,6 @@
 export const ROOT_URL = "/";
 export const POOL_URL_PREFIX = "/pool";
+export const FUN_URL = "/fun";
 export const CREATE_URL = "/create";
 export const MINT_URL = "/mint";
 export const AIRDROP_URL = "/airdrop";

@@ -165,35 +165,55 @@ export default function PoolsTable({
 
     const pageCount = Math.ceil(sortedPoolGroups.length / pageSize);
     const lastPageIndex = pageCount - 1;
+    const maxButtons = md ? 7 : 5;
 
-    if (pageCount < 7)
+    if (pageCount < maxButtons)
       return Array.from({ length: pageCount }).map((_, index) => index);
 
-    // First three pages
-    if (pageIndex <= 2) return [0, 1, 2, 3, 4, 5, lastPageIndex];
+    if (md) {
+      // Desktop: show up to 7 buttons
+      // First three pages
+      if (pageIndex <= 2) return [0, 1, 2, 3, 4, 5, lastPageIndex];
 
-    // Last three pages
-    if (pageIndex >= lastPageIndex - 2)
+      // Last three pages
+      if (pageIndex >= lastPageIndex - 2)
+        return [
+          0,
+          lastPageIndex - 5,
+          lastPageIndex - 4,
+          lastPageIndex - 3,
+          lastPageIndex - 2,
+          lastPageIndex - 1,
+          lastPageIndex,
+        ];
+
       return [
         0,
-        lastPageIndex - 5,
-        lastPageIndex - 4,
-        lastPageIndex - 3,
-        lastPageIndex - 2,
-        lastPageIndex - 1,
+        pageIndex - 2,
+        pageIndex - 1,
+        pageIndex,
+        pageIndex + 1,
+        pageIndex + 2,
         lastPageIndex,
       ];
+    } else {
+      // Mobile: show up to 5 buttons
+      // First two pages
+      if (pageIndex <= 1) return [0, 1, 2, 3, lastPageIndex];
 
-    return [
-      0,
-      pageIndex - 2,
-      pageIndex - 1,
-      pageIndex,
-      pageIndex + 1,
-      pageIndex + 2,
-      lastPageIndex,
-    ];
-  }, [sortedPoolGroups, pageSize, pageIndex]);
+      // Last two pages
+      if (pageIndex >= lastPageIndex - 1)
+        return [
+          0,
+          lastPageIndex - 3,
+          lastPageIndex - 2,
+          lastPageIndex - 1,
+          lastPageIndex,
+        ];
+
+      return [0, pageIndex - 1, pageIndex, pageIndex + 1, lastPageIndex];
+    }
+  }, [sortedPoolGroups, pageSize, pageIndex, md]);
 
   const pageRows = useMemo(
     () =>
