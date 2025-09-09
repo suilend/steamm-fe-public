@@ -16,6 +16,7 @@ import {
 import PercentInput from "@/components/PercentInput";
 import SubmitButton from "@/components/SubmitButton";
 import Tooltip from "@/components/Tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { showSuccessTxnToast } from "@/lib/toasts";
 import { cn } from "@/lib/utils";
@@ -29,10 +30,12 @@ interface FeeReceiverRow {
 export default function ConfigTab() {
   const { explorer, suiClient } = useSettingsContext();
   const { address, signExecuteAndWaitForTransaction } = useWalletContext();
-  const { steammClient, appData } = useLoadedAppContext();
+  const { steammClient } = useLoadedAppContext();
 
   // Fee receivers
-  const [feeReceiverRows, setFeeReceiverRows] = useState<FeeReceiverRow[]>([]);
+  const [feeReceiverRows, setFeeReceiverRows] = useState<
+    FeeReceiverRow[] | undefined
+  >(undefined);
 
   useEffect(() => {
     (async () => {
@@ -40,12 +43,13 @@ export default function ConfigTab() {
         const feeReceivers = await suiClient.getDynamicFieldObject({
           parentId: steammClient.sdkOptions.packages.steamm.config!.registryId,
           name: {
-            type: `${PUBLISHED_AT}::registry::FeeReceiversKey`,
+            type: "0xc04425c5585e7d0a7e49f1265983e4303180216880179cccfc894afa8afe6d50::registry::FeeReceiversKey",
             value: {
               dummy_field: false,
             },
           },
         });
+
         if (feeReceivers.error) {
           const rowId = uuidv4();
           setFeeReceiverRows([{ id: rowId, address: "", weight: "" }]);
@@ -53,38 +57,52 @@ export default function ConfigTab() {
           setTimeout(() => {
             document.getElementById(`address-${rowId}`)?.focus();
           });
-
           return;
         } else {
-          // TODO
-        }
+          const receivers = (feeReceivers.data?.content as any).fields.value
+            .fields.receivers as string[];
+          const weights = (feeReceivers.data?.content as any).fields.value
+            .fields.weights as string[];
 
-        // const rows: FeeReceiverRow[] = feeReceivers.receivers.map(
-        //   (receiver, index) => ({
-        //     id: uuidv4(),
-        //     address: receiver,
-        //     weight: feeReceivers.weights[index].toString(),
-        //   }),
-        // );
+          setFeeReceiverRows(
+            receivers.map((receiver, index) => ({
+              id: uuidv4(),
+              address: receiver,
+              weight: weights[index],
+            })),
+          );
+        }
       } catch (err) {
         console.error(err);
       }
     })();
   }, [suiClient, steammClient.sdkOptions.packages.steamm.config]);
 
-  const onChange = (id: string, key: keyof FeeReceiverRow) => (value: string) =>
-    setFeeReceiverRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, [key]: value } : row)),
-    );
+  const onChange =
+    (id: string, key: keyof FeeReceiverRow) => (value: string) => {
+      if (feeReceiverRows === undefined) return;
+
+      setFeeReceiverRows((prev) =>
+        (prev as FeeReceiverRow[]).map((row) =>
+          row.id === id ? { ...row, [key]: value } : row,
+        ),
+      );
+    };
 
   const removeRow = (id: string) => {
-    setFeeReceiverRows((prev) => prev.filter((row) => row.id !== id));
+    if (feeReceiverRows === undefined) return;
+
+    setFeeReceiverRows((prev) =>
+      (prev as FeeReceiverRow[]).filter((row) => row.id !== id),
+    );
   };
 
   const addRow = () => {
+    if (feeReceiverRows === undefined) return;
+
     const rowId = uuidv4();
     setFeeReceiverRows((prev) => [
-      ...prev,
+      ...(prev as FeeReceiverRow[]),
       { id: rowId, address: "", weight: "" },
     ]);
 
@@ -99,6 +117,7 @@ export default function ConfigTab() {
 
   const setFeeReceivers = async () => {
     if (address !== ADMIN_ADDRESS) return;
+    if (feeReceiverRows === undefined) return;
 
     try {
       setIsSettingFeeReceivers(true);
@@ -149,63 +168,71 @@ export default function ConfigTab() {
 
       {/* Table */}
       <div className="flex w-full flex-col gap-2">
-        {feeReceiverRows.map((row, index) => (
-          <div key={row.id} className="flex w-full flex-row gap-2">
-            {/* Address */}
-            <div className="flex flex-1 flex-col gap-2">
-              {index === 0 && (
-                <p className="text-p2 text-secondary-foreground">address</p>
-              )}
-              <div
-                className={cn(
-                  "w-full rounded-md bg-card/50 transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]",
-                  "h-max",
+        {feeReceiverRows === undefined ? (
+          <Skeleton className="h-[119px] w-full" />
+        ) : (
+          feeReceiverRows.map((row, index) => (
+            <div key={row.id} className="flex w-full flex-row gap-2">
+              {/* Address */}
+              <div className="flex flex-1 flex-col gap-2">
+                {index === 0 && (
+                  <p className="text-p2 text-secondary-foreground">address</p>
                 )}
-              >
-                <TextareaAutosize
-                  id={`address-${row.id}`}
+                <div
                   className={cn(
-                    "block w-full min-w-0 !border-0 !bg-[transparent] px-3 py-2.5 !text-p2 text-foreground !shadow-none !outline-none placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
-                    "h-auto max-h-32 min-h-10",
+                    "w-full rounded-md bg-card/50 transition-colors focus-within:bg-card focus-within:shadow-[inset_0_0_0_1px_hsl(var(--focus))]",
+                    "h-max",
                   )}
-                  value={row.address}
-                  onChange={(e) => onChange(row.id, "address")(e.target.value)}
-                  minRows={1}
+                >
+                  <TextareaAutosize
+                    id={`address-${row.id}`}
+                    className={cn(
+                      "block w-full min-w-0 !border-0 !bg-[transparent] px-3 py-2.5 !text-p2 text-foreground !shadow-none !outline-none placeholder:text-tertiary-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+                      "h-auto max-h-32 min-h-10",
+                    )}
+                    value={row.address}
+                    onChange={(e) =>
+                      onChange(row.id, "address")(e.target.value)
+                    }
+                    minRows={1}
+                  />
+                </div>
+              </div>
+
+              {/* Weight */}
+              <div className="flex w-[80px] flex-col gap-2 md:w-[120px]">
+                {index === 0 && (
+                  <p className="text-p2 text-secondary-foreground">weight</p>
+                )}
+                <PercentInput
+                  inputId={`weight-${row.id}`}
+                  value={row.weight}
+                  onChange={onChange(row.id, "weight")}
+                  min={0}
+                  max={100}
                 />
               </div>
-            </div>
 
-            {/* Weight */}
-            <div className="flex w-[80px] flex-col gap-2 md:w-[120px]">
-              {index === 0 && (
-                <p className="text-p2 text-secondary-foreground">weight</p>
-              )}
-              <PercentInput
-                inputId={`weight-${row.id}`}
-                value={row.weight}
-                onChange={onChange(row.id, "weight")}
-                min={0}
-                max={100}
-              />
+              {/* Remove row */}
+              <div className="flex flex-col gap-2">
+                {index === 0 && (
+                  <p className="text-p2 text-secondary-foreground opacity-0">
+                    -
+                  </p>
+                )}
+                <Tooltip title="Remove row">
+                  <button
+                    className="flex h-10 w-10 flex-row items-center justify-center rounded-md bg-button-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
+                    disabled={feeReceiverRows.length < 2}
+                    onClick={() => removeRow(row.id)}
+                  >
+                    <Minus className="h-4 w-4 text-button-2-foreground" />
+                  </button>
+                </Tooltip>
+              </div>
             </div>
-
-            {/* Remove row */}
-            <div className="flex flex-col gap-2">
-              {index === 0 && (
-                <p className="text-p2 text-secondary-foreground opacity-0">-</p>
-              )}
-              <Tooltip title="Remove row">
-                <button
-                  className="flex h-10 w-10 flex-row items-center justify-center rounded-md bg-button-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
-                  disabled={feeReceiverRows.length < 2}
-                  onClick={() => removeRow(row.id)}
-                >
-                  <Minus className="h-4 w-4 text-button-2-foreground" />
-                </button>
-              </Tooltip>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
 
         {/* Add row */}
         <div className="w-full pr-12">
