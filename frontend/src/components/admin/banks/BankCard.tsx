@@ -985,7 +985,11 @@ export default function BankCard({
               className="group flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
               disabled={
                 bankRewardsMap === undefined ||
-                Object.keys(bankRewardsMap).length === 0 ||
+                bankAutoclaimedRewardsMap === undefined ||
+                !(
+                  Object.keys(bankRewardsMap).length > 0 ||
+                  Object.keys(bankAutoclaimedRewardsMap).length > 0
+                ) ||
                 isClaimingRewards
               }
               onClick={claimRewards}
