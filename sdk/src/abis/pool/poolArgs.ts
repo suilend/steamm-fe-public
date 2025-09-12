@@ -81,6 +81,11 @@ export interface CollectProtocolFeesArgs {
   globalAdmin: TransactionObjectInput;
 }
 
+export interface SetDepositLimitArgs {
+  globalAdmin: TransactionObjectInput;
+  k: bigint | TransactionArgument;
+}
+
 export interface MigrateArgs {
   adminCap: TransactionObjectInput;
 }

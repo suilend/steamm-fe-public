@@ -471,6 +471,19 @@ export class PoolManager implements IManager {
     return [coinA, coinB];
   }
 
+  public setDepositLimit(
+    k: bigint | TransactionArgument,
+    poolInfo: PoolInfo,
+    tx: Transaction,
+  ) {
+    const pool = this.sdk.poolAbi(poolInfo);
+
+    pool.setDepositLimit(tx, {
+      globalAdmin: this.sdk.sdkOptions.packages.steamm.config!.globalAdmin,
+      k,
+    });
+  }
+
   // public migrate(
   //   args: MigratePoolArgs,
   //   tx: Transaction = new Transaction()

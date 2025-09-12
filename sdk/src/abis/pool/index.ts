@@ -17,6 +17,7 @@ import {
   QuoteRedeemArgs,
   QuoteSwapFullArgs,
   RedeemLiquidityArgs,
+  SetDepositLimitArgs,
   SwapFullArgs,
 } from "./poolArgs";
 
@@ -156,6 +157,21 @@ export class PoolAbi {
     );
 
     return [coinA, coinB];
+  }
+
+  public setDepositLimit(tx: Transaction, args: SetDepositLimitArgs) {
+    const callArgs = {
+      pool: tx.object(this.poolInfo.poolId),
+      globalAdmin: args.globalAdmin,
+      k: args.k,
+    };
+
+    Codegen.Pool.setDepositLimit(
+      tx,
+      this.poolTypes(),
+      callArgs,
+      this.publishedAt,
+    );
   }
 
   public migrate(
