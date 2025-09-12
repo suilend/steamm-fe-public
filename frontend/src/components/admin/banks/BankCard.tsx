@@ -960,20 +960,21 @@ export default function BankCard({
                 }
               >
                 <div className="flex h-[21px] w-max flex-row items-center gap-2">
-                  <TokenLogos
-                    coinTypes={Object.keys(bankRewardsMap)}
-                    size={16}
-                  />
-
-                  {Object.keys(bankAutoclaimedRewardsMap).length > 0 && (
-                    <>
+                  {Object.keys(bankRewardsMap).length > 0 && (
+                    <TokenLogos
+                      coinTypes={Object.keys(bankRewardsMap)}
+                      size={16}
+                    />
+                  )}
+                  {Object.keys(bankRewardsMap).length > 0 &&
+                    Object.keys(bankAutoclaimedRewardsMap).length > 0 && (
                       <div className="h-4 w-px bg-border" />
-
-                      <TokenLogos
-                        coinTypes={Object.keys(bankAutoclaimedRewardsMap)}
-                        size={16}
-                      />
-                    </>
+                    )}
+                  {Object.keys(bankAutoclaimedRewardsMap).length > 0 && (
+                    <TokenLogos
+                      coinTypes={Object.keys(bankAutoclaimedRewardsMap)}
+                      size={16}
+                    />
                   )}
                 </div>
               </Tooltip>
