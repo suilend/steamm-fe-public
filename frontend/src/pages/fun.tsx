@@ -16,7 +16,7 @@ import {
 import { ASSETS_URL } from "@/lib/constants";
 
 // Convert TrendingCoin to Token format
-const convertTrendingCoinToToken = (
+export const convertTrendingCoinToToken = (
   trendingCoin: TrendingCoin,
   rank?: number,
 ): Token => {

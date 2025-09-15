@@ -28,39 +28,7 @@ import { SelectPopoverOption } from "@/lib/select";
 import { getFilteredTokens } from "@/lib/tokens";
 import { PoolGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-// Convert trending coin to Token format (same as in fun.tsx)
-const convertTrendingCoinToToken = (
-  trendingCoin: any,
-  rank?: number,
-): Token => {
-  const marketCapValue = parseFloat(trendingCoin.market_cap) || 0;
-  const priceValue = parseFloat(trendingCoin.price) || 0;
-  const publishedDate = new Date(trendingCoin.published_at);
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - publishedDate.getTime());
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  const timeAgo = diffDays === 0 ? "Today" : `${diffDays}d`;
-
-  return {
-    id: trendingCoin.coinType,
-    name: trendingCoin.name,
-    symbol: trendingCoin.symbol,
-    image: trendingCoin.logo,
-    change24h: trendingCoin.price_change_1d || 0,
-    timeAgo,
-    holders: trendingCoin.holders || 0,
-    coinType: trendingCoin.coinType,
-    marketCap: marketCapValue,
-    price: priceValue,
-    isVerified: trendingCoin.verified,
-    decimals: trendingCoin.decimals,
-    description: trendingCoin.description,
-    topTenHolders: trendingCoin.topTenHolders,
-    volume24h: trendingCoin.volume_24h,
-    rank,
-  };
-};
+import { convertTrendingCoinToToken } from "@/pages/fun";
 
 export default function SearchDialog() {
   const { appData, recentPoolIds } = useLoadedAppContext();
