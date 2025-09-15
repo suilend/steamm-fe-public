@@ -6,6 +6,7 @@ import {
   Clock,
   Copy,
   Crown,
+  ExternalLink,
   Filter,
   FilterX,
   Search,
@@ -58,7 +59,7 @@ export default function TokenColumn({
   showSearch = false,
   rankedBezels = false,
 }: TokenColumnProps) {
-  const { address } = useWalletContext();
+  const { address, setIsConnectWalletDropdownOpen } = useWalletContext();
   const {
     quickBuyAmount,
     watchlist,
@@ -209,7 +210,7 @@ export default function TokenColumn({
         ) : (
           filteredTokens.map((token) => (
             <div
-              key={token.id}
+              key={`${token.coinType}-${token.name}-${token.symbol}`}
               className="group flex items-center gap-0 overflow-hidden bg-[#0A101A] transition-colors hover:bg-card/50 md:gap-3"
             >
               {/* Token Image */}
@@ -224,10 +225,10 @@ export default function TokenColumn({
                         style={{
                           background:
                             token.rank === 1
-                              ? "conic-gradient(from 0deg, #fbbf24, #f59e0b, #d97706, #92400e, #451a03, #92400e, #d97706, #f59e0b, #fbbf24)" // Gold - wider range
+                              ? "conic-gradient(from 0deg, #fff7b2, #fde68a, #facc15, #eab308, #f59e0b, #eab308, #facc15, #fde68a, #fff7b2)" // Gold - brighter yellows
                               : token.rank === 2
-                                ? "conic-gradient(from 0deg, #f3f4f6, #d1d5db, #9ca3af, #6b7280, #374151, #6b7280, #9ca3af, #d1d5db, #f3f4f6)" // Silver - wider range
-                                : "conic-gradient(from 0deg, #fed7aa, #fdba74, #fb923c, #f97316, #ea580c, #c2410c, #9a3412, #c2410c, #ea580c, #f97316, #fb923c, #fdba74, #fed7aa)", // Bronze - wider range
+                                ? "conic-gradient(from 0deg, #f3f4f6, #d1d5db, #9ca3af, #6b7280, #374151, #6b7280, #9ca3af, #d1d5db, #f3f4f6)" // Silver
+                                : "conic-gradient(from 0deg, #a97142, #8b5a2b, #6e3b1f, #4a2c1a, #3b2414, #4a2c1a, #6e3b1f, #8b5a2b, #a97142)", // Bronze - browner
                         }}
                       />
                     </div>
@@ -242,7 +243,7 @@ export default function TokenColumn({
                         rankedBezels &&
                           token.rank &&
                           token.rank <= 3 &&
-                          "absolute left-0.5 top-0.5 h-[60px] w-[60px]",
+                          "absolute left-1 top-1 h-[56px] w-[56px]",
                       )}
                     />
                   ) : (
@@ -252,7 +253,7 @@ export default function TokenColumn({
                         rankedBezels &&
                           token.rank &&
                           token.rank <= 3 &&
-                          "absolute left-0.5 top-0.5 h-[60px] w-[60px]",
+                          "absolute left-1 top-1 h-[56px] w-[60px]",
                       )}
                     />
                   )}
@@ -310,6 +311,51 @@ export default function TokenColumn({
                         className="h-3 w-3"
                       />
                     </button>
+                    {token.socialMedia?.x && (
+                      <button
+                        className="text-secondary-foreground transition-colors hover:text-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(token.socialMedia!.x!, "_blank")
+                          }}
+                      >
+                      <img
+                        src="https://d29k09wtkr1a3e.cloudfront.net/icons/x.svg"
+                        alt="noodles"
+                        width={12}
+                        height={12}
+                        className="h-3 w-3"
+                      />
+                      </button>
+                    )}
+                    {token.socialMedia?.telegram && (
+                      <button
+                        className="text-secondary-foreground transition-colors hover:text-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(token.socialMedia!.telegram!, "_blank")
+                          }}
+                      >
+                      <img
+                        src="https://d29k09wtkr1a3e.cloudfront.net/icons/telegram.svg"
+                        alt="noodles"
+                        width={12}
+                        height={12}
+                        className="h-3 w-3"
+                      />
+                      </button>
+                    )}
+                    {token.socialMedia?.website && (
+                      <button
+                        className="text-secondary-foreground transition-colors hover:text-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(token.socialMedia!.website!, "_blank")
+                          }}
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </button>
+                    )}
                   </div>
 
                   {/* Buy Button */}
@@ -321,10 +367,14 @@ export default function TokenColumn({
                           "cursor-not-allowed opacity-50",
                       )}
                       onClick={(e) => {
+                        if (!address) {
+                          setIsConnectWalletDropdownOpen(true);
+                          return;
+                        }
                         e.stopPropagation();
                         handleBuyToken(token);
                       }}
-                      disabled={buyingTokenId === token.id || !address}
+                      disabled={buyingTokenId === token.id}
                     >
                       <span className="font-medium text-button-1">
                         {buyingTokenId === token.id
@@ -370,6 +420,7 @@ export default function TokenColumn({
                           {formatToken(new BigNumber(token.holders), {
                             exact: false,
                             trimTrailingZeros: true,
+                            dp: 0,
                           })}
                         </span>
                       </span>

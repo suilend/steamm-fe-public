@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
 const NOODLES_API_BASE = "https://api.noodles.fi";
-const CACHE_TTL_MS = 5 * 60 * 1000; // 1 minutes in milliseconds
+const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes in milliseconds
 
 // In-memory cache structure
 interface CachedCoinData {
@@ -10,19 +10,18 @@ interface CachedCoinData {
 }
 
 interface CachedVolumeData {
-  data: Record<string, VolumeData>;
+  data: VolumeData;
   timestamp: number;
 }
 
 // Cache storage
 const coinDetailsCache = new Map<string, CachedCoinData>();
-const volumeDataCache = new Map<string, CachedVolumeData>();
+const volumeCoinCache = new Map<string, CachedVolumeData>();
 
 // Cache key helpers
 const getCoinDetailCacheKey = (coinId: string): string =>
   `coin_detail_${coinId}`;
-const getVolumeCacheKey = (coinIds: string[]): string =>
-  `volume_${coinIds.sort().join(",")}`;
+const getVolumeCoinCacheKey = (coinId: string): string => `volume_${coinId}`;
 
 // Cache cleanup function (removes expired entries) - only called on successful requests
 const cleanupCache = () => {
@@ -36,9 +35,9 @@ const cleanupCache = () => {
   }
 
   // Clean volume data cache
-  for (const [key, value] of volumeDataCache.entries()) {
+  for (const [key, value] of volumeCoinCache.entries()) {
     if (now - value.timestamp > CACHE_TTL_MS) {
-      volumeDataCache.delete(key);
+      volumeCoinCache.delete(key);
     }
   }
 };
@@ -158,21 +157,9 @@ export default async function handler(
       return res.status(500).json({ error: "API configuration error" });
     }
 
-    // Helper function to chunk coin IDs for API limits (max 100 items per request)
-    const chunkCoinIds = (
-      coinIds: string[],
-      chunkSize: number = 100,
-    ): string[][] => {
-      const chunks: string[][] = [];
-      for (let i = 0; i < coinIds.length; i += chunkSize) {
-        chunks.push(coinIds.slice(i, i + chunkSize));
-      }
-      return chunks;
-    };
-
     // Separate cached and uncached coin IDs
     const cachedResults: CoinDetailResponse[] = [];
-    const staleResults: CoinDetailResponse[] = [];
+    const staleCoinIds: string[] = [];
     const uncachedCoinIds: string[] = [];
 
     for (const coinId of requestBody.coin_ids) {
@@ -180,12 +167,12 @@ export default async function handler(
       const cached = coinDetailsCache.get(cacheKey);
 
       if (cached && isCacheValid(cached.timestamp)) {
-        // Fresh cache hit
+        // Fresh cache hit - include immediately
         cachedResults.push(cached.data);
       } else if (cached && hasCachedData(cached.timestamp)) {
-        // Stale cache - keep for potential fallback
-        staleResults.push(cached.data);
-        uncachedCoinIds.push(coinId);
+        // Stale cache - include immediately and schedule background refresh
+        cachedResults.push(cached.data);
+        staleCoinIds.push(coinId);
       } else {
         // No cache at all
         uncachedCoinIds.push(coinId);
@@ -193,11 +180,51 @@ export default async function handler(
     }
 
     console.log(
-      `Cache hit for ${cachedResults.length} coins, ${staleResults.length} stale cached, fetching ${uncachedCoinIds.length} from API`,
+      `Cache hit for ${cachedResults.length} coins, ${staleCoinIds.length} stale cached, fetching ${uncachedCoinIds.length} from API`,
     );
 
-    // Create promises for uncached coin detail requests
-    const coinDetailPromises = uncachedCoinIds.map(async (coinId) => {
+    // Sort uncached coin details by staleness (oldest or missing first)
+    const uncachedCoinIdsSorted = uncachedCoinIds
+      .map((coinId) => ({
+        coinId,
+        ts: coinDetailsCache.get(getCoinDetailCacheKey(coinId))?.timestamp ?? 0,
+      }))
+      .sort((a, b) => a.ts - b.ts)
+      .map(({ coinId }) => coinId);
+
+    // Background refetch for stale cached coin details (fire-and-forget)
+    const refetchCoinDetailInBackground = async (coinId: string) => {
+      try {
+        const response = await fetch(
+          `${NOODLES_API_BASE}/api/v1/partner/coin-detail?coin_id=${encodeURIComponent(coinId)}`,
+          {
+            method: "GET",
+            headers: {
+              "Accept-Encoding": "application/json",
+              "x-api-key": apiKey,
+              "x-chain": "sui",
+            },
+          },
+        );
+        if (!response.ok) return;
+        const data: CoinDetailResponse = await response.json();
+        if (data.code !== 200) return;
+        coinDetailsCache.set(getCoinDetailCacheKey(coinId), {
+          data,
+          timestamp: Date.now(),
+        });
+      } catch {
+        // swallow
+      }
+    };
+
+    // Limit immediate uncached fetches to 20, background the remainder
+    const immediateUncachedCoinIds = uncachedCoinIdsSorted.slice(0, 20);
+    const backgroundUncachedCoinIds = uncachedCoinIdsSorted.slice(20);
+
+    // Fetch uncached coin details sequentially (stale-first, up to 20)
+    const coinDetailResults: any[] = [];
+    for (const coinId of immediateUncachedCoinIds) {
       try {
         const response = await fetch(
           `${NOODLES_API_BASE}/api/v1/partner/coin-detail?coin_id=${encodeURIComponent(coinId)}`,
@@ -216,133 +243,120 @@ export default async function handler(
         }
 
         const data: CoinDetailResponse = await response.json();
-
-        if (data.code !== 200) {
-          throw new Error(`API error: ${data.message}`);
-        }
+        if (data.code !== 200) throw new Error(`API error: ${data.message}`);
 
         // Cache the successful result
         const cacheKey = getCoinDetailCacheKey(coinId);
-        coinDetailsCache.set(cacheKey, {
-          data,
-          timestamp: Date.now(),
-        });
+        coinDetailsCache.set(cacheKey, { data, timestamp: Date.now() });
 
-        return { status: "fulfilled" as const, value: data };
+        coinDetailResults.push({ status: "fulfilled", value: data });
       } catch (error) {
-        return {
-          status: "rejected" as const,
+        coinDetailResults.push({
+          status: "rejected",
           reason: {
             coin_id: coinId,
             error: error instanceof Error ? error.message : "Unknown error",
           },
-        };
+        });
       }
-    });
+    }
+    // Schedule background for stale cached and remaining uncached
+    for (const coinId of staleCoinIds) void refetchCoinDetailInBackground(coinId);
+    for (const coinId of backgroundUncachedCoinIds)
+      void refetchCoinDetailInBackground(coinId);
 
-    // Check volume data cache
+    // Volume: use per-coin cache immediately; background refetch stale; fetch missing per-coin
     const allCoinIds = requestBody.coin_ids;
-    const volumeCacheKey = getVolumeCacheKey(allCoinIds);
-    const cachedVolumeData = volumeDataCache.get(volumeCacheKey);
-
-    let volumePromises: Promise<any>[] = [];
-    let hasStaleVolumeData = false;
-
-    if (cachedVolumeData && isCacheValid(cachedVolumeData.timestamp)) {
-      console.log("Volume data cache hit");
-      // Use cached volume data
-      volumePromises = [
-        Promise.resolve({
-          status: "fulfilled" as const,
-          value: { status: "fulfilled" as const, value: cachedVolumeData.data },
-        }),
-      ];
-    } else {
-      if (cachedVolumeData && hasCachedData(cachedVolumeData.timestamp)) {
-        console.log("Volume data cache stale, will fallback if API fails");
-        hasStaleVolumeData = true;
-      } else {
-        console.log("Volume data cache miss, fetching from API");
-      }
-
-      // Create chunked POST requests for volume data (max 100 items per request)
-      const coinIdChunks = chunkCoinIds(allCoinIds);
-      console.log(
-        `Fetching volume data in ${coinIdChunks.length} chunks of up to 100 items each`,
-      );
-
-      volumePromises = coinIdChunks.map(async (chunk) => {
-        try {
-          const response = await fetch(
-            `${NOODLES_API_BASE}/api/v1/partner/coin-price-volume-multi`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-                "x-api-key": apiKey,
-                "x-chain": "sui",
-              },
-              body: JSON.stringify({
-                coin_ids: chunk,
-              }),
-            },
-          );
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
-          const data: VolumeResponse = await response.json();
-
-          if (data.code !== 200) {
-            throw new Error(`API error: ${data.message}`);
-          }
-
-          return { status: "fulfilled" as const, value: data.data };
-        } catch (error) {
-          console.error("Volume API error:", error);
-          return { status: "rejected" as const, reason: error };
-        }
-      });
-    }
-
-    // Execute all requests in parallel (only if there are uncached requests)
-    const [coinDetailResults, volumeResults] = await Promise.all([
-      uncachedCoinIds.length > 0
-        ? Promise.allSettled(coinDetailPromises)
-        : Promise.resolve([]),
-      Promise.allSettled(volumePromises),
-    ]);
-
-    // Merge volume data from all chunks
     const volumeData: Record<string, VolumeData> = {};
-    let volumeApiSuccessful = false;
 
-    volumeResults.forEach((result) => {
-      if (
-        result.status === "fulfilled" &&
-        result.value.status === "fulfilled"
-      ) {
-        Object.assign(volumeData, result.value.value);
-        volumeApiSuccessful = true;
+    const refetchVolumeInBackground = async (coinId: string) => {
+      try {
+        const response = await fetch(
+          `${NOODLES_API_BASE}/api/v1/partner/coin-price-volume-multi`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              "x-api-key": apiKey,
+              "x-chain": "sui",
+            },
+            body: JSON.stringify({ coin_ids: [coinId] }),
+          },
+        );
+        if (!response.ok) return;
+        const json: VolumeResponse = await response.json();
+        if (json.code !== 200) return;
+        const v = json.data[coinId];
+        if (!v) return;
+        volumeCoinCache.set(getVolumeCoinCacheKey(coinId), {
+          data: v,
+          timestamp: Date.now(),
+        });
+      } catch {
+        // swallow
       }
-    });
+    };
 
-    // Fallback to stale volume data if API failed and we have stale data
-    if (!volumeApiSuccessful && hasStaleVolumeData && cachedVolumeData) {
-      console.log("Volume API failed, falling back to stale cached data");
-      Object.assign(volumeData, cachedVolumeData.data);
+    // Sort all coins by staleness for the "missing" fetch order
+    const coinsByStaleness = allCoinIds
+      .map((coinId) => ({
+        coinId,
+        ts: volumeCoinCache.get(getVolumeCoinCacheKey(coinId))?.timestamp ?? 0,
+      }))
+      .sort((a, b) => a.ts - b.ts)
+      .map(({ coinId }) => coinId);
+
+    // Determine which coins are missing volume
+    const missingVolumeIds: string[] = [];
+    for (const coinId of coinsByStaleness) {
+      const cached = volumeCoinCache.get(getVolumeCoinCacheKey(coinId));
+      if (cached) {
+        // Use cached immediately
+        volumeData[coinId] = cached.data;
+        if (!isCacheValid(cached.timestamp)) void refetchVolumeInBackground(coinId);
+      } else {
+        missingVolumeIds.push(coinId);
+      }
     }
 
-    // Cache the volume data if it was successfully fetched from API
-    if (volumeApiSuccessful) {
-      volumeDataCache.set(volumeCacheKey, {
-        data: volumeData,
-        timestamp: Date.now(),
-      });
-      console.log("Volume data cached successfully");
+    // Limit immediate missing volume fetches to 20; background the rest
+    const immediateMissingVolume = missingVolumeIds.slice(0, 20);
+    const backgroundMissingVolume = missingVolumeIds.slice(20);
+
+    for (const coinId of immediateMissingVolume) {
+      try {
+        const response = await fetch(
+          `${NOODLES_API_BASE}/api/v1/partner/coin-price-volume-multi`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              "x-api-key": apiKey,
+              "x-chain": "sui",
+            },
+            body: JSON.stringify({ coin_ids: [coinId] }),
+          },
+        );
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const json: VolumeResponse = await response.json();
+        if (json.code !== 200) throw new Error(`API error: ${json.message}`);
+        const v = json.data[coinId];
+        if (v) {
+          volumeData[coinId] = v;
+          volumeCoinCache.set(getVolumeCoinCacheKey(coinId), {
+            data: v,
+            timestamp: Date.now(),
+          });
+        }
+      } catch {
+        // leave undefined
+      }
     }
+
+    for (const coinId of backgroundMissingVolume)
+      void refetchVolumeInBackground(coinId);
 
     // Separate successful and failed requests from API calls
     const successful: CoinDetailResponse[] = [...cachedResults]; // Start with cached results
@@ -362,13 +376,8 @@ export default async function handler(
     });
 
     // Fallback to stale data for failed coin detail requests
-    const failedCoinIds = failed.map((f) => f.coin_id);
-    const staleResultsToUse = staleResults.filter(
-      (staleResult) =>
-        failedCoinIds.includes(staleResult.data.coin.coin_type) ||
-        uncachedCoinIds.some(
-          (coinId) => staleResult.data.coin.coin_type === coinId,
-        ),
+    const staleResultsToUse: CoinDetailResponse[] = cachedResults.filter((r) =>
+      staleCoinIds.includes(r.data.coin.coin_type),
     );
 
     if (staleResultsToUse.length > 0) {
@@ -388,7 +397,7 @@ export default async function handler(
     }
 
     // Only cleanup cache if we had some successful API responses
-    if (successful.length - apiSuccessfulCount > 0 || volumeApiSuccessful) {
+    if (successful.length - apiSuccessfulCount > 0) {
       cleanupCache();
     }
 
@@ -399,9 +408,8 @@ export default async function handler(
       `Volume data fetch completed: ${Object.keys(volumeData).length} coins with volume data`,
     );
 
-    console.log(volumeData);
     console.log(
-      `Cache sizes: ${coinDetailsCache.size} coin details, ${volumeDataCache.size} volume data entries`,
+      `Cache sizes: ${coinDetailsCache.size} coin details, ${volumeCoinCache.size} volume data entries`,
     );
 
     // Enhance successful responses with volume data

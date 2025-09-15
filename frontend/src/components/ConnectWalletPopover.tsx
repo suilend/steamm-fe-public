@@ -6,6 +6,7 @@ import useIsiOS from "@suilend/sui-fe-next/hooks/useIsiOS";
 
 import Popover from "@/components/Popover";
 import { cn } from "@/lib/utils";
+import Dialog from "./Dialog";
 
 interface WalletItemProps {
   wallet: Wallet;

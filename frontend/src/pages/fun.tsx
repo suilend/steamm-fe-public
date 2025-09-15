@@ -59,6 +59,7 @@ const convertTrendingCoinToToken = (
     topTenHolders: trendingCoin.topTenHolders,
     volume24h: trendingCoin.volume_24h,
     rank,
+    socialMedia: trendingCoin.socialMedia,
   };
 };
 
@@ -71,8 +72,9 @@ export default function TokensPage() {
     slippagePercent,
     setSlippagePercent,
     quickBuyModalOpen,
-    quickBuyModalData,
+    quickBuyModalData, 
     setQuickBuyModalOpen,
+    setBuyingTokenId,
   } = useLoadedMarketContext();
 
   const [searchString, setSearchString] = useState<string>("");
@@ -95,7 +97,7 @@ export default function TokensPage() {
   const trendingTokens = useMemo(() => {
     return allTokens
       .slice()
-      .sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h)) // Sort by highest price change
+      .sort((a, b) => Math.abs(new BigNumber(b.volume24h).toNumber()) - Math.abs(new BigNumber(a.volume24h).toNumber())) // Sort by highest volume
       .slice(0, 10);
   }, [allTokens]);
 
@@ -219,7 +221,10 @@ export default function TokensPage() {
       {/* Quick Buy Modal */}
       <QuickBuyModal
         isOpen={quickBuyModalOpen}
-        onClose={() => setQuickBuyModalOpen(false)}
+        onClose={() => {
+          setQuickBuyModalOpen(false);
+          setBuyingTokenId(null);
+        }}
         token={quickBuyModalData.token!}
         quote={quickBuyModalData.quote}
         isLoading={quickBuyModalData.isLoading}

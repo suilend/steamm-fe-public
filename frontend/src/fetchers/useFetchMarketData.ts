@@ -9,7 +9,7 @@ const MISSED_STEAMM_COIN_TYPES = [
   "0x0ef38abcdaaafedd1e2d88929068a3f65b59bf7ee07d7e8f573c71df02d27522::attn::ATTN",
 ];
 
-interface CoinDetailsResponse {
+export interface CoinDetailsResponse {
   successful: Array<{
     code: number;
     message: string;
@@ -49,6 +49,7 @@ interface CoinDetailsResponse {
         coingecko_url: string | null;
         coinmarketcap_url: string | null;
         docs: string | null;
+        telegram: string | null;
       } | null;
       tags: Array<{
         id: number;
@@ -69,12 +70,19 @@ interface CoinDetailsResponse {
   failed: Array<{ coin_id: string; error: string }>;
 }
 
-export default function useFetchMarketData() {
+export default function useFetchMarketData(skipFetch: boolean = false) {
   const { cache } = useSWRConfig();
 
   // Data fetcher
   const dataFetcher = async (): Promise<MarketData> => {
     // Fetch STEAMM coin types
+    if (skipFetch) {
+      return {
+        steammCoinTypes: [],
+        trendingCoins: [],
+      };
+    }
+
     const coinTypesRes = await fetch(`${API_URL}/steamm/cointypes/all`);
     if (!coinTypesRes.ok) {
       throw new Error(
@@ -134,6 +142,7 @@ export default function useFetchMarketData() {
         decimals: detail.data.coin.decimals || 9,
         description: detail.data.coin.description || "",
         topTenHolders: detail.data.security?.top_10_holders || 0,
+        socialMedia: detail.data.social_media || null,
       }),
     );
 
