@@ -316,16 +316,16 @@ export default function TokenColumn({
                         className="text-secondary-foreground transition-colors hover:text-foreground"
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.open(token.socialMedia!.x!, "_blank")
-                          }}
+                          window.open(token.socialMedia!.x!, "_blank");
+                        }}
                       >
-                      <img
-                        src="https://d29k09wtkr1a3e.cloudfront.net/icons/x.svg"
-                        alt="noodles"
-                        width={12}
-                        height={12}
-                        className="h-3 w-3"
-                      />
+                        <img
+                          src="https://d29k09wtkr1a3e.cloudfront.net/icons/x.svg"
+                          alt="noodles"
+                          width={12}
+                          height={12}
+                          className="h-3 w-3"
+                        />
                       </button>
                     )}
                     {token.socialMedia?.telegram && (
@@ -333,16 +333,16 @@ export default function TokenColumn({
                         className="text-secondary-foreground transition-colors hover:text-foreground"
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.open(token.socialMedia!.telegram!, "_blank")
-                          }}
+                          window.open(token.socialMedia!.telegram!, "_blank");
+                        }}
                       >
-                      <img
-                        src="https://d29k09wtkr1a3e.cloudfront.net/icons/telegram.svg"
-                        alt="noodles"
-                        width={12}
-                        height={12}
-                        className="h-3 w-3"
-                      />
+                        <img
+                          src="https://d29k09wtkr1a3e.cloudfront.net/icons/telegram.svg"
+                          alt="noodles"
+                          width={12}
+                          height={12}
+                          className="h-3 w-3"
+                        />
                       </button>
                     )}
                     {token.socialMedia?.website && (
@@ -350,8 +350,8 @@ export default function TokenColumn({
                         className="text-secondary-foreground transition-colors hover:text-foreground"
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.open(token.socialMedia!.website!, "_blank")
-                          }}
+                          window.open(token.socialMedia!.website!, "_blank");
+                        }}
                       >
                         <ExternalLink className="h-3 w-3" />
                       </button>

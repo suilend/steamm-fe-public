@@ -1,3 +1,4 @@
+import { useRouter } from "next/router";
 import {
   PropsWithChildren,
   createContext,
@@ -31,12 +32,13 @@ import {
 
 import { useLoadedAppContext } from "@/contexts/AppContext";
 import { useUserContext } from "@/contexts/UserContext";
-import useFetchMarketData, { CoinDetailsResponse } from "@/fetchers/useFetchMarketData";
+import useFetchMarketData, {
+  CoinDetailsResponse,
+} from "@/fetchers/useFetchMarketData";
 import { useAggSdks } from "@/lib/agg-swap";
 import { MAX_BALANCE_SUI_SUBTRACTED_AMOUNT } from "@/lib/constants";
 import { formatPercentInputValue } from "@/lib/format";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { useRouter } from "next/router";
 
 const SUI_TOKEN = getToken(NORMALIZED_SUI_COINTYPE, {
   decimals: SUI_DECIMALS,
@@ -85,7 +87,7 @@ export interface TrendingCoin {
   decimals: number;
   description: string;
   topTenHolders: number;
-  socialMedia: CoinDetailsResponse['successful'][0]['data']['social_media'];
+  socialMedia: CoinDetailsResponse["successful"][0]["data"]["social_media"];
 }
 
 // Token interface for UI components
@@ -106,7 +108,7 @@ export interface Token {
   topTenHolders: number;
   volume24h: string;
   rank?: number; // Original ranking position, unaffected by filtering
-  socialMedia: CoinDetailsResponse['successful'][0]['data']['social_media'];
+  socialMedia: CoinDetailsResponse["successful"][0]["data"]["social_media"];
 }
 
 export interface MarketData {
@@ -197,8 +199,9 @@ export function MarketContextProvider({ children }: PropsWithChildren) {
   const { pathname } = useRouter();
 
   // Market data (blocking)
-  const { data: marketData, mutateData: mutateMarketData } =
-    useFetchMarketData(pathname !== "/fun");
+  const { data: marketData, mutateData: mutateMarketData } = useFetchMarketData(
+    pathname !== "/fun",
+  );
   const [quickBuyAmount, _setQuickBuyAmount] = useLocalStorage<string>(
     "quickBuyAmount",
     "5",

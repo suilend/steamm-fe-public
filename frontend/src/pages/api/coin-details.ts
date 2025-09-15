@@ -261,7 +261,8 @@ export default async function handler(
       }
     }
     // Schedule background for stale cached and remaining uncached
-    for (const coinId of staleCoinIds) void refetchCoinDetailInBackground(coinId);
+    for (const coinId of staleCoinIds)
+      void refetchCoinDetailInBackground(coinId);
     for (const coinId of backgroundUncachedCoinIds)
       void refetchCoinDetailInBackground(coinId);
 
@@ -314,7 +315,8 @@ export default async function handler(
       if (cached) {
         // Use cached immediately
         volumeData[coinId] = cached.data;
-        if (!isCacheValid(cached.timestamp)) void refetchVolumeInBackground(coinId);
+        if (!isCacheValid(cached.timestamp))
+          void refetchVolumeInBackground(coinId);
       } else {
         missingVolumeIds.push(coinId);
       }

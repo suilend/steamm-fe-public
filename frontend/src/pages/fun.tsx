@@ -72,7 +72,7 @@ export default function TokensPage() {
     slippagePercent,
     setSlippagePercent,
     quickBuyModalOpen,
-    quickBuyModalData, 
+    quickBuyModalData,
     setQuickBuyModalOpen,
     setBuyingTokenId,
   } = useLoadedMarketContext();
@@ -97,7 +97,11 @@ export default function TokensPage() {
   const trendingTokens = useMemo(() => {
     return allTokens
       .slice()
-      .sort((a, b) => Math.abs(new BigNumber(b.volume24h).toNumber()) - Math.abs(new BigNumber(a.volume24h).toNumber())) // Sort by highest volume
+      .sort(
+        (a, b) =>
+          Math.abs(new BigNumber(b.volume24h).toNumber()) -
+          Math.abs(new BigNumber(a.volume24h).toNumber()),
+      ) // Sort by highest volume
       .slice(0, 10);
   }, [allTokens]);
 
