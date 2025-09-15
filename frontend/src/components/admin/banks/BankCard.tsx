@@ -16,6 +16,7 @@ import * as simulate from "@suilend/sdk/utils/simulate";
 import { ADMIN_ADDRESS, ParsedBank } from "@suilend/steamm-sdk";
 import { PUBLISHED_AT } from "@suilend/steamm-sdk/_codegen/_generated/steamm";
 import {
+  NORMALIZED_IKA_COINTYPE,
   formatPercent,
   formatPoints,
   formatToken,
@@ -432,7 +433,9 @@ export default function BankCard({
     const result: RewardsMap = {};
 
     Object.values(rewardMap).flatMap((rewards) =>
-      [...rewards.deposit, ...rewards.borrow].forEach((r) => {
+      [...rewards.deposit].forEach((r) => {
+        if (r.stats.reserve.coinType !== bank.coinType) return; // Will be autoclaimed and deposited, no need to claim here
+
         if (!r.obligationClaims[obligation.id]) return;
         if (r.obligationClaims[obligation.id].claimableAmount.eq(0)) return;
 
@@ -468,6 +471,7 @@ export default function BankCard({
     appData.suilend.mainMarket.reserveMap,
     appData.suilend.mainMarket.rewardCoinMetadataMap,
     appData.suilend.mainMarket.rewardPriceMap,
+    bank.coinType,
     appData.coinMetadataMap,
   ]);
 
