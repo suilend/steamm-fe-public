@@ -1,4 +1,3 @@
-import { useRouter } from "next/router";
 import {
   PropsWithChildren,
   createContext,
@@ -197,12 +196,10 @@ export function MarketContextProvider({ children }: PropsWithChildren) {
   const { appData } = useLoadedAppContext();
   const { getBalance, refresh } = useUserContext();
   const { sdkMap, partnerIdMap } = useAggSdks();
-  const { pathname } = useRouter();
 
   // Market data (blocking)
-  const { data: marketData, mutateData: mutateMarketData } = useFetchMarketData(
-    pathname !== "/fun",
-  );
+  const { data: marketData, mutateData: mutateMarketData } =
+    useFetchMarketData();
   const [quickBuyAmount, _setQuickBuyAmount] = useLocalStorage<string>(
     "quickBuyAmount",
     "5",
