@@ -111,8 +111,8 @@ export default function useFetchMarketData(skipFetch: boolean = false) {
     const coinDetailsData: CoinDetailsResponse = await coinDetailsRes.json();
 
     // Convert coin details to TrendingCoin format for compatibility
-    const trendingCoins: TrendingCoin[] = coinDetailsData.successful.map(
-      (detail) => ({
+    const trendingCoins: TrendingCoin[] = coinDetailsData.successful
+      .map((detail) => ({
         coinType: detail.data.coin.coin_type,
         name: detail.data.coin.name,
         symbol: detail.data.coin.symbol,
@@ -143,8 +143,8 @@ export default function useFetchMarketData(skipFetch: boolean = false) {
         description: detail.data.coin.description || "",
         topTenHolders: detail.data.security?.top_10_holders || 0,
         socialMedia: detail.data.social_media || null,
-      }),
-    );
+      }))
+      .filter((coin) => coin.liquidity_usd !== "0");
 
     console.log(
       `Fetched ${trendingCoins.length} coin details, ${coinDetailsData.failed.length} failed`,

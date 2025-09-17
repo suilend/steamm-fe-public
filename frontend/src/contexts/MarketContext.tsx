@@ -109,6 +109,7 @@ export interface Token {
   volume24h: string;
   rank?: number; // Original ranking position, unaffected by filtering
   socialMedia: CoinDetailsResponse["successful"][0]["data"]["social_media"];
+  liquidity: string;
 }
 
 export interface MarketData {

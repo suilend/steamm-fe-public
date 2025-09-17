@@ -60,6 +60,7 @@ export const convertTrendingCoinToToken = (
     volume24h: trendingCoin.volume_24h,
     rank,
     socialMedia: trendingCoin.socialMedia,
+    liquidity: trendingCoin.liquidity_usd,
   };
 };
 

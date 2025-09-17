@@ -5,7 +5,7 @@ import {
   ADMIN_URL,
   AIRDROP_URL,
   CREATE_URL,
-  // FUN_URL,
+  FUN_URL,
   LEADERBOARD_URL,
   MINT_URL,
   POOL_URL_PREFIX,
@@ -39,7 +39,7 @@ const useNavItems = (includePools: boolean = false) => {
       ],
     },
     { url: SWAP_URL, title: "Swap", startsWithUrl: SWAP_URL },
-    // { url: FUN_URL, title: "Fun" },
+    { url: FUN_URL, title: "Fun" },
     { url: PORTFOLIO_URL, title: "Portfolio" },
     ...(address === ADMIN_ADDRESS ? [{ url: ADMIN_URL, title: "Admin" }] : []),
     {
