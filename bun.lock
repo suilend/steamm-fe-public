@@ -20,10 +20,10 @@
       "name": "frontend",
       "version": "0.1.0",
       "dependencies": {
-        "@7kprotocol/sdk-ts": "^3.4.0",
-        "@cetusprotocol/aggregator-sdk": "^1.2.0",
+        "@7kprotocol/sdk-ts": "^3.4.1",
+        "@cetusprotocol/aggregator-sdk": "^1.2.1",
         "@datadog/browser-rum": "^6.6.4",
-        "@flowx-finance/sdk": "^1.11.3",
+        "@flowx-finance/sdk": "^1.13.4",
         "@launchdarkly/node-server-sdk": "^9.7.2",
         "@mysten/dapp-kit": "0.16.0",
         "@mysten/move-bytecode-template": "0.1.0",
@@ -35,13 +35,13 @@
         "@radix-ui/react-popover": "^1.1.2",
         "@radix-ui/react-tooltip": "^1.1.4",
         "@sentry/nextjs": "^8.38.0",
-        "@suilend/sdk": "^1.1.81",
+        "@suilend/sdk": "^1.1.82",
         "@suilend/sui-fe": "^0.3.29",
         "@suilend/sui-fe-next": "^0.1.62",
         "@tanstack/react-table": "^8.20.5",
         "@vercel/analytics": "^1.4.0",
         "@vercel/speed-insights": "^1.1.0",
-        "aftermath-ts-sdk": "^1.3.14",
+        "aftermath-ts-sdk": "^1.3.22",
         "bignumber.js": "^9.1.2",
         "class-variance-authority": "^0.7.0",
         "clsx": "^2.1.1",
@@ -88,7 +88,7 @@
       "version": "1.1.5",
       "dependencies": {
         "@pythnetwork/pyth-sui-js": "^2.2.0",
-        "@suilend/sdk": "^1.1.77",
+        "@suilend/sdk": "^1.1.82",
         "@suilend/sui-fe": "^0.3.29",
         "bignumber.js": "^9.1.2",
         "dotenv": "^16.4.7",
@@ -192,7 +192,7 @@
 
     "@bluefin-exchange/bluefin7k-aggregator-sdk": ["@bluefin-exchange/bluefin7k-aggregator-sdk@4.3.2", "", { "peerDependencies": { "@mysten/sui": "^1.33.0", "@pythnetwork/pyth-sui-js": "^2.1.0" } }, "sha512-i17f++6v+9ju2vvdmqe6nVhbKadiHcLmU7Fqzsjijh0NKZ39xNrsKjCA33RIP7KTeXpTOxdNytgiqR2TQKUdDQ=="],
 
-    "@cetusprotocol/aggregator-sdk": ["@cetusprotocol/aggregator-sdk@1.2.0", "", { "dependencies": { "@mysten/sui": "^1.0.5", "@pythnetwork/pyth-sui-js": "^2.1.0", "bip39": "^3.1.0", "dotenv": "^16.4.5", "json-bigint": "^1.0.0", "node-fetch": "^3.3.2" }, "peerDependencies": { "typescript": "^5.0.0" } }, "sha512-Z1fy9rgXYgaO6jShUSivIjkDjcJSx7UVBEhJsZSTBSQ96hLhbXNwo/Tglq3FOArO4NrES/zTbwnCnQyxWNu8ig=="],
+    "@cetusprotocol/aggregator-sdk": ["@cetusprotocol/aggregator-sdk@1.2.1", "", { "dependencies": { "@mysten/sui": "^1.0.5", "@pythnetwork/pyth-sui-js": "^2.1.0", "bip39": "^3.1.0", "dotenv": "^16.4.5", "json-bigint": "^1.0.0", "node-fetch": "^3.3.2" }, "peerDependencies": { "typescript": "^5.0.0" } }, "sha512-jfFNO2kF5Y9gDP4QT75GJ5qTOMIVkOMzm/XA5kPRGXr83FyQLDzehgFt8M7TjRD6Y1/50kGpG9dMibA+XBJwuw=="],
 
     "@cspotcode/source-map-support": ["@cspotcode/source-map-support@0.8.1", "", { "dependencies": { "@jridgewell/trace-mapping": "0.3.9" } }, "sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw=="],
 
@@ -236,7 +236,7 @@
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.10", "", {}, "sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ=="],
 
-    "@flowx-finance/sdk": ["@flowx-finance/sdk@1.13.2", "", { "dependencies": { "@bluefin-exchange/bluefin7k-aggregator-sdk": "^4.3.1", "@cetusprotocol/aggregator-sdk": "^1.0.3", "@mysten/sui": "^1.14.2", "@mysten/sui.js": "^0.54.1", "aftermath-ts-sdk": "^1.3.19", "bignumber.js": "^9.0.1", "bn.js": "^5.2.1", "crypto-js": "^4.2.0", "d3": "^7.9.0", "graphql-request": "^6.1.0", "json-bigint": "^1.0.0", "lodash": "^4.17.20", "node-cache": "^5.1.2", "object-hash": "^3.0.0", "p-limit": "3.1.0", "tiny-invariant": "^1.3.3" } }, "sha512-i/wvj5lpTSZ/1xdIE9DIRU0+uyy7gB8JV8hWyt71jw4idvh9ov0Fz3weFW6ss+TzLAg5XqL/w4xGAgzqxKrGzw=="],
+    "@flowx-finance/sdk": ["@flowx-finance/sdk@1.13.4", "", { "dependencies": { "@bluefin-exchange/bluefin7k-aggregator-sdk": "^4.3.1", "@cetusprotocol/aggregator-sdk": "^1.0.3", "@mysten/sui": "^1.14.2", "@mysten/sui.js": "^0.54.1", "aftermath-ts-sdk": "^1.3.19", "bignumber.js": "^9.0.1", "bn.js": "^5.2.1", "crypto-js": "^4.2.0", "d3": "^7.9.0", "graphql-request": "^6.1.0", "json-bigint": "^1.0.0", "lodash": "^4.17.20", "node-cache": "^5.1.2", "object-hash": "^3.0.0", "p-limit": "3.1.0", "tiny-invariant": "^1.3.3" } }, "sha512-Sx4+pY2G6fasRxoOyWTcM9K9/j/x9a4mYmr/KEE5LFJQ3sIlerjBC22gppRN9nHVy3l+Wtgo7tdpeQoouF1y8w=="],
 
     "@gql.tada/cli-utils": ["@gql.tada/cli-utils@1.7.1", "", { "dependencies": { "@0no-co/graphqlsp": "^1.12.13", "@gql.tada/internal": "1.0.8", "graphql": "^15.5.0 || ^16.0.0 || ^17.0.0" }, "peerDependencies": { "@gql.tada/svelte-support": "1.0.1", "@gql.tada/vue-support": "1.0.1", "typescript": "^5.0.0" }, "optionalPeers": ["@gql.tada/svelte-support", "@gql.tada/vue-support"] }, "sha512-wg5ysZNQxtNQm67T3laVWmZzLpGb7QfyYWZdaUD2r1OjDj5Bgftq7eQlplmH+hsdffjuUyhJw/b5XAjeE2mJtg=="],
 
@@ -646,7 +646,7 @@
 
     "@suchipi/femver": ["@suchipi/femver@1.0.0", "", {}, "sha512-bprE8+K5V+DPX7q2e2K57ImqNBdfGHDIWaGI5xHxZoxbKOuQZn4wzPiUxOAHnsUr3w3xHrWXwN7gnG/iIuEMIg=="],
 
-    "@suilend/sdk": ["@suilend/sdk@1.1.81", "", { "dependencies": { "@7kprotocol/sdk-ts": "^3.4.0", "@cetusprotocol/aggregator-sdk": "^1.2.0", "@flowx-finance/sdk": "^1.11.3", "@pythnetwork/pyth-sui-js": "^2.2.0", "aftermath-ts-sdk": "^1.3.14", "bignumber.js": "^9.1.2", "bn.js": "^5.2.2", "crypto-js": "^4.2.0", "lodash": "^4.17.21", "p-limit": "3.1.0", "uuid": "^11.0.3" }, "peerDependencies": { "@mysten/bcs": "1.6.0", "@mysten/sui": "1.28.2", "@suilend/sui-fe": "^0.3.29" } }, "sha512-i9AJoZAQIUKyRHRGgMXrbsDX8k/9EP9K4EaPYsZFXUYhWEtcXSlr+FnKKgDFKb635Oo3A+a++48dhalqGLke0A=="],
+    "@suilend/sdk": ["@suilend/sdk@1.1.82", "", { "dependencies": { "@7kprotocol/sdk-ts": "^3.4.1", "@cetusprotocol/aggregator-sdk": "^1.2.1", "@flowx-finance/sdk": "^1.13.4", "@pythnetwork/pyth-sui-js": "^2.2.0", "aftermath-ts-sdk": "^1.3.22", "bignumber.js": "^9.1.2", "bn.js": "^5.2.2", "crypto-js": "^4.2.0", "lodash": "^4.17.21", "p-limit": "3.1.0", "uuid": "^11.0.3" }, "peerDependencies": { "@mysten/bcs": "1.6.0", "@mysten/sui": "1.28.2", "@suilend/sui-fe": "^0.3.29" } }, "sha512-j3037yJQeDp2g4oaMTnvHWx3VBTLg9J+9dQ4TbolLpyGNnbRrdgHhteywEOzUbWMeuAX5OvgbDvQAgd+RaCjzQ=="],
 
     "@suilend/steamm-sdk-local": ["@suilend/steamm-sdk-local@workspace:sdk"],
 
@@ -892,7 +892,7 @@
 
     "acorn-walk": ["acorn-walk@8.3.4", "", { "dependencies": { "acorn": "^8.11.0" } }, "sha512-ueEepnujpqee2o5aIYnvHU6C0A42MNdsIDeqy5BydrkuC5R1ZuUFnm27EeFJGoEHJQgn3uleRvmTXaJgfXbt4g=="],
 
-    "aftermath-ts-sdk": ["aftermath-ts-sdk@1.3.21", "", { "dependencies": { "bn.js": "^5.2.2", "dayjs": "^1.11.7", "node-fetch": "^3.3.1", "priority-queue-typescript": "^1.0.1" }, "peerDependencies": { "@mysten/sui": "1.34.0" } }, "sha512-rTAx4O/iB0GHSKGLsXENdMP1nfw8JqPShGG25PIGPSIf7KtFBlvzf/8e/bQGT4vhpYOeEtSbBKWfLO/q+53wRQ=="],
+    "aftermath-ts-sdk": ["aftermath-ts-sdk@1.3.22", "", { "dependencies": { "bn.js": "^5.2.2", "dayjs": "^1.11.7", "node-fetch": "^3.3.1", "priority-queue-typescript": "^1.0.1" }, "peerDependencies": { "@mysten/sui": "1.38.0" } }, "sha512-Plle529LS7AzvZ9SCxMWqxC0IJiou8L5fAHjXa25d1q9mli2f8uxb0X11Ly+n4qOPBI9vpKPwxpgZPq4Oy+clw=="],
 
     "agent-base": ["agent-base@7.1.4", "", {}, "sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ=="],
 
