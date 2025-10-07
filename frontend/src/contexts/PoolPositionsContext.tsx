@@ -93,7 +93,14 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
                               getStakingYieldAprPercent(
                                 Side.DEPOSIT,
                                 coinType,
-                                appData.lstAprPercentMap,
+                                Object.fromEntries(
+                                  Object.entries(appData.lstAprPercentMap).map(
+                                    ([coinType, aprPercent]) => [
+                                      coinType,
+                                      { aprPercent },
+                                    ],
+                                  ),
+                                ),
                               ) ?? 0,
                             ).times(
                               pool.prices[index].times(pool.balances[index]),

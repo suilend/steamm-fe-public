@@ -26,7 +26,11 @@ export const getPoolStakingYieldAprPercent = (
                 getStakingYieldAprPercent(
                   Side.DEPOSIT,
                   coinType,
-                  lstAprPercentMap,
+                  Object.fromEntries(
+                    Object.entries(lstAprPercentMap).map(
+                      ([coinType, aprPercent]) => [coinType, { aprPercent }],
+                    ),
+                  ),
                 ) ?? 0,
               ).times(pool.prices[index].times(pool.balances[index])),
             ),
