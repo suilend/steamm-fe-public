@@ -28,8 +28,8 @@
   },
   "dependencies": {
     "@pythnetwork/pyth-sui-js": "^2.2.0",
-    "@suilend/sdk": "^1.1.82",
-    "@suilend/sui-fe": "^0.3.29",
+    "@suilend/sdk": "^1.1.84",
+    "@suilend/sui-fe": "^0.3.31",
     "bignumber.js": "^9.1.2",
     "dotenv": "^16.4.7"
   },
