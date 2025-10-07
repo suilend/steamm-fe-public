@@ -18,7 +18,7 @@
     "@7kprotocol/sdk-ts": "^3.4.1",
     "@cetusprotocol/aggregator-sdk": "^1.2.1",
     "@datadog/browser-rum": "^6.6.4",
-    "@flowx-finance/sdk": "^1.13.4",
+    "@flowx-finance/sdk": "^1.13.5",
     "@launchdarkly/node-server-sdk": "^9.7.2",
     "@mysten/dapp-kit": "0.16.0",
     "@mysten/move-bytecode-template": "0.1.0",
