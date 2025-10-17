@@ -8,7 +8,11 @@ import {
   useState,
 } from "react";
 
-import { Transaction, TransactionArgument } from "@mysten/sui/transactions";
+import {
+  Transaction,
+  TransactionArgument,
+  TransactionObjectArgument,
+} from "@mysten/sui/transactions";
 import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
@@ -523,7 +527,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
               : undefined, // Create obligation (no obligations OR no obligations with less than 5 deposits)
           );
         appData.suilend.lmMarket.suilendClient.deposit(
-          lpCoin,
+          lpCoin as TransactionObjectArgument,
           pool.lpTokenType,
           obligationOwnerCapId,
           transaction,
@@ -531,7 +535,10 @@ function DepositTab({ onDeposit }: DepositTabProps) {
         if (didCreate)
           sendObligationToUser(obligationOwnerCapId, address, transaction);
       } else {
-        transaction.transferObjects([lpCoin], address);
+        transaction.transferObjects(
+          [lpCoin as TransactionObjectArgument],
+          address,
+        );
       }
 
       const res = await signExecuteAndWaitForTransaction(
@@ -1144,7 +1151,10 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
       bankInfoA: banks[0].bankInfo,
       bankInfoB: banks[1].bankInfo,
     });
-    transaction.transferObjects([coinA, coinB], address);
+    transaction.transferObjects(
+      [coinA as TransactionObjectArgument, coinB as TransactionObjectArgument],
+      address,
+    );
 
     rebalanceBanks(banks, steammClient, transaction);
 
