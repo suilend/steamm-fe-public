@@ -102,7 +102,7 @@ export function obj(tx: Transaction, arg: TransactionObjectInput) {
 
 export function pure(tx: Transaction, arg: PureArg, type: string): TransactionArgument {
   if (isTransactionArgument(arg)) {
-    return obj(tx, arg)
+    return obj(tx, arg as TransactionObjectArgument)
   }
 
   function getBcsForType(type: string): BcsType<any> {

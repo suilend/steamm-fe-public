@@ -1,6 +1,7 @@
 import {
   Transaction,
   TransactionArgument,
+  TransactionObjectArgument,
   TransactionResult,
 } from "@mysten/sui/transactions";
 
@@ -67,8 +68,8 @@ export class PoolAbi {
   ): [TransactionArgument, TransactionArgument] {
     const callArgs = {
       pool: tx.object(this.poolInfo.poolId),
-      coinA: args.coinA,
-      coinB: args.coinB,
+      coinA: args.coinA as TransactionObjectArgument,
+      coinB: args.coinB as TransactionObjectArgument,
       maxA: args.maxA,
       maxB: args.maxB,
     };
@@ -264,56 +265,88 @@ export class PoolAbi {
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.totalSwapAInAmount(tx, tradeData, this.publishedAt);
+    return Codegen.Pool.totalSwapAInAmount(
+      tx,
+      tradeData as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewTotalSwapBOutAmount(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.totalSwapBOutAmount(tx, tradeData, this.publishedAt);
+    return Codegen.Pool.totalSwapBOutAmount(
+      tx,
+      tradeData as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewTotalSwapAOutAmount(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.totalSwapAOutAmount(tx, tradeData, this.publishedAt);
+    return Codegen.Pool.totalSwapAOutAmount(
+      tx,
+      tradeData as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewTotalSwapBInAmount(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.totalSwapBInAmount(tx, tradeData, this.publishedAt);
+    return Codegen.Pool.totalSwapBInAmount(
+      tx,
+      tradeData as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewProtocolFeesA(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.protocolFeesA(tx, tradeData, this.publishedAt);
+    return Codegen.Pool.protocolFeesA(
+      tx,
+      tradeData as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewProtocolFeesB(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.protocolFeesB(tx, tradeData, this.publishedAt);
+    return Codegen.Pool.protocolFeesB(
+      tx,
+      tradeData as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewPoolFeesA(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.poolFeesA(tx, tradeData, this.publishedAt);
+    return Codegen.Pool.poolFeesA(
+      tx,
+      tradeData as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewPoolFeesB(
     tx: Transaction,
     tradeData: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.poolFeesB(tx, tradeData, this.publishedAt);
+    return Codegen.Pool.poolFeesB(
+      tx,
+      tradeData as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewMinimumLiquidity(tx: Transaction): TransactionArgument {
@@ -324,28 +357,44 @@ export class PoolAbi {
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.swapResultUser(tx, swapResult, this.publishedAt);
+    return Codegen.Pool.swapResultUser(
+      tx,
+      swapResult as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewSwapResultPoolId(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.swapResultPoolId(tx, swapResult, this.publishedAt);
+    return Codegen.Pool.swapResultPoolId(
+      tx,
+      swapResult as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewSwapResultAmountIn(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.swapResultAmountIn(tx, swapResult, this.publishedAt);
+    return Codegen.Pool.swapResultAmountIn(
+      tx,
+      swapResult as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewSwapResultAmountOut(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.swapResultAmountOut(tx, swapResult, this.publishedAt);
+    return Codegen.Pool.swapResultAmountOut(
+      tx,
+      swapResult as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewSwapResultProtocolFees(
@@ -354,7 +403,7 @@ export class PoolAbi {
   ): TransactionArgument {
     return Codegen.Pool.swapResultProtocolFees(
       tx,
-      swapResult,
+      swapResult as TransactionObjectArgument,
       this.publishedAt,
     );
   }
@@ -363,21 +412,33 @@ export class PoolAbi {
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.swapResultPoolFees(tx, swapResult, this.publishedAt);
+    return Codegen.Pool.swapResultPoolFees(
+      tx,
+      swapResult as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewSwapResultA2b(
     tx: Transaction,
     swapResult: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.swapResultA2b(tx, swapResult, this.publishedAt);
+    return Codegen.Pool.swapResultA2b(
+      tx,
+      swapResult as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewDepositResultUser(
     tx: Transaction,
     depositResult: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.depositResultUser(tx, depositResult, this.publishedAt);
+    return Codegen.Pool.depositResultUser(
+      tx,
+      depositResult as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewDepositResultPoolId(
@@ -386,7 +447,7 @@ export class PoolAbi {
   ): TransactionArgument {
     return Codegen.Pool.depositResultPoolId(
       tx,
-      depositResult,
+      depositResult as TransactionObjectArgument,
       this.publishedAt,
     );
   }
@@ -397,7 +458,7 @@ export class PoolAbi {
   ): TransactionArgument {
     return Codegen.Pool.depositResultDepositA(
       tx,
-      depositResult,
+      depositResult as TransactionObjectArgument,
       this.publishedAt,
     );
   }
@@ -408,7 +469,7 @@ export class PoolAbi {
   ): TransactionArgument {
     return Codegen.Pool.depositResultDepositB(
       tx,
-      depositResult,
+      depositResult as TransactionObjectArgument,
       this.publishedAt,
     );
   }
@@ -419,7 +480,7 @@ export class PoolAbi {
   ): TransactionArgument {
     return Codegen.Pool.depositResultMintLp(
       tx,
-      depositResult,
+      depositResult as TransactionObjectArgument,
       this.publishedAt,
     );
   }
@@ -428,14 +489,22 @@ export class PoolAbi {
     tx: Transaction,
     redeemResult: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.redeemResultUser(tx, redeemResult, this.publishedAt);
+    return Codegen.Pool.redeemResultUser(
+      tx,
+      redeemResult as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewRedeemResultPoolId(
     tx: Transaction,
     redeemResult: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.redeemResultPoolId(tx, redeemResult, this.publishedAt);
+    return Codegen.Pool.redeemResultPoolId(
+      tx,
+      redeemResult as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 
   public viewRedeemResultWithdrawA(
@@ -444,7 +513,7 @@ export class PoolAbi {
   ): TransactionArgument {
     return Codegen.Pool.redeemResultWithdrawA(
       tx,
-      redeemResult,
+      redeemResult as TransactionObjectArgument,
       this.publishedAt,
     );
   }
@@ -455,7 +524,7 @@ export class PoolAbi {
   ): TransactionArgument {
     return Codegen.Pool.redeemResultWithdrawB(
       tx,
-      redeemResult,
+      redeemResult as TransactionObjectArgument,
       this.publishedAt,
     );
   }
@@ -464,6 +533,10 @@ export class PoolAbi {
     tx: Transaction,
     redeemResult: TransactionArgument,
   ): TransactionArgument {
-    return Codegen.Pool.redeemResultBurnLp(tx, redeemResult, this.publishedAt);
+    return Codegen.Pool.redeemResultBurnLp(
+      tx,
+      redeemResult as TransactionObjectArgument,
+      this.publishedAt,
+    );
   }
 }

@@ -1,6 +1,7 @@
 import {
   Transaction,
   TransactionArgument,
+  TransactionObjectArgument,
   TransactionResult,
 } from "@mysten/sui/transactions";
 import {
@@ -81,7 +82,10 @@ export class PoolManager implements IManager {
   ) {
     const [lpToken, _depositResult] = await this.depositLiquidity(tx, args);
 
-    tx.transferObjects([lpToken], this.sdk.senderAddress);
+    tx.transferObjects(
+      [lpToken as TransactionObjectArgument],
+      this.sdk.senderAddress,
+    );
   }
 
   public async depositLiquidity(
@@ -94,8 +98,8 @@ export class PoolManager implements IManager {
     const poolScript = this.sdk.poolScript(poolInfo, bankInfoA, bankInfoB);
 
     const [lpToken, depositResult] = poolScript.depositLiquidity(tx, {
-      coinA: tx.object(args.coinA),
-      coinB: tx.object(args.coinB),
+      coinA: tx.object(args.coinA as TransactionObjectArgument),
+      coinB: tx.object(args.coinB as TransactionObjectArgument),
       maxA: args.maxA,
       maxB: args.maxB,
     });
@@ -109,7 +113,10 @@ export class PoolManager implements IManager {
   ) {
     const [coinA, coinB, _redeemResult] = await this.redeemLiquidity(tx, args);
 
-    tx.transferObjects([coinA, coinB], this.sdk.senderAddress);
+    tx.transferObjects(
+      [coinA as TransactionObjectArgument, coinB as TransactionObjectArgument],
+      this.sdk.senderAddress,
+    );
   }
 
   public async redeemLiquidity(
@@ -137,7 +144,10 @@ export class PoolManager implements IManager {
     const [coinA, coinB, _redeemResult] =
       await this.redeemLiquidityWithProvision(tx, args);
 
-    tx.transferObjects([coinA, coinB], this.sdk.senderAddress);
+    tx.transferObjects(
+      [coinA as TransactionObjectArgument, coinB as TransactionObjectArgument],
+      this.sdk.senderAddress,
+    );
   }
 
   public async redeemLiquidityWithProvision(

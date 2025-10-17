@@ -1,6 +1,7 @@
 import {
   Transaction,
   TransactionArgument,
+  TransactionObjectArgument,
   TransactionResult,
 } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
@@ -32,8 +33,12 @@ export class OracleQuoter implements QuoterAbi {
       bankA: tx.object(args.bankA as any), // TODO: Fix this
       bankB: tx.object(args.bankB as any), // TODO: Fix this
       lendingMarket: tx.object(args.lendingMarket as any), // TODO: Fix this
-      oraclePriceUpdateA: tx.object(args.oraclePriceA),
-      oraclePriceUpdateB: tx.object(args.oraclePriceB),
+      oraclePriceUpdateA: tx.object(
+        args.oraclePriceA as TransactionObjectArgument,
+      ),
+      oraclePriceUpdateB: tx.object(
+        args.oraclePriceB as TransactionObjectArgument,
+      ),
       coinA: args.coinA,
       coinB: args.coinB,
       amountIn: args.amountIn,
@@ -61,8 +66,12 @@ export class OracleQuoter implements QuoterAbi {
       bankA: tx.object(args.bankA as any), // TODO: Fix this
       bankB: tx.object(args.bankB as any), // TODO: Fix this
       lendingMarket: tx.object(args.lendingMarket as any), // TODO: Fix this
-      oraclePriceUpdateA: tx.object(args.oraclePriceA),
-      oraclePriceUpdateB: tx.object(args.oraclePriceB),
+      oraclePriceUpdateA: tx.object(
+        args.oraclePriceA as TransactionObjectArgument,
+      ),
+      oraclePriceUpdateB: tx.object(
+        args.oraclePriceB as TransactionObjectArgument,
+      ),
       amountIn: args.amountIn,
       a2B: args.a2b,
       clock: tx.object(SUI_CLOCK_OBJECT_ID),
