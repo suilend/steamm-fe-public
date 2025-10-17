@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { useSignPersonalMessage } from "@mysten/dapp-kit";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";
@@ -83,8 +82,12 @@ const REQUIRED_SUI_AMOUNT = new BigNumber(0.1);
 
 export default function CreatePoolCard() {
   const { suiClient } = useSettingsContext();
-  const { account, address, signExecuteAndWaitForTransaction } =
-    useWalletContext();
+  const {
+    account,
+    address,
+    signExecuteAndWaitForTransaction,
+    signPersonalMessage,
+  } = useWalletContext();
   const { steammClient, appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
@@ -609,7 +612,6 @@ export default function CreatePoolCard() {
     };
   })();
 
-  const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const onSubmitClick = async () => {
     if (submitButtonState.isDisabled) return;
     if (!quoterId || !feeTierPercent) return;
@@ -633,7 +635,7 @@ export default function CreatePoolCard() {
       // 1.1) Create
       let _keypair = keypair;
       if (_keypair === undefined) {
-        _keypair = (await createKeypair(account, signPersonalMessage)).keypair;
+        _keypair = (await createKeypair(signPersonalMessage)).keypair;
         setKeypair(_keypair);
       }
 

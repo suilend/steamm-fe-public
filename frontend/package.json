@@ -20,7 +20,6 @@
     "@datadog/browser-rum": "^6.6.4",
     "@flowx-finance/sdk": "^1.13.5",
     "@launchdarkly/node-server-sdk": "^9.7.2",
-    "@mysten/dapp-kit": "0.19.4",
     "@mysten/move-bytecode-template": "0.1.0",
     "@mysten/sui": "1.42.0",
     "@mysten/wallet-standard": "0.19.2",

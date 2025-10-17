@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useSignPersonalMessage } from "@mysten/dapp-kit";
 import { SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import BigNumber from "bignumber.js";
@@ -82,8 +81,12 @@ const getBatchTransactionGas = (transferCount: number) =>
 
 export default function AirdropCard() {
   const { explorer, suiClient } = useSettingsContext();
-  const { account, address, signExecuteAndWaitForTransaction } =
-    useWalletContext();
+  const {
+    account,
+    address,
+    signExecuteAndWaitForTransaction,
+    signPersonalMessage,
+  } = useWalletContext();
   const { appData } = useLoadedAppContext();
   const { balancesCoinMetadataMap, getBalance, refresh } = useUserContext();
 
@@ -372,7 +375,6 @@ export default function AirdropCard() {
     };
   })();
 
-  const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const onSubmitClick = async () => {
     if (submitButtonState.isDisabled) return;
     if (
@@ -395,10 +397,7 @@ export default function AirdropCard() {
       if (_keypair === undefined) {
         console.log("[onSubmitClick] createKeypair");
 
-        const createKeypairResult = await createKeypair(
-          account,
-          signPersonalMessage,
-        );
+        const createKeypairResult = await createKeypair(signPersonalMessage);
         _keypair = createKeypairResult.keypair;
         setKeypair(_keypair);
         setKeypairAddress(createKeypairResult.address);
@@ -635,7 +634,7 @@ export default function AirdropCard() {
       if (_keypair === undefined) {
         console.log("[onSubmitClick] createKeypair");
 
-        _keypair = (await createKeypair(account, signPersonalMessage)).keypair;
+        _keypair = (await createKeypair(signPersonalMessage)).keypair;
         setKeypair(_keypair);
       }
 
