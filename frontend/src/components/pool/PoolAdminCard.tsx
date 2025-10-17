@@ -41,8 +41,7 @@ export default function PoolAdminCard() {
       const transaction = new Transaction();
 
       transaction.moveCall({
-        target:
-          "0x5d7c7f59ac2b12325b73fcdc850e80b52470e954c09f0c57d056b0406d236890::omm_v2::pause_pool",
+        target: `${steammClient.sdkOptions.packages.steamm.publishedAt}::omm_v2::pause_pool`,
         typeArguments: [
           pool.bTokenTypes[0],
           pool.bTokenTypes[1],
@@ -78,8 +77,7 @@ export default function PoolAdminCard() {
       const transaction = new Transaction();
 
       transaction.moveCall({
-        target:
-          "0x5d7c7f59ac2b12325b73fcdc850e80b52470e954c09f0c57d056b0406d236890::omm_v2::resume_pool",
+        target: `${steammClient.sdkOptions.packages.steamm.publishedAt}::omm_v2::resume_pool`,
         typeArguments: [
           pool.bTokenTypes[0],
           pool.bTokenTypes[1],
@@ -125,7 +123,7 @@ export default function PoolAdminCard() {
       await appData.suilend.lmMarket.suilendClient.createReserve(
         appData.suilend.lmMarket.lendingMarket.ownerCapId,
         transaction,
-        "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a",
+        "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a", // USDC
         pool.lpTokenType,
         {
           openLtvPct: Number(0),
