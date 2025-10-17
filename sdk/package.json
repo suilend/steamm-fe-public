@@ -28,8 +28,8 @@
   },
   "dependencies": {
     "@pythnetwork/pyth-sui-js": "^2.2.0",
-    "@suilend/sdk": "^1.1.84",
-    "@suilend/sui-fe": "^0.3.31",
+    "@suilend/sdk": "^1.1.85",
+    "@suilend/sui-fe": "^0.3.36",
     "bignumber.js": "^9.1.2",
     "dotenv": "^16.4.7"
   },
@@ -45,7 +45,7 @@
     "@mysten/move-bytecode-template": "0.1.0"
   },
   "peerDependencies": {
-    "@mysten/sui": "1.28.2"
+    "@mysten/sui": "1.42.0"
   },
   "overrides": {
     "chalk": "5.3.0",
