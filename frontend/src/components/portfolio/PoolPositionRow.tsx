@@ -2,7 +2,6 @@ import Link from "next/link";
 import { CSSProperties, MouseEvent, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
-import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 import { Loader2 } from "lucide-react";
 
@@ -101,7 +100,6 @@ export default function PoolPositionRow({
           );
         }
       } catch (err) {
-        Sentry.captureException(err);
         console.error(err);
         throw err;
       }
@@ -134,7 +132,6 @@ export default function PoolPositionRow({
         true,
       );
       console.error(err);
-      Sentry.captureException(err);
     } finally {
       setIsUnstaking(false);
 

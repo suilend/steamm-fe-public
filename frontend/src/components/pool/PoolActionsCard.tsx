@@ -13,7 +13,6 @@ import {
   TransactionArgument,
   TransactionObjectArgument,
 } from "@mysten/sui/transactions";
-import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 import { debounce } from "lodash";
 import { Plus } from "lucide-react";
@@ -630,7 +629,6 @@ function DepositTab({ onDeposit }: DepositTabProps) {
         true,
       );
       console.error(err);
-      Sentry.captureException(err);
     } finally {
       document.getElementById(getCoinInputId(pool.coinTypes[0]))?.focus();
       setIsSubmitting(false);
@@ -1254,7 +1252,6 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
         true,
       );
       console.error(err);
-      Sentry.captureException(err);
     } finally {
       setIsSubmitting(false);
       refresh();
@@ -1451,7 +1448,6 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
       } catch (err) {
         showErrorToast("Failed to fetch quote", err as Error);
         console.error(err);
-        Sentry.captureException(err);
       }
     },
     [appData.coinMetadataMap],
@@ -1741,7 +1737,6 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
     } catch (err) {
       showErrorToast("Failed to swap", err as Error, undefined, true);
       console.error(err);
-      Sentry.captureException(err);
     } finally {
       document.getElementById(getCoinInputId(activeCoinType))?.focus();
       setIsSubmitting(false);

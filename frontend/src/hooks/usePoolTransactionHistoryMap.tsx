@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import * as Sentry from "@sentry/nextjs";
 import pLimit from "p-limit";
 
 import { showErrorToast, useWalletContext } from "@suilend/sui-fe-next";
@@ -120,7 +119,6 @@ const usePoolTransactionHistoryMap = (poolIds: string[] | undefined) => {
           err as Error,
         );
         console.error(err);
-        Sentry.captureException(err);
       }
     },
     [address],

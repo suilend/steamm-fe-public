@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import * as Sentry from "@sentry/nextjs";
 import { BigNumber } from "bignumber.js";
 
 import { QuoterId, SwapQuote } from "@suilend/steamm-sdk";
@@ -149,7 +148,6 @@ const usePoolCurrentPriceQuote = (poolIds: string[] | undefined) => {
           err as Error,
         );
         console.error(err);
-        Sentry.captureException(err);
       }
     },
     [

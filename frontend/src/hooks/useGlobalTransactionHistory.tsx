@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import * as Sentry from "@sentry/nextjs";
-
 import { showErrorToast, useWalletContext } from "@suilend/sui-fe-next";
 
 import { fetchHistoricalLpTransactions } from "@/lib/lp";
@@ -57,7 +55,6 @@ const useGlobalTransactionHistory = () => {
         err as Error,
       );
       console.error(err);
-      Sentry.captureException(err);
     }
   }, [address]);
 

@@ -1,7 +1,6 @@
 import { MouseEvent, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
-import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 
 import {
@@ -118,7 +117,6 @@ const useStake = (
         true,
       );
       console.error(err);
-      Sentry.captureException(err);
     } finally {
       setIsStaking(false);
 

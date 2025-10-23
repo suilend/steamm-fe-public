@@ -2,7 +2,6 @@ import Head from "next/head";
 import { useMemo, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
-import * as Sentry from "@sentry/nextjs";
 import BigNumber from "bignumber.js";
 import { Loader2 } from "lucide-react";
 
@@ -273,7 +272,6 @@ export default function PortfolioPage() {
     } catch (err) {
       showErrorToast("Failed to claim rewards", err as Error, undefined, true);
       console.error(err);
-      Sentry.captureException(err);
     } finally {
       setIsClaiming(false);
       refresh();

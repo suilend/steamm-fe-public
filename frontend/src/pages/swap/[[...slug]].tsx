@@ -6,7 +6,6 @@ import { AggregatorClient as CetusSdk } from "@cetusprotocol/aggregator-sdk";
 import { AggregatorQuoter as FlowXAggregatorQuoter } from "@flowx-finance/sdk";
 import { Transaction } from "@mysten/sui/transactions";
 import { normalizeStructTag } from "@mysten/sui/utils";
-import * as Sentry from "@sentry/nextjs";
 import { Aftermath as AftermathSdk } from "aftermath-ts-sdk";
 import BigNumber from "bignumber.js";
 
@@ -412,7 +411,6 @@ export default function SwapPage() {
     } catch (err) {
       showErrorToast("Failed to swap", err as Error, undefined, true);
       console.error(err);
-      Sentry.captureException(err);
     } finally {
       document.getElementById(getCoinInputId(inCoinType))?.focus();
       setIsSubmitting(false);
