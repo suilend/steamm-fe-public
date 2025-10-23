@@ -29,7 +29,7 @@
   "dependencies": {
     "@pythnetwork/pyth-sui-js": "^2.2.0",
     "@suilend/sdk": "^1.1.86",
-    "@suilend/sui-fe": "^0.3.36",
+    "@suilend/sui-fe": "^0.3.38",
     "bignumber.js": "^9.1.2",
     "dotenv": "^16.4.7"
   },
