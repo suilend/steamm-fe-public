@@ -387,12 +387,11 @@ export default function PortfolioPage() {
 
   const transactionHistoryCoinTypeOptions: SelectPopoverOption[] = useMemo(
     () =>
-      appData === undefined ||
-      filteredAddressGlobalTransactionHistory === undefined
+      appData === undefined || addressGlobalTransactionHistory === undefined
         ? []
         : Array.from(
             new Set(
-              filteredAddressGlobalTransactionHistory.flatMap((transaction) => {
+              addressGlobalTransactionHistory.flatMap((transaction) => {
                 const pool = appData.pools.find(
                   (pool) => pool.id === transaction.pool_id,
                 );
@@ -426,7 +425,7 @@ export default function PortfolioPage() {
             .sort((a, b) => b.count! - a.count!), // Descending order
     [
       appData,
-      filteredAddressGlobalTransactionHistory,
+      addressGlobalTransactionHistory,
       getFilteredAddressGlobalTransactionHistory,
       transactionHistoryTypes,
     ],
