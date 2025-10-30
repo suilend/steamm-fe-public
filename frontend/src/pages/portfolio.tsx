@@ -1,8 +1,9 @@
 import Head from "next/head";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
+import { capitalize } from "lodash";
 import { Loader2 } from "lucide-react";
 
 import { ClaimRewardsReward, RewardSummary, Side } from "@suilend/sdk";
@@ -22,6 +23,7 @@ import {
 import Divider from "@/components/Divider";
 import TransactionHistoryTable from "@/components/pool/TransactionHistoryTable";
 import PoolPositionsTable from "@/components/portfolio/PoolPositionsTable";
+import SelectPopover from "@/components/SelectPopover";
 import Tag from "@/components/Tag";
 import TokenLogo from "@/components/TokenLogo";
 import TokenLogos from "@/components/TokenLogos";
@@ -32,8 +34,15 @@ import { usePoolPositionsContext } from "@/contexts/PoolPositionsContext";
 import { useUserContext } from "@/contexts/UserContext";
 import useGlobalTransactionHistory from "@/hooks/useGlobalTransactionHistory";
 import usePoolTransactionHistoryMap from "@/hooks/usePoolTransactionHistoryMap";
+import { SelectPopoverOption } from "@/lib/select";
 import { showSuccessTxnToast } from "@/lib/toasts";
-import { HistoryTransactionType, PoolPosition } from "@/lib/types";
+import {
+  HistoryDeposit,
+  HistorySwap,
+  HistoryTransactionType,
+  HistoryWithdraw,
+  PoolPosition,
+} from "@/lib/types";
 
 export default function PortfolioPage() {
   const { explorer } = useSettingsContext();
@@ -281,9 +290,146 @@ export default function PortfolioPage() {
   // Global transaction history
   const { globalTransactionHistory } = useGlobalTransactionHistory();
 
-  const addressGlobalTransactionHistory = useMemo(
+  const addressGlobalTransactionHistory:
+    | (HistoryDeposit | HistoryWithdraw | HistorySwap)[]
+    | undefined = useMemo(
     () => (address ? globalTransactionHistory : []),
     [address, globalTransactionHistory],
+  );
+
+  // Global transaction history - Filters
+  const [transactionHistoryTypes, setTransactionHistoryTypes] = useState<
+    HistoryTransactionType[]
+  >([]);
+  const onTransactionHistoryTypeChange = useCallback(
+    (value: HistoryTransactionType) => {
+      setTransactionHistoryTypes((prev) =>
+        prev.includes(value)
+          ? prev.filter((_value) => _value !== value)
+          : [...prev, value],
+      );
+    },
+    [],
+  );
+
+  const [transactionHistoryCoinTypes, setTransactionHistoryCoinTypes] =
+    useState<string[]>([]);
+  const onTransactionHistoryCoinTypeChange = useCallback((value: string) => {
+    setTransactionHistoryCoinTypes((prev) =>
+      prev.includes(value)
+        ? prev.filter((_value) => _value !== value)
+        : [...prev, value],
+    );
+  }, []);
+
+  const getFilteredAddressGlobalTransactionHistory = useCallback(
+    (
+      _transactionHistoryTypes: HistoryTransactionType[],
+      _transactionHistoryCoinTypes: string[],
+    ): (HistoryDeposit | HistoryWithdraw | HistorySwap)[] | undefined =>
+      appData === undefined || addressGlobalTransactionHistory === undefined
+        ? undefined
+        : addressGlobalTransactionHistory.filter((transaction) => {
+            const pool = appData.pools.find(
+              (pool) => pool.id === transaction.pool_id,
+            );
+            if (!pool) return true;
+
+            return (
+              (_transactionHistoryTypes.length === 0 ||
+                _transactionHistoryTypes.includes(transaction.type)) &&
+              (_transactionHistoryCoinTypes.length === 0 ||
+                pool.coinTypes.some((coinType) =>
+                  _transactionHistoryCoinTypes.includes(coinType),
+                ))
+            );
+          }),
+    [appData, addressGlobalTransactionHistory],
+  );
+  const filteredAddressGlobalTransactionHistory:
+    | (HistoryDeposit | HistoryWithdraw | HistorySwap)[]
+    | undefined = useMemo(
+    () =>
+      getFilteredAddressGlobalTransactionHistory(
+        transactionHistoryTypes,
+        transactionHistoryCoinTypes,
+      ),
+    [
+      getFilteredAddressGlobalTransactionHistory,
+      transactionHistoryTypes,
+      transactionHistoryCoinTypes,
+    ],
+  );
+
+  // Options
+  const transactionHistoryTypeOptions: SelectPopoverOption[] = useMemo(
+    () =>
+      appData === undefined
+        ? []
+        : Object.values(HistoryTransactionType).map(
+            (historyTransactionType) => ({
+              id: historyTransactionType,
+              name: capitalize(historyTransactionType),
+              count: getFilteredAddressGlobalTransactionHistory(
+                [historyTransactionType],
+                transactionHistoryCoinTypes,
+              )?.filter(
+                (transaction) => transaction.type === historyTransactionType,
+              ).length,
+            }),
+          ),
+    [
+      appData,
+      getFilteredAddressGlobalTransactionHistory,
+      transactionHistoryCoinTypes,
+    ],
+  );
+
+  const transactionHistoryCoinTypeOptions: SelectPopoverOption[] = useMemo(
+    () =>
+      appData === undefined ||
+      filteredAddressGlobalTransactionHistory === undefined
+        ? []
+        : Array.from(
+            new Set(
+              filteredAddressGlobalTransactionHistory.flatMap((transaction) => {
+                const pool = appData.pools.find(
+                  (pool) => pool.id === transaction.pool_id,
+                );
+                if (!pool) return [];
+
+                return pool.coinTypes;
+              }),
+            ),
+          )
+            .map((coinType) => ({
+              id: coinType,
+              startDecorator: (
+                <TokenLogo
+                  token={getToken(coinType, appData.coinMetadataMap[coinType])}
+                  size={16}
+                />
+              ),
+              name: appData.coinMetadataMap[coinType].symbol,
+              count: getFilteredAddressGlobalTransactionHistory(
+                transactionHistoryTypes,
+                [coinType],
+              )?.filter((transaction) => {
+                const pool = appData.pools.find(
+                  (pool) => pool.id === transaction.pool_id,
+                );
+                if (!pool) return false;
+
+                return pool.coinTypes.includes(coinType);
+              }).length,
+            }))
+            .sort((a, b) => b.count! - a.count!), // Descending order
+    [
+      appData,
+      filteredAddressGlobalTransactionHistory,
+      getFilteredAddressGlobalTransactionHistory,
+      transactionHistoryTypes,
+    ],
   );
 
   return (
@@ -436,22 +582,56 @@ export default function PortfolioPage() {
 
         {/* Global transaction history */}
         <div className="flex w-full flex-col gap-6">
-          <div className="flex flex-row items-center gap-3">
-            <p className="text-h3 text-foreground">Transaction history</p>
-            {addressGlobalTransactionHistory === undefined ? (
-              <Skeleton className="h-5 w-12" />
-            ) : (
-              <Tag>{addressGlobalTransactionHistory.length}</Tag>
-            )}
+          <div className="flex flex-row items-center justify-between gap-4">
+            {/* Left */}
+            <div className="flex flex-row items-center gap-3">
+              <p className="text-h3 text-foreground">Transaction history</p>
+              {addressGlobalTransactionHistory === undefined ? (
+                <Skeleton className="h-5 w-12" />
+              ) : (
+                <Tag>{addressGlobalTransactionHistory.length}</Tag>
+              )}
+            </div>
+
+            {/* Right */}
+            <div className="flex h-[30px] flex-row items-center gap-2">
+              <SelectPopover
+                className="w-max min-w-32"
+                align="start"
+                options={[transactionHistoryTypeOptions]}
+                placeholder="All actions"
+                values={transactionHistoryTypes}
+                onChange={(id: string) =>
+                  onTransactionHistoryTypeChange(id as HistoryTransactionType)
+                }
+                isMultiSelect
+                canClear
+                onClear={() => setTransactionHistoryTypes([])}
+              />
+
+              <SelectPopover
+                className="w-max min-w-32"
+                align="start"
+                options={[transactionHistoryCoinTypeOptions]}
+                placeholder="All assets"
+                values={transactionHistoryCoinTypes}
+                onChange={(id: string) =>
+                  onTransactionHistoryCoinTypeChange(id as string)
+                }
+                isMultiSelect
+                canClear
+                onClear={() => setTransactionHistoryCoinTypes([])}
+              />
+            </div>
           </div>
 
           <TransactionHistoryTable
             transactionHistory={
-              addressGlobalTransactionHistory === undefined
+              filteredAddressGlobalTransactionHistory === undefined
                 ? undefined
-                : addressGlobalTransactionHistory.length === 0
+                : filteredAddressGlobalTransactionHistory.length === 0
                   ? []
-                  : [addressGlobalTransactionHistory]
+                  : [filteredAddressGlobalTransactionHistory]
             }
             hasPoolColumn
           />

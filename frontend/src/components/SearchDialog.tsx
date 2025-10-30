@@ -189,6 +189,7 @@ export default function SearchDialog() {
             })),
     [appData, poolsWithExtraData, poolGroups, searchString, feeTiers],
   );
+
   // Filter
   const filteredPoolGroups: PoolGroup[] =
     appData === undefined

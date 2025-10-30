@@ -111,12 +111,12 @@ export default function SelectPopover({
 
               {values.length === 1 &&
                 allOptions.filter((option) => values.includes(option.id))[0]
-                  .endDecorator !== undefined && (
+                  ?.endDecorator !== undefined && (
                   <>
                     {
                       allOptions.filter((option) =>
                         values.includes(option.id),
-                      )[0].endDecorator
+                      )[0]?.endDecorator
                     }
                   </>
                 )}
@@ -124,7 +124,7 @@ export default function SelectPopover({
 
             {values.length === 1 &&
               allOptions.filter((option) => values.includes(option.id))[0]
-                .description !== undefined && (
+                ?.description !== undefined && (
                 <p
                   className={cn(
                     "text-left !text-p3 text-tertiary-foreground",
@@ -133,7 +133,7 @@ export default function SelectPopover({
                 >
                   {
                     allOptions.filter((option) => values.includes(option.id))[0]
-                      .description
+                      ?.description
                   }
                 </p>
               )}
@@ -184,6 +184,8 @@ export default function SelectPopover({
               >
                 <div className="flex flex-col items-start gap-1">
                   <div className="flex flex-row items-center gap-2">
+                    {option.startDecorator}
+
                     <div className="flex flex-row items-baseline gap-1.5">
                       <p
                         className={cn(
@@ -210,9 +212,7 @@ export default function SelectPopover({
                       )}
                     </div>
 
-                    {option.endDecorator !== undefined && (
-                      <>{option.endDecorator}</>
-                    )}
+                    {option.endDecorator}
                   </div>
 
                   {option.description && (
