@@ -18,8 +18,13 @@ import { useLocalStorage } from "usehooks-ts";
 import { formatToken, formatUsd } from "@suilend/sui-fe";
 import { useWalletContext } from "@suilend/sui-fe-next";
 
+import TokenFilterPopup, {
+  FilterCriteria,
+} from "@/components/tokens/TokenFilterPopup";
 import Tooltip from "@/components/Tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import WarningBadge from "@/components/WarningBadge";
 import {
   QuickBuyToken,
   Token,
@@ -27,10 +32,6 @@ import {
 } from "@/contexts/MarketContext";
 import { ASSETS_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-
-import VerifiedBadge from "../VerifiedBadge";
-
-import TokenFilterPopup, { FilterCriteria } from "./TokenFilterPopup";
 
 interface TokenColumnProps {
   title: string;
@@ -268,8 +269,10 @@ export default function TokenColumn({
                     <h4 className="text-sm truncate font-medium text-foreground">
                       {token.symbol}
                     </h4>
-                    {token.isVerified && (
+                    {token.isVerified ? (
                       <VerifiedBadge tooltip="Verified token" />
+                    ) : (
+                      <WarningBadge tooltip="Unverified token" />
                     )}
                     <button
                       className="text-secondary-foreground transition-colors hover:text-foreground"

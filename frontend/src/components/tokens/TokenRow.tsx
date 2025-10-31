@@ -10,14 +10,14 @@ import CopyToClipboardButton from "@/components/CopyToClipboardButton";
 import Parameter from "@/components/Parameter";
 import TokenLogo from "@/components/TokenLogo";
 import { TokenColumn } from "@/components/tokens/TokensTable";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import WarningBadge from "@/components/WarningBadge";
 import { useLoadedMarketContext } from "@/contexts/MarketContext";
 import { QuickBuyToken, Token } from "@/contexts/MarketContext";
 import useBreakpoint from "@/hooks/useBreakpoint";
 import { ASSETS_URL } from "@/lib/constants";
 import { isInvalidIconUrl } from "@/lib/tokens";
 import { cn } from "@/lib/utils";
-
-import VerifiedBadge from "../VerifiedBadge";
 
 interface TokenRowProps {
   columnStyleMap: Record<
@@ -128,8 +128,10 @@ export default function TokenRow({ columnStyleMap, token }: TokenRowProps) {
                     <span className="truncate font-medium text-foreground">
                       {token.symbol}
                     </span>
-                    {token.isVerified && (
+                    {token.isVerified ? (
                       <VerifiedBadge tooltip="Verified token" />
+                    ) : (
+                      <WarningBadge tooltip="Unverified token" />
                     )}
 
                     {/* Token Controls - always visible */}
