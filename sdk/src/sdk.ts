@@ -486,8 +486,11 @@ export class SteammSDK {
     }[]
   > {
     // Setup
-    const TEST_BANK_COIN_TYPES: string[] = [];
-    const TEST_POOL_IDS: string[] = [];
+    const BLACKLISTED_BANK_COIN_TYPES: string[] = [];
+    const BLACKLISTED_POOL_IDS: string[] = [
+      "0xe0ae9060ea476c25eba2bae5a3c0a9c0b901388bcf0b03ae1038589b59cdfe4a", // Fake XAUM pool
+      "0xdf07b0781119d613cb19ca2b990494ed6ede5b7ae35740f0322471abefa4c71d", // Fake XAUM pool
+    ];
 
     // Data
     const [suilend, oracleIndexOracleInfoPriceMap, bankObjs, poolObjs] =
@@ -653,7 +656,9 @@ export class SteammSDK {
           bankObjs.push(
             ...banksJson.filter(
               (bankObj) =>
-                !TEST_BANK_COIN_TYPES.includes(bankObj.bankInfo.coinType), // Filter out test banks
+                !BLACKLISTED_BANK_COIN_TYPES.includes(
+                  bankObj.bankInfo.coinType,
+                ), // Filter out blacklisted banks
             ),
           );
 
@@ -678,7 +683,8 @@ export class SteammSDK {
 
           poolObjs.push(
             ...poolsJson.filter(
-              (poolObj) => !TEST_POOL_IDS.includes(poolObj.poolInfo.poolId), // Filter out test pools
+              (poolObj) =>
+                !BLACKLISTED_POOL_IDS.includes(poolObj.poolInfo.poolId), // Filter out blacklisted pools
             ),
           );
 

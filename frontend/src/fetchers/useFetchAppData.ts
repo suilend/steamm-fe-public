@@ -37,8 +37,11 @@ import { normalizeRewards } from "@/lib/liquidityMining";
 import { OracleType } from "@/lib/oracles";
 import { fetchPool } from "@/lib/pools";
 
-const TEST_BANK_COIN_TYPES: string[] = [];
-const TEST_POOL_IDS: string[] = [];
+const BLACKLISTED_BANK_COIN_TYPES: string[] = [];
+const BLACKLISTED_POOL_IDS: string[] = [
+  "0xe0ae9060ea476c25eba2bae5a3c0a9c0b901388bcf0b03ae1038589b59cdfe4a", // Fake XAUM pool
+  "0xdf07b0781119d613cb19ca2b990494ed6ede5b7ae35740f0322471abefa4c71d", // Fake XAUM pool
+];
 
 export default function useFetchAppData(steammClient: SteammSDK) {
   const { suiClient } = useSettingsContext();
@@ -57,106 +60,146 @@ export default function useFetchAppData(steammClient: SteammSDK) {
     ] = await Promise.all([
       // Suilend
       (async () => {
-        const [mainMarket, lmMarket] = await Promise.all([
-          // Suilend - Main market
-          (async () => {
-            const suilendClient = await SuilendClient.initialize(
-              process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-                ? BETA_CONFIG.packages.suilend.config!.lendingMarketId // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
-                : MAINNET_CONFIG.packages.suilend.config!.lendingMarketId,
-              process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-                ? BETA_CONFIG.packages.suilend.config!.lendingMarketType // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
-                : MAINNET_CONFIG.packages.suilend.config!.lendingMarketType,
-              suiClient,
-            );
-
-            const {
-              lendingMarket,
-
-              refreshedRawReserves,
-              reserveMap,
-
-              activeRewardCoinTypes,
-              rewardCoinMetadataMap,
-            } = await initializeSuilend(suiClient, suilendClient);
-
-            const { rewardPriceMap } = await initializeSuilendRewards(
-              reserveMap,
-              activeRewardCoinTypes,
-            );
-
-            const depositAprPercentMap: Record<string, BigNumber> =
-              Object.fromEntries(
-                Object.entries(reserveMap).map(([coinType, reserve]) => [
-                  coinType,
-                  reserve.depositAprPercent,
-                ]),
+        const [mainMarket, elixirMarket, matrixdockGoldMarket, lmMarket] =
+          await Promise.all([
+            // Suilend - Main Market
+            (async () => {
+              const suilendClient = await SuilendClient.initialize(
+                process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+                  ? BETA_CONFIG.packages.suilend.config!.lendingMarketId // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
+                  : MAINNET_CONFIG.packages.suilend.config!.lendingMarketId,
+                process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+                  ? BETA_CONFIG.packages.suilend.config!.lendingMarketType // Requires NEXT_PUBLIC_SUILEND_USE_BETA_MARKET=true
+                  : MAINNET_CONFIG.packages.suilend.config!.lendingMarketType,
+                suiClient,
               );
 
-            return {
-              suilendClient,
+              const {
+                lendingMarket,
 
-              lendingMarket,
+                refreshedRawReserves,
+                reserveMap,
 
-              refreshedRawReserves,
-              reserveMap,
+                activeRewardCoinTypes,
+                rewardCoinMetadataMap,
+              } = await initializeSuilend(suiClient, suilendClient);
 
-              activeRewardCoinTypes,
-              rewardCoinMetadataMap,
+              const { rewardPriceMap } = await initializeSuilendRewards(
+                reserveMap,
+                activeRewardCoinTypes,
+              );
 
-              rewardPriceMap,
+              const depositAprPercentMap: Record<string, BigNumber> =
+                Object.fromEntries(
+                  Object.entries(reserveMap).map(([coinType, reserve]) => [
+                    coinType,
+                    reserve.depositAprPercent,
+                  ]),
+                );
 
-              depositAprPercentMap,
-            };
-          })(),
+              return {
+                suilendClient,
 
-          // Suilend - LM market
-          (async () => {
-            const [STEAMM_LM_LENDING_MARKET_ID, STEAMM_LM_LENDING_MARKET_TYPE] =
-              process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
-                ? [
-                    "0xb1d89cf9082cedce09d3647f0ebda4a8b5db125aff5d312a8bfd7eefa715bd35",
-                    "0xdeeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP",
-                  ]
-                : [
-                    "0xc1888ec1b81a414e427a44829310508352aec38252ee0daa9f8b181b6947de9f",
-                    "0x0a071f4976abae1a7f722199cf0bfcbe695ef9408a878e7d12a7ca87b7e582a6::lp_rewards::LP_REWARDS",
-                  ];
+                lendingMarket,
 
-            const suilendClient = await SuilendClient.initialize(
-              STEAMM_LM_LENDING_MARKET_ID,
-              STEAMM_LM_LENDING_MARKET_TYPE,
-              suiClient,
-            );
+                refreshedRawReserves,
+                reserveMap,
 
-            const {
-              lendingMarket,
+                activeRewardCoinTypes,
+                rewardCoinMetadataMap,
 
-              refreshedRawReserves,
-              reserveMap,
+                rewardPriceMap,
 
-              activeRewardCoinTypes,
-              rewardCoinMetadataMap,
-            } = await initializeSuilend(suiClient, suilendClient, {
-              id: STEAMM_LM_LENDING_MARKET_ID,
-              type: STEAMM_LM_LENDING_MARKET_TYPE,
-              lendingMarketOwnerCapId:
-                "0x55a0f33b24e091830302726c8cfbff8cf8abd2ec1f83a4e6f4bf51c7ba3ad5ab",
-            });
+                depositAprPercentMap,
+              };
+            })(),
 
-            return {
-              suilendClient,
+            // Suilend - Elixir Market
+            (async () => {
+              const suilendClient = await SuilendClient.initialize(
+                "0x0d3a7f758d19d11e8526f66cca43403a99da16862c570c43efe0f8c4a500f7f2",
+                "0x3628b6ea618a6cca71793bab63e88ea69e10d3a99b5c7b3df88ba01f165015d4::elixir::ELIXIR",
+                suiClient,
+              );
 
-              lendingMarket,
+              const { reserveMap } = await initializeSuilend(
+                suiClient,
+                suilendClient,
+              );
 
-              refreshedRawReserves,
-              reserveMap,
+              return {
+                reserveMap,
+              };
+            })(),
 
-              activeRewardCoinTypes,
-              rewardCoinMetadataMap,
-            };
-          })(),
-        ]);
+            // Suilend - Matrixdock Gold Market
+            (async () => {
+              const suilendClient = await SuilendClient.initialize(
+                "0x8a8d8e138a28de1c637d0b0955e621b017da7010de388db5a18493eca99c5e82",
+                "0xd382f7d6e7596585b3063d5f4607de30a7a81adeb521d6b862b4c57defca746e::Matrixdock_gold::MATRIXDOCK_GOLD",
+                suiClient,
+              );
+
+              const { reserveMap } = await initializeSuilend(
+                suiClient,
+                suilendClient,
+              );
+
+              return {
+                reserveMap,
+              };
+            })(),
+
+            // Suilend - LM Market
+            (async () => {
+              const [
+                STEAMM_LM_LENDING_MARKET_ID,
+                STEAMM_LM_LENDING_MARKET_TYPE,
+              ] =
+                process.env.NEXT_PUBLIC_STEAMM_USE_BETA_MARKET === "true"
+                  ? [
+                      "0xb1d89cf9082cedce09d3647f0ebda4a8b5db125aff5d312a8bfd7eefa715bd35",
+                      "0xdeeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP",
+                    ]
+                  : [
+                      "0xc1888ec1b81a414e427a44829310508352aec38252ee0daa9f8b181b6947de9f",
+                      "0x0a071f4976abae1a7f722199cf0bfcbe695ef9408a878e7d12a7ca87b7e582a6::lp_rewards::LP_REWARDS",
+                    ];
+
+              const suilendClient = await SuilendClient.initialize(
+                STEAMM_LM_LENDING_MARKET_ID,
+                STEAMM_LM_LENDING_MARKET_TYPE,
+                suiClient,
+              );
+
+              const {
+                lendingMarket,
+
+                refreshedRawReserves,
+                reserveMap,
+
+                activeRewardCoinTypes,
+                rewardCoinMetadataMap,
+              } = await initializeSuilend(suiClient, suilendClient, {
+                id: STEAMM_LM_LENDING_MARKET_ID,
+                type: STEAMM_LM_LENDING_MARKET_TYPE,
+                lendingMarketOwnerCapId:
+                  "0x55a0f33b24e091830302726c8cfbff8cf8abd2ec1f83a4e6f4bf51c7ba3ad5ab",
+              });
+
+              return {
+                suilendClient,
+
+                lendingMarket,
+
+                refreshedRawReserves,
+                reserveMap,
+
+                activeRewardCoinTypes,
+                rewardCoinMetadataMap,
+              };
+            })(),
+          ]);
 
         const { rewardPriceMap: lmMarket_rewardPriceMap } =
           await initializeSuilendRewards(
@@ -166,6 +209,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
         return {
           mainMarket,
+          elixirMarket,
+          matrixdockGoldMarket,
           lmMarket: {
             ...lmMarket,
 
@@ -330,7 +375,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           const bankInfos = Object.values(await steammClient.fetchBankData());
 
           for (const bankInfo of bankInfos) {
-            if (TEST_BANK_COIN_TYPES.includes(bankInfo.coinType)) continue; // Filter out test banks
+            if (BLACKLISTED_BANK_COIN_TYPES.includes(bankInfo.coinType))
+              continue; // Filter out blacklisted banks
 
             const bank = await steammClient.fullClient.fetchBank(
               bankInfo.bankId,
@@ -354,7 +400,9 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           bankObjs.push(
             ...banksJson.filter(
               (bankObj) =>
-                !TEST_BANK_COIN_TYPES.includes(bankObj.bankInfo.coinType), // Filter out test banks
+                !BLACKLISTED_BANK_COIN_TYPES.includes(
+                  bankObj.bankInfo.coinType,
+                ), // Filter out blacklisted banks
             ),
           );
         }
@@ -366,7 +414,7 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           const poolInfos = await steammClient.fetchPoolData();
 
           for (const poolInfo of poolInfos) {
-            if (TEST_POOL_IDS.includes(poolInfo.poolId)) continue; // Filter out test pools
+            if (BLACKLISTED_POOL_IDS.includes(poolInfo.poolId)) continue; // Filter out blacklisted pools
 
             const pool = await fetchPool(steammClient, poolInfo);
             const redeemQuote =
@@ -405,7 +453,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
           poolObjs.push(
             ...poolsJson.filter(
-              (poolObj) => !TEST_POOL_IDS.includes(poolObj.poolInfo.poolId), // Filter out test pools
+              (poolObj) =>
+                !BLACKLISTED_POOL_IDS.includes(poolObj.poolInfo.poolId), // Filter out blacklisted pools
             ),
           );
         }

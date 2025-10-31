@@ -343,26 +343,6 @@ export default function SearchDialog() {
           !showSearchResults ? "hidden" : "flex min-h-0 flex-1 flex-col gap-5",
         )}
       >
-        {/* Tokens Section */}
-        {searchString !== "" && filteredTokensCount > 0 && (
-          <>
-            <h2 className="-mb-2 text-p1 text-foreground">
-              {filteredTokensCount} token{filteredTokensCount !== 1 && "s"}
-            </h2>
-            <div className="flex flex-1 flex-row items-stretch overflow-hidden">
-              <TokensTable
-                className="flex flex-col"
-                containerClassName="flex-1"
-                tableContainerClassName="h-full"
-                tableId="search-tokens"
-                tokens={filteredTokens}
-                searchString={searchString}
-                pageSize={10}
-              />
-            </div>
-          </>
-        )}
-
         {/* Pools Section */}
         {filteredPoolGroupsCount > 0 && (
           <>
@@ -402,6 +382,26 @@ export default function SearchDialog() {
                 tableContainerClassName="h-full"
                 tableId="search-pools"
                 poolGroups={filteredPoolGroups}
+                searchString={searchString}
+                pageSize={10}
+              />
+            </div>
+          </>
+        )}
+
+        {/* Tokens Section */}
+        {searchString !== "" && filteredTokensCount > 0 && (
+          <>
+            <h2 className="-mb-2 text-p1 text-foreground">
+              {filteredTokensCount} token{filteredTokensCount !== 1 && "s"}
+            </h2>
+            <div className="flex flex-1 flex-row items-stretch overflow-hidden">
+              <TokensTable
+                className="flex flex-col"
+                containerClassName="flex-1"
+                tableContainerClassName="h-full"
+                tableId="search-tokens"
+                tokens={filteredTokens}
                 searchString={searchString}
                 pageSize={10}
               />

@@ -54,6 +54,12 @@ export interface AppData {
 
       depositAprPercentMap: Record<string, BigNumber>;
     };
+    elixirMarket: {
+      reserveMap: Record<string, ParsedReserve>;
+    };
+    matrixdockGoldMarket: {
+      reserveMap: Record<string, ParsedReserve>;
+    };
     lmMarket: {
       suilendClient: SuilendClient;
 
@@ -209,9 +215,16 @@ export function AppContextProvider({ children }: PropsWithChildren) {
   const verifiedCoinTypes: string[] | undefined = useMemo(
     () => [
       ...Object.keys(appData?.suilend.mainMarket.reserveMap ?? {}),
+      ...Object.keys(appData?.suilend.elixirMarket.reserveMap ?? {}),
+      ...Object.keys(appData?.suilend.matrixdockGoldMarket.reserveMap ?? {}),
       ...(flags?.steammVerifiedCoinTypes ?? []),
     ],
-    [flags?.steammVerifiedCoinTypes, appData?.suilend.mainMarket.reserveMap],
+    [
+      appData?.suilend.mainMarket.reserveMap,
+      appData?.suilend.elixirMarket.reserveMap,
+      appData?.suilend.matrixdockGoldMarket.reserveMap,
+      flags?.steammVerifiedCoinTypes,
+    ],
   );
 
   // Recent pools
