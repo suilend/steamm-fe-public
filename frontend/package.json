@@ -28,7 +28,7 @@
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-popover": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.4",
-    "@suilend/sdk": "^1.1.90",
+    "@suilend/sdk": "^1.1.92",
     "@suilend/sui-fe": "^0.3.40",
     "@suilend/sui-fe-next": "^0.1.80",
     "@tanstack/react-table": "^8.20.5",

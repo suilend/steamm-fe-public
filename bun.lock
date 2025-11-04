@@ -33,7 +33,7 @@
         "@radix-ui/react-dialog": "^1.1.2",
         "@radix-ui/react-popover": "^1.1.2",
         "@radix-ui/react-tooltip": "^1.1.4",
-        "@suilend/sdk": "^1.1.90",
+        "@suilend/sdk": "^1.1.92",
         "@suilend/sui-fe": "^0.3.40",
         "@suilend/sui-fe-next": "^0.1.80",
         "@tanstack/react-table": "^8.20.5",
@@ -86,7 +86,7 @@
       "version": "1.1.8",
       "dependencies": {
         "@pythnetwork/pyth-sui-js": "^2.2.0",
-        "@suilend/sdk": "^1.1.90",
+        "@suilend/sdk": "^1.1.92",
         "@suilend/sui-fe": "^0.3.40",
         "bignumber.js": "^9.1.2",
         "dotenv": "^16.4.7",
@@ -686,7 +686,7 @@
 
     "@suchipi/femver": ["@suchipi/femver@1.0.0", "", {}, "sha512-bprE8+K5V+DPX7q2e2K57ImqNBdfGHDIWaGI5xHxZoxbKOuQZn4wzPiUxOAHnsUr3w3xHrWXwN7gnG/iIuEMIg=="],
 
-    "@suilend/sdk": ["@suilend/sdk@1.1.90", "", { "dependencies": { "@7kprotocol/sdk-ts": "^3.4.1", "@cetusprotocol/aggregator-sdk": "^1.2.1", "@flowx-finance/sdk": "^1.13.5", "@pythnetwork/pyth-sui-js": "^2.2.0", "@suilend/springsui-sdk": "^1.0.27", "aftermath-ts-sdk": "^1.3.22", "bignumber.js": "^9.1.2", "bn.js": "^5.2.2", "crypto-js": "^4.2.0", "lodash": "^4.17.21", "p-limit": "3.1.0", "uuid": "^11.0.3" }, "peerDependencies": { "@mysten/bcs": "1.8.1", "@mysten/sui": "1.42.0", "@suilend/sui-fe": "^0.3.40" } }, "sha512-LPzMs2yWt64AtJFbsIXNh0cbZ+A8v/5aGfvkTuXcYubWizDSoYdNEbkpynKx6/eNy/xDrmnJ3RH18T3PIWPkxg=="],
+    "@suilend/sdk": ["@suilend/sdk@1.1.92", "", { "dependencies": { "@7kprotocol/sdk-ts": "^3.5.0", "@cetusprotocol/aggregator-sdk": "^1.4.2", "@flowx-finance/sdk": "^1.14.0", "@pythnetwork/pyth-sui-js": "^2.2.0", "@suilend/springsui-sdk": "^1.0.27", "aftermath-ts-sdk": "^1.3.24", "bignumber.js": "^9.1.2", "bn.js": "^5.2.2", "crypto-js": "^4.2.0", "lodash": "^4.17.21", "p-limit": "3.1.0", "uuid": "^11.0.3" }, "peerDependencies": { "@mysten/bcs": "1.8.1", "@mysten/sui": "1.42.0", "@suilend/sui-fe": "^0.3.41" } }, "sha512-fW2dBZnrCNtQ0ITG+bNB42D/0aiVh6S/OPup1UGBTDq8TZv8R1ntBxVBioa7UaSMCv/ZV8fb/hESXTmoN+bTww=="],
 
     "@suilend/springsui-sdk": ["@suilend/springsui-sdk@1.0.27", "", { "dependencies": { "bignumber.js": "^9.1.2" }, "peerDependencies": { "@mysten/bcs": "1.8.1", "@mysten/sui": "1.42.0" } }, "sha512-4/BwbpqKrUYLrtSAEGBSCaUJnvl6Yhm+gSUS732J6O1QJFd0JDs9hl9xxpo9Y0Z36vJGPnxqXX+qwyqbBAr4LA=="],
 
@@ -2451,14 +2451,6 @@
     "@sentry/nextjs/resolve": ["resolve@1.22.8", "", { "dependencies": { "is-core-module": "^2.13.0", "path-parse": "^1.0.7", "supports-preserve-symlinks-flag": "^1.0.0" }, "bin": { "resolve": "bin/resolve" } }, "sha512-oKWePCxqpd6FlLvGV1VU0x7bkPmmCNolxzjMf4NczoDnQcIWrAF+cPtZn5i6n+RfD2d9i0tzpKnG6Yk168yIyw=="],
 
     "@sentry/webpack-plugin/uuid": ["uuid@9.0.1", "", { "bin": { "uuid": "dist/bin/uuid" } }, "sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA=="],
-
-    "@suilend/sdk/@7kprotocol/sdk-ts": ["@7kprotocol/sdk-ts@3.4.1", "", { "peerDependencies": { "@mysten/sui": "^1.33.0", "@pythnetwork/pyth-sui-js": "^2.1.0" } }, "sha512-XjhO2UwhHW/cJUt+DZvcn/ybdSPyc0Tl3xMZlOAztJOWfeE2Yv/4H2gsUOs1xRlV/6vtlGhYkxKGXwzdM2DwbQ=="],
-
-    "@suilend/sdk/@cetusprotocol/aggregator-sdk": ["@cetusprotocol/aggregator-sdk@1.3.0", "", { "dependencies": { "@mysten/sui": "^1.0.5", "@pythnetwork/pyth-sui-js": "^2.1.0", "bip39": "^3.1.0", "dotenv": "^16.4.5", "json-bigint": "^1.0.0", "node-fetch": "^3.3.2" }, "peerDependencies": { "typescript": "^5.0.0" } }, "sha512-WRlWD9/oEpGI8ywO8EmFx7JdZiOLxH7d/5vfk2+TMJkRJfehnwepI7mQUoCA/ga3zmgF/twDLGn5bMISTtQnVw=="],
-
-    "@suilend/sdk/@flowx-finance/sdk": ["@flowx-finance/sdk@1.13.5", "", { "dependencies": { "@bluefin-exchange/bluefin7k-aggregator-sdk": "^4.3.1", "@cetusprotocol/aggregator-sdk": "^1.0.3", "@mysten/sui": "^1.14.2", "@mysten/sui.js": "^0.54.1", "aftermath-ts-sdk": "^1.3.19", "bignumber.js": "^9.0.1", "bn.js": "^5.2.1", "crypto-js": "^4.2.0", "d3": "^7.9.0", "graphql-request": "^6.1.0", "json-bigint": "^1.0.0", "lodash": "^4.17.20", "node-cache": "^5.1.2", "object-hash": "^3.0.0", "p-limit": "3.1.0", "tiny-invariant": "^1.3.3" } }, "sha512-8EamXdsdpXqKabGrLw+vIKkJ4kZ6w4Uucvj75RAz+tt4APSLchYcyc1PdY948zF3QfrvWOfFONvCxv573pbvOQ=="],
-
-    "@suilend/sdk/aftermath-ts-sdk": ["aftermath-ts-sdk@1.3.23", "", { "dependencies": { "bn.js": "^5.2.2", "dayjs": "^1.11.7", "node-fetch": "^3.3.1", "priority-queue-typescript": "^1.0.1" }, "peerDependencies": { "@mysten/sui": "1.38.0" } }, "sha512-KaEPuE5QQbDm1Ftp8LqErEQ+huwQ/bE8n82vN3sVaKplUP368jvJI3x0R1O1DRpwFMZGfQFIDiwn2OTG9n8I4A=="],
 
     "@typescript-eslint/typescript-estree/minimatch": ["minimatch@9.0.5", "", { "dependencies": { "brace-expansion": "^2.0.1" } }, "sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow=="],
 
