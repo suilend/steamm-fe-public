@@ -101,6 +101,7 @@ export function PoolPositionsContextProvider({ children }: PropsWithChildren) {
                                     ],
                                   ),
                                 ),
+                                undefined,
                               ) ?? 0,
                             ).times(
                               pool.prices[index].times(pool.balances[index]),

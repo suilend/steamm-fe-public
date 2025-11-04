@@ -31,6 +31,7 @@ export const getPoolStakingYieldAprPercent = (
                       ([coinType, aprPercent]) => [coinType, { aprPercent }],
                     ),
                   ),
+                  undefined,
                 ) ?? 0,
               ).times(pool.prices[index].times(pool.balances[index])),
             ),
