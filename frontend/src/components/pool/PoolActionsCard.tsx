@@ -102,7 +102,8 @@ interface DepositTabProps {
 
 function DepositTab({ onDeposit }: DepositTabProps) {
   const { explorer, suiClient } = useSettingsContext();
-  const { address, signExecuteAndWaitForTransaction } = useWalletContext();
+  const { address, dryRunTransaction, signExecuteAndWaitForTransaction } =
+    useWalletContext();
   const {
     steammClient,
     appData,
@@ -500,7 +501,15 @@ function DepositTab({ onDeposit }: DepositTabProps) {
       });
       transaction.transferObjects([depositCoinA, depositCoinB], address);
 
-      rebalanceBanks(banks, steammClient, transaction);
+      try {
+        const txCopy = Transaction.from(transaction);
+        rebalanceBanks(banks, steammClient, txCopy);
+
+        await dryRunTransaction(txCopy);
+        transaction = txCopy;
+      } catch (err) {
+        // Fail silently
+      }
 
       // Stake LP tokens (if reserve exists)
       if (!!appData.suilend.lmMarket.reserveMap[pool.lpTokenType]) {
@@ -979,7 +988,7 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
 
     const lpTokenValue = lpTokenTotalAmount.times(sliderValue).div(100);
 
-    const transaction = new Transaction();
+    let transaction = new Transaction();
     const mergeCoinLpToken = mergeAllCoins(
       lpTokenType,
       transaction,
@@ -1154,7 +1163,15 @@ function WithdrawTab({ onWithdraw }: WithdrawTabProps) {
       address,
     );
 
-    rebalanceBanks(banks, steammClient, transaction);
+    try {
+      const txCopy = Transaction.from(transaction);
+      rebalanceBanks(banks, steammClient, txCopy);
+
+      await dryRunTransaction(txCopy);
+      transaction = txCopy;
+    } catch (err) {
+      // Fail silently
+    }
 
     return transaction;
   };
@@ -1362,7 +1379,8 @@ interface SwapTabProps {
 
 function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
   const { explorer, suiClient } = useSettingsContext();
-  const { address, signExecuteAndWaitForTransaction } = useWalletContext();
+  const { address, dryRunTransaction, signExecuteAndWaitForTransaction } =
+    useWalletContext();
   const {
     steammClient,
     appData,
@@ -1634,7 +1652,7 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
         .integerValue(BigNumber.ROUND_DOWN)
         .toString();
 
-      const transaction = new Transaction();
+      let transaction = new Transaction();
       const [mergeCoinA, mergeCoinB] = [
         mergeAllCoins(coinTypeA, transaction, allCoinsA),
         mergeAllCoins(coinTypeB, transaction, allCoinsB),
@@ -1673,7 +1691,15 @@ function SwapTab({ onSwap, isCpmmOffsetPoolWithNoQuoteAssets }: SwapTabProps) {
       });
       transaction.transferObjects([coinA, coinB], address);
 
-      rebalanceBanks(banks, steammClient, transaction);
+      try {
+        const txCopy = Transaction.from(transaction);
+        rebalanceBanks(banks, steammClient, txCopy);
+
+        await dryRunTransaction(txCopy);
+        transaction = txCopy;
+      } catch (err) {
+        // Fail silently
+      }
 
       const res = await signExecuteAndWaitForTransaction(
         transaction,
