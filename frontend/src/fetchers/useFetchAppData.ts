@@ -11,6 +11,7 @@ import {
   initializeSuilendRewards,
   toHexString,
 } from "@suilend/sdk";
+import { getWorkingPythEndpoint } from "@suilend/sdk/lib/pyth";
 import {
   BETA_CONFIG,
   BankObj,
@@ -36,6 +37,7 @@ import { formatPair } from "@/lib/format";
 import { normalizeRewards } from "@/lib/liquidityMining";
 import { OracleType } from "@/lib/oracles";
 import { fetchPool } from "@/lib/pools";
+import { FALLBACK_PYTH_ENDPOINT } from "@/lib/pyth";
 
 const BLACKLISTED_BANK_COIN_TYPES: string[] = [];
 const BLACKLISTED_POOL_IDS: string[] = [
@@ -82,7 +84,12 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
                 activeRewardCoinTypes,
                 rewardCoinMetadataMap,
-              } = await initializeSuilend(suiClient, suilendClient);
+              } = await initializeSuilend(
+                suiClient,
+                suilendClient,
+                undefined,
+                FALLBACK_PYTH_ENDPOINT,
+              );
 
               const { rewardPriceMap } = await initializeSuilendRewards(
                 reserveMap,
@@ -125,6 +132,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               const { reserveMap } = await initializeSuilend(
                 suiClient,
                 suilendClient,
+                undefined,
+                FALLBACK_PYTH_ENDPOINT,
               );
 
               return {
@@ -143,6 +152,8 @@ export default function useFetchAppData(steammClient: SteammSDK) {
               const { reserveMap } = await initializeSuilend(
                 suiClient,
                 suilendClient,
+                undefined,
+                FALLBACK_PYTH_ENDPOINT,
               );
 
               return {
@@ -180,12 +191,17 @@ export default function useFetchAppData(steammClient: SteammSDK) {
 
                 activeRewardCoinTypes,
                 rewardCoinMetadataMap,
-              } = await initializeSuilend(suiClient, suilendClient, {
-                id: STEAMM_LM_LENDING_MARKET_ID,
-                type: STEAMM_LM_LENDING_MARKET_TYPE,
-                lendingMarketOwnerCapId:
-                  "0x55a0f33b24e091830302726c8cfbff8cf8abd2ec1f83a4e6f4bf51c7ba3ad5ab",
-              });
+              } = await initializeSuilend(
+                suiClient,
+                suilendClient,
+                {
+                  id: STEAMM_LM_LENDING_MARKET_ID,
+                  type: STEAMM_LM_LENDING_MARKET_TYPE,
+                  lendingMarketOwnerCapId:
+                    "0x55a0f33b24e091830302726c8cfbff8cf8abd2ec1f83a4e6f4bf51c7ba3ad5ab",
+                },
+                FALLBACK_PYTH_ENDPOINT,
+              );
 
               return {
                 suilendClient,
@@ -309,10 +325,12 @@ export default function useFetchAppData(steammClient: SteammSDK) {
           ) as [number, string][],
         );
 
-        const pythConnection = new SuiPriceServiceConnection(
-          "https://hermes.pyth.network",
-          { timeout: 30 * 1000 },
+        const pythEndpoint = await getWorkingPythEndpoint(
+          FALLBACK_PYTH_ENDPOINT,
         );
+        const pythConnection = new SuiPriceServiceConnection(pythEndpoint, {
+          timeout: 30 * 1000,
+        });
         // TODO: Switchboard price connection
 
         const pythPriceFeeds =

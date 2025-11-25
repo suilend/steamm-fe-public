@@ -33,8 +33,8 @@
         "@radix-ui/react-dialog": "^1.1.2",
         "@radix-ui/react-popover": "^1.1.2",
         "@radix-ui/react-tooltip": "^1.1.4",
-        "@suilend/sdk": "^1.1.92",
-        "@suilend/sui-fe": "^0.3.42",
+        "@suilend/sdk": "^1.1.93",
+        "@suilend/sui-fe": "^0.3.43",
         "@suilend/sui-fe-next": "^0.1.81",
         "@tanstack/react-table": "^8.20.5",
         "@vercel/analytics": "^1.4.0",
@@ -2513,6 +2513,10 @@
     "fast-glob/glob-parent": ["glob-parent@5.1.2", "", { "dependencies": { "is-glob": "^4.0.1" } }, "sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow=="],
 
     "foreground-child/signal-exit": ["signal-exit@4.1.0", "", {}, "sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw=="],
+
+    "frontend/@suilend/sdk": ["@suilend/sdk@1.1.93", "", { "dependencies": { "@7kprotocol/sdk-ts": "^3.5.0", "@cetusprotocol/aggregator-sdk": "^1.4.2", "@flowx-finance/sdk": "^1.14.0", "@pythnetwork/pyth-sui-js": "^2.2.0", "@suilend/springsui-sdk": "^1.0.27", "aftermath-ts-sdk": "^1.3.24", "bignumber.js": "^9.1.2", "bn.js": "^5.2.2", "crypto-js": "^4.2.0", "lodash": "^4.17.21", "p-limit": "3.1.0", "uuid": "^11.0.3" }, "peerDependencies": { "@mysten/bcs": "1.8.1", "@mysten/sui": "1.42.0", "@suilend/sui-fe": "^0.3.43" } }, "sha512-1TmH8jYASYXGC9z+sAgkL87INm8vhxGKdMPgv8wIQK36n9IdMtVzTQTzk41RygIg4sFwDqc2VYcuYgkDxha0Hw=="],
+
+    "frontend/@suilend/sui-fe": ["@suilend/sui-fe@0.3.43", "", { "dependencies": { "@mysten/wallet-standard": "0.19.2", "bignumber.js": "^9.1.2", "blake2b": "^2.1.4", "lodash": "^4.17.21", "mixpanel-browser": "^2.71.0", "next": "^15.0.3", "p-limit": "3.1.0" }, "peerDependencies": { "@mysten/sui": "1.42.0", "date-fns": "^4.1.0" } }, "sha512-IYkKfTOSGBBwPYqThfiovaaqKReyS2I6sYWcX5RWZCTaQPCsYcYZfj+Wj6mH0U6omzGItYJ6jDrIcokDTpqyxA=="],
 
     "glob/minimatch": ["minimatch@9.0.5", "", { "dependencies": { "brace-expansion": "^2.0.1" } }, "sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow=="],
 
