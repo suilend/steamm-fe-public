@@ -251,7 +251,7 @@ export default function SearchDialog() {
           <div className="flex flex-row items-center gap-2">
             <Search className="h-4 w-4 text-secondary-foreground transition-colors group-hover:text-foreground" />
             <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground max-md:hidden">
-              Search pools & tokens
+              Search
             </p>
           </div>
 
