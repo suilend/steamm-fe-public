@@ -2,6 +2,7 @@ import {
   CSSProperties,
   PropsWithChildren,
   ReactElement,
+  SVGProps,
   cloneElement,
 } from "react";
 
@@ -12,7 +13,7 @@ import { cn } from "@/lib/utils";
 export interface TitleWithIconProps extends PropsWithChildren {
   className?: ClassValue;
   style?: CSSProperties;
-  icon?: ReactElement;
+  icon?: ReactElement<SVGProps<SVGSVGElement>>;
 }
 
 export default function TitleWithIcon({
