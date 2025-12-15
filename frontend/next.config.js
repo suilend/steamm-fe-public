@@ -34,4 +34,20 @@ module.exports = {
 
     return config;
   },
+  async headers() {
+    return [
+      {
+        key: "X-Frame-Options",
+        value: "DENY",
+      },
+      {
+        key: "X-Strict-Transport-Security",
+        value: "max-age=31536000",
+      },
+      {
+        key: "X-Content-Type-Options",
+        value: "nosniff",
+      },
+    ];
+  },
 };
