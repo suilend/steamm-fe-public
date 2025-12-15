@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 
-import { setSuiClient as set7kSdkSuiClient } from "@7kprotocol/sdk-ts/cjs";
+import { setSuiClient as setBluefin7kSdkSuiClient } from "@bluefin-exchange/bluefin7k-aggregator-sdk/cjs";
 import {
   AggregatorClient as CetusSdk,
   Env,
@@ -18,7 +18,7 @@ export type SdkMap = {
 };
 export type PartnerIdMap = {
   [QuoteProvider.CETUS]: string;
-  [QuoteProvider._7K]: string;
+  [QuoteProvider.BLUEFIN7K]: string;
   [QuoteProvider.FLOWX]: string;
 };
 
@@ -55,7 +55,7 @@ export const useAggSdks = (): {
   const cetusSdk = useCetusSdk();
 
   useEffect(() => {
-    set7kSdkSuiClient(suiClient);
+    setBluefin7kSdkSuiClient(suiClient);
   }, [suiClient]);
 
   const flowXSdk = useMemo(() => {
@@ -77,7 +77,7 @@ export const useAggSdks = (): {
     () => ({
       [QuoteProvider.CETUS]:
         "0x7d68adb758c18d0f1e6cbbfe07c4c12bce92de37ce61b27b51245a568381b83e",
-      [QuoteProvider._7K]:
+      [QuoteProvider.BLUEFIN7K]:
         "0x7d68adb758c18d0f1e6cbbfe07c4c12bce92de37ce61b27b51245a568381b83e",
       [QuoteProvider.FLOWX]:
         "0x7d68adb758c18d0f1e6cbbfe07c4c12bce92de37ce61b27b51245a568381b83e",

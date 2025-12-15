@@ -75,7 +75,7 @@ export default function SwapPage() {
       [
         // QuoteProvider.AFTERMATH,
         QuoteProvider.CETUS,
-        QuoteProvider._7K,
+        QuoteProvider.BLUEFIN7K,
         QuoteProvider.FLOWX,
       ].filter(Boolean) as QuoteProvider[],
     [],

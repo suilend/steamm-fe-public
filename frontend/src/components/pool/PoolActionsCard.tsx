@@ -121,7 +121,7 @@ function DepositTab({ onDeposit }: DepositTabProps) {
     () => [
       // QuoteProvider.AFTERMATH,
       QuoteProvider.CETUS,
-      QuoteProvider._7K,
+      QuoteProvider.BLUEFIN7K,
       QuoteProvider.FLOWX,
     ],
     [],

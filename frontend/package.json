@@ -15,7 +15,7 @@
     "check": "bun tsc --noEmit"
   },
   "dependencies": {
-    "@7kprotocol/sdk-ts": "^3.5.0",
+    "@bluefin-exchange/bluefin7k-aggregator-sdk": "^5.1.5",
     "@cetusprotocol/aggregator-sdk": "^1.4.2",
     "@datadog/browser-rum": "^6.6.4",
     "@flowx-finance/sdk": "^1.14.0",
@@ -28,7 +28,7 @@
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-popover": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.4",
-    "@suilend/sdk": "^1.1.96",
+    "@suilend/sdk": "^1.1.97",
     "@suilend/sui-fe": "^0.3.46",
     "@suilend/sui-fe-next": "^0.1.83",
     "@tanstack/react-table": "^8.20.5",

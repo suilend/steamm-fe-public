@@ -20,7 +20,7 @@
       "name": "frontend",
       "version": "0.1.0",
       "dependencies": {
-        "@7kprotocol/sdk-ts": "^3.5.0",
+        "@bluefin-exchange/bluefin7k-aggregator-sdk": "^5.1.5",
         "@cetusprotocol/aggregator-sdk": "^1.4.2",
         "@datadog/browser-rum": "^6.6.4",
         "@flowx-finance/sdk": "^1.14.0",
@@ -33,7 +33,7 @@
         "@radix-ui/react-dialog": "^1.1.2",
         "@radix-ui/react-popover": "^1.1.2",
         "@radix-ui/react-tooltip": "^1.1.4",
-        "@suilend/sdk": "^1.1.96",
+        "@suilend/sdk": "^1.1.97",
         "@suilend/sui-fe": "^0.3.46",
         "@suilend/sui-fe-next": "^0.1.83",
         "@tanstack/react-table": "^8.20.5",
@@ -83,10 +83,10 @@
     },
     "sdk": {
       "name": "@suilend/steamm-sdk-local",
-      "version": "1.1.8",
+      "version": "1.1.9",
       "dependencies": {
         "@pythnetwork/pyth-sui-js": "2.2.0",
-        "@suilend/sdk": "^1.1.96",
+        "@suilend/sdk": "^1.1.97",
         "@suilend/sui-fe": "^0.3.46",
         "bignumber.js": "^9.1.2",
         "dotenv": "^16.4.7",
@@ -111,8 +111,6 @@
     "@0no-co/graphql.web": ["@0no-co/graphql.web@1.2.0", "", { "peerDependencies": { "graphql": "^14.0.0 || ^15.0.0 || ^16.0.0" }, "optionalPeers": ["graphql"] }, "sha512-/1iHy9TTr63gE1YcR5idjx8UREz1s0kFhydf3bBLCXyqjhkIc6igAzTOx3zPifCwFR87tsh/4Pa9cNts6d2otw=="],
 
     "@0no-co/graphqlsp": ["@0no-co/graphqlsp@1.15.1", "", { "dependencies": { "@gql.tada/internal": "^1.0.0", "graphql": "^15.5.0 || ^16.0.0 || ^17.0.0" }, "peerDependencies": { "typescript": "^5.0.0" } }, "sha512-UBDBuVGpX5Ti0PjGnSAzkMG04psNYxKfJ+1bgF8HFPfHHpKNVl4GULHSNW0GTOngcYCYA70c+InoKw0qjHwmVQ=="],
-
-    "@7kprotocol/sdk-ts": ["@7kprotocol/sdk-ts@3.5.4", "", { "dependencies": { "uuid": "^13.0.0" }, "optionalDependencies": { "@cetusprotocol/aggregator-sdk": "^1.4.1", "@flowx-finance/sdk": "^1.13.8" }, "peerDependencies": { "@mysten/sui": "^1.44.0", "@pythnetwork/pyth-sui-js": "^2.2.0" } }, "sha512-2xGlGfjlo6XcKNjoyv/+iZevFAbRjn8JqzqTw58iB2+TlU8qGNNEQp5c8nw+Dv7l3FcVpe0N9Ci9g5nyVeCsgw=="],
 
     "@adraffy/ens-normalize": ["@adraffy/ens-normalize@1.11.1", "", {}, "sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ=="],
 
@@ -192,7 +190,7 @@
 
     "@bcoe/v8-coverage": ["@bcoe/v8-coverage@0.2.3", "", {}, "sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw=="],
 
-    "@bluefin-exchange/bluefin7k-aggregator-sdk": ["@bluefin-exchange/bluefin7k-aggregator-sdk@4.3.2", "", { "peerDependencies": { "@mysten/sui": "^1.33.0", "@pythnetwork/pyth-sui-js": "^2.1.0" } }, "sha512-i17f++6v+9ju2vvdmqe6nVhbKadiHcLmU7Fqzsjijh0NKZ39xNrsKjCA33RIP7KTeXpTOxdNytgiqR2TQKUdDQ=="],
+    "@bluefin-exchange/bluefin7k-aggregator-sdk": ["@bluefin-exchange/bluefin7k-aggregator-sdk@5.1.5", "", { "dependencies": { "uuid": "^13.0.0" }, "peerDependencies": { "@mysten/sui": "^1.33.0", "@pythnetwork/pyth-sui-js": "^2.1.0" } }, "sha512-lU12oDFCNwhopbaMkghtKby+9MxsnmqSlKgycWaGb3ASbjSLF47IhwiOkSCAw+rvTk6Rnqtbh2YvJdxxO+qO0A=="],
 
     "@cetusprotocol/aggregator-sdk": ["@cetusprotocol/aggregator-sdk@1.4.2", "", { "dependencies": { "@mysten/sui": "^1.0.5", "@pythnetwork/pyth-sui-js": "^2.1.0", "bip39": "^3.1.0", "dotenv": "^16.4.5", "json-bigint": "^1.0.0", "node-fetch": "^3.3.2" }, "peerDependencies": { "typescript": "^5.0.0" } }, "sha512-GhsiwY3IAvIgjqacQtIGn60AlvK3IguaP5YapE5u0LhXbG6Nsyho0MEpki19N68QYUct1GUWwpOfLVCzUpKKrQ=="],
 
@@ -660,7 +658,7 @@
 
     "@suchipi/femver": ["@suchipi/femver@1.0.0", "", {}, "sha512-bprE8+K5V+DPX7q2e2K57ImqNBdfGHDIWaGI5xHxZoxbKOuQZn4wzPiUxOAHnsUr3w3xHrWXwN7gnG/iIuEMIg=="],
 
-    "@suilend/sdk": ["@suilend/sdk@1.1.96", "", { "dependencies": { "@7kprotocol/sdk-ts": "^3.5.0", "@cetusprotocol/aggregator-sdk": "^1.4.2", "@flowx-finance/sdk": "^1.14.0", "@suilend/springsui-sdk": "^1.0.27", "aftermath-ts-sdk": "^1.3.24", "bignumber.js": "^9.1.2", "bn.js": "^5.2.2", "crypto-js": "^4.2.0", "lodash": "^4.17.21", "p-limit": "3.1.0", "uuid": "^11.0.3" }, "peerDependencies": { "@mysten/bcs": "1.8.1", "@mysten/sui": "1.42.0", "@pythnetwork/pyth-sui-js": "2.2.0", "@suilend/sui-fe": "^0.3.44" } }, "sha512-3FMlgr6NBHH2APDAqu0fimrQR3VyDL9N4kUtBneIDOxFvQYyYn8pix+v+dmHfYVs8Yeemidme9YibGkGW98Q/A=="],
+    "@suilend/sdk": ["@suilend/sdk@1.1.97", "", { "dependencies": { "@bluefin-exchange/bluefin7k-aggregator-sdk": "^5.1.5", "@cetusprotocol/aggregator-sdk": "^1.4.2", "@flowx-finance/sdk": "^1.14.0", "@suilend/springsui-sdk": "^1.0.27", "aftermath-ts-sdk": "^1.3.24", "bignumber.js": "^9.1.2", "bn.js": "^5.2.2", "crypto-js": "^4.2.0", "lodash": "^4.17.21", "p-limit": "3.1.0", "uuid": "^11.0.3" }, "peerDependencies": { "@mysten/bcs": "1.8.1", "@mysten/sui": "1.42.0", "@pythnetwork/pyth-sui-js": "2.2.0", "@suilend/sui-fe": "^0.3.46" } }, "sha512-oqc5N5BN9zuT2srHLXEnqmCz6QV3EsZS03HbvU46YMYOj2/aYeiugKB+fECfZPcGedttE5dpsU0iERvDf0l1og=="],
 
     "@suilend/springsui-sdk": ["@suilend/springsui-sdk@1.0.28", "", { "dependencies": { "bignumber.js": "^9.1.2" }, "peerDependencies": { "@mysten/bcs": "1.8.1", "@mysten/sui": "1.42.0" } }, "sha512-+2tGgA4rj5U5sWaUsHxJgB7JjwJy9q7+sULN/kutNsMw9HUMcGXw4OdipXrJ4VwiGkc5pqEbNNbPJWorzS9GvQ=="],
 
@@ -2246,8 +2244,6 @@
 
     "zustand": ["zustand@4.5.7", "", { "dependencies": { "use-sync-external-store": "^1.2.2" }, "peerDependencies": { "@types/react": ">=16.8", "immer": ">=9.0.6", "react": ">=16.8" }, "optionalPeers": ["@types/react", "immer", "react"] }, "sha512-CHOUy7mu3lbD6o6LJLfllpjkzhHXSBlX8B9+qPddUsIfeF5S/UZ5q0kmCsnRqT1UHFQZchNFDDzMbQsuesHWlw=="],
 
-    "@7kprotocol/sdk-ts/uuid": ["uuid@13.0.0", "", { "bin": { "uuid": "dist-node/bin/uuid" } }, "sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w=="],
-
     "@base-org/account/@noble/hashes": ["@noble/hashes@1.4.0", "", {}, "sha512-V1JJ1WTRUqHHrOSh597hURcMqVKVGL/ea3kv0gSnEdsEZ0/+VyPghM1lMNGc00z7CIQorSvbKpuJkxvuHbvdbg=="],
 
     "@base-org/account/clsx": ["clsx@1.2.1", "", {}, "sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg=="],
@@ -2257,6 +2253,8 @@
     "@base-org/account/ox": ["ox@0.6.9", "", { "dependencies": { "@adraffy/ens-normalize": "^1.10.1", "@noble/curves": "^1.6.0", "@noble/hashes": "^1.5.0", "@scure/bip32": "^1.5.0", "@scure/bip39": "^1.4.0", "abitype": "^1.0.6", "eventemitter3": "5.0.1" }, "peerDependencies": { "typescript": ">=5.4.0" }, "optionalPeers": ["typescript"] }, "sha512-wi5ShvzE4eOcTwQVsIPdFr+8ycyX+5le/96iAJutaZAvCes1J0+RvpEPg5QDPDiaR0XQQAvZVl7AwqQcINuUug=="],
 
     "@base-org/account/zustand": ["zustand@5.0.3", "", { "peerDependencies": { "@types/react": ">=18.0.0", "immer": ">=9.0.6", "react": ">=18.0.0", "use-sync-external-store": ">=1.2.0" }, "optionalPeers": ["@types/react", "immer", "react", "use-sync-external-store"] }, "sha512-14fwWQtU3pH4dE0dOpdMiWjddcH+QzKIgk1cl8epwSE7yag43k/AD/m4L6+K7DytAOr9gGBe3/EXj9g7cdostg=="],
+
+    "@bluefin-exchange/bluefin7k-aggregator-sdk/uuid": ["uuid@13.0.0", "", { "bin": { "uuid": "dist-node/bin/uuid" } }, "sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w=="],
 
     "@coinbase/cdp-sdk/abitype": ["abitype@1.0.6", "", { "peerDependencies": { "typescript": ">=5.0.4", "zod": "^3 >=3.22.0" }, "optionalPeers": ["typescript", "zod"] }, "sha512-MMSqYh4+C/aVqI2RQaWqbvI4Kxo5cQV40WQ4QFtDnNzCkqChm8MuENhElmynZlO0qUy/ObkEUaXtKqYnx1Kp3A=="],
 
@@ -2269,6 +2267,8 @@
     "@eslint-community/eslint-utils/eslint-visitor-keys": ["eslint-visitor-keys@3.4.3", "", {}, "sha512-wpc+LXeiyiisxPlEkUzU6svyS1frIO3Mgxj1fdy7Pm8Ygzguax2N3Fa/D/ag1WqbOprdI+uY6wMUl8/a2G+iag=="],
 
     "@eslint/eslintrc/ignore": ["ignore@5.3.2", "", {}, "sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g=="],
+
+    "@flowx-finance/sdk/@bluefin-exchange/bluefin7k-aggregator-sdk": ["@bluefin-exchange/bluefin7k-aggregator-sdk@4.3.2", "", { "peerDependencies": { "@mysten/sui": "^1.33.0", "@pythnetwork/pyth-sui-js": "^2.1.0" } }, "sha512-i17f++6v+9ju2vvdmqe6nVhbKadiHcLmU7Fqzsjijh0NKZ39xNrsKjCA33RIP7KTeXpTOxdNytgiqR2TQKUdDQ=="],
 
     "@istanbuljs/load-nyc-config/find-up": ["find-up@4.1.0", "", { "dependencies": { "locate-path": "^5.0.0", "path-exists": "^4.0.0" } }, "sha512-PpOwAdQ/YlXQ2vj8a3h8IipDuYRi3wceVQQGYWxNINccq40Anw7BlsEXCMbt1Zt+OLA6Fq9suIpIWD0OsnISlw=="],
 
