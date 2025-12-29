@@ -46,6 +46,7 @@ import { useUserContext } from "@/contexts/UserContext";
 import {
   AirdropRow,
   MakeBatchTransferResult,
+  getBatchTransferTransaction,
   makeBatchTransfer,
 } from "@/lib/airdrop";
 import { formatTextInputValue } from "@/lib/format";
@@ -391,189 +392,214 @@ export default function AirdropCard() {
 
       setIsSubmitting(true);
 
-      // 1) Create, check, and fund keypair
-      // 1.1) Create
-      let _keypair = keypair;
-      if (_keypair === undefined) {
-        console.log("[onSubmitClick] createKeypair");
-
-        const createKeypairResult = await createKeypair(signPersonalMessage);
-        _keypair = createKeypairResult.keypair;
-        setKeypair(_keypair);
-        setKeypairAddress(createKeypairResult.address);
-      }
-
-      // 1.2) Check
-      const { lastCurrentFlowTransaction } = await checkIfKeypairCanBeUsed(
-        lastSignedTransactionRef.current?.signedTransaction,
-        currentFlowDigests,
-        _keypair,
-        suiClient,
-      );
-      console.log(
-        "[onSubmitClick] checkIfKeypairCanBeUsed - lastCurrentFlowTransaction:",
-        lastCurrentFlowTransaction,
-      );
-
-      // 1.3) Fund
-      if (fundKeypairResult === undefined) {
-        await checkLastTransactionSignature<LastSignedTransactionType>(
-          LastSignedTransactionType.FUND_KEYPAIR,
-          lastCurrentFlowTransaction,
-          lastSignedTransactionRef.current,
-          setLastSignedTransaction,
+      if (batches.length === 1) {
+        const transaction = await getBatchTransferTransaction(
+          token,
+          batches[0],
+          address,
           suiClient,
-          async (res: SuiTransactionBlockResponse) => {
-            console.log("[onSubmitClick] fundKeypair - validCallback");
-            setFundKeypairResult({ res });
-          },
-          async () => {
-            console.log("[onSubmitClick] fundKeypair - invalidCallback");
-
-            const _fundKeypairResult: FundKeypairResult = await fundKeypair(
-              [
-                {
-                  ...token,
-                  amount: totalTokenAmount.plus(
-                    isSui(token.coinType) ? totalGasAmount : 0,
-                  ),
-                },
-                ...(isSui(token.coinType)
-                  ? []
-                  : [
-                      {
-                        ...getToken(
-                          NORMALIZED_SUI_COINTYPE,
-                          appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE],
-                        ),
-                        amount: totalGasAmount,
-                      },
-                    ]),
-              ],
-              address,
-              _keypair,
-              suiClient,
-              signExecuteAndWaitForTransaction,
-              onSign<LastSignedTransactionType>(
-                LastSignedTransactionType.FUND_KEYPAIR,
-                setLastSignedTransaction,
-              ),
-            );
-            setFundKeypairResult(_fundKeypairResult);
-          },
         );
-      }
 
-      // 2) Create and send keypair transactions
-      // 2.1) Make batch transfers
-      const makeBatchTransferResultsCount = (makeBatchTransferResults ?? [])
-        .length;
-      console.log(
-        "[onSubmitClick] makeBatchTransferResultsCount:",
-        makeBatchTransferResultsCount,
-        "batches.length:",
-        batches.length,
-      );
+        const res = await signExecuteAndWaitForTransaction(transaction);
+        const txUrl = explorer.buildTxUrl(res.digest);
 
-      if (makeBatchTransferResultsCount < batches.length) {
-        for (let i = 0; i < batches.length; i++) {
-          console.log(`[onSubmitClick] makeBatchTransfer ${i}`);
-          const batch = batches[i];
+        showSuccessTxnToast(
+          `Airdropped ${formatToken(totalTokenAmount, {
+            dp: token.decimals,
+            trimTrailingZeros: true,
+          })} ${token.symbol} to ${
+            recipientsType === RecipientsType.CSV
+              ? `${batches.flat().length} ${batches.flat().length === 1 ? "address" : "addresses"}`
+              : `the ${recipientsTypeNameMap[recipientsType]} NFT collection`
+          }`,
+          txUrl,
+        );
+        reset();
+      } else {
+        // 1) Create, check, and fund keypair
+        // 1.1) Create
+        let _keypair = keypair;
+        if (_keypair === undefined) {
+          console.log("[onSubmitClick] createKeypair");
 
-          if (i <= makeBatchTransferResultsCount - 1) {
-            console.log(`[onSubmitClick] makeBatchTransfer ${i} - skipping`);
-            continue;
-          } else {
-            console.log(
-              `[onSubmitClick] makeBatchTransfer ${i} - NOT skipping`,
+          const createKeypairResult = await createKeypair(signPersonalMessage);
+          _keypair = createKeypairResult.keypair;
+          setKeypair(_keypair);
+          setKeypairAddress(createKeypairResult.address);
+        }
+
+        // 1.2) Check
+        const { lastCurrentFlowTransaction } = await checkIfKeypairCanBeUsed(
+          lastSignedTransactionRef.current?.signedTransaction,
+          currentFlowDigests,
+          _keypair,
+          suiClient,
+        );
+        console.log(
+          "[onSubmitClick] checkIfKeypairCanBeUsed - lastCurrentFlowTransaction:",
+          lastCurrentFlowTransaction,
+        );
+
+        // 1.3) Fund
+        if (fundKeypairResult === undefined) {
+          await checkLastTransactionSignature<LastSignedTransactionType>(
+            LastSignedTransactionType.FUND_KEYPAIR,
+            lastCurrentFlowTransaction,
+            lastSignedTransactionRef.current,
+            setLastSignedTransaction,
+            suiClient,
+            async (res: SuiTransactionBlockResponse) => {
+              console.log("[onSubmitClick] fundKeypair - validCallback");
+              setFundKeypairResult({ res });
+            },
+            async () => {
+              console.log("[onSubmitClick] fundKeypair - invalidCallback");
+
+              const _fundKeypairResult: FundKeypairResult = await fundKeypair(
+                [
+                  {
+                    ...token,
+                    amount: totalTokenAmount.plus(
+                      isSui(token.coinType) ? totalGasAmount : 0,
+                    ),
+                  },
+                  ...(isSui(token.coinType)
+                    ? []
+                    : [
+                        {
+                          ...getToken(
+                            NORMALIZED_SUI_COINTYPE,
+                            appData.coinMetadataMap[NORMALIZED_SUI_COINTYPE],
+                          ),
+                          amount: totalGasAmount,
+                        },
+                      ]),
+                ],
+                address,
+                _keypair,
+                suiClient,
+                signExecuteAndWaitForTransaction,
+                onSign<LastSignedTransactionType>(
+                  LastSignedTransactionType.FUND_KEYPAIR,
+                  setLastSignedTransaction,
+                ),
+              );
+              setFundKeypairResult(_fundKeypairResult);
+            },
+          );
+        }
+
+        // 2) Create and send keypair transactions
+        // 2.1) Make batch transfers
+        const makeBatchTransferResultsCount = (makeBatchTransferResults ?? [])
+          .length;
+        console.log(
+          "[onSubmitClick] makeBatchTransferResultsCount:",
+          makeBatchTransferResultsCount,
+          "batches.length:",
+          batches.length,
+        );
+
+        if (makeBatchTransferResultsCount < batches.length) {
+          for (let i = 0; i < batches.length; i++) {
+            console.log(`[onSubmitClick] makeBatchTransfer ${i}`);
+            const batch = batches[i];
+
+            if (i <= makeBatchTransferResultsCount - 1) {
+              console.log(`[onSubmitClick] makeBatchTransfer ${i} - skipping`);
+              continue;
+            } else {
+              console.log(
+                `[onSubmitClick] makeBatchTransfer ${i} - NOT skipping`,
+              );
+            }
+
+            await checkLastTransactionSignature<LastSignedTransactionType>(
+              LastSignedTransactionType.MAKE_BATCH_TRANSFER,
+              lastCurrentFlowTransaction,
+              lastSignedTransactionRef.current,
+              setLastSignedTransaction,
+              suiClient,
+              async (res: SuiTransactionBlockResponse) => {
+                console.log(
+                  `[onSubmitClick] makeBatchTransfer ${i} - validCallback`,
+                );
+                setMakeBatchTransferResults((prev) => [
+                  ...(prev ?? []),
+                  { batch, res },
+                ]);
+              },
+              async () => {
+                console.log(
+                  `[onSubmitClick] makeBatchTransfer ${i} - invalidCallback`,
+                );
+
+                const _makeBatchTransferResult = await makeBatchTransfer(
+                  token,
+                  batch,
+                  _keypair,
+                  suiClient,
+                  onSign<LastSignedTransactionType>(
+                    LastSignedTransactionType.MAKE_BATCH_TRANSFER,
+                    setLastSignedTransaction,
+                  ),
+                );
+                setMakeBatchTransferResults((prev) => [
+                  ...(prev ?? []),
+                  _makeBatchTransferResult,
+                ]);
+              },
             );
           }
+        }
 
+        // 2.2) Return objects and unused SUI to user
+        if (returnAllOwnedObjectsAndSuiToUserResult === undefined) {
           await checkLastTransactionSignature<LastSignedTransactionType>(
-            LastSignedTransactionType.MAKE_BATCH_TRANSFER,
+            LastSignedTransactionType.RETURN_ALL_OWNED_OBJECTS_AND_SUI_TO_USER,
             lastCurrentFlowTransaction,
             lastSignedTransactionRef.current,
             setLastSignedTransaction,
             suiClient,
             async (res: SuiTransactionBlockResponse) => {
               console.log(
-                `[onSubmitClick] makeBatchTransfer ${i} - validCallback`,
+                "[onSubmitClick] returnAllOwnedObjectsAndSuiToUser - validCallback",
               );
-              setMakeBatchTransferResults((prev) => [
-                ...(prev ?? []),
-                { batch, res },
-              ]);
+              setReturnAllOwnedObjectsAndSuiToUserResult({ res });
             },
             async () => {
               console.log(
-                `[onSubmitClick] makeBatchTransfer ${i} - invalidCallback`,
+                "[onSubmitClick] returnAllOwnedObjectsAndSuiToUser - invalidCallback",
               );
 
-              const _makeBatchTransferResult = await makeBatchTransfer(
-                token,
-                batch,
-                _keypair,
-                suiClient,
-                onSign<LastSignedTransactionType>(
-                  LastSignedTransactionType.MAKE_BATCH_TRANSFER,
-                  setLastSignedTransaction,
-                ),
+              const _returnAllOwnedObjectsAndSuiToUserResult: ReturnAllOwnedObjectsAndSuiToUserResult =
+                await returnAllOwnedObjectsAndSuiToUser(
+                  address,
+                  _keypair,
+                  suiClient,
+                  onSign<LastSignedTransactionType>(
+                    LastSignedTransactionType.RETURN_ALL_OWNED_OBJECTS_AND_SUI_TO_USER,
+                    setLastSignedTransaction,
+                  ),
+                ); // Dry run will throw if there is no gas object (i.e. if we've already returned all owned objects and SUI to user)
+              setReturnAllOwnedObjectsAndSuiToUserResult(
+                _returnAllOwnedObjectsAndSuiToUserResult,
               );
-              setMakeBatchTransferResults((prev) => [
-                ...(prev ?? []),
-                _makeBatchTransferResult,
-              ]);
             },
           );
         }
-      }
 
-      // 2.2) Return objects and unused SUI to user
-      if (returnAllOwnedObjectsAndSuiToUserResult === undefined) {
-        await checkLastTransactionSignature<LastSignedTransactionType>(
-          LastSignedTransactionType.RETURN_ALL_OWNED_OBJECTS_AND_SUI_TO_USER,
-          lastCurrentFlowTransaction,
-          lastSignedTransactionRef.current,
-          setLastSignedTransaction,
-          suiClient,
-          async (res: SuiTransactionBlockResponse) => {
-            console.log(
-              "[onSubmitClick] returnAllOwnedObjectsAndSuiToUser - validCallback",
-            );
-            setReturnAllOwnedObjectsAndSuiToUserResult({ res });
-          },
-          async () => {
-            console.log(
-              "[onSubmitClick] returnAllOwnedObjectsAndSuiToUser - invalidCallback",
-            );
-
-            const _returnAllOwnedObjectsAndSuiToUserResult: ReturnAllOwnedObjectsAndSuiToUserResult =
-              await returnAllOwnedObjectsAndSuiToUser(
-                address,
-                _keypair,
-                suiClient,
-                onSign<LastSignedTransactionType>(
-                  LastSignedTransactionType.RETURN_ALL_OWNED_OBJECTS_AND_SUI_TO_USER,
-                  setLastSignedTransaction,
-                ),
-              ); // Dry run will throw if there is no gas object (i.e. if we've already returned all owned objects and SUI to user)
-            setReturnAllOwnedObjectsAndSuiToUserResult(
-              _returnAllOwnedObjectsAndSuiToUserResult,
-            );
-          },
+        showSuccessToast(
+          `Airdropped ${formatToken(totalTokenAmount, {
+            dp: token.decimals,
+            trimTrailingZeros: true,
+          })} ${token.symbol} to ${
+            recipientsType === RecipientsType.CSV
+              ? `${batches.flat().length} ${batches.flat().length === 1 ? "address" : "addresses"}`
+              : `the ${recipientsTypeNameMap[recipientsType]} NFT collection`
+          }`,
         );
       }
-
-      showSuccessToast(
-        `Airdropped ${formatToken(totalTokenAmount, {
-          dp: token.decimals,
-          trimTrailingZeros: true,
-        })} ${token.symbol} to ${
-          recipientsType === RecipientsType.CSV
-            ? `${batches.flat().length} ${batches.flat().length === 1 ? "address" : "addresses"}`
-            : `the ${recipientsTypeNameMap[recipientsType]} NFT collection`
-        }`,
-      );
     } catch (err) {
       showErrorToast("Failed to airdrop", err as Error, undefined, true);
       console.error(err);
@@ -678,7 +704,8 @@ export default function AirdropCard() {
 
   // Steps dialog
   const isStepsDialogOpen =
-    isSubmitting || !!returnAllOwnedObjectsAndSuiToUserResult;
+    (batches ?? []).length > 1 &&
+    (isSubmitting || !!returnAllOwnedObjectsAndSuiToUserResult);
 
   return (
     <>

@@ -18,19 +18,13 @@ export type AirdropRow = { number: number; address: string; amount: string };
 const STEAMM_AIRDROPPER_PACKAGE_ID =
   "0x11461c4c04384d13b5ab787ebac3fb063f9d5df6ee63d133e96b79edaf24c744";
 
-export type MakeBatchTransferResult = {
-  batch: AirdropRow[];
-  res: SuiTransactionBlockResponse;
-};
-export const makeBatchTransfer = async (
+export const getBatchTransferTransaction = async (
   token: Token,
   batch: AirdropRow[],
-  keypair: Ed25519Keypair,
+  address: string,
   suiClient: SuiClient,
-  onSign: (signedTransaction: SignatureWithBytes) => void,
-): Promise<MakeBatchTransferResult> => {
-  console.log("[makeBatchTransfer]", { token, batch });
-
+) => {
+  console.log("[getBatchTransferTransaction]", { token, batch, address });
   const recipients = batch.map((row) => row.address);
   const amounts = batch.map((row) =>
     BigInt(
@@ -47,14 +41,10 @@ export const makeBatchTransfer = async (
     totalAmount,
   });
 
-  const allCoins = await getAllCoins(
-    suiClient,
-    keypair.toSuiAddress(),
-    token.coinType,
-  );
+  const allCoins = await getAllCoins(suiClient, address, token.coinType);
 
   const transaction = new Transaction();
-  transaction.setSender(keypair.toSuiAddress());
+  transaction.setSender(address);
 
   const mergeCoin = mergeAllCoins(token.coinType, transaction, allCoins);
   const [coin] = transaction.splitCoins(
@@ -73,6 +63,27 @@ export const makeBatchTransfer = async (
     ],
     typeArguments: [token.coinType],
   });
+
+  return transaction;
+};
+
+export type MakeBatchTransferResult = {
+  batch: AirdropRow[];
+  res: SuiTransactionBlockResponse;
+};
+export const makeBatchTransfer = async (
+  token: Token,
+  batch: AirdropRow[],
+  keypair: Ed25519Keypair,
+  suiClient: SuiClient,
+  onSign: (signedTransaction: SignatureWithBytes) => void,
+): Promise<MakeBatchTransferResult> => {
+  const transaction = await getBatchTransferTransaction(
+    token,
+    batch,
+    keypair.toSuiAddress(),
+    suiClient,
+  );
 
   const res = await keypairSignExecuteAndWaitForTransaction(
     transaction,
