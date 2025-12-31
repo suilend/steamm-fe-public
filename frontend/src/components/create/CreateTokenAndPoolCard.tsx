@@ -13,7 +13,6 @@ import {
   ReturnAllOwnedObjectsAndSuiToUserResult,
   Token,
   checkIfKeypairCanBeUsed,
-  createKeypair,
   formatInteger,
   formatNumber,
   formatPercent,
@@ -70,6 +69,7 @@ import {
   formatPercentInputValue,
   formatTextInputValue,
 } from "@/lib/format";
+import { createKeypairAndSaveMapping } from "@/lib/keypair";
 import { cn } from "@/lib/utils";
 
 const REQUIRED_SUI_AMOUNT = new BigNumber(0.2);
@@ -539,7 +539,9 @@ export default function CreateTokenAndPoolCard({
       // 1.1) Create
       let _keypair = keypair;
       if (_keypair === undefined) {
-        _keypair = (await createKeypair(signPersonalMessage)).keypair;
+        _keypair = (
+          await createKeypairAndSaveMapping(address, signPersonalMessage)
+        ).keypair;
         setKeypair(_keypair);
       }
 

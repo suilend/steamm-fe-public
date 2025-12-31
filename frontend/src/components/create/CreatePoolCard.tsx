@@ -20,7 +20,6 @@ import {
   ReturnAllOwnedObjectsAndSuiToUserResult,
   Token,
   checkIfKeypairCanBeUsed,
-  createKeypair,
   formatPrice,
   formatToken,
   fundKeypair,
@@ -72,6 +71,7 @@ import {
   formatPair,
   formatTextInputValue,
 } from "@/lib/format";
+import { createKeypairAndSaveMapping } from "@/lib/keypair";
 import { parseOraclePriceIdentifier } from "@/lib/oracles";
 import { AMPLIFIER_TOOLTIP } from "@/lib/pools";
 import { SelectPopoverOption } from "@/lib/select";
@@ -635,7 +635,9 @@ export default function CreatePoolCard() {
       // 1.1) Create
       let _keypair = keypair;
       if (_keypair === undefined) {
-        _keypair = (await createKeypair(signPersonalMessage)).keypair;
+        _keypair = (
+          await createKeypairAndSaveMapping(address, signPersonalMessage)
+        ).keypair;
         setKeypair(_keypair);
       }
 

@@ -13,7 +13,6 @@ import {
   ReturnAllOwnedObjectsAndSuiToUserResult,
   checkIfKeypairCanBeUsed,
   checkLastTransactionSignature,
-  createKeypair,
   formatInteger,
   formatToken,
   fundKeypair,
@@ -50,6 +49,7 @@ import {
   makeBatchTransfer,
 } from "@/lib/airdrop";
 import { formatTextInputValue } from "@/lib/format";
+import { createKeypairAndSaveMapping } from "@/lib/keypair";
 import doubleUpCitizenObjectIds from "@/lib/nft-collections/doubleup-citizen-object-ids.json";
 import primeMachinObjectIds from "@/lib/nft-collections/prime-machin-object-ids.json";
 import rootletsObjectIds from "@/lib/nft-collections/rootlets-object-ids.json";
@@ -422,7 +422,10 @@ export default function AirdropCard() {
         if (_keypair === undefined) {
           console.log("[onSubmitClick] createKeypair");
 
-          const createKeypairResult = await createKeypair(signPersonalMessage);
+          const createKeypairResult = await createKeypairAndSaveMapping(
+            address,
+            signPersonalMessage,
+          );
           _keypair = createKeypairResult.keypair;
           setKeypair(_keypair);
           setKeypairAddress(createKeypairResult.address);
@@ -660,7 +663,9 @@ export default function AirdropCard() {
       if (_keypair === undefined) {
         console.log("[onSubmitClick] createKeypair");
 
-        _keypair = (await createKeypair(signPersonalMessage)).keypair;
+        _keypair = (
+          await createKeypairAndSaveMapping(address, signPersonalMessage)
+        ).keypair;
         setKeypair(_keypair);
       }
 
