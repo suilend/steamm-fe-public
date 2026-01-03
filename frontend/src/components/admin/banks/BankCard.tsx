@@ -16,7 +16,6 @@ import * as simulate from "@suilend/sdk/utils/simulate";
 import { ADMIN_ADDRESS, ParsedBank } from "@suilend/steamm-sdk";
 import { PUBLISHED_AT } from "@suilend/steamm-sdk/_codegen/_generated/steamm";
 import {
-  NORMALIZED_IKA_COINTYPE,
   formatPercent,
   formatPoints,
   formatToken,
@@ -434,7 +433,14 @@ export default function BankCard({
 
     Object.values(rewardMap).flatMap((rewards) =>
       [...rewards.deposit].forEach((r) => {
-        if (r.stats.reserve.coinType !== bank.coinType) return; // Will be autoclaimed and deposited, no need to claim here
+        if (
+          r.stats.reserve.coinType !== bank.coinType &&
+          !(
+            isSendPoints(r.stats.rewardCoinType) ||
+            isSteammPoints(r.stats.rewardCoinType)
+          )
+        )
+          return; // Will be autoclaimed and deposited, no need to claim here
 
         if (!r.obligationClaims[obligation.id]) return;
         if (r.obligationClaims[obligation.id].claimableAmount.eq(0)) return;
@@ -942,17 +948,20 @@ export default function BankCard({
                                 {appData.coinMetadataMap[coinType].symbol}
                               </p>
 
-                              {!isSendPoints(coinType) &&
-                                !isSteammPoints(coinType) && (
-                                  <p className="text-p2 text-secondary-foreground">
-                                    {formatUsd(
-                                      amount.times(
-                                        appData.suilend.mainMarket
-                                          .rewardPriceMap[coinType] ?? 0,
-                                      ),
-                                    )}
-                                  </p>
-                                )}
+                              {!(
+                                isSendPoints(coinType) ||
+                                isSteammPoints(coinType)
+                              ) && (
+                                <p className="text-p2 text-secondary-foreground">
+                                  {formatUsd(
+                                    amount.times(
+                                      appData.suilend.mainMarket.rewardPriceMap[
+                                        coinType
+                                      ] ?? 0,
+                                    ),
+                                  )}
+                                </p>
+                              )}
                             </div>
                           ))}
                         </div>
