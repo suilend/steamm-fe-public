@@ -49,6 +49,8 @@ function WalletContextProviderWrapper({ children }: PropsWithChildren) {
 }
 
 export default function App({ Component, pageProps }: AppProps) {
+  console.log("[_app.tsx] Node.js:", process.version);
+
   // Mixpanel
   useEffect(() => {
     const projectToken = process.env.NEXT_PUBLIC_MIXPANEL_PROJECT_TOKEN;
