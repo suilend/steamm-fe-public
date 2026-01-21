@@ -16,6 +16,7 @@ import * as simulate from "@suilend/sdk/utils/simulate";
 import { ADMIN_ADDRESS, ParsedBank } from "@suilend/steamm-sdk";
 import { PUBLISHED_AT } from "@suilend/steamm-sdk/_codegen/_generated/steamm";
 import {
+  MAX_U64,
   formatPercent,
   formatPoints,
   formatToken,
@@ -417,8 +418,8 @@ export default function BankCard({
     }
   };
 
-  // Rewards
-  const bankRewardsMap: RewardsMap | undefined = useMemo(() => {
+  // Claimable rewards
+  const bankClaimableRewardsMap: RewardsMap | undefined = useMemo(() => {
     if (obligation === undefined) return undefined;
     if (obligation === null) return {};
 
@@ -481,56 +482,10 @@ export default function BankCard({
     appData.coinMetadataMap,
   ]);
 
-  const [isClaimingRewards, setIsClaimingRewards] = useState<boolean>(false);
-
-  const claimRewards = async () => {
-    if (bankRewardsMap === undefined) return;
-
-    try {
-      setIsClaimingRewards(true);
-
-      const transaction = new Transaction();
-
-      for (const [coinType, { rewards }] of Object.entries(bankRewardsMap)) {
-        for (const reward of rewards) {
-          transaction.moveCall({
-            target: `${PUBLISHED_AT}::bank::claim_rewards`,
-            typeArguments: [
-              bank.bankInfo.lendingMarketType,
-              bank.coinType,
-              bank.bTokenType,
-              coinType,
-            ],
-            arguments: [
-              transaction.object(bank.id),
-              transaction.object(bank.bankInfo.lendingMarketId),
-              transaction.object(
-                steammClient.sdkOptions.packages.steamm.config!.registryId,
-              ),
-              transaction.pure.u64(reward.stats.rewardIndex),
-              transaction.object(SUI_CLOCK_OBJECT_ID),
-            ],
-          });
-        }
-      }
-
-      const res = await signExecuteAndWaitForTransaction(transaction);
-      const txUrl = explorer.buildTxUrl(res.digest);
-
-      showSuccessTxnToast("Claimed rewards", txUrl);
-    } catch (err) {
-      showErrorToast("Failed to claim rewards", err as Error, undefined, true);
-      console.error(err);
-    } finally {
-      setIsClaimingRewards(false);
-      refresh();
-    }
-  };
-
   // Deposits
-  const [bankAutoclaimedRewardsMap, bankDepositsMap] = useMemo(() => {
-    if (obligation === undefined) return [undefined, undefined];
-    if (obligation === null) return [{}, {}];
+  const bankAutoclaimedRewardsMap = useMemo(() => {
+    if (obligation === undefined) return undefined;
+    if (obligation === null) return {};
 
     const autoclaimedRewardsResult: Record<string, { amount: BigNumber }> = {};
     const depositsResult: Record<string, BigNumber> = {};
@@ -566,8 +521,90 @@ export default function BankCard({
       ),
     );
 
-    return [sortedAutoclaimedRewardsResult, depositsResult];
+    return sortedAutoclaimedRewardsResult;
   }, [obligation, bank.coinType, bank.bank.lending?.ctokens]);
+
+  // Claim rewards
+  const [isClaimingRewards, setIsClaimingRewards] = useState<boolean>(false);
+
+  const claimRewards = async () => {
+    if (
+      bankClaimableRewardsMap === undefined ||
+      bankAutoclaimedRewardsMap === undefined
+    )
+      return;
+
+    try {
+      setIsClaimingRewards(true);
+
+      const transaction = new Transaction();
+
+      // Claimable rewards + autoclaimed rewards for the bank's coinType
+      for (const [coinType, { rewards }] of Object.entries(
+        bankClaimableRewardsMap,
+      )) {
+        for (const reward of rewards) {
+          transaction.moveCall({
+            target: `${PUBLISHED_AT}::bank::claim_rewards`,
+            typeArguments: [
+              bank.bankInfo.lendingMarketType,
+              bank.coinType,
+              bank.bTokenType,
+              coinType,
+            ],
+            arguments: [
+              transaction.object(bank.id),
+              transaction.object(bank.bankInfo.lendingMarketId),
+              transaction.object(
+                steammClient.sdkOptions.packages.steamm.config!.registryId,
+              ),
+              transaction.pure.u64(reward.stats.rewardIndex),
+              transaction.object(SUI_CLOCK_OBJECT_ID),
+            ],
+          });
+        }
+      }
+
+      // Autoclaimed rewards
+      for (const [coinType] of Object.entries(bankAutoclaimedRewardsMap)) {
+        if (
+          Object.keys(bankClaimableRewardsMap).includes(coinType) &&
+          coinType === bank.coinType
+        )
+          continue; // Already handled above
+
+        transaction.moveCall({
+          target: `${PUBLISHED_AT}::bank::claim_rewards`,
+          typeArguments: [
+            bank.bankInfo.lendingMarketType,
+            bank.coinType,
+            bank.bTokenType,
+            coinType,
+          ],
+          arguments: [
+            transaction.object(bank.id),
+            transaction.object(bank.bankInfo.lendingMarketId),
+            transaction.object(
+              steammClient.sdkOptions.packages.steamm.config!.registryId,
+            ),
+            transaction.pure.u64(MAX_U64.toString()), // Using MAX_U64 as a flag to only claim autoclaimed rewards
+            transaction.object(SUI_CLOCK_OBJECT_ID),
+          ],
+        });
+      }
+
+      const res = await signExecuteAndWaitForTransaction(transaction);
+      const txUrl = explorer.buildTxUrl(res.digest);
+
+      showSuccessTxnToast("Claimed rewards", txUrl);
+    } catch (err) {
+      showErrorToast("Failed to claim rewards", err as Error, undefined, true);
+      console.error(err);
+    } finally {
+      setIsClaimingRewards(false);
+      refresh();
+    }
+  };
 
   return (
     <div
@@ -901,16 +938,16 @@ export default function BankCard({
         {/* Rewards */}
         <Parameter className="items-start" label="Rewards" isHorizontal>
           <div className="flex flex-col items-end gap-1.5">
-            {bankRewardsMap === undefined ||
+            {bankClaimableRewardsMap === undefined ||
             bankAutoclaimedRewardsMap === undefined ? (
               <Skeleton className="h-[21px] w-16" />
-            ) : Object.keys(bankRewardsMap).length > 0 ||
+            ) : Object.keys(bankClaimableRewardsMap).length > 0 ||
               Object.keys(bankAutoclaimedRewardsMap).length > 0 ? (
               <Tooltip
                 content={
                   <div className="flex flex-col gap-2">
                     {[
-                      Object.entries(bankRewardsMap),
+                      Object.entries(bankClaimableRewardsMap),
                       ...(Object.entries(bankAutoclaimedRewardsMap).length > 0
                         ? [Object.entries(bankAutoclaimedRewardsMap)]
                         : []),
@@ -973,13 +1010,13 @@ export default function BankCard({
                 }
               >
                 <div className="flex h-[21px] w-max flex-row items-center gap-2">
-                  {Object.keys(bankRewardsMap).length > 0 && (
+                  {Object.keys(bankClaimableRewardsMap).length > 0 && (
                     <TokenLogos
-                      coinTypes={Object.keys(bankRewardsMap)}
+                      coinTypes={Object.keys(bankClaimableRewardsMap)}
                       size={16}
                     />
                   )}
-                  {Object.keys(bankRewardsMap).length > 0 &&
+                  {Object.keys(bankClaimableRewardsMap).length > 0 &&
                     Object.keys(bankAutoclaimedRewardsMap).length > 0 && (
                       <div className="h-4 w-px bg-border" />
                     )}
@@ -998,10 +1035,10 @@ export default function BankCard({
             <button
               className="group flex h-6 w-[48px] flex-row items-center justify-center rounded-md bg-button-2 px-2 transition-colors hover:bg-button-2/80 disabled:pointer-events-none disabled:opacity-50"
               disabled={
-                bankRewardsMap === undefined ||
+                bankClaimableRewardsMap === undefined ||
                 bankAutoclaimedRewardsMap === undefined ||
                 !(
-                  Object.keys(bankRewardsMap).length > 0 ||
+                  Object.keys(bankClaimableRewardsMap).length > 0 ||
                   Object.keys(bankAutoclaimedRewardsMap).length > 0
                 ) ||
                 isClaimingRewards
