@@ -539,7 +539,7 @@ export default function BankCard({
 
       const transaction = new Transaction();
 
-      // Claimable rewards + autoclaimed rewards for the bank's coinType
+      // Claimable rewards + autoclaimed rewards (if any)
       for (const [coinType, { rewards }] of Object.entries(
         bankClaimableRewardsMap,
       )) {
@@ -567,11 +567,7 @@ export default function BankCard({
 
       // Autoclaimed rewards
       for (const [coinType] of Object.entries(bankAutoclaimedRewardsMap)) {
-        if (
-          Object.keys(bankClaimableRewardsMap).includes(coinType) &&
-          coinType === bank.coinType
-        )
-          continue; // Already handled above
+        if (Object.keys(bankClaimableRewardsMap).includes(coinType)) continue; // Already handled above
 
         transaction.moveCall({
           target: `${PUBLISHED_AT}::bank::claim_rewards`,
