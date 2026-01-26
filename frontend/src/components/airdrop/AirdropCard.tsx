@@ -886,17 +886,16 @@ export default function AirdropCard() {
 
           {(hasFailed ||
             lastSignedTransactionRef.current !== undefined ||
-            currentFlowDigests.length > 0) &&
-            !returnAllOwnedObjectsAndSuiToUserResult && (
-              <button
-                className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
-                onClick={reset}
-              >
-                <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
-                  Start over
-                </p>
-              </button>
-            )}
+            currentFlowDigests.length > 0) && (
+            <button
+              className="group flex h-10 w-full flex-row items-center justify-center rounded-md border px-3 transition-colors hover:bg-border/50"
+              onClick={reset}
+            >
+              <p className="text-p2 text-secondary-foreground transition-colors group-hover:text-foreground">
+                Start over
+              </p>
+            </button>
+          )}
 
           {hasUnusedFunds && (
             <button
