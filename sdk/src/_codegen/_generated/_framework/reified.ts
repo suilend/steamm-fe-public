@@ -1,8 +1,8 @@
-import { bcs, BcsType } from "@mysten/sui/bcs";
-import { fromHEX, toHEX } from "@mysten/sui/utils";
+import { bcs, BcsType } from "@mysten/sui-v1/bcs";
+import { fromHEX, toHEX } from "@mysten/sui-v1/utils";
 import { FieldsWithTypes, compressSuiType, parseTypeName } from "./util";
-import { SuiClient, SuiParsedData, SuiObjectData } from "@mysten/sui/client";
-import { EnumOutputShapeWithKeys } from "@mysten/bcs";
+import { SuiClient, SuiParsedData, SuiObjectData } from "@mysten/sui-v1/client";
+import { EnumOutputShapeWithKeys } from "@mysten/bcs-v1";
 
 // for backwards compatibility
 export { vector } from "./vector";

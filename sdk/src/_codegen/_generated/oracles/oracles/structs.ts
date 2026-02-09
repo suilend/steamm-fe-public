@@ -27,10 +27,10 @@ import { Vector } from "../../_framework/vector";
 import { PKG_V1 } from "../index";
 import { OracleDecimal } from "../oracle-decimal/structs";
 import { Version } from "../version/structs";
-import { EnumOutputShapeWithKeys } from "@mysten/bcs";
-import { bcs } from "@mysten/sui/bcs";
-import { SuiClient, SuiObjectData, SuiParsedData } from "@mysten/sui/client";
-import { fromB64 } from "@mysten/sui/utils";
+import { EnumOutputShapeWithKeys } from "@mysten/bcs-v1";
+import { bcs } from "@mysten/sui-v1/bcs";
+import { SuiClient, SuiObjectData, SuiParsedData } from "@mysten/sui-v1/client";
+import { fromB64 } from "@mysten/sui-v1/utils";
 
 /* ============================== AdminCap =============================== */
 

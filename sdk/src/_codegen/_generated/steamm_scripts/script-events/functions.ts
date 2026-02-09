@@ -1,6 +1,6 @@
 import {PUBLISHED_AT} from "..";
 import {GenericArg, generic} from "../../_framework/util";
-import {Transaction} from "@mysten/sui/transactions";
+import {Transaction} from "@mysten/sui-v1/transactions";
 
 export function emitEvent(
     tx: Transaction,

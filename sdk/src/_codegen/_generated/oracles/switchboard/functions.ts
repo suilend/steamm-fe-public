@@ -1,7 +1,7 @@
 import {PUBLISHED_AT} from "..";
 import {ID} from "../../_dependencies/source/0x2/object/structs";
 import {obj, pure} from "../../_framework/util";
-import {Transaction, TransactionArgument, TransactionObjectInput} from "@mysten/sui/transactions";
+import {Transaction, TransactionArgument, TransactionObjectInput} from "@mysten/sui-v1/transactions";
 
 export interface GetPriceArgs { switchboardFeed: TransactionObjectInput; clock: TransactionObjectInput; maxStalenessS: bigint | TransactionArgument; maxConfidenceIntervalPct: bigint | TransactionArgument; expectedFeedId: string | TransactionArgument }
 

@@ -7,9 +7,9 @@ import {ID, UID} from "../../0x2/object/structs";
 import {Decimal} from "../decimal/structs";
 import {PKG_V1, PKG_V11} from "../index";
 import {UserRewardManager} from "../liquidity-mining/structs";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
 
 /* ============================== Borrow =============================== */
 

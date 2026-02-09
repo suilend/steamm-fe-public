@@ -2,9 +2,9 @@ import {Balance} from "../../_dependencies/source/0x2/balance/structs";
 import {PhantomReified, PhantomToTypeStr, PhantomTypeArgument, Reified, StructClass, ToField, ToPhantomTypeArgument, ToTypeStr, assertFieldsWithTypesArgsMatch, assertReifiedTypeArgsMatch, decodeFromFields, decodeFromFieldsWithTypes, decodeFromJSONField, extractType, phantom} from "../../_framework/reified";
 import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from "../../_framework/util";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64} from "@mysten/sui-v1/utils";
 
 /* ============================== FeeConfig =============================== */
 

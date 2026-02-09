@@ -3,9 +3,9 @@ import {PhantomReified, PhantomToTypeStr, PhantomTypeArgument, Reified, StructCl
 import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from "../../../../_framework/util";
 import {Table} from "../../0x2/table/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64} from "@mysten/sui-v1/utils";
 
 /* ============================== Empty =============================== */
 

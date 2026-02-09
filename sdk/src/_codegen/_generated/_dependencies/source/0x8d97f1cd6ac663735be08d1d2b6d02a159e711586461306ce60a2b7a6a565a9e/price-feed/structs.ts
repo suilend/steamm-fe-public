@@ -3,9 +3,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {PKG_V1} from "../index";
 import {PriceIdentifier} from "../price-identifier/structs";
 import {Price} from "../price/structs";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64} from "@mysten/sui-v1/utils";
 
 /* ============================== PriceFeed =============================== */
 

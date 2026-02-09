@@ -5,9 +5,9 @@ import {Balance} from "../../0x2/balance/structs";
 import {SUI} from "../../0x2/sui/structs";
 import {AdminCap, LiquidStakingInfo} from "../../0xb0575765166030556a6eafd3b1b970eba8183ff748860680245b9edd41c716e7/liquid-staking/structs";
 import {PKG_V8} from "../index";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64} from "@mysten/sui-v1/utils";
 
 /* ============================== Staker =============================== */
 

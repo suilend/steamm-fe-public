@@ -1,5 +1,5 @@
 import {PUBLISHED_AT} from "..";
-import {Transaction} from "@mysten/sui/transactions";
+import {Transaction} from "@mysten/sui-v1/transactions";
 
 export function init(
     tx: Transaction,

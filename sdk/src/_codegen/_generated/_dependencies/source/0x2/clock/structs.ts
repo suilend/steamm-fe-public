@@ -2,9 +2,9 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {PKG_V30} from "../index";
 import {UID} from "../object/structs";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64} from "@mysten/sui-v1/utils";
 
 /* ============================== Clock =============================== */
 

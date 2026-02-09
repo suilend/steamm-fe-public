@@ -7,9 +7,9 @@ import {TypeName} from "../../0x1/type-name/structs";
 import {ID, UID} from "../../0x2/object/structs";
 import {Table} from "../../0x2/table/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
 
 /* ============================== ExistingOracle =============================== */
 

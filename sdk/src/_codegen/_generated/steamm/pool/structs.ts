@@ -7,9 +7,9 @@ import {FeeConfig, Fees} from "../fees/structs";
 import {PKG_V1} from "../index";
 import {SwapFee} from "../quote/structs";
 import {Version} from "../version/structs";
-import {BcsType, bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {BcsType, bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
 
 /* ============================== DepositResult =============================== */
 

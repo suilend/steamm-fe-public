@@ -12,9 +12,9 @@ import {FeeConfig} from "../fees/structs";
 import {PKG_V1} from "../index";
 import {Storage} from "../storage/structs";
 import {Version} from "../version/structs";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64} from "@mysten/sui-v1/utils";
 
 /* ============================== AdminCap =============================== */
 

@@ -11,9 +11,9 @@ import {PKG_V18} from "../index";
 import {PoolTokenExchangeRate} from "../staking-pool/structs";
 import {ValidatorWrapper} from "../validator-wrapper/structs";
 import {Validator} from "../validator/structs";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
 
 /* ============================== ValidatorEpochInfoEvent =============================== */
 

@@ -3,9 +3,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {String} from "../../0x1/string/structs";
 import {PKG_V30} from "../index";
 import {UID} from "../object/structs";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
 
 /* ============================== VerifiedIssuer =============================== */
 

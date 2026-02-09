@@ -8,9 +8,9 @@ import {ID, UID} from "../../0x2/object/structs";
 import {SUI} from "../../0x2/sui/structs";
 import {Table} from "../../0x2/table/structs";
 import {PKG_V18} from "../index";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64} from "@mysten/sui-v1/utils";
 
 /* ============================== FungibleStakedSui =============================== */
 

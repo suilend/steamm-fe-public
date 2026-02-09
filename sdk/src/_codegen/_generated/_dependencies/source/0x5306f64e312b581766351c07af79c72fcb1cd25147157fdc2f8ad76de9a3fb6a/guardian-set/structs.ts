@@ -4,9 +4,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {Vector} from "../../../../_framework/vector";
 import {Guardian} from "../guardian/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64} from "@mysten/sui-v1/utils";
 
 /* ============================== GuardianSet =============================== */
 

@@ -8,9 +8,9 @@ import {PKG_V30} from "../index";
 import {ID, UID} from "../object/structs";
 import {VecMap} from "../vec-map/structs";
 import {VecSet} from "../vec-set/structs";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
 
 /* ============================== RuleKey =============================== */
 

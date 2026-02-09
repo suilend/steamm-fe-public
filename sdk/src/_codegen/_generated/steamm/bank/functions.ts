@@ -4,7 +4,7 @@ import {
   Transaction,
   TransactionArgument,
   TransactionObjectInput,
-} from "@mysten/sui/transactions";
+} from "@mysten/sui-v1/transactions";
 
 export interface RebalanceArgs {
   bank: TransactionObjectInput;

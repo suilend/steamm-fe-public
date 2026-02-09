@@ -9,9 +9,9 @@ import {ID} from "../../0x2/object/structs";
 import {Url} from "../../0x2/url/structs";
 import {PKG_V18} from "../index";
 import {StakingPool} from "../staking-pool/structs";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
 
 /* ============================== ConvertingToFungibleStakedSuiEvent =============================== */
 

@@ -10,9 +10,9 @@ import {PKG_V1, PKG_V10} from "../index";
 import {Obligation} from "../obligation/structs";
 import {RateLimiter} from "../rate-limiter/structs";
 import {Reserve} from "../reserve/structs";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
 
 /* ============================== MintEvent =============================== */
 

@@ -3,9 +3,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {ID} from "../../0x2/object/structs";
 import {Bytes32} from "../bytes32/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64} from "@mysten/sui-v1/utils";
 
 /* ============================== CurrentVersion =============================== */
 

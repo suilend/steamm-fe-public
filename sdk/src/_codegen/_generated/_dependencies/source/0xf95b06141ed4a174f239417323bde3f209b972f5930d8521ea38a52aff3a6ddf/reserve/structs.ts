@@ -10,9 +10,9 @@ import {Decimal} from "../decimal/structs";
 import {PKG_V1, PKG_V8} from "../index";
 import {PoolRewardManager} from "../liquidity-mining/structs";
 import {ReserveConfig} from "../reserve-config/structs";
-import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {bcs} from "@mysten/sui-v1/bcs";
+import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
+import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
 
 /* ============================== BalanceKey =============================== */
 
