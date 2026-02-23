@@ -30,8 +30,7 @@
     "@mysten/bcs-v1": "npm:@mysten/bcs@1.9.2",
     "@mysten/sui-v1": "npm:@mysten/sui@1.45.2",
     "@pythnetwork/pyth-sui-js": "2.2.0",
-    "@suilend/sdk": "^1.1.99",
-    "@suilend/sui-fe": "^0.4.9",
+    "@suilend/sui-fe": "^0.4.10",
     "bignumber.js": "^9.1.2",
     "dotenv": "^16.4.7"
   },
