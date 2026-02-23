@@ -245,11 +245,11 @@ export default function CsvUpload({
         />
 
         <button
-          className="flex h-8 w-max items-center justify-center rounded-md bg-button-1 px-4 text-p2 text-button-1-foreground transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
+          className="flex h-8 w-max flex-row items-center justify-center rounded-md bg-button-1 px-2.5 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
           disabled={!pasteText.trim()}
           onClick={handlePasteText}
         >
-          Parse
+          <p className="text-p2 text-button-1-foreground">Parse</p>
         </button>
       </div>
     </>
