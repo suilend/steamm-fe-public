@@ -7,11 +7,9 @@ import {
   useState,
 } from "react";
 
-import BigNumber from "bignumber.js";
 import { X } from "lucide-react";
 import { Metadata } from "sharp";
 
-import { formatNumber } from "@suilend/sui-fe";
 import { showErrorToast } from "@suilend/sui-fe-next";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,6 +17,7 @@ import {
   BROWSE_FILE_SIZE_ERROR_MESSAGE,
   BROWSE_MAX_FILE_SIZE_BYTES,
 } from "@/lib/createToken";
+import { formatFileSize } from "@/lib/format";
 
 const MAX_BASE64_LENGTH = 2 ** 16; // 65,536 characters (~49KB file size)
 
@@ -115,11 +114,7 @@ export default function IconUpload({
 
     setIconUrl(processedBase64);
     setIconFilename(file.name);
-    setIconFileSize(
-      json.metadata.size > 1024 * 1024
-        ? `${formatNumber(new BigNumber(json.metadata.size / 1024 / 1024), { dp: 1 })} MB`
-        : `${formatNumber(new BigNumber(json.metadata.size / 1024), { dp: 1 })} KB`,
-    );
+    setIconFileSize(formatFileSize(json.metadata.size));
   };
 
   const handleFile = async (file: File) => {
