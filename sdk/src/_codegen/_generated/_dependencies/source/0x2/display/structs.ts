@@ -4,9 +4,9 @@ import {String} from "../../0x1/string/structs";
 import {PKG_V30} from "../index";
 import {ID, UID} from "../object/structs";
 import {VecMap} from "../vec-map/structs";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Display =============================== */
 
@@ -104,7 +104,7 @@ export class Display<T extends PhantomTypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Display.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Display.fetch(
                 client,
                 T,
                 id,
@@ -263,7 +263,7 @@ export class Display<T extends PhantomTypeArgument> implements StructClass {
 
             return Display.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -279,7 +279,7 @@ export class Display<T extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<Display<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -393,7 +393,7 @@ export class DisplayCreated<T extends PhantomTypeArgument> implements StructClas
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => DisplayCreated.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => DisplayCreated.fetch(
                 client,
                 T,
                 id,
@@ -548,7 +548,7 @@ export class DisplayCreated<T extends PhantomTypeArgument> implements StructClas
 
             return DisplayCreated.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -564,7 +564,7 @@ export class DisplayCreated<T extends PhantomTypeArgument> implements StructClas
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<DisplayCreated<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -682,7 +682,7 @@ export class VersionUpdated<T extends PhantomTypeArgument> implements StructClas
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => VersionUpdated.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => VersionUpdated.fetch(
                 client,
                 T,
                 id,
@@ -841,7 +841,7 @@ export class VersionUpdated<T extends PhantomTypeArgument> implements StructClas
 
             return VersionUpdated.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -857,7 +857,7 @@ export class VersionUpdated<T extends PhantomTypeArgument> implements StructClas
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<VersionUpdated<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,

@@ -52,6 +52,7 @@ export const ORACLE_CONFIG = {
 
 export const MAINNET_CONFIG: SdkOptions = {
   fullRpcUrl: "https://fullnode.mainnet.sui.io:443",
+  network: "mainnet",
   packages: {
     suilend: SUILEND_CONFIG,
     steamm: STEAMM_CONFIG,

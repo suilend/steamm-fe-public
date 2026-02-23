@@ -5,9 +5,9 @@ import {TypeName} from "../../0x1/type-name/structs";
 import {ID, UID} from "../../0x2/object/structs";
 import {Table} from "../../0x2/table/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Registry =============================== */
 
@@ -94,7 +94,7 @@ export class Registry implements StructClass {
                 Registry.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Registry.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Registry.fetch(
                 client,
                 id,
             ),
@@ -221,7 +221,7 @@ export class Registry implements StructClass {
             }
 
             return Registry.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -236,7 +236,7 @@ export class Registry implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Registry> {
         const res = await client.getObject({
             id,
@@ -338,7 +338,7 @@ export class LENDING_MARKET_2 implements StructClass {
                 LENDING_MARKET_2.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => LENDING_MARKET_2.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => LENDING_MARKET_2.fetch(
                 client,
                 id,
             ),
@@ -461,7 +461,7 @@ export class LENDING_MARKET_2 implements StructClass {
             }
 
             return LENDING_MARKET_2.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -476,7 +476,7 @@ export class LENDING_MARKET_2 implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<LENDING_MARKET_2> {
         const res = await client.getObject({
             id,

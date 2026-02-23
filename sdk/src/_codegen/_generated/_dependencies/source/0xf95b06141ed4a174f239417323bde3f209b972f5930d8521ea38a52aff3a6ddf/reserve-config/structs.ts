@@ -4,9 +4,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {Vector} from "../../../../_framework/vector";
 import {Bag} from "../../0x2/bag/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== ReserveConfig =============================== */
 
@@ -125,7 +125,7 @@ export class ReserveConfig implements StructClass {
                 ReserveConfig.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ReserveConfig.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ReserveConfig.fetch(
                 client,
                 id,
             ),
@@ -284,7 +284,7 @@ export class ReserveConfig implements StructClass {
             }
 
             return ReserveConfig.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -299,7 +299,7 @@ export class ReserveConfig implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ReserveConfig> {
         const res = await client.getObject({
             id,
@@ -401,7 +401,7 @@ export class ReserveConfigBuilder implements StructClass {
                 ReserveConfigBuilder.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ReserveConfigBuilder.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ReserveConfigBuilder.fetch(
                 client,
                 id,
             ),
@@ -524,7 +524,7 @@ export class ReserveConfigBuilder implements StructClass {
             }
 
             return ReserveConfigBuilder.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -539,7 +539,7 @@ export class ReserveConfigBuilder implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ReserveConfigBuilder> {
         const res = await client.getObject({
             id,

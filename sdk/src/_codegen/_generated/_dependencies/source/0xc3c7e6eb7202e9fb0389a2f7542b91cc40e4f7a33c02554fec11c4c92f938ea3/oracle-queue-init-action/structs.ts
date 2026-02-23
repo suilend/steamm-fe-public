@@ -4,9 +4,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {Vector} from "../../../../_framework/vector";
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== OracleQueueCreated =============================== */
 
@@ -28,7 +28,7 @@ export class OracleQueueCreated implements StructClass { __StructClass = true as
 
  this.queueId = fields.queueId;; this.guardianQueueId = fields.guardianQueueId;; this.queueKey = fields.queueKey; }
 
- static reified( ): OracleQueueCreatedReified { return { typeName: OracleQueueCreated.$typeName, fullTypeName: composeSuiType( OracleQueueCreated.$typeName, ...[] ) as `${typeof PKG_V1}::oracle_queue_init_action::OracleQueueCreated`, typeArgs: [ ] as [], isPhantom: OracleQueueCreated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => OracleQueueCreated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => OracleQueueCreated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => OracleQueueCreated.fromBcs( data, ), bcs: OracleQueueCreated.bcs, fromJSONField: (field: any) => OracleQueueCreated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => OracleQueueCreated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => OracleQueueCreated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => OracleQueueCreated.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => OracleQueueCreated.fetch( client, id, ), new: ( fields: OracleQueueCreatedFields, ) => { return new OracleQueueCreated( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): OracleQueueCreatedReified { return { typeName: OracleQueueCreated.$typeName, fullTypeName: composeSuiType( OracleQueueCreated.$typeName, ...[] ) as `${typeof PKG_V1}::oracle_queue_init_action::OracleQueueCreated`, typeArgs: [ ] as [], isPhantom: OracleQueueCreated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => OracleQueueCreated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => OracleQueueCreated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => OracleQueueCreated.fromBcs( data, ), bcs: OracleQueueCreated.bcs, fromJSONField: (field: any) => OracleQueueCreated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => OracleQueueCreated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => OracleQueueCreated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => OracleQueueCreated.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => OracleQueueCreated.fetch( client, id, ), new: ( fields: OracleQueueCreatedFields, ) => { return new OracleQueueCreated( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return OracleQueueCreated.reified() }
 
@@ -68,9 +68,9 @@ export class OracleQueueCreated implements StructClass { __StructClass = true as
 
  static fromSuiObjectData( data: SuiObjectData ): OracleQueueCreated { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isOracleQueueCreated(data.bcs.type)) { throw new Error(`object at is not a OracleQueueCreated object`); }
 
- return OracleQueueCreated.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return OracleQueueCreated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return OracleQueueCreated.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return OracleQueueCreated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<OracleQueueCreated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching OracleQueueCreated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isOracleQueueCreated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a OracleQueueCreated object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<OracleQueueCreated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching OracleQueueCreated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isOracleQueueCreated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a OracleQueueCreated object`); }
 
  return OracleQueueCreated.fromSuiObjectData( res.data ); }
 

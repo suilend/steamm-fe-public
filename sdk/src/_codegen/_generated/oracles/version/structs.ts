@@ -15,9 +15,9 @@ import {
   compressSuiType,
 } from "../../_framework/util";
 import { PKG_V1 } from "../index";
-import { bcs } from "@mysten/sui-v1/bcs";
-import { SuiClient, SuiObjectData, SuiParsedData } from "@mysten/sui-v1/client";
-import { fromB64 } from "@mysten/sui-v1/utils";
+import { bcs } from "@mysten/sui/bcs";
+import { SuiJsonRpcClient, SuiObjectData, SuiParsedData } from "@mysten/sui/jsonRpc";
+import { fromBase64 } from "@mysten/sui/utils";
 
 /* ============================== Version =============================== */
 
@@ -77,7 +77,7 @@ export class Version implements StructClass {
         Version.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) =>
         Version.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) => Version.fetch(client, id),
+      fetch: async (client: SuiJsonRpcClient, id: string) => Version.fetch(client, id),
       new: (fields: VersionFields) => {
         return new Version([], fields);
       },
@@ -168,7 +168,7 @@ export class Version implements StructClass {
         throw new Error(`object at is not a Version object`);
       }
 
-      return Version.fromBcs(fromB64(data.bcs.bcsBytes));
+      return Version.fromBcs(fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return Version.fromSuiParsedData(data.content);
@@ -178,7 +178,7 @@ export class Version implements StructClass {
     );
   }
 
-  static async fetch(client: SuiClient, id: string): Promise<Version> {
+  static async fetch(client: SuiJsonRpcClient, id: string): Promise<Version> {
     const res = await client.getObject({ id, options: { showBcs: true } });
     if (res.error) {
       throw new Error(

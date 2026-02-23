@@ -1,6 +1,6 @@
 import {PUBLISHED_AT} from "..";
 import {GenericArg, generic, obj, pure} from "../../_framework/util";
-import {Transaction, TransactionArgument, TransactionObjectInput} from "@mysten/sui-v1/transactions";
+import {Transaction, TransactionArgument, TransactionObjectInput} from "@mysten/sui/transactions";
 
 export interface SwapArgs {
     pool: TransactionObjectInput; coinA: TransactionObjectInput; coinB: TransactionObjectInput; quote: TransactionObjectInput; minAmountOut: bigint | TransactionArgument

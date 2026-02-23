@@ -7,9 +7,9 @@ import {PKG_V30} from "../index";
 import {ID, UID} from "../object/structs";
 import {Table} from "../table/structs";
 import {VecSet} from "../vec-set/structs";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== AddressKey =============================== */
 
@@ -92,7 +92,7 @@ export class AddressKey implements StructClass {
                 AddressKey.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => AddressKey.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => AddressKey.fetch(
                 client,
                 id,
             ),
@@ -123,8 +123,8 @@ export class AddressKey implements StructClass {
     static get bcs() {
         return bcs.struct("AddressKey", {
             pos0:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
 
         })
     };
@@ -216,7 +216,7 @@ export class AddressKey implements StructClass {
             }
 
             return AddressKey.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -231,7 +231,7 @@ export class AddressKey implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<AddressKey> {
         const res = await client.getObject({
             id,
@@ -335,7 +335,7 @@ export class ConfigKey implements StructClass {
                 ConfigKey.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ConfigKey.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ConfigKey.fetch(
                 client,
                 id,
             ),
@@ -460,7 +460,7 @@ export class ConfigKey implements StructClass {
             }
 
             return ConfigKey.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -475,7 +475,7 @@ export class ConfigKey implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ConfigKey> {
         const res = await client.getObject({
             id,
@@ -577,7 +577,7 @@ export class ConfigWriteCap implements StructClass {
                 ConfigWriteCap.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ConfigWriteCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ConfigWriteCap.fetch(
                 client,
                 id,
             ),
@@ -700,7 +700,7 @@ export class ConfigWriteCap implements StructClass {
             }
 
             return ConfigWriteCap.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -715,7 +715,7 @@ export class ConfigWriteCap implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ConfigWriteCap> {
         const res = await client.getObject({
             id,
@@ -819,7 +819,7 @@ export class DenyList implements StructClass {
                 DenyList.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => DenyList.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => DenyList.fetch(
                 client,
                 id,
             ),
@@ -944,7 +944,7 @@ export class DenyList implements StructClass {
             }
 
             return DenyList.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -959,7 +959,7 @@ export class DenyList implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<DenyList> {
         const res = await client.getObject({
             id,
@@ -1061,7 +1061,7 @@ export class GlobalPauseKey implements StructClass {
                 GlobalPauseKey.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => GlobalPauseKey.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => GlobalPauseKey.fetch(
                 client,
                 id,
             ),
@@ -1184,7 +1184,7 @@ export class GlobalPauseKey implements StructClass {
             }
 
             return GlobalPauseKey.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1199,7 +1199,7 @@ export class GlobalPauseKey implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<GlobalPauseKey> {
         const res = await client.getObject({
             id,
@@ -1303,7 +1303,7 @@ export class PerTypeConfigCreated implements StructClass {
                 PerTypeConfigCreated.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => PerTypeConfigCreated.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => PerTypeConfigCreated.fetch(
                 client,
                 id,
             ),
@@ -1428,7 +1428,7 @@ export class PerTypeConfigCreated implements StructClass {
             }
 
             return PerTypeConfigCreated.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1443,7 +1443,7 @@ export class PerTypeConfigCreated implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<PerTypeConfigCreated> {
         const res = await client.getObject({
             id,
@@ -1549,7 +1549,7 @@ export class PerTypeList implements StructClass {
                 PerTypeList.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => PerTypeList.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => PerTypeList.fetch(
                 client,
                 id,
             ),
@@ -1676,7 +1676,7 @@ export class PerTypeList implements StructClass {
             }
 
             return PerTypeList.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1691,7 +1691,7 @@ export class PerTypeList implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<PerTypeList> {
         const res = await client.getObject({
             id,

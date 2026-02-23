@@ -4,9 +4,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {Vector} from "../../../../_framework/vector";
 import {Option} from "../../0x1/option/structs";
 import {PKG_V18} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== GenesisChainParameters =============================== */
 
@@ -111,7 +111,7 @@ export class GenesisChainParameters implements StructClass {
                 GenesisChainParameters.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => GenesisChainParameters.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => GenesisChainParameters.fetch(
                 client,
                 id,
             ),
@@ -256,7 +256,7 @@ export class GenesisChainParameters implements StructClass {
             }
 
             return GenesisChainParameters.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -271,7 +271,7 @@ export class GenesisChainParameters implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<GenesisChainParameters> {
         const res = await client.getObject({
             id,
@@ -401,7 +401,7 @@ export class GenesisValidatorMetadata implements StructClass {
                 GenesisValidatorMetadata.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => GenesisValidatorMetadata.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => GenesisValidatorMetadata.fetch(
                 client,
                 id,
             ),
@@ -440,8 +440,8 @@ export class GenesisValidatorMetadata implements StructClass {
             , project_url:
                 bcs.vector(bcs.u8())
             , sui_address:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , gas_price:
                 bcs.u64()
             , commission_rate:
@@ -553,7 +553,7 @@ export class GenesisValidatorMetadata implements StructClass {
             }
 
             return GenesisValidatorMetadata.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -568,7 +568,7 @@ export class GenesisValidatorMetadata implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<GenesisValidatorMetadata> {
         const res = await client.getObject({
             id,
@@ -674,7 +674,7 @@ export class TokenAllocation implements StructClass {
                 TokenAllocation.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => TokenAllocation.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => TokenAllocation.fetch(
                 client,
                 id,
             ),
@@ -705,13 +705,13 @@ export class TokenAllocation implements StructClass {
     static get bcs() {
         return bcs.struct("TokenAllocation", {
             recipient_address:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , amount_mist:
                 bcs.u64()
             , staked_with_validator:
-                Option.bcs(bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),}))
+                Option.bcs(bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),}))
 
         })
     };
@@ -803,7 +803,7 @@ export class TokenAllocation implements StructClass {
             }
 
             return TokenAllocation.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -818,7 +818,7 @@ export class TokenAllocation implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<TokenAllocation> {
         const res = await client.getObject({
             id,
@@ -922,7 +922,7 @@ export class TokenDistributionSchedule implements StructClass {
                 TokenDistributionSchedule.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => TokenDistributionSchedule.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => TokenDistributionSchedule.fetch(
                 client,
                 id,
             ),
@@ -1047,7 +1047,7 @@ export class TokenDistributionSchedule implements StructClass {
             }
 
             return TokenDistributionSchedule.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1062,7 +1062,7 @@ export class TokenDistributionSchedule implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<TokenDistributionSchedule> {
         const res = await client.getObject({
             id,

@@ -4,9 +4,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {Vector} from "../../../../_framework/vector";
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== GuardianQueueCreated =============================== */
 
@@ -28,7 +28,7 @@ export class GuardianQueueCreated implements StructClass { __StructClass = true 
 
  this.queueId = fields.queueId;; this.queueKey = fields.queueKey; }
 
- static reified( ): GuardianQueueCreatedReified { return { typeName: GuardianQueueCreated.$typeName, fullTypeName: composeSuiType( GuardianQueueCreated.$typeName, ...[] ) as `${typeof PKG_V1}::guardian_queue_init_action::GuardianQueueCreated`, typeArgs: [ ] as [], isPhantom: GuardianQueueCreated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => GuardianQueueCreated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => GuardianQueueCreated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => GuardianQueueCreated.fromBcs( data, ), bcs: GuardianQueueCreated.bcs, fromJSONField: (field: any) => GuardianQueueCreated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => GuardianQueueCreated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => GuardianQueueCreated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => GuardianQueueCreated.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => GuardianQueueCreated.fetch( client, id, ), new: ( fields: GuardianQueueCreatedFields, ) => { return new GuardianQueueCreated( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): GuardianQueueCreatedReified { return { typeName: GuardianQueueCreated.$typeName, fullTypeName: composeSuiType( GuardianQueueCreated.$typeName, ...[] ) as `${typeof PKG_V1}::guardian_queue_init_action::GuardianQueueCreated`, typeArgs: [ ] as [], isPhantom: GuardianQueueCreated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => GuardianQueueCreated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => GuardianQueueCreated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => GuardianQueueCreated.fromBcs( data, ), bcs: GuardianQueueCreated.bcs, fromJSONField: (field: any) => GuardianQueueCreated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => GuardianQueueCreated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => GuardianQueueCreated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => GuardianQueueCreated.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => GuardianQueueCreated.fetch( client, id, ), new: ( fields: GuardianQueueCreatedFields, ) => { return new GuardianQueueCreated( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return GuardianQueueCreated.reified() }
 
@@ -68,9 +68,9 @@ export class GuardianQueueCreated implements StructClass { __StructClass = true 
 
  static fromSuiObjectData( data: SuiObjectData ): GuardianQueueCreated { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isGuardianQueueCreated(data.bcs.type)) { throw new Error(`object at is not a GuardianQueueCreated object`); }
 
- return GuardianQueueCreated.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return GuardianQueueCreated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return GuardianQueueCreated.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return GuardianQueueCreated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<GuardianQueueCreated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching GuardianQueueCreated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isGuardianQueueCreated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a GuardianQueueCreated object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<GuardianQueueCreated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching GuardianQueueCreated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isGuardianQueueCreated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a GuardianQueueCreated object`); }
 
  return GuardianQueueCreated.fromSuiObjectData( res.data ); }
 

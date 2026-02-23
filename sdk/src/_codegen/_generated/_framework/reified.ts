@@ -1,8 +1,8 @@
-import { bcs, BcsType } from "@mysten/sui-v1/bcs";
-import { fromHEX, toHEX } from "@mysten/sui-v1/utils";
+import { bcs, BcsType } from "@mysten/sui/bcs";
+import { fromHex, toHex } from "@mysten/sui/utils";
 import { FieldsWithTypes, compressSuiType, parseTypeName } from "./util";
-import { SuiClient, SuiParsedData, SuiObjectData } from "@mysten/sui-v1/client";
-import { EnumOutputShapeWithKeys } from "@mysten/bcs-v1";
+import { SuiJsonRpcClient, SuiParsedData, SuiObjectData } from "@mysten/sui/jsonRpc";
+import { EnumOutputShapeWithKeys } from "@mysten/bcs";
 
 // for backwards compatibility
 export { vector } from "./vector";
@@ -64,7 +64,7 @@ export interface StructClassReified<T extends StructClass, Fields> {
   fromJSON: (json: Record<string, any>) => T;
   fromSuiParsedData: (content: SuiParsedData) => T;
   fromSuiObjectData: (data: SuiObjectData) => T;
-  fetch: (client: SuiClient, id: string) => Promise<T>;
+  fetch: (client: SuiJsonRpcClient, id: string) => Promise<T>;
   new: (fields: Fields) => T;
   kind: "StructClassReified";
 }
@@ -251,8 +251,8 @@ export type ToField<T extends TypeArgument> = T extends "bool"
                                   : never;
 
 const Address = bcs.bytes(32).transform({
-  input: (val: string) => fromHEX(val),
-  output: (val) => toHEX(val),
+  input: (val: string) => fromHex(val),
+  output: (val) => toHex(val),
 });
 
 export function toBcs<T extends Reified<TypeArgument, any>>(

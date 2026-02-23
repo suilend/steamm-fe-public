@@ -7,7 +7,7 @@ import init from "@mysten/move-bytecode-template";
 import {
   SuiObjectChange,
   SuiTransactionBlockResponse,
-} from "@mysten/sui/client";
+} from "@mysten/sui/jsonRpc";
 
 // Initialize the WASM module
 let initialized = false;

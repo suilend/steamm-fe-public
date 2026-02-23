@@ -2,9 +2,9 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {PKG_V1} from "../index";
 import {PriceFeed} from "../price-feed/structs";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== PriceFeedUpdateEvent =============================== */
 
@@ -89,7 +89,7 @@ export class PriceFeedUpdateEvent implements StructClass {
                 PriceFeedUpdateEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => PriceFeedUpdateEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => PriceFeedUpdateEvent.fetch(
                 client,
                 id,
             ),
@@ -214,7 +214,7 @@ export class PriceFeedUpdateEvent implements StructClass {
             }
 
             return PriceFeedUpdateEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -229,7 +229,7 @@ export class PriceFeedUpdateEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<PriceFeedUpdateEvent> {
         const res = await client.getObject({
             id,
@@ -331,7 +331,7 @@ export class PythInitializationEvent implements StructClass {
                 PythInitializationEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => PythInitializationEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => PythInitializationEvent.fetch(
                 client,
                 id,
             ),
@@ -454,7 +454,7 @@ export class PythInitializationEvent implements StructClass {
             }
 
             return PythInitializationEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -469,7 +469,7 @@ export class PythInitializationEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<PythInitializationEvent> {
         const res = await client.getObject({
             id,

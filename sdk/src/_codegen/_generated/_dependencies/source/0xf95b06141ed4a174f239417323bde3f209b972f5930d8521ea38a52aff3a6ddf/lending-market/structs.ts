@@ -10,9 +10,9 @@ import {PKG_V1, PKG_V10} from "../index";
 import {Obligation} from "../obligation/structs";
 import {RateLimiter} from "../rate-limiter/structs";
 import {Reserve} from "../reserve/structs";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== MintEvent =============================== */
 
@@ -103,7 +103,7 @@ export class MintEvent implements StructClass {
                 MintEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => MintEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => MintEvent.fetch(
                 client,
                 id,
             ),
@@ -134,13 +134,13 @@ export class MintEvent implements StructClass {
     static get bcs() {
         return bcs.struct("MintEvent", {
             lending_market_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , coin_type:
                 TypeName.bcs
             , reserve_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , liquidity_amount:
                 bcs.u64()
             , ctoken_amount:
@@ -236,7 +236,7 @@ export class MintEvent implements StructClass {
             }
 
             return MintEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -251,7 +251,7 @@ export class MintEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<MintEvent> {
         const res = await client.getObject({
             id,
@@ -361,7 +361,7 @@ export class RedeemEvent implements StructClass {
                 RedeemEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => RedeemEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => RedeemEvent.fetch(
                 client,
                 id,
             ),
@@ -392,13 +392,13 @@ export class RedeemEvent implements StructClass {
     static get bcs() {
         return bcs.struct("RedeemEvent", {
             lending_market_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , coin_type:
                 TypeName.bcs
             , reserve_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , ctoken_amount:
                 bcs.u64()
             , liquidity_amount:
@@ -494,7 +494,7 @@ export class RedeemEvent implements StructClass {
             }
 
             return RedeemEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -509,7 +509,7 @@ export class RedeemEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<RedeemEvent> {
         const res = await client.getObject({
             id,
@@ -621,7 +621,7 @@ export class BorrowEvent implements StructClass {
                 BorrowEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => BorrowEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => BorrowEvent.fetch(
                 client,
                 id,
             ),
@@ -652,16 +652,16 @@ export class BorrowEvent implements StructClass {
     static get bcs() {
         return bcs.struct("BorrowEvent", {
             lending_market_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , coin_type:
                 TypeName.bcs
             , reserve_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , obligation_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , liquidity_amount:
                 bcs.u64()
             , origination_fee_amount:
@@ -757,7 +757,7 @@ export class BorrowEvent implements StructClass {
             }
 
             return BorrowEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -772,7 +772,7 @@ export class BorrowEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<BorrowEvent> {
         const res = await client.getObject({
             id,
@@ -886,7 +886,7 @@ export class ClaimRewardEvent implements StructClass {
                 ClaimRewardEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ClaimRewardEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ClaimRewardEvent.fetch(
                 client,
                 id,
             ),
@@ -917,19 +917,19 @@ export class ClaimRewardEvent implements StructClass {
     static get bcs() {
         return bcs.struct("ClaimRewardEvent", {
             lending_market_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , reserve_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , obligation_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , is_deposit_reward:
                 bcs.bool()
             , pool_reward_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , coin_type:
                 TypeName.bcs
             , liquidity_amount:
@@ -1025,7 +1025,7 @@ export class ClaimRewardEvent implements StructClass {
             }
 
             return ClaimRewardEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1040,7 +1040,7 @@ export class ClaimRewardEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ClaimRewardEvent> {
         const res = await client.getObject({
             id,
@@ -1150,7 +1150,7 @@ export class DepositEvent implements StructClass {
                 DepositEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => DepositEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => DepositEvent.fetch(
                 client,
                 id,
             ),
@@ -1181,16 +1181,16 @@ export class DepositEvent implements StructClass {
     static get bcs() {
         return bcs.struct("DepositEvent", {
             lending_market_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , coin_type:
                 TypeName.bcs
             , reserve_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , obligation_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , ctoken_amount:
                 bcs.u64()
 
@@ -1284,7 +1284,7 @@ export class DepositEvent implements StructClass {
             }
 
             return DepositEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1299,7 +1299,7 @@ export class DepositEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<DepositEvent> {
         const res = await client.getObject({
             id,
@@ -1405,7 +1405,7 @@ export class FeeReceivers implements StructClass {
                 FeeReceivers.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => FeeReceivers.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => FeeReceivers.fetch(
                 client,
                 id,
             ),
@@ -1436,8 +1436,8 @@ export class FeeReceivers implements StructClass {
     static get bcs() {
         return bcs.struct("FeeReceivers", {
             receivers:
-                bcs.vector(bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),}))
+                bcs.vector(bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),}))
             , weights:
                 bcs.vector(bcs.u64())
             , total_weight:
@@ -1533,7 +1533,7 @@ export class FeeReceivers implements StructClass {
             }
 
             return FeeReceivers.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1548,7 +1548,7 @@ export class FeeReceivers implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<FeeReceivers> {
         const res = await client.getObject({
             id,
@@ -1650,7 +1650,7 @@ export class FeeReceiversKey implements StructClass {
                 FeeReceiversKey.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => FeeReceiversKey.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => FeeReceiversKey.fetch(
                 client,
                 id,
             ),
@@ -1773,7 +1773,7 @@ export class FeeReceiversKey implements StructClass {
             }
 
             return FeeReceiversKey.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1788,7 +1788,7 @@ export class FeeReceiversKey implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<FeeReceiversKey> {
         const res = await client.getObject({
             id,
@@ -1898,7 +1898,7 @@ export class ForgiveEvent implements StructClass {
                 ForgiveEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ForgiveEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ForgiveEvent.fetch(
                 client,
                 id,
             ),
@@ -1929,16 +1929,16 @@ export class ForgiveEvent implements StructClass {
     static get bcs() {
         return bcs.struct("ForgiveEvent", {
             lending_market_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , coin_type:
                 TypeName.bcs
             , reserve_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , obligation_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , liquidity_amount:
                 bcs.u64()
 
@@ -2032,7 +2032,7 @@ export class ForgiveEvent implements StructClass {
             }
 
             return ForgiveEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -2047,7 +2047,7 @@ export class ForgiveEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ForgiveEvent> {
         const res = await client.getObject({
             id,
@@ -2149,7 +2149,7 @@ export class LENDING_MARKET implements StructClass {
                 LENDING_MARKET.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => LENDING_MARKET.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => LENDING_MARKET.fetch(
                 client,
                 id,
             ),
@@ -2272,7 +2272,7 @@ export class LENDING_MARKET implements StructClass {
             }
 
             return LENDING_MARKET.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -2287,7 +2287,7 @@ export class LENDING_MARKET implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<LENDING_MARKET> {
         const res = await client.getObject({
             id,
@@ -2414,7 +2414,7 @@ export class LendingMarket<P extends PhantomTypeArgument> implements StructClass
                     P,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => LendingMarket.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => LendingMarket.fetch(
                 client,
                 P,
                 id,
@@ -2460,8 +2460,8 @@ export class LendingMarket<P extends PhantomTypeArgument> implements StructClass
             , rate_limiter:
                 RateLimiter.bcs
             , fee_receiver:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , bad_debt_usd:
                 Decimal.bcs
             , bad_debt_limit_usd:
@@ -2584,7 +2584,7 @@ export class LendingMarket<P extends PhantomTypeArgument> implements StructClass
 
             return LendingMarket.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -2600,7 +2600,7 @@ export class LendingMarket<P extends PhantomTypeArgument> implements StructClass
     }
 
     static async fetch<P extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: P, id: string
+        client: SuiJsonRpcClient, typeArg: P, id: string
     ): Promise<LendingMarket<ToPhantomTypeArgument<P>>> {
         const res = await client.getObject({
             id,
@@ -2716,7 +2716,7 @@ export class LendingMarketOwnerCap<P extends PhantomTypeArgument> implements Str
                     P,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => LendingMarketOwnerCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => LendingMarketOwnerCap.fetch(
                 client,
                 P,
                 id,
@@ -2873,7 +2873,7 @@ export class LendingMarketOwnerCap<P extends PhantomTypeArgument> implements Str
 
             return LendingMarketOwnerCap.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -2889,7 +2889,7 @@ export class LendingMarketOwnerCap<P extends PhantomTypeArgument> implements Str
     }
 
     static async fetch<P extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: P, id: string
+        client: SuiJsonRpcClient, typeArg: P, id: string
     ): Promise<LendingMarketOwnerCap<ToPhantomTypeArgument<P>>> {
         const res = await client.getObject({
             id,
@@ -3010,7 +3010,7 @@ export class LiquidateEvent implements StructClass {
                 LiquidateEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => LiquidateEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => LiquidateEvent.fetch(
                 client,
                 id,
             ),
@@ -3041,17 +3041,17 @@ export class LiquidateEvent implements StructClass {
     static get bcs() {
         return bcs.struct("LiquidateEvent", {
             lending_market_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , repay_reserve_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , withdraw_reserve_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , obligation_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , repay_coin_type:
                 TypeName.bcs
             , withdraw_coin_type:
@@ -3155,7 +3155,7 @@ export class LiquidateEvent implements StructClass {
             }
 
             return LiquidateEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -3170,7 +3170,7 @@ export class LiquidateEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<LiquidateEvent> {
         const res = await client.getObject({
             id,
@@ -3285,7 +3285,7 @@ export class ObligationOwnerCap<P extends PhantomTypeArgument> implements Struct
                     P,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ObligationOwnerCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ObligationOwnerCap.fetch(
                 client,
                 P,
                 id,
@@ -3442,7 +3442,7 @@ export class ObligationOwnerCap<P extends PhantomTypeArgument> implements Struct
 
             return ObligationOwnerCap.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -3458,7 +3458,7 @@ export class ObligationOwnerCap<P extends PhantomTypeArgument> implements Struct
     }
 
     static async fetch<P extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: P, id: string
+        client: SuiJsonRpcClient, typeArg: P, id: string
     ): Promise<ObligationOwnerCap<ToPhantomTypeArgument<P>>> {
         const res = await client.getObject({
             id,
@@ -3572,7 +3572,7 @@ export class RateLimiterExemption<P extends PhantomTypeArgument, T extends Phant
                     [P, T],
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => RateLimiterExemption.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => RateLimiterExemption.fetch(
                 client,
                 [P, T],
                 id,
@@ -3729,7 +3729,7 @@ export class RateLimiterExemption<P extends PhantomTypeArgument, T extends Phant
 
             return RateLimiterExemption.fromBcs(
                 typeArgs,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -3745,7 +3745,7 @@ export class RateLimiterExemption<P extends PhantomTypeArgument, T extends Phant
     }
 
     static async fetch<P extends PhantomReified<PhantomTypeArgument>, T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArgs: [P, T], id: string
+        client: SuiJsonRpcClient, typeArgs: [P, T], id: string
     ): Promise<RateLimiterExemption<ToPhantomTypeArgument<P>, ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -3856,7 +3856,7 @@ export class RepayEvent implements StructClass {
                 RepayEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => RepayEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => RepayEvent.fetch(
                 client,
                 id,
             ),
@@ -3887,16 +3887,16 @@ export class RepayEvent implements StructClass {
     static get bcs() {
         return bcs.struct("RepayEvent", {
             lending_market_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , coin_type:
                 TypeName.bcs
             , reserve_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , obligation_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , liquidity_amount:
                 bcs.u64()
 
@@ -3990,7 +3990,7 @@ export class RepayEvent implements StructClass {
             }
 
             return RepayEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -4005,7 +4005,7 @@ export class RepayEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<RepayEvent> {
         const res = await client.getObject({
             id,
@@ -4115,7 +4115,7 @@ export class WithdrawEvent implements StructClass {
                 WithdrawEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => WithdrawEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => WithdrawEvent.fetch(
                 client,
                 id,
             ),
@@ -4146,16 +4146,16 @@ export class WithdrawEvent implements StructClass {
     static get bcs() {
         return bcs.struct("WithdrawEvent", {
             lending_market_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , coin_type:
                 TypeName.bcs
             , reserve_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , obligation_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , ctoken_amount:
                 bcs.u64()
 
@@ -4249,7 +4249,7 @@ export class WithdrawEvent implements StructClass {
             }
 
             return WithdrawEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -4264,7 +4264,7 @@ export class WithdrawEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<WithdrawEvent> {
         const res = await client.getObject({
             id,

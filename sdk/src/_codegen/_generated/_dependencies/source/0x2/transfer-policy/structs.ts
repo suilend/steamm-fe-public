@@ -7,9 +7,9 @@ import {PKG_V30} from "../index";
 import {ID, UID} from "../object/structs";
 import {SUI} from "../sui/structs";
 import {VecSet} from "../vec-set/structs";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== RuleKey =============================== */
 
@@ -103,7 +103,7 @@ export class RuleKey<T extends PhantomTypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => RuleKey.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => RuleKey.fetch(
                 client,
                 T,
                 id,
@@ -258,7 +258,7 @@ export class RuleKey<T extends PhantomTypeArgument> implements StructClass {
 
             return RuleKey.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -274,7 +274,7 @@ export class RuleKey<T extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<RuleKey<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -392,7 +392,7 @@ export class TransferPolicy<T extends PhantomTypeArgument> implements StructClas
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => TransferPolicy.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => TransferPolicy.fetch(
                 client,
                 T,
                 id,
@@ -551,7 +551,7 @@ export class TransferPolicy<T extends PhantomTypeArgument> implements StructClas
 
             return TransferPolicy.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -567,7 +567,7 @@ export class TransferPolicy<T extends PhantomTypeArgument> implements StructClas
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<TransferPolicy<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -683,7 +683,7 @@ export class TransferPolicyCap<T extends PhantomTypeArgument> implements StructC
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => TransferPolicyCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => TransferPolicyCap.fetch(
                 client,
                 T,
                 id,
@@ -840,7 +840,7 @@ export class TransferPolicyCap<T extends PhantomTypeArgument> implements StructC
 
             return TransferPolicyCap.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -856,7 +856,7 @@ export class TransferPolicyCap<T extends PhantomTypeArgument> implements StructC
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<TransferPolicyCap<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -970,7 +970,7 @@ export class TransferPolicyCreated<T extends PhantomTypeArgument> implements Str
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => TransferPolicyCreated.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => TransferPolicyCreated.fetch(
                 client,
                 T,
                 id,
@@ -1125,7 +1125,7 @@ export class TransferPolicyCreated<T extends PhantomTypeArgument> implements Str
 
             return TransferPolicyCreated.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1141,7 +1141,7 @@ export class TransferPolicyCreated<T extends PhantomTypeArgument> implements Str
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<TransferPolicyCreated<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -1255,7 +1255,7 @@ export class TransferPolicyDestroyed<T extends PhantomTypeArgument> implements S
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => TransferPolicyDestroyed.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => TransferPolicyDestroyed.fetch(
                 client,
                 T,
                 id,
@@ -1410,7 +1410,7 @@ export class TransferPolicyDestroyed<T extends PhantomTypeArgument> implements S
 
             return TransferPolicyDestroyed.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1426,7 +1426,7 @@ export class TransferPolicyDestroyed<T extends PhantomTypeArgument> implements S
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<TransferPolicyDestroyed<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -1546,7 +1546,7 @@ export class TransferRequest<T extends PhantomTypeArgument> implements StructCla
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => TransferRequest.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => TransferRequest.fetch(
                 client,
                 T,
                 id,
@@ -1707,7 +1707,7 @@ export class TransferRequest<T extends PhantomTypeArgument> implements StructCla
 
             return TransferRequest.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1723,7 +1723,7 @@ export class TransferRequest<T extends PhantomTypeArgument> implements StructCla
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<TransferRequest<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,

@@ -5,9 +5,9 @@ import {UpgradeCap} from "../../0x2/package/structs";
 import {ConsumedVAAs} from "../../0x5306f64e312b581766351c07af79c72fcb1cd25147157fdc2f8ad76de9a3fb6a/consumed-vaas/structs";
 import {DataSource} from "../data-source/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== LatestOnly =============================== */
 
@@ -90,7 +90,7 @@ export class LatestOnly implements StructClass {
                 LatestOnly.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => LatestOnly.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => LatestOnly.fetch(
                 client,
                 id,
             ),
@@ -213,7 +213,7 @@ export class LatestOnly implements StructClass {
             }
 
             return LatestOnly.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -228,7 +228,7 @@ export class LatestOnly implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<LatestOnly> {
         const res = await client.getObject({
             id,
@@ -344,7 +344,7 @@ export class State implements StructClass {
                 State.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => State.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => State.fetch(
                 client,
                 id,
             ),
@@ -383,8 +383,8 @@ export class State implements StructClass {
             , base_update_fee:
                 bcs.u64()
             , fee_recipient_address:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , last_executed_governance_sequence:
                 bcs.u64()
             , consumed_vaas:
@@ -482,7 +482,7 @@ export class State implements StructClass {
             }
 
             return State.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -497,7 +497,7 @@ export class State implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<State> {
         const res = await client.getObject({
             id,
@@ -599,7 +599,7 @@ export class CurrentDigest implements StructClass {
                 CurrentDigest.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => CurrentDigest.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => CurrentDigest.fetch(
                 client,
                 id,
             ),
@@ -722,7 +722,7 @@ export class CurrentDigest implements StructClass {
             }
 
             return CurrentDigest.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -737,7 +737,7 @@ export class CurrentDigest implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<CurrentDigest> {
         const res = await client.getObject({
             id,

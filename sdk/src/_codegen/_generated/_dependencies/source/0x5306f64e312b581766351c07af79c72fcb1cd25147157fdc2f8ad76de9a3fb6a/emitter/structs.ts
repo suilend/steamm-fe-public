@@ -2,9 +2,9 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {ID, UID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== EmitterCap =============================== */
 
@@ -89,7 +89,7 @@ export class EmitterCap implements StructClass {
                 EmitterCap.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => EmitterCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => EmitterCap.fetch(
                 client,
                 id,
             ),
@@ -214,7 +214,7 @@ export class EmitterCap implements StructClass {
             }
 
             return EmitterCap.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -229,7 +229,7 @@ export class EmitterCap implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<EmitterCap> {
         const res = await client.getObject({
             id,
@@ -331,7 +331,7 @@ export class EmitterCreated implements StructClass {
                 EmitterCreated.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => EmitterCreated.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => EmitterCreated.fetch(
                 client,
                 id,
             ),
@@ -454,7 +454,7 @@ export class EmitterCreated implements StructClass {
             }
 
             return EmitterCreated.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -469,7 +469,7 @@ export class EmitterCreated implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<EmitterCreated> {
         const res = await client.getObject({
             id,
@@ -571,7 +571,7 @@ export class EmitterDestroyed implements StructClass {
                 EmitterDestroyed.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => EmitterDestroyed.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => EmitterDestroyed.fetch(
                 client,
                 id,
             ),
@@ -694,7 +694,7 @@ export class EmitterDestroyed implements StructClass {
             }
 
             return EmitterDestroyed.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -709,7 +709,7 @@ export class EmitterDestroyed implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<EmitterDestroyed> {
         const res = await client.getObject({
             id,

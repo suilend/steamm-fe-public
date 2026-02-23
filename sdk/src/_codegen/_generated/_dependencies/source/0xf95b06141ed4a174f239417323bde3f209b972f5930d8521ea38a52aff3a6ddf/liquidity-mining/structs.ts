@@ -8,9 +8,9 @@ import {Bag} from "../../0x2/bag/structs";
 import {ID, UID} from "../../0x2/object/structs";
 import {Decimal} from "../decimal/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== PoolReward =============================== */
 
@@ -111,7 +111,7 @@ export class PoolReward implements StructClass {
                 PoolReward.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => PoolReward.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => PoolReward.fetch(
                 client,
                 id,
             ),
@@ -252,7 +252,7 @@ export class PoolReward implements StructClass {
             }
 
             return PoolReward.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -267,7 +267,7 @@ export class PoolReward implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<PoolReward> {
         const res = await client.getObject({
             id,
@@ -375,7 +375,7 @@ export class PoolRewardManager implements StructClass {
                 PoolRewardManager.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => PoolRewardManager.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => PoolRewardManager.fetch(
                 client,
                 id,
             ),
@@ -504,7 +504,7 @@ export class PoolRewardManager implements StructClass {
             }
 
             return PoolRewardManager.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -519,7 +519,7 @@ export class PoolRewardManager implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<PoolRewardManager> {
         const res = await client.getObject({
             id,
@@ -632,7 +632,7 @@ export class RewardBalance<T extends PhantomTypeArgument> implements StructClass
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => RewardBalance.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => RewardBalance.fetch(
                 client,
                 T,
                 id,
@@ -787,7 +787,7 @@ export class RewardBalance<T extends PhantomTypeArgument> implements StructClass
 
             return RewardBalance.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -803,7 +803,7 @@ export class RewardBalance<T extends PhantomTypeArgument> implements StructClass
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<RewardBalance<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -910,7 +910,7 @@ export class UserReward implements StructClass {
                 UserReward.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => UserReward.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => UserReward.fetch(
                 client,
                 id,
             ),
@@ -1037,7 +1037,7 @@ export class UserReward implements StructClass {
             }
 
             return UserReward.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1052,7 +1052,7 @@ export class UserReward implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<UserReward> {
         const res = await client.getObject({
             id,
@@ -1160,7 +1160,7 @@ export class UserRewardManager implements StructClass {
                 UserRewardManager.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => UserRewardManager.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => UserRewardManager.fetch(
                 client,
                 id,
             ),
@@ -1289,7 +1289,7 @@ export class UserRewardManager implements StructClass {
             }
 
             return UserRewardManager.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1304,7 +1304,7 @@ export class UserRewardManager implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<UserRewardManager> {
         const res = await client.getObject({
             id,

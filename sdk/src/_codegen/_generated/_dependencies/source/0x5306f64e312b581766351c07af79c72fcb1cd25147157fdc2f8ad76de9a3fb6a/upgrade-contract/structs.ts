@@ -3,9 +3,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {ID} from "../../0x2/object/structs";
 import {Bytes32} from "../bytes32/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== ContractUpgraded =============================== */
 
@@ -90,7 +90,7 @@ export class ContractUpgraded implements StructClass {
                 ContractUpgraded.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ContractUpgraded.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ContractUpgraded.fetch(
                 client,
                 id,
             ),
@@ -215,7 +215,7 @@ export class ContractUpgraded implements StructClass {
             }
 
             return ContractUpgraded.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -230,7 +230,7 @@ export class ContractUpgraded implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ContractUpgraded> {
         const res = await client.getObject({
             id,
@@ -332,7 +332,7 @@ export class GovernanceWitness implements StructClass {
                 GovernanceWitness.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => GovernanceWitness.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => GovernanceWitness.fetch(
                 client,
                 id,
             ),
@@ -455,7 +455,7 @@ export class GovernanceWitness implements StructClass {
             }
 
             return GovernanceWitness.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -470,7 +470,7 @@ export class GovernanceWitness implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<GovernanceWitness> {
         const res = await client.getObject({
             id,
@@ -572,7 +572,7 @@ export class UpgradeContract implements StructClass {
                 UpgradeContract.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => UpgradeContract.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => UpgradeContract.fetch(
                 client,
                 id,
             ),
@@ -695,7 +695,7 @@ export class UpgradeContract implements StructClass {
             }
 
             return UpgradeContract.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -710,7 +710,7 @@ export class UpgradeContract implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<UpgradeContract> {
         const res = await client.getObject({
             id,

@@ -7,9 +7,9 @@ import {TypeName} from "../../0x1/type-name/structs";
 import {ID, UID} from "../../0x2/object/structs";
 import {Table} from "../../0x2/table/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== ExistingOracle =============================== */
 
@@ -31,7 +31,7 @@ export class ExistingOracle implements StructClass { __StructClass = true as con
 
  this.oracleId = fields.oracleId;; this.oracleKey = fields.oracleKey; }
 
- static reified( ): ExistingOracleReified { return { typeName: ExistingOracle.$typeName, fullTypeName: composeSuiType( ExistingOracle.$typeName, ...[] ) as `${typeof PKG_V1}::queue::ExistingOracle`, typeArgs: [ ] as [], isPhantom: ExistingOracle.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => ExistingOracle.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => ExistingOracle.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => ExistingOracle.fromBcs( data, ), bcs: ExistingOracle.bcs, fromJSONField: (field: any) => ExistingOracle.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => ExistingOracle.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => ExistingOracle.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => ExistingOracle.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => ExistingOracle.fetch( client, id, ), new: ( fields: ExistingOracleFields, ) => { return new ExistingOracle( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): ExistingOracleReified { return { typeName: ExistingOracle.$typeName, fullTypeName: composeSuiType( ExistingOracle.$typeName, ...[] ) as `${typeof PKG_V1}::queue::ExistingOracle`, typeArgs: [ ] as [], isPhantom: ExistingOracle.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => ExistingOracle.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => ExistingOracle.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => ExistingOracle.fromBcs( data, ), bcs: ExistingOracle.bcs, fromJSONField: (field: any) => ExistingOracle.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => ExistingOracle.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => ExistingOracle.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => ExistingOracle.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => ExistingOracle.fetch( client, id, ), new: ( fields: ExistingOracleFields, ) => { return new ExistingOracle( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return ExistingOracle.reified() }
 
@@ -71,9 +71,9 @@ export class ExistingOracle implements StructClass { __StructClass = true as con
 
  static fromSuiObjectData( data: SuiObjectData ): ExistingOracle { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isExistingOracle(data.bcs.type)) { throw new Error(`object at is not a ExistingOracle object`); }
 
- return ExistingOracle.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return ExistingOracle.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return ExistingOracle.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return ExistingOracle.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<ExistingOracle> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching ExistingOracle object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isExistingOracle(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a ExistingOracle object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<ExistingOracle> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching ExistingOracle object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isExistingOracle(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a ExistingOracle object`); }
 
  return ExistingOracle.fromSuiObjectData( res.data ); }
 
@@ -99,7 +99,7 @@ export class Queue implements StructClass { __StructClass = true as const;
 
  this.id = fields.id;; this.queueKey = fields.queueKey;; this.authority = fields.authority;; this.name = fields.name;; this.fee = fields.fee;; this.feeRecipient = fields.feeRecipient;; this.minAttestations = fields.minAttestations;; this.oracleValidityLengthMs = fields.oracleValidityLengthMs;; this.lastQueueOverrideMs = fields.lastQueueOverrideMs;; this.guardianQueueId = fields.guardianQueueId;; this.existingOracles = fields.existingOracles;; this.feeTypes = fields.feeTypes;; this.version = fields.version; }
 
- static reified( ): QueueReified { return { typeName: Queue.$typeName, fullTypeName: composeSuiType( Queue.$typeName, ...[] ) as `${typeof PKG_V1}::queue::Queue`, typeArgs: [ ] as [], isPhantom: Queue.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => Queue.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => Queue.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => Queue.fromBcs( data, ), bcs: Queue.bcs, fromJSONField: (field: any) => Queue.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => Queue.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => Queue.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => Queue.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => Queue.fetch( client, id, ), new: ( fields: QueueFields, ) => { return new Queue( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): QueueReified { return { typeName: Queue.$typeName, fullTypeName: composeSuiType( Queue.$typeName, ...[] ) as `${typeof PKG_V1}::queue::Queue`, typeArgs: [ ] as [], isPhantom: Queue.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => Queue.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => Queue.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => Queue.fromBcs( data, ), bcs: Queue.bcs, fromJSONField: (field: any) => Queue.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => Queue.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => Queue.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => Queue.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => Queue.fetch( client, id, ), new: ( fields: QueueFields, ) => { return new Queue( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return Queue.reified() }
 
@@ -107,7 +107,7 @@ export class Queue implements StructClass { __StructClass = true as const;
 
  static get bcs() { return bcs.struct("Queue", {
 
- id: UID.bcs, queueKey: bcs.vector(bcs.u8()), authority: bcs.bytes(32).transform({ input: (val: string) => fromHEX(val), output: (val: Uint8Array) => toHEX(val), }), name: String.bcs, fee: bcs.u64(), feeRecipient: bcs.bytes(32).transform({ input: (val: string) => fromHEX(val), output: (val: Uint8Array) => toHEX(val), }), minAttestations: bcs.u64(), oracleValidityLengthMs: bcs.u64(), lastQueueOverrideMs: bcs.u64(), guardianQueueId: ID.bcs, existingOracles: Table.bcs, feeTypes: bcs.vector(TypeName.bcs), version: bcs.u8()
+ id: UID.bcs, queueKey: bcs.vector(bcs.u8()), authority: bcs.bytes(32).transform({ input: (val: string) => fromHex(val), output: (val: Uint8Array) => toHex(val), }), name: String.bcs, fee: bcs.u64(), feeRecipient: bcs.bytes(32).transform({ input: (val: string) => fromHex(val), output: (val: Uint8Array) => toHex(val), }), minAttestations: bcs.u64(), oracleValidityLengthMs: bcs.u64(), lastQueueOverrideMs: bcs.u64(), guardianQueueId: ID.bcs, existingOracles: Table.bcs, feeTypes: bcs.vector(TypeName.bcs), version: bcs.u8()
 
 }) };
 
@@ -139,9 +139,9 @@ export class Queue implements StructClass { __StructClass = true as const;
 
  static fromSuiObjectData( data: SuiObjectData ): Queue { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isQueue(data.bcs.type)) { throw new Error(`object at is not a Queue object`); }
 
- return Queue.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return Queue.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return Queue.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return Queue.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<Queue> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching Queue object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isQueue(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a Queue object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<Queue> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching Queue object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isQueue(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a Queue object`); }
 
  return Queue.fromSuiObjectData( res.data ); }
 

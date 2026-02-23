@@ -18,9 +18,9 @@ import {
 } from "../../../../_framework/util";
 import { Vector } from "../../../../_framework/vector";
 import { PKG_V1 } from "../index";
-import { bcs } from "@mysten/sui-v1/bcs";
-import { SuiClient, SuiObjectData, SuiParsedData } from "@mysten/sui-v1/client";
-import { fromB64 } from "@mysten/sui-v1/utils";
+import { bcs } from "@mysten/sui/bcs";
+import { SuiJsonRpcClient, SuiObjectData, SuiParsedData } from "@mysten/sui/jsonRpc";
+import { fromBase64 } from "@mysten/sui/utils";
 
 /* ============================== PriceIdentifier =============================== */
 
@@ -84,7 +84,7 @@ export class PriceIdentifier implements StructClass {
         PriceIdentifier.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) =>
         PriceIdentifier.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) =>
+      fetch: async (client: SuiJsonRpcClient, id: string) =>
         PriceIdentifier.fetch(client, id),
       new: (fields: PriceIdentifierFields) => {
         return new PriceIdentifier([], fields);
@@ -180,7 +180,7 @@ export class PriceIdentifier implements StructClass {
         throw new Error(`object at is not a PriceIdentifier object`);
       }
 
-      return PriceIdentifier.fromBcs(fromB64(data.bcs.bcsBytes));
+      return PriceIdentifier.fromBcs(fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return PriceIdentifier.fromSuiParsedData(data.content);
@@ -191,7 +191,7 @@ export class PriceIdentifier implements StructClass {
     );
   }
 
-  static async fetch(client: SuiClient, id: string): Promise<PriceIdentifier> {
+  static async fetch(client: SuiJsonRpcClient, id: string): Promise<PriceIdentifier> {
     const res = await client.getObject({
       id,
       options: {

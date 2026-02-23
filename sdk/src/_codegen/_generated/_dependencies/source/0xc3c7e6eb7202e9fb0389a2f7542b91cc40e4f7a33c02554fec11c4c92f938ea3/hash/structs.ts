@@ -3,9 +3,9 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {Vector} from "../../../../_framework/vector";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Hasher =============================== */
 
@@ -27,7 +27,7 @@ export class Hasher implements StructClass { __StructClass = true as const;
 
  this.buffer = fields.buffer; }
 
- static reified( ): HasherReified { return { typeName: Hasher.$typeName, fullTypeName: composeSuiType( Hasher.$typeName, ...[] ) as `${typeof PKG_V1}::hash::Hasher`, typeArgs: [ ] as [], isPhantom: Hasher.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => Hasher.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => Hasher.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => Hasher.fromBcs( data, ), bcs: Hasher.bcs, fromJSONField: (field: any) => Hasher.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => Hasher.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => Hasher.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => Hasher.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => Hasher.fetch( client, id, ), new: ( fields: HasherFields, ) => { return new Hasher( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): HasherReified { return { typeName: Hasher.$typeName, fullTypeName: composeSuiType( Hasher.$typeName, ...[] ) as `${typeof PKG_V1}::hash::Hasher`, typeArgs: [ ] as [], isPhantom: Hasher.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => Hasher.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => Hasher.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => Hasher.fromBcs( data, ), bcs: Hasher.bcs, fromJSONField: (field: any) => Hasher.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => Hasher.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => Hasher.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => Hasher.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => Hasher.fetch( client, id, ), new: ( fields: HasherFields, ) => { return new Hasher( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return Hasher.reified() }
 
@@ -67,9 +67,9 @@ export class Hasher implements StructClass { __StructClass = true as const;
 
  static fromSuiObjectData( data: SuiObjectData ): Hasher { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isHasher(data.bcs.type)) { throw new Error(`object at is not a Hasher object`); }
 
- return Hasher.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return Hasher.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return Hasher.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return Hasher.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<Hasher> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching Hasher object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isHasher(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a Hasher object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<Hasher> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching Hasher object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isHasher(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a Hasher object`); }
 
  return Hasher.fromSuiObjectData( res.data ); }
 

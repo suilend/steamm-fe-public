@@ -3,9 +3,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {PKG_V1} from "../index";
 import {PriceIdentifier} from "../price-identifier/structs";
 import {Price} from "../price/structs";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== PriceFeed =============================== */
 
@@ -92,7 +92,7 @@ export class PriceFeed implements StructClass {
                 PriceFeed.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => PriceFeed.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => PriceFeed.fetch(
                 client,
                 id,
             ),
@@ -219,7 +219,7 @@ export class PriceFeed implements StructClass {
             }
 
             return PriceFeed.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -234,7 +234,7 @@ export class PriceFeed implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<PriceFeed> {
         const res = await client.getObject({
             id,

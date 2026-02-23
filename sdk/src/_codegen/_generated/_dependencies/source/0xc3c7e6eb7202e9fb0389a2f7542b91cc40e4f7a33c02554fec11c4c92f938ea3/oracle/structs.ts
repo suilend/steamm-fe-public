@@ -4,9 +4,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {Vector} from "../../../../_framework/vector";
 import {ID, UID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Oracle =============================== */
 
@@ -28,7 +28,7 @@ export class Oracle implements StructClass { __StructClass = true as const;
 
  this.id = fields.id;; this.oracleKey = fields.oracleKey;; this.queue = fields.queue;; this.queueKey = fields.queueKey;; this.expirationTimeMs = fields.expirationTimeMs;; this.mrEnclave = fields.mrEnclave;; this.secp256K1Key = fields.secp256K1Key;; this.validAttestations = fields.validAttestations;; this.version = fields.version; }
 
- static reified( ): OracleReified { return { typeName: Oracle.$typeName, fullTypeName: composeSuiType( Oracle.$typeName, ...[] ) as `${typeof PKG_V1}::oracle::Oracle`, typeArgs: [ ] as [], isPhantom: Oracle.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => Oracle.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => Oracle.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => Oracle.fromBcs( data, ), bcs: Oracle.bcs, fromJSONField: (field: any) => Oracle.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => Oracle.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => Oracle.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => Oracle.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => Oracle.fetch( client, id, ), new: ( fields: OracleFields, ) => { return new Oracle( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): OracleReified { return { typeName: Oracle.$typeName, fullTypeName: composeSuiType( Oracle.$typeName, ...[] ) as `${typeof PKG_V1}::oracle::Oracle`, typeArgs: [ ] as [], isPhantom: Oracle.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => Oracle.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => Oracle.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => Oracle.fromBcs( data, ), bcs: Oracle.bcs, fromJSONField: (field: any) => Oracle.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => Oracle.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => Oracle.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => Oracle.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => Oracle.fetch( client, id, ), new: ( fields: OracleFields, ) => { return new Oracle( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return Oracle.reified() }
 
@@ -68,9 +68,9 @@ export class Oracle implements StructClass { __StructClass = true as const;
 
  static fromSuiObjectData( data: SuiObjectData ): Oracle { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isOracle(data.bcs.type)) { throw new Error(`object at is not a Oracle object`); }
 
- return Oracle.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return Oracle.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return Oracle.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return Oracle.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<Oracle> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching Oracle object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isOracle(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a Oracle object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<Oracle> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching Oracle object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isOracle(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a Oracle object`); }
 
  return Oracle.fromSuiObjectData( res.data ); }
 
@@ -96,7 +96,7 @@ export class Attestation implements StructClass { __StructClass = true as const;
 
  this.guardianId = fields.guardianId;; this.secp256K1Key = fields.secp256K1Key;; this.timestampMs = fields.timestampMs; }
 
- static reified( ): AttestationReified { return { typeName: Attestation.$typeName, fullTypeName: composeSuiType( Attestation.$typeName, ...[] ) as `${typeof PKG_V1}::oracle::Attestation`, typeArgs: [ ] as [], isPhantom: Attestation.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => Attestation.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => Attestation.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => Attestation.fromBcs( data, ), bcs: Attestation.bcs, fromJSONField: (field: any) => Attestation.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => Attestation.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => Attestation.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => Attestation.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => Attestation.fetch( client, id, ), new: ( fields: AttestationFields, ) => { return new Attestation( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): AttestationReified { return { typeName: Attestation.$typeName, fullTypeName: composeSuiType( Attestation.$typeName, ...[] ) as `${typeof PKG_V1}::oracle::Attestation`, typeArgs: [ ] as [], isPhantom: Attestation.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => Attestation.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => Attestation.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => Attestation.fromBcs( data, ), bcs: Attestation.bcs, fromJSONField: (field: any) => Attestation.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => Attestation.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => Attestation.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => Attestation.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => Attestation.fetch( client, id, ), new: ( fields: AttestationFields, ) => { return new Attestation( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return Attestation.reified() }
 
@@ -136,9 +136,9 @@ export class Attestation implements StructClass { __StructClass = true as const;
 
  static fromSuiObjectData( data: SuiObjectData ): Attestation { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isAttestation(data.bcs.type)) { throw new Error(`object at is not a Attestation object`); }
 
- return Attestation.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return Attestation.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return Attestation.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return Attestation.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<Attestation> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching Attestation object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAttestation(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a Attestation object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<Attestation> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching Attestation object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAttestation(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a Attestation object`); }
 
  return Attestation.fromSuiObjectData( res.data ); }
 

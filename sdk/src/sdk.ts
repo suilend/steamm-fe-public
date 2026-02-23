@@ -97,13 +97,14 @@ export class SteammSDK {
     };
     this._rpcClient = new FullClient({
       url: options.fullRpcUrl,
+      network: options.network ?? "mainnet",
     });
 
     this._pool = new PoolManager(this);
     this._bank = new BankManager(this);
     this._router = new Router(this);
     this._pythClient = new SuiPythClient(
-      this._rpcClient,
+      this._rpcClient as any, // SuiPythClient expects a SuiClient, but we use SuiJsonRpcClient (which is the same thing in v2)
       PYTH_STATE_ID,
       WORMHOLE_STATE_ID,
     );

@@ -1,6 +1,6 @@
 import {PUBLISHED_AT} from "..";
 import {obj} from "../../_framework/util";
-import {Transaction, TransactionObjectInput} from "@mysten/sui-v1/transactions";
+import {Transaction, TransactionObjectInput} from "@mysten/sui/transactions";
 
 export interface NeedsRebalanceArgs {
     bank: TransactionObjectInput; lendingMarket: TransactionObjectInput; clock: TransactionObjectInput

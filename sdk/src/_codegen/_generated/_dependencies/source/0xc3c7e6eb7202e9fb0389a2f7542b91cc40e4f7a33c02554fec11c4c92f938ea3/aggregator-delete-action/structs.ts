@@ -2,9 +2,9 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== AggregatorDeleted =============================== */
 
@@ -26,7 +26,7 @@ export class AggregatorDeleted implements StructClass { __StructClass = true as 
 
  this.aggregatorId = fields.aggregatorId; }
 
- static reified( ): AggregatorDeletedReified { return { typeName: AggregatorDeleted.$typeName, fullTypeName: composeSuiType( AggregatorDeleted.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator_delete_action::AggregatorDeleted`, typeArgs: [ ] as [], isPhantom: AggregatorDeleted.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => AggregatorDeleted.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => AggregatorDeleted.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => AggregatorDeleted.fromBcs( data, ), bcs: AggregatorDeleted.bcs, fromJSONField: (field: any) => AggregatorDeleted.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => AggregatorDeleted.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => AggregatorDeleted.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => AggregatorDeleted.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => AggregatorDeleted.fetch( client, id, ), new: ( fields: AggregatorDeletedFields, ) => { return new AggregatorDeleted( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): AggregatorDeletedReified { return { typeName: AggregatorDeleted.$typeName, fullTypeName: composeSuiType( AggregatorDeleted.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator_delete_action::AggregatorDeleted`, typeArgs: [ ] as [], isPhantom: AggregatorDeleted.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => AggregatorDeleted.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => AggregatorDeleted.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => AggregatorDeleted.fromBcs( data, ), bcs: AggregatorDeleted.bcs, fromJSONField: (field: any) => AggregatorDeleted.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => AggregatorDeleted.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => AggregatorDeleted.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => AggregatorDeleted.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => AggregatorDeleted.fetch( client, id, ), new: ( fields: AggregatorDeletedFields, ) => { return new AggregatorDeleted( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return AggregatorDeleted.reified() }
 
@@ -66,9 +66,9 @@ export class AggregatorDeleted implements StructClass { __StructClass = true as 
 
  static fromSuiObjectData( data: SuiObjectData ): AggregatorDeleted { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isAggregatorDeleted(data.bcs.type)) { throw new Error(`object at is not a AggregatorDeleted object`); }
 
- return AggregatorDeleted.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return AggregatorDeleted.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return AggregatorDeleted.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return AggregatorDeleted.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<AggregatorDeleted> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching AggregatorDeleted object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAggregatorDeleted(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a AggregatorDeleted object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<AggregatorDeleted> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching AggregatorDeleted object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAggregatorDeleted(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a AggregatorDeleted object`); }
 
  return AggregatorDeleted.fromSuiObjectData( res.data ); }
 

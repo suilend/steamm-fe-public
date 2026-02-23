@@ -3,9 +3,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from ".
 import {Option} from "../../0x1/option/structs";
 import {PKG_V30} from "../index";
 import {ID} from "../object/structs";
-import {BcsType, bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
+import {BcsType, bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== Borrow =============================== */
 
@@ -90,7 +90,7 @@ export class Borrow implements StructClass {
                 Borrow.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Borrow.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Borrow.fetch(
                 client,
                 id,
             ),
@@ -121,8 +121,8 @@ export class Borrow implements StructClass {
     static get bcs() {
         return bcs.struct("Borrow", {
             ref:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , obj:
                 ID.bcs
 
@@ -216,7 +216,7 @@ export class Borrow implements StructClass {
             }
 
             return Borrow.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -231,7 +231,7 @@ export class Borrow implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Borrow> {
         const res = await client.getObject({
             id,
@@ -346,7 +346,7 @@ export class Referent<T extends TypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Referent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Referent.fetch(
                 client,
                 T,
                 id,
@@ -382,8 +382,8 @@ export class Referent<T extends TypeArgument> implements StructClass {
     static get bcs() {
         return <T extends BcsType<any>>(T: T) => bcs.struct(`Referent<${T.name}>`, {
             id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , value:
                 Option.bcs(T)
 
@@ -505,7 +505,7 @@ export class Referent<T extends TypeArgument> implements StructClass {
 
             return Referent.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -521,7 +521,7 @@ export class Referent<T extends TypeArgument> implements StructClass {
     }
 
     static async fetch<T extends Reified<TypeArgument, any>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<Referent<ToTypeArgument<T>>> {
         const res = await client.getObject({
             id,

@@ -3,9 +3,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {ID} from "../../0x2/object/structs";
 import {Decimal} from "../decimal/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== AggregatorUpdated =============================== */
 
@@ -27,7 +27,7 @@ export class AggregatorUpdated implements StructClass { __StructClass = true as 
 
  this.aggregatorId = fields.aggregatorId;; this.oracleId = fields.oracleId;; this.value = fields.value;; this.timestampMs = fields.timestampMs; }
 
- static reified( ): AggregatorUpdatedReified { return { typeName: AggregatorUpdated.$typeName, fullTypeName: composeSuiType( AggregatorUpdated.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator_submit_result_action::AggregatorUpdated`, typeArgs: [ ] as [], isPhantom: AggregatorUpdated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => AggregatorUpdated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => AggregatorUpdated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => AggregatorUpdated.fromBcs( data, ), bcs: AggregatorUpdated.bcs, fromJSONField: (field: any) => AggregatorUpdated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => AggregatorUpdated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => AggregatorUpdated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => AggregatorUpdated.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => AggregatorUpdated.fetch( client, id, ), new: ( fields: AggregatorUpdatedFields, ) => { return new AggregatorUpdated( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): AggregatorUpdatedReified { return { typeName: AggregatorUpdated.$typeName, fullTypeName: composeSuiType( AggregatorUpdated.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator_submit_result_action::AggregatorUpdated`, typeArgs: [ ] as [], isPhantom: AggregatorUpdated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => AggregatorUpdated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => AggregatorUpdated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => AggregatorUpdated.fromBcs( data, ), bcs: AggregatorUpdated.bcs, fromJSONField: (field: any) => AggregatorUpdated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => AggregatorUpdated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => AggregatorUpdated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => AggregatorUpdated.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => AggregatorUpdated.fetch( client, id, ), new: ( fields: AggregatorUpdatedFields, ) => { return new AggregatorUpdated( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return AggregatorUpdated.reified() }
 
@@ -67,9 +67,9 @@ export class AggregatorUpdated implements StructClass { __StructClass = true as 
 
  static fromSuiObjectData( data: SuiObjectData ): AggregatorUpdated { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isAggregatorUpdated(data.bcs.type)) { throw new Error(`object at is not a AggregatorUpdated object`); }
 
- return AggregatorUpdated.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return AggregatorUpdated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return AggregatorUpdated.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return AggregatorUpdated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<AggregatorUpdated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching AggregatorUpdated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAggregatorUpdated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a AggregatorUpdated object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<AggregatorUpdated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching AggregatorUpdated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAggregatorUpdated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a AggregatorUpdated object`); }
 
  return AggregatorUpdated.fromSuiObjectData( res.data ); }
 

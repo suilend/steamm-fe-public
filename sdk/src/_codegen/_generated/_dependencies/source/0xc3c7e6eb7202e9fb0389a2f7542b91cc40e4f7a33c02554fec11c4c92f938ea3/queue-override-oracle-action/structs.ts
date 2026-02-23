@@ -4,9 +4,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {Vector} from "../../../../_framework/vector";
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== QueueOracleOverride =============================== */
 
@@ -28,7 +28,7 @@ export class QueueOracleOverride implements StructClass { __StructClass = true a
 
  this.queueId = fields.queueId;; this.oracleId = fields.oracleId;; this.secp256K1Key = fields.secp256K1Key;; this.mrEnclave = fields.mrEnclave;; this.expirationTimeMs = fields.expirationTimeMs; }
 
- static reified( ): QueueOracleOverrideReified { return { typeName: QueueOracleOverride.$typeName, fullTypeName: composeSuiType( QueueOracleOverride.$typeName, ...[] ) as `${typeof PKG_V1}::queue_override_oracle_action::QueueOracleOverride`, typeArgs: [ ] as [], isPhantom: QueueOracleOverride.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => QueueOracleOverride.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => QueueOracleOverride.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => QueueOracleOverride.fromBcs( data, ), bcs: QueueOracleOverride.bcs, fromJSONField: (field: any) => QueueOracleOverride.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => QueueOracleOverride.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => QueueOracleOverride.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => QueueOracleOverride.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => QueueOracleOverride.fetch( client, id, ), new: ( fields: QueueOracleOverrideFields, ) => { return new QueueOracleOverride( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): QueueOracleOverrideReified { return { typeName: QueueOracleOverride.$typeName, fullTypeName: composeSuiType( QueueOracleOverride.$typeName, ...[] ) as `${typeof PKG_V1}::queue_override_oracle_action::QueueOracleOverride`, typeArgs: [ ] as [], isPhantom: QueueOracleOverride.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => QueueOracleOverride.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => QueueOracleOverride.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => QueueOracleOverride.fromBcs( data, ), bcs: QueueOracleOverride.bcs, fromJSONField: (field: any) => QueueOracleOverride.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => QueueOracleOverride.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => QueueOracleOverride.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => QueueOracleOverride.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => QueueOracleOverride.fetch( client, id, ), new: ( fields: QueueOracleOverrideFields, ) => { return new QueueOracleOverride( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return QueueOracleOverride.reified() }
 
@@ -68,9 +68,9 @@ export class QueueOracleOverride implements StructClass { __StructClass = true a
 
  static fromSuiObjectData( data: SuiObjectData ): QueueOracleOverride { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isQueueOracleOverride(data.bcs.type)) { throw new Error(`object at is not a QueueOracleOverride object`); }
 
- return QueueOracleOverride.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return QueueOracleOverride.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return QueueOracleOverride.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return QueueOracleOverride.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<QueueOracleOverride> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching QueueOracleOverride object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isQueueOracleOverride(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a QueueOracleOverride object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<QueueOracleOverride> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching QueueOracleOverride object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isQueueOracleOverride(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a QueueOracleOverride object`); }
 
  return QueueOracleOverride.fromSuiObjectData( res.data ); }
 

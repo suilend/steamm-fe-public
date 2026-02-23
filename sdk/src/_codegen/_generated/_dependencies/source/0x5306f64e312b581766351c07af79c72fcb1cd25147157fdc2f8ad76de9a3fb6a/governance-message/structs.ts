@@ -5,9 +5,9 @@ import {Vector} from "../../../../_framework/vector";
 import {Bytes32} from "../bytes32/structs";
 import {ExternalAddress} from "../external-address/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== DecreeReceipt =============================== */
 
@@ -105,7 +105,7 @@ export class DecreeReceipt<T extends PhantomTypeArgument> implements StructClass
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => DecreeReceipt.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => DecreeReceipt.fetch(
                 client,
                 T,
                 id,
@@ -264,7 +264,7 @@ export class DecreeReceipt<T extends PhantomTypeArgument> implements StructClass
 
             return DecreeReceipt.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -280,7 +280,7 @@ export class DecreeReceipt<T extends PhantomTypeArgument> implements StructClass
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<DecreeReceipt<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -402,7 +402,7 @@ export class DecreeTicket<T extends PhantomTypeArgument> implements StructClass 
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => DecreeTicket.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => DecreeTicket.fetch(
                 client,
                 T,
                 id,
@@ -565,7 +565,7 @@ export class DecreeTicket<T extends PhantomTypeArgument> implements StructClass 
 
             return DecreeTicket.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -581,7 +581,7 @@ export class DecreeTicket<T extends PhantomTypeArgument> implements StructClass 
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<DecreeTicket<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,

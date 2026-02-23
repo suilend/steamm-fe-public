@@ -2,7 +2,7 @@ import {
   DevInspectResults,
   DryRunTransactionBlockResponse,
   SuiTransactionBlockResponse,
-} from "@mysten/sui/client";
+} from "@mysten/sui/jsonRpc";
 
 export type ErrorInfo = {
   tag: string;

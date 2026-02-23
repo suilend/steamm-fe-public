@@ -8,9 +8,9 @@ import {ID, UID} from "../../0x2/object/structs";
 import {SUI} from "../../0x2/sui/structs";
 import {Table} from "../../0x2/table/structs";
 import {PKG_V18} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== FungibleStakedSui =============================== */
 
@@ -97,7 +97,7 @@ export class FungibleStakedSui implements StructClass {
                 FungibleStakedSui.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => FungibleStakedSui.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => FungibleStakedSui.fetch(
                 client,
                 id,
             ),
@@ -224,7 +224,7 @@ export class FungibleStakedSui implements StructClass {
             }
 
             return FungibleStakedSui.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -239,7 +239,7 @@ export class FungibleStakedSui implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<FungibleStakedSui> {
         const res = await client.getObject({
             id,
@@ -345,7 +345,7 @@ export class FungibleStakedSuiData implements StructClass {
                 FungibleStakedSuiData.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => FungibleStakedSuiData.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => FungibleStakedSuiData.fetch(
                 client,
                 id,
             ),
@@ -472,7 +472,7 @@ export class FungibleStakedSuiData implements StructClass {
             }
 
             return FungibleStakedSuiData.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -487,7 +487,7 @@ export class FungibleStakedSuiData implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<FungibleStakedSuiData> {
         const res = await client.getObject({
             id,
@@ -589,7 +589,7 @@ export class FungibleStakedSuiDataKey implements StructClass {
                 FungibleStakedSuiDataKey.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => FungibleStakedSuiDataKey.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => FungibleStakedSuiDataKey.fetch(
                 client,
                 id,
             ),
@@ -712,7 +712,7 @@ export class FungibleStakedSuiDataKey implements StructClass {
             }
 
             return FungibleStakedSuiDataKey.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -727,7 +727,7 @@ export class FungibleStakedSuiDataKey implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<FungibleStakedSuiDataKey> {
         const res = await client.getObject({
             id,
@@ -831,7 +831,7 @@ export class PoolTokenExchangeRate implements StructClass {
                 PoolTokenExchangeRate.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => PoolTokenExchangeRate.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => PoolTokenExchangeRate.fetch(
                 client,
                 id,
             ),
@@ -956,7 +956,7 @@ export class PoolTokenExchangeRate implements StructClass {
             }
 
             return PoolTokenExchangeRate.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -971,7 +971,7 @@ export class PoolTokenExchangeRate implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<PoolTokenExchangeRate> {
         const res = await client.getObject({
             id,
@@ -1079,7 +1079,7 @@ export class StakedSui implements StructClass {
                 StakedSui.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => StakedSui.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => StakedSui.fetch(
                 client,
                 id,
             ),
@@ -1208,7 +1208,7 @@ export class StakedSui implements StructClass {
             }
 
             return StakedSui.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1223,7 +1223,7 @@ export class StakedSui implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<StakedSui> {
         const res = await client.getObject({
             id,
@@ -1345,7 +1345,7 @@ export class StakingPool implements StructClass {
                 StakingPool.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => StakingPool.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => StakingPool.fetch(
                 client,
                 id,
             ),
@@ -1488,7 +1488,7 @@ export class StakingPool implements StructClass {
             }
 
             return StakingPool.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1503,7 +1503,7 @@ export class StakingPool implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<StakingPool> {
         const res = await client.getObject({
             id,

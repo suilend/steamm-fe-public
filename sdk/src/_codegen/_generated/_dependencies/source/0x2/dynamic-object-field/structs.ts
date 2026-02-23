@@ -1,9 +1,9 @@
 import {PhantomReified, Reified, StructClass, ToField, ToTypeArgument, ToTypeStr, TypeArgument, assertFieldsWithTypesArgsMatch, assertReifiedTypeArgsMatch, decodeFromFields, decodeFromFieldsWithTypes, decodeFromJSONField, extractType, fieldToJSON, phantom, toBcs} from "../../../../_framework/reified";
 import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from "../../../../_framework/util";
 import {PKG_V30} from "../index";
-import {BcsType, bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {BcsType, bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Wrapper =============================== */
 
@@ -97,7 +97,7 @@ export class Wrapper<Name extends TypeArgument> implements StructClass {
                     Name,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Wrapper.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Wrapper.fetch(
                 client,
                 Name,
                 id,
@@ -253,7 +253,7 @@ export class Wrapper<Name extends TypeArgument> implements StructClass {
 
             return Wrapper.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -269,7 +269,7 @@ export class Wrapper<Name extends TypeArgument> implements StructClass {
     }
 
     static async fetch<Name extends Reified<TypeArgument, any>>(
-        client: SuiClient, typeArg: Name, id: string
+        client: SuiJsonRpcClient, typeArg: Name, id: string
     ): Promise<Wrapper<ToTypeArgument<Name>>> {
         const res = await client.getObject({
             id,

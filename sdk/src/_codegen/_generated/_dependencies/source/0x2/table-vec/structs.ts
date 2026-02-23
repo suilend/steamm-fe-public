@@ -3,9 +3,9 @@ import {PhantomReified, PhantomToTypeStr, PhantomTypeArgument, Reified, StructCl
 import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from "../../../../_framework/util";
 import {PKG_V30} from "../index";
 import {Table} from "../table/structs";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== TableVec =============================== */
 
@@ -99,7 +99,7 @@ export class TableVec<Element extends PhantomTypeArgument> implements StructClas
                     Element,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => TableVec.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => TableVec.fetch(
                 client,
                 Element,
                 id,
@@ -254,7 +254,7 @@ export class TableVec<Element extends PhantomTypeArgument> implements StructClas
 
             return TableVec.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -270,7 +270,7 @@ export class TableVec<Element extends PhantomTypeArgument> implements StructClas
     }
 
     static async fetch<Element extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: Element, id: string
+        client: SuiJsonRpcClient, typeArg: Element, id: string
     ): Promise<TableVec<ToPhantomTypeArgument<Element>>> {
         const res = await client.getObject({
             id,

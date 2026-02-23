@@ -3,9 +3,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {String} from "../../0x1/string/structs";
 import {PKG_V30} from "../index";
 import {UID} from "../object/structs";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== VerifiedID =============================== */
 
@@ -98,7 +98,7 @@ export class VerifiedID implements StructClass {
                 VerifiedID.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => VerifiedID.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => VerifiedID.fetch(
                 client,
                 id,
             ),
@@ -131,8 +131,8 @@ export class VerifiedID implements StructClass {
             id:
                 UID.bcs
             , owner:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , key_claim_name:
                 String.bcs
             , key_claim_value:
@@ -232,7 +232,7 @@ export class VerifiedID implements StructClass {
             }
 
             return VerifiedID.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -247,7 +247,7 @@ export class VerifiedID implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<VerifiedID> {
         const res = await client.getObject({
             id,

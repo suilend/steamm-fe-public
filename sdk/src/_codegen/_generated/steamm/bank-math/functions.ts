@@ -1,6 +1,6 @@
 import {PUBLISHED_AT} from "..";
 import {pure} from "../../_framework/util";
-import {Transaction, TransactionArgument} from "@mysten/sui-v1/transactions";
+import {Transaction, TransactionArgument} from "@mysten/sui/transactions";
 
 export interface AssertOutputArgs {
     liquidReserve: bigint | TransactionArgument; lent: bigint | TransactionArgument; output: bigint | TransactionArgument

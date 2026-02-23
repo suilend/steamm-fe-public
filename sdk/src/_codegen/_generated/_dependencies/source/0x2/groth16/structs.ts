@@ -3,9 +3,9 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {Vector} from "../../../../_framework/vector";
 import {PKG_V30} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Curve =============================== */
 
@@ -88,7 +88,7 @@ export class Curve implements StructClass {
                 Curve.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Curve.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Curve.fetch(
                 client,
                 id,
             ),
@@ -211,7 +211,7 @@ export class Curve implements StructClass {
             }
 
             return Curve.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -226,7 +226,7 @@ export class Curve implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Curve> {
         const res = await client.getObject({
             id,
@@ -334,7 +334,7 @@ export class PreparedVerifyingKey implements StructClass {
                 PreparedVerifyingKey.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => PreparedVerifyingKey.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => PreparedVerifyingKey.fetch(
                 client,
                 id,
             ),
@@ -463,7 +463,7 @@ export class PreparedVerifyingKey implements StructClass {
             }
 
             return PreparedVerifyingKey.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -478,7 +478,7 @@ export class PreparedVerifyingKey implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<PreparedVerifyingKey> {
         const res = await client.getObject({
             id,
@@ -580,7 +580,7 @@ export class ProofPoints implements StructClass {
                 ProofPoints.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ProofPoints.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ProofPoints.fetch(
                 client,
                 id,
             ),
@@ -703,7 +703,7 @@ export class ProofPoints implements StructClass {
             }
 
             return ProofPoints.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -718,7 +718,7 @@ export class ProofPoints implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ProofPoints> {
         const res = await client.getObject({
             id,
@@ -820,7 +820,7 @@ export class PublicProofInputs implements StructClass {
                 PublicProofInputs.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => PublicProofInputs.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => PublicProofInputs.fetch(
                 client,
                 id,
             ),
@@ -943,7 +943,7 @@ export class PublicProofInputs implements StructClass {
             }
 
             return PublicProofInputs.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -958,7 +958,7 @@ export class PublicProofInputs implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<PublicProofInputs> {
         const res = await client.getObject({
             id,

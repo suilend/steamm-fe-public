@@ -4,9 +4,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {Vector} from "../../../../_framework/vector";
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== OracleCreated =============================== */
 
@@ -28,7 +28,7 @@ export class OracleCreated implements StructClass { __StructClass = true as cons
 
  this.oracleId = fields.oracleId;; this.queueId = fields.queueId;; this.oracleKey = fields.oracleKey; }
 
- static reified( ): OracleCreatedReified { return { typeName: OracleCreated.$typeName, fullTypeName: composeSuiType( OracleCreated.$typeName, ...[] ) as `${typeof PKG_V1}::oracle_init_action::OracleCreated`, typeArgs: [ ] as [], isPhantom: OracleCreated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => OracleCreated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => OracleCreated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => OracleCreated.fromBcs( data, ), bcs: OracleCreated.bcs, fromJSONField: (field: any) => OracleCreated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => OracleCreated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => OracleCreated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => OracleCreated.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => OracleCreated.fetch( client, id, ), new: ( fields: OracleCreatedFields, ) => { return new OracleCreated( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): OracleCreatedReified { return { typeName: OracleCreated.$typeName, fullTypeName: composeSuiType( OracleCreated.$typeName, ...[] ) as `${typeof PKG_V1}::oracle_init_action::OracleCreated`, typeArgs: [ ] as [], isPhantom: OracleCreated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => OracleCreated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => OracleCreated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => OracleCreated.fromBcs( data, ), bcs: OracleCreated.bcs, fromJSONField: (field: any) => OracleCreated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => OracleCreated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => OracleCreated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => OracleCreated.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => OracleCreated.fetch( client, id, ), new: ( fields: OracleCreatedFields, ) => { return new OracleCreated( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return OracleCreated.reified() }
 
@@ -68,9 +68,9 @@ export class OracleCreated implements StructClass { __StructClass = true as cons
 
  static fromSuiObjectData( data: SuiObjectData ): OracleCreated { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isOracleCreated(data.bcs.type)) { throw new Error(`object at is not a OracleCreated object`); }
 
- return OracleCreated.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return OracleCreated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return OracleCreated.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return OracleCreated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<OracleCreated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching OracleCreated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isOracleCreated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a OracleCreated object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<OracleCreated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching OracleCreated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isOracleCreated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a OracleCreated object`); }
 
  return OracleCreated.fromSuiObjectData( res.data ); }
 

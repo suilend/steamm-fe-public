@@ -2,9 +2,9 @@ import {PhantomReified, PhantomToTypeStr, PhantomTypeArgument, Reified, StructCl
 import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from "../../../../_framework/util";
 import {PKG_V30} from "../index";
 import {UID} from "../object/structs";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Table =============================== */
 
@@ -100,7 +100,7 @@ export class Table<K extends PhantomTypeArgument, V extends PhantomTypeArgument>
                     [K, V],
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Table.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Table.fetch(
                 client,
                 [K, V],
                 id,
@@ -259,7 +259,7 @@ export class Table<K extends PhantomTypeArgument, V extends PhantomTypeArgument>
 
             return Table.fromBcs(
                 typeArgs,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -275,7 +275,7 @@ export class Table<K extends PhantomTypeArgument, V extends PhantomTypeArgument>
     }
 
     static async fetch<K extends PhantomReified<PhantomTypeArgument>, V extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArgs: [K, V], id: string
+        client: SuiJsonRpcClient, typeArgs: [K, V], id: string
     ): Promise<Table<ToPhantomTypeArgument<K>, ToPhantomTypeArgument<V>>> {
         const res = await client.getObject({
             id,

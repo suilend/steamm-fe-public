@@ -3,9 +3,9 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {Vector} from "../../../../_framework/vector";
 import {PKG_V30} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== TxContext =============================== */
 
@@ -96,7 +96,7 @@ export class TxContext implements StructClass {
                 TxContext.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => TxContext.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => TxContext.fetch(
                 client,
                 id,
             ),
@@ -127,8 +127,8 @@ export class TxContext implements StructClass {
     static get bcs() {
         return bcs.struct("TxContext", {
             sender:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , tx_hash:
                 bcs.vector(bcs.u8())
             , epoch:
@@ -228,7 +228,7 @@ export class TxContext implements StructClass {
             }
 
             return TxContext.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -243,7 +243,7 @@ export class TxContext implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<TxContext> {
         const res = await client.getObject({
             id,

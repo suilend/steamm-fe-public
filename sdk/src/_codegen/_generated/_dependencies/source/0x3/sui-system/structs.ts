@@ -2,9 +2,9 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {UID} from "../../0x2/object/structs";
 import {PKG_V18} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== SuiSystemState =============================== */
 
@@ -89,7 +89,7 @@ export class SuiSystemState implements StructClass {
                 SuiSystemState.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => SuiSystemState.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => SuiSystemState.fetch(
                 client,
                 id,
             ),
@@ -214,7 +214,7 @@ export class SuiSystemState implements StructClass {
             }
 
             return SuiSystemState.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -229,7 +229,7 @@ export class SuiSystemState implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<SuiSystemState> {
         const res = await client.getObject({
             id,

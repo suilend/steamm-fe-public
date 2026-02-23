@@ -1,6 +1,6 @@
 import {PUBLISHED_AT} from "..";
 import {obj, pure} from "../../_framework/util";
-import {Transaction, TransactionArgument, TransactionObjectInput} from "@mysten/sui-v1/transactions";
+import {Transaction, TransactionArgument, TransactionObjectInput} from "@mysten/sui/transactions";
 
 export function fromPythPrice( tx: Transaction, price: TransactionObjectInput, publishedAt: string = PUBLISHED_AT ) { return tx.moveCall({ target: `${publishedAt}::pyth::from_pyth_price`, arguments: [ obj(tx, price) ], }) }
 

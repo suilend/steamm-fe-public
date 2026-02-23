@@ -3,9 +3,9 @@ import {PhantomReified, PhantomToTypeStr, PhantomTypeArgument, Reified, StructCl
 import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from "../../../../_framework/util";
 import {Table} from "../../0x2/table/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Empty =============================== */
 
@@ -88,7 +88,7 @@ export class Empty implements StructClass {
                 Empty.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Empty.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Empty.fetch(
                 client,
                 id,
             ),
@@ -211,7 +211,7 @@ export class Empty implements StructClass {
             }
 
             return Empty.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -226,7 +226,7 @@ export class Empty implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Empty> {
         const res = await client.getObject({
             id,
@@ -339,7 +339,7 @@ export class Set<T extends PhantomTypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Set.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Set.fetch(
                 client,
                 T,
                 id,
@@ -494,7 +494,7 @@ export class Set<T extends PhantomTypeArgument> implements StructClass {
 
             return Set.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -510,7 +510,7 @@ export class Set<T extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<Set<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,

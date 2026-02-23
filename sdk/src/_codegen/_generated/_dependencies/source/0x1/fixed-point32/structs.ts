@@ -1,9 +1,9 @@
 import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFields, decodeFromFieldsWithTypes, decodeFromJSONField, phantom} from "../../../../_framework/reified";
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {PKG_V14} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== FixedPoint32 =============================== */
 
@@ -86,7 +86,7 @@ export class FixedPoint32 implements StructClass {
                 FixedPoint32.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => FixedPoint32.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => FixedPoint32.fetch(
                 client,
                 id,
             ),
@@ -209,7 +209,7 @@ export class FixedPoint32 implements StructClass {
             }
 
             return FixedPoint32.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -224,7 +224,7 @@ export class FixedPoint32 implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<FixedPoint32> {
         const res = await client.getObject({
             id,

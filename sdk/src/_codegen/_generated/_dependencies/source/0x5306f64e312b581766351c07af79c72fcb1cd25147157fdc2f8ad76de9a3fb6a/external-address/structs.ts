@@ -2,9 +2,9 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {Bytes32} from "../bytes32/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== ExternalAddress =============================== */
 
@@ -87,7 +87,7 @@ export class ExternalAddress implements StructClass {
                 ExternalAddress.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ExternalAddress.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ExternalAddress.fetch(
                 client,
                 id,
             ),
@@ -210,7 +210,7 @@ export class ExternalAddress implements StructClass {
             }
 
             return ExternalAddress.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -225,7 +225,7 @@ export class ExternalAddress implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ExternalAddress> {
         const res = await client.getObject({
             id,

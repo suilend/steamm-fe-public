@@ -2,9 +2,9 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeArgument, ToTypeStr
 import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from "../../../../_framework/util";
 import {PKG_V30} from "../index";
 import {UID} from "../object/structs";
-import {BcsType, bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {BcsType, bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Field =============================== */
 
@@ -102,7 +102,7 @@ export class Field<Name extends TypeArgument, Value extends TypeArgument> implem
                     [Name, Value],
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Field.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Field.fetch(
                 client,
                 [Name, Value],
                 id,
@@ -263,7 +263,7 @@ export class Field<Name extends TypeArgument, Value extends TypeArgument> implem
 
             return Field.fromBcs(
                 typeArgs,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -279,7 +279,7 @@ export class Field<Name extends TypeArgument, Value extends TypeArgument> implem
     }
 
     static async fetch<Name extends Reified<TypeArgument, any>, Value extends Reified<TypeArgument, any>>(
-        client: SuiClient, typeArgs: [Name, Value], id: string
+        client: SuiJsonRpcClient, typeArgs: [Name, Value], id: string
     ): Promise<Field<ToTypeArgument<Name>, ToTypeArgument<Value>>> {
         const res = await client.getObject({
             id,

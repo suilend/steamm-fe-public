@@ -3,14 +3,15 @@ import {
   DynamicFieldPage,
   PaginatedEvents,
   PaginatedObjectsResponse,
-  SuiClient,
   SuiEventFilter,
+  SuiJsonRpcClient,
+  SuiJsonRpcClientOptions,
   SuiObjectDataOptions,
   SuiObjectResponse,
   SuiObjectResponseQuery,
   SuiParsedData,
   SuiTransactionBlockResponse,
-} from "@mysten/sui/client";
+} from "@mysten/sui/jsonRpc";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Secp256k1Keypair } from "@mysten/sui/keypairs/secp256k1";
 import {
@@ -44,7 +45,10 @@ import { extractGenerics } from "../utils";
 /**
  * Represents a module for making RPC (Remote Procedure Call) requests.
  */
-export class FullClient extends SuiClient {
+export class FullClient extends SuiJsonRpcClient {
+  constructor(options: SuiJsonRpcClientOptions) {
+    super(options);
+  }
   /**
    * Get events for a given query criteria
    * @param query
@@ -182,9 +186,9 @@ export class FullClient extends SuiClient {
    * @throws {Error} - Throws an error if the sender is empty.
    */
   async calculationTxGas(tx: Transaction): Promise<number> {
-    const { sender } = tx.blockData;
+    const sender = tx.getData().sender;
 
-    if (sender === undefined) {
+    if (!sender) {
       throw Error("sdk sender is empty");
     }
 

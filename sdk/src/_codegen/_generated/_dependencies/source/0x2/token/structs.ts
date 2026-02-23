@@ -8,9 +8,9 @@ import {PKG_V30} from "../index";
 import {ID, UID} from "../object/structs";
 import {VecMap} from "../vec-map/structs";
 import {VecSet} from "../vec-set/structs";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== RuleKey =============================== */
 
@@ -104,7 +104,7 @@ export class RuleKey<T extends PhantomTypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => RuleKey.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => RuleKey.fetch(
                 client,
                 T,
                 id,
@@ -259,7 +259,7 @@ export class RuleKey<T extends PhantomTypeArgument> implements StructClass {
 
             return RuleKey.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -275,7 +275,7 @@ export class RuleKey<T extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<RuleKey<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -399,7 +399,7 @@ export class ActionRequest<T extends PhantomTypeArgument> implements StructClass
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ActionRequest.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ActionRequest.fetch(
                 client,
                 T,
                 id,
@@ -439,11 +439,11 @@ export class ActionRequest<T extends PhantomTypeArgument> implements StructClass
             , amount:
                 bcs.u64()
             , sender:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , recipient:
-                Option.bcs(bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),}))
+                Option.bcs(bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),}))
             , spent_balance:
                 Option.bcs(Balance.bcs)
             , approvals:
@@ -566,7 +566,7 @@ export class ActionRequest<T extends PhantomTypeArgument> implements StructClass
 
             return ActionRequest.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -582,7 +582,7 @@ export class ActionRequest<T extends PhantomTypeArgument> implements StructClass
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<ActionRequest<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -698,7 +698,7 @@ export class Token<T extends PhantomTypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Token.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Token.fetch(
                 client,
                 T,
                 id,
@@ -855,7 +855,7 @@ export class Token<T extends PhantomTypeArgument> implements StructClass {
 
             return Token.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -871,7 +871,7 @@ export class Token<T extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<Token<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -989,7 +989,7 @@ export class TokenPolicy<T extends PhantomTypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => TokenPolicy.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => TokenPolicy.fetch(
                 client,
                 T,
                 id,
@@ -1148,7 +1148,7 @@ export class TokenPolicy<T extends PhantomTypeArgument> implements StructClass {
 
             return TokenPolicy.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1164,7 +1164,7 @@ export class TokenPolicy<T extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<TokenPolicy<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -1280,7 +1280,7 @@ export class TokenPolicyCap<T extends PhantomTypeArgument> implements StructClas
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => TokenPolicyCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => TokenPolicyCap.fetch(
                 client,
                 T,
                 id,
@@ -1437,7 +1437,7 @@ export class TokenPolicyCap<T extends PhantomTypeArgument> implements StructClas
 
             return TokenPolicyCap.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1453,7 +1453,7 @@ export class TokenPolicyCap<T extends PhantomTypeArgument> implements StructClas
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<TokenPolicyCap<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -1569,7 +1569,7 @@ export class TokenPolicyCreated<T extends PhantomTypeArgument> implements Struct
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => TokenPolicyCreated.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => TokenPolicyCreated.fetch(
                 client,
                 T,
                 id,
@@ -1726,7 +1726,7 @@ export class TokenPolicyCreated<T extends PhantomTypeArgument> implements Struct
 
             return TokenPolicyCreated.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1742,7 +1742,7 @@ export class TokenPolicyCreated<T extends PhantomTypeArgument> implements Struct
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<TokenPolicyCreated<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,

@@ -22,7 +22,7 @@ import {
   STEAMM_SCRIPT_PKG_ID,
   SUILEND_PKG_ID,
 } from "./../packages";
-import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
+import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/jsonRpc";
 import { parseErrorCode } from "../../src";
 import {
   createCoinAndBankHelper,

@@ -1,9 +1,9 @@
 import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFields, decodeFromFieldsWithTypes, decodeFromJSONField, phantom} from "../../../../_framework/reified";
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== GovernanceWitness =============================== */
 
@@ -86,7 +86,7 @@ export class GovernanceWitness implements StructClass {
                 GovernanceWitness.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => GovernanceWitness.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => GovernanceWitness.fetch(
                 client,
                 id,
             ),
@@ -209,7 +209,7 @@ export class GovernanceWitness implements StructClass {
             }
 
             return GovernanceWitness.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -224,7 +224,7 @@ export class GovernanceWitness implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<GovernanceWitness> {
         const res = await client.getObject({
             id,
@@ -328,7 +328,7 @@ export class TransferFee implements StructClass {
                 TransferFee.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => TransferFee.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => TransferFee.fetch(
                 client,
                 id,
             ),
@@ -361,8 +361,8 @@ export class TransferFee implements StructClass {
             amount:
                 bcs.u64()
             , recipient:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
 
         })
     };
@@ -454,7 +454,7 @@ export class TransferFee implements StructClass {
             }
 
             return TransferFee.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -469,7 +469,7 @@ export class TransferFee implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<TransferFee> {
         const res = await client.getObject({
             id,

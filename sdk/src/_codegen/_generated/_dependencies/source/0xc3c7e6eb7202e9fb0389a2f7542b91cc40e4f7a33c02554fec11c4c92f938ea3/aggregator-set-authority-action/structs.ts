@@ -2,9 +2,9 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== AggregatorAuthorityUpdated =============================== */
 
@@ -26,7 +26,7 @@ export class AggregatorAuthorityUpdated implements StructClass { __StructClass =
 
  this.aggregatorId = fields.aggregatorId;; this.existingAuthority = fields.existingAuthority;; this.newAuthority = fields.newAuthority; }
 
- static reified( ): AggregatorAuthorityUpdatedReified { return { typeName: AggregatorAuthorityUpdated.$typeName, fullTypeName: composeSuiType( AggregatorAuthorityUpdated.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator_set_authority_action::AggregatorAuthorityUpdated`, typeArgs: [ ] as [], isPhantom: AggregatorAuthorityUpdated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => AggregatorAuthorityUpdated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => AggregatorAuthorityUpdated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => AggregatorAuthorityUpdated.fromBcs( data, ), bcs: AggregatorAuthorityUpdated.bcs, fromJSONField: (field: any) => AggregatorAuthorityUpdated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => AggregatorAuthorityUpdated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => AggregatorAuthorityUpdated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => AggregatorAuthorityUpdated.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => AggregatorAuthorityUpdated.fetch( client, id, ), new: ( fields: AggregatorAuthorityUpdatedFields, ) => { return new AggregatorAuthorityUpdated( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): AggregatorAuthorityUpdatedReified { return { typeName: AggregatorAuthorityUpdated.$typeName, fullTypeName: composeSuiType( AggregatorAuthorityUpdated.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator_set_authority_action::AggregatorAuthorityUpdated`, typeArgs: [ ] as [], isPhantom: AggregatorAuthorityUpdated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => AggregatorAuthorityUpdated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => AggregatorAuthorityUpdated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => AggregatorAuthorityUpdated.fromBcs( data, ), bcs: AggregatorAuthorityUpdated.bcs, fromJSONField: (field: any) => AggregatorAuthorityUpdated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => AggregatorAuthorityUpdated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => AggregatorAuthorityUpdated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => AggregatorAuthorityUpdated.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => AggregatorAuthorityUpdated.fetch( client, id, ), new: ( fields: AggregatorAuthorityUpdatedFields, ) => { return new AggregatorAuthorityUpdated( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return AggregatorAuthorityUpdated.reified() }
 
@@ -34,7 +34,7 @@ export class AggregatorAuthorityUpdated implements StructClass { __StructClass =
 
  static get bcs() { return bcs.struct("AggregatorAuthorityUpdated", {
 
- aggregatorId: ID.bcs, existingAuthority: bcs.bytes(32).transform({ input: (val: string) => fromHEX(val), output: (val: Uint8Array) => toHEX(val), }), newAuthority: bcs.bytes(32).transform({ input: (val: string) => fromHEX(val), output: (val: Uint8Array) => toHEX(val), })
+ aggregatorId: ID.bcs, existingAuthority: bcs.bytes(32).transform({ input: (val: string) => fromHex(val), output: (val: Uint8Array) => toHex(val), }), newAuthority: bcs.bytes(32).transform({ input: (val: string) => fromHex(val), output: (val: Uint8Array) => toHex(val), })
 
 }) };
 
@@ -66,9 +66,9 @@ export class AggregatorAuthorityUpdated implements StructClass { __StructClass =
 
  static fromSuiObjectData( data: SuiObjectData ): AggregatorAuthorityUpdated { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isAggregatorAuthorityUpdated(data.bcs.type)) { throw new Error(`object at is not a AggregatorAuthorityUpdated object`); }
 
- return AggregatorAuthorityUpdated.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return AggregatorAuthorityUpdated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return AggregatorAuthorityUpdated.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return AggregatorAuthorityUpdated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<AggregatorAuthorityUpdated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching AggregatorAuthorityUpdated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAggregatorAuthorityUpdated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a AggregatorAuthorityUpdated object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<AggregatorAuthorityUpdated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching AggregatorAuthorityUpdated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAggregatorAuthorityUpdated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a AggregatorAuthorityUpdated object`); }
 
  return AggregatorAuthorityUpdated.fromSuiObjectData( res.data ); }
 

@@ -5,9 +5,9 @@ import {Vector} from "../../../../_framework/vector";
 import {PKG_V30} from "../index";
 import {UID} from "../object/structs";
 import {Versioned} from "../versioned/structs";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Random =============================== */
 
@@ -92,7 +92,7 @@ export class Random implements StructClass {
                 Random.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Random.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Random.fetch(
                 client,
                 id,
             ),
@@ -217,7 +217,7 @@ export class Random implements StructClass {
             }
 
             return Random.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -232,7 +232,7 @@ export class Random implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Random> {
         const res = await client.getObject({
             id,
@@ -338,7 +338,7 @@ export class RandomGenerator implements StructClass {
                 RandomGenerator.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => RandomGenerator.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => RandomGenerator.fetch(
                 client,
                 id,
             ),
@@ -465,7 +465,7 @@ export class RandomGenerator implements StructClass {
             }
 
             return RandomGenerator.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -480,7 +480,7 @@ export class RandomGenerator implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<RandomGenerator> {
         const res = await client.getObject({
             id,
@@ -588,7 +588,7 @@ export class RandomInner implements StructClass {
                 RandomInner.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => RandomInner.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => RandomInner.fetch(
                 client,
                 id,
             ),
@@ -717,7 +717,7 @@ export class RandomInner implements StructClass {
             }
 
             return RandomInner.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -732,7 +732,7 @@ export class RandomInner implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<RandomInner> {
         const res = await client.getObject({
             id,

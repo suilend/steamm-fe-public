@@ -43,6 +43,7 @@ export const SUILEND_BETA_CONFIG = {
 
 export const BETA_CONFIG: SdkOptions = {
   fullRpcUrl: "https://fullnode.mainnet.sui.io:443",
+  network: "mainnet",
   packages: {
     suilend: SUILEND_BETA_CONFIG,
     steamm: STEAMM_BETA_CONFIG,

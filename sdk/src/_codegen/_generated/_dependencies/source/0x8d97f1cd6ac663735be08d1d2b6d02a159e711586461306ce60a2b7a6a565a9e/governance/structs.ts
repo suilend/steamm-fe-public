@@ -4,9 +4,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {Vector} from "../../../../_framework/vector";
 import {Bytes32} from "../../0x5306f64e312b581766351c07af79c72fcb1cd25147157fdc2f8ad76de9a3fb6a/bytes32/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== WormholeVAAVerificationReceipt =============================== */
 
@@ -93,7 +93,7 @@ export class WormholeVAAVerificationReceipt implements StructClass {
                 WormholeVAAVerificationReceipt.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => WormholeVAAVerificationReceipt.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => WormholeVAAVerificationReceipt.fetch(
                 client,
                 id,
             ),
@@ -220,7 +220,7 @@ export class WormholeVAAVerificationReceipt implements StructClass {
             }
 
             return WormholeVAAVerificationReceipt.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -235,7 +235,7 @@ export class WormholeVAAVerificationReceipt implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<WormholeVAAVerificationReceipt> {
         const res = await client.getObject({
             id,

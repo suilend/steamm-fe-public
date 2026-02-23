@@ -6,9 +6,9 @@ import {String} from "../../0x1/string/structs";
 import {ID, UID} from "../../0x2/object/structs";
 import {Decimal} from "../decimal/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== Aggregator =============================== */
 
@@ -30,7 +30,7 @@ export class Aggregator implements StructClass { __StructClass = true as const;
 
  this.id = fields.id;; this.queue = fields.queue;; this.createdAtMs = fields.createdAtMs;; this.name = fields.name;; this.authority = fields.authority;; this.feedHash = fields.feedHash;; this.minSampleSize = fields.minSampleSize;; this.maxStalenessSeconds = fields.maxStalenessSeconds;; this.maxVariance = fields.maxVariance;; this.minResponses = fields.minResponses;; this.currentResult = fields.currentResult;; this.updateState = fields.updateState;; this.version = fields.version; }
 
- static reified( ): AggregatorReified { return { typeName: Aggregator.$typeName, fullTypeName: composeSuiType( Aggregator.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator::Aggregator`, typeArgs: [ ] as [], isPhantom: Aggregator.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => Aggregator.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => Aggregator.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => Aggregator.fromBcs( data, ), bcs: Aggregator.bcs, fromJSONField: (field: any) => Aggregator.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => Aggregator.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => Aggregator.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => Aggregator.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => Aggregator.fetch( client, id, ), new: ( fields: AggregatorFields, ) => { return new Aggregator( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): AggregatorReified { return { typeName: Aggregator.$typeName, fullTypeName: composeSuiType( Aggregator.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator::Aggregator`, typeArgs: [ ] as [], isPhantom: Aggregator.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => Aggregator.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => Aggregator.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => Aggregator.fromBcs( data, ), bcs: Aggregator.bcs, fromJSONField: (field: any) => Aggregator.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => Aggregator.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => Aggregator.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => Aggregator.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => Aggregator.fetch( client, id, ), new: ( fields: AggregatorFields, ) => { return new Aggregator( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return Aggregator.reified() }
 
@@ -38,7 +38,7 @@ export class Aggregator implements StructClass { __StructClass = true as const;
 
  static get bcs() { return bcs.struct("Aggregator", {
 
- id: UID.bcs, queue: ID.bcs, createdAtMs: bcs.u64(), name: String.bcs, authority: bcs.bytes(32).transform({ input: (val: string) => fromHEX(val), output: (val: Uint8Array) => toHEX(val), }), feedHash: bcs.vector(bcs.u8()), minSampleSize: bcs.u64(), maxStalenessSeconds: bcs.u64(), maxVariance: bcs.u64(), minResponses: bcs.u32(), currentResult: CurrentResult.bcs, updateState: UpdateState.bcs, version: bcs.u8()
+ id: UID.bcs, queue: ID.bcs, createdAtMs: bcs.u64(), name: String.bcs, authority: bcs.bytes(32).transform({ input: (val: string) => fromHex(val), output: (val: Uint8Array) => toHex(val), }), feedHash: bcs.vector(bcs.u8()), minSampleSize: bcs.u64(), maxStalenessSeconds: bcs.u64(), maxVariance: bcs.u64(), minResponses: bcs.u32(), currentResult: CurrentResult.bcs, updateState: UpdateState.bcs, version: bcs.u8()
 
 }) };
 
@@ -70,9 +70,9 @@ export class Aggregator implements StructClass { __StructClass = true as const;
 
  static fromSuiObjectData( data: SuiObjectData ): Aggregator { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isAggregator(data.bcs.type)) { throw new Error(`object at is not a Aggregator object`); }
 
- return Aggregator.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return Aggregator.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return Aggregator.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return Aggregator.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<Aggregator> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching Aggregator object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAggregator(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a Aggregator object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<Aggregator> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching Aggregator object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAggregator(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a Aggregator object`); }
 
  return Aggregator.fromSuiObjectData( res.data ); }
 
@@ -98,7 +98,7 @@ export class CurrentResult implements StructClass { __StructClass = true as cons
 
  this.result = fields.result;; this.timestampMs = fields.timestampMs;; this.minTimestampMs = fields.minTimestampMs;; this.maxTimestampMs = fields.maxTimestampMs;; this.minResult = fields.minResult;; this.maxResult = fields.maxResult;; this.stdev = fields.stdev;; this.range = fields.range;; this.mean = fields.mean; }
 
- static reified( ): CurrentResultReified { return { typeName: CurrentResult.$typeName, fullTypeName: composeSuiType( CurrentResult.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator::CurrentResult`, typeArgs: [ ] as [], isPhantom: CurrentResult.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => CurrentResult.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => CurrentResult.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => CurrentResult.fromBcs( data, ), bcs: CurrentResult.bcs, fromJSONField: (field: any) => CurrentResult.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => CurrentResult.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => CurrentResult.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => CurrentResult.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => CurrentResult.fetch( client, id, ), new: ( fields: CurrentResultFields, ) => { return new CurrentResult( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): CurrentResultReified { return { typeName: CurrentResult.$typeName, fullTypeName: composeSuiType( CurrentResult.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator::CurrentResult`, typeArgs: [ ] as [], isPhantom: CurrentResult.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => CurrentResult.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => CurrentResult.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => CurrentResult.fromBcs( data, ), bcs: CurrentResult.bcs, fromJSONField: (field: any) => CurrentResult.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => CurrentResult.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => CurrentResult.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => CurrentResult.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => CurrentResult.fetch( client, id, ), new: ( fields: CurrentResultFields, ) => { return new CurrentResult( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return CurrentResult.reified() }
 
@@ -138,9 +138,9 @@ export class CurrentResult implements StructClass { __StructClass = true as cons
 
  static fromSuiObjectData( data: SuiObjectData ): CurrentResult { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isCurrentResult(data.bcs.type)) { throw new Error(`object at is not a CurrentResult object`); }
 
- return CurrentResult.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return CurrentResult.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return CurrentResult.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return CurrentResult.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<CurrentResult> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching CurrentResult object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isCurrentResult(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a CurrentResult object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<CurrentResult> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching CurrentResult object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isCurrentResult(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a CurrentResult object`); }
 
  return CurrentResult.fromSuiObjectData( res.data ); }
 
@@ -166,7 +166,7 @@ export class Update implements StructClass { __StructClass = true as const;
 
  this.result = fields.result;; this.timestampMs = fields.timestampMs;; this.oracle = fields.oracle; }
 
- static reified( ): UpdateReified { return { typeName: Update.$typeName, fullTypeName: composeSuiType( Update.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator::Update`, typeArgs: [ ] as [], isPhantom: Update.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => Update.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => Update.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => Update.fromBcs( data, ), bcs: Update.bcs, fromJSONField: (field: any) => Update.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => Update.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => Update.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => Update.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => Update.fetch( client, id, ), new: ( fields: UpdateFields, ) => { return new Update( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): UpdateReified { return { typeName: Update.$typeName, fullTypeName: composeSuiType( Update.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator::Update`, typeArgs: [ ] as [], isPhantom: Update.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => Update.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => Update.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => Update.fromBcs( data, ), bcs: Update.bcs, fromJSONField: (field: any) => Update.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => Update.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => Update.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => Update.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => Update.fetch( client, id, ), new: ( fields: UpdateFields, ) => { return new Update( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return Update.reified() }
 
@@ -206,9 +206,9 @@ export class Update implements StructClass { __StructClass = true as const;
 
  static fromSuiObjectData( data: SuiObjectData ): Update { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isUpdate(data.bcs.type)) { throw new Error(`object at is not a Update object`); }
 
- return Update.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return Update.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return Update.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return Update.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<Update> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching Update object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isUpdate(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a Update object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<Update> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching Update object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isUpdate(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a Update object`); }
 
  return Update.fromSuiObjectData( res.data ); }
 
@@ -234,7 +234,7 @@ export class UpdateState implements StructClass { __StructClass = true as const;
 
  this.results = fields.results;; this.currIdx = fields.currIdx; }
 
- static reified( ): UpdateStateReified { return { typeName: UpdateState.$typeName, fullTypeName: composeSuiType( UpdateState.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator::UpdateState`, typeArgs: [ ] as [], isPhantom: UpdateState.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => UpdateState.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => UpdateState.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => UpdateState.fromBcs( data, ), bcs: UpdateState.bcs, fromJSONField: (field: any) => UpdateState.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => UpdateState.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => UpdateState.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => UpdateState.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => UpdateState.fetch( client, id, ), new: ( fields: UpdateStateFields, ) => { return new UpdateState( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): UpdateStateReified { return { typeName: UpdateState.$typeName, fullTypeName: composeSuiType( UpdateState.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator::UpdateState`, typeArgs: [ ] as [], isPhantom: UpdateState.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => UpdateState.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => UpdateState.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => UpdateState.fromBcs( data, ), bcs: UpdateState.bcs, fromJSONField: (field: any) => UpdateState.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => UpdateState.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => UpdateState.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => UpdateState.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => UpdateState.fetch( client, id, ), new: ( fields: UpdateStateFields, ) => { return new UpdateState( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return UpdateState.reified() }
 
@@ -274,9 +274,9 @@ export class UpdateState implements StructClass { __StructClass = true as const;
 
  static fromSuiObjectData( data: SuiObjectData ): UpdateState { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isUpdateState(data.bcs.type)) { throw new Error(`object at is not a UpdateState object`); }
 
- return UpdateState.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return UpdateState.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return UpdateState.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return UpdateState.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<UpdateState> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching UpdateState object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isUpdateState(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a UpdateState object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<UpdateState> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching UpdateState object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isUpdateState(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a UpdateState object`); }
 
  return UpdateState.fromSuiObjectData( res.data ); }
 

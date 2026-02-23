@@ -4,9 +4,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {Vector} from "../../../../_framework/vector";
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== AggregatorConfigsUpdated =============================== */
 
@@ -28,7 +28,7 @@ export class AggregatorConfigsUpdated implements StructClass { __StructClass = t
 
  this.aggregatorId = fields.aggregatorId;; this.feedHash = fields.feedHash;; this.minSampleSize = fields.minSampleSize;; this.maxStalenessSeconds = fields.maxStalenessSeconds;; this.maxVariance = fields.maxVariance;; this.minResponses = fields.minResponses; }
 
- static reified( ): AggregatorConfigsUpdatedReified { return { typeName: AggregatorConfigsUpdated.$typeName, fullTypeName: composeSuiType( AggregatorConfigsUpdated.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator_set_configs_action::AggregatorConfigsUpdated`, typeArgs: [ ] as [], isPhantom: AggregatorConfigsUpdated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => AggregatorConfigsUpdated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => AggregatorConfigsUpdated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => AggregatorConfigsUpdated.fromBcs( data, ), bcs: AggregatorConfigsUpdated.bcs, fromJSONField: (field: any) => AggregatorConfigsUpdated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => AggregatorConfigsUpdated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => AggregatorConfigsUpdated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => AggregatorConfigsUpdated.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => AggregatorConfigsUpdated.fetch( client, id, ), new: ( fields: AggregatorConfigsUpdatedFields, ) => { return new AggregatorConfigsUpdated( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): AggregatorConfigsUpdatedReified { return { typeName: AggregatorConfigsUpdated.$typeName, fullTypeName: composeSuiType( AggregatorConfigsUpdated.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator_set_configs_action::AggregatorConfigsUpdated`, typeArgs: [ ] as [], isPhantom: AggregatorConfigsUpdated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => AggregatorConfigsUpdated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => AggregatorConfigsUpdated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => AggregatorConfigsUpdated.fromBcs( data, ), bcs: AggregatorConfigsUpdated.bcs, fromJSONField: (field: any) => AggregatorConfigsUpdated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => AggregatorConfigsUpdated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => AggregatorConfigsUpdated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => AggregatorConfigsUpdated.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => AggregatorConfigsUpdated.fetch( client, id, ), new: ( fields: AggregatorConfigsUpdatedFields, ) => { return new AggregatorConfigsUpdated( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return AggregatorConfigsUpdated.reified() }
 
@@ -68,9 +68,9 @@ export class AggregatorConfigsUpdated implements StructClass { __StructClass = t
 
  static fromSuiObjectData( data: SuiObjectData ): AggregatorConfigsUpdated { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isAggregatorConfigsUpdated(data.bcs.type)) { throw new Error(`object at is not a AggregatorConfigsUpdated object`); }
 
- return AggregatorConfigsUpdated.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return AggregatorConfigsUpdated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return AggregatorConfigsUpdated.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return AggregatorConfigsUpdated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<AggregatorConfigsUpdated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching AggregatorConfigsUpdated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAggregatorConfigsUpdated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a AggregatorConfigsUpdated object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<AggregatorConfigsUpdated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching AggregatorConfigsUpdated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAggregatorConfigsUpdated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a AggregatorConfigsUpdated object`); }
 
  return AggregatorConfigsUpdated.fromSuiObjectData( res.data ); }
 

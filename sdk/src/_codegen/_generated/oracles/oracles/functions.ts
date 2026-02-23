@@ -4,7 +4,7 @@ import {
   Transaction,
   TransactionArgument,
   TransactionObjectInput,
-} from "@mysten/sui-v1/transactions";
+} from "@mysten/sui/transactions";
 
 export function newRegistry(
   tx: Transaction,

@@ -3,9 +3,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from ".
 import {Option} from "../../0x1/option/structs";
 import {PKG_V30} from "../index";
 import {UID} from "../object/structs";
-import {BcsType, bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {BcsType, bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== LinkedTable =============================== */
 
@@ -105,7 +105,7 @@ export class LinkedTable<K extends TypeArgument, V extends PhantomTypeArgument> 
                     [K, V],
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => LinkedTable.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => LinkedTable.fetch(
                 client,
                 [K, V],
                 id,
@@ -268,7 +268,7 @@ export class LinkedTable<K extends TypeArgument, V extends PhantomTypeArgument> 
 
             return LinkedTable.fromBcs(
                 typeArgs,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -284,7 +284,7 @@ export class LinkedTable<K extends TypeArgument, V extends PhantomTypeArgument> 
     }
 
     static async fetch<K extends Reified<TypeArgument, any>, V extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArgs: [K, V], id: string
+        client: SuiJsonRpcClient, typeArgs: [K, V], id: string
     ): Promise<LinkedTable<ToTypeArgument<K>, ToPhantomTypeArgument<V>>> {
         const res = await client.getObject({
             id,
@@ -402,7 +402,7 @@ export class Node<K extends TypeArgument, V extends TypeArgument> implements Str
                     [K, V],
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Node.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Node.fetch(
                 client,
                 [K, V],
                 id,
@@ -563,7 +563,7 @@ export class Node<K extends TypeArgument, V extends TypeArgument> implements Str
 
             return Node.fromBcs(
                 typeArgs,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -579,7 +579,7 @@ export class Node<K extends TypeArgument, V extends TypeArgument> implements Str
     }
 
     static async fetch<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
-        client: SuiClient, typeArgs: [K, V], id: string
+        client: SuiJsonRpcClient, typeArgs: [K, V], id: string
     ): Promise<Node<ToTypeArgument<K>, ToTypeArgument<V>>> {
         const res = await client.getObject({
             id,

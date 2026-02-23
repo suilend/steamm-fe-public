@@ -4,9 +4,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {Balance} from "../../0x2/balance/structs";
 import {SUI} from "../../0x2/sui/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== FeeCollector =============================== */
 
@@ -91,7 +91,7 @@ export class FeeCollector implements StructClass {
                 FeeCollector.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => FeeCollector.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => FeeCollector.fetch(
                 client,
                 id,
             ),
@@ -216,7 +216,7 @@ export class FeeCollector implements StructClass {
             }
 
             return FeeCollector.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -231,7 +231,7 @@ export class FeeCollector implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<FeeCollector> {
         const res = await client.getObject({
             id,

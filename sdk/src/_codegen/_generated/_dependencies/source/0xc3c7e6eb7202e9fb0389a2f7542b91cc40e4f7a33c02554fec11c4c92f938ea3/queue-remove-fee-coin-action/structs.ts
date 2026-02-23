@@ -3,9 +3,9 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {TypeName} from "../../0x1/type-name/structs";
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== QueueFeeTypeRemoved =============================== */
 
@@ -27,7 +27,7 @@ export class QueueFeeTypeRemoved implements StructClass { __StructClass = true a
 
  this.queueId = fields.queueId;; this.feeType = fields.feeType; }
 
- static reified( ): QueueFeeTypeRemovedReified { return { typeName: QueueFeeTypeRemoved.$typeName, fullTypeName: composeSuiType( QueueFeeTypeRemoved.$typeName, ...[] ) as `${typeof PKG_V1}::queue_remove_fee_coin_action::QueueFeeTypeRemoved`, typeArgs: [ ] as [], isPhantom: QueueFeeTypeRemoved.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => QueueFeeTypeRemoved.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => QueueFeeTypeRemoved.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => QueueFeeTypeRemoved.fromBcs( data, ), bcs: QueueFeeTypeRemoved.bcs, fromJSONField: (field: any) => QueueFeeTypeRemoved.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => QueueFeeTypeRemoved.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => QueueFeeTypeRemoved.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => QueueFeeTypeRemoved.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => QueueFeeTypeRemoved.fetch( client, id, ), new: ( fields: QueueFeeTypeRemovedFields, ) => { return new QueueFeeTypeRemoved( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): QueueFeeTypeRemovedReified { return { typeName: QueueFeeTypeRemoved.$typeName, fullTypeName: composeSuiType( QueueFeeTypeRemoved.$typeName, ...[] ) as `${typeof PKG_V1}::queue_remove_fee_coin_action::QueueFeeTypeRemoved`, typeArgs: [ ] as [], isPhantom: QueueFeeTypeRemoved.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => QueueFeeTypeRemoved.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => QueueFeeTypeRemoved.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => QueueFeeTypeRemoved.fromBcs( data, ), bcs: QueueFeeTypeRemoved.bcs, fromJSONField: (field: any) => QueueFeeTypeRemoved.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => QueueFeeTypeRemoved.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => QueueFeeTypeRemoved.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => QueueFeeTypeRemoved.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => QueueFeeTypeRemoved.fetch( client, id, ), new: ( fields: QueueFeeTypeRemovedFields, ) => { return new QueueFeeTypeRemoved( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return QueueFeeTypeRemoved.reified() }
 
@@ -67,9 +67,9 @@ export class QueueFeeTypeRemoved implements StructClass { __StructClass = true a
 
  static fromSuiObjectData( data: SuiObjectData ): QueueFeeTypeRemoved { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isQueueFeeTypeRemoved(data.bcs.type)) { throw new Error(`object at is not a QueueFeeTypeRemoved object`); }
 
- return QueueFeeTypeRemoved.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return QueueFeeTypeRemoved.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return QueueFeeTypeRemoved.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return QueueFeeTypeRemoved.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<QueueFeeTypeRemoved> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching QueueFeeTypeRemoved object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isQueueFeeTypeRemoved(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a QueueFeeTypeRemoved object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<QueueFeeTypeRemoved> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching QueueFeeTypeRemoved object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isQueueFeeTypeRemoved(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a QueueFeeTypeRemoved object`); }
 
  return QueueFeeTypeRemoved.fromSuiObjectData( res.data ); }
 

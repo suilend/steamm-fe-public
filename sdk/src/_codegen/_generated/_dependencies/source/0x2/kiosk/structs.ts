@@ -5,9 +5,9 @@ import {Balance} from "../balance/structs";
 import {PKG_V30} from "../index";
 import {ID, UID} from "../object/structs";
 import {SUI} from "../sui/structs";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== Borrow =============================== */
 
@@ -92,7 +92,7 @@ export class Borrow implements StructClass {
                 Borrow.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Borrow.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Borrow.fetch(
                 client,
                 id,
             ),
@@ -217,7 +217,7 @@ export class Borrow implements StructClass {
             }
 
             return Borrow.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -232,7 +232,7 @@ export class Borrow implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Borrow> {
         const res = await client.getObject({
             id,
@@ -334,7 +334,7 @@ export class Item implements StructClass {
                 Item.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Item.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Item.fetch(
                 client,
                 id,
             ),
@@ -457,7 +457,7 @@ export class Item implements StructClass {
             }
 
             return Item.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -472,7 +472,7 @@ export class Item implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Item> {
         const res = await client.getObject({
             id,
@@ -587,7 +587,7 @@ export class ItemDelisted<T extends PhantomTypeArgument> implements StructClass 
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ItemDelisted.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ItemDelisted.fetch(
                 client,
                 T,
                 id,
@@ -744,7 +744,7 @@ export class ItemDelisted<T extends PhantomTypeArgument> implements StructClass 
 
             return ItemDelisted.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -760,7 +760,7 @@ export class ItemDelisted<T extends PhantomTypeArgument> implements StructClass 
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<ItemDelisted<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -878,7 +878,7 @@ export class ItemListed<T extends PhantomTypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ItemListed.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ItemListed.fetch(
                 client,
                 T,
                 id,
@@ -1037,7 +1037,7 @@ export class ItemListed<T extends PhantomTypeArgument> implements StructClass {
 
             return ItemListed.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1053,7 +1053,7 @@ export class ItemListed<T extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<ItemListed<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -1171,7 +1171,7 @@ export class ItemPurchased<T extends PhantomTypeArgument> implements StructClass
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ItemPurchased.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ItemPurchased.fetch(
                 client,
                 T,
                 id,
@@ -1330,7 +1330,7 @@ export class ItemPurchased<T extends PhantomTypeArgument> implements StructClass
 
             return ItemPurchased.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1346,7 +1346,7 @@ export class ItemPurchased<T extends PhantomTypeArgument> implements StructClass
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<ItemPurchased<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -1457,7 +1457,7 @@ export class Kiosk implements StructClass {
                 Kiosk.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Kiosk.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Kiosk.fetch(
                 client,
                 id,
             ),
@@ -1492,8 +1492,8 @@ export class Kiosk implements StructClass {
             , profits:
                 Balance.bcs
             , owner:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , item_count:
                 bcs.u32()
             , allow_extensions:
@@ -1589,7 +1589,7 @@ export class Kiosk implements StructClass {
             }
 
             return Kiosk.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1604,7 +1604,7 @@ export class Kiosk implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Kiosk> {
         const res = await client.getObject({
             id,
@@ -1708,7 +1708,7 @@ export class KioskOwnerCap implements StructClass {
                 KioskOwnerCap.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => KioskOwnerCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => KioskOwnerCap.fetch(
                 client,
                 id,
             ),
@@ -1833,7 +1833,7 @@ export class KioskOwnerCap implements StructClass {
             }
 
             return KioskOwnerCap.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1848,7 +1848,7 @@ export class KioskOwnerCap implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<KioskOwnerCap> {
         const res = await client.getObject({
             id,
@@ -1952,7 +1952,7 @@ export class Listing implements StructClass {
                 Listing.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Listing.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Listing.fetch(
                 client,
                 id,
             ),
@@ -2077,7 +2077,7 @@ export class Listing implements StructClass {
             }
 
             return Listing.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -2092,7 +2092,7 @@ export class Listing implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Listing> {
         const res = await client.getObject({
             id,
@@ -2194,7 +2194,7 @@ export class Lock implements StructClass {
                 Lock.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Lock.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Lock.fetch(
                 client,
                 id,
             ),
@@ -2317,7 +2317,7 @@ export class Lock implements StructClass {
             }
 
             return Lock.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -2332,7 +2332,7 @@ export class Lock implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Lock> {
         const res = await client.getObject({
             id,
@@ -2451,7 +2451,7 @@ export class PurchaseCap<T extends PhantomTypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => PurchaseCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => PurchaseCap.fetch(
                 client,
                 T,
                 id,
@@ -2612,7 +2612,7 @@ export class PurchaseCap<T extends PhantomTypeArgument> implements StructClass {
 
             return PurchaseCap.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -2628,7 +2628,7 @@ export class PurchaseCap<T extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<PurchaseCap<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,

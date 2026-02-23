@@ -3,9 +3,9 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeArgument, ToTypeStr
 import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from "../../../../_framework/util";
 import {Vector} from "../../../../_framework/vector";
 import {PKG_V1} from "../index";
-import {BcsType, bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64} from "@mysten/sui-v1/utils";
+import {BcsType, bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Cursor =============================== */
 
@@ -99,7 +99,7 @@ export class Cursor<T extends TypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Cursor.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Cursor.fetch(
                 client,
                 T,
                 id,
@@ -255,7 +255,7 @@ export class Cursor<T extends TypeArgument> implements StructClass {
 
             return Cursor.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -271,7 +271,7 @@ export class Cursor<T extends TypeArgument> implements StructClass {
     }
 
     static async fetch<T extends Reified<TypeArgument, any>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<Cursor<ToTypeArgument<T>>> {
         const res = await client.getObject({
             id,

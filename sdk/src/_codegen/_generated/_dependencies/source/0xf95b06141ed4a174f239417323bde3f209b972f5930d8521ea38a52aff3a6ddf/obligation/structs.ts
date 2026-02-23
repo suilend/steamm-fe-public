@@ -7,9 +7,9 @@ import {ID, UID} from "../../0x2/object/structs";
 import {Decimal} from "../decimal/structs";
 import {PKG_V1, PKG_V11} from "../index";
 import {UserRewardManager} from "../liquidity-mining/structs";
-import {bcs} from "@mysten/sui-v1/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui-v1/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui-v1/utils";
+import {bcs} from "@mysten/sui/bcs";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== Borrow =============================== */
 
@@ -102,7 +102,7 @@ export class Borrow implements StructClass {
                 Borrow.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Borrow.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Borrow.fetch(
                 client,
                 id,
             ),
@@ -235,7 +235,7 @@ export class Borrow implements StructClass {
             }
 
             return Borrow.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -250,7 +250,7 @@ export class Borrow implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Borrow> {
         const res = await client.getObject({
             id,
@@ -362,7 +362,7 @@ export class BorrowRecord implements StructClass {
                 BorrowRecord.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => BorrowRecord.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => BorrowRecord.fetch(
                 client,
                 id,
             ),
@@ -495,7 +495,7 @@ export class BorrowRecord implements StructClass {
             }
 
             return BorrowRecord.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -510,7 +510,7 @@ export class BorrowRecord implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<BorrowRecord> {
         const res = await client.getObject({
             id,
@@ -622,7 +622,7 @@ export class Deposit implements StructClass {
                 Deposit.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Deposit.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Deposit.fetch(
                 client,
                 id,
             ),
@@ -755,7 +755,7 @@ export class Deposit implements StructClass {
             }
 
             return Deposit.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -770,7 +770,7 @@ export class Deposit implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Deposit> {
         const res = await client.getObject({
             id,
@@ -882,7 +882,7 @@ export class DepositRecord implements StructClass {
                 DepositRecord.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => DepositRecord.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => DepositRecord.fetch(
                 client,
                 id,
             ),
@@ -1015,7 +1015,7 @@ export class DepositRecord implements StructClass {
             }
 
             return DepositRecord.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1030,7 +1030,7 @@ export class DepositRecord implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<DepositRecord> {
         const res = await client.getObject({
             id,
@@ -1132,7 +1132,7 @@ export class ExistStaleOracles implements StructClass {
                 ExistStaleOracles.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ExistStaleOracles.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ExistStaleOracles.fetch(
                 client,
                 id,
             ),
@@ -1255,7 +1255,7 @@ export class ExistStaleOracles implements StructClass {
             }
 
             return ExistStaleOracles.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1270,7 +1270,7 @@ export class ExistStaleOracles implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ExistStaleOracles> {
         const res = await client.getObject({
             id,
@@ -1411,7 +1411,7 @@ export class Obligation<P extends PhantomTypeArgument> implements StructClass {
                     P,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Obligation.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Obligation.fetch(
                 client,
                 P,
                 id,
@@ -1594,7 +1594,7 @@ export class Obligation<P extends PhantomTypeArgument> implements StructClass {
 
             return Obligation.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1610,7 +1610,7 @@ export class Obligation<P extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<P extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: P, id: string
+        client: SuiJsonRpcClient, typeArg: P, id: string
     ): Promise<Obligation<ToPhantomTypeArgument<P>>> {
         const res = await client.getObject({
             id,
@@ -1739,7 +1739,7 @@ export class ObligationDataEvent implements StructClass {
                 ObligationDataEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ObligationDataEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ObligationDataEvent.fetch(
                 client,
                 id,
             ),
@@ -1770,11 +1770,11 @@ export class ObligationDataEvent implements StructClass {
     static get bcs() {
         return bcs.struct("ObligationDataEvent", {
             lending_market_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , obligation_id:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , deposits:
                 bcs.vector(DepositRecord.bcs)
             , borrows:
@@ -1890,7 +1890,7 @@ export class ObligationDataEvent implements StructClass {
             }
 
             return ObligationDataEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1905,7 +1905,7 @@ export class ObligationDataEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ObligationDataEvent> {
         const res = await client.getObject({
             id,

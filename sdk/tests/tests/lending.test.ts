@@ -10,7 +10,7 @@ import { SteammSDK } from "../../src/sdk";
 import { BankList, DataPage, PoolInfo } from "../../src/types";
 
 import { STEAMM_PKG_ID } from "./../packages";
-import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/client";
+import { PaginatedObjectsResponse, SuiObjectData } from "@mysten/sui/jsonRpc";
 import { initLendingNoOp, testConfig } from "../utils/utils";
 
 dotenv.config();

@@ -645,7 +645,7 @@ export async function getOracleArgs(
     const stalePriceUpdateData =
       await sdk.pythConnection.getPriceFeedsUpdateData(stalePriceIdentifiers);
     await sdk.pythClient.updatePriceFeeds(
-      tx,
+      tx as any,
       stalePriceUpdateData,
       stalePriceIdentifiers,
     );
@@ -768,7 +768,7 @@ export async function getOracleV2Args(
     const stalePriceUpdateData =
       await sdk.pythConnection.getPriceFeedsUpdateData(stalePriceIdentifiers);
     await sdk.pythClient.updatePriceFeeds(
-      tx,
+      tx as any,
       stalePriceUpdateData,
       stalePriceIdentifiers,
     );

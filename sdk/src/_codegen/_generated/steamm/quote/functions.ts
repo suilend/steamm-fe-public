@@ -1,6 +1,6 @@
 import {PUBLISHED_AT} from "..";
 import {obj, pure} from "../../_framework/util";
-import {Transaction, TransactionArgument, TransactionObjectInput} from "@mysten/sui-v1/transactions";
+import {Transaction, TransactionArgument, TransactionObjectInput} from "@mysten/sui/transactions";
 
 export interface QuoteArgs {
     amountIn: bigint | TransactionArgument; amountOut: bigint | TransactionArgument; protocolFees: bigint | TransactionArgument; poolFees: bigint | TransactionArgument; a2B: boolean | TransactionArgument
