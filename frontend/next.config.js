@@ -10,11 +10,13 @@ module.exports = {
   transpilePackages: [
     "@suilend/sdk",
     "@suilend/springsui-sdk",
+    "@suilend/steamm-sdk",
     "@suilend/sui-fe",
     "@suilend/sui-fe-next",
     "@mysten/dapp-kit-core",
     "@mysten/dapp-kit-react",
     "sonner",
+    "geist",
   ],
   images: {
     remotePatterns: [
