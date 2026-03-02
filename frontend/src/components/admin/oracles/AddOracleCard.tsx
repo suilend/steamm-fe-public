@@ -53,7 +53,7 @@ export default function AddOracleCard() {
             priceIdentifier,
           ]);
         await steammClient.pythClient.createPriceFeed(
-          innerTransaction,
+          innerTransaction as any,
           priceUpdateData,
         );
 

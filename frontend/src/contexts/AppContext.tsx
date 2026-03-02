@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 
-import { CoinMetadata } from "@mysten/sui/client";
+import { CoinMetadata } from "@mysten/sui/jsonRpc";
 import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 import { useFlags } from "launchdarkly-react-client-sdk";

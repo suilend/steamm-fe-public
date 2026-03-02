@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 
-import { SuiTransactionBlockResponse } from "@mysten/sui/client";
+import { SuiTransactionBlockResponse } from "@mysten/sui/jsonRpc";
 import { ExternalLink } from "lucide-react";
 
 import {

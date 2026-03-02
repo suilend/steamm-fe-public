@@ -1,4 +1,4 @@
-import { CoinMetadata } from "@mysten/sui/client";
+import { CoinMetadata } from "@mysten/sui/jsonRpc";
 import { normalizeStructTag } from "@mysten/sui/utils";
 import { PriceFeed, SuiPriceServiceConnection } from "@pythnetwork/pyth-sui-js";
 import BigNumber from "bignumber.js";

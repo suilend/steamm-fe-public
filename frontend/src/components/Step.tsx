@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { SuiTransactionBlockResponse } from "@mysten/sui/client";
+import { SuiTransactionBlockResponse } from "@mysten/sui/jsonRpc";
 import { ExternalLink } from "lucide-react";
 import { Check, Loader2 } from "lucide-react";
 

@@ -1,9 +1,9 @@
 import {
-  SuiClient,
   SuiEvent,
+  SuiJsonRpcClient,
   SuiObjectChange,
   SuiTransactionBlockResponse,
-} from "@mysten/sui/client";
+} from "@mysten/sui/jsonRpc";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID, normalizeStructTag } from "@mysten/sui/utils";
@@ -82,7 +82,7 @@ export type GetBTokenAndBankForTokenResult = {
 };
 export const getBTokenAndBankForToken = async (
   token: Token,
-  suiClient: SuiClient,
+  suiClient: SuiJsonRpcClient,
   appData: AppData,
 ): Promise<GetBTokenAndBankForTokenResult> => {
   const existingBank = appData.bankMap[token.coinType];
@@ -110,7 +110,7 @@ export const createBTokenAndBankForToken = async (
   steammClient: SteammSDK,
   appData: AppData,
   keypair: Ed25519Keypair,
-  suiClient: SuiClient,
+  suiClient: SuiJsonRpcClient,
 ): Promise<CreateBTokenAndBankForTokenResult> => {
   if (hasBTokenAndBankForToken(token, appData))
     throw new Error("BToken and bank already exist for token");
@@ -198,7 +198,7 @@ export const createBTokenAndBankForToken = async (
 export const createLpToken = async (
   bTokens: [Token, Token],
   keypair: Ed25519Keypair,
-  suiClient: SuiClient,
+  suiClient: SuiJsonRpcClient,
 ): Promise<CreateCoinResult> => {
   console.log("[createLpToken] Creating LP token for bTokens", bTokens);
 
@@ -238,7 +238,7 @@ export const createPoolAndDepositInitialLiquidity = async (
   steammClient: SteammSDK,
   appData: AppData,
   keypair: Ed25519Keypair,
-  suiClient: SuiClient,
+  suiClient: SuiJsonRpcClient,
 ): Promise<CreatePoolAndDepositInitialLiquidityResult> => {
   console.log(
     "[createPoolAndDepositInitialLiquidity] Creating pool and depositing initial liquidity",

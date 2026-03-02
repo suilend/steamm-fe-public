@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 
-import { DynamicFieldInfo } from "@mysten/sui/client";
+import { DynamicFieldInfo } from "@mysten/sui/jsonRpc";
 import BigNumber from "bignumber.js";
 
 import {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { SuiTransactionBlockResponse } from "@mysten/sui/client";
+import { SuiTransactionBlockResponse } from "@mysten/sui/jsonRpc";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import BigNumber from "bignumber.js";
 import { chunk } from "lodash";

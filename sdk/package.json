@@ -12,8 +12,8 @@
   "types": "./sdk/src/index.ts",
   "scripts": {
     "build": "rm -rf ./dist && bun tsc",
-    "eslint": "eslint --fix \"./src/**/*.ts\"",
-    "prettier": "prettier --write \"./src/**/*\"",
+    "eslint": "eslint --fix src/",
+    "prettier": "prettier --write src/",
     "lint": "bun eslint && bun prettier && bun tsc --noEmit",
     "test": "bun test",
     "check": "bun tsc --noEmit",
@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@pythnetwork/pyth-sui-js": "2.2.0",
-    "@suilend/sui-fe": "^2.0.0",
+    "@suilend/sui-fe": "^2.0.6",
     "bignumber.js": "^9.1.2",
     "dotenv": "^16.4.7"
   },

@@ -7,7 +7,15 @@ module.exports = {
     externalDir: true,
     esmExternals: "loose",
   },
-  transpilePackages: ["@suilend/sui-fe-next", "sonner"],
+  transpilePackages: [
+    "@suilend/sdk",
+    "@suilend/springsui-sdk",
+    "@suilend/sui-fe",
+    "@suilend/sui-fe-next",
+    "@mysten/dapp-kit-core",
+    "@mysten/dapp-kit-react",
+    "sonner",
+  ],
   images: {
     remotePatterns: [
       new URL("https://d29k09wtkr1a3e.cloudfront.net/steamm/**"),
@@ -30,7 +38,27 @@ module.exports = {
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
+      buffer: require.resolve("buffer/"),
     };
+
+    if (!isServer) {
+      config.plugins.push(
+        new (require("webpack").NormalModuleReplacementPlugin)(
+          /^node:/,
+          (resource) => {
+            resource.request = resource.request.replace(/^node:/, "");
+          },
+        ),
+      );
+    }
+    if (isServer) {
+      config.resolve.alias["@webcomponents/scoped-custom-element-registry"] =
+        path.resolve(__dirname, "src/lib/empty.js");
+      config.resolve.alias["@mysten/dapp-kit-core/web"] = path.resolve(
+        __dirname,
+        "src/lib/dapp-kit-core-web-stub.js",
+      );
+    }
 
     return config;
   },

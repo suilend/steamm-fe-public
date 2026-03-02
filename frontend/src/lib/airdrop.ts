@@ -1,5 +1,8 @@
-import { SuiClient, SuiTransactionBlockResponse } from "@mysten/sui/client";
 import { SignatureWithBytes } from "@mysten/sui/cryptography";
+import {
+  SuiJsonRpcClient,
+  SuiTransactionBlockResponse,
+} from "@mysten/sui/jsonRpc";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
@@ -22,7 +25,7 @@ export const getBatchTransferTransaction = async (
   token: Token,
   batch: AirdropRow[],
   address: string,
-  suiClient: SuiClient,
+  suiClient: SuiJsonRpcClient,
 ) => {
   console.log("[getBatchTransferTransaction]", { token, batch, address });
   const recipients = batch.map((row) => row.address);
@@ -75,7 +78,7 @@ export const makeBatchTransfer = async (
   token: Token,
   batch: AirdropRow[],
   keypair: Ed25519Keypair,
-  suiClient: SuiClient,
+  suiClient: SuiJsonRpcClient,
   onSign: (signedTransaction: SignatureWithBytes) => void,
 ): Promise<MakeBatchTransferResult> => {
   const transaction = await getBatchTransferTransaction(

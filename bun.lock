@@ -36,8 +36,8 @@
         "@radix-ui/react-popover": "^1.1.2",
         "@radix-ui/react-tooltip": "^1.1.4",
         "@suilend/sdk": "^2.0.0",
-        "@suilend/sui-fe": "^2.0.0",
-        "@suilend/sui-fe-next": "^2.0.0",
+        "@suilend/sui-fe": "^2.0.6",
+        "@suilend/sui-fe-next": "^2.0.8",
         "@tanstack/react-table": "^8.20.5",
         "@vercel/analytics": "^1.4.0",
         "@vercel/speed-insights": "^1.1.0",
@@ -77,6 +77,7 @@
         "@types/react-dom": "19.0.3",
         "@types/uuid": "^10.0.0",
         "autoprefixer": "^10.4.20",
+        "buffer": "^6.0.3",
         "postcss": "^8.4.49",
         "prettier-plugin-tailwindcss": "^0.6.8",
         "tailwindcss": "^3.4.15",
@@ -88,7 +89,7 @@
       "version": "2.0.1",
       "dependencies": {
         "@pythnetwork/pyth-sui-js": "2.2.0",
-        "@suilend/sui-fe": "^2.0.0",
+        "@suilend/sui-fe": "^2.0.6",
         "bignumber.js": "^9.1.2",
         "dotenv": "^16.4.7",
       },
@@ -667,9 +668,9 @@
 
     "@suilend/steamm-sdk-local": ["@suilend/steamm-sdk-local@workspace:sdk"],
 
-    "@suilend/sui-fe": ["@suilend/sui-fe@2.0.0", "", { "dependencies": { "@mysten/wallet-standard": "0.20.0", "bignumber.js": "^9.1.2", "blake2b": "^2.1.4", "lodash": "^4.17.21", "p-limit": "3.1.0" }, "peerDependencies": { "@mysten/sui": "2.3.1" } }, "sha512-iWH6buCrKQZI2eJynaGVlDrjX/LosgrT8SRnwmaRYU6aGjN4DjpQszokdNEy1KVhAtjKL/YTT4Wo1Fq/qOWImg=="],
+    "@suilend/sui-fe": ["@suilend/sui-fe@2.0.6", "", { "dependencies": { "@mysten/wallet-standard": "0.20.0", "bignumber.js": "^9.1.2", "blake2b": "^2.1.4", "lodash": "^4.17.21", "p-limit": "3.1.0" }, "peerDependencies": { "@mysten/sui": "2.3.1" } }, "sha512-YhT4NjTSG+qEcg3V9MJQtwUFyROqGi3/pF5DFudfguYm5IrO8tZITsKgrWxzF6UzmxcvI/bskw7hCHxE1GNENA=="],
 
-    "@suilend/sui-fe-next": ["@suilend/sui-fe-next@2.0.0", "", { "dependencies": { "@reown/appkit": "^1.8.10", "@reown/appkit-common": "^1.8.10", "@reown/appkit-universal-connector": "^1.8.10", "@tanstack/react-query": "^5.60.2", "bignumber.js": "^9.1.2", "launchdarkly-react-client-sdk": "^3.6.0", "lodash": "^4.17.21", "mixpanel-browser": "^2.72.0", "next": "^15.0.3", "react": "18.3.1", "react-dom": "18.3.1", "react-responsive": "^10.0.0", "shio-sdk": "^1.0.8", "sonner": "1.4.41", "swr": "^2.2.5", "tailwind-merge": "^2.5.4", "usehooks-ts": "^3.1.1" }, "peerDependencies": { "@mysten/dapp-kit-core": "1.0.3", "@mysten/dapp-kit-react": "1.0.1", "@mysten/sui": "2.3.1", "@mysten/wallet-standard": "0.20.0", "@suilend/sui-fe": "^2.0.0" } }, "sha512-csCCfZuCtLdNTftod6MrrkkutY6QTjq9ZO7jMaVK5L2iXQbaUa1ZEQBjrjBWSM8wkgtp5zLPdl8YjVROa3sDKg=="],
+    "@suilend/sui-fe-next": ["@suilend/sui-fe-next@2.0.8", "", { "dependencies": { "@reown/appkit": "^1.8.10", "@reown/appkit-common": "^1.8.10", "@reown/appkit-universal-connector": "^1.8.10", "@tanstack/react-query": "^5.60.2", "bignumber.js": "^9.1.2", "launchdarkly-react-client-sdk": "^3.6.0", "lodash": "^4.17.21", "mixpanel-browser": "^2.72.0", "next": "^15.0.3", "react": "18.3.1", "react-dom": "18.3.1", "react-responsive": "^10.0.0", "shio-sdk": "^1.0.8", "sonner": "1.4.41", "swr": "^2.2.5", "tailwind-merge": "^2.5.4", "usehooks-ts": "^3.1.1" }, "peerDependencies": { "@mysten/dapp-kit-core": "1.0.3", "@mysten/dapp-kit-react": "1.0.1", "@mysten/sui": "2.3.1", "@mysten/wallet-standard": "0.20.0", "@suilend/sui-fe": "^2.0.6" } }, "sha512-isq27YdzZNspLJxQxJSpUR+9wU++vkKojoEfGoR/WuXEsP+bqH7b6nxREYy2yjq2hs5k8VDIoC+t4UQn3kpqMg=="],
 
     "@swc/helpers": ["@swc/helpers@0.5.15", "", { "dependencies": { "tslib": "^2.8.0" } }, "sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g=="],
 

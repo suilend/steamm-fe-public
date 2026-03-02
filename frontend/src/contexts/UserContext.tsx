@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 
-import { CoinMetadata, SuiTransactionBlockResponse } from "@mysten/sui/client";
+import { CoinMetadata, SuiTransactionBlockResponse } from "@mysten/sui/jsonRpc";
 import { normalizeStructTag } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
 
