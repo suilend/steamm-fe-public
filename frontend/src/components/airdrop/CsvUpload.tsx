@@ -1,13 +1,13 @@
 import { ChangeEvent, DragEvent, useEffect, useState } from "react";
 
-import BigNumber from "bignumber.js";
-import { parse as parseCsv } from "csv-parse/sync";
 import { Download, FileSpreadsheet, X } from "lucide-react";
 
-import { Token, formatNumber } from "@suilend/sui-fe";
+import { Token } from "@suilend/sui-fe";
 import { showErrorToast } from "@suilend/sui-fe-next";
 
-import { AirdropRow } from "@/lib/airdrop";
+import TextInput from "@/components/TextInput";
+import { AirdropRow, parseCsvText } from "@/lib/airdrop";
+import { formatFileSize } from "@/lib/format";
 import { sleep } from "@/lib/utils";
 
 const VALID_MIME_TYPES = ["text/csv"];
@@ -77,9 +77,32 @@ export default function CsvUpload({
     (document.getElementById("csv-upload") as HTMLInputElement).value = "";
   };
 
+  // Paste CSV text
+  const [pasteText, setPasteText] = useState<string>("");
+
+  const handlePasteText = () => {
+    if (!pasteText.trim()) return;
+    try {
+      reset();
+
+      const parsedRecords = parseCsvText(pasteText);
+      setCsvRows(parsedRecords);
+      setCsvFilename("Pasted CSV");
+      setCsvFileSize(formatFileSize(new Blob([pasteText]).size));
+
+      setPasteText("");
+    } catch (err) {
+      console.error(err);
+      showErrorToast("Failed to parse CSV text", err as Error);
+
+      reset();
+    }
+  };
+
   const handleFile = async (file: File) => {
     try {
       reset();
+      setPasteText("");
 
       // Validate file type
       if (!VALID_MIME_TYPES.includes(file.type))
@@ -91,37 +114,10 @@ export default function CsvUpload({
         try {
           await sleep(100);
           const text = e.target?.result as string;
-
-          const records: { [key: string]: string }[] = parseCsv(text, {
-            columns: true,
-            delimiter: ",",
-            skip_empty_lines: true,
-          });
-
-          if (records.length === 0) throw new Error("No rows found");
-          if (Object.keys(records[0]).length !== 2)
-            throw new Error(
-              "Each row must have exactly 2 columns (address, amount)",
-            );
-
-          const parsedRecords: AirdropRow[] = records.map((record, index) => {
-            const addressKey = Object.keys(record)[0];
-            const amountKey = Object.keys(record)[1];
-
-            return {
-              number: index + 1,
-              address: record[addressKey],
-              amount: record[amountKey],
-            };
-          });
-
+          const parsedRecords = parseCsvText(text);
           setCsvRows(parsedRecords);
           setCsvFilename(file.name);
-          setCsvFileSize(
-            file.size > 1024
-              ? `${formatNumber(new BigNumber(file.size / 1024), { dp: 1 })} KB`
-              : `${formatNumber(new BigNumber(file.size), { dp: 1 })} B`,
-          );
+          setCsvFileSize(formatFileSize(file.size));
         } catch (err) {
           console.error(err);
           showErrorToast("Failed to upload CSV file", err as Error);
@@ -235,6 +231,25 @@ export default function CsvUpload({
           <p className="text-p3 text-secondary-foreground transition-colors group-hover:text-foreground">
             Template
           </p>
+        </button>
+      </div>
+
+      <div className="flex w-full flex-col gap-3">
+        <p className="text-p2 text-secondary-foreground">Or paste CSV text</p>
+        <TextInput
+          placeholder={"address,amount\n0x1111...,50\n0x2222...,60.012345"}
+          value={pasteText}
+          onChange={setPasteText}
+          isTextarea
+          minRows={3}
+        />
+
+        <button
+          className="flex h-8 w-max flex-row items-center justify-center rounded-md bg-button-1 px-2.5 transition-colors hover:bg-button-1/80 disabled:pointer-events-none disabled:opacity-50"
+          disabled={!pasteText.trim()}
+          onClick={handlePasteText}
+        >
+          <p className="text-p2 text-button-1-foreground">Parse</p>
         </button>
       </div>
     </>

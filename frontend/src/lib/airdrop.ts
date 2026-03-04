@@ -6,6 +6,7 @@ import {
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
+import { parse as parseCsv } from "csv-parse/sync";
 
 import {
   Token,
@@ -16,6 +17,29 @@ import {
 } from "@suilend/sui-fe";
 
 export type AirdropRow = { number: number; address: string; amount: string };
+
+export function parseCsvText(text: string): AirdropRow[] {
+  const records: { [key: string]: string }[] = parseCsv(text, {
+    columns: true,
+    delimiter: ",",
+    skip_empty_lines: true,
+  });
+
+  if (records.length === 0) throw new Error("No rows found");
+  if (Object.keys(records[0]).length !== 2)
+    throw new Error("Each row must have exactly 2 columns (address, amount)");
+
+  return records.map((record, index) => {
+    const addressKey = Object.keys(record)[0];
+    const amountKey = Object.keys(record)[1];
+
+    return {
+      number: index + 1,
+      address: record[addressKey],
+      amount: record[amountKey],
+    };
+  });
+}
 
 // Make batch transfer
 const STEAMM_AIRDROPPER_PACKAGE_ID =

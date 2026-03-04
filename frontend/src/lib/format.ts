@@ -2,6 +2,14 @@ import BigNumber from "bignumber.js";
 
 import { formatInteger, formatNumber } from "@suilend/sui-fe";
 
+export const formatFileSize = (bytes: number): string => {
+  if (bytes >= 1024 * 1024)
+    return `${formatNumber(new BigNumber(bytes / 1024 / 1024), { dp: 1 })} MB`;
+  if (bytes >= 1024)
+    return `${formatNumber(new BigNumber(bytes / 1024), { dp: 1 })} KB`;
+  return `${formatNumber(new BigNumber(bytes), { dp: 1 })} B`;
+};
+
 export const formatPair = (symbols: string[], separator = "-") =>
   symbols.join(separator);
 
