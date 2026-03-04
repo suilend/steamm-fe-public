@@ -60,6 +60,11 @@ module.exports = {
         __dirname,
         "src/lib/dapp-kit-core-web-stub.js",
       );
+      config.externals = config.externals || [];
+      config.externals.push(
+        "@cetusprotocol/cetus-sui-clmm-sdk",
+        "@cetusprotocol/aggregator-sdk",
+      );
     }
 
     return config;
