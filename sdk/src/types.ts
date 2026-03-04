@@ -2,6 +2,7 @@ import { BankObj, OracleObj, PoolObj } from "./lib";
 
 export type SdkOptions = {
   fullRpcUrl: string;
+  network?: "mainnet" | "testnet" | "devnet" | "localnet";
   packages: {
     steamm: Package<SteammConfigs>;
     oracle: Package<OracleConfigs>;

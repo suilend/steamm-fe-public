@@ -5,8 +5,8 @@ import {Vector} from "../../../../_framework/vector";
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== MessageTicket =============================== */
 
@@ -95,7 +95,7 @@ export class MessageTicket implements StructClass {
                 MessageTicket.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => MessageTicket.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => MessageTicket.fetch(
                 client,
                 id,
             ),
@@ -224,7 +224,7 @@ export class MessageTicket implements StructClass {
             }
 
             return MessageTicket.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -239,7 +239,7 @@ export class MessageTicket implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<MessageTicket> {
         const res = await client.getObject({
             id,
@@ -351,7 +351,7 @@ export class WormholeMessage implements StructClass {
                 WormholeMessage.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => WormholeMessage.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => WormholeMessage.fetch(
                 client,
                 id,
             ),
@@ -484,7 +484,7 @@ export class WormholeMessage implements StructClass {
             }
 
             return WormholeMessage.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -499,7 +499,7 @@ export class WormholeMessage implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<WormholeMessage> {
         const res = await client.getObject({
             id,

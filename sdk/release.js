@@ -4,17 +4,17 @@ const NAME = "@suilend/steamm-sdk";
 
 // 1. Update package.json
 import packageJson from "./package.json";
-const newPackageJson = Object.assign({}, packageJson) as any;
+const newPackageJson = Object.assign({}, packageJson);
 
 newPackageJson["name"] = NAME;
 newPackageJson["main"] = "./index.js";
 
-const exportsMap: Record<string, string> = {
+const exportsMap = {
   ".": "./index.js",
 };
-const files = (
-  fs.readdirSync("./dist/", { recursive: true }) as string[]
-).filter((file) => file !== "index.js" && file.endsWith(".js"));
+const files = fs
+  .readdirSync("./dist/", { recursive: true })
+  .filter((file) => file !== "index.js" && file.endsWith(".js"));
 for (const file of files) {
   const fileName = file.substring(
     0,

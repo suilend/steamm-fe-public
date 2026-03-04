@@ -5,8 +5,8 @@ import {Vector} from "../../../../_framework/vector";
 import {Guardian} from "../guardian/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== GovernanceWitness =============================== */
 
@@ -89,7 +89,7 @@ export class GovernanceWitness implements StructClass {
                 GovernanceWitness.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => GovernanceWitness.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => GovernanceWitness.fetch(
                 client,
                 id,
             ),
@@ -212,7 +212,7 @@ export class GovernanceWitness implements StructClass {
             }
 
             return GovernanceWitness.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -227,7 +227,7 @@ export class GovernanceWitness implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<GovernanceWitness> {
         const res = await client.getObject({
             id,
@@ -329,7 +329,7 @@ export class GuardianSetAdded implements StructClass {
                 GuardianSetAdded.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => GuardianSetAdded.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => GuardianSetAdded.fetch(
                 client,
                 id,
             ),
@@ -452,7 +452,7 @@ export class GuardianSetAdded implements StructClass {
             }
 
             return GuardianSetAdded.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -467,7 +467,7 @@ export class GuardianSetAdded implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<GuardianSetAdded> {
         const res = await client.getObject({
             id,
@@ -571,7 +571,7 @@ export class UpdateGuardianSet implements StructClass {
                 UpdateGuardianSet.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => UpdateGuardianSet.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => UpdateGuardianSet.fetch(
                 client,
                 id,
             ),
@@ -696,7 +696,7 @@ export class UpdateGuardianSet implements StructClass {
             }
 
             return UpdateGuardianSet.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -711,7 +711,7 @@ export class UpdateGuardianSet implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<UpdateGuardianSet> {
         const res = await client.getObject({
             id,

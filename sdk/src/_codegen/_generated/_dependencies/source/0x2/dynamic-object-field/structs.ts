@@ -2,8 +2,8 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeArgument, ToTypeStr
 import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from "../../../../_framework/util";
 import {PKG_V30} from "../index";
 import {BcsType, bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Wrapper =============================== */
 
@@ -97,7 +97,7 @@ export class Wrapper<Name extends TypeArgument> implements StructClass {
                     Name,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Wrapper.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Wrapper.fetch(
                 client,
                 Name,
                 id,
@@ -253,7 +253,7 @@ export class Wrapper<Name extends TypeArgument> implements StructClass {
 
             return Wrapper.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -269,7 +269,7 @@ export class Wrapper<Name extends TypeArgument> implements StructClass {
     }
 
     static async fetch<Name extends Reified<TypeArgument, any>>(
-        client: SuiClient, typeArg: Name, id: string
+        client: SuiJsonRpcClient, typeArg: Name, id: string
     ): Promise<Wrapper<ToTypeArgument<Name>>> {
         const res = await client.getObject({
             id,

@@ -1,4 +1,4 @@
-import { CoinMetadata } from "@mysten/sui/client";
+import { CoinMetadata } from "@mysten/sui/jsonRpc";
 import BigNumber from "bignumber.js";
 
 import { BankInfo, OracleInfo, PoolInfo, RedeemQuote } from "..";

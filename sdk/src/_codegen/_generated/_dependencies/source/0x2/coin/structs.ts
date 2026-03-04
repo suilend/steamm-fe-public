@@ -8,8 +8,8 @@ import {PKG_V30} from "../index";
 import {ID, UID} from "../object/structs";
 import {Url} from "../url/structs";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Coin =============================== */
 
@@ -105,7 +105,7 @@ export class Coin<T extends PhantomTypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Coin.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Coin.fetch(
                 client,
                 T,
                 id,
@@ -262,7 +262,7 @@ export class Coin<T extends PhantomTypeArgument> implements StructClass {
 
             return Coin.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -278,7 +278,7 @@ export class Coin<T extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<Coin<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -402,7 +402,7 @@ export class CoinMetadata<T extends PhantomTypeArgument> implements StructClass 
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => CoinMetadata.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => CoinMetadata.fetch(
                 client,
                 T,
                 id,
@@ -567,7 +567,7 @@ export class CoinMetadata<T extends PhantomTypeArgument> implements StructClass 
 
             return CoinMetadata.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -583,7 +583,7 @@ export class CoinMetadata<T extends PhantomTypeArgument> implements StructClass 
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<CoinMetadata<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -697,7 +697,7 @@ export class CurrencyCreated<T extends PhantomTypeArgument> implements StructCla
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => CurrencyCreated.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => CurrencyCreated.fetch(
                 client,
                 T,
                 id,
@@ -852,7 +852,7 @@ export class CurrencyCreated<T extends PhantomTypeArgument> implements StructCla
 
             return CurrencyCreated.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -868,7 +868,7 @@ export class CurrencyCreated<T extends PhantomTypeArgument> implements StructCla
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<CurrencyCreated<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -982,7 +982,7 @@ export class DenyCap<T extends PhantomTypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => DenyCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => DenyCap.fetch(
                 client,
                 T,
                 id,
@@ -1137,7 +1137,7 @@ export class DenyCap<T extends PhantomTypeArgument> implements StructClass {
 
             return DenyCap.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1153,7 +1153,7 @@ export class DenyCap<T extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<DenyCap<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -1269,7 +1269,7 @@ export class DenyCapV2<T extends PhantomTypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => DenyCapV2.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => DenyCapV2.fetch(
                 client,
                 T,
                 id,
@@ -1426,7 +1426,7 @@ export class DenyCapV2<T extends PhantomTypeArgument> implements StructClass {
 
             return DenyCapV2.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1442,7 +1442,7 @@ export class DenyCapV2<T extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<DenyCapV2<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -1560,7 +1560,7 @@ export class RegulatedCoinMetadata<T extends PhantomTypeArgument> implements Str
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => RegulatedCoinMetadata.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => RegulatedCoinMetadata.fetch(
                 client,
                 T,
                 id,
@@ -1719,7 +1719,7 @@ export class RegulatedCoinMetadata<T extends PhantomTypeArgument> implements Str
 
             return RegulatedCoinMetadata.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1735,7 +1735,7 @@ export class RegulatedCoinMetadata<T extends PhantomTypeArgument> implements Str
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<RegulatedCoinMetadata<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -1851,7 +1851,7 @@ export class TreasuryCap<T extends PhantomTypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => TreasuryCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => TreasuryCap.fetch(
                 client,
                 T,
                 id,
@@ -2008,7 +2008,7 @@ export class TreasuryCap<T extends PhantomTypeArgument> implements StructClass {
 
             return TreasuryCap.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -2024,7 +2024,7 @@ export class TreasuryCap<T extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<TreasuryCap<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,

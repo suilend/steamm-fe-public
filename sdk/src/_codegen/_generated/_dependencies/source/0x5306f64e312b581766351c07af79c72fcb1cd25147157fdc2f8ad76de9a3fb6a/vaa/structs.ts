@@ -6,8 +6,8 @@ import {Bytes32} from "../bytes32/structs";
 import {ExternalAddress} from "../external-address/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== VAA =============================== */
 
@@ -106,7 +106,7 @@ export class VAA implements StructClass {
                 VAA.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => VAA.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => VAA.fetch(
                 client,
                 id,
             ),
@@ -245,7 +245,7 @@ export class VAA implements StructClass {
             }
 
             return VAA.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -260,7 +260,7 @@ export class VAA implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<VAA> {
         const res = await client.getObject({
             id,

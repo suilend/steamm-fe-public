@@ -2,8 +2,8 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../_framework/util";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== MultiRouteSwapQuote =============================== */
 
@@ -88,7 +88,7 @@ export class MultiRouteSwapQuote implements StructClass {
                 MultiRouteSwapQuote.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => MultiRouteSwapQuote.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => MultiRouteSwapQuote.fetch(
                 client,
                 id,
             ),
@@ -213,7 +213,7 @@ export class MultiRouteSwapQuote implements StructClass {
             }
 
             return MultiRouteSwapQuote.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -228,7 +228,7 @@ export class MultiRouteSwapQuote implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<MultiRouteSwapQuote> {
         const res = await client.getObject({
             id,

@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== QueueAuthorityUpdated =============================== */
 
@@ -26,7 +26,7 @@ export class QueueAuthorityUpdated implements StructClass { __StructClass = true
 
  this.queueId = fields.queueId;; this.existingAuthority = fields.existingAuthority;; this.newAuthority = fields.newAuthority; }
 
- static reified( ): QueueAuthorityUpdatedReified { return { typeName: QueueAuthorityUpdated.$typeName, fullTypeName: composeSuiType( QueueAuthorityUpdated.$typeName, ...[] ) as `${typeof PKG_V1}::queue_set_authority_action::QueueAuthorityUpdated`, typeArgs: [ ] as [], isPhantom: QueueAuthorityUpdated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => QueueAuthorityUpdated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => QueueAuthorityUpdated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => QueueAuthorityUpdated.fromBcs( data, ), bcs: QueueAuthorityUpdated.bcs, fromJSONField: (field: any) => QueueAuthorityUpdated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => QueueAuthorityUpdated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => QueueAuthorityUpdated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => QueueAuthorityUpdated.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => QueueAuthorityUpdated.fetch( client, id, ), new: ( fields: QueueAuthorityUpdatedFields, ) => { return new QueueAuthorityUpdated( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): QueueAuthorityUpdatedReified { return { typeName: QueueAuthorityUpdated.$typeName, fullTypeName: composeSuiType( QueueAuthorityUpdated.$typeName, ...[] ) as `${typeof PKG_V1}::queue_set_authority_action::QueueAuthorityUpdated`, typeArgs: [ ] as [], isPhantom: QueueAuthorityUpdated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => QueueAuthorityUpdated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => QueueAuthorityUpdated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => QueueAuthorityUpdated.fromBcs( data, ), bcs: QueueAuthorityUpdated.bcs, fromJSONField: (field: any) => QueueAuthorityUpdated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => QueueAuthorityUpdated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => QueueAuthorityUpdated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => QueueAuthorityUpdated.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => QueueAuthorityUpdated.fetch( client, id, ), new: ( fields: QueueAuthorityUpdatedFields, ) => { return new QueueAuthorityUpdated( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return QueueAuthorityUpdated.reified() }
 
@@ -34,7 +34,7 @@ export class QueueAuthorityUpdated implements StructClass { __StructClass = true
 
  static get bcs() { return bcs.struct("QueueAuthorityUpdated", {
 
- queueId: ID.bcs, existingAuthority: bcs.bytes(32).transform({ input: (val: string) => fromHEX(val), output: (val: Uint8Array) => toHEX(val), }), newAuthority: bcs.bytes(32).transform({ input: (val: string) => fromHEX(val), output: (val: Uint8Array) => toHEX(val), })
+ queueId: ID.bcs, existingAuthority: bcs.bytes(32).transform({ input: (val: string) => fromHex(val), output: (val: Uint8Array) => toHex(val), }), newAuthority: bcs.bytes(32).transform({ input: (val: string) => fromHex(val), output: (val: Uint8Array) => toHex(val), })
 
 }) };
 
@@ -66,9 +66,9 @@ export class QueueAuthorityUpdated implements StructClass { __StructClass = true
 
  static fromSuiObjectData( data: SuiObjectData ): QueueAuthorityUpdated { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isQueueAuthorityUpdated(data.bcs.type)) { throw new Error(`object at is not a QueueAuthorityUpdated object`); }
 
- return QueueAuthorityUpdated.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return QueueAuthorityUpdated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return QueueAuthorityUpdated.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return QueueAuthorityUpdated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<QueueAuthorityUpdated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching QueueAuthorityUpdated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isQueueAuthorityUpdated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a QueueAuthorityUpdated object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<QueueAuthorityUpdated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching QueueAuthorityUpdated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isQueueAuthorityUpdated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a QueueAuthorityUpdated object`); }
 
  return QueueAuthorityUpdated.fromSuiObjectData( res.data ); }
 

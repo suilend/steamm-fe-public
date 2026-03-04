@@ -10,8 +10,8 @@ import {SUI} from "../../0x2/sui/structs";
 import {FungibleStakedSui, PoolTokenExchangeRate, StakedSui} from "../../0x3/staking-pool/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== Storage =============================== */
 
@@ -102,7 +102,7 @@ export class Storage implements StructClass {
                 Storage.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Storage.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Storage.fetch(
                 client,
                 id,
             ),
@@ -233,7 +233,7 @@ export class Storage implements StructClass {
             }
 
             return Storage.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -248,7 +248,7 @@ export class Storage implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Storage> {
         const res = await client.getObject({
             id,
@@ -362,7 +362,7 @@ export class ValidatorInfo implements StructClass {
                 ValidatorInfo.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ValidatorInfo.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ValidatorInfo.fetch(
                 client,
                 id,
             ),
@@ -395,8 +395,8 @@ export class ValidatorInfo implements StructClass {
             staking_pool_id:
                 ID.bcs
             , validator_address:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , active_stake:
                 Option.bcs(FungibleStakedSui.bcs)
             , inactive_stake:
@@ -498,7 +498,7 @@ export class ValidatorInfo implements StructClass {
             }
 
             return ValidatorInfo.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -513,7 +513,7 @@ export class ValidatorInfo implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ValidatorInfo> {
         const res = await client.getObject({
             id,

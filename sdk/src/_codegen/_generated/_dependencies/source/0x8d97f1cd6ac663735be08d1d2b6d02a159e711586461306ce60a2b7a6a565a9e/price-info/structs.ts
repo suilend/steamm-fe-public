@@ -18,8 +18,8 @@ import { UID } from "../../0x2/object/structs";
 import { PKG_V1 } from "../index";
 import { PriceFeed } from "../price-feed/structs";
 import { bcs } from "@mysten/sui/bcs";
-import { SuiClient, SuiObjectData, SuiParsedData } from "@mysten/sui/client";
-import { fromB64 } from "@mysten/sui/utils";
+import { SuiJsonRpcClient, SuiObjectData, SuiParsedData } from "@mysten/sui/jsonRpc";
+import { fromBase64 } from "@mysten/sui/utils";
 
 /* ============================== PriceInfo =============================== */
 
@@ -85,7 +85,7 @@ export class PriceInfo implements StructClass {
         PriceInfo.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) =>
         PriceInfo.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) =>
+      fetch: async (client: SuiJsonRpcClient, id: string) =>
         PriceInfo.fetch(client, id),
       new: (fields: PriceInfoFields) => {
         return new PriceInfo([], fields);
@@ -194,7 +194,7 @@ export class PriceInfo implements StructClass {
         throw new Error(`object at is not a PriceInfo object`);
       }
 
-      return PriceInfo.fromBcs(fromB64(data.bcs.bcsBytes));
+      return PriceInfo.fromBcs(fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return PriceInfo.fromSuiParsedData(data.content);
@@ -205,7 +205,7 @@ export class PriceInfo implements StructClass {
     );
   }
 
-  static async fetch(client: SuiClient, id: string): Promise<PriceInfo> {
+  static async fetch(client: SuiJsonRpcClient, id: string): Promise<PriceInfo> {
     const res = await client.getObject({
       id,
       options: {
@@ -293,7 +293,7 @@ export class PriceInfoObject implements StructClass {
         PriceInfoObject.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) =>
         PriceInfoObject.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) =>
+      fetch: async (client: SuiJsonRpcClient, id: string) =>
         PriceInfoObject.fetch(client, id),
       new: (fields: PriceInfoObjectFields) => {
         return new PriceInfoObject([], fields);
@@ -397,7 +397,7 @@ export class PriceInfoObject implements StructClass {
         throw new Error(`object at is not a PriceInfoObject object`);
       }
 
-      return PriceInfoObject.fromBcs(fromB64(data.bcs.bcsBytes));
+      return PriceInfoObject.fromBcs(fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return PriceInfoObject.fromSuiParsedData(data.content);
@@ -408,7 +408,7 @@ export class PriceInfoObject implements StructClass {
     );
   }
 
-  static async fetch(client: SuiClient, id: string): Promise<PriceInfoObject> {
+  static async fetch(client: SuiJsonRpcClient, id: string): Promise<PriceInfoObject> {
     const res = await client.getObject({
       id,
       options: {

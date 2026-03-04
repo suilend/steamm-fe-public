@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {PKG_V30} from "../index";
 import {UID} from "../object/structs";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Clock =============================== */
 
@@ -89,7 +89,7 @@ export class Clock implements StructClass {
                 Clock.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Clock.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Clock.fetch(
                 client,
                 id,
             ),
@@ -214,7 +214,7 @@ export class Clock implements StructClass {
             }
 
             return Clock.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -229,7 +229,7 @@ export class Clock implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Clock> {
         const res = await client.getObject({
             id,

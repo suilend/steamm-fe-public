@@ -2,8 +2,8 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Decimal =============================== */
 
@@ -25,7 +25,7 @@ export class Decimal implements StructClass { __StructClass = true as const;
 
  this.value = fields.value;; this.neg = fields.neg; }
 
- static reified( ): DecimalReified { return { typeName: Decimal.$typeName, fullTypeName: composeSuiType( Decimal.$typeName, ...[] ) as `${typeof PKG_V1}::decimal::Decimal`, typeArgs: [ ] as [], isPhantom: Decimal.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => Decimal.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => Decimal.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => Decimal.fromBcs( data, ), bcs: Decimal.bcs, fromJSONField: (field: any) => Decimal.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => Decimal.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => Decimal.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => Decimal.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => Decimal.fetch( client, id, ), new: ( fields: DecimalFields, ) => { return new Decimal( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): DecimalReified { return { typeName: Decimal.$typeName, fullTypeName: composeSuiType( Decimal.$typeName, ...[] ) as `${typeof PKG_V1}::decimal::Decimal`, typeArgs: [ ] as [], isPhantom: Decimal.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => Decimal.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => Decimal.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => Decimal.fromBcs( data, ), bcs: Decimal.bcs, fromJSONField: (field: any) => Decimal.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => Decimal.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => Decimal.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => Decimal.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => Decimal.fetch( client, id, ), new: ( fields: DecimalFields, ) => { return new Decimal( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return Decimal.reified() }
 
@@ -65,9 +65,9 @@ export class Decimal implements StructClass { __StructClass = true as const;
 
  static fromSuiObjectData( data: SuiObjectData ): Decimal { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isDecimal(data.bcs.type)) { throw new Error(`object at is not a Decimal object`); }
 
- return Decimal.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return Decimal.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return Decimal.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return Decimal.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<Decimal> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching Decimal object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isDecimal(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a Decimal object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<Decimal> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching Decimal object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isDecimal(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a Decimal object`); }
 
  return Decimal.fromSuiObjectData( res.data ); }
 

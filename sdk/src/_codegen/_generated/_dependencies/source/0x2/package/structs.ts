@@ -6,8 +6,8 @@ import {String} from "../../0x1/ascii/structs";
 import {PKG_V30} from "../index";
 import {ID, UID} from "../object/structs";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Publisher =============================== */
 
@@ -94,7 +94,7 @@ export class Publisher implements StructClass {
                 Publisher.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Publisher.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Publisher.fetch(
                 client,
                 id,
             ),
@@ -221,7 +221,7 @@ export class Publisher implements StructClass {
             }
 
             return Publisher.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -236,7 +236,7 @@ export class Publisher implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Publisher> {
         const res = await client.getObject({
             id,
@@ -344,7 +344,7 @@ export class UpgradeCap implements StructClass {
                 UpgradeCap.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => UpgradeCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => UpgradeCap.fetch(
                 client,
                 id,
             ),
@@ -473,7 +473,7 @@ export class UpgradeCap implements StructClass {
             }
 
             return UpgradeCap.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -488,7 +488,7 @@ export class UpgradeCap implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<UpgradeCap> {
         const res = await client.getObject({
             id,
@@ -592,7 +592,7 @@ export class UpgradeReceipt implements StructClass {
                 UpgradeReceipt.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => UpgradeReceipt.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => UpgradeReceipt.fetch(
                 client,
                 id,
             ),
@@ -717,7 +717,7 @@ export class UpgradeReceipt implements StructClass {
             }
 
             return UpgradeReceipt.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -732,7 +732,7 @@ export class UpgradeReceipt implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<UpgradeReceipt> {
         const res = await client.getObject({
             id,
@@ -840,7 +840,7 @@ export class UpgradeTicket implements StructClass {
                 UpgradeTicket.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => UpgradeTicket.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => UpgradeTicket.fetch(
                 client,
                 id,
             ),
@@ -969,7 +969,7 @@ export class UpgradeTicket implements StructClass {
             }
 
             return UpgradeTicket.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -984,7 +984,7 @@ export class UpgradeTicket implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<UpgradeTicket> {
         const res = await client.getObject({
             id,

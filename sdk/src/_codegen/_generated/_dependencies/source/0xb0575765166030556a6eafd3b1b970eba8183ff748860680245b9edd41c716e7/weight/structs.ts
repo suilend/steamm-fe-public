@@ -7,8 +7,8 @@ import {PKG_V1} from "../index";
 import {AdminCap} from "../liquid-staking/structs";
 import {Version} from "../version/structs";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== WEIGHT =============================== */
 
@@ -91,7 +91,7 @@ export class WEIGHT implements StructClass {
                 WEIGHT.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => WEIGHT.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => WEIGHT.fetch(
                 client,
                 id,
             ),
@@ -214,7 +214,7 @@ export class WEIGHT implements StructClass {
             }
 
             return WEIGHT.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -229,7 +229,7 @@ export class WEIGHT implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<WEIGHT> {
         const res = await client.getObject({
             id,
@@ -352,7 +352,7 @@ export class WeightHook<P extends PhantomTypeArgument> implements StructClass {
                     P,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => WeightHook.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => WeightHook.fetch(
                 client,
                 P,
                 id,
@@ -390,8 +390,8 @@ export class WeightHook<P extends PhantomTypeArgument> implements StructClass {
             id:
                 UID.bcs
             , validator_addresses_and_weights:
-                VecMap.bcs(bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),}), bcs.u64())
+                VecMap.bcs(bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),}), bcs.u64())
             , total_weight:
                 bcs.u64()
             , admin_cap:
@@ -518,7 +518,7 @@ export class WeightHook<P extends PhantomTypeArgument> implements StructClass {
 
             return WeightHook.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -534,7 +534,7 @@ export class WeightHook<P extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<P extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: P, id: string
+        client: SuiJsonRpcClient, typeArg: P, id: string
     ): Promise<WeightHook<ToPhantomTypeArgument<P>>> {
         const res = await client.getObject({
             id,
@@ -648,7 +648,7 @@ export class WeightHookAdminCap<P extends PhantomTypeArgument> implements Struct
                     P,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => WeightHookAdminCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => WeightHookAdminCap.fetch(
                 client,
                 P,
                 id,
@@ -803,7 +803,7 @@ export class WeightHookAdminCap<P extends PhantomTypeArgument> implements Struct
 
             return WeightHookAdminCap.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -819,7 +819,7 @@ export class WeightHookAdminCap<P extends PhantomTypeArgument> implements Struct
     }
 
     static async fetch<P extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: P, id: string
+        client: SuiJsonRpcClient, typeArg: P, id: string
     ): Promise<WeightHookAdminCap<ToPhantomTypeArgument<P>>> {
         const res = await client.getObject({
             id,

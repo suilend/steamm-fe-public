@@ -4,8 +4,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from ".
 import {Vector} from "../../../../_framework/vector";
 import {PKG_V30} from "../index";
 import {BcsType, bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Entry =============================== */
 
@@ -101,7 +101,7 @@ export class Entry<K extends TypeArgument, V extends TypeArgument> implements St
                     [K, V],
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Entry.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Entry.fetch(
                 client,
                 [K, V],
                 id,
@@ -260,7 +260,7 @@ export class Entry<K extends TypeArgument, V extends TypeArgument> implements St
 
             return Entry.fromBcs(
                 typeArgs,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -276,7 +276,7 @@ export class Entry<K extends TypeArgument, V extends TypeArgument> implements St
     }
 
     static async fetch<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
-        client: SuiClient, typeArgs: [K, V], id: string
+        client: SuiJsonRpcClient, typeArgs: [K, V], id: string
     ): Promise<Entry<ToTypeArgument<K>, ToTypeArgument<V>>> {
         const res = await client.getObject({
             id,
@@ -390,7 +390,7 @@ export class VecMap<K extends TypeArgument, V extends TypeArgument> implements S
                     [K, V],
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => VecMap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => VecMap.fetch(
                 client,
                 [K, V],
                 id,
@@ -547,7 +547,7 @@ export class VecMap<K extends TypeArgument, V extends TypeArgument> implements S
 
             return VecMap.fromBcs(
                 typeArgs,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -563,7 +563,7 @@ export class VecMap<K extends TypeArgument, V extends TypeArgument> implements S
     }
 
     static async fetch<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
-        client: SuiClient, typeArgs: [K, V], id: string
+        client: SuiJsonRpcClient, typeArgs: [K, V], id: string
     ): Promise<VecMap<ToTypeArgument<K>, ToTypeArgument<V>>> {
         const res = await client.getObject({
             id,

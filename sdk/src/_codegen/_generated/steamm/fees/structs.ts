@@ -3,8 +3,8 @@ import {PhantomReified, PhantomToTypeStr, PhantomTypeArgument, Reified, StructCl
 import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from "../../_framework/util";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== FeeConfig =============================== */
 
@@ -91,7 +91,7 @@ export class FeeConfig implements StructClass {
                 FeeConfig.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => FeeConfig.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => FeeConfig.fetch(
                 client,
                 id,
             ),
@@ -218,7 +218,7 @@ export class FeeConfig implements StructClass {
             }
 
             return FeeConfig.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -233,7 +233,7 @@ export class FeeConfig implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<FeeConfig> {
         const res = await client.getObject({
             id,
@@ -350,7 +350,7 @@ export class Fees<A extends PhantomTypeArgument, B extends PhantomTypeArgument> 
                     [A, B],
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Fees.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Fees.fetch(
                 client,
                 [A, B],
                 id,
@@ -511,7 +511,7 @@ export class Fees<A extends PhantomTypeArgument, B extends PhantomTypeArgument> 
 
             return Fees.fromBcs(
                 typeArgs,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -527,7 +527,7 @@ export class Fees<A extends PhantomTypeArgument, B extends PhantomTypeArgument> 
     }
 
     static async fetch<A extends PhantomReified<PhantomTypeArgument>, B extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArgs: [A, B], id: string
+        client: SuiJsonRpcClient, typeArgs: [A, B], id: string
     ): Promise<Fees<ToPhantomTypeArgument<A>, ToPhantomTypeArgument<B>>> {
         const res = await client.getObject({
             id,

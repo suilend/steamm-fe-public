@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {ID, UID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== State =============================== */
 
@@ -26,7 +26,7 @@ export class State implements StructClass { __StructClass = true as const;
 
  this.id = fields.id;; this.oracleQueue = fields.oracleQueue;; this.guardianQueue = fields.guardianQueue;; this.onDemandPackageId = fields.onDemandPackageId; }
 
- static reified( ): StateReified { return { typeName: State.$typeName, fullTypeName: composeSuiType( State.$typeName, ...[] ) as `${typeof PKG_V1}::on_demand::State`, typeArgs: [ ] as [], isPhantom: State.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => State.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => State.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => State.fromBcs( data, ), bcs: State.bcs, fromJSONField: (field: any) => State.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => State.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => State.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => State.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => State.fetch( client, id, ), new: ( fields: StateFields, ) => { return new State( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): StateReified { return { typeName: State.$typeName, fullTypeName: composeSuiType( State.$typeName, ...[] ) as `${typeof PKG_V1}::on_demand::State`, typeArgs: [ ] as [], isPhantom: State.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => State.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => State.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => State.fromBcs( data, ), bcs: State.bcs, fromJSONField: (field: any) => State.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => State.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => State.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => State.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => State.fetch( client, id, ), new: ( fields: StateFields, ) => { return new State( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return State.reified() }
 
@@ -66,9 +66,9 @@ export class State implements StructClass { __StructClass = true as const;
 
  static fromSuiObjectData( data: SuiObjectData ): State { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isState(data.bcs.type)) { throw new Error(`object at is not a State object`); }
 
- return State.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return State.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return State.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return State.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<State> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching State object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isState(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a State object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<State> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching State object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isState(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a State object`); }
 
  return State.fromSuiObjectData( res.data ); }
 
@@ -94,7 +94,7 @@ export class AdminCap implements StructClass { __StructClass = true as const;
 
  this.id = fields.id; }
 
- static reified( ): AdminCapReified { return { typeName: AdminCap.$typeName, fullTypeName: composeSuiType( AdminCap.$typeName, ...[] ) as `${typeof PKG_V1}::on_demand::AdminCap`, typeArgs: [ ] as [], isPhantom: AdminCap.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => AdminCap.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => AdminCap.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => AdminCap.fromBcs( data, ), bcs: AdminCap.bcs, fromJSONField: (field: any) => AdminCap.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => AdminCap.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => AdminCap.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => AdminCap.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => AdminCap.fetch( client, id, ), new: ( fields: AdminCapFields, ) => { return new AdminCap( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): AdminCapReified { return { typeName: AdminCap.$typeName, fullTypeName: composeSuiType( AdminCap.$typeName, ...[] ) as `${typeof PKG_V1}::on_demand::AdminCap`, typeArgs: [ ] as [], isPhantom: AdminCap.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => AdminCap.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => AdminCap.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => AdminCap.fromBcs( data, ), bcs: AdminCap.bcs, fromJSONField: (field: any) => AdminCap.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => AdminCap.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => AdminCap.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => AdminCap.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => AdminCap.fetch( client, id, ), new: ( fields: AdminCapFields, ) => { return new AdminCap( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return AdminCap.reified() }
 
@@ -134,9 +134,9 @@ export class AdminCap implements StructClass { __StructClass = true as const;
 
  static fromSuiObjectData( data: SuiObjectData ): AdminCap { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isAdminCap(data.bcs.type)) { throw new Error(`object at is not a AdminCap object`); }
 
- return AdminCap.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return AdminCap.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return AdminCap.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return AdminCap.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<AdminCap> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching AdminCap object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAdminCap(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a AdminCap object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<AdminCap> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching AdminCap object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAdminCap(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a AdminCap object`); }
 
  return AdminCap.fromSuiObjectData( res.data ); }
 
@@ -162,7 +162,7 @@ export class ON_DEMAND implements StructClass { __StructClass = true as const;
 
  this.dummyField = fields.dummyField; }
 
- static reified( ): ON_DEMANDReified { return { typeName: ON_DEMAND.$typeName, fullTypeName: composeSuiType( ON_DEMAND.$typeName, ...[] ) as `${typeof PKG_V1}::on_demand::ON_DEMAND`, typeArgs: [ ] as [], isPhantom: ON_DEMAND.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => ON_DEMAND.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => ON_DEMAND.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => ON_DEMAND.fromBcs( data, ), bcs: ON_DEMAND.bcs, fromJSONField: (field: any) => ON_DEMAND.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => ON_DEMAND.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => ON_DEMAND.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => ON_DEMAND.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => ON_DEMAND.fetch( client, id, ), new: ( fields: ON_DEMANDFields, ) => { return new ON_DEMAND( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): ON_DEMANDReified { return { typeName: ON_DEMAND.$typeName, fullTypeName: composeSuiType( ON_DEMAND.$typeName, ...[] ) as `${typeof PKG_V1}::on_demand::ON_DEMAND`, typeArgs: [ ] as [], isPhantom: ON_DEMAND.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => ON_DEMAND.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => ON_DEMAND.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => ON_DEMAND.fromBcs( data, ), bcs: ON_DEMAND.bcs, fromJSONField: (field: any) => ON_DEMAND.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => ON_DEMAND.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => ON_DEMAND.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => ON_DEMAND.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => ON_DEMAND.fetch( client, id, ), new: ( fields: ON_DEMANDFields, ) => { return new ON_DEMAND( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return ON_DEMAND.reified() }
 
@@ -202,9 +202,9 @@ export class ON_DEMAND implements StructClass { __StructClass = true as const;
 
  static fromSuiObjectData( data: SuiObjectData ): ON_DEMAND { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isON_DEMAND(data.bcs.type)) { throw new Error(`object at is not a ON_DEMAND object`); }
 
- return ON_DEMAND.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return ON_DEMAND.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return ON_DEMAND.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return ON_DEMAND.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<ON_DEMAND> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching ON_DEMAND object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isON_DEMAND(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a ON_DEMAND object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<ON_DEMAND> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching ON_DEMAND object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isON_DEMAND(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a ON_DEMAND object`); }
 
  return ON_DEMAND.fromSuiObjectData( res.data ); }
 

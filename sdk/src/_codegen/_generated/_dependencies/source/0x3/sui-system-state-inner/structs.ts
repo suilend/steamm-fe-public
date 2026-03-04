@@ -11,8 +11,8 @@ import {StakeSubsidy} from "../stake-subsidy/structs";
 import {StorageFund} from "../storage-fund/structs";
 import {ValidatorSet} from "../validator-set/structs";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== SuiSystemStateInner =============================== */
 
@@ -125,7 +125,7 @@ export class SuiSystemStateInner implements StructClass {
                 SuiSystemStateInner.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => SuiSystemStateInner.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => SuiSystemStateInner.fetch(
                 client,
                 id,
             ),
@@ -170,9 +170,9 @@ export class SuiSystemStateInner implements StructClass {
             , reference_gas_price:
                 bcs.u64()
             , validator_report_records:
-                VecMap.bcs(bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),}), VecSet.bcs(bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})))
+                VecMap.bcs(bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),}), VecSet.bcs(bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})))
             , stake_subsidy:
                 StakeSubsidy.bcs
             , safe_mode:
@@ -280,7 +280,7 @@ export class SuiSystemStateInner implements StructClass {
             }
 
             return SuiSystemStateInner.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -295,7 +295,7 @@ export class SuiSystemStateInner implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<SuiSystemStateInner> {
         const res = await client.getObject({
             id,
@@ -427,7 +427,7 @@ export class SuiSystemStateInnerV2 implements StructClass {
                 SuiSystemStateInnerV2.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => SuiSystemStateInnerV2.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => SuiSystemStateInnerV2.fetch(
                 client,
                 id,
             ),
@@ -472,9 +472,9 @@ export class SuiSystemStateInnerV2 implements StructClass {
             , reference_gas_price:
                 bcs.u64()
             , validator_report_records:
-                VecMap.bcs(bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),}), VecSet.bcs(bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})))
+                VecMap.bcs(bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),}), VecSet.bcs(bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})))
             , stake_subsidy:
                 StakeSubsidy.bcs
             , safe_mode:
@@ -582,7 +582,7 @@ export class SuiSystemStateInnerV2 implements StructClass {
             }
 
             return SuiSystemStateInnerV2.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -597,7 +597,7 @@ export class SuiSystemStateInnerV2 implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<SuiSystemStateInnerV2> {
         const res = await client.getObject({
             id,
@@ -721,7 +721,7 @@ export class SystemEpochInfoEvent implements StructClass {
                 SystemEpochInfoEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => SystemEpochInfoEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => SystemEpochInfoEvent.fetch(
                 client,
                 id,
             ),
@@ -866,7 +866,7 @@ export class SystemEpochInfoEvent implements StructClass {
             }
 
             return SystemEpochInfoEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -881,7 +881,7 @@ export class SystemEpochInfoEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<SystemEpochInfoEvent> {
         const res = await client.getObject({
             id,
@@ -997,7 +997,7 @@ export class SystemParameters implements StructClass {
                 SystemParameters.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => SystemParameters.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => SystemParameters.fetch(
                 client,
                 id,
             ),
@@ -1134,7 +1134,7 @@ export class SystemParameters implements StructClass {
             }
 
             return SystemParameters.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1149,7 +1149,7 @@ export class SystemParameters implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<SystemParameters> {
         const res = await client.getObject({
             id,
@@ -1267,7 +1267,7 @@ export class SystemParametersV2 implements StructClass {
                 SystemParametersV2.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => SystemParametersV2.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => SystemParametersV2.fetch(
                 client,
                 id,
             ),
@@ -1406,7 +1406,7 @@ export class SystemParametersV2 implements StructClass {
             }
 
             return SystemParametersV2.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1421,7 +1421,7 @@ export class SystemParametersV2 implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<SystemParametersV2> {
         const res = await client.getObject({
             id,

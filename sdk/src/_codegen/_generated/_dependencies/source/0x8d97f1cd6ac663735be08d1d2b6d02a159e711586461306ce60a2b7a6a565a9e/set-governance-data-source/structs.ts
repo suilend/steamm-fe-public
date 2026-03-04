@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {ExternalAddress} from "../../0x5306f64e312b581766351c07af79c72fcb1cd25147157fdc2f8ad76de9a3fb6a/external-address/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== GovernanceDataSource =============================== */
 
@@ -91,7 +91,7 @@ export class GovernanceDataSource implements StructClass {
                 GovernanceDataSource.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => GovernanceDataSource.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => GovernanceDataSource.fetch(
                 client,
                 id,
             ),
@@ -218,7 +218,7 @@ export class GovernanceDataSource implements StructClass {
             }
 
             return GovernanceDataSource.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -233,7 +233,7 @@ export class GovernanceDataSource implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<GovernanceDataSource> {
         const res = await client.getObject({
             id,

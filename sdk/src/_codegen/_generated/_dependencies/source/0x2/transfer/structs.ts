@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from ".
 import {PKG_V30} from "../index";
 import {ID} from "../object/structs";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Receiving =============================== */
 
@@ -100,7 +100,7 @@ export class Receiving<T extends PhantomTypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Receiving.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Receiving.fetch(
                 client,
                 T,
                 id,
@@ -257,7 +257,7 @@ export class Receiving<T extends PhantomTypeArgument> implements StructClass {
 
             return Receiving.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -273,7 +273,7 @@ export class Receiving<T extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<Receiving<ToPhantomTypeArgument<T>>> {
         const res = await client.getObject({
             id,

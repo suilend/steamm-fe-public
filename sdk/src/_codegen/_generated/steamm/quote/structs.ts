@@ -2,8 +2,8 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../_framework/util";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== DepositQuote =============================== */
 
@@ -92,7 +92,7 @@ export class DepositQuote implements StructClass {
                 DepositQuote.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => DepositQuote.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => DepositQuote.fetch(
                 client,
                 id,
             ),
@@ -221,7 +221,7 @@ export class DepositQuote implements StructClass {
             }
 
             return DepositQuote.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -236,7 +236,7 @@ export class DepositQuote implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<DepositQuote> {
         const res = await client.getObject({
             id,
@@ -342,7 +342,7 @@ export class RedeemQuote implements StructClass {
                 RedeemQuote.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => RedeemQuote.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => RedeemQuote.fetch(
                 client,
                 id,
             ),
@@ -469,7 +469,7 @@ export class RedeemQuote implements StructClass {
             }
 
             return RedeemQuote.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -484,7 +484,7 @@ export class RedeemQuote implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<RedeemQuote> {
         const res = await client.getObject({
             id,
@@ -588,7 +588,7 @@ export class SwapFee implements StructClass {
                 SwapFee.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => SwapFee.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => SwapFee.fetch(
                 client,
                 id,
             ),
@@ -713,7 +713,7 @@ export class SwapFee implements StructClass {
             }
 
             return SwapFee.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -728,7 +728,7 @@ export class SwapFee implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<SwapFee> {
         const res = await client.getObject({
             id,
@@ -836,7 +836,7 @@ export class SwapQuote implements StructClass {
                 SwapQuote.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => SwapQuote.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => SwapQuote.fetch(
                 client,
                 id,
             ),
@@ -965,7 +965,7 @@ export class SwapQuote implements StructClass {
             }
 
             return SwapQuote.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -980,7 +980,7 @@ export class SwapQuote implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<SwapQuote> {
         const res = await client.getObject({
             id,

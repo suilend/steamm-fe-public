@@ -18,8 +18,8 @@ import { ORACLE_V2_PKG_V1 } from "../index";
 import { ID, UID } from "../../_dependencies/source/0x2/object/structs";
 import { Version } from "../version/structs";
 import { bcs } from "@mysten/sui/bcs";
-import { SuiClient, SuiObjectData, SuiParsedData } from "@mysten/sui/client";
-import { fromB64 } from "@mysten/sui/utils";
+import { SuiJsonRpcClient, SuiObjectData, SuiParsedData } from "@mysten/sui/jsonRpc";
+import { fromBase64 } from "@mysten/sui/utils";
 
 /* ============================== OracleQuoterV2 =============================== */
 
@@ -101,7 +101,7 @@ export class OracleQuoterV2 implements StructClass {
         OracleQuoterV2.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) =>
         OracleQuoterV2.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) =>
+      fetch: async (client: SuiJsonRpcClient, id: string) =>
         OracleQuoterV2.fetch(client, id),
       new: (fields: OracleQuoterV2Fields) => {
         return new OracleQuoterV2([], fields);
@@ -240,7 +240,7 @@ export class OracleQuoterV2 implements StructClass {
         throw new Error(`object at is not a OracleQuoterV2 object`);
       }
 
-      return OracleQuoterV2.fromBcs(fromB64(data.bcs.bcsBytes));
+      return OracleQuoterV2.fromBcs(fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return OracleQuoterV2.fromSuiParsedData(data.content);
@@ -251,7 +251,7 @@ export class OracleQuoterV2 implements StructClass {
     );
   }
 
-  static async fetch(client: SuiClient, id: string): Promise<OracleQuoterV2> {
+  static async fetch(client: SuiJsonRpcClient, id: string): Promise<OracleQuoterV2> {
     const res = await client.getObject({
       id,
       options: {

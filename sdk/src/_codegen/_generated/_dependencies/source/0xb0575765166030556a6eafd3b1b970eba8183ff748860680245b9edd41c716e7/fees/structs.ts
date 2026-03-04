@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {Bag} from "../../0x2/bag/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== FeeConfig =============================== */
 
@@ -99,7 +99,7 @@ export class FeeConfig implements StructClass {
                 FeeConfig.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => FeeConfig.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => FeeConfig.fetch(
                 client,
                 id,
             ),
@@ -234,7 +234,7 @@ export class FeeConfig implements StructClass {
             }
 
             return FeeConfig.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -249,7 +249,7 @@ export class FeeConfig implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<FeeConfig> {
         const res = await client.getObject({
             id,
@@ -351,7 +351,7 @@ export class FeeConfigBuilder implements StructClass {
                 FeeConfigBuilder.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => FeeConfigBuilder.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => FeeConfigBuilder.fetch(
                 client,
                 id,
             ),
@@ -474,7 +474,7 @@ export class FeeConfigBuilder implements StructClass {
             }
 
             return FeeConfigBuilder.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -489,7 +489,7 @@ export class FeeConfigBuilder implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<FeeConfigBuilder> {
         const res = await client.getObject({
             id,

@@ -1,4 +1,7 @@
-import { SuiClient, SuiTransactionBlockResponse } from "@mysten/sui/client";
+import {
+  SuiJsonRpcClient,
+  SuiTransactionBlockResponse,
+} from "@mysten/sui/jsonRpc";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
@@ -40,7 +43,7 @@ export const createToken = async (
   iconUrl: string,
   decimals: number,
   keypair: Ed25519Keypair,
-  suiClient: SuiClient,
+  suiClient: SuiJsonRpcClient,
 ): Promise<CreateCoinResult> => {
   console.log("[createToken] Creating token");
 
@@ -70,7 +73,7 @@ export const mintToken = async (
   decimals: number,
   nonMintable: boolean,
   keypair: Ed25519Keypair,
-  suiClient: SuiClient,
+  suiClient: SuiJsonRpcClient,
 ): Promise<MintTokenResult> => {
   console.log("[mintToken] Minting");
 

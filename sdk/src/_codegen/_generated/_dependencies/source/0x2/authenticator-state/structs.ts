@@ -6,8 +6,8 @@ import {String} from "../../0x1/string/structs";
 import {PKG_V30} from "../index";
 import {UID} from "../object/structs";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== ActiveJwk =============================== */
 
@@ -94,7 +94,7 @@ export class ActiveJwk implements StructClass {
                 ActiveJwk.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ActiveJwk.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ActiveJwk.fetch(
                 client,
                 id,
             ),
@@ -221,7 +221,7 @@ export class ActiveJwk implements StructClass {
             }
 
             return ActiveJwk.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -236,7 +236,7 @@ export class ActiveJwk implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ActiveJwk> {
         const res = await client.getObject({
             id,
@@ -340,7 +340,7 @@ export class AuthenticatorState implements StructClass {
                 AuthenticatorState.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => AuthenticatorState.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => AuthenticatorState.fetch(
                 client,
                 id,
             ),
@@ -465,7 +465,7 @@ export class AuthenticatorState implements StructClass {
             }
 
             return AuthenticatorState.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -480,7 +480,7 @@ export class AuthenticatorState implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<AuthenticatorState> {
         const res = await client.getObject({
             id,
@@ -584,7 +584,7 @@ export class AuthenticatorStateInner implements StructClass {
                 AuthenticatorStateInner.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => AuthenticatorStateInner.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => AuthenticatorStateInner.fetch(
                 client,
                 id,
             ),
@@ -709,7 +709,7 @@ export class AuthenticatorStateInner implements StructClass {
             }
 
             return AuthenticatorStateInner.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -724,7 +724,7 @@ export class AuthenticatorStateInner implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<AuthenticatorStateInner> {
         const res = await client.getObject({
             id,
@@ -832,7 +832,7 @@ export class JWK implements StructClass {
                 JWK.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => JWK.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => JWK.fetch(
                 client,
                 id,
             ),
@@ -961,7 +961,7 @@ export class JWK implements StructClass {
             }
 
             return JWK.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -976,7 +976,7 @@ export class JWK implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<JWK> {
         const res = await client.getObject({
             id,
@@ -1080,7 +1080,7 @@ export class JwkId implements StructClass {
                 JwkId.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => JwkId.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => JwkId.fetch(
                 client,
                 id,
             ),
@@ -1205,7 +1205,7 @@ export class JwkId implements StructClass {
             }
 
             return JwkId.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1220,7 +1220,7 @@ export class JwkId implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<JwkId> {
         const res = await client.getObject({
             id,

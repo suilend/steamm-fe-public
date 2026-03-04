@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../_framework
 import {PKG_V1} from "../index";
 import {Version} from "../version/structs";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== CpQuoter =============================== */
 
@@ -89,7 +89,7 @@ export class CpQuoter implements StructClass {
                 CpQuoter.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => CpQuoter.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => CpQuoter.fetch(
                 client,
                 id,
             ),
@@ -214,7 +214,7 @@ export class CpQuoter implements StructClass {
             }
 
             return CpQuoter.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -229,7 +229,7 @@ export class CpQuoter implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<CpQuoter> {
         const res = await client.getObject({
             id,

@@ -4,8 +4,8 @@ import {String} from "../../0x1/string/structs";
 import {PKG_V30} from "../index";
 import {UID} from "../object/structs";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== VerifiedIssuer =============================== */
 
@@ -92,7 +92,7 @@ export class VerifiedIssuer implements StructClass {
                 VerifiedIssuer.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => VerifiedIssuer.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => VerifiedIssuer.fetch(
                 client,
                 id,
             ),
@@ -125,8 +125,8 @@ export class VerifiedIssuer implements StructClass {
             id:
                 UID.bcs
             , owner:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , issuer:
                 String.bcs
 
@@ -220,7 +220,7 @@ export class VerifiedIssuer implements StructClass {
             }
 
             return VerifiedIssuer.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -235,7 +235,7 @@ export class VerifiedIssuer implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<VerifiedIssuer> {
         const res = await client.getObject({
             id,

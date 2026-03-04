@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== MigrateComplete =============================== */
 
@@ -87,7 +87,7 @@ export class MigrateComplete implements StructClass {
                 MigrateComplete.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => MigrateComplete.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => MigrateComplete.fetch(
                 client,
                 id,
             ),
@@ -210,7 +210,7 @@ export class MigrateComplete implements StructClass {
             }
 
             return MigrateComplete.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -225,7 +225,7 @@ export class MigrateComplete implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<MigrateComplete> {
         const res = await client.getObject({
             id,

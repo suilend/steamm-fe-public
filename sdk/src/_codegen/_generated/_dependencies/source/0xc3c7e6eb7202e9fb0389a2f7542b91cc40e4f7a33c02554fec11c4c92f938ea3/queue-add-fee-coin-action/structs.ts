@@ -4,8 +4,8 @@ import {TypeName} from "../../0x1/type-name/structs";
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== QueueFeeTypeAdded =============================== */
 
@@ -27,7 +27,7 @@ export class QueueFeeTypeAdded implements StructClass { __StructClass = true as 
 
  this.queueId = fields.queueId;; this.feeType = fields.feeType; }
 
- static reified( ): QueueFeeTypeAddedReified { return { typeName: QueueFeeTypeAdded.$typeName, fullTypeName: composeSuiType( QueueFeeTypeAdded.$typeName, ...[] ) as `${typeof PKG_V1}::queue_add_fee_coin_action::QueueFeeTypeAdded`, typeArgs: [ ] as [], isPhantom: QueueFeeTypeAdded.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => QueueFeeTypeAdded.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => QueueFeeTypeAdded.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => QueueFeeTypeAdded.fromBcs( data, ), bcs: QueueFeeTypeAdded.bcs, fromJSONField: (field: any) => QueueFeeTypeAdded.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => QueueFeeTypeAdded.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => QueueFeeTypeAdded.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => QueueFeeTypeAdded.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => QueueFeeTypeAdded.fetch( client, id, ), new: ( fields: QueueFeeTypeAddedFields, ) => { return new QueueFeeTypeAdded( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): QueueFeeTypeAddedReified { return { typeName: QueueFeeTypeAdded.$typeName, fullTypeName: composeSuiType( QueueFeeTypeAdded.$typeName, ...[] ) as `${typeof PKG_V1}::queue_add_fee_coin_action::QueueFeeTypeAdded`, typeArgs: [ ] as [], isPhantom: QueueFeeTypeAdded.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => QueueFeeTypeAdded.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => QueueFeeTypeAdded.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => QueueFeeTypeAdded.fromBcs( data, ), bcs: QueueFeeTypeAdded.bcs, fromJSONField: (field: any) => QueueFeeTypeAdded.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => QueueFeeTypeAdded.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => QueueFeeTypeAdded.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => QueueFeeTypeAdded.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => QueueFeeTypeAdded.fetch( client, id, ), new: ( fields: QueueFeeTypeAddedFields, ) => { return new QueueFeeTypeAdded( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return QueueFeeTypeAdded.reified() }
 
@@ -67,9 +67,9 @@ export class QueueFeeTypeAdded implements StructClass { __StructClass = true as 
 
  static fromSuiObjectData( data: SuiObjectData ): QueueFeeTypeAdded { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isQueueFeeTypeAdded(data.bcs.type)) { throw new Error(`object at is not a QueueFeeTypeAdded object`); }
 
- return QueueFeeTypeAdded.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return QueueFeeTypeAdded.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return QueueFeeTypeAdded.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return QueueFeeTypeAdded.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<QueueFeeTypeAdded> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching QueueFeeTypeAdded object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isQueueFeeTypeAdded(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a QueueFeeTypeAdded object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<QueueFeeTypeAdded> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching QueueFeeTypeAdded object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isQueueFeeTypeAdded(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a QueueFeeTypeAdded object`); }
 
  return QueueFeeTypeAdded.fromSuiObjectData( res.data ); }
 

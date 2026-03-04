@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== OnDemandPackageIdSet =============================== */
 
@@ -26,7 +26,7 @@ export class OnDemandPackageIdSet implements StructClass { __StructClass = true 
 
  this.oldOnDemandPackageId = fields.oldOnDemandPackageId;; this.onDemandPackageId = fields.onDemandPackageId; }
 
- static reified( ): OnDemandPackageIdSetReified { return { typeName: OnDemandPackageIdSet.$typeName, fullTypeName: composeSuiType( OnDemandPackageIdSet.$typeName, ...[] ) as `${typeof PKG_V1}::set_package_id_action::OnDemandPackageIdSet`, typeArgs: [ ] as [], isPhantom: OnDemandPackageIdSet.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => OnDemandPackageIdSet.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => OnDemandPackageIdSet.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => OnDemandPackageIdSet.fromBcs( data, ), bcs: OnDemandPackageIdSet.bcs, fromJSONField: (field: any) => OnDemandPackageIdSet.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => OnDemandPackageIdSet.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => OnDemandPackageIdSet.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => OnDemandPackageIdSet.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => OnDemandPackageIdSet.fetch( client, id, ), new: ( fields: OnDemandPackageIdSetFields, ) => { return new OnDemandPackageIdSet( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): OnDemandPackageIdSetReified { return { typeName: OnDemandPackageIdSet.$typeName, fullTypeName: composeSuiType( OnDemandPackageIdSet.$typeName, ...[] ) as `${typeof PKG_V1}::set_package_id_action::OnDemandPackageIdSet`, typeArgs: [ ] as [], isPhantom: OnDemandPackageIdSet.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => OnDemandPackageIdSet.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => OnDemandPackageIdSet.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => OnDemandPackageIdSet.fromBcs( data, ), bcs: OnDemandPackageIdSet.bcs, fromJSONField: (field: any) => OnDemandPackageIdSet.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => OnDemandPackageIdSet.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => OnDemandPackageIdSet.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => OnDemandPackageIdSet.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => OnDemandPackageIdSet.fetch( client, id, ), new: ( fields: OnDemandPackageIdSetFields, ) => { return new OnDemandPackageIdSet( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return OnDemandPackageIdSet.reified() }
 
@@ -66,9 +66,9 @@ export class OnDemandPackageIdSet implements StructClass { __StructClass = true 
 
  static fromSuiObjectData( data: SuiObjectData ): OnDemandPackageIdSet { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isOnDemandPackageIdSet(data.bcs.type)) { throw new Error(`object at is not a OnDemandPackageIdSet object`); }
 
- return OnDemandPackageIdSet.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return OnDemandPackageIdSet.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return OnDemandPackageIdSet.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return OnDemandPackageIdSet.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<OnDemandPackageIdSet> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching OnDemandPackageIdSet object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isOnDemandPackageIdSet(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a OnDemandPackageIdSet object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<OnDemandPackageIdSet> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching OnDemandPackageIdSet object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isOnDemandPackageIdSet(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a OnDemandPackageIdSet object`); }
 
  return OnDemandPackageIdSet.fromSuiObjectData( res.data ); }
 

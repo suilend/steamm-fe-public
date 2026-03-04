@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {ExternalAddress} from "../../0x5306f64e312b581766351c07af79c72fcb1cd25147157fdc2f8ad76de9a3fb6a/external-address/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== DataSource =============================== */
 
@@ -89,7 +89,7 @@ export class DataSource implements StructClass {
                 DataSource.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => DataSource.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => DataSource.fetch(
                 client,
                 id,
             ),
@@ -214,7 +214,7 @@ export class DataSource implements StructClass {
             }
 
             return DataSource.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -229,7 +229,7 @@ export class DataSource implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<DataSource> {
         const res = await client.getObject({
             id,

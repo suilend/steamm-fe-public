@@ -8,8 +8,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from ".
 import {PKG_V1} from "../index";
 import {Version} from "../version/structs";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== Bank =============================== */
 
@@ -113,7 +113,7 @@ export class Bank<P extends PhantomTypeArgument, T extends PhantomTypeArgument, 
                     [P, T, BToken],
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Bank.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Bank.fetch(
                 client,
                 [P, T, BToken],
                 id,
@@ -280,7 +280,7 @@ export class Bank<P extends PhantomTypeArgument, T extends PhantomTypeArgument, 
 
             return Bank.fromBcs(
                 typeArgs,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -296,7 +296,7 @@ export class Bank<P extends PhantomTypeArgument, T extends PhantomTypeArgument, 
     }
 
     static async fetch<P extends PhantomReified<PhantomTypeArgument>, T extends PhantomReified<PhantomTypeArgument>, BToken extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArgs: [P, T, BToken], id: string
+        client: SuiJsonRpcClient, typeArgs: [P, T, BToken], id: string
     ): Promise<Bank<ToPhantomTypeArgument<P>, ToPhantomTypeArgument<T>, ToPhantomTypeArgument<BToken>>> {
         const res = await client.getObject({
             id,
@@ -407,7 +407,7 @@ export class BurnBTokenEvent implements StructClass {
                 BurnBTokenEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => BurnBTokenEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => BurnBTokenEvent.fetch(
                 client,
                 id,
             ),
@@ -438,8 +438,8 @@ export class BurnBTokenEvent implements StructClass {
     static get bcs() {
         return bcs.struct("BurnBTokenEvent", {
             user:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , bank_id:
                 ID.bcs
             , lending_market_id:
@@ -539,7 +539,7 @@ export class BurnBTokenEvent implements StructClass {
             }
 
             return BurnBTokenEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -554,7 +554,7 @@ export class BurnBTokenEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<BurnBTokenEvent> {
         const res = await client.getObject({
             id,
@@ -662,7 +662,7 @@ export class DeployEvent implements StructClass {
                 DeployEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => DeployEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => DeployEvent.fetch(
                 client,
                 id,
             ),
@@ -791,7 +791,7 @@ export class DeployEvent implements StructClass {
             }
 
             return DeployEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -806,7 +806,7 @@ export class DeployEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<DeployEvent> {
         const res = await client.getObject({
             id,
@@ -927,7 +927,7 @@ export class Lending<P extends PhantomTypeArgument> implements StructClass {
                     P,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Lending.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Lending.fetch(
                 client,
                 P,
                 id,
@@ -1090,7 +1090,7 @@ export class Lending<P extends PhantomTypeArgument> implements StructClass {
 
             return Lending.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1106,7 +1106,7 @@ export class Lending<P extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<P extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: P, id: string
+        client: SuiJsonRpcClient, typeArg: P, id: string
     ): Promise<Lending<ToPhantomTypeArgument<P>>> {
         const res = await client.getObject({
             id,
@@ -1217,7 +1217,7 @@ export class MintBTokenEvent implements StructClass {
                 MintBTokenEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => MintBTokenEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => MintBTokenEvent.fetch(
                 client,
                 id,
             ),
@@ -1248,8 +1248,8 @@ export class MintBTokenEvent implements StructClass {
     static get bcs() {
         return bcs.struct("MintBTokenEvent", {
             user:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , bank_id:
                 ID.bcs
             , lending_market_id:
@@ -1349,7 +1349,7 @@ export class MintBTokenEvent implements StructClass {
             }
 
             return MintBTokenEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1364,7 +1364,7 @@ export class MintBTokenEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<MintBTokenEvent> {
         const res = await client.getObject({
             id,
@@ -1466,7 +1466,7 @@ export class NeedsRebalance implements StructClass {
                 NeedsRebalance.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => NeedsRebalance.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => NeedsRebalance.fetch(
                 client,
                 id,
             ),
@@ -1589,7 +1589,7 @@ export class NeedsRebalance implements StructClass {
             }
 
             return NeedsRebalance.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1604,7 +1604,7 @@ export class NeedsRebalance implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<NeedsRebalance> {
         const res = await client.getObject({
             id,
@@ -1714,7 +1714,7 @@ export class NewBankEvent implements StructClass {
                 NewBankEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => NewBankEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => NewBankEvent.fetch(
                 client,
                 id,
             ),
@@ -1845,7 +1845,7 @@ export class NewBankEvent implements StructClass {
             }
 
             return NewBankEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1860,7 +1860,7 @@ export class NewBankEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<NewBankEvent> {
         const res = await client.getObject({
             id,
@@ -1968,7 +1968,7 @@ export class RecallEvent implements StructClass {
                 RecallEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => RecallEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => RecallEvent.fetch(
                 client,
                 id,
             ),
@@ -2097,7 +2097,7 @@ export class RecallEvent implements StructClass {
             }
 
             return RecallEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -2112,7 +2112,7 @@ export class RecallEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<RecallEvent> {
         const res = await client.getObject({
             id,

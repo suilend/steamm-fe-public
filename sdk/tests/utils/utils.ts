@@ -1,4 +1,4 @@
-import { ObjectOwner } from "@mysten/sui/client";
+import { ObjectOwner } from "@mysten/sui/jsonRpc";
 import { Transaction, TransactionResult } from "@mysten/sui/transactions";
 import { normalizeSuiAddress, toHex } from "@mysten/sui/utils";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";

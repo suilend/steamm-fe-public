@@ -4,8 +4,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from ".
 import {Vector} from "../../../../_framework/vector";
 import {PKG_V30} from "../index";
 import {BcsType, bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Entry =============================== */
 
@@ -101,7 +101,7 @@ export class Entry<T extends TypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Entry.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Entry.fetch(
                 client,
                 T,
                 id,
@@ -259,7 +259,7 @@ export class Entry<T extends TypeArgument> implements StructClass {
 
             return Entry.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -275,7 +275,7 @@ export class Entry<T extends TypeArgument> implements StructClass {
     }
 
     static async fetch<T extends Reified<TypeArgument, any>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<Entry<ToTypeArgument<T>>> {
         const res = await client.getObject({
             id,
@@ -389,7 +389,7 @@ export class PriorityQueue<T extends TypeArgument> implements StructClass {
                     T,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => PriorityQueue.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => PriorityQueue.fetch(
                 client,
                 T,
                 id,
@@ -545,7 +545,7 @@ export class PriorityQueue<T extends TypeArgument> implements StructClass {
 
             return PriorityQueue.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -561,7 +561,7 @@ export class PriorityQueue<T extends TypeArgument> implements StructClass {
     }
 
     static async fetch<T extends Reified<TypeArgument, any>>(
-        client: SuiClient, typeArg: T, id: string
+        client: SuiJsonRpcClient, typeArg: T, id: string
     ): Promise<PriorityQueue<ToTypeArgument<T>>> {
         const res = await client.getObject({
             id,

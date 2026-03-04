@@ -4,8 +4,8 @@ import {Option} from "../../0x1/option/structs";
 import {PKG_V30} from "../index";
 import {UID} from "../object/structs";
 import {BcsType, bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Config =============================== */
 
@@ -99,7 +99,7 @@ export class Config<WriteCap extends PhantomTypeArgument> implements StructClass
                     WriteCap,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Config.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Config.fetch(
                 client,
                 WriteCap,
                 id,
@@ -254,7 +254,7 @@ export class Config<WriteCap extends PhantomTypeArgument> implements StructClass
 
             return Config.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -270,7 +270,7 @@ export class Config<WriteCap extends PhantomTypeArgument> implements StructClass
     }
 
     static async fetch<WriteCap extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: WriteCap, id: string
+        client: SuiJsonRpcClient, typeArg: WriteCap, id: string
     ): Promise<Config<ToPhantomTypeArgument<WriteCap>>> {
         const res = await client.getObject({
             id,
@@ -384,7 +384,7 @@ export class Setting<Value extends TypeArgument> implements StructClass {
                     Value,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Setting.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Setting.fetch(
                 client,
                 Value,
                 id,
@@ -540,7 +540,7 @@ export class Setting<Value extends TypeArgument> implements StructClass {
 
             return Setting.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -556,7 +556,7 @@ export class Setting<Value extends TypeArgument> implements StructClass {
     }
 
     static async fetch<Value extends Reified<TypeArgument, any>>(
-        client: SuiClient, typeArg: Value, id: string
+        client: SuiJsonRpcClient, typeArg: Value, id: string
     ): Promise<Setting<ToTypeArgument<Value>>> {
         const res = await client.getObject({
             id,
@@ -674,7 +674,7 @@ export class SettingData<Value extends TypeArgument> implements StructClass {
                     Value,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => SettingData.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => SettingData.fetch(
                 client,
                 Value,
                 id,
@@ -834,7 +834,7 @@ export class SettingData<Value extends TypeArgument> implements StructClass {
 
             return SettingData.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -850,7 +850,7 @@ export class SettingData<Value extends TypeArgument> implements StructClass {
     }
 
     static async fetch<Value extends Reified<TypeArgument, any>>(
-        client: SuiClient, typeArg: Value, id: string
+        client: SuiJsonRpcClient, typeArg: Value, id: string
     ): Promise<SettingData<ToTypeArgument<Value>>> {
         const res = await client.getObject({
             id,

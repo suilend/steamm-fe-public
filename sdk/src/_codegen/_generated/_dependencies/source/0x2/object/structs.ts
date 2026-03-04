@@ -2,8 +2,8 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {PKG_V30} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== ID =============================== */
 
@@ -86,7 +86,7 @@ export class ID implements StructClass {
                 ID.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ID.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ID.fetch(
                 client,
                 id,
             ),
@@ -117,8 +117,8 @@ export class ID implements StructClass {
     static get bcs() {
         return bcs.struct("ID", {
             bytes:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
 
         })
     };
@@ -210,7 +210,7 @@ export class ID implements StructClass {
             }
 
             return ID.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -225,7 +225,7 @@ export class ID implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ID> {
         const res = await client.getObject({
             id,
@@ -327,7 +327,7 @@ export class UID implements StructClass {
                 UID.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => UID.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => UID.fetch(
                 client,
                 id,
             ),
@@ -450,7 +450,7 @@ export class UID implements StructClass {
             }
 
             return UID.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -465,7 +465,7 @@ export class UID implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<UID> {
         const res = await client.getObject({
             id,

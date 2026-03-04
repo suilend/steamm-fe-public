@@ -29,8 +29,8 @@ import { OracleDecimal } from "../oracle-decimal/structs";
 import { Version } from "../version/structs";
 import { EnumOutputShapeWithKeys } from "@mysten/bcs";
 import { bcs } from "@mysten/sui/bcs";
-import { SuiClient, SuiObjectData, SuiParsedData } from "@mysten/sui/client";
-import { fromB64 } from "@mysten/sui/utils";
+import { SuiJsonRpcClient, SuiObjectData, SuiParsedData } from "@mysten/sui/jsonRpc";
+import { fromBase64 } from "@mysten/sui/utils";
 
 /* ============================== AdminCap =============================== */
 
@@ -93,7 +93,7 @@ export class AdminCap implements StructClass {
         AdminCap.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) =>
         AdminCap.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) =>
+      fetch: async (client: SuiJsonRpcClient, id: string) =>
         AdminCap.fetch(client, id),
       new: (fields: AdminCapFields) => {
         return new AdminCap([], fields);
@@ -196,7 +196,7 @@ export class AdminCap implements StructClass {
         throw new Error(`object at is not a AdminCap object`);
       }
 
-      return AdminCap.fromBcs(fromB64(data.bcs.bcsBytes));
+      return AdminCap.fromBcs(fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return AdminCap.fromSuiParsedData(data.content);
@@ -206,7 +206,7 @@ export class AdminCap implements StructClass {
     );
   }
 
-  static async fetch(client: SuiClient, id: string): Promise<AdminCap> {
+  static async fetch(client: SuiJsonRpcClient, id: string): Promise<AdminCap> {
     const res = await client.getObject({ id, options: { showBcs: true } });
     if (res.error) {
       throw new Error(
@@ -285,7 +285,7 @@ export class Oracle implements StructClass {
         Oracle.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) =>
         Oracle.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) => Oracle.fetch(client, id),
+      fetch: async (client: SuiJsonRpcClient, id: string) => Oracle.fetch(client, id),
       new: (fields: OracleFields) => {
         return new Oracle([], fields);
       },
@@ -387,7 +387,7 @@ export class Oracle implements StructClass {
         throw new Error(`object at is not a Oracle object`);
       }
 
-      return Oracle.fromBcs(fromB64(data.bcs.bcsBytes));
+      return Oracle.fromBcs(fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return Oracle.fromSuiParsedData(data.content);
@@ -397,7 +397,7 @@ export class Oracle implements StructClass {
     );
   }
 
-  static async fetch(client: SuiClient, id: string): Promise<Oracle> {
+  static async fetch(client: SuiJsonRpcClient, id: string): Promise<Oracle> {
     const res = await client.getObject({ id, options: { showBcs: true } });
     if (res.error) {
       throw new Error(
@@ -489,7 +489,7 @@ export class OraclePriceUpdate implements StructClass {
         OraclePriceUpdate.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) =>
         OraclePriceUpdate.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) =>
+      fetch: async (client: SuiJsonRpcClient, id: string) =>
         OraclePriceUpdate.fetch(client, id),
       new: (fields: OraclePriceUpdateFields) => {
         return new OraclePriceUpdate([], fields);
@@ -628,7 +628,7 @@ export class OraclePriceUpdate implements StructClass {
         throw new Error(`object at is not a OraclePriceUpdate object`);
       }
 
-      return OraclePriceUpdate.fromBcs(fromB64(data.bcs.bcsBytes));
+      return OraclePriceUpdate.fromBcs(fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return OraclePriceUpdate.fromSuiParsedData(data.content);
@@ -639,7 +639,7 @@ export class OraclePriceUpdate implements StructClass {
   }
 
   static async fetch(
-    client: SuiClient,
+    client: SuiJsonRpcClient,
     id: string,
   ): Promise<OraclePriceUpdate> {
     const res = await client.getObject({ id, options: { showBcs: true } });
@@ -733,7 +733,7 @@ export class OracleRegistry implements StructClass {
         OracleRegistry.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) =>
         OracleRegistry.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) =>
+      fetch: async (client: SuiJsonRpcClient, id: string) =>
         OracleRegistry.fetch(client, id),
       new: (fields: OracleRegistryFields) => {
         return new OracleRegistry([], fields);
@@ -869,7 +869,7 @@ export class OracleRegistry implements StructClass {
         throw new Error(`object at is not a OracleRegistry object`);
       }
 
-      return OracleRegistry.fromBcs(fromB64(data.bcs.bcsBytes));
+      return OracleRegistry.fromBcs(fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return OracleRegistry.fromSuiParsedData(data.content);
@@ -879,7 +879,7 @@ export class OracleRegistry implements StructClass {
     );
   }
 
-  static async fetch(client: SuiClient, id: string): Promise<OracleRegistry> {
+  static async fetch(client: SuiJsonRpcClient, id: string): Promise<OracleRegistry> {
     const res = await client.getObject({ id, options: { showBcs: true } });
     if (res.error) {
       throw new Error(
@@ -974,7 +974,7 @@ export class OracleRegistryConfig implements StructClass {
         OracleRegistryConfig.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) =>
         OracleRegistryConfig.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) =>
+      fetch: async (client: SuiJsonRpcClient, id: string) =>
         OracleRegistryConfig.fetch(client, id),
       new: (fields: OracleRegistryConfigFields) => {
         return new OracleRegistryConfig([], fields);
@@ -1133,7 +1133,7 @@ export class OracleRegistryConfig implements StructClass {
         throw new Error(`object at is not a OracleRegistryConfig object`);
       }
 
-      return OracleRegistryConfig.fromBcs(fromB64(data.bcs.bcsBytes));
+      return OracleRegistryConfig.fromBcs(fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return OracleRegistryConfig.fromSuiParsedData(data.content);
@@ -1144,7 +1144,7 @@ export class OracleRegistryConfig implements StructClass {
   }
 
   static async fetch(
-    client: SuiClient,
+    client: SuiJsonRpcClient,
     id: string,
   ): Promise<OracleRegistryConfig> {
     const res = await client.getObject({ id, options: { showBcs: true } });

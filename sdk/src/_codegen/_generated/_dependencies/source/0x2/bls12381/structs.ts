@@ -2,8 +2,8 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {PKG_V30} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== G1 =============================== */
 
@@ -86,7 +86,7 @@ export class G1 implements StructClass {
                 G1.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => G1.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => G1.fetch(
                 client,
                 id,
             ),
@@ -209,7 +209,7 @@ export class G1 implements StructClass {
             }
 
             return G1.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -224,7 +224,7 @@ export class G1 implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<G1> {
         const res = await client.getObject({
             id,
@@ -326,7 +326,7 @@ export class G2 implements StructClass {
                 G2.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => G2.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => G2.fetch(
                 client,
                 id,
             ),
@@ -449,7 +449,7 @@ export class G2 implements StructClass {
             }
 
             return G2.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -464,7 +464,7 @@ export class G2 implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<G2> {
         const res = await client.getObject({
             id,
@@ -566,7 +566,7 @@ export class GT implements StructClass {
                 GT.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => GT.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => GT.fetch(
                 client,
                 id,
             ),
@@ -689,7 +689,7 @@ export class GT implements StructClass {
             }
 
             return GT.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -704,7 +704,7 @@ export class GT implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<GT> {
         const res = await client.getObject({
             id,
@@ -806,7 +806,7 @@ export class Scalar implements StructClass {
                 Scalar.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Scalar.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Scalar.fetch(
                 client,
                 id,
             ),
@@ -929,7 +929,7 @@ export class Scalar implements StructClass {
             }
 
             return Scalar.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -944,7 +944,7 @@ export class Scalar implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Scalar> {
         const res = await client.getObject({
             id,
@@ -1046,7 +1046,7 @@ export class UncompressedG1 implements StructClass {
                 UncompressedG1.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => UncompressedG1.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => UncompressedG1.fetch(
                 client,
                 id,
             ),
@@ -1169,7 +1169,7 @@ export class UncompressedG1 implements StructClass {
             }
 
             return UncompressedG1.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1184,7 +1184,7 @@ export class UncompressedG1 implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<UncompressedG1> {
         const res = await client.getObject({
             id,

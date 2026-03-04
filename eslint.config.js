@@ -13,7 +13,7 @@ module.exports = [
   ...compat.extends(
     "prettier",
     "next/core-web-vitals",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:@typescript-eslint/recommended",
   ),
   {
     plugins: {
@@ -31,7 +31,7 @@ module.exports = [
         {
           pathGroups: [
             {
-              pattern: "*(react|next)/**",
+              pattern: "{react,react-dom,next,next/**,react/**,react-dom/**}",
               patternOptions: { partial: true },
               group: "external",
               position: "before",

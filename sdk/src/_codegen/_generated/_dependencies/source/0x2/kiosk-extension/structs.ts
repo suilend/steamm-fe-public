@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from ".
 import {Bag} from "../bag/structs";
 import {PKG_V30} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Extension =============================== */
 
@@ -91,7 +91,7 @@ export class Extension implements StructClass {
                 Extension.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Extension.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Extension.fetch(
                 client,
                 id,
             ),
@@ -218,7 +218,7 @@ export class Extension implements StructClass {
             }
 
             return Extension.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -233,7 +233,7 @@ export class Extension implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Extension> {
         const res = await client.getObject({
             id,
@@ -346,7 +346,7 @@ export class ExtensionKey<Ext extends PhantomTypeArgument> implements StructClas
                     Ext,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ExtensionKey.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ExtensionKey.fetch(
                 client,
                 Ext,
                 id,
@@ -501,7 +501,7 @@ export class ExtensionKey<Ext extends PhantomTypeArgument> implements StructClas
 
             return ExtensionKey.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -517,7 +517,7 @@ export class ExtensionKey<Ext extends PhantomTypeArgument> implements StructClas
     }
 
     static async fetch<Ext extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: Ext, id: string
+        client: SuiJsonRpcClient, typeArg: Ext, id: string
     ): Promise<ExtensionKey<ToPhantomTypeArgument<Ext>>> {
         const res = await client.getObject({
             id,

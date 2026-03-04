@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {Decimal} from "../decimal/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== RateLimiter =============================== */
 
@@ -93,7 +93,7 @@ export class RateLimiter implements StructClass {
                 RateLimiter.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => RateLimiter.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => RateLimiter.fetch(
                 client,
                 id,
             ),
@@ -222,7 +222,7 @@ export class RateLimiter implements StructClass {
             }
 
             return RateLimiter.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -237,7 +237,7 @@ export class RateLimiter implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<RateLimiter> {
         const res = await client.getObject({
             id,
@@ -341,7 +341,7 @@ export class RateLimiterConfig implements StructClass {
                 RateLimiterConfig.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => RateLimiterConfig.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => RateLimiterConfig.fetch(
                 client,
                 id,
             ),
@@ -466,7 +466,7 @@ export class RateLimiterConfig implements StructClass {
             }
 
             return RateLimiterConfig.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -481,7 +481,7 @@ export class RateLimiterConfig implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<RateLimiterConfig> {
         const res = await client.getObject({
             id,

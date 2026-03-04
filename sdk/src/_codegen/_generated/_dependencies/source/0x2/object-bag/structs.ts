@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {PKG_V30} from "../index";
 import {UID} from "../object/structs";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== ObjectBag =============================== */
 
@@ -89,7 +89,7 @@ export class ObjectBag implements StructClass {
                 ObjectBag.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ObjectBag.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ObjectBag.fetch(
                 client,
                 id,
             ),
@@ -214,7 +214,7 @@ export class ObjectBag implements StructClass {
             }
 
             return ObjectBag.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -229,7 +229,7 @@ export class ObjectBag implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ObjectBag> {
         const res = await client.getObject({
             id,

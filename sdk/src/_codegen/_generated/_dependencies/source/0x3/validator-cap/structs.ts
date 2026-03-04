@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {UID} from "../../0x2/object/structs";
 import {PKG_V18} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== UnverifiedValidatorOperationCap =============================== */
 
@@ -89,7 +89,7 @@ export class UnverifiedValidatorOperationCap implements StructClass {
                 UnverifiedValidatorOperationCap.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => UnverifiedValidatorOperationCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => UnverifiedValidatorOperationCap.fetch(
                 client,
                 id,
             ),
@@ -122,8 +122,8 @@ export class UnverifiedValidatorOperationCap implements StructClass {
             id:
                 UID.bcs
             , authorizer_validator_address:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
 
         })
     };
@@ -215,7 +215,7 @@ export class UnverifiedValidatorOperationCap implements StructClass {
             }
 
             return UnverifiedValidatorOperationCap.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -230,7 +230,7 @@ export class UnverifiedValidatorOperationCap implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<UnverifiedValidatorOperationCap> {
         const res = await client.getObject({
             id,
@@ -332,7 +332,7 @@ export class ValidatorOperationCap implements StructClass {
                 ValidatorOperationCap.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ValidatorOperationCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ValidatorOperationCap.fetch(
                 client,
                 id,
             ),
@@ -363,8 +363,8 @@ export class ValidatorOperationCap implements StructClass {
     static get bcs() {
         return bcs.struct("ValidatorOperationCap", {
             authorizer_validator_address:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
 
         })
     };
@@ -456,7 +456,7 @@ export class ValidatorOperationCap implements StructClass {
             }
 
             return ValidatorOperationCap.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -471,7 +471,7 @@ export class ValidatorOperationCap implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ValidatorOperationCap> {
         const res = await client.getObject({
             id,

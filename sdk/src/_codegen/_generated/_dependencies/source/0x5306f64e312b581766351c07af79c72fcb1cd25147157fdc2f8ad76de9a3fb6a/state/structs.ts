@@ -10,8 +10,8 @@ import {FeeCollector} from "../fee-collector/structs";
 import {GuardianSet} from "../guardian-set/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== LatestOnly =============================== */
 
@@ -94,7 +94,7 @@ export class LatestOnly implements StructClass {
                 LatestOnly.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => LatestOnly.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => LatestOnly.fetch(
                 client,
                 id,
             ),
@@ -217,7 +217,7 @@ export class LatestOnly implements StructClass {
             }
 
             return LatestOnly.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -232,7 +232,7 @@ export class LatestOnly implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<LatestOnly> {
         const res = await client.getObject({
             id,
@@ -350,7 +350,7 @@ export class State implements StructClass {
                 State.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => State.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => State.fetch(
                 client,
                 id,
             ),
@@ -489,7 +489,7 @@ export class State implements StructClass {
             }
 
             return State.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -504,7 +504,7 @@ export class State implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<State> {
         const res = await client.getObject({
             id,

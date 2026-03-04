@@ -4,8 +4,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {Vector} from "../../../../_framework/vector";
 import {PKG_V14} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== BitVector =============================== */
 
@@ -90,7 +90,7 @@ export class BitVector implements StructClass {
                 BitVector.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => BitVector.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => BitVector.fetch(
                 client,
                 id,
             ),
@@ -215,7 +215,7 @@ export class BitVector implements StructClass {
             }
 
             return BitVector.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -230,7 +230,7 @@ export class BitVector implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<BitVector> {
         const res = await client.getObject({
             id,

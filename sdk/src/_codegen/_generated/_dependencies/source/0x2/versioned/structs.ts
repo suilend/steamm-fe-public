@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {PKG_V30} from "../index";
 import {ID, UID} from "../object/structs";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== VersionChangeCap =============================== */
 
@@ -89,7 +89,7 @@ export class VersionChangeCap implements StructClass {
                 VersionChangeCap.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => VersionChangeCap.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => VersionChangeCap.fetch(
                 client,
                 id,
             ),
@@ -214,7 +214,7 @@ export class VersionChangeCap implements StructClass {
             }
 
             return VersionChangeCap.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -229,7 +229,7 @@ export class VersionChangeCap implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<VersionChangeCap> {
         const res = await client.getObject({
             id,
@@ -333,7 +333,7 @@ export class Versioned implements StructClass {
                 Versioned.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Versioned.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Versioned.fetch(
                 client,
                 id,
             ),
@@ -458,7 +458,7 @@ export class Versioned implements StructClass {
             }
 
             return Versioned.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -473,7 +473,7 @@ export class Versioned implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Versioned> {
         const res = await client.getObject({
             id,

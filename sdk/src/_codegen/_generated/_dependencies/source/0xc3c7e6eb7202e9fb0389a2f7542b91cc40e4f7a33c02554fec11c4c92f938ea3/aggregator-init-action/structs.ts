@@ -4,8 +4,8 @@ import {String} from "../../0x1/string/structs";
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== AggregatorCreated =============================== */
 
@@ -27,7 +27,7 @@ export class AggregatorCreated implements StructClass { __StructClass = true as 
 
  this.aggregatorId = fields.aggregatorId;; this.name = fields.name; }
 
- static reified( ): AggregatorCreatedReified { return { typeName: AggregatorCreated.$typeName, fullTypeName: composeSuiType( AggregatorCreated.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator_init_action::AggregatorCreated`, typeArgs: [ ] as [], isPhantom: AggregatorCreated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => AggregatorCreated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => AggregatorCreated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => AggregatorCreated.fromBcs( data, ), bcs: AggregatorCreated.bcs, fromJSONField: (field: any) => AggregatorCreated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => AggregatorCreated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => AggregatorCreated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => AggregatorCreated.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => AggregatorCreated.fetch( client, id, ), new: ( fields: AggregatorCreatedFields, ) => { return new AggregatorCreated( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): AggregatorCreatedReified { return { typeName: AggregatorCreated.$typeName, fullTypeName: composeSuiType( AggregatorCreated.$typeName, ...[] ) as `${typeof PKG_V1}::aggregator_init_action::AggregatorCreated`, typeArgs: [ ] as [], isPhantom: AggregatorCreated.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => AggregatorCreated.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => AggregatorCreated.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => AggregatorCreated.fromBcs( data, ), bcs: AggregatorCreated.bcs, fromJSONField: (field: any) => AggregatorCreated.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => AggregatorCreated.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => AggregatorCreated.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => AggregatorCreated.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => AggregatorCreated.fetch( client, id, ), new: ( fields: AggregatorCreatedFields, ) => { return new AggregatorCreated( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return AggregatorCreated.reified() }
 
@@ -67,9 +67,9 @@ export class AggregatorCreated implements StructClass { __StructClass = true as 
 
  static fromSuiObjectData( data: SuiObjectData ): AggregatorCreated { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isAggregatorCreated(data.bcs.type)) { throw new Error(`object at is not a AggregatorCreated object`); }
 
- return AggregatorCreated.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return AggregatorCreated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return AggregatorCreated.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return AggregatorCreated.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<AggregatorCreated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching AggregatorCreated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAggregatorCreated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a AggregatorCreated object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<AggregatorCreated> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching AggregatorCreated object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isAggregatorCreated(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a AggregatorCreated object`); }
 
  return AggregatorCreated.fromSuiObjectData( res.data ); }
 

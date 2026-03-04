@@ -2,8 +2,8 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../_framework/util";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== OracleDecimal =============================== */
 
@@ -25,7 +25,7 @@ export class OracleDecimal implements StructClass { __StructClass = true as cons
 
  this.base = fields.base;; this.expo = fields.expo;; this.isExpoNegative = fields.isExpoNegative; }
 
- static reified( ): OracleDecimalReified { return { typeName: OracleDecimal.$typeName, fullTypeName: composeSuiType( OracleDecimal.$typeName, ...[] ) as `${typeof PKG_V1}::oracle_decimal::OracleDecimal`, typeArgs: [ ] as [], isPhantom: OracleDecimal.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => OracleDecimal.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => OracleDecimal.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => OracleDecimal.fromBcs( data, ), bcs: OracleDecimal.bcs, fromJSONField: (field: any) => OracleDecimal.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => OracleDecimal.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => OracleDecimal.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => OracleDecimal.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => OracleDecimal.fetch( client, id, ), new: ( fields: OracleDecimalFields, ) => { return new OracleDecimal( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): OracleDecimalReified { return { typeName: OracleDecimal.$typeName, fullTypeName: composeSuiType( OracleDecimal.$typeName, ...[] ) as `${typeof PKG_V1}::oracle_decimal::OracleDecimal`, typeArgs: [ ] as [], isPhantom: OracleDecimal.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => OracleDecimal.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => OracleDecimal.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => OracleDecimal.fromBcs( data, ), bcs: OracleDecimal.bcs, fromJSONField: (field: any) => OracleDecimal.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => OracleDecimal.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => OracleDecimal.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => OracleDecimal.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => OracleDecimal.fetch( client, id, ), new: ( fields: OracleDecimalFields, ) => { return new OracleDecimal( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return OracleDecimal.reified() }
 
@@ -65,9 +65,9 @@ export class OracleDecimal implements StructClass { __StructClass = true as cons
 
  static fromSuiObjectData( data: SuiObjectData ): OracleDecimal { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isOracleDecimal(data.bcs.type)) { throw new Error(`object at is not a OracleDecimal object`); }
 
- return OracleDecimal.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return OracleDecimal.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return OracleDecimal.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return OracleDecimal.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<OracleDecimal> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching OracleDecimal object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isOracleDecimal(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a OracleDecimal object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<OracleDecimal> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching OracleDecimal object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isOracleDecimal(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a OracleDecimal object`); }
 
  return OracleDecimal.fromSuiObjectData( res.data ); }
 

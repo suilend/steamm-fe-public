@@ -4,8 +4,8 @@ import {ID} from "../../0x2/object/structs";
 import {Bytes32} from "../../0x5306f64e312b581766351c07af79c72fcb1cd25147157fdc2f8ad76de9a3fb6a/bytes32/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== ContractUpgraded =============================== */
 
@@ -90,7 +90,7 @@ export class ContractUpgraded implements StructClass {
                 ContractUpgraded.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ContractUpgraded.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ContractUpgraded.fetch(
                 client,
                 id,
             ),
@@ -215,7 +215,7 @@ export class ContractUpgraded implements StructClass {
             }
 
             return ContractUpgraded.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -230,7 +230,7 @@ export class ContractUpgraded implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ContractUpgraded> {
         const res = await client.getObject({
             id,
@@ -332,7 +332,7 @@ export class UpgradeContract implements StructClass {
                 UpgradeContract.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => UpgradeContract.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => UpgradeContract.fetch(
                 client,
                 id,
             ),
@@ -455,7 +455,7 @@ export class UpgradeContract implements StructClass {
             }
 
             return UpgradeContract.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -470,7 +470,7 @@ export class UpgradeContract implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<UpgradeContract> {
         const res = await client.getObject({
             id,

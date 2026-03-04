@@ -5,8 +5,8 @@ import {Vector} from "../../../../_framework/vector";
 import {DataSource} from "../data-source/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== DataSources =============================== */
 
@@ -89,7 +89,7 @@ export class DataSources implements StructClass {
                 DataSources.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => DataSources.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => DataSources.fetch(
                 client,
                 id,
             ),
@@ -212,7 +212,7 @@ export class DataSources implements StructClass {
             }
 
             return DataSources.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -227,7 +227,7 @@ export class DataSources implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<DataSources> {
         const res = await client.getObject({
             id,

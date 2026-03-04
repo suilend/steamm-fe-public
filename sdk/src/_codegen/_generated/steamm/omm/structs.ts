@@ -18,8 +18,8 @@ import { ORACLE_PKG_V1 } from "../index";
 import { ID, UID } from "../../_dependencies/source/0x2/object/structs";
 import { Version } from "../version/structs";
 import { bcs } from "@mysten/sui/bcs";
-import { SuiClient, SuiObjectData, SuiParsedData } from "@mysten/sui/client";
-import { fromB64 } from "@mysten/sui/utils";
+import { SuiJsonRpcClient, SuiObjectData, SuiParsedData } from "@mysten/sui/jsonRpc";
+import { fromBase64 } from "@mysten/sui/utils";
 
 /* ============================== OracleQuoter =============================== */
 
@@ -95,7 +95,7 @@ export class OracleQuoter implements StructClass {
         OracleQuoter.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) =>
         OracleQuoter.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) =>
+      fetch: async (client: SuiJsonRpcClient, id: string) =>
         OracleQuoter.fetch(client, id),
       new: (fields: OracleQuoterFields) => {
         return new OracleQuoter([], fields);
@@ -229,7 +229,7 @@ export class OracleQuoter implements StructClass {
         throw new Error(`object at is not a OracleQuoter object`);
       }
 
-      return OracleQuoter.fromBcs(fromB64(data.bcs.bcsBytes));
+      return OracleQuoter.fromBcs(fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return OracleQuoter.fromSuiParsedData(data.content);
@@ -240,7 +240,7 @@ export class OracleQuoter implements StructClass {
     );
   }
 
-  static async fetch(client: SuiClient, id: string): Promise<OracleQuoter> {
+  static async fetch(client: SuiJsonRpcClient, id: string): Promise<OracleQuoter> {
     const res = await client.getObject({
       id,
       options: {

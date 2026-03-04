@@ -4,8 +4,8 @@ import {ID} from "../../0x2/object/structs";
 import {Bytes32} from "../bytes32/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== CurrentVersion =============================== */
 
@@ -88,7 +88,7 @@ export class CurrentVersion implements StructClass {
                 CurrentVersion.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => CurrentVersion.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => CurrentVersion.fetch(
                 client,
                 id,
             ),
@@ -211,7 +211,7 @@ export class CurrentVersion implements StructClass {
             }
 
             return CurrentVersion.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -226,7 +226,7 @@ export class CurrentVersion implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<CurrentVersion> {
         const res = await client.getObject({
             id,
@@ -328,7 +328,7 @@ export class CurrentPackage implements StructClass {
                 CurrentPackage.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => CurrentPackage.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => CurrentPackage.fetch(
                 client,
                 id,
             ),
@@ -451,7 +451,7 @@ export class CurrentPackage implements StructClass {
             }
 
             return CurrentPackage.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -466,7 +466,7 @@ export class CurrentPackage implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<CurrentPackage> {
         const res = await client.getObject({
             id,
@@ -570,7 +570,7 @@ export class PackageInfo implements StructClass {
                 PackageInfo.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => PackageInfo.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => PackageInfo.fetch(
                 client,
                 id,
             ),
@@ -695,7 +695,7 @@ export class PackageInfo implements StructClass {
             }
 
             return PackageInfo.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -710,7 +710,7 @@ export class PackageInfo implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<PackageInfo> {
         const res = await client.getObject({
             id,
@@ -812,7 +812,7 @@ export class PendingPackage implements StructClass {
                 PendingPackage.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => PendingPackage.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => PendingPackage.fetch(
                 client,
                 id,
             ),
@@ -935,7 +935,7 @@ export class PendingPackage implements StructClass {
             }
 
             return PendingPackage.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -950,7 +950,7 @@ export class PendingPackage implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<PendingPackage> {
         const res = await client.getObject({
             id,

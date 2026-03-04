@@ -4,8 +4,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName} from ".
 import {Vector} from "../../../../_framework/vector";
 import {PKG_V14} from "../index";
 import {BcsType, bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Option =============================== */
 
@@ -103,7 +103,7 @@ export class Option<Element extends TypeArgument> implements StructClass {
                     Element,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Option.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Option.fetch(
                 client,
                 Element,
                 id,
@@ -259,7 +259,7 @@ export class Option<Element extends TypeArgument> implements StructClass {
 
             return Option.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -275,7 +275,7 @@ export class Option<Element extends TypeArgument> implements StructClass {
     }
 
     static async fetch<Element extends Reified<TypeArgument, any>>(
-        client: SuiClient, typeArg: Element, id: string
+        client: SuiJsonRpcClient, typeArg: Element, id: string
     ): Promise<Option<ToTypeArgument<Element>>> {
         const res = await client.getObject({
             id,

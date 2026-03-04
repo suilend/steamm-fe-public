@@ -4,10 +4,10 @@ import init, {
 } from "@mysten/move-bytecode-template";
 import { bcs } from "@mysten/sui/bcs";
 import {
-  SuiClient,
+  SuiJsonRpcClient,
   SuiObjectChange,
   SuiTransactionBlockResponse,
-} from "@mysten/sui/client";
+} from "@mysten/sui/jsonRpc";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
@@ -100,7 +100,7 @@ export type CreateCoinResult = {
 export const createCoin = async (
   bytecode: Uint8Array<ArrayBufferLike>,
   keypair: Ed25519Keypair,
-  suiClient: SuiClient,
+  suiClient: SuiJsonRpcClient,
   options?: { isCreateToken?: boolean },
 ): Promise<CreateCoinResult> => {
   console.log("[createCoin] Creating coin");

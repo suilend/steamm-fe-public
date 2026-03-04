@@ -3,8 +3,8 @@ import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_fra
 import {ID} from "../../0x2/object/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== OracleQueueIdSet =============================== */
 
@@ -26,7 +26,7 @@ export class OracleQueueIdSet implements StructClass { __StructClass = true as c
 
  this.oldOracleQueueId = fields.oldOracleQueueId;; this.oracleQueueId = fields.oracleQueueId; }
 
- static reified( ): OracleQueueIdSetReified { return { typeName: OracleQueueIdSet.$typeName, fullTypeName: composeSuiType( OracleQueueIdSet.$typeName, ...[] ) as `${typeof PKG_V1}::set_oracle_queue_id_action::OracleQueueIdSet`, typeArgs: [ ] as [], isPhantom: OracleQueueIdSet.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => OracleQueueIdSet.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => OracleQueueIdSet.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => OracleQueueIdSet.fromBcs( data, ), bcs: OracleQueueIdSet.bcs, fromJSONField: (field: any) => OracleQueueIdSet.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => OracleQueueIdSet.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => OracleQueueIdSet.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => OracleQueueIdSet.fromSuiObjectData( content, ), fetch: async (client: SuiClient, id: string) => OracleQueueIdSet.fetch( client, id, ), new: ( fields: OracleQueueIdSetFields, ) => { return new OracleQueueIdSet( [], fields ) }, kind: "StructClassReified", } }
+ static reified( ): OracleQueueIdSetReified { return { typeName: OracleQueueIdSet.$typeName, fullTypeName: composeSuiType( OracleQueueIdSet.$typeName, ...[] ) as `${typeof PKG_V1}::set_oracle_queue_id_action::OracleQueueIdSet`, typeArgs: [ ] as [], isPhantom: OracleQueueIdSet.$isPhantom, reifiedTypeArgs: [], fromFields: (fields: Record<string, any>) => OracleQueueIdSet.fromFields( fields, ), fromFieldsWithTypes: (item: FieldsWithTypes) => OracleQueueIdSet.fromFieldsWithTypes( item, ), fromBcs: (data: Uint8Array) => OracleQueueIdSet.fromBcs( data, ), bcs: OracleQueueIdSet.bcs, fromJSONField: (field: any) => OracleQueueIdSet.fromJSONField( field, ), fromJSON: (json: Record<string, any>) => OracleQueueIdSet.fromJSON( json, ), fromSuiParsedData: (content: SuiParsedData) => OracleQueueIdSet.fromSuiParsedData( content, ), fromSuiObjectData: (content: SuiObjectData) => OracleQueueIdSet.fromSuiObjectData( content, ), fetch: async (client: SuiJsonRpcClient, id: string) => OracleQueueIdSet.fetch( client, id, ), new: ( fields: OracleQueueIdSetFields, ) => { return new OracleQueueIdSet( [], fields ) }, kind: "StructClassReified", } }
 
  static get r() { return OracleQueueIdSet.reified() }
 
@@ -66,9 +66,9 @@ export class OracleQueueIdSet implements StructClass { __StructClass = true as c
 
  static fromSuiObjectData( data: SuiObjectData ): OracleQueueIdSet { if (data.bcs) { if (data.bcs.dataType !== "moveObject" || !isOracleQueueIdSet(data.bcs.type)) { throw new Error(`object at is not a OracleQueueIdSet object`); }
 
- return OracleQueueIdSet.fromBcs( fromB64(data.bcs.bcsBytes) ); } if (data.content) { return OracleQueueIdSet.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
+ return OracleQueueIdSet.fromBcs( fromBase64(data.bcs.bcsBytes) ); } if (data.content) { return OracleQueueIdSet.fromSuiParsedData( data.content ) } throw new Error( "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request." ); }
 
- static async fetch( client: SuiClient, id: string ): Promise<OracleQueueIdSet> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching OracleQueueIdSet object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isOracleQueueIdSet(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a OracleQueueIdSet object`); }
+ static async fetch( client: SuiJsonRpcClient, id: string ): Promise<OracleQueueIdSet> { const res = await client.getObject({ id, options: { showBcs: true, }, }); if (res.error) { throw new Error(`error fetching OracleQueueIdSet object at id ${id}: ${res.error.code}`); } if (res.data?.bcs?.dataType !== "moveObject" || !isOracleQueueIdSet(res.data.bcs.type)) { throw new Error(`object at id ${id} is not a OracleQueueIdSet object`); }
 
  return OracleQueueIdSet.fromSuiObjectData( res.data ); }
 

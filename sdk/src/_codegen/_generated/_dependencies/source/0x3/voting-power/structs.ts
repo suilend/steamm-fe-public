@@ -2,8 +2,8 @@ import {PhantomReified, Reified, StructClass, ToField, ToTypeStr, decodeFromFiel
 import {FieldsWithTypes, composeSuiType, compressSuiType} from "../../../../_framework/util";
 import {PKG_V18} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== VotingPowerInfo =============================== */
 
@@ -88,7 +88,7 @@ export class VotingPowerInfo implements StructClass {
                 VotingPowerInfo.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => VotingPowerInfo.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => VotingPowerInfo.fetch(
                 client,
                 id,
             ),
@@ -213,7 +213,7 @@ export class VotingPowerInfo implements StructClass {
             }
 
             return VotingPowerInfo.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -228,7 +228,7 @@ export class VotingPowerInfo implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<VotingPowerInfo> {
         const res = await client.getObject({
             id,
@@ -334,7 +334,7 @@ export class VotingPowerInfoV2 implements StructClass {
                 VotingPowerInfoV2.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => VotingPowerInfoV2.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => VotingPowerInfoV2.fetch(
                 client,
                 id,
             ),
@@ -461,7 +461,7 @@ export class VotingPowerInfoV2 implements StructClass {
             }
 
             return VotingPowerInfoV2.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -476,7 +476,7 @@ export class VotingPowerInfoV2 implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<VotingPowerInfoV2> {
         const res = await client.getObject({
             id,

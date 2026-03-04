@@ -5,8 +5,8 @@ import {Vector} from "../../../../_framework/vector";
 import {Guardian} from "../guardian/structs";
 import {PKG_V1} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== GuardianSet =============================== */
 
@@ -93,7 +93,7 @@ export class GuardianSet implements StructClass {
                 GuardianSet.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => GuardianSet.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => GuardianSet.fetch(
                 client,
                 id,
             ),
@@ -220,7 +220,7 @@ export class GuardianSet implements StructClass {
             }
 
             return GuardianSet.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -235,7 +235,7 @@ export class GuardianSet implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<GuardianSet> {
         const res = await client.getObject({
             id,

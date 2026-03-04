@@ -12,8 +12,8 @@ import {PoolTokenExchangeRate} from "../staking-pool/structs";
 import {ValidatorWrapper} from "../validator-wrapper/structs";
 import {Validator} from "../validator/structs";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64, fromHEX, toHEX} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64, fromHex, toHex} from "@mysten/sui/utils";
 
 /* ============================== ValidatorEpochInfoEvent =============================== */
 
@@ -114,7 +114,7 @@ export class ValidatorEpochInfoEvent implements StructClass {
                 ValidatorEpochInfoEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ValidatorEpochInfoEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ValidatorEpochInfoEvent.fetch(
                 client,
                 id,
             ),
@@ -147,8 +147,8 @@ export class ValidatorEpochInfoEvent implements StructClass {
             epoch:
                 bcs.u64()
             , validator_address:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , reference_gas_survey_quote:
                 bcs.u64()
             , stake:
@@ -162,8 +162,8 @@ export class ValidatorEpochInfoEvent implements StructClass {
             , pool_token_exchange_rate:
                 PoolTokenExchangeRate.bcs
             , tallying_rule_reporters:
-                bcs.vector(bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),}))
+                bcs.vector(bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),}))
             , tallying_rule_global_score:
                 bcs.u64()
 
@@ -257,7 +257,7 @@ export class ValidatorEpochInfoEvent implements StructClass {
             }
 
             return ValidatorEpochInfoEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -272,7 +272,7 @@ export class ValidatorEpochInfoEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ValidatorEpochInfoEvent> {
         const res = await client.getObject({
             id,
@@ -394,7 +394,7 @@ export class ValidatorEpochInfoEventV2 implements StructClass {
                 ValidatorEpochInfoEventV2.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ValidatorEpochInfoEventV2.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ValidatorEpochInfoEventV2.fetch(
                 client,
                 id,
             ),
@@ -427,8 +427,8 @@ export class ValidatorEpochInfoEventV2 implements StructClass {
             epoch:
                 bcs.u64()
             , validator_address:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , reference_gas_survey_quote:
                 bcs.u64()
             , stake:
@@ -444,8 +444,8 @@ export class ValidatorEpochInfoEventV2 implements StructClass {
             , pool_token_exchange_rate:
                 PoolTokenExchangeRate.bcs
             , tallying_rule_reporters:
-                bcs.vector(bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),}))
+                bcs.vector(bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),}))
             , tallying_rule_global_score:
                 bcs.u64()
 
@@ -539,7 +539,7 @@ export class ValidatorEpochInfoEventV2 implements StructClass {
             }
 
             return ValidatorEpochInfoEventV2.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -554,7 +554,7 @@ export class ValidatorEpochInfoEventV2 implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ValidatorEpochInfoEventV2> {
         const res = await client.getObject({
             id,
@@ -660,7 +660,7 @@ export class ValidatorJoinEvent implements StructClass {
                 ValidatorJoinEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ValidatorJoinEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ValidatorJoinEvent.fetch(
                 client,
                 id,
             ),
@@ -693,8 +693,8 @@ export class ValidatorJoinEvent implements StructClass {
             epoch:
                 bcs.u64()
             , validator_address:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , staking_pool_id:
                 ID.bcs
 
@@ -788,7 +788,7 @@ export class ValidatorJoinEvent implements StructClass {
             }
 
             return ValidatorJoinEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -803,7 +803,7 @@ export class ValidatorJoinEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ValidatorJoinEvent> {
         const res = await client.getObject({
             id,
@@ -911,7 +911,7 @@ export class ValidatorLeaveEvent implements StructClass {
                 ValidatorLeaveEvent.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ValidatorLeaveEvent.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ValidatorLeaveEvent.fetch(
                 client,
                 id,
             ),
@@ -944,8 +944,8 @@ export class ValidatorLeaveEvent implements StructClass {
             epoch:
                 bcs.u64()
             , validator_address:
-                bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),})
+                bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),})
             , staking_pool_id:
                 ID.bcs
             , is_voluntary:
@@ -1041,7 +1041,7 @@ export class ValidatorLeaveEvent implements StructClass {
             }
 
             return ValidatorLeaveEvent.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1056,7 +1056,7 @@ export class ValidatorLeaveEvent implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ValidatorLeaveEvent> {
         const res = await client.getObject({
             id,
@@ -1174,7 +1174,7 @@ export class ValidatorSet implements StructClass {
                 ValidatorSet.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => ValidatorSet.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => ValidatorSet.fetch(
                 client,
                 id,
             ),
@@ -1219,8 +1219,8 @@ export class ValidatorSet implements StructClass {
             , validator_candidates:
                 Table.bcs
             , at_risk_validators:
-                VecMap.bcs(bcs.bytes(32).transform({input: (val: string) => fromHEX(val),
-                output: (val: Uint8Array) => toHEX(val),}), bcs.u64())
+                VecMap.bcs(bcs.bytes(32).transform({input: (val: string) => fromHex(val),
+                output: (val: Uint8Array) => toHex(val),}), bcs.u64())
             , extra_fields:
                 Bag.bcs
 
@@ -1314,7 +1314,7 @@ export class ValidatorSet implements StructClass {
             }
 
             return ValidatorSet.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -1329,7 +1329,7 @@ export class ValidatorSet implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<ValidatorSet> {
         const res = await client.getObject({
             id,

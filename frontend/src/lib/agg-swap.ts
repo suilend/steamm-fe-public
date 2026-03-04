@@ -30,7 +30,7 @@ export const useCetusSdk = () => {
     const sdk = new CetusSdk({
       endpoint: "https://api-sui.cetus.zone/router_v3/find_routes",
       signer: address,
-      client: suiClient,
+      client: suiClient as any,
       env: Env.Mainnet,
     });
     return sdk;

@@ -6,8 +6,8 @@ import {SUI} from "../../0x2/sui/structs";
 import {AdminCap, LiquidStakingInfo} from "../../0xb0575765166030556a6eafd3b1b970eba8183ff748860680245b9edd41c716e7/liquid-staking/structs";
 import {PKG_V8} from "../index";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== Staker =============================== */
 
@@ -109,7 +109,7 @@ export class Staker<P extends PhantomTypeArgument> implements StructClass {
                     P,
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Staker.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Staker.fetch(
                 client,
                 P,
                 id,
@@ -272,7 +272,7 @@ export class Staker<P extends PhantomTypeArgument> implements StructClass {
 
             return Staker.fromBcs(
                 typeArg,
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -288,7 +288,7 @@ export class Staker<P extends PhantomTypeArgument> implements StructClass {
     }
 
     static async fetch<P extends PhantomReified<PhantomTypeArgument>>(
-        client: SuiClient, typeArg: P, id: string
+        client: SuiJsonRpcClient, typeArg: P, id: string
     ): Promise<Staker<ToPhantomTypeArgument<P>>> {
         const res = await client.getObject({
             id,

@@ -5,8 +5,8 @@ import {Vector} from "../../../../_framework/vector";
 import {PKG_V1} from "../index";
 import {PriceInfo} from "../price-info/structs";
 import {bcs} from "@mysten/sui/bcs";
-import {SuiClient, SuiObjectData, SuiParsedData} from "@mysten/sui/client";
-import {fromB64} from "@mysten/sui/utils";
+import {SuiJsonRpcClient, SuiObjectData, SuiParsedData} from "@mysten/sui/jsonRpc";
+import {fromBase64} from "@mysten/sui/utils";
 
 /* ============================== BatchPriceAttestation =============================== */
 
@@ -95,7 +95,7 @@ export class BatchPriceAttestation implements StructClass {
                 BatchPriceAttestation.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => BatchPriceAttestation.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => BatchPriceAttestation.fetch(
                 client,
                 id,
             ),
@@ -224,7 +224,7 @@ export class BatchPriceAttestation implements StructClass {
             }
 
             return BatchPriceAttestation.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -239,7 +239,7 @@ export class BatchPriceAttestation implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<BatchPriceAttestation> {
         const res = await client.getObject({
             id,
@@ -349,7 +349,7 @@ export class Header implements StructClass {
                 Header.fromSuiObjectData(
                     content,
                 ),
-            fetch: async (client: SuiClient, id: string) => Header.fetch(
+            fetch: async (client: SuiJsonRpcClient, id: string) => Header.fetch(
                 client,
                 id,
             ),
@@ -480,7 +480,7 @@ export class Header implements StructClass {
             }
 
             return Header.fromBcs(
-                fromB64(data.bcs.bcsBytes)
+                fromBase64(data.bcs.bcsBytes)
             );
         }
         if (data.content) {
@@ -495,7 +495,7 @@ export class Header implements StructClass {
     }
 
     static async fetch(
-        client: SuiClient, id: string
+        client: SuiJsonRpcClient, id: string
     ): Promise<Header> {
         const res = await client.getObject({
             id,
